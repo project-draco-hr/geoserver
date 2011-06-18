@@ -1,0 +1,27 @@
+{
+  VersioningFeatureStore restricted=(VersioningFeatureStore)synchStore.getFeatureSource("restricted");
+  SimpleFeatureType schema=restricted.getSchema();
+  Id updateFilter=ff.id(singleton(ff.featureId("restricted.1b99be2b-2480-4742-ad52-95c294efda3b")));
+  restricted.modifyFeatures(schema.getDescriptor("cat"),450,updateFilter);
+  updateFilter=ff.id(singleton(ff.featureId("restricted.d91fe390-bdc7-4b22-9316-2cd6c8737ef5")));
+  restricted.modifyFeatures(schema.getDescriptor("cat"),347,updateFilter);
+  updateFilter=ff.id(singleton(ff.featureId("restricted.be7cafea-d0b7-4257-9b9c-1ed3de3f7ef4")));
+  restricted.modifyFeatures(schema.getDescriptor("cat"),-48,updateFilter);
+  MockHttpServletResponse response=postAsServletResponse(root(true),loadTextResource("PostDiffInitial.xml"));
+  checkPostDiffSuccessResponse(response);
+  assertEquals(1,gss.getActiveConflicts("restricted").size());
+  assertEquals(1,gss.getCleanMerges("restricted",7).size());
+  response=postAsServletResponse(root(true),loadTextResource("GetDiffInitial.xml"));
+  validate(response);
+  Document dom=dom(response);
+  assertXpathEvaluatesTo("-1","/gss:GetDiffResponse/@fromVersion",dom);
+  assertXpathEvaluatesTo("7","/gss:GetDiffResponse/@toVersion",dom);
+  assertXpathEvaluatesTo("sf:restricted","/gss:GetDiffResponse/@typeName",dom);
+  assertXpathEvaluatesTo("1","count(/gss:GetDiffResponse/gss:Changes)",dom);
+  assertXpathEvaluatesTo("sf:restricted","/gss:GetDiffResponse/gss:Changes/wfs:Update/@typeName",dom);
+  assertXpathEvaluatesTo("1","count(/gss:GetDiffResponse/gss:Changes/wfs:Update/ogc:Filter/ogc:FeatureId)",dom);
+  assertXpathEvaluatesTo("restricted.1b99be2b-2480-4742-ad52-95c294efda3b","/gss:GetDiffResponse/gss:Changes/wfs:Update/ogc:Filter/ogc:FeatureId/@fid",dom);
+  assertXpathEvaluatesTo("1","count(/gss:GetDiffResponse/gss:Changes/wfs:Update/wfs:Property)",dom);
+  assertXpathEvaluatesTo("cat","/gss:GetDiffResponse/gss:Changes/wfs:Update/wfs:Property/wfs:Name",dom);
+  assertXpathEvaluatesTo("450","/gss:GetDiffResponse/gss:Changes/wfs:Update/wfs:Property/wfs:Value",dom);
+}

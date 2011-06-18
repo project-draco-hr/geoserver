@@ -1,0 +1,23 @@
+{
+  final TextField hostname=new TextField("hostname",new Model(""));
+  final Form form=new Form("form"){
+    @Override protected void onSubmit(){
+      String newHostname=hostname.getDefaultModelObjectAsString();
+      ProxyConfig config=ProxyConfig.loadConfFromDisk();
+      config.hostnameWhitelist.add(newHostname);
+      ProxyConfig.writeConfigToDisk(config);
+      setResponsePage(ProxyAdminPage.class);
+    }
+  }
+;
+  form.add(hostname);
+  form.setMarkupId("mainForm");
+  add(form);
+  AjaxLink cancelLink=new AjaxLink("cancel"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      setResponsePage(ProxyAdminPage.class);
+    }
+  }
+;
+  add(cancelLink);
+}

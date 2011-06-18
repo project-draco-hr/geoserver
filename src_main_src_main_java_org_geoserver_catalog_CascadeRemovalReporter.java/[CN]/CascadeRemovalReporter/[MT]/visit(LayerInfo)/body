@@ -1,0 +1,20 @@
+{
+  add(layer.getResource(),ModificationType.DELETE);
+  add(layer,ModificationType.DELETE);
+  for (  LayerGroupInfo group : catalog.getLayerGroups()) {
+    if (group.getLayers().contains(layer)) {
+      Set<LayerInfo> layers=groups.get(group);
+      if (layers == null) {
+        layers=new HashSet<LayerInfo>();
+        groups.put(group,layers);
+      }
+      layers.add(layer);
+      if (layers.size() == new HashSet<LayerInfo>(group.getLayers()).size()) {
+        add(group,ModificationType.DELETE);
+      }
+ else {
+        add(group,ModificationType.GROUP_CHANGED);
+      }
+    }
+  }
+}

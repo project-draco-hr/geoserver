@@ -1,0 +1,33 @@
+{
+  Rule r;
+  Filter f;
+  List<Rule> list=new ArrayList();
+  PropertyName att=ff.property(property);
+  String szFilter="";
+  String szTitle="";
+  Literal val;
+  try {
+    for (int i=0; i < groups.getSize(); i++) {
+      r=styleFactory.createRule();
+      Set ls=groups.getValues(i);
+      Iterator it=ls.iterator();
+      val=ff.literal(it.next());
+      szFilter=att + "=\'" + val+ "\'";
+      szTitle="" + val;
+      while (it.hasNext()) {
+        val=ff.literal(it.next());
+        szFilter+=" OR " + att + "=\'"+ val+ "\'";
+        szTitle+=" OR " + val;
+      }
+      f=CQL.toFilter(szFilter);
+      r.setTitle(szTitle);
+      r.setFilter(f);
+      list.add(r);
+    }
+    return list;
+  }
+ catch (  CQLException e) {
+    e.printStackTrace();
+  }
+  return null;
+}

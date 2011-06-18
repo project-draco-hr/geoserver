@@ -1,0 +1,20 @@
+{
+  HashMap kvp=new HashMap();
+  URL url=GetMapKvpRequestReader.class.getResource("BasicPolygonsFeatureTypeConstaint.sld");
+  kvp.put("sld",URLDecoder.decode(url.toExternalForm(),"UTF-8"));
+  kvp.put("layers",MockData.BASIC_POLYGONS.getPrefix() + ":" + MockData.BASIC_POLYGONS.getLocalPart());
+  kvp.put("styles","TheLibraryModeStyle");
+  GetMapRequest request=(GetMapRequest)reader.createRequest();
+  request=(GetMapRequest)reader.read(request,parseKvp(kvp),kvp);
+  assertNotNull(request.getSld());
+  assertEquals(url,request.getSld());
+  final Style style=(Style)request.getStyles().get(0);
+  assertNotNull(style);
+  assertEquals("TheLibraryModeStyle",style.getName());
+  assertEquals(1,request.getLayers().size());
+  MapLayerInfo layer=request.getLayers().get(0);
+  assertEquals(getLayerId(MockData.BASIC_POLYGONS),layer.getName());
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  assertEquals(1,layer.getLayerFeatureConstraints().length);
+  assertEquals(ff.equals(ff.property("ID"),ff.literal("xyz")),layer.getLayerFeatureConstraints()[0].getFilter());
+}

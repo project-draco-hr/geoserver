@@ -1,0 +1,13 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName("MyPoints");
+  assertEquals("EPSG:4326",fti.getSRS());
+  assertEquals(ProjectionPolicy.REPROJECT_TO_DECLARED,fti.getProjectionPolicy());
+  FeatureCollection fc=fti.getFeatureSource(null,null).getFeatures();
+  assertEquals(CRS.decode("EPSG:4326"),fc.getSchema().getCoordinateReferenceSystem());
+  FeatureIterator fi=fc.features();
+  Feature f=fi.next();
+  Geometry g=(Geometry)f.getDefaultGeometryProperty().getValue();
+  assertFalse(g.equalsExact(WKT.read("POINT(500050 500050)")));
+  fi.close();
+  assertEquals(CRS.decode("EPSG:4326"),f.getType().getCoordinateReferenceSystem());
+}

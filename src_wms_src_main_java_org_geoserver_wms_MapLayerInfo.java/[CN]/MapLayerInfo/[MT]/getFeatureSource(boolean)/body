@@ -1,0 +1,14 @@
+{
+  if (type != TYPE_VECTOR) {
+    throw new IllegalArgumentException("Layer type is not vector");
+  }
+  if (!layerInfo.enabled()) {
+    throw new IOException("featureType: " + getName() + " does not have a properly configured "+ "datastore");
+  }
+  FeatureTypeInfo resource=(FeatureTypeInfo)layerInfo.getResource();
+  if (resource.getStore() == null || resource.getStore().getDataStore(null) == null) {
+    throw new IOException("featureType: " + getName() + " does not have a properly configured "+ "datastore");
+  }
+  Hints hints=new Hints(ResourcePool.REPROJECT,Boolean.valueOf(!skipReproject));
+  return resource.getFeatureSource(null,hints);
+}

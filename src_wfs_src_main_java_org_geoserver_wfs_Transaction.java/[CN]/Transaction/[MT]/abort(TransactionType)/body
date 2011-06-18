@@ -1,0 +1,30 @@
+{
+  if (transaction == null) {
+    return;
+  }
+  try {
+    transaction.rollback();
+    transaction.close();
+  }
+ catch (  IOException ioException) {
+    LOGGER.log(Level.SEVERE,"Failed trying to rollback a transaction:" + ioException);
+  }
+  if (request.getLockId() != null) {
+    if (request.getReleaseAction() == AllSomeType.SOME_LITERAL) {
+      try {
+        lockRefresh(request.getLockId());
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Error occured refreshing lock",e);
+      }
+    }
+ else     if (request.getReleaseAction() == AllSomeType.ALL_LITERAL) {
+      try {
+        lockRelease(request.getLockId());
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Error occured releasing lock",e);
+      }
+    }
+  }
+}

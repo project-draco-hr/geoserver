@@ -1,0 +1,11 @@
+{
+  Document dom=getAsDOM("/rest/workspaces/sf/datastores/sf.xml");
+  assertXpathEvaluatesTo("2","count(//dataStore/connectionParameters/*)",dom);
+  String xml="<dataStore>" + "<name>sf</name>" + "<connectionParameters>"+ "<one>"+ "<string>1</string>"+ "</one>"+ "<two>"+ "<string>2</string>"+ "</two>"+ "</connectionParameters>"+ "</dataStore>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/sf/datastores/sf",xml,"text/xml");
+  assertEquals(200,response.getStatusCode());
+  DataStoreInfo ds=catalog.getDataStoreByName("sf","sf");
+  assertEquals(2,ds.getConnectionParameters().size());
+  assertTrue(ds.getConnectionParameters().containsKey("one"));
+  assertTrue(ds.getConnectionParameters().containsKey("two"));
+}

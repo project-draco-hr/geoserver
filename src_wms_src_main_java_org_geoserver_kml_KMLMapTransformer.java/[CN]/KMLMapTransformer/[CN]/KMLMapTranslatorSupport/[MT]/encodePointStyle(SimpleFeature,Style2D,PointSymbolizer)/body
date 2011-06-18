@@ -1,0 +1,59 @@
+{
+  start("IconStyle");
+  if (style instanceof MarkStyle2D) {
+    Mark mark=SLD.mark(symbolizer);
+    if (mark != null) {
+      Double opacity=mark.getFill().getOpacity().evaluate(feature,Double.class);
+      if (opacity == null || Double.isNaN(opacity)) {
+        opacity=1.0;
+      }
+      if (mark.getFill() != null) {
+        final Color color=(Color)mark.getFill().getColor().evaluate(feature,Color.class);
+        encodeColor(color,opacity);
+      }
+    }
+  }
+  element("colorMode","normal");
+  String iconHref=null;
+  if ((symbolizer.getGraphic() != null) && (symbolizer.getGraphic().getExternalGraphics() != null) && (symbolizer.getGraphic().getExternalGraphics().length > 0)) {
+    ExternalGraphic graphic=symbolizer.getGraphic().getExternalGraphics()[0];
+    try {
+      if ("file".equals(graphic.getLocation().getProtocol())) {
+        File file=DataUtilities.urlToFile(graphic.getLocation());
+        File styles=null;
+        File graphicFile=null;
+        if (file.isAbsolute()) {
+          GeoServerDataDirectory dataDir=(GeoServerDataDirectory)GeoServerExtensions.bean("dataDirectory");
+          styles=dataDir.findOrCreateStyleDir().getCanonicalFile();
+          graphicFile=file.getCanonicalFile();
+          file=graphicFile;
+          if (file.getAbsolutePath().startsWith(styles.getAbsolutePath())) {
+            file=new File(file.getAbsolutePath().substring(styles.getAbsolutePath().length() + 1));
+          }
+ else {
+            file=null;
+          }
+        }
+        if (file != null && styles != null) {
+          iconHref=ResponseUtils.buildURL(mapContext.getRequest().getBaseUrl(),"styles/" + styles.toURI().relativize(graphicFile.toURI()),null,URLType.RESOURCE);
+        }
+      }
+ else       if ("http".equals(graphic.getLocation().getProtocol())) {
+        iconHref=graphic.getLocation().toString();
+      }
+ else {
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"Error processing external graphic:" + graphic,e);
+    }
+  }
+  iconHref=evaluateDynamicSymbolizer(iconHref,feature);
+  if (iconHref == null) {
+    iconHref="http://maps.google.com/mapfiles/kml/pal4/icon25.png";
+  }
+  start("Icon");
+  element("href",iconHref);
+  end("Icon");
+  end("IconStyle");
+}

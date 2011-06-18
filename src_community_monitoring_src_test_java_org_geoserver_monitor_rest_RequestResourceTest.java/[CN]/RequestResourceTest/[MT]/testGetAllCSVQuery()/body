@@ -1,0 +1,16 @@
+{
+  RequestResource.CSVFormat format=new RequestResource.CSVFormat(new String[]{"id","path","startTime"},monitor);
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  format.toRepresentation(new Query()).write(out);
+  BufferedReader in=new BufferedReader(new InputStreamReader(new ByteArrayInputStream(out.toByteArray())));
+  String line=in.readLine();
+  assertEquals("id,path,startTime",line);
+  Iterator<RequestData> it=monitor.getDAO().getRequests().iterator();
+  while ((line=in.readLine()) != null) {
+    assertTrue(it.hasNext());
+    RequestData data=it.next();
+    String expected=data.getId() + "," + data.getPath()+ ","+ DateUtil.serializeDateTime(data.getStartTime());
+    assertEquals(expected,line);
+  }
+  assertFalse(it.hasNext());
+}

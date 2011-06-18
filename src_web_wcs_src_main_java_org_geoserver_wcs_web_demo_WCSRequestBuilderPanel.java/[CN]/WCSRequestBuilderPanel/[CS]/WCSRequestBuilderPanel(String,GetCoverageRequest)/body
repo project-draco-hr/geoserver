@@ -1,0 +1,96 @@
+{
+  super(id);
+  setOutputMarkupId(true);
+  setDefaultModel(new Model(getCoverage));
+  this.getCoverage=getCoverage;
+  feedback=new FeedbackPanel("feedback");
+  feedback.setOutputMarkupId(true);
+  add(feedback);
+  final DropDownChoice<Version> version=new DropDownChoice<Version>("version",new PropertyModel<Version>(getCoverage,"version"),Arrays.asList(Version.values()));
+  add(version);
+  version.add(new AjaxFormSubmitBehavior("onchange"){
+    @Override protected void onError(    AjaxRequestTarget target){
+      onSubmit(target);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target){
+      if (version.getModelObject() == Version.v1_0_0) {
+        sourceGridContainer.setVisible(true);
+        targetlayoutContainer.setVisible(false);
+        manualGrid.setModelObject(false);
+        sourceGridRange.setVisible(false);
+      }
+ else {
+        targetlayoutContainer.setVisible(true);
+        sourceGridContainer.setVisible(false);
+        targetLayoutChooser.setModelObject(TargetLayout.Automatic);
+        g2w.setModelObject(null);
+        g2w.setVisible(false);
+      }
+      target.addComponent(WCSRequestBuilderPanel.this);
+    }
+  }
+);
+  coverage=new DropDownChoice<String>("coverage",new PropertyModel<String>(getCoverage,"coverage"),new CoverageNamesModel());
+  add(coverage);
+  coverage.add(new AjaxFormSubmitBehavior("onchange"){
+    @Override protected void onError(    AjaxRequestTarget target){
+      onSubmit(target);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target){
+      details.setVisible(true);
+      String coverageName=coverage.getModelObject();
+      Catalog catalog=GeoServerApplication.get().getCatalog();
+      CoverageInfo ci=catalog.getCoverageByName(coverageName);
+      ReferencedEnvelope ri=ci.getNativeBoundingBox();
+      final GetCoverageRequest gc=WCSRequestBuilderPanel.this.getCoverage;
+      gc.bounds=ri;
+      gc.targetCRS=ri.getCoordinateReferenceSystem();
+      gc.sourceGridRange=null;
+      describeLink.setEnabled(true);
+      target.addComponent(WCSRequestBuilderPanel.this);
+    }
+  }
+);
+  details=new WebMarkupContainer("details");
+  details.setOutputMarkupId(true);
+  details.setVisible(false);
+  add(details);
+  envelope=new EnvelopePanel("envelope",new PropertyModel(getCoverage,"bounds"));
+  envelope.setCRSFieldVisible(true);
+  envelope.setCrsRequired(true);
+  details.add(envelope);
+  buildGridPanel();
+  formats=new DropDownChoice<String>("format",new PropertyModel(getCoverage,"outputFormat"),GetCoverageRequest.FORMATS);
+  details.add(formats);
+  targetCRS=new CRSPanel("targetCRS",new PropertyModel(getCoverage,"targetCRS"));
+  details.add(targetCRS);
+  buildAffinePanel();
+  responseWindow=new ModalWindow("responseWindow");
+  add(responseWindow);
+  responseWindow.setPageCreator(new ModalWindow.PageCreator(){
+    public Page createPage(){
+      DemoRequest request=new DemoRequest(null);
+      HttpServletRequest http=((WebRequest)WCSRequestBuilderPanel.this.getRequest()).getHttpServletRequest();
+      String url=ResponseUtils.buildURL(ResponseUtils.baseURL(http),"ows",Collections.singletonMap("strict","true"),URLType.SERVICE);
+      request.setRequestUrl(url);
+      request.setRequestBody((String)responseWindow.getDefaultModelObject());
+      return new DemoRequestResponse(new Model(request));
+    }
+  }
+);
+  describeLink=new GeoServerAjaxFormLink("describeCoverage"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      version.processInput();
+      coverage.processInput();
+      final String coverageName=WCSRequestBuilderPanel.this.getCoverage.coverage;
+      if (coverageName != null) {
+        responseWindow.setDefaultModel(new Model(getDescribeXML(coverageName)));
+        responseWindow.show(target);
+      }
+    }
+  }
+;
+  describeLink.setEnabled(false);
+  describeLink.setOutputMarkupId(true);
+  add(describeLink);
+}

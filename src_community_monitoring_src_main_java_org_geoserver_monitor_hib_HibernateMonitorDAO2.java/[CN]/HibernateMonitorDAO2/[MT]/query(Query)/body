@@ -1,0 +1,20 @@
+{
+  return hib.executeFind(new HibernateCallback(){
+    public Object doInHibernate(    Session session) throws HibernateException, SQLException {
+      List<Object> objs=new ArrayList();
+      org.hibernate.Query query=toQuery(q,objs);
+      List list=query.list();
+      if (q.getProperties().isEmpty()) {
+        return list;
+      }
+      List<RequestData> results=new ArrayList(list.size());
+      Iterator it=list.iterator();
+      while (it.hasNext()) {
+        Object next=it.next();
+        results.add(toRequest(next,q));
+      }
+      return results;
+    }
+  }
+);
+}

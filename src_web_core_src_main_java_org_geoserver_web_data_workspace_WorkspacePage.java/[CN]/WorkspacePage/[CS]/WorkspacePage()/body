@@ -1,0 +1,22 @@
+{
+  add(table=new GeoServerTablePanel<WorkspaceInfo>("table",provider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<WorkspaceInfo> property){
+      if (property == NAME) {
+        return workspaceLink(id,itemModel);
+      }
+ else       if (property == DEFAULT) {
+        if (getCatalog().getDefaultWorkspace().equals(itemModel.getObject()))         return new Icon(id,CatalogIconFactory.ENABLED_ICON);
+ else         return new Label(id,"");
+      }
+      throw new IllegalArgumentException("No such property " + property.getName());
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      removal.setEnabled(table.getSelection().size() > 0);
+      target.addComponent(removal);
+    }
+  }
+);
+  table.setOutputMarkupId(true);
+  add(dialog=new GeoServerDialog("dialog"));
+  setHeaderPanel(headerPanel());
+}

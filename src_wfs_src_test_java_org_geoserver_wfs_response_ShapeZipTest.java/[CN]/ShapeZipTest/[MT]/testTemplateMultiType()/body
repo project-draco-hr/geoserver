@@ -1,0 +1,16 @@
+{
+  WorkspaceInfo ws=getCatalog().getWorkspaceByName(MockData.BASIC_POLYGONS.getPrefix());
+  getDataDirectory().copyToWorkspaceDir(ws,getClass().getResourceAsStream("shapeziptest.ftl"),"shapezip.ftl");
+  ShapeZipOutputFormat zip=new ShapeZipOutputFormat();
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  FeatureCollectionType fct=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  fct.getFeature().add(getFeatureSource(MockData.BASIC_POLYGONS).getFeatures(Filter.INCLUDE));
+  fct.getFeature().add(getFeatureSource(MockData.BRIDGES).getFeatures(Filter.INCLUDE));
+  String[][] headers=zip.getHeaders(fct,op);
+  assertEquals(1,headers.length);
+  assertEquals("Content-Disposition",headers[0][0]);
+  assertEquals("attachment; filename=shapezip_BasicPolygons.zip",headers[0][1]);
+  zip.write(fct,bos,op);
+  byte[] zipBytes=bos.toByteArray();
+  checkShapefileIntegrity(new String[]{"theshape_BasicPolygons","theshape_Bridges"},new ByteArrayInputStream(zipBytes));
+}

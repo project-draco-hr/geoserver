@@ -1,0 +1,27 @@
+{
+  final List parameters=new ArrayList();
+  final String readGeometryKey=AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString();
+  if ((params != null) && (params.values().size() > 0)) {
+    List list=params.values();
+    final Iterator it=list.iterator();
+    while (it.hasNext()) {
+      final ParameterValue val=(ParameterValue)it.next();
+      if (val != null) {
+        final ParameterDescriptor descr=(ParameterDescriptor)val.getDescriptor();
+        final String _key=descr.getName().toString();
+        if ("namespace".equals(_key)) {
+          continue;
+        }
+        if (_key.equalsIgnoreCase(readGeometryKey)) {
+          continue;
+        }
+        final Object value=val.getValue();
+        parameters.add(new DefaultParameterDescriptor(_key,value.getClass(),null,value).createValue());
+      }
+    }
+    return (!parameters.isEmpty()) ? (GeneralParameterValue[])parameters.toArray(new GeneralParameterValue[parameters.size()]) : null;
+  }
+ else {
+    return null;
+  }
+}

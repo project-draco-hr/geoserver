@@ -1,0 +1,40 @@
+{
+  final Catalog catalog=storeInfo.getCatalog();
+  final ResourcePool resourcePool=catalog.getResourcePool();
+  Class<?> factoryClass=null;
+  if (storeInfo instanceof DataStoreInfo) {
+    DataAccessFactory storeFactory;
+    try {
+      storeFactory=resourcePool.getDataStoreFactory((DataStoreInfo)storeInfo);
+    }
+ catch (    IOException e) {
+      throw new IllegalArgumentException("no factory found for StoreInfo " + storeInfo);
+    }
+    if (storeFactory != null) {
+      factoryClass=storeFactory.getClass();
+    }
+  }
+ else   if (storeInfo instanceof CoverageStoreInfo) {
+    AbstractGridFormat gridFormat;
+    gridFormat=resourcePool.getGridCoverageFormat((CoverageStoreInfo)storeInfo);
+    if (gridFormat != null) {
+      factoryClass=gridFormat.getClass();
+    }
+  }
+ else {
+    throw new IllegalArgumentException("Unknown store type: " + storeInfo.getClass().getName());
+  }
+  if (factoryClass == null) {
+    throw new IllegalArgumentException("Can't locate the factory for the store");
+  }
+  final List<DataStorePanelInfo> providers=app.getBeansOfType(DataStorePanelInfo.class);
+  DataStorePanelInfo panelInfo=null;
+  for (  DataStorePanelInfo provider : providers) {
+    Class<?> providerFactoryClass=provider.getFactoryClass();
+    if (factoryClass.equals(providerFactoryClass)) {
+      panelInfo=provider;
+      break;
+    }
+  }
+  return panelInfo;
+}

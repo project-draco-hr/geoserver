@@ -1,0 +1,20 @@
+{
+  MapLayer mapLayer=createMapLayer(MockData.BASIC_POLYGONS,"SingleFeature");
+  FeatureSource<SimpleFeatureType,SimpleFeature> featureSource;
+  featureSource=(SimpleFeatureSource)mapLayer.getFeatureSource();
+  WMSMapContext mapContext=new WMSMapContext(createGetMapRequest(MockData.BASIC_POLYGONS));
+  Document document;
+  try {
+    mapContext.addLayer(mapLayer);
+    KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContext,mapLayer);
+    transformer.setIndentation(2);
+    document=WMSTestSupport.transform(featureSource.getFeatures(),transformer);
+  }
+  finally {
+    mapContext.dispose();
+  }
+  Element element=document.getDocumentElement();
+  assertEquals("kml",element.getNodeName());
+  assertEquals(1,element.getElementsByTagName("Placemark").getLength());
+  assertEquals(1,element.getElementsByTagName("Style").getLength());
+}

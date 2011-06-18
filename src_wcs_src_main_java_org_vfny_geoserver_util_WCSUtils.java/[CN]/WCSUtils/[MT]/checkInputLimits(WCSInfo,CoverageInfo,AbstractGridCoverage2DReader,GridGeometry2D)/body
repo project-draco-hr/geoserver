@@ -1,0 +1,58 @@
+{
+  long limit=info.getMaxInputMemory() * 1024;
+  if (limit <= 0) {
+    return;
+  }
+  long actual=0;
+  try {
+    GeneralEnvelope requestedEnvelope=new GeneralEnvelope(gridGeometry.getEnvelope());
+    final CoordinateReferenceSystem requestCRS=requestedEnvelope.getCoordinateReferenceSystem();
+    final CoordinateReferenceSystem nativeCRS=reader.getCrs();
+    if (!CRS.equalsIgnoreMetadata(requestCRS,nativeCRS)) {
+      requestedEnvelope=CRS.transform(CRS.findMathTransform(requestCRS,nativeCRS,true),requestedEnvelope);
+    }
+    requestedEnvelope.intersect(reader.getOriginalEnvelope());
+    if (!requestedEnvelope.isEmpty()) {
+      MathTransform crsToGrid=meta.getGrid().getGridToCRS().inverse();
+      GeneralEnvelope requestedGrid=CRS.transform(crsToGrid,requestedEnvelope);
+      double[] spans=new double[requestedGrid.getDimension()];
+      double[] resolutions=new double[requestedGrid.getDimension()];
+      for (int i=0; i < spans.length; i++) {
+        spans[i]=requestedGrid.getSpan(i);
+        resolutions[i]=requestedEnvelope.getSpan(i) / spans[i];
+      }
+      OverviewPolicy policy=info.getOverviewPolicy();
+      double[] readResoutions=reader.getReadingResolutions(policy,resolutions);
+      double[] baseResolutions=reader.getReadingResolutions(OverviewPolicy.IGNORE,resolutions);
+      for (int i=0; i < spans.length; i++) {
+        spans[i]*=readResoutions[i] / baseResolutions[i];
+      }
+      long pixels=1;
+      for (int i=0; i < requestedGrid.getDimension(); i++) {
+        pixels*=Math.ceil(requestedGrid.getSpan(i));
+      }
+      long pixelSize=0;
+      if (meta.getDimensions() != null) {
+        for (        CoverageDimensionInfo dimension : meta.getDimensions()) {
+          int size=guessSizeFromRange(dimension.getRange());
+          if (size == 0) {
+            LOGGER.log(Level.INFO,"Failed to guess the size of dimension " + dimension.getName() + ", skipping the pre-read check");
+            pixelSize=-1;
+            break;
+          }
+          pixelSize+=size;
+        }
+      }
+      actual=pixels * pixelSize / 8;
+    }
+  }
+ catch (  Throwable t) {
+    throw new WcsException("An error occurred while checking serving limits",t);
+  }
+  if (actual < 0) {
+    LOGGER.log(Level.INFO,"Warning, we could not estimate the amount of bytes to be " + "read from the coverage source for the current request");
+  }
+  if (actual > limit) {
+    throw new WcsException("This request is trying to read too much data, " + "the limit is " + formatBytes(limit) + " but the actual amount of bytes "+ "to be read is "+ formatBytes(actual));
+  }
+}

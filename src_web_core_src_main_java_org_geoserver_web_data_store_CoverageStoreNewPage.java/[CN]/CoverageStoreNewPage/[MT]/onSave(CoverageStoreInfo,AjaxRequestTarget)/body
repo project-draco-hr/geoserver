@@ -1,0 +1,27 @@
+{
+  final Catalog catalog=getCatalog();
+  CoverageStoreInfo savedStore=catalog.getFactory().createCoverageStore();
+  clone(info,savedStore);
+  try {
+    catalog.save(savedStore);
+  }
+ catch (  RuntimeException e) {
+    LOGGER.log(Level.INFO,"Adding the store for " + info.getURL(),e);
+    throw new IllegalArgumentException("The coverage store could not be saved. Failure message: " + e.getMessage());
+  }
+  NewLayerPage layerChooserPage;
+  try {
+    layerChooserPage=new NewLayerPage(savedStore.getId());
+  }
+ catch (  RuntimeException e) {
+    LOGGER.log(Level.INFO,"Getting list of coverages for saved store " + info.getURL(),e);
+    try {
+      catalog.remove(savedStore);
+    }
+ catch (    RuntimeErrorException shouldNotHappen) {
+      LOGGER.log(Level.WARNING,"Can't remove CoverageStoreInfo after adding it!",e);
+    }
+    throw new IllegalArgumentException(e.getMessage(),e);
+  }
+  setResponsePage(layerChooserPage);
+}

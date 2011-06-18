@@ -1,0 +1,18 @@
+{
+  super.oneTimeSetUp();
+  Catalog catalog=getCatalog();
+  for (  QName name : indexed) {
+    String namespaceURI=name.getNamespaceURI();
+    String localPart=name.getLocalPart();
+    FeatureTypeInfo typeInfo=catalog.getFeatureTypeByName(namespaceURI,localPart);
+    LayerInfo layer=catalog.getLayerByName(typeInfo.getPrefixedName());
+    layer.getMetadata().put(Properties.INDEXING_ENABLED,Boolean.TRUE);
+    catalog.save(layer);
+  }
+  Map<String,String> namespaces=new HashMap<String,String>();
+  namespaces.put("atom","http://www.w3.org/2005/Atom");
+  namespaces.put("geo","http://www.google.com/geo/schemas/sitemap/1.0");
+  namespaces.put("sm","http://www.sitemaps.org/schemas/sitemap/0.9");
+  namespaces.put("kml","http://www.opengis.net/kml/2.2");
+  XMLUnit.setXpathNamespaceContext(new SimpleNamespaceContext(namespaces));
+}

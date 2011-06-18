@@ -1,0 +1,16 @@
+{
+  WPSResourceManager manager=GeoServerExtensions.bean(WPSResourceManager.class);
+  File directory=IOUtils.createTempDirectory("sxttmp");
+  File file=new File(directory,m_sFilename);
+  try {
+    ShapefileDataStore dataStore=new ShapefileDataStore(DataUtilities.fileToURL(file));
+    dataStore.createSchema(m_FeatureType);
+    manager.addResource(new ShapefileResource(dataStore,directory));
+    return dataStore;
+  }
+ catch (  Throwable t) {
+    LOGGER.log(Level.SEVERE,"Could not create shapefile output ",t);
+    IOUtils.delete(directory);
+    throw (IOException)new IOException(t.getMessage()).initCause(t);
+  }
+}

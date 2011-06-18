@@ -1,0 +1,15 @@
+{
+  FeatureTypeMap map=getTypeMapBackwards(typeName,true);
+  updateMap(map,false);
+  SimpleFeatureSource source=wrapped.getFeatureSource(map.getOriginalName());
+  if (map.isUnchanged())   return source;
+  if (source instanceof FeatureLocking) {
+    SimpleFeatureLocking locking=DataUtilities.simple((FeatureLocking)source);
+    return new RetypingFeatureLocking(this,locking,map);
+  }
+ else   if (source instanceof FeatureStore) {
+    SimpleFeatureStore store=DataUtilities.simple((FeatureStore)source);
+    return new RetypingFeatureStore(this,store,map);
+  }
+  return new RetypingFeatureSource(this,source,map);
+}

@@ -1,0 +1,21 @@
+{
+  boolean atLeastOnePermit=false;
+  Set<Obligation> permitObligations=new HashSet<Obligation>();
+  Iterator<? extends CombinerElement> it=policyElements.iterator();
+  while (it.hasNext()) {
+    AbstractPolicy policy=((PolicyCombinerElement)(it.next())).getPolicy();
+    MatchResult match=policy.match(context);
+    if (match.getResult() == MatchResult.INDETERMINATE)     return new Result(Result.DECISION_DENY,context.getResourceId().encode());
+    if (match.getResult() == MatchResult.MATCH) {
+      Result result=policy.evaluate(context);
+      int effect=result.getDecision();
+      if ((effect == Result.DECISION_DENY) || (effect == Result.DECISION_INDETERMINATE))       return new Result(Result.DECISION_DENY,context.getResourceId().encode(),result.getObligations());
+      if (effect == Result.DECISION_PERMIT) {
+        atLeastOnePermit=true;
+        permitObligations.addAll(result.getObligations());
+      }
+    }
+  }
+  if (atLeastOnePermit)   return new Result(Result.DECISION_PERMIT,context.getResourceId().encode(),permitObligations);
+ else   return new Result(Result.DECISION_NOT_APPLICABLE,context.getResourceId().encode());
+}

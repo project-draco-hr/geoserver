@@ -1,0 +1,28 @@
+{
+  Collection kvpReaders=loadKvpRequestReaders();
+  List matches=new ArrayList();
+  for (Iterator itr=kvpReaders.iterator(); itr.hasNext(); ) {
+    KvpRequestReader kvpReader=(KvpRequestReader)itr.next();
+    if (kvpReader.getRequestBean().isAssignableFrom(type)) {
+      matches.add(kvpReader);
+    }
+  }
+  if (matches.isEmpty()) {
+    return null;
+  }
+  if (matches.size() > 1) {
+    Comparator comparator=new Comparator(){
+      public int compare(      Object o1,      Object o2){
+        KvpRequestReader kvp1=(KvpRequestReader)o1;
+        KvpRequestReader kvp2=(KvpRequestReader)o2;
+        if (kvp2.getRequestBean().isAssignableFrom(kvp1.getRequestBean())) {
+          return -1;
+        }
+        return 1;
+      }
+    }
+;
+    Collections.sort(matches,comparator);
+  }
+  return (KvpRequestReader)matches.get(0);
+}

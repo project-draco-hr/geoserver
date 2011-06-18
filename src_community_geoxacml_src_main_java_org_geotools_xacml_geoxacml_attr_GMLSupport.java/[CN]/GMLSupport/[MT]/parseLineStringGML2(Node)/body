@@ -1,0 +1,22 @@
+{
+  List<Node> coordinates=getChildren(node,"coord");
+  if (!coordinates.isEmpty() && (coordinates.size() >= 2)) {
+    Coordinate[] coordArray=new Coordinate[coordinates.size()];
+    for (int i=0; i < coordinates.size(); i++) {
+      coordArray[i]=parseCoordGML2(coordinates.get(i));
+    }
+    return gf.createLineString(coordArray);
+  }
+  if (!coordinates.isEmpty()) {
+    throw new GMLException(LINESTRING_ERROR);
+  }
+  Node coords=getChild(node,"coordinates");
+  if (coords != null) {
+    CoordinateSequence cs=parseCoordinatesGML2(coords);
+    if (cs.size() < 2) {
+      throw new GMLException(LINESTRING_ERROR);
+    }
+    return gf.createLineString(cs);
+  }
+  return null;
+}

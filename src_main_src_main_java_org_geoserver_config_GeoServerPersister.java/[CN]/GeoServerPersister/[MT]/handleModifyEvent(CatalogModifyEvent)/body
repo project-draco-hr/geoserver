@@ -1,0 +1,45 @@
+{
+  Object source=event.getSource();
+  try {
+    int i=event.getPropertyNames().indexOf("name");
+    if (i > -1) {
+      String newName=(String)event.getNewValues().get(i);
+      if (source instanceof WorkspaceInfo) {
+        renameWorkspace((WorkspaceInfo)source,newName);
+      }
+ else       if (source instanceof StoreInfo) {
+        renameStore((StoreInfo)source,newName);
+      }
+ else       if (source instanceof ResourceInfo) {
+        renameResource((ResourceInfo)source,newName);
+      }
+ else       if (source instanceof StyleInfo) {
+        renameStyle((StyleInfo)source,newName);
+      }
+ else       if (source instanceof LayerGroupInfo) {
+        renameLayerGroup((LayerGroupInfo)source,newName);
+      }
+    }
+    if (source instanceof StoreInfo) {
+      i=event.getPropertyNames().indexOf("workspace");
+      if (i > -1) {
+        WorkspaceInfo newWorkspace=(WorkspaceInfo)event.getNewValues().get(i);
+        File oldDir=dir((StoreInfo)source);
+        oldDir.renameTo(new File(dir(newWorkspace),oldDir.getName()));
+      }
+    }
+    if (source instanceof Catalog) {
+      i=event.getPropertyNames().indexOf("defaultWorkspace");
+      if (i > -1) {
+        WorkspaceInfo defWorkspace=(WorkspaceInfo)event.getNewValues().get(i);
+        if (defWorkspace != null) {
+          File d=rl.createDirectory("workspaces");
+          persist(defWorkspace,new File(d,"default.xml"));
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+}

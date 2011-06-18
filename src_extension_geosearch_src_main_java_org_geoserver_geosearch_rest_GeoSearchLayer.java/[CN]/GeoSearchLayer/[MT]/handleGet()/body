@@ -1,0 +1,57 @@
+{
+  final WMS wms=new WMS(geoserver){
+    /** 
+ * Override to KMLMetadataDocumentMapOutputFormat does not need to be in the spring
+ * context and hence available to the whole geoserver
+ * @see org.geoserver.wms.WMS#getMapOutputFormat(java.lang.String)
+ */
+    @Override public GetMapOutputFormat getMapOutputFormat(    final String mimeType){
+      if (KMLMetadataDocumentMapOutputFormat.MIME_TYPE.equals(mimeType)) {
+        return new KMLMetadataDocumentMapOutputFormat(this);
+      }
+      return super.getMapOutputFormat(mimeType);
+    }
+  }
+;
+  GetMapKvpRequestReader reader=new GetMapKvpRequestReader(wms);
+  reader.setHttpRequest(RESTUtils.getServletRequest(getRequest()));
+  GetMapRequest getMapRequest=getRequest(layer);
+  final String title;
+  final String description;
+  String[] keywords={};
+  if (layer instanceof LayerInfo) {
+    LayerInfo layerInfo=(LayerInfo)layer;
+    title=layerInfo.getResource().getTitle();
+    description=layerInfo.getResource().getAbstract();
+    List<String> kws=layerInfo.getResource().getKeywords();
+    if (kws != null) {
+      keywords=kws.toArray(new String[kws.size()]);
+    }
+  }
+ else {
+    LayerGroupInfo lgi=(LayerGroupInfo)layer;
+    title=getTitle(lgi);
+    description=getDescription(lgi);
+    keywords=getKeyWords(lgi);
+  }
+  WMSMapContext context=new WMSMapContext(getMapRequest);
+  context.setTitle(title);
+  context.setAbstract(description);
+  context.setKeywords(keywords);
+  context.setMapWidth(getMapRequest.getWidth());
+  context.setMapHeight(getMapRequest.getHeight());
+  context.setAreaOfInterest((ReferencedEnvelope)getMapRequest.getBbox());
+  WebMap webMap;
+  try {
+    webMap=new GetMap(wms).run(getMapRequest,context);
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    throw new RestletException(e.getMessage(),Status.SERVER_ERROR_INTERNAL,e);
+  }
+  Assert.isTrue(webMap instanceof XMLTransformerMap);
+  DataFormat format=getFormatGet();
+  Representation representation=format.toRepresentation(webMap);
+  Response response=getResponse();
+  response.setEntity(representation);
+}

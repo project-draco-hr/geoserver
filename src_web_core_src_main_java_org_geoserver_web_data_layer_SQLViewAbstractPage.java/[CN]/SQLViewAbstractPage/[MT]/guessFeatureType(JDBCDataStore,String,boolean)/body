@@ -1,0 +1,68 @@
+{
+  SimpleFeatureType base=store.getSchema(vtName);
+  List<String> geometries=new ArrayList<String>();
+  for (  AttributeDescriptor ad : base.getAttributeDescriptors()) {
+    if (ad instanceof GeometryDescriptor) {
+      geometries.add(ad.getLocalName());
+    }
+  }
+  if (geometries.size() == 0 || !guessGeometrySrid) {
+    return base;
+  }
+  Query q=new Query(vtName);
+  q.setPropertyNames(geometries);
+  q.setMaxFeatures(1);
+  SimpleFeatureIterator it=null;
+  SimpleFeature f=null;
+  try {
+    it=store.getFeatureSource(vtName).getFeatures(q).features();
+    if (it.hasNext()) {
+      f=it.next();
+    }
+  }
+  finally {
+    if (it != null) {
+      it.close();
+    }
+  }
+  if (f == null) {
+    return base;
+  }
+  Connection cx=null;
+  try {
+    store.getConnection(Transaction.AUTO_COMMIT);
+    SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+    tb.setName(base.getName());
+    for (    AttributeDescriptor ad : base.getAttributeDescriptors()) {
+      if (ad instanceof GeometryDescriptor) {
+        GeometryDescriptor gd=(GeometryDescriptor)ad;
+        Geometry g=(Geometry)f.getAttribute(ad.getLocalName());
+        if (g == null) {
+          tb.add(ad);
+        }
+ else {
+          Class binding=g.getClass();
+          CoordinateReferenceSystem crs=null;
+          if (g.getSRID() > 0) {
+            crs=store.getSQLDialect().createCRS(g.getSRID(),cx);
+            tb.userData(JDBCDataStore.JDBC_NATIVE_SRID,g.getSRID());
+          }
+          if (crs == null) {
+            crs=gd.getCoordinateReferenceSystem();
+          }
+          tb.add(ad.getLocalName(),binding,crs);
+        }
+      }
+ else {
+        tb.add(ad);
+      }
+    }
+    return tb.buildFeatureType();
+  }
+ catch (  SQLException e) {
+    throw (IOException)new IOException(e.getMessage()).initCause(e);
+  }
+ finally {
+    store.closeSafe(cx);
+  }
+}

@@ -1,0 +1,60 @@
+{
+  String ctxPath=request.getContextPath();
+  String reqPath=request.getRequestURI();
+  reqPath=reqPath.substring(ctxPath.length());
+  if ((reqPath.length() > 1) && reqPath.startsWith("/")) {
+    reqPath=reqPath.substring(1);
+  }
+  File file=loader.find(reqPath);
+  if (file == null && scloader != null) {
+    ServletContextResource resource=(ServletContextResource)scloader.getResource(reqPath);
+    if (resource != null && resource.exists()) {
+      file=resource.getFile();
+    }
+  }
+  if (file == null) {
+    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+    return null;
+  }
+  if (file.isDirectory()) {
+    String uri=request.getRequestURI().toString();
+    uri+=uri.endsWith("/") ? "index.html" : "/index.html";
+    response.addHeader("Location",uri);
+    response.sendError(HttpServletResponse.SC_MOVED_TEMPORARILY);
+    return null;
+  }
+  String mime=getServletContext().getMimeType(file.getName());
+  if (mime != null)   response.setContentType(mime);
+  long length=file.length();
+  if (length > 0 && length <= Integer.MAX_VALUE)   response.setContentLength((int)length);
+  long lastModified=file.lastModified();
+  if (lastModified > 0) {
+    SimpleDateFormat format=new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss",Locale.ENGLISH);
+    format.setTimeZone(TimeZone.getTimeZone("GMT"));
+    String formatted=format.format(new Date(lastModified)) + " GMT";
+    response.setHeader("Last-Modified",formatted);
+  }
+  EncodingInfo encInfo=null;
+  FileInputStream input=null;
+  OutputStream output=null;
+  final byte[] b4=new byte[4];
+  int count=0;
+  try {
+    input=new FileInputStream(file);
+    count=input.read(b4);
+    encInfo=XmlCharsetDetector.getEncodingName(b4,count);
+    response.setCharacterEncoding(encInfo.getEncoding() != null ? encInfo.getEncoding() : "UTF-8");
+    output=response.getOutputStream();
+    output.write(b4,0,count);
+    byte[] buffer=new byte[8192];
+    int n=-1;
+    while ((n=input.read(buffer)) != -1) {
+      output.write(buffer,0,n);
+    }
+  }
+  finally {
+    if (output != null)     output.flush();
+    if (input != null)     input.close();
+  }
+  return null;
+}

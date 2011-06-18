@@ -1,0 +1,28 @@
+{
+  List matches=new ArrayList();
+  for (Iterator it=transactionElementHandlers.iterator(); it.hasNext(); ) {
+    TransactionElementHandler handler=(TransactionElementHandler)it.next();
+    if (handler.getElementClass().isAssignableFrom(type)) {
+      matches.add(handler);
+    }
+  }
+  if (matches.isEmpty()) {
+    String msg="No transaction element handler for : ( " + type + " )";
+    throw new WFSTransactionException(msg);
+  }
+  if (matches.size() > 1) {
+    Comparator comparator=new Comparator(){
+      public int compare(      Object o1,      Object o2){
+        TransactionElementHandler h1=(TransactionElementHandler)o1;
+        TransactionElementHandler h2=(TransactionElementHandler)o2;
+        if (h2.getElementClass().isAssignableFrom(h1.getElementClass())) {
+          return -1;
+        }
+        return 1;
+      }
+    }
+;
+    Collections.sort(matches,comparator);
+  }
+  return (TransactionElementHandler)matches.get(0);
+}

@@ -1,0 +1,47 @@
+{
+  String workspace=getAttribute("workspace");
+  String datastore=getAttribute("datastore");
+  String format=getAttribute("format");
+  DataStoreInfo info=catalog.getDataStoreByName(workspace,datastore);
+  if (info == null) {
+    throw new RestletException("No such datastore " + datastore,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  Map<String,Serializable> params=info.getConnectionParameters();
+  File directory=null;
+  for (  Map.Entry<String,Serializable> e : params.entrySet()) {
+    if (e.getValue() instanceof File) {
+      directory=(File)e.getValue();
+    }
+ else     if (e.getValue() instanceof URL) {
+      directory=new File(((URL)e.getValue()).getFile());
+    }
+    if (directory != null && !"directory".equals(e.getKey())) {
+      directory=directory.getParentFile();
+    }
+    if (directory != null) {
+      break;
+    }
+  }
+  if (directory == null || !directory.exists() || !directory.isDirectory()) {
+    throw new RestletException("No files for datastore " + datastore,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  StreamDataFormat fmt=new StreamDataFormat(MediaType.APPLICATION_ZIP){
+    @Override protected Object read(    InputStream in) throws IOException {
+      return null;
+    }
+    @Override protected void write(    Object object,    OutputStream out) throws IOException {
+      ZipOutputStream zout=new ZipOutputStream(out);
+      File directory=(File)object;
+      for (      File f : directory.listFiles()) {
+        ZipEntry entry=new ZipEntry(f.getName());
+        zout.putNextEntry(entry);
+        IOUtils.copy(new FileInputStream(f),zout);
+        zout.closeEntry();
+      }
+      zout.flush();
+      zout.close();
+    }
+  }
+;
+  getResponse().setEntity(fmt.toRepresentation(directory));
+}

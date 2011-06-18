@@ -1,0 +1,14 @@
+{
+  WorkspaceInfo ws=getCatalog().getStores(DataStoreInfo.class).get(0).getWorkspace();
+  NamespaceInfo ns=getCatalog().getNamespaceByPrefix(ws.getName());
+  ns.setURI("http://www.geoserver.org/newNamespace");
+  getCatalog().save(ns);
+  List<DataStoreInfo> stores=getCatalog().getDataStoresByWorkspace(ws);
+  assertTrue(stores.size() > 0);
+  for (  DataStoreInfo ds : stores) {
+    String nsURI=(String)ds.getConnectionParameters().get("namespace");
+    if (nsURI != null) {
+      assertEquals(ns.getURI(),nsURI);
+    }
+  }
+}

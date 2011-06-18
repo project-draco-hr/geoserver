@@ -1,0 +1,38 @@
+{
+  boolean queryable=wmsConfig.isQueryable(layer);
+  AttributesImpl qatts=attributes("queryable",queryable ? "1" : "0");
+  int cascadedHopCount=getCascadedHopCount(layer);
+  if (cascadedHopCount > 0) {
+    qatts.addAttribute("","cascaded","cascaded","",String.valueOf(cascadedHopCount));
+  }
+  start("Layer",qatts);
+  element("Name",layer.getResource().getNamespace().getPrefix() + ":" + layer.getName());
+  element("Title",layer.getResource().getTitle());
+  element("Abstract",layer.getResource().getAbstract());
+  handleKeywordList(layer.getResource().getKeywords());
+  final String crs=layer.getResource().getSRS();
+  element("CRS",crs);
+  element("CRS","CRS:84");
+  ReferencedEnvelope llbbox=layer.getResource().getLatLonBoundingBox();
+  handleGeographicBoundingBox(llbbox);
+  ReferencedEnvelope bbox;
+  try {
+    bbox=layer.getResource().boundingBox();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Unexpected error obtaining bounding box for layer " + layer.getName(),e);
+  }
+  if (bbox != null) {
+    handleBBox(bbox,crs);
+  }
+  if (layer.getType() == Type.VECTOR) {
+    dimensionHelper.handleVectorLayerDimensions(layer);
+  }
+ else   if (layer.getType() == Type.RASTER) {
+    dimensionHelper.handleRasterLayerDimensions(layer);
+  }
+  handleAttribution(layer);
+  handleMetadataList(layer.getResource().getMetadataLinks());
+  handleStyles(layer);
+  end("Layer");
+}

@@ -1,0 +1,35 @@
+{
+  String tempResponse=new String();
+  String generatedType=new String();
+  Set validTypes=new HashSet();
+  for (int i=0; i < infos.length; i++) {
+    FeatureTypeInfo ftInfo=(FeatureTypeInfo)infos[i];
+    if (!validTypes.contains(ftInfo)) {
+      File schemaFile=null;
+      try {
+        if ((schemaFile != null) && schemaFile.exists() && schemaFile.canRead()) {
+          generatedType=writeFile(schemaFile);
+        }
+ else {
+          FeatureType ft=ftInfo.getFeatureType();
+          String gType=generateFromSchema(ft);
+          if ((gType != null) && (gType != "")) {
+            generatedType=gType;
+          }
+        }
+      }
+ catch (      IOException e) {
+        generatedType="";
+      }
+      if (!generatedType.equals("")) {
+        tempResponse=tempResponse + generatedType;
+        validTypes.add(ftInfo);
+      }
+    }
+  }
+  for (Iterator i=validTypes.iterator(); i.hasNext(); ) {
+    tempResponse=tempResponse + printElement((FeatureTypeInfo)i.next());
+  }
+  tempResponse=tempResponse + "\n\n";
+  return tempResponse;
+}

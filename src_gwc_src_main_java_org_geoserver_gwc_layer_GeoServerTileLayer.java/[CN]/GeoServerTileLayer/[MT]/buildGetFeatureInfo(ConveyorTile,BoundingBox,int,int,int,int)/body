@@ -1,0 +1,29 @@
+{
+  Map<String,String> wmsParams=new HashMap<String,String>();
+  wmsParams.put("SERVICE","WMS");
+  wmsParams.put("VERSION","1.1.1");
+  wmsParams.put("REQUEST","GetFeatureInfo");
+  wmsParams.put("LAYERS",getName());
+  wmsParams.put("STYLES","");
+  wmsParams.put("QUERY_LAYERS",getName());
+  MimeType mimeType=convTile.getMimeType();
+  if (mimeType == null) {
+    mimeType=getMimeTypes().get(0);
+  }
+  wmsParams.put("FORMAT",mimeType.getFormat());
+  wmsParams.put("EXCEPTIONS",GetMapRequest.SE_XML);
+  wmsParams.put("INFO_FORMAT",convTile.getMimeType().getFormat());
+  GridSubset gridSubset=convTile.getGridSubset();
+  wmsParams.put("SRS",gridSubset.getSRS().toString());
+  wmsParams.put("HEIGHT",String.valueOf(height));
+  wmsParams.put("WIDTH",String.valueOf(width));
+  wmsParams.put("BBOX",bbox.toString());
+  wmsParams.put("X",String.valueOf(x));
+  wmsParams.put("Y",String.valueOf(y));
+  Map<String,String> fullParameters=convTile.getFullParameters();
+  if (fullParameters.isEmpty()) {
+    fullParameters=getDefaultParameterFilters();
+  }
+  wmsParams.putAll(fullParameters);
+  return wmsParams;
+}

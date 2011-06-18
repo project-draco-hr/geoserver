@@ -1,0 +1,27 @@
+{
+  Encoder encoder=new Encoder(configuration,configuration.getXSD().getSchema());
+  NamespaceSupport namespaces=encoder.getNamespaces();
+  List<DeleteElementType> deletes=changes.getDelete();
+  List<UpdateElementType> updates=changes.getUpdate();
+  List<InsertElementType> inserts=changes.getInsert();
+  for (  DeleteElementType delete : deletes) {
+    QName typeName=delete.getTypeName();
+    namespaces.declarePrefix(typeName.getPrefix(),typeName.getNamespaceURI());
+  }
+  for (  UpdateElementType update : updates) {
+    QName typeName=update.getTypeName();
+    namespaces.declarePrefix(typeName.getPrefix(),typeName.getNamespaceURI());
+  }
+  for (  InsertElementType insert : inserts) {
+    List<SimpleFeature> features=insert.getFeature();
+    for (    SimpleFeature feature : features) {
+      Name typeName=feature.getType().getName();
+      NamespaceInfo nsi=catalog.getNamespaceByURI(typeName.getNamespaceURI());
+      if (nsi != null) {
+        namespaces.declarePrefix(nsi.getPrefix(),nsi.getURI());
+      }
+    }
+  }
+  encoder.setEncoding(Charset.forName("UTF-8"));
+  return encoder;
+}

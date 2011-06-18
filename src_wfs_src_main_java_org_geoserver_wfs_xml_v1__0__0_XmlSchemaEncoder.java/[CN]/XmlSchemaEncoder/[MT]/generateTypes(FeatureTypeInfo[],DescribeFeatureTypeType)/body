@@ -1,0 +1,31 @@
+{
+  StringBuffer tempResponse=new StringBuffer();
+  tempResponse.append("<?xml version=\"1.0\" encoding=\"" + getInfo().getGeoServer().getGlobal().getCharset() + "\"?>"+ "\n<xs:schema ");
+  if (allSameType(infos)) {
+    FeatureTypeInfo ftInfo=infos[0];
+    String targetNs=ftInfo.getNamespace().getURI();
+    tempResponse.append(TARGETNS_PREFIX + targetNs + TARGETNS_SUFFIX);
+    tempResponse.append("\n  " + "xmlns:" + ftInfo.getNamespace().getPrefix() + "=\""+ targetNs+ "\"");
+    tempResponse.append(GML_NAMESPACE);
+    tempResponse.append(XS_NAMESPACE);
+    tempResponse.append(ELEMENT_FORM_DEFAULT + ATTR_FORM_DEFAULT);
+    tempResponse.append("\n\n<xs:import namespace=" + GML_URL + " schemaLocation=\""+ buildSchemaURL(request.getBaseUrl(),"gml/2.1.2.1/feature.xsd")+ "\"/>\n\n");
+    tempResponse.append(generateSpecifiedTypes(infos));
+  }
+ else {
+    tempResponse.append(XS_NAMESPACE);
+    tempResponse.append(ELEMENT_FORM_DEFAULT + ATTR_FORM_DEFAULT);
+    Set prefixes=new HashSet();
+    for (int i=0; i < infos.length; i++) {
+      FeatureTypeInfo ftInfo=infos[i];
+      prefixes.add(ftInfo.getNamespace().getPrefix());
+    }
+    Iterator prefixIter=prefixes.iterator();
+    while (prefixIter.hasNext()) {
+      String prefix=prefixIter.next().toString();
+      tempResponse.append(getNSImport(prefix,infos,request.getBaseUrl(),request.getService().toLowerCase()));
+    }
+  }
+  tempResponse.append(FOOTER);
+  return tempResponse.toString();
+}

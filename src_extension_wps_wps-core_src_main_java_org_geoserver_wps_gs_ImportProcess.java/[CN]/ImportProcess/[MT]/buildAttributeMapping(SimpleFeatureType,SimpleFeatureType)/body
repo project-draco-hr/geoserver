@@ -1,0 +1,40 @@
+{
+  Set<String> sourceNames=new HashSet<String>();
+  for (  AttributeDescriptor sd : sourceType.getAttributeDescriptors()) {
+    sourceNames.add(sd.getLocalName());
+  }
+  Map<String,String> result=new HashMap<String,String>();
+  for (  String name : sourceNames) {
+    if (targetType.getDescriptor(name) != null) {
+      result.put(name,name);
+    }
+  }
+  sourceNames.removeAll(result.keySet());
+  for (  String name : sourceNames) {
+    for (    AttributeDescriptor td : targetType.getAttributeDescriptors()) {
+      if (td.getLocalName().equalsIgnoreCase(name)) {
+        result.put(name,td.getLocalName());
+        break;
+      }
+    }
+  }
+  sourceNames.removeAll(result.keySet());
+  for (  String name : sourceNames) {
+    String loName=name.toLowerCase();
+    for (    AttributeDescriptor td : targetType.getAttributeDescriptors()) {
+      String tdName=td.getLocalName().toLowerCase();
+      if (loName.startsWith(tdName)) {
+        result.put(name,td.getLocalName());
+        break;
+      }
+    }
+  }
+  sourceNames.removeAll(result.keySet());
+  if (targetType.getGeometryDescriptor() != null && "the_geom".equals(targetType.getGeometryDescriptor().getLocalName()) && !"the_geom".equalsIgnoreCase(sourceType.getGeometryDescriptor().getLocalName())) {
+    result.put(sourceType.getGeometryDescriptor().getLocalName(),"the_geom");
+  }
+  if (!sourceNames.isEmpty()) {
+    LOGGER.warning("Could not match the following attributes " + sourceNames + " to the target feature type ones: "+ targetType);
+  }
+  return result;
+}

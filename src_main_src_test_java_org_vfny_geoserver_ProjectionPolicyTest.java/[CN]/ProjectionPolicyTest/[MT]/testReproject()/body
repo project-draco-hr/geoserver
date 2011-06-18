@@ -1,0 +1,13 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName(MockData.POLYGONS.getLocalPart());
+  assertEquals("EPSG:4326",fti.getSRS());
+  assertEquals(ProjectionPolicy.REPROJECT_TO_DECLARED,fti.getProjectionPolicy());
+  FeatureCollection fc=fti.getFeatureSource(null,null).getFeatures();
+  assertEquals(CRS.decode("EPSG:4326"),fc.getSchema().getCoordinateReferenceSystem());
+  FeatureIterator fi=fc.features();
+  Feature f=fi.next();
+  Geometry g=(Geometry)f.getDefaultGeometryProperty().getValue();
+  assertFalse(g.equalsExact(WKT.read("POLYGON((500225 500025,500225 500075,500275 500050,500275 500025,500225 500025))")));
+  fi.close();
+  assertEquals(CRS.decode("EPSG:4326"),f.getType().getCoordinateReferenceSystem());
+}

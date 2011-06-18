@@ -1,0 +1,15 @@
+{
+  VersioningDataStore synch=(VersioningDataStore)getCatalog().getDataStoreByName("synch").getDataStore(null);
+  VersioningFeatureSource restricted=(VersioningFeatureSource)synch.getFeatureSource("restricted");
+  long revisionStart=getLastRevision(restricted);
+  MockHttpServletResponse response=postAsServletResponse(root(true),loadTextResource("PostDiffEmpty.xml"));
+  checkPostDiffSuccessResponse(response);
+  assertEquals(new Long(12),getLastCentralRevision(synch,"restricted"));
+  long revisionAfterFirst=getLastRevision(restricted);
+  assertEquals(revisionStart,revisionAfterFirst);
+  response=postAsServletResponse(root(true),loadTextResource("PostDiffEmptySecond.xml"));
+  checkPostDiffSuccessResponse(response);
+  assertEquals(new Long(24),getLastCentralRevision(synch,"restricted"));
+  long revisionAfterSecond=getLastRevision(restricted);
+  assertEquals(revisionStart,revisionAfterSecond);
+}

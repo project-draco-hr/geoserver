@@ -1,0 +1,22 @@
+{
+  HttpSession session=super.getSession(false);
+  if (session != null || !create) {
+    return session;
+  }
+  if (getPathInfo().startsWith("/web")) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      Exception e=new Exception("Full stack trace for the session creation path");
+      e.fillInStackTrace();
+      LOGGER.log(Level.FINE,"Creating a new http session inside the web UI (normal behavior)",e);
+    }
+  }
+ else {
+    if (LOGGER.isLoggable(Level.INFO)) {
+      Exception e=new Exception("Full stack trace for the session creation path");
+      e.fillInStackTrace();
+      LOGGER.log(Level.INFO,"Creating a new http session outside of the web UI! " + "(normally not desirable), the path is" + getPathInfo(),e);
+    }
+  }
+  session=super.getSession(true);
+  return session;
+}

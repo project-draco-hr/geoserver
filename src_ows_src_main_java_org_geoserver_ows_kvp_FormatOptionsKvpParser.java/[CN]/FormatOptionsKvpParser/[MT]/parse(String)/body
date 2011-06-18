@@ -1,0 +1,29 @@
+{
+  List parsers=GeoServerExtensions.extensions(KvpParser.class,applicationContext);
+  Map formatOptions=new CaseInsensitiveMap(new HashMap());
+  List<String> kvps=KvpUtils.escapedTokens(value,';');
+  for (  String kvp : kvps) {
+    List<String> kv=KvpUtils.escapedTokens(kvp,':');
+    if (kv.size() > 2) {
+      throw new IllegalArgumentException("Invalid key-value pair length (" + kv.size() + " elements).");
+    }
+    String key=kv.get(0);
+    String raw=kv.size() == 1 ? "true" : KvpUtils.unescape(kv.get(1));
+    Object parsed=null;
+    for (Iterator p=parsers.iterator(); p.hasNext(); ) {
+      KvpParser parser=(KvpParser)p.next();
+      if (key.equalsIgnoreCase(parser.getKey())) {
+        parsed=parser.parse(raw);
+        if (parsed != null) {
+          break;
+        }
+      }
+    }
+    if (parsed == null) {
+      if (LOGGER.isLoggable(Level.FINER))       LOGGER.finer("Could not find kvp parser for: '" + key + "'. Storing as raw string.");
+      parsed=raw;
+    }
+    formatOptions.put(key,parsed);
+  }
+  return formatOptions;
+}

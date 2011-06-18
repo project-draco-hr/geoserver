@@ -1,0 +1,17 @@
+{
+  MapLayer mapLayer=createMapLayer(MockData.POINTS,"BridgeSubdir");
+  FeatureSource<SimpleFeatureType,SimpleFeature> featureSource;
+  featureSource=(SimpleFeatureSource)mapLayer.getFeatureSource();
+  WMSMapContext mapContext=new WMSMapContext(createGetMapRequest(MockData.POINTS));
+  Document document;
+  try {
+    mapContext.addLayer(mapLayer);
+    KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContext,mapLayer);
+    transformer.setIndentation(2);
+    document=WMSTestSupport.transform(featureSource.getFeatures(),transformer);
+  }
+  finally {
+    mapContext.dispose();
+  }
+  XMLAssert.assertXpathEvaluatesTo("http://localhost:8080/geoserver/styles/graphics/bridgesubdir.png","//Style/IconStyle/Icon/href",document);
+}

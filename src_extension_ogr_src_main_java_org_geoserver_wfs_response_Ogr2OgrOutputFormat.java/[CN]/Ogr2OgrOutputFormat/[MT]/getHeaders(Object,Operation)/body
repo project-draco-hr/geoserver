@@ -1,0 +1,14 @@
+{
+  GetFeatureType request=(GetFeatureType)OwsUtils.parameter(operation.getParameters(),GetFeatureType.class);
+  OgrFormat format=formats.get(request.getOutputFormat());
+  if (format == null) {
+    throw new WFSException("Unknown output format " + request.getOutputFormat());
+  }
+ else   if (!format.singleFile || request.getQuery().size() > 1) {
+    String outputFileName=((QName)((QueryType)request.getQuery().get(0)).getTypeName().get(0)).getLocalPart();
+    return (String[][])new String[][]{{"Content-Disposition","attachment; filename=" + outputFileName + ".zip"}};
+  }
+ else {
+    return null;
+  }
+}

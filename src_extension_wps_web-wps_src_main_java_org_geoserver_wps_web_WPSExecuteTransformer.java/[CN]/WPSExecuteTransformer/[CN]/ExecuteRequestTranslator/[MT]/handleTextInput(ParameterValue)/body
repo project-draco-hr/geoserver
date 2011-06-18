@@ -1,0 +1,23 @@
+{
+  start("wps:Data");
+  start("wps:ComplexData",attributes("mimeType",value.mime));
+  String data=Converters.convert(value.value,String.class);
+  if (data != null) {
+    Document document=parseAsXML(data);
+    if (document != null) {
+      dumpAsXML(document);
+    }
+ else {
+      try {
+        ((LexicalHandler)contentHandler).startCDATA();
+        chars(data);
+        ((LexicalHandler)contentHandler).endCDATA();
+      }
+ catch (      SAXException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  end("wps:ComplexData");
+  end("wps:Data");
+}

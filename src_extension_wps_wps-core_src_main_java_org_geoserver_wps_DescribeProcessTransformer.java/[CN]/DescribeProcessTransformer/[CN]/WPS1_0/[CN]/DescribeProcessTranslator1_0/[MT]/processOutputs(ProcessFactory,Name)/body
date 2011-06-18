@@ -1,0 +1,20 @@
+{
+  start("ProcessOutputs");
+  for (  Parameter<?> outputIdentifier : pf.getResultInfo(processName,null).values()) {
+    start("Output");
+    element("ows:Identifier",outputIdentifier.key);
+    element("ows:Title",outputIdentifier.title.toString(this.locale));
+    element("ows:Abstract",outputIdentifier.description.toString(this.locale));
+    Transmuter transmuter=this.dataTransformer.getDefaultTransmuter(outputIdentifier.type);
+    if (transmuter instanceof ComplexTransmuter) {
+      start("ComplexOutput");
+      this.complexParameter((ComplexTransmuter)transmuter);
+      end("ComplexOutput");
+    }
+ else {
+      this.literalData((LiteralTransmuter)transmuter);
+    }
+    end("Output");
+  }
+  end("ProcessOutputs");
+}

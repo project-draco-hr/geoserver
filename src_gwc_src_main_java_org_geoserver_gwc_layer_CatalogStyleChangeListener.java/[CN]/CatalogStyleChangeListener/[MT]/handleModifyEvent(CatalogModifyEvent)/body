@@ -1,0 +1,30 @@
+{
+  CatalogInfo source=event.getSource();
+  if (!(source instanceof StyleInfo)) {
+    return;
+  }
+  final List<String> propertyNames=event.getPropertyNames();
+  if (!propertyNames.contains("name")) {
+    return;
+  }
+  final int index=propertyNames.indexOf("name");
+  final String oldStyleName=(String)event.getOldValues().get(index);
+  final String newStyleName=(String)event.getNewValues().get(index);
+  if (oldStyleName.equals(newStyleName)) {
+    return;
+  }
+  List<GeoServerTileLayer> affectedLayers;
+  affectedLayers=catalogConfig.getTileLayersForStyle(oldStyleName);
+  for (  GeoServerTileLayer tl : affectedLayers) {
+    GeoServerTileLayerInfo info=tl.getInfo();
+    Set<String> styleNames=new HashSet<String>(info.getCachedStyles());
+    if (styleNames.contains(oldStyleName)) {
+      tl.resetParameterFilters();
+      catalogConfig.truncate(tl.getName(),oldStyleName);
+      styleNames.remove(oldStyleName);
+      styleNames.add(newStyleName);
+      info.setCachedStyles(styleNames);
+      catalogConfig.save(tl);
+    }
+  }
+}

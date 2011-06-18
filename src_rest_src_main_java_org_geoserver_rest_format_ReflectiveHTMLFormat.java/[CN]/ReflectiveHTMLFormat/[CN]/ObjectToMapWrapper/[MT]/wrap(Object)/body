@@ -1,0 +1,36 @@
+{
+  if (object instanceof Collection) {
+    Collection c=(Collection)object;
+    if (c.isEmpty()) {
+      SimpleHash hash=new SimpleHash();
+      hash.put("values",new CollectionModel(c,this));
+      return hash;
+    }
+ else {
+      Object o=c.iterator().next();
+      if (clazz.isAssignableFrom(o.getClass())) {
+        SimpleHash hash=new SimpleHash();
+        hash.put("values",new CollectionModel(c,this));
+        return hash;
+      }
+    }
+  }
+  if (object != null && clazz.isAssignableFrom(object.getClass())) {
+    HashMap map=new HashMap();
+    ClassProperties cp=OwsUtils.getClassProperties(clazz);
+    for (    String p : cp.properties()) {
+      if ("Class".equals(p))       continue;
+      Object value=OwsUtils.get(object,p);
+      if (value == null) {
+        value="null";
+      }
+      map.put(Character.toLowerCase(p.charAt(0)) + p.substring(1),value.toString());
+    }
+    SimpleHash model=new SimpleHash();
+    model.put("properties",new MapModel(map,this));
+    model.put("className",clazz.getSimpleName());
+    wrapInternal(map,model,(T)object);
+    return model;
+  }
+  return super.wrap(object);
+}

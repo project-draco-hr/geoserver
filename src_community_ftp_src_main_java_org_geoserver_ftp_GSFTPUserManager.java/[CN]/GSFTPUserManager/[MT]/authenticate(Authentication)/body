@@ -1,0 +1,56 @@
+{
+  if (!(ftpAuthRequest instanceof UsernamePasswordAuthentication)) {
+    throw new AuthenticationFailedException();
+  }
+  final UsernamePasswordAuthentication upa=(UsernamePasswordAuthentication)ftpAuthRequest;
+  final String principal=upa.getUsername();
+  final String credentials=upa.getPassword();
+  org.springframework.security.core.Authentication gsAuth=new UsernamePasswordAuthenticationToken(principal,credentials);
+  try {
+    gsAuth=authManager.authenticate(gsAuth);
+  }
+ catch (  org.springframework.security.core.AuthenticationException authEx) {
+    throw new AuthenticationFailedException(authEx);
+  }
+  try {
+    BaseUser user=getUserByName(principal);
+    user.setPassword(credentials);
+    if (!user.getEnabled()) {
+      throw new AuthenticationFailedException();
+    }
+    if (DEFAULT_USER.equals(user.getName()) && DEFAULT_PASSWORD.equals(credentials)) {
+      LOGGER.log(Level.SEVERE,"The default admin/password combination has not been " + "modified, this makes the embedded FTP server an " + "open file host for everybody to use!!!");
+    }
+    final File dataRoot=dataDir.findOrCreateDataRoot();
+    boolean isGSAdmin=false;
+    for (    GrantedAuthority authority : gsAuth.getAuthorities()) {
+      final String userRole=authority.getAuthority();
+      if (ADMIN_ROLE.equals(userRole)) {
+        isGSAdmin=true;
+        break;
+      }
+    }
+    final File homeDirectory;
+    if (isGSAdmin) {
+      homeDirectory=dataRoot;
+    }
+ else {
+      homeDirectory=new File(new File(dataRoot,"incoming"),user.getName());
+    }
+    String normalizedPath=homeDirectory.getAbsolutePath();
+    normalizedPath=FilenameUtils.normalize(normalizedPath);
+    user.setHomeDirectory(normalizedPath);
+    if (!homeDirectory.exists()) {
+      LOGGER.fine("Creating FTP home directory for user " + user.getName() + " at "+ normalizedPath);
+      homeDirectory.mkdirs();
+    }
+    return user;
+  }
+ catch (  AuthenticationFailedException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    LOGGER.log(Level.INFO,"FTP authentication failure",e);
+    throw new AuthenticationFailedException(e);
+  }
+}

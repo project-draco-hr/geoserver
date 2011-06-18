@@ -1,0 +1,14 @@
+{
+  FeatureCollection fc=dataStore.getFeatureSource("Buildings").getFeatures();
+  fct.getFeature().add(fc);
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  gft.setOutputFormat("OGR-KML-ZIP");
+  ogr.write(fct,bos,op);
+  ZipInputStream zis=new ZipInputStream(new ByteArrayInputStream(bos.toByteArray()));
+  Document dom=null;
+  ZipEntry entry=zis.getNextEntry();
+  assertEquals("Buildings.kml",entry.getName());
+  dom=dom(zis);
+  assertEquals("kml",dom.getDocumentElement().getTagName());
+  assertEquals(2,dom.getElementsByTagName("Placemark").getLength());
+}

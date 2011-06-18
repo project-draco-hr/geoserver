@@ -1,0 +1,12 @@
+{
+  String namespace=getAttribute(request,"namespace");
+  if (namespace == null && request.getMethod() == Method.GET) {
+    return new NamespaceListResource(getContext(),request,response,catalog);
+  }
+  if (namespace != null) {
+    if (catalog.getNamespaceByPrefix(namespace) == null) {
+      throw new RestletException("No such namespace: " + namespace,Status.CLIENT_ERROR_NOT_FOUND);
+    }
+  }
+  return new NamespaceResource(null,request,response,catalog);
+}

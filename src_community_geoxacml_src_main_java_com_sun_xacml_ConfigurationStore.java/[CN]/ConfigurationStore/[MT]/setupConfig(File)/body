@@ -1,0 +1,69 @@
+{
+  logger.config("Loading runtime configuration");
+  loader=getClass().getClassLoader();
+  Node root=getRootNode(configFile);
+  pdpConfigMap=new HashMap<String,PDPConfig>();
+  attributeMap=new HashMap<String,AttributeFactory>();
+  combiningMap=new HashMap<String,CombiningAlgFactory>();
+  functionMap=new HashMap<String,FunctionFactoryProxy>();
+  NamedNodeMap attrs=root.getAttributes();
+  String defaultPDP=attrs.getNamedItem("defaultPDP").getNodeValue();
+  String defaultAF=getDefaultFactory(attrs,"defaultAttributeFactory");
+  String defaultCAF=getDefaultFactory(attrs,"defaultCombiningAlgFactory");
+  String defaultFF=getDefaultFactory(attrs,"defaultFunctionFactory");
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String childName=child.getNodeName();
+    String elementName=null;
+    if (child.getNodeType() == Node.ELEMENT_NODE)     elementName=child.getAttributes().getNamedItem("name").getNodeValue();
+    if (childName.equals("pdp")) {
+      if (logger.isLoggable(Level.CONFIG))       logger.config("Loading PDP: " + elementName);
+      if (pdpConfigMap.containsKey(elementName))       throw new ParsingException("more that one pdp with " + "name \"" + elementName + "\"");
+      pdpConfigMap.put(elementName,parsePDPConfig(child));
+    }
+ else     if (childName.equals("attributeFactory")) {
+      if (logger.isLoggable(Level.CONFIG))       logger.config("Loading AttributeFactory: " + elementName);
+      if (attributeMap.containsKey(elementName))       throw new ParsingException("more that one " + "attributeFactory with name " + elementName + "\"");
+      attributeMap.put(elementName,parseAttributeFactory(child));
+    }
+ else     if (childName.equals("combiningAlgFactory")) {
+      if (logger.isLoggable(Level.CONFIG))       logger.config("Loading CombiningAlgFactory: " + elementName);
+      if (combiningMap.containsKey(elementName))       throw new ParsingException("more that one " + "combiningAlgFactory with " + "name \"" + elementName + "\"");
+      combiningMap.put(elementName,parseCombiningAlgFactory(child));
+    }
+ else     if (childName.equals("functionFactory")) {
+      if (logger.isLoggable(Level.CONFIG))       logger.config("Loading FunctionFactory: " + elementName);
+      if (functionMap.containsKey(elementName))       throw new ParsingException("more that one functionFactory" + " with name \"" + elementName + "\"");
+      functionMap.put(elementName,parseFunctionFactory(child));
+    }
+  }
+  defaultPDPConfig=(PDPConfig)(pdpConfigMap.get(defaultPDP));
+  defaultAttributeFactory=(AttributeFactory)(attributeMap.get(defaultAF));
+  if (defaultAttributeFactory == null) {
+    try {
+      defaultAttributeFactory=AttributeFactory.getInstance(defaultAF);
+    }
+ catch (    Exception e) {
+      throw new ParsingException("Unknown AttributeFactory",e);
+    }
+  }
+  defaultCombiningFactory=(CombiningAlgFactory)(combiningMap.get(defaultCAF));
+  if (defaultCombiningFactory == null) {
+    try {
+      defaultCombiningFactory=CombiningAlgFactory.getInstance(defaultCAF);
+    }
+ catch (    Exception e) {
+      throw new ParsingException("Unknown CombininAlgFactory",e);
+    }
+  }
+  defaultFunctionFactoryProxy=(FunctionFactoryProxy)(functionMap.get(defaultFF));
+  if (defaultFunctionFactoryProxy == null) {
+    try {
+      defaultFunctionFactoryProxy=FunctionFactory.getInstance(defaultFF);
+    }
+ catch (    Exception e) {
+      throw new ParsingException("Unknown FunctionFactory",e);
+    }
+  }
+}

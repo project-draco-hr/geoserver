@@ -1,0 +1,12 @@
+{
+  Request request=newRequestGET("foo");
+  request.getClientInfo().getAcceptedMediaTypes().add(new Preference<MediaType>(MediaType.TEXT_XML));
+  Response response=new Response(request);
+  FooReflectiveResource resource=new FooReflectiveResource(null,request,response);
+  resource.handleGet();
+  Document dom=getDOM(response);
+  assertEquals(Foo.class.getName(),dom.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo("one","//prop1",dom);
+  assertXpathEvaluatesTo("2","//prop2",dom);
+  assertXpathEvaluatesTo("3.0","//prop3",dom);
+}

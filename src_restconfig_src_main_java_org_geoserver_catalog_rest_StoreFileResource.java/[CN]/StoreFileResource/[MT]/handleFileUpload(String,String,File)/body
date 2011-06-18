@@ -1,0 +1,49 @@
+{
+  getResponse().setStatus(Status.SUCCESS_ACCEPTED);
+  MediaType mediaType=getRequest().getEntity().getMediaType();
+  if (LOGGER.isLoggable(Level.INFO))   LOGGER.info("PUT file, mimetype: " + mediaType);
+  File uploadedFile=null;
+  try {
+    String method=(String)getRequest().getResourceRef().getLastSegment();
+    if (method != null && method.toLowerCase().startsWith("file.")) {
+      uploadedFile=RESTUtils.handleBinUpload(store + "." + format,directory,getRequest());
+    }
+ else     if (method != null && method.toLowerCase().startsWith("url.")) {
+      uploadedFile=RESTUtils.handleURLUpload(store,format,getRequest());
+    }
+ else     if (method != null && method.toLowerCase().startsWith("external.")) {
+      uploadedFile=RESTUtils.handleEXTERNALUpload(getRequest());
+    }
+ else {
+      final StringBuilder builder=new StringBuilder("Unrecognized file upload method: ").append(method);
+      throw new RestletException(builder.toString(),Status.CLIENT_ERROR_BAD_REQUEST);
+    }
+  }
+ catch (  Throwable t) {
+    throw new RestletException("Error while storing uploaded file:",Status.SERVER_ERROR_INTERNAL,t);
+  }
+  if (mediaType != null && RESTUtils.isZipMediaType(mediaType)) {
+    if (!uploadedFile.getName().endsWith(".zip")) {
+      File newUploadedFile=new File(uploadedFile.getParentFile(),FilenameUtils.getBaseName(uploadedFile.getAbsolutePath()) + ".zip");
+      uploadedFile.renameTo(newUploadedFile);
+      uploadedFile=newUploadedFile;
+    }
+    try {
+      RESTUtils.unzipFile(uploadedFile,directory);
+      File primaryFile=findPrimaryFile(directory,format);
+      if (primaryFile != null) {
+        uploadedFile=primaryFile;
+      }
+ else {
+        throw new RestletException("Could not find appropriate " + format + " file in archive",Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+    }
+ catch (    RestletException e) {
+      throw e;
+    }
+catch (    Exception e) {
+      throw new RestletException("Error occured unzipping file",Status.SERVER_ERROR_INTERNAL,e);
+    }
+  }
+  return uploadedFile;
+}

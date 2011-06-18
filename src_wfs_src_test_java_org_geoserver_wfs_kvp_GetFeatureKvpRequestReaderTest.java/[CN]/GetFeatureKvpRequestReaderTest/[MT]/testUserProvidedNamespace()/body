@@ -1,0 +1,20 @@
+{
+  final String localPart=MockData.MLINES.getLocalPart();
+  final String namespace=MockData.MLINES.getNamespaceURI();
+  final String alternamePrefix="ex";
+  final String alternameTypeName=alternamePrefix + ":" + localPart;
+  Map<String,String> raw=new HashMap<String,String>();
+  raw.put("service","WFS");
+  raw.put("version","1.1.0");
+  raw.put("request","GetFeature");
+  raw.put("typeName",alternameTypeName);
+  raw.put("namespace","xmlns(" + alternamePrefix + "="+ namespace+ ")");
+  Map<String,Object> parsed=parseKvp(raw);
+  GetFeatureType req=WfsFactory.eINSTANCE.createGetFeatureType();
+  Object read=reader.read(req,parsed,raw);
+  GetFeatureType parsedReq=(GetFeatureType)read;
+  QueryType query=(QueryType)parsedReq.getQuery().get(0);
+  List<QName> typeNames=query.getTypeName();
+  assertEquals(1,typeNames.size());
+  assertEquals(MockData.MLINES,typeNames.get(0));
+}

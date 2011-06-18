@@ -1,0 +1,22 @@
+{
+  DataAccessRuleProvider provider=new DataAccessRuleProvider();
+  add(rules=new GeoServerTablePanel<DataAccessRule>("table",provider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<DataAccessRule> property){
+      if (property == DataAccessRuleProvider.RULEKEY) {
+        return editRuleLink(id,itemModel,property);
+      }
+      if (property == DataAccessRuleProvider.ROLES) {
+        return new Label(id,property.getModel(itemModel));
+      }
+      throw new RuntimeException("Uknown property " + property);
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      removal.setEnabled(rules.getSelection().size() > 0);
+      target.addComponent(removal);
+    }
+  }
+);
+  rules.setOutputMarkupId(true);
+  add(dialog=new GeoServerDialog("dialog"));
+  setHeaderPanel(headerPanel());
+}

@@ -1,0 +1,50 @@
+{
+  super(id);
+  items=new ArrayList();
+  for (int i=0; i < layerGroup.getLayers().size(); i++) {
+    LayerInfo layer=layerGroup.getLayers().get(i);
+    StyleInfo style=layerGroup.getStyles().get(i);
+    items.add(new LayerGroupEntry(layer,style));
+  }
+  add(popupWindow=new ModalWindow("popup"));
+  entryProvider=new LayerGroupEntryProvider(items);
+  add(layerTable=new GeoServerTablePanel<LayerGroupEntry>("layers",entryProvider){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<LayerGroupEntry> property){
+      if (property == LayerGroupEntryProvider.LAYER) {
+        return layerLink(id,itemModel);
+      }
+      if (property == LayerGroupEntryProvider.DEFAULT_STYLE) {
+        return defaultStyleCheckbox(id,itemModel);
+      }
+      if (property == LayerGroupEntryProvider.STYLE) {
+        return styleLink(id,itemModel);
+      }
+      if (property == LayerGroupEntryProvider.REMOVE) {
+        return removeLink(id,itemModel);
+      }
+      if (property == LayerGroupEntryProvider.POSITION) {
+        return positionPanel(id,itemModel);
+      }
+      return null;
+    }
+  }
+.setFilterable(false));
+  layerTable.setOutputMarkupId(true);
+  add(new AjaxLink("add"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      popupWindow.setInitialHeight(375);
+      popupWindow.setInitialWidth(525);
+      popupWindow.setTitle(new ParamResourceModel("chooseLayer",this));
+      popupWindow.setContent(new LayerListPanel(popupWindow.getContentId()){
+        @Override protected void handleLayer(        LayerInfo layer,        AjaxRequestTarget target){
+          popupWindow.close(target);
+          entryProvider.getItems().add(new LayerGroupEntry(layer,layer.getDefaultStyle()));
+          target.addComponent(layerTable);
+        }
+      }
+);
+      popupWindow.show(target);
+    }
+  }
+);
+}

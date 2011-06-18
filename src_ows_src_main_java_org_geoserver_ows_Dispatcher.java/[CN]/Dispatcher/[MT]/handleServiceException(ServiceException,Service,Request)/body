@@ -1,0 +1,17 @@
+{
+  ServiceExceptionHandler handler=null;
+  if (service != null) {
+    Collection handlers=GeoServerExtensions.extensions(ServiceExceptionHandler.class);
+    for (Iterator h=handlers.iterator(); h.hasNext(); ) {
+      ServiceExceptionHandler seh=(ServiceExceptionHandler)h.next();
+      if (seh.getServices().contains(service)) {
+        handler=seh;
+        break;
+      }
+    }
+  }
+  if (handler == null) {
+    handler=new DefaultServiceExceptionHandler();
+  }
+  handler.handleServiceException(se,request);
+}

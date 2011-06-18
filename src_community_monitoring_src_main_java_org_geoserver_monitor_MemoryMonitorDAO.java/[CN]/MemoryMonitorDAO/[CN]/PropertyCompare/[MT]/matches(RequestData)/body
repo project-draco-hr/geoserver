@@ -1,0 +1,48 @@
+{
+  String property=null;
+  Object value=null;
+  if (left instanceof String && OwsUtils.has(data,(String)left)) {
+    property=(String)left;
+    value=right;
+  }
+ else   if (right instanceof String && OwsUtils.has(data,(String)right)) {
+    property=(String)right;
+    value=left;
+  }
+  if (property == null) {
+    throw new IllegalArgumentException("Could not find property");
+  }
+  Object o=OwsUtils.get(data,property);
+  if (o == null) {
+    return value == null && compare == Comparison.EQ;
+  }
+  if (compare == Comparison.IN) {
+    if (!(value instanceof List)) {
+      throw new UnsupportedOperationException("IN comparison only supported against list values");
+    }
+    return ((List)value).contains(o);
+  }
+  if (compare == Comparison.EQ) {
+    return o.equals(value);
+  }
+  if (compare == Comparison.NEQ) {
+    return !o.equals(value);
+  }
+  if (o instanceof Comparable) {
+    int c=((Comparable)o).compareTo(value);
+switch (compare) {
+case LT:
+      return c < 0;
+case LTE:
+    return c <= 0;
+case GT:
+  return c > 0;
+case GTE:
+return c >= 0;
+}
+return false;
+}
+ else {
+throw new UnsupportedOperationException("Values of type " + value.getClass().getName() + " only support equality and non-equality comparison.");
+}
+}

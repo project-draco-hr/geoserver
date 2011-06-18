@@ -1,0 +1,27 @@
+{
+  Document dom=getAsDOM(BASEPATH + "?request=DescribeCoverage&service=WCS&version=1.1.1&identifiers=" + getLayerId(TASMANIA_BM));
+  checkValidationErrors(dom,WCS11_SCHEMA);
+  assertEquals(1,dom.getElementsByTagName("wcs:CoverageDescriptions").getLength());
+  assertEquals(1,dom.getElementsByTagName("wcs:CoverageDescription").getLength());
+  assertXpathEvaluatesTo(getLayerId(TASMANIA_BM),"/wcs:CoverageDescriptions/wcs:CoverageDescription/wcs:Identifier",dom);
+  Node gridOffsets=xpath.getMatchingNodes("/wcs:CoverageDescriptions/wcs:CoverageDescription/" + "wcs:Domain/wcs:SpatialDomain/wcs:GridCRS/wcs:GridOffsets",dom).item(0);
+  String[] offsetStrs=gridOffsets.getTextContent().split(" ");
+  assertEquals(4,offsetStrs.length);
+  double[] offsets=new double[4];
+  for (int i=0; i < offsetStrs.length; i++) {
+    offsets[i]=Double.parseDouble(offsetStrs[i]);
+  }
+  assertTrue(offsets[0] > 0);
+  assertEquals(0.0,offsets[1]);
+  assertEquals(0.0,offsets[2]);
+  assertTrue(offsets[3] < 0);
+  assertEquals(1,dom.getElementsByTagName("wcs:Field").getLength());
+  assertEquals(1,dom.getElementsByTagName("wcs:Axis").getLength());
+  assertEquals(3,dom.getElementsByTagName("wcs:Key").getLength());
+  NodeList keys=dom.getElementsByTagName("wcs:Key");
+  for (int i=0; i < keys.getLength(); i++) {
+    Node key=keys.item(i);
+    assertFalse(key.getTextContent().contains(" "));
+  }
+  assertXpathEvaluatesTo("contents","/wcs:CoverageDescriptions/wcs:CoverageDescription/" + "wcs:Range/wcs:Field/wcs:Identifier",dom);
+}

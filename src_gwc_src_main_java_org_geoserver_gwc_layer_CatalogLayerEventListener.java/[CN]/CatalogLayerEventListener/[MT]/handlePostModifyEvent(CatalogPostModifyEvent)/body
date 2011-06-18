@@ -1,0 +1,32 @@
+{
+  final Object source=event.getSource();
+  if (!(source instanceof LayerInfo || source instanceof LayerGroupInfo || source instanceof FeatureTypeInfo|| source instanceof CoverageInfo|| source instanceof WMSLayerInfo)) {
+    return;
+  }
+  final CatalogModifyEvent preModifyEvent=PRE_MODIFY_EVENT.get();
+  if (preModifyEvent == null) {
+    throw new IllegalStateException("PostModifyEvent called without having called handlePreModify first?");
+  }
+  PRE_MODIFY_EVENT.remove();
+  final List<String> changedProperties=preModifyEvent.getPropertyNames();
+  final List<Object> oldValues=preModifyEvent.getOldValues();
+  final List<Object> newValues=preModifyEvent.getNewValues();
+  log.finer("Handling modify event for " + source);
+  if (source instanceof FeatureTypeInfo || source instanceof CoverageInfo || source instanceof WMSLayerInfo|| source instanceof LayerGroupInfo) {
+    if (changedProperties.contains("name") || changedProperties.contains("namespace")) {
+      handleRename(source,changedProperties,oldValues,newValues);
+    }
+  }
+  if (source instanceof LayerInfo) {
+    if (changedProperties.contains("defaultStyle") || changedProperties.contains("styles")) {
+      final LayerInfo li=(LayerInfo)source;
+      handleLayerInfo(changedProperties,oldValues,newValues,li);
+    }
+  }
+ else   if (source instanceof LayerGroupInfo) {
+    if (changedProperties.contains("layers") || changedProperties.contains("styles")) {
+      LayerGroupInfo lgInfo=(LayerGroupInfo)source;
+      handleLayerGroupInfo(changedProperties,oldValues,newValues,lgInfo);
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  super(entry,query);
+  PythonDataStore dataStore=(PythonDataStore)entry.getDataStore();
+  PyObject workspace=dataStore.getWorkspace();
+  PyMethod get=(PyMethod)workspace.__findattr__("get");
+  if (get == null) {
+    get=(PyMethod)workspace.__findattr__("__getitem__");
+  }
+  this.layer=get.__call__(new PyObject[]{new PyString(entry.getName().getLocalPart())});
+  this.schema=layer.__findattr__("schema");
+}

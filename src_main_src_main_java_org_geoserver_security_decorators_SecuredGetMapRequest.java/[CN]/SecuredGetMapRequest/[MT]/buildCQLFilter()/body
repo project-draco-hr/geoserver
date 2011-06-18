@@ -1,0 +1,36 @@
+{
+  List<Filter> layerFilters=new ArrayList<Filter>();
+  boolean layerFiltersFound=false;
+  for (int i=0; i < layers.size(); i++) {
+    Layer layer=layers.get(i);
+    if (layer instanceof SecuredWMSLayer) {
+      SecuredWMSLayer secured=(SecuredWMSLayer)layer;
+      final WrapperPolicy policy=secured.getPolicy();
+      if (policy.getResponse() == org.geoserver.security.Response.CHALLENGE) {
+        SecureCatalogImpl.unauthorizedAccess(layer.getName());
+      }
+      if (policy.getLimits() instanceof WMSAccessLimits) {
+        WMSAccessLimits limits=(WMSAccessLimits)policy.getLimits();
+        layerFilters.add(limits.getReadFilter());
+        layerFiltersFound|=limits.getReadFilter() != null;
+        if (limits.getRasterFilter() != null) {
+          LOGGER.severe("Sorry, raster filters for cascaded wms layers " + "have not been implemented yet");
+        }
+      }
+      delegate.addLayer(layer,styles.get(i));
+    }
+  }
+  String encodedFilter=null;
+  if (layerFiltersFound) {
+    StringBuilder sb=new StringBuilder();
+    for (    Filter filter : layerFilters) {
+      if (filter != null) {
+        sb.append(CQL.toCQL(filter));
+      }
+      sb.append(";");
+    }
+    sb.setLength(sb.length() - 1);
+    encodedFilter=ResponseUtils.urlEncode(sb.toString());
+  }
+  return encodedFilter;
+}

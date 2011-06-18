@@ -1,0 +1,20 @@
+{
+  if (templateLoader == null) {
+    templateLoader=new GeoServerTemplateLoader(getClass());
+  }
+  if (name != null) {
+    ResourceInfo ri=wms.getResourceInfo(name);
+    if (ri != null) {
+      templateLoader.setResource(ri);
+    }
+ else {
+      throw new IllegalArgumentException("Can't find neither a FeatureType nor " + "a CoverageInfo or WMSLayerInfo named " + name);
+    }
+  }
+synchronized (templateConfig) {
+    templateConfig.setTemplateLoader(templateLoader);
+    Template t=templateConfig.getTemplate(templateFileName);
+    t.setEncoding(charset.name());
+    return t;
+  }
+}

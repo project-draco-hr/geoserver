@@ -1,0 +1,25 @@
+{
+  if (input instanceof String) {
+    Parser p=new Parser(configuration);
+    input=p.parse(new StringReader((String)input));
+  }
+  FeatureCollectionType fct=(FeatureCollectionType)input;
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)fct.getFeature().get(0);
+  if (fc.getSchema().getGeometryDescriptor() != null) {
+    CoordinateReferenceSystem crs=getCollectionCRS(fc);
+    if (crs != null) {
+      CoordinateReferenceSystem nativeCrs=fc.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
+      if (nativeCrs == null) {
+        fc=new ForceCoordinateSystemFeatureResults(fc,crs,false);
+      }
+      Integer code=CRS.lookupEpsgCode(crs,false);
+      if (code != null) {
+        CoordinateReferenceSystem lonLatCrs=CRS.decode("EPSG:" + code,true);
+        if (!CRS.equalsIgnoreMetadata(crs,lonLatCrs)) {
+          fc=new ReprojectingFeatureCollection(fc,lonLatCrs);
+        }
+      }
+    }
+  }
+  return eliminateFeatureBounds(fc);
+}

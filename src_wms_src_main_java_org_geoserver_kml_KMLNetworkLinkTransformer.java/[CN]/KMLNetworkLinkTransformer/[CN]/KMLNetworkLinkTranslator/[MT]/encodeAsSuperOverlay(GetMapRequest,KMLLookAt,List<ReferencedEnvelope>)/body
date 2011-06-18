@@ -1,0 +1,15 @@
+{
+  List<MapLayerInfo> layers=request.getLayers();
+  List<Style> styles=request.getStyles();
+  for (int i=0; i < layers.size(); i++) {
+    MapLayerInfo layer=layers.get(i);
+    if ("cached".equals(KMLUtils.getSuperoverlayMode(request,wms)) && KMLUtils.isRequestGWCCompatible(request,i,wms)) {
+      encodeGWCLink(request,layer);
+    }
+ else {
+      String styleName=i < styles.size() ? styles.get(i).getName() : null;
+      ReferencedEnvelope bounds=layerBounds.get(i);
+      encodeLayerSuperOverlay(request,layer,styleName,i,bounds,lookAt);
+    }
+  }
+}

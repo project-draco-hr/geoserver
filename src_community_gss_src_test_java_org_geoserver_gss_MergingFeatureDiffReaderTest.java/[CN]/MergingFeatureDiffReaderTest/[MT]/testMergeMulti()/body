@@ -1,0 +1,27 @@
+{
+  VersioningFeatureStore restricted=(VersioningFeatureStore)synchStore.getFeatureSource("restricted");
+  SimpleFeatureType schema=restricted.getSchema();
+  Id updateFilter=ff.id(singleton(ff.featureId("restricted.be7cafea-d0b7-4257-9b9c-1ed3de3f7ef4")));
+  Transaction t=new DefaultTransaction();
+  restricted.setTransaction(t);
+  restricted.modifyFeatures(schema.getDescriptor("cat"),-48,updateFilter);
+  String v1=restricted.getVersion();
+  t.commit();
+  WKTReader wkt=new WKTReader();
+  Geometry g=wkt.read("MULTIPOLYGON(((0 0, 0 10, 10 10, 10 0, 0 0)))");
+  restricted.modifyFeatures(schema.getDescriptor("the_geom"),g,updateFilter);
+  String v2=restricted.getVersion();
+  t.commit();
+  t.close();
+  restricted.setTransaction(Transaction.AUTO_COMMIT);
+  FeatureDiffReader r1=restricted.getDifferences("FIRST",v1,null,null);
+  FeatureDiffReader r2=restricted.getDifferences(v1,v2,null,null);
+  MergingFeatureDiffReader merge=new MergingFeatureDiffReader(r1,r2);
+  assertTrue(merge.hasNext());
+  FeatureDiff fd=merge.next();
+  assertEquals(2,fd.getChangedAttributes().size());
+  assertEquals(-48l,fd.getFeature().getAttribute("cat"));
+  assertTrue(g.equals((Geometry)fd.getFeature().getAttribute("the_geom")));
+  assertFalse(merge.hasNext());
+  merge.close();
+}

@@ -1,0 +1,18 @@
+{
+  File temp=File.createTempFile("sectest","",new File("target"));
+  temp.delete();
+  temp.mkdir();
+  try {
+    dao.securityDir=temp;
+    dao.storeUsers();
+    File propFile=new File(temp,"users.properties");
+    dao.userDefinitionsFile=new PropertyFileWatcher(propFile);
+    dao.userMap.clear();
+    dao.loadUserMap();
+  }
+  finally {
+    temp.delete();
+  }
+  assertEquals(3,dao.getUsers().size());
+  testLoadUser();
+}

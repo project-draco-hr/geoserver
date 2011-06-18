@@ -1,0 +1,18 @@
+{
+  Expression[] list=inputs.toArray(new Expression[inputs.size()]);
+  if (list.length != 2)   throw new IllegalArgumentException("map requires two inputs");
+  Function function=null;
+  if (list[0] instanceof Function) {
+    function=(Function)(list[0]);
+  }
+ else   if (list[0] instanceof VariableReference) {
+    Expression xpr=((VariableReference)(list[0])).getReferencedDefinition().getExpression();
+    if (xpr instanceof Function)     function=(Function)xpr;
+  }
+  if (function == null)   throw new IllegalArgumentException("first argument to map must " + "be a Function");
+  Expression eval=list[1];
+  if (!eval.returnsBag())   throw new IllegalArgumentException("second argument to map must " + "be a bag");
+  List<Expression> input=new ArrayList<Expression>();
+  input.add(list[1]);
+  function.checkInputsNoBag(input);
+}

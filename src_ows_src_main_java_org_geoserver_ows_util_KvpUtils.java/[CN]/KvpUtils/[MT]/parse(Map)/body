@@ -1,0 +1,52 @@
+{
+  Collection parsers=GeoServerExtensions.extensions(KvpParser.class);
+  String service=(String)kvp.get("service");
+  String version=(String)kvp.get("version");
+  String request=(String)kvp.get("request");
+  for (Iterator p=parsers.iterator(); p.hasNext(); ) {
+    KvpParser parser=(KvpParser)p.next();
+    if (parser.getService() != null && !parser.getService().equalsIgnoreCase(service)) {
+      p.remove();
+      continue;
+    }
+    if (parser.getVersion() != null && !parser.getVersion().toString().equals(version)) {
+      p.remove();
+      continue;
+    }
+    if (parser.getRequest() != null && !parser.getRequest().equalsIgnoreCase(request)) {
+      p.remove();
+    }
+  }
+  ArrayList<Throwable> errors=new ArrayList<Throwable>();
+  for (Iterator itr=kvp.entrySet().iterator(); itr.hasNext(); ) {
+    Map.Entry entry=(Map.Entry)itr.next();
+    String key=(String)entry.getKey();
+    String value=(String)entry.getValue();
+    Object parsed=null;
+    KvpParser parser=null;
+    for (Iterator pitr=parsers.iterator(); pitr.hasNext() && parsed == null; ) {
+      KvpParser candidate=(KvpParser)pitr.next();
+      if (key.equalsIgnoreCase(candidate.getKey())) {
+        if (parser == null)         parser=candidate;
+ else {
+          String trgService=candidate.getService();
+          Version trgVersion=candidate.getVersion();
+          if (trgService != null && trgService.equalsIgnoreCase(service) && trgVersion != null && trgVersion.toString().equals(version))           parser=candidate;
+ else           if (trgService != null && trgService.equalsIgnoreCase(service))           parser=candidate;
+        }
+      }
+    }
+    if (parser != null) {
+      try {
+        parsed=parser.parse(value);
+      }
+ catch (      Throwable t) {
+        errors.add(t);
+      }
+    }
+    if (parsed != null) {
+      entry.setValue(parsed);
+    }
+  }
+  return errors;
+}

@@ -1,0 +1,50 @@
+{
+  GetMapRequest getMapRequest=createGetMapRequest(MockData.BASIC_POLYGONS);
+  HashMap formatOptions=new HashMap();
+  formatOptions.put("kmplacemark",new Boolean(doPlacemarks));
+  formatOptions.put("kmscore",new Integer(0));
+  getMapRequest.setFormatOptions(formatOptions);
+  WMSMapContext mapContext=new WMSMapContext(getMapRequest);
+  mapContext.addLayer(mapLayer);
+  mapContext.setMapHeight(1024);
+  mapContext.setMapWidth(1024);
+  KMZMapOutputFormat mapProducer=new KMZMapOutputFormat(getWMS());
+  KMZMapResponse mapEncoder=new KMZMapResponse(getWMS());
+  KMZMap kmzMap=mapProducer.produceMap(mapContext);
+  try {
+    File tempDir=IOUtils.createRandomDirectory("./target","kmplacemark","test");
+    tempDir.deleteOnExit();
+    File zip=new File(tempDir,"kmz.zip");
+    zip.deleteOnExit();
+    FileOutputStream output=new FileOutputStream(zip);
+    mapEncoder.write(kmzMap,output,null);
+    output.flush();
+    output.close();
+    assertTrue(zip.exists());
+    ZipFile zipFile=new ZipFile(zip);
+    ZipEntry entry=zipFile.getEntry("wms.kml");
+    assertNotNull(entry);
+    assertNotNull(zipFile.getEntry("images/layer_0.png"));
+    byte[] buffer=new byte[1024];
+    int len;
+    InputStream inStream=zipFile.getInputStream(entry);
+    File temp=File.createTempFile("test_out","kmz",tempDir);
+    temp.deleteOnExit();
+    BufferedOutputStream outStream=new BufferedOutputStream(new FileOutputStream(temp));
+    while ((len=inStream.read(buffer)) >= 0)     outStream.write(buffer,0,len);
+    inStream.close();
+    outStream.close();
+    Document document=dom(new BufferedInputStream(new FileInputStream(temp)));
+    assertEquals("kml",document.getDocumentElement().getNodeName());
+    if (doPlacemarks) {
+      assertEquals(getFeatureSource(MockData.BASIC_POLYGONS).getFeatures().size(),document.getElementsByTagName("Placemark").getLength());
+    }
+ else {
+      assertEquals(0,document.getElementsByTagName("Placemark").getLength());
+    }
+    zipFile.close();
+  }
+  finally {
+    kmzMap.dispose();
+  }
+}

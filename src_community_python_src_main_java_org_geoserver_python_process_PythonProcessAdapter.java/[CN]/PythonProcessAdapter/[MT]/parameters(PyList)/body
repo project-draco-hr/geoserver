@@ -1,0 +1,33 @@
+{
+  LinkedHashMap<String,Parameter<?>> inputs=new LinkedHashMap();
+  for (  PyObject obj : (List<PyObject>)list) {
+    String arg=obj.__getitem__(0).toString();
+    Object type=null;
+    try {
+      type=obj.__getitem__(1);
+    }
+ catch (    PyException e) {
+    }
+    Object desc=null;
+    try {
+      desc=obj.__getitem__(2);
+    }
+ catch (    PyException e) {
+    }
+    Class clazz=null;
+    if (type != null && type instanceof PyType) {
+      clazz=Python.toJavaClass((PyType)type);
+    }
+    if (clazz == null) {
+      clazz=Object.class;
+    }
+    if (desc != null) {
+      desc=desc.toString();
+    }
+ else {
+      desc=arg;
+    }
+    inputs.put(arg,new Parameter(arg,clazz,arg,desc.toString()));
+  }
+  return inputs;
+}

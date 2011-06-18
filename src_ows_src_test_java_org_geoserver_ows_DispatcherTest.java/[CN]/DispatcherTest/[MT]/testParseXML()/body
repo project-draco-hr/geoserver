@@ -1,0 +1,18 @@
+{
+  URL url=getClass().getResource("applicationContext.xml");
+  FileSystemXmlApplicationContext context=new FileSystemXmlApplicationContext(url.toString());
+  Dispatcher dispatcher=(Dispatcher)context.getBean("dispatcher");
+  String body="<Hello service=\"hello\" message=\"Hello world!\"/>";
+  File file=File.createTempFile("geoserver","req");
+  file.deleteOnExit();
+  FileOutputStream output=new FileOutputStream(file);
+  output.write(body.getBytes());
+  output.flush();
+  output.close();
+  BufferedReader input=new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+  input.mark(8192);
+  Request req=new Request();
+  req.setInput(input);
+  Object object=dispatcher.parseRequestXML(null,input,req);
+  assertEquals(new Message("Hello world!"),object);
+}

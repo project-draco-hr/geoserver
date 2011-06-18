@@ -1,0 +1,104 @@
+{
+  final boolean hasPropertiesFile=configFile != null && configFile.exists() && configFile.canRead() && configFile.isFile();
+  if (hasPropertiesFile) {
+    Properties props=new Properties();
+    FileInputStream fis=null;
+    try {
+      fis=new FileInputStream(configFile);
+      props.load(fis);
+      Iterator<Object> keys=props.keySet().iterator();
+      envVariables=new ArrayList<Variable>();
+      while (keys.hasNext()) {
+        String key=(String)keys.next();
+        if (key.equalsIgnoreCase(GRKeys.GDAL_CACHEMAX)) {
+          String cacheMax=null;
+          try {
+            cacheMax=(String)props.get(GRKeys.GDAL_CACHEMAX);
+            if (cacheMax != null) {
+              int gdalCacheMaxMemory=Integer.parseInt(cacheMax);
+              Variable var=new Variable();
+              var.setKey(GRKeys.GDAL_CACHEMAX);
+              var.setValue(cacheMax);
+              envVariables.add(var);
+            }
+          }
+ catch (          NumberFormatException nfe) {
+            if (LOGGER.isLoggable(Level.WARNING)) {
+              LOGGER.log(Level.WARNING,"Unable to parse the specified property as a number: " + cacheMax,nfe);
+            }
+          }
+        }
+ else         if (key.equalsIgnoreCase(GRKeys.GDAL_DATA) || key.equalsIgnoreCase(GRKeys.GDAL_LOGGING_DIR) || key.equalsIgnoreCase(GRKeys.TEMP_DIR)) {
+          String path=(String)props.get(key);
+          if (path != null) {
+            final File directory=new File(path);
+            if (directory.exists() && directory.isDirectory() && ((key.equalsIgnoreCase(GRKeys.GDAL_DATA) && directory.canRead()) || directory.canWrite())) {
+              Variable var=new Variable();
+              var.setKey(key);
+              var.setValue(path);
+              envVariables.add(var);
+            }
+ else {
+              if (LOGGER.isLoggable(Level.WARNING)) {
+                LOGGER.log(Level.WARNING,"The specified folder for " + key + " variable isn't valid, "+ "or it doesn't exist or it isn't a readable directory or it is a "+ "destination folder which can't be written: "+ path);
+              }
+            }
+          }
+        }
+ else         if (key.equalsIgnoreCase(GRKeys.EXECUTION_TIMEOUT)) {
+          String timeout=null;
+          try {
+            timeout=(String)props.get(GRKeys.EXECUTION_TIMEOUT);
+            if (timeout != null) {
+              executionTimeout=Long.parseLong(timeout);
+            }
+          }
+ catch (          NumberFormatException nfe) {
+            if (LOGGER.isLoggable(Level.WARNING)) {
+              LOGGER.log(Level.WARNING,"Unable to parse the specified property as a number: " + timeout,nfe);
+            }
+          }
+        }
+ else         if (key.equalsIgnoreCase(GRKeys.GDAL_WARP_PARAMS) || key.equalsIgnoreCase(GRKeys.GDAL_TRANSLATE_PARAMS)) {
+          String param=(String)props.get(key);
+          if (param != null) {
+            if (key.equalsIgnoreCase(GRKeys.GDAL_WARP_PARAMS)) {
+              gdalWarpingParameters=param.trim();
+            }
+ else {
+              gdalTranslateParameters=param.trim();
+            }
+          }
+        }
+ else         if (key.endsWith("PATH")) {
+          String param=(String)props.get(key);
+          if (param != null) {
+            Variable var=new Variable();
+            var.setKey(key);
+            var.setValue(param);
+            envVariables.add(var);
+          }
+        }
+      }
+    }
+ catch (    FileNotFoundException e) {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.log(Level.WARNING,"Unable to parse the config file: " + configFile.getAbsolutePath(),e);
+      }
+    }
+catch (    IOException e) {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.log(Level.WARNING,"Unable to parse the config file: " + configFile.getAbsolutePath(),e);
+      }
+    }
+ finally {
+      if (fis != null) {
+        try {
+          fis.close();
+        }
+ catch (        Throwable t) {
+        }
+      }
+    }
+  }
+}

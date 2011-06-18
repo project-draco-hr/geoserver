@@ -1,0 +1,19 @@
+{
+  Set<String> fids=readCachedTileFids(tile,conn);
+  if (fids != null) {
+    return fids;
+  }
+ else {
+    String tileKey=tableName + tile.x + "-"+ tile.y+ "-"+ tile.z;
+    canonicalizer.add(tileKey);
+    tileKey=canonicalizer.get(tileKey);
+synchronized (tileKey) {
+      fids=readCachedTileFids(tile,conn);
+      if (fids != null)       return fids;
+      fids=computeFids(tile,conn);
+      storeFids(tile,fids,conn);
+      if (fids.size() < featuresPerTile)       for (      Tile child : tile.getChildren())       storeFids(child,NO_FIDS,conn);
+    }
+  }
+  return fids;
+}

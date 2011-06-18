@@ -1,0 +1,55 @@
+{
+  PythonInterpreter pi=python.interpreter();
+  pi.execfile(appFile.getAbsolutePath());
+  PyObject app=pi.get("app");
+  if (app == null) {
+    throw new RestletException("'app' function not found",Status.SERVER_ERROR_INTERNAL);
+  }
+  if (!(app instanceof PyFunction)) {
+    throw new RestletException("'app' must be a function",Status.SERVER_ERROR_INTERNAL);
+  }
+  PyFunction appf=(PyFunction)app;
+  PyFunction start_response=createStartResponse();
+  WSGIResponse wr=new WSGIResponse();
+  response.set(wr);
+  PyObject ret=appf.__call__(new PyObject[]{createEnviron(getRequest()),start_response});
+  if (ret != null) {
+    String contentType=wr.headers.get("Content-type");
+    if (contentType == null) {
+      contentType="text/plain";
+    }
+    MediaType mediaType=new MediaType(contentType);
+    if (ret instanceof PyString) {
+      getResponse().setEntity(ret.toString(),mediaType);
+    }
+ else     if (ret instanceof PyList) {
+      final PyList list=(PyList)ret;
+      getResponse().setEntity(new OutputRepresentation(mediaType){
+        @Override public void write(        OutputStream outputStream) throws IOException {
+          for (Iterator i=list.iterator(); i.hasNext(); ) {
+            outputStream.write(i.next().toString().getBytes());
+            outputStream.write('\n');
+          }
+        }
+      }
+);
+    }
+ else     if (ret instanceof PyIterator) {
+      final PyIterator iter=(PyIterator)ret;
+      getResponse().setEntity(new OutputRepresentation(mediaType){
+        @Override public void write(        OutputStream outputStream) throws IOException {
+          for (Iterator i=iter.iterator(); i.hasNext(); ) {
+            outputStream.write(i.next().toString().getBytes());
+            outputStream.write('\n');
+          }
+        }
+      }
+);
+    }
+ else {
+      LOGGER.warning("Unsure how to handle " + ret + ". Resorting to outputing string "+ "representation.");
+      getResponse().setEntity(ret.toString(),mediaType);
+    }
+  }
+  response.remove();
+}

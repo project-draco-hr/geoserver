@@ -1,0 +1,15 @@
+{
+  if (isNull(store.getName())) {
+    throw new IllegalArgumentException("Store name must not be null");
+  }
+  if (store.getWorkspace() == null) {
+    throw new IllegalArgumentException("Store must be part of a workspace");
+  }
+  WorkspaceInfo workspace=store.getWorkspace();
+  StoreInfo existing=getStoreByName(workspace,store.getName(),StoreInfo.class);
+  if (existing != null && !existing.getId().equals(store.getId())) {
+    String msg="Store '" + store.getName() + "' already exists in workspace '"+ workspace.getName()+ "'";
+    throw new IllegalArgumentException(msg);
+  }
+  return postValidate(store,isNew);
+}

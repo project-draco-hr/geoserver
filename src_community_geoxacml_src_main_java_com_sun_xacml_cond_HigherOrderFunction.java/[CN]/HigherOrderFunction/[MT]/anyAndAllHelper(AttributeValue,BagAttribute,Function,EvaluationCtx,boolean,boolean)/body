@@ -1,0 +1,23 @@
+{
+  BooleanAttribute attr=BooleanAttribute.getInstance(allFunction);
+  Iterator<AttributeValue> it=bag.iterator();
+  while (it.hasNext()) {
+    List<AttributeValue> params=new ArrayList<AttributeValue>();
+    if (!argumentsAreSwapped) {
+      params.add(value);
+      params.add((AttributeValue)(it.next()));
+    }
+ else {
+      params.add((AttributeValue)(it.next()));
+      params.add(value);
+    }
+    EvaluationResult result=function.evaluate(params,context);
+    if (result.indeterminate())     return result;
+    BooleanAttribute bool=(BooleanAttribute)(result.getAttributeValue());
+    if (bool.getValue() != allFunction) {
+      attr=bool;
+      break;
+    }
+  }
+  return new EvaluationResult(attr);
+}

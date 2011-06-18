@@ -1,0 +1,63 @@
+{
+  LOGGER.finer("filtering " + ((HttpServletRequest)request).getRequestURL());
+  if (!filterIsEnabled || !(request instanceof HttpServletRequest)) {
+    chain.doFilter(request,response);
+    return;
+  }
+  final String proxyBaseUrl=geoServer.getProxyBaseUrl();
+  if (proxyBaseUrl == null || "".equals(proxyBaseUrl)) {
+    chain.doFilter(request,response);
+    return;
+  }
+  final CacheingResponseWrapper wrapper=new CacheingResponseWrapper((HttpServletResponse)response,mimeTypePatterns);
+  chain.doFilter(request,wrapper);
+  wrapper.flushBuffer();
+  if (wrapper.isCacheing()) {
+    BufferedReader reader;
+{
+      byte[] cachedContent=wrapper.getCachedContent();
+      String cs=wrapper.getCharacterEncoding();
+      reader=new BufferedReader(new InputStreamReader(new ByteArrayInputStream(cachedContent),cs));
+    }
+    PrintWriter writer=response.getWriter();
+    final String serverBase;
+    final String proxyBase;
+    final String context;
+    final String proxyContext;
+    final String baseUrl;
+{
+      String _baseUrl=RequestUtils.baseURL((HttpServletRequest)request);
+      if (_baseUrl.endsWith("/")) {
+        _baseUrl=_baseUrl.substring(0,_baseUrl.length() - 1);
+      }
+      baseUrl=_baseUrl;
+      final URL base=new URL(baseUrl);
+      final URL proxy=new URL(proxyBaseUrl);
+      serverBase=getServerBase(base);
+      proxyBase=getServerBase(proxy);
+      context=getContext(base);
+      proxyContext=getContext(proxy);
+    }
+    String line;
+    String translatedLine;
+    LOGGER.finer("translating " + ((HttpServletRequest)request).getRequestURI());
+    while ((line=reader.readLine()) != null) {
+      if (line.indexOf(proxyBaseUrl) != -1) {
+        translatedLine=line.replaceAll(proxyBaseUrl,baseUrl);
+      }
+ else {
+        translatedLine=line;
+      }
+      translatedLine=translatedLine.replaceAll(serverBase,proxyBase);
+      translatedLine=translatedLine.replaceAll(context,proxyContext);
+      if (LOGGER.isLoggable(Level.FINE)) {
+        if (!line.equals(translatedLine)) {
+          LOGGER.finest("translated '" + line + "'");
+          LOGGER.finest("        as '" + translatedLine + "'");
+        }
+      }
+      writer.println(translatedLine);
+    }
+    writer.flush();
+  }
+}

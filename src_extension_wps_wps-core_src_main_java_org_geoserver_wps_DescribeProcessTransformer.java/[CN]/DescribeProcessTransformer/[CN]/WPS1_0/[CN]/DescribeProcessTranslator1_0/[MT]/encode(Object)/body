@@ -1,0 +1,26 @@
+{
+  this.request=(DescribeProcessType)object;
+  if (null == this.request.getLanguage()) {
+    this.locale=new Locale("en-CA");
+  }
+ else {
+    this.locale=new Locale(this.request.getLanguage());
+  }
+  this.dataTransformer=new DataTransformer(request.getBaseUrl());
+  AttributesImpl attrs=new AttributesImpl();
+  attrs.addAttribute("","xmlns:xsi","xmlns:xsi","",DescribeProcessTransformer.XSI_URI);
+  attrs.addAttribute("","xmlns","xmlns","",DescribeProcessTransformer.WPS_URI);
+  attrs.addAttribute("","xmlns:wps","xmlns:wps","",DescribeProcessTransformer.WPS_URI);
+  attrs.addAttribute("","xmlns:ows","xmlns:ows","",OWS.NAMESPACE);
+  attrs.addAttribute("","version","version","","1.0.0");
+  attrs.addAttribute("","xsi:schemaLocation","xsi:schemaLocation","","http://www.opengis.net/wps/1.0.0 ../wpsDescribeProcess_request.xsd");
+  start("wps:ProcessDescriptions",attrs);
+  if (null == this.request.getIdentifier() || this.request.getIdentifier().isEmpty()) {
+    throw new WPSException("Invalid identifier","No identifier present");
+  }
+  for (  Object identifier : this.request.getIdentifier()) {
+    CodeType ct=(CodeType)identifier;
+    this.processDescription(Ows11Util.name(ct));
+  }
+  end("wps:ProcessDescriptions");
+}

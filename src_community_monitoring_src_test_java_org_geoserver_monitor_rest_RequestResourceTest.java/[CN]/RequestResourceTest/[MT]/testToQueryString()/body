@@ -1,0 +1,16 @@
+{
+  Date from=toDate("2010-07-23T15:56:44");
+  Date to=toDate("2010-07-23T16:16:44");
+  Query q=new Query().between(from,to);
+  q.filter("service","WFS",Comparison.EQ).and("status","RUNNING",Comparison.EQ).and("path",Arrays.asList("/foo","/bar"),Comparison.IN);
+  String qs=RequestResource.toQueryString(q);
+  assertEquals('?',qs.charAt(0));
+  qs=qs.substring(1);
+  Map<String,String> kvp=new HashMap();
+  for (  String s : qs.split("&")) {
+    kvp.put(s.split("=")[0],s.split("=")[1]);
+  }
+  assertEquals(from,RequestResource.DATE_FORMAT.parse(kvp.get("from")));
+  assertEquals(to,RequestResource.DATE_FORMAT.parse(kvp.get("to")));
+  assertEquals("service:EQ:WFS;status:EQ:RUNNING;path:IN:/foo,/bar",kvp.get("filter"));
+}

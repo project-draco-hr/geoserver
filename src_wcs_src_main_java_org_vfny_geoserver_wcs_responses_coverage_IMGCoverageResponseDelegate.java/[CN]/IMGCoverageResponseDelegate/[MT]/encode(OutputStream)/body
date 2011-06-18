@@ -1,0 +1,24 @@
+{
+  if (sourceCoverage == null) {
+    throw new IllegalStateException("It seems prepare() has not been called or has not succeed");
+  }
+  final WorldImageWriter writer=new WorldImageWriter(output);
+  final Format writerParams=writer.getFormat();
+  final ParameterValueGroup writeParameters=writerParams.getWriteParameters();
+  final ParameterValue<?> format=writeParameters.parameter("Format");
+  format.setValue(this.outputFormat.toLowerCase());
+  try {
+    writer.write(sourceCoverage,new GeneralParameterValue[]{format});
+    output.flush();
+  }
+  finally {
+    org.apache.commons.io.IOUtils.closeQuietly(output);
+    try {
+      writer.dispose();
+    }
+ catch (    Throwable e) {
+    }
+    this.sourceCoverage.dispose(false);
+    this.sourceCoverage=null;
+  }
+}

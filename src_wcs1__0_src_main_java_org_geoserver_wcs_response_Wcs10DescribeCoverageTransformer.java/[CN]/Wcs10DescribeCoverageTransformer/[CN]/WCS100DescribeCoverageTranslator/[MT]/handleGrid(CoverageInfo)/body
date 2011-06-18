@@ -1,0 +1,45 @@
+{
+  final GridGeometry originalGrid=ci.getGrid();
+  final GridEnvelope gridRange=originalGrid.getGridRange();
+  final AffineTransform2D gridToCRS=(AffineTransform2D)originalGrid.getGridToCRS();
+  final int gridDimension=(gridToCRS != null ? gridToCRS.getSourceDimensions() : 0);
+  AttributesImpl attributes=new AttributesImpl();
+  attributes.addAttribute("","dimension","dimension","",String.valueOf(gridDimension));
+  start("gml:RectifiedGrid",attributes);
+  String lowers="";
+  String uppers="";
+  for (int r=0; r < gridDimension; r++) {
+    if (gridToCRS.getSourceDimensions() > r) {
+      lowers+=(gridRange.getLow(r) + " ");
+      uppers+=(gridRange.getHigh(r) + " ");
+    }
+ else {
+      lowers+=(0 + " ");
+      uppers+=(0 + " ");
+    }
+  }
+  start("gml:limits");
+  start("gml:GridEnvelope");
+  element("gml:low",lowers.trim());
+  element("gml:high",uppers.trim());
+  end("gml:GridEnvelope");
+  end("gml:limits");
+  for (int dn=0; dn < ci.getCRS().getCoordinateSystem().getDimension(); dn++) {
+    String axisName=ci.getCRS().getCoordinateSystem().getAxis(dn).getAbbreviation();
+    axisName=axisName.toLowerCase().startsWith("lon") ? "x" : axisName;
+    axisName=axisName.toLowerCase().startsWith("lat") ? "y" : axisName;
+    element("gml:axisName",axisName);
+  }
+  final StringBuilder origins=new StringBuilder();
+  origins.append(gridToCRS.getTranslateX()).append(" ").append(gridToCRS.getTranslateY());
+  start("gml:origin");
+  element("gml:pos",origins.toString());
+  end("gml:origin");
+  final StringBuilder offsetX=new StringBuilder();
+  offsetX.append(gridToCRS.getScaleX()).append(" ").append(gridToCRS.getShearX());
+  element("gml:offsetVector",offsetX.toString());
+  final StringBuilder offsetY=new StringBuilder();
+  offsetY.append(gridToCRS.getShearY()).append(" ").append(gridToCRS.getScaleY());
+  element("gml:offsetVector",offsetY.toString());
+  end("gml:RectifiedGrid");
+}

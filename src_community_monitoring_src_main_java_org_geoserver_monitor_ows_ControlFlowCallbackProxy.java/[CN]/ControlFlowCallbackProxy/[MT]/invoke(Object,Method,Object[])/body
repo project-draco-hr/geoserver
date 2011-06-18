@@ -1,0 +1,17 @@
+{
+  if ("operationDispatched".equals(method.getName()) && monitor.current() != null) {
+    RequestData data=monitor.current();
+    if (data == null) {
+      return method.invoke(target,args);
+    }
+    data.setStatus(Status.WAITING);
+    monitor.update();
+    Object result=method.invoke(target,args);
+    data.setStatus(Status.RUNNING);
+    monitor.update();
+    return result;
+  }
+ else {
+    return method.invoke(target,args);
+  }
+}

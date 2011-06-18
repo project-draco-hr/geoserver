@@ -1,0 +1,30 @@
+{
+  final double dx=(eastBoundLongitude - westBoundLongitude) / numSteps;
+  final double dy=(northBoundLatitude - southBoundLatitude) / numSteps;
+  List<Coordinate> coords=new ArrayList<Coordinate>(4 * numSteps + 1);
+  double x=westBoundLongitude;
+  for (int i=0; i < numSteps; i++) {
+    coords.add(new Coordinate(x,southBoundLatitude));
+    x+=dx;
+  }
+  double y=southBoundLatitude;
+  for (int i=0; i < numSteps; i++) {
+    coords.add(new Coordinate(eastBoundLongitude,y));
+    y+=dy;
+  }
+  x=eastBoundLongitude;
+  for (int i=0; i < numSteps; i++) {
+    coords.add(new Coordinate(x,northBoundLatitude));
+    x-=dx;
+  }
+  y=northBoundLatitude;
+  for (int i=0; i < numSteps; i++) {
+    coords.add(new Coordinate(westBoundLongitude,y));
+    y-=dy;
+  }
+  coords.add(new Coordinate(westBoundLongitude,southBoundLatitude));
+  Coordinate[] coordinates=coords.toArray(new Coordinate[coords.size()]);
+  LinearRing shell=gf.createLinearRing(coordinates);
+  Polygon polygon=gf.createPolygon(shell,null);
+  return polygon;
+}

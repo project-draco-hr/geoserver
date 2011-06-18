@@ -1,0 +1,37 @@
+{
+  FunctionFactoryProxy proxy=null;
+  FunctionFactory generalFactory=null;
+  FunctionFactory conditionFactory=null;
+  FunctionFactory targetFactory=null;
+  if (useStandard(root,"useStandardFunctions")) {
+    logger.config("Starting with standard Functions");
+    proxy=StandardFunctionFactory.getNewFactoryProxy();
+    targetFactory=proxy.getTargetFactory();
+    conditionFactory=proxy.getConditionFactory();
+    generalFactory=proxy.getGeneralFactory();
+  }
+ else {
+    generalFactory=new BaseFunctionFactory();
+    conditionFactory=new BaseFunctionFactory(generalFactory);
+    targetFactory=new BaseFunctionFactory(conditionFactory);
+    proxy=new BasicFunctionFactoryProxy(targetFactory,conditionFactory,generalFactory);
+  }
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String name=child.getNodeName();
+    if (name.equals("target")) {
+      logger.config("Loading [TARGET] functions");
+      functionParserHelper(child,targetFactory);
+    }
+ else     if (name.equals("condition")) {
+      logger.config("Loading [CONDITION] functions");
+      functionParserHelper(child,conditionFactory);
+    }
+ else     if (name.equals("general")) {
+      logger.config("Loading [GENERAL] functions");
+      functionParserHelper(child,generalFactory);
+    }
+  }
+  return proxy;
+}

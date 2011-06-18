@@ -1,0 +1,57 @@
+{
+  StringBuilder contents=new StringBuilder();
+  ArrayList<String> statements=new ArrayList<String>();
+  try {
+    BufferedReader input=new BufferedReader(new InputStreamReader(new DataInputStream(inputStream)));
+    try {
+      String line=null, suffix=null;
+      boolean start=true;
+      while ((line=input.readLine()) != null) {
+        String trimedLine=line.trim();
+        if (trimedLine.startsWith("--") || trimedLine.equals("")) {
+          continue;
+        }
+        if (start) {
+          boolean match=false;
+          for (          OracleScriptRule ps : OracleScriptRule.values()) {
+            if (trimedLine.startsWith(ps.getPrefix())) {
+              match=true;
+              suffix=ps.getSuffix();
+              start=trimedLine.endsWith(suffix) ? true : false;
+              contents.append(trimedLine + NEWLINE);
+              if (start) {
+                statements.add((contents.toString().trim()).substring(0,contents.toString().trim().length() - 1));
+                contents.setLength(0);
+                suffix=null;
+              }
+              break;
+            }
+          }
+          if (!match) {
+            throw new Exception("Can't match " + trimedLine);
+          }
+        }
+ else {
+          if (trimedLine.endsWith(suffix)) {
+            trimedLine=trimedLine.trim().substring(0,trimedLine.length() - 1);
+            contents.append(trimedLine);
+            statements.add(contents.toString());
+            contents.setLength(0);
+            start=true;
+            suffix=null;
+          }
+ else {
+            contents.append(trimedLine + NEWLINE);
+          }
+        }
+      }
+      return statements;
+    }
+  finally {
+      input.close();
+    }
+  }
+ catch (  Exception e) {
+    throw e;
+  }
+}

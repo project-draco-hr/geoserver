@@ -1,0 +1,24 @@
+{
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  request.setContextPath("/geoserver");
+  request.setRequestURI("/geoserver/hello");
+  request.setMethod("get");
+  Dispatcher dispatcher=new Dispatcher();
+  Request req=new Request();
+  req.httpRequest=request;
+  dispatcher.init(req);
+  Map map=dispatcher.readOpContext(req);
+  assertEquals("hello",map.get("service"));
+  request=new MockHttpServletRequest();
+  request.setContextPath("/geoserver");
+  request.setRequestURI("/geoserver/foobar/hello");
+  request.setMethod("get");
+  map=dispatcher.readOpContext(req);
+  assertEquals("hello",map.get("service"));
+  request=new MockHttpServletRequest();
+  request.setContextPath("/geoserver");
+  request.setRequestURI("/geoserver/foobar/hello/");
+  request.setMethod("get");
+  map=dispatcher.readOpContext(req);
+  assertEquals("hello",map.get("service"));
+}

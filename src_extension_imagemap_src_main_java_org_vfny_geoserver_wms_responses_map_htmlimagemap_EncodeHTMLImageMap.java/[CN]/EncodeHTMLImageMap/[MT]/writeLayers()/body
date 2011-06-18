@@ -1,0 +1,59 @@
+{
+  MapLayer[] layers=mapContext.getLayers();
+  int nLayers=layers.length;
+  for (int i=0; i < nLayers; i++) {
+    MapLayer layer=layers[i];
+    SimpleFeatureSource fSource;
+    fSource=(SimpleFeatureSource)layer.getFeatureSource();
+    SimpleFeatureType schema=fSource.getSchema();
+    try {
+      ReferencedEnvelope aoi=mapContext.getAreaOfInterest();
+      CoordinateReferenceSystem sourceCrs=schema.getGeometryDescriptor().getCoordinateReferenceSystem();
+      boolean reproject=(sourceCrs != null) && !CRS.equalsIgnoreMetadata(aoi.getCoordinateReferenceSystem(),sourceCrs);
+      if (reproject) {
+        aoi=aoi.transform(sourceCrs,true);
+      }
+      BBOX bboxFilter=filterFactory.bbox(schema.getGeometryDescriptor().getLocalName(),aoi.getMinX(),aoi.getMinY(),aoi.getMaxX(),aoi.getMaxY(),null);
+      Query q=new Query(schema.getTypeName(),bboxFilter);
+      String mapId=null;
+      mapId=schema.getTypeName();
+      writer.write("<map name=\"" + mapId + "\">\n");
+      Query definitionQuery=layer.getQuery();
+      LOGGER.info("Definition Query: " + definitionQuery.toString());
+      if (!definitionQuery.equals(Query.ALL)) {
+        if (q.equals(Query.ALL)) {
+          q=(Query)definitionQuery;
+        }
+ else {
+          q=(Query)DataUtilities.mixQueries(definitionQuery,q,"HTMLImageMapEncoder");
+        }
+      }
+      FeatureTypeStyle[] ftsList=filterFeatureTypeStyles(layer.getStyle(),fSource.getSchema());
+      Filter ruleFilter=processRuleForQuery(ftsList);
+      if (ruleFilter != null) {
+        ruleFilter=filterFactory.and(q.getFilter(),ruleFilter);
+        q=new DefaultQuery(schema.getTypeName(),ruleFilter);
+      }
+      SimpleFeatureCollection fColl=null;
+      if (reproject) {
+        fColl=new ReprojectFeatureResults(fSource.getFeatures(q),mapContext.getCoordinateReferenceSystem());
+      }
+ else       fColl=fSource.getFeatures(q);
+      writer.writeFeatures(fColl,ftsList);
+      writer.write("</map>\n");
+    }
+ catch (    IOException ex) {
+      throw ex;
+    }
+catch (    AbortedException ae) {
+      LOGGER.info("process aborted: " + ae.getMessage());
+      throw ae;
+    }
+catch (    Throwable t) {
+      LOGGER.warning("UNCAUGHT exception: " + t.getMessage());
+      IOException ioe=new IOException("UNCAUGHT exception: " + t.getMessage());
+      ioe.setStackTrace(t.getStackTrace());
+      throw ioe;
+    }
+  }
+}

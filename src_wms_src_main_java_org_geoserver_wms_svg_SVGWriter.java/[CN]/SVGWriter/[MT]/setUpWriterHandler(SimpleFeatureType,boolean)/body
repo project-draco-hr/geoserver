@@ -1,0 +1,25 @@
+{
+  if (doCollect) {
+    this.writerHandler=new CollectSVGHandler(featureWriter);
+    LOGGER.finer("Established a collecting features writer handler");
+  }
+ else {
+    this.writerHandler=new SVGFeatureWriterHandler();
+    String typeName=featureType.getTypeName();
+    List atts=new ArrayList(0);
+    if (atts.contains("#FID")) {
+      this.writerHandler=new FIDSVGHandler(this.writerHandler);
+      atts.remove("#FID");
+      LOGGER.finer("Added FID handler decorator");
+    }
+    if (atts.contains("#BOUNDS")) {
+      this.writerHandler=new BoundsSVGHandler(this.writerHandler);
+      atts.remove("#BOUNDS");
+      LOGGER.finer("Added BOUNDS handler decorator");
+    }
+    if (atts.size() > 0) {
+      this.writerHandler=new AttributesSVGHandler(this.writerHandler);
+      LOGGER.finer("Added ATTRIBUTES handler decorator");
+    }
+  }
+}

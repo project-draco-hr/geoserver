@@ -1,0 +1,17 @@
+{
+  try {
+    String coverageName=coverage.getModelObject();
+    Catalog catalog=GeoServerApplication.get().getCatalog();
+    CoverageInfo ci=catalog.getCoverageByName(coverageName);
+    ReferencedEnvelope boundsNative=getCoverage.bounds.transform(ci.getCRS(),true);
+    MathTransform w2g=ci.getGrid().getGridToCRS().inverse();
+    Envelope ge=JTS.transform(boundsNative,w2g);
+    GridEnvelope2D grid=new GridEnvelope2D(new Rectangle(0,0,(int)ge.getWidth(),(int)ge.getHeight()));
+    return grid;
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to guess native grid",e);
+    error("Failed to guess native grid: " + e.getMessage());
+    return null;
+  }
+}

@@ -1,0 +1,43 @@
+{
+  if (g instanceof GeometryCollection) {
+    GeometryCollection gc=(GeometryCollection)g;
+    if (gc.getNumGeometries() == 1) {
+      g=gc.getGeometryN(0);
+    }
+ else {
+      double maxAreaSoFar=gc.getGeometryN(0).getArea();
+      Coordinate centroidToReturn=gc.getGeometryN(0).getCentroid().getCoordinate();
+      for (int t=0; t < gc.getNumGeometries(); t++) {
+        double area=gc.getGeometryN(t).getArea();
+        if (area > maxAreaSoFar) {
+          maxAreaSoFar=area;
+          centroidToReturn=gc.getGeometryN(t).getCentroid().getCoordinate();
+        }
+      }
+      return centroidToReturn;
+    }
+  }
+  if (g instanceof Point) {
+    return g.getCoordinate();
+  }
+ else   if (g instanceof LineString) {
+    double tol=1E-6;
+    double mid=g.getLength() / 2d;
+    Coordinate[] coords=g.getCoordinates();
+    double len=0d;
+    for (int i=1; i < coords.length; i++) {
+      LineSegment line=new LineSegment(coords[i - 1],coords[i]);
+      len+=line.getLength();
+      if (Math.abs(len - mid) < tol) {
+        return line.getCoordinate(1);
+      }
+      if (len > mid) {
+        return line.pointAlong(1 - ((len - mid) / line.getLength()));
+      }
+    }
+    return g.getCentroid().getCoordinate();
+  }
+ else {
+    return g.getCentroid().getCoordinate();
+  }
+}

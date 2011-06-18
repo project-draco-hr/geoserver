@@ -1,0 +1,57 @@
+{
+  Formatter log4j=null;
+  final Logger logger=org.geotools.util.logging.Logging.getLogger(base);
+  if (!logger.getUseParentHandlers()) {
+    logger.setLevel(filterLevel);
+    if (logger.getHandlers().length > 0) {
+      Handler handler=logger.getHandlers()[0];
+      if (handler != null) {
+        handler.setLevel(filterLevel);
+      }
+    }
+  }
+  for (Logger parent=logger; parent.getUseParentHandlers(); ) {
+    parent=parent.getParent();
+    if (parent == null) {
+      break;
+    }
+    final Handler[] handlers=parent.getHandlers();
+    if (handlers != null) {
+      for (int i=0; i < handlers.length; i++) {
+        Handler handler=handlers[i];
+        if (handler.getClass().equals(ConsoleHandler.class)) {
+          final Formatter formatter=handler.getFormatter();
+          if (formatter.getClass().equals(SimpleFormatter.class)) {
+            if (log4j == null) {
+              log4j=new Log4JFormatter(base);
+            }
+            try {
+              logger.removeHandler(handler);
+              handler=new Stdout(handler,log4j);
+              handler.setLevel(filterLevel);
+            }
+ catch (            UnsupportedEncodingException exception) {
+              unexpectedException(exception);
+            }
+catch (            SecurityException exception) {
+              unexpectedException(exception);
+            }
+          }
+        }
+        if (handler.getClass().equals(Stdout.class)) {
+          handler.setLevel(filterLevel);
+        }
+        logger.addHandler(handler);
+        logger.setLevel(filterLevel);
+      }
+    }
+  }
+  if (0 == logger.getHandlers().length) {
+    log4j=new Log4JFormatter(base);
+    Handler handler=new Stdout();
+    handler.setFormatter(log4j);
+    handler.setLevel(filterLevel);
+    logger.addHandler(handler);
+  }
+  logger.setUseParentHandlers(false);
+}

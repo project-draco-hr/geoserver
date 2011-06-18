@@ -1,0 +1,23 @@
+{
+  ZipInputStream zis=new ZipInputStream(zippedIn);
+  ZipEntry entry=null;
+  try {
+    while ((entry=zis.getNextEntry()) != null) {
+      try {
+        final String name=entry.getName();
+        if (name.toLowerCase().endsWith(fileName.toLowerCase())) {
+          String unzippedFileContents=IOUtils.toString(zis);
+          assertEquals(expectedContent,unzippedFileContents);
+          return;
+        }
+      }
+  finally {
+        zis.closeEntry();
+      }
+    }
+  }
+  finally {
+    zis.close();
+  }
+  fail(fileName + " was not found in the provided stream");
+}

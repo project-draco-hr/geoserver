@@ -1,0 +1,12 @@
+{
+  Query writeQuery=getWriteQuery(policy);
+  if (writeQuery == Query.ALL) {
+    storeDelegate.removeFeatures(filter);
+  }
+ else   if (writeQuery.getFilter() == Filter.EXCLUDE || writeQuery.getPropertyNames() == Query.NO_NAMES) {
+    throw unsupportedOperation();
+  }
+  final Query local=new Query(null,filter);
+  Query mixed=DataUtilities.mixQueries(local,writeQuery,null);
+  storeDelegate.removeFeatures(mixed.getFilter());
+}

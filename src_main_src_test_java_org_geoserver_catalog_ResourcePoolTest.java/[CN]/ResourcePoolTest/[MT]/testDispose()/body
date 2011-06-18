@@ -1,0 +1,29 @@
+{
+  disposeCalled=false;
+class ResourcePool2 extends ResourcePool {
+    @SuppressWarnings("serial") public ResourcePool2(    Catalog catalog){
+      super(catalog);
+      dataStoreCache=new DataStoreCache(){
+        @SuppressWarnings("unchecked") @Override void dispose(        String name,        DataAccess dataStore){
+          disposeCalled=true;
+          super.dispose(name,dataStore);
+        }
+      }
+;
+    }
+  }
+  Catalog catalog=getCatalog();
+  ResourcePool pool=new ResourcePool2(catalog);
+  catalog.setResourcePool(pool);
+  DataStoreInfo info=catalog.getDataStores().get(0);
+  DataAccess<? extends FeatureType,? extends Feature> dataStore=pool.getDataStore(info);
+  assertNotNull(dataStore);
+  assertFalse(disposeCalled);
+  pool.clear(info);
+  assertTrue(disposeCalled);
+  dataStore=pool.getDataStore(info);
+  assertNotNull(dataStore);
+  disposeCalled=false;
+  pool.dispose();
+  assertTrue(disposeCalled);
+}

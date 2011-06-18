@@ -1,0 +1,55 @@
+{
+  GeneralEnvelope retVal;
+  final CoordinateReferenceSystem requestCRS=CRS.getHorizontalCRS(requestedEnvelope.getCoordinateReferenceSystem());
+  final CoordinateReferenceSystem nativeCRS=CRS.getHorizontalCRS(nativeEnvelope.getCoordinateReferenceSystem());
+  try {
+    MathTransform destinationToSourceTransform=null;
+    if (!CRS.equalsIgnoreMetadata(requestCRS,nativeCRS))     destinationToSourceTransform=CRS.findMathTransform(requestCRS,nativeCRS,true);
+    if (destinationToSourceTransform != null && !destinationToSourceTransform.isIdentity()) {
+      retVal=CRS.transform(destinationToSourceTransform,getHorizontalEnvelope(requestedEnvelope));
+      retVal.setCoordinateReferenceSystem(nativeCRS);
+    }
+ else {
+      retVal=new GeneralEnvelope(getHorizontalEnvelope(requestedEnvelope));
+    }
+    if (!retVal.intersects(nativeEnvelope,true))     return null;
+    retVal.intersect(nativeEnvelope);
+    retVal.setCoordinateReferenceSystem(nativeCRS);
+    return retVal;
+  }
+ catch (  TransformException te) {
+    if (LOGGER.isLoggable(Level.FINE))     LOGGER.log(Level.FINE,te.getLocalizedMessage(),te);
+  }
+catch (  FactoryException fe) {
+    if (LOGGER.isLoggable(Level.FINE))     LOGGER.log(Level.FINE,fe.getLocalizedMessage(),fe);
+  }
+  try {
+    final CoordinateReferenceSystem nativeGeoCRS=CRSUtilities.getStandardGeographicCRS2D(nativeCRS);
+    final GeneralEnvelope nativeGeoEnvelope=(GeneralEnvelope)CRS.transform(nativeEnvelope,nativeGeoCRS);
+    nativeGeoEnvelope.setCoordinateReferenceSystem(nativeGeoCRS);
+    GeneralEnvelope requestedBBOXInNativeGeographicCRS=null;
+    if (!CRS.equalsIgnoreMetadata(nativeCRS,requestCRS)) {
+      final MathTransform requestCRSToCoverageGeographicCRS2D=CRS.findMathTransform(requestCRS,nativeGeoCRS,true);
+      if (!requestCRSToCoverageGeographicCRS2D.isIdentity()) {
+        requestedBBOXInNativeGeographicCRS=CRS.transform(requestCRSToCoverageGeographicCRS2D,requestedEnvelope);
+        requestedBBOXInNativeGeographicCRS.setCoordinateReferenceSystem(nativeCRS);
+      }
+    }
+    if (requestedBBOXInNativeGeographicCRS == null)     requestedBBOXInNativeGeographicCRS=new GeneralEnvelope(requestCRS);
+    if (!requestedBBOXInNativeGeographicCRS.intersects(nativeEnvelope,true))     return null;
+    requestedBBOXInNativeGeographicCRS.intersect(nativeGeoEnvelope);
+    requestedBBOXInNativeGeographicCRS.setCoordinateReferenceSystem(nativeGeoCRS);
+    final MathTransform transform=CRS.findMathTransform(nativeGeoCRS,requestCRS,true);
+    final GeneralEnvelope approximateRequestedBBox=CRS.transform(transform,requestedBBOXInNativeGeographicCRS);
+    approximateRequestedBBox.setCoordinateReferenceSystem(requestCRS);
+    return approximateRequestedBBox;
+  }
+ catch (  TransformException te) {
+    if (LOGGER.isLoggable(Level.FINE))     LOGGER.log(Level.FINE,te.getLocalizedMessage(),te);
+  }
+catch (  FactoryException fe) {
+    if (LOGGER.isLoggable(Level.FINE))     LOGGER.log(Level.FINE,fe.getLocalizedMessage(),fe);
+  }
+  LOGGER.log(Level.INFO,"We did not manage to crop the requested envelope, we fall back onto loading the whole coverage.");
+  return null;
+}

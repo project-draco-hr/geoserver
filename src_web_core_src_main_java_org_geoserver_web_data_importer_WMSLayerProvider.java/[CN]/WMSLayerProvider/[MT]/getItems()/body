@@ -1,0 +1,32 @@
+{
+  if (items == null) {
+    if (storeId == null)     return new ArrayList<LayerResource>();
+    try {
+      List<LayerResource> result;
+      StoreInfo store=getCatalog().getStore(storeId,StoreInfo.class);
+      Map<String,LayerResource> resources=new HashMap<String,LayerResource>();
+      WMSStoreInfo wmsInfo=(WMSStoreInfo)store;
+      CatalogBuilder builder=new CatalogBuilder(getCatalog());
+      builder.setStore(store);
+      List<Layer> layers=wmsInfo.getWebMapServer(null).getCapabilities().getLayerList();
+      for (      Layer l : layers) {
+        if (l.getName() == null) {
+          continue;
+        }
+        resources.put(l.getName(),new LayerResource(new NameImpl(l.getName())));
+      }
+      List<ResourceInfo> configuredTypes=getCatalog().getResourcesByStore(store,ResourceInfo.class);
+      for (      ResourceInfo type : configuredTypes) {
+        LayerResource resource=resources.get(type.getNativeName());
+        if (resource != null)         resource.setStatus(LayerStatus.PUBLISHED);
+      }
+      result=new ArrayList<LayerResource>(resources.values());
+      Collections.sort(result);
+      items=result;
+    }
+ catch (    Exception e) {
+      throw new RuntimeException("Could not list layers for this store, " + "an error occurred retrieving them: " + e.getMessage(),e);
+    }
+  }
+  return items;
+}

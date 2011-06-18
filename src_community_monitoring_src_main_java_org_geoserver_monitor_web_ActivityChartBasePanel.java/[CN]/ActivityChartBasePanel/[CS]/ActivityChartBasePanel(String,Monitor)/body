@@ -1,0 +1,32 @@
+{
+  super(id);
+  Date[] range=getDateRange();
+  BufferedDynamicImageResource resource=queryAndRenderChart(monitor,range);
+  add(chartImage=new NonCachingImage("chart",resource));
+  chartImage.setOutputMarkupId(true);
+  Form form=new Form("form");
+  add(form);
+  from=new Date(range[0].getTime());
+  to=new Date(range[1].getTime());
+  form.add(new DateTimeField("from",new PropertyModel<Date>(this,"from")){
+    @Override protected boolean use12HourFormat(){
+      return false;
+    }
+  }
+);
+  form.add(new DateTimeField("to",new PropertyModel<Date>(this,"to")){
+    @Override protected boolean use12HourFormat(){
+      return false;
+    }
+  }
+);
+  form.add(new AjaxButton("refresh"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      Monitor monitor=((GeoServerApplication)getApplication()).getBeanOfType(Monitor.class);
+      Date[] range=new Date[]{from,to};
+      chartImage.setImageResource(queryAndRenderChart(monitor,range));
+      target.addComponent(chartImage);
+    }
+  }
+);
+}

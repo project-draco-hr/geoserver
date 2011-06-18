@@ -1,0 +1,170 @@
+{
+  final Envelope envelope=request.getBbox();
+  final List<MapLayerInfo> layers=request.getLayers();
+  final List<Map<String,String>> viewParams=request.getViewParams();
+  final Style[] styles=request.getStyles().toArray(new Style[]{});
+  final Filter[] filters=buildLayersFilters(request.getFilter(),layers);
+  final CoordinateReferenceSystem mapcrs=request.getCrs();
+  if (mapcrs != null) {
+    mapContext.setAreaOfInterest(envelope,mapcrs);
+  }
+ else {
+    mapContext.setAreaOfInterest(envelope,DefaultGeographicCRS.WGS84);
+  }
+  mapContext.setMapWidth(request.getWidth());
+  mapContext.setMapHeight(request.getHeight());
+  mapContext.setAngle(request.getAngle());
+  mapContext.setBgColor(request.getBgColor());
+  mapContext.setTransparent(request.isTransparent());
+  mapContext.setBuffer(request.getBuffer());
+  mapContext.setPaletteInverter(request.getPalette());
+  if ((request.getWidth() <= 0) || (request.getHeight() <= 0) || (mapContext.getAreaOfInterest().getLength(0) <= 0)|| (mapContext.getAreaOfInterest().getLength(1) <= 0)) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("We are not going to render anything because either the area is null or the dimensions are not positive.");
+    }
+    return null;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("setting up map");
+  }
+  boolean cachingPossible=request.isGet();
+  final String featureVersion=request.getFeatureVersion();
+  int maxAge=Integer.MAX_VALUE;
+  for (int i=0; i < layers.size(); i++) {
+    final MapLayerInfo mapLayerInfo=layers.get(i);
+    cachingPossible&=mapLayerInfo.isCachingEnabled();
+    if (cachingPossible) {
+      maxAge=Math.min(maxAge,mapLayerInfo.getCacheMaxAge());
+    }
+ else {
+      cachingPossible=false;
+    }
+    final Style layerStyle=styles[i];
+    final Filter layerFilter=filters[i];
+    final MapLayer layer;
+    int layerType=mapLayerInfo.getType();
+    if (layerType == MapLayerInfo.TYPE_REMOTE_VECTOR) {
+      final SimpleFeatureSource source=mapLayerInfo.getRemoteFeatureSource();
+      layer=new DefaultMapLayer(source,layerStyle);
+      layer.setTitle(mapLayerInfo.getRemoteFeatureSource().getSchema().getTypeName());
+      final Query definitionQuery=new Query(source.getSchema().getTypeName());
+      definitionQuery.setFilter(layerFilter);
+      definitionQuery.setVersion(featureVersion);
+      int maxFeatures=request.getMaxFeatures() != null ? request.getMaxFeatures() : Integer.MAX_VALUE;
+      definitionQuery.setMaxFeatures(maxFeatures);
+      layer.setQuery(definitionQuery);
+      mapContext.addLayer(layer);
+    }
+ else     if (layerType == MapLayerInfo.TYPE_VECTOR) {
+      FeatureSource<? extends FeatureType,? extends Feature> source;
+      try {
+        source=mapLayerInfo.getFeatureSource(true);
+      }
+ catch (      IOException exp) {
+        if (LOGGER.isLoggable(Level.SEVERE)) {
+          LOGGER.log(Level.SEVERE,new StringBuffer("Getting feature source: ").append(exp.getMessage()).toString(),exp);
+        }
+        throw new ServiceException("Internal error",exp);
+      }
+      layer=new FeatureSourceMapLayer(source,layerStyle);
+      layer.setTitle(mapLayerInfo.getFeature().getPrefixedName());
+      Filter dimensionFilter=wms.getTimeElevationToFilter(times,elevations,mapLayerInfo.getFeature());
+      Filter filter=Filters.and(ff,layerFilter,dimensionFilter);
+      final Query definitionQuery=new Query(source.getSchema().getName().getLocalPart());
+      definitionQuery.setVersion(featureVersion);
+      definitionQuery.setFilter(filter);
+      if (viewParams != null) {
+        definitionQuery.setHints(new Hints(Hints.VIRTUAL_TABLE_PARAMETERS,viewParams.get(i)));
+      }
+      final Integer startIndex=request.getStartIndex();
+      if (startIndex != null) {
+        QueryCapabilities queryCapabilities=source.getQueryCapabilities();
+        if (queryCapabilities.isOffsetSupported()) {
+          definitionQuery.setStartIndex(startIndex);
+        }
+ else {
+          throw new ServiceException("startIndex is not supported for the " + mapLayerInfo.getName() + " layer");
+        }
+      }
+      int maxFeatures=request.getMaxFeatures() != null ? request.getMaxFeatures() : Integer.MAX_VALUE;
+      definitionQuery.setMaxFeatures(maxFeatures);
+      layer.setQuery(definitionQuery);
+      mapContext.addLayer(layer);
+    }
+ else     if (layerType == MapLayerInfo.TYPE_RASTER) {
+      final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)mapLayerInfo.getCoverageReader();
+      if (reader != null) {
+        GeneralParameterValue[] readParameters=wms.getWMSReadParameters(request,mapLayerInfo,layerFilter,times,elevations,reader,false);
+        try {
+          try {
+            layer=new DefaultMapLayer(FeatureUtilities.wrapGridCoverageReader(reader,readParameters),layerStyle);
+          }
+ catch (          Exception e) {
+            throw new RuntimeException(e);
+          }
+          layer.setTitle(mapLayerInfo.getCoverage().getPrefixedName());
+          layer.setQuery(Query.ALL);
+          mapContext.addLayer(layer);
+        }
+ catch (        IllegalArgumentException e) {
+          if (LOGGER.isLoggable(Level.SEVERE)) {
+            LOGGER.log(Level.SEVERE,new StringBuilder("Wrapping GC in feature source: ").append(e.getLocalizedMessage()).toString(),e);
+          }
+          throw new ServiceException("Internal error : unable to get reader for this coverage layer " + mapLayerInfo);
+        }
+      }
+ else {
+        throw new ServiceException(new StringBuffer("Internal error : unable to get reader for this coverage layer ").append(mapLayerInfo.toString()).toString());
+      }
+    }
+ else     if (layerType == MapLayerInfo.TYPE_WMS) {
+      WMSLayerInfo wmsLayer=(WMSLayerInfo)mapLayerInfo.getResource();
+      WebMapServer wms=wmsLayer.getStore().getWebMapServer(null);
+      Layer gt2Layer=wmsLayer.getWMSLayer(null);
+      boolean merged=false;
+      if (mapContext.getLayerCount() > 0) {
+        MapLayer lastLayer=mapContext.getLayer(mapContext.getLayerCount() - 1);
+        if (lastLayer instanceof WMSMapLayer) {
+          WMSMapLayer lastWMS=(WMSMapLayer)lastLayer;
+          WebMapServer otherWMS=lastWMS.getWebMapServer();
+          if (otherWMS.equals(wms)) {
+            lastWMS.addLayer(gt2Layer);
+            merged=true;
+          }
+        }
+      }
+      if (!merged) {
+        WMSMapLayer mapLayer=new WMSMapLayer(wms,gt2Layer);
+        mapLayer.setTitle(wmsLayer.getPrefixedName());
+        mapContext.addLayer(mapLayer);
+      }
+    }
+ else {
+      throw new IllegalArgumentException("Unkown layer type " + layerType);
+    }
+  }
+  Map envMap=new HashMap(request.getEnv());
+  envMap.put("wms_bbox",mapContext.getAreaOfInterest());
+  envMap.put("wms_crs",mapContext.getAreaOfInterest().getCoordinateReferenceSystem());
+  envMap.put("wms_srs",mapContext.getRequest().getSRS());
+  envMap.put("wms_width",mapContext.getMapWidth());
+  envMap.put("wms_height",mapContext.getMapHeight());
+  EnvFunction.setLocalValues(envMap);
+  WebMap map;
+  try {
+    setupRenderingBuffer(mapContext,layers);
+    map=delegate.produceMap(mapContext);
+  }
+  finally {
+    EnvFunction.clearLocalValues();
+  }
+  if (cachingPossible) {
+    map.setResponseHeader("Cache-Control","max-age=" + maxAge + ", must-revalidate");
+    Date expires=new Date();
+    expires.setTime(expires.getTime() + maxAge * 1000);
+    DateFormat format=new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z",Locale.US);
+    format.setTimeZone(TimeZone.getTimeZone("GMT"));
+    map.setResponseHeader("Expires",format.format(expires));
+  }
+  return map;
+}

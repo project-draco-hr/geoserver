@@ -1,0 +1,26 @@
+{
+  Properties db=new Properties();
+  if (dbprops == null) {
+    dbprops=new File(monitoringDir,"db.properties");
+    InputStream in=getClass().getResourceAsStream("db.properties");
+    IOUtils.copy(in,new FileOutputStream(dbprops));
+    db.load(getClass().getResourceAsStream("db.properties"));
+  }
+ else {
+    FileInputStream in=new FileInputStream(dbprops);
+    db.load(in);
+    in.close();
+  }
+  setDriverClassName(db.getProperty("driver"));
+  setUrl(getURL(db));
+  if (db.containsKey("username")) {
+    setUsername(db.getProperty("username"));
+  }
+  if (db.containsKey("password")) {
+    setPassword(db.getProperty("password"));
+  }
+  setDefaultAutoCommit(Boolean.valueOf(db.getProperty("defaultAutoCommit","true")));
+  setMinIdle(1);
+  setMaxActive(4);
+  super.getConnection();
+}

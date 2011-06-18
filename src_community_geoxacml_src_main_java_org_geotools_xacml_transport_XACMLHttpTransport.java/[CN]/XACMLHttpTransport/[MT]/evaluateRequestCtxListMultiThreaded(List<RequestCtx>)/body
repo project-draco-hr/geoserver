@@ -1,0 +1,28 @@
+{
+  List<ResponseCtx> resultList=new ArrayList<ResponseCtx>(requests.size());
+  List<HttpThread> threadList=new ArrayList<HttpThread>(requests.size());
+  if (requests.size() == 1) {
+    resultList.add(evaluateRequestCtx(requests.get(0)));
+    return resultList;
+  }
+  for (  RequestCtx request : requests) {
+    HttpThread t=new HttpThread(request);
+    t.start();
+    threadList.add(t);
+  }
+  for (  HttpThread t : threadList) {
+    try {
+      t.join();
+    }
+ catch (    InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    log(t.getRequestCtx());
+    if (t.getRuntimeException() == null) {
+      log(t.getResponseCtx());
+      resultList.add(t.getResponseCtx());
+    }
+ else     throw t.getRuntimeException();
+  }
+  return resultList;
+}

@@ -1,0 +1,20 @@
+{
+  final SimpleFeature next=delegate.next();
+  final SimpleFeatureType featureType=next.getFeatureType();
+  for (  AttributeDescriptor att : featureType.getAttributeDescriptors()) {
+    String name=att.getLocalName();
+    if (!writableAttributes.contains(name)) {
+      Object value=next.getAttribute(name);
+      if (value != null) {
+        String typeName=getSchema().getName().getLocalPart();
+        if (response == Response.CHALLENGE) {
+          throw SecureCatalogImpl.unauthorizedAccess(typeName);
+        }
+ else {
+          throw new UnsupportedOperationException("Trying to write on the write protected attribute " + name);
+        }
+      }
+    }
+  }
+  return next;
+}

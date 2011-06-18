@@ -1,0 +1,14 @@
+{
+  inputNotNull(sourceDirectory,filter);
+  if (!sourceDirectory.exists() || !sourceDirectory.canRead() || !sourceDirectory.isDirectory())   throw new IllegalStateException("Source is not in a legal state.");
+  final File[] files=(filter != null ? sourceDirectory.listFiles(filter) : sourceDirectory.listFiles());
+  for (  File file : files) {
+    if (file.isDirectory()) {
+      if (recursive)       deleteDirectory(file,filter,recursive,deleteItself);
+    }
+ else {
+      if (!file.delete())       return false;
+    }
+  }
+  return deleteItself ? sourceDirectory.delete() : true;
+}

@@ -1,0 +1,38 @@
+{
+  String name=readValue("name",String.class,reader);
+  String sql=readValue("sql",String.class,reader);
+  VirtualTable vt=new VirtualTable(name,sql);
+  List<String> primaryKeys=new ArrayList<String>();
+  while (reader.hasMoreChildren()) {
+    reader.moveDown();
+    if (reader.getNodeName().equals("keyColumn")) {
+      primaryKeys.add(reader.getValue());
+    }
+ else     if (reader.getNodeName().equals("geometry")) {
+      String geomName=readValue("name",String.class,reader);
+      Geometries geomType=Geometries.getForName(readValue("type",String.class,reader));
+      Class type=geomType == null ? Geometry.class : geomType.getBinding();
+      int srid=readValue("srid",Integer.class,reader);
+      vt.addGeometryMetadatata(geomName,type,srid);
+    }
+ else     if (reader.getNodeName().equals("parameter")) {
+      String pname=readValue("name",String.class,reader);
+      String defaultValue=null;
+      Validator validator=null;
+      while (reader.hasMoreChildren()) {
+        reader.moveDown();
+        if (reader.getNodeName().equals("defaultValue")) {
+          defaultValue=reader.getValue();
+        }
+ else         if (reader.getNodeName().equals("regexpValidator")) {
+          validator=new RegexpValidator(reader.getValue());
+        }
+        reader.moveUp();
+      }
+      vt.addParameter(new VirtualTableParameter(pname,defaultValue,validator));
+    }
+    reader.moveUp();
+  }
+  vt.setPrimaryKeyColumns(primaryKeys);
+  return vt;
+}

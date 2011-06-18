@@ -1,0 +1,32 @@
+{
+  AbstractGridFormat format=store.getFormat();
+  if (format == null) {
+    String msg="Coverage Store factory not found";
+    msg=(String)new ResourceModel("CoverageStoreEditPage.cantGetCoverageStoreFactory",msg).getObject();
+    throw new IllegalArgumentException(msg);
+  }
+  IModel model=new Model(store);
+  paramsForm=new Form("rasterStoreForm",model);
+  add(paramsForm);
+  paramsForm.add(new Label("storeType",format.getName()));
+  paramsForm.add(new Label("storeTypeDescription",format.getDescription()));
+  PropertyModel nameModel=new PropertyModel(model,"name");
+  final TextParamPanel namePanel=new TextParamPanel("namePanel",nameModel,new ResourceModel("dataSrcName","Data Source Name"),true);
+  paramsForm.add(namePanel);
+  paramsForm.add(new TextParamPanel("descriptionPanel",new PropertyModel(model,"description"),new ResourceModel("description","Description"),false));
+  paramsForm.add(new CheckBoxParamPanel("enabledPanel",new PropertyModel(model,"enabled"),new ResourceModel("enabled","Enabled")));
+  workspacePanel=new WorkspacePanel("workspacePanel",new PropertyModel(model,"workspace"),new ResourceModel("workspace","Workspace"),true);
+  paramsForm.add(workspacePanel);
+  final StoreEditPanel storeEditPanel;
+{
+    GeoServerApplication app=getGeoServerApplication();
+    storeEditPanel=StoreExtensionPoints.getStoreEditPanel("parametersPanel",paramsForm,store,app);
+  }
+  paramsForm.add(storeEditPanel);
+  paramsForm.add(new BookmarkablePageLink("cancel",StorePage.class));
+  paramsForm.add(saveLink());
+  paramsForm.setDefaultButton(saveLink());
+  paramsForm.add(new FeedbackPanel("feedback"));
+  StoreNameValidator storeNameValidator=new StoreNameValidator(workspacePanel.getFormComponent(),namePanel.getFormComponent(),store.getId());
+  paramsForm.add(storeNameValidator);
+}

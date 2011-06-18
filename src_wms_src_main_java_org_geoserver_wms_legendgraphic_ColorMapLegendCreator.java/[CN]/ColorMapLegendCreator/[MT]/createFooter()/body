@@ -1,0 +1,20 @@
+{
+  final BufferedImage image=ImageUtils.createImage(1,1,(IndexColorModel)null,transparent);
+  final Map<Key,Object> hintsMap=new HashMap<Key,Object>();
+  final Graphics2D graphics=ImageUtils.prepareTransparency(transparent,backgroundColor,image,hintsMap);
+  final Queue<BufferedImage> queue=new LinkedList<BufferedImage>();
+  final int rowWidth=(int)Math.round(footerW);
+  for (  Cell cell : footerRows) {
+    final Dimension dim=cell.getPreferredDimension(graphics);
+    final int rowHeight=(int)Math.round(dim.getHeight());
+    final Rectangle clipboxA=new Rectangle(0,0,rowWidth,rowHeight);
+    final BufferedImage colorCellLegend=new BufferedImage(rowWidth,rowHeight,BufferedImage.TYPE_INT_ARGB);
+    Graphics2D rlg=colorCellLegend.createGraphics();
+    rlg.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+    cell.draw(rlg,clipboxA,border);
+    rlg.dispose();
+    queue.add(colorCellLegend);
+  }
+  graphics.dispose();
+  return queue;
+}

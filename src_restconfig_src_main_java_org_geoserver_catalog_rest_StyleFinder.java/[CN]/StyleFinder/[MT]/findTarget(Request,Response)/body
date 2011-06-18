@@ -1,0 +1,14 @@
+{
+  String style=getAttribute(request,"style");
+  String layer=getAttribute(request,"layer");
+  if (style != null && catalog.getStyleByName(style) == null) {
+    throw new RestletException("No such style: " + style,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (layer != null && catalog.getLayerByName(layer) == null) {
+    throw new RestletException("No such layer: " + layer,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (style == null && request.getMethod() == Method.GET) {
+    return new StyleListResource(getContext(),request,response,catalog);
+  }
+  return new StyleResource(getContext(),request,response,catalog);
+}

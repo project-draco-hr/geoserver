@@ -1,0 +1,10 @@
+{
+  Document dom=getAsDOM("/rest/workspaces/wcs/coveragestores/BlueMarble.xml");
+  assertXpathEvaluatesTo("true","/coverageStore/enabled",dom);
+  String xml="<coverageStore>" + "<name>BlueMarble</name>" + "<enabled>false</enabled>"+ "</coverageStore>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/wcs/coveragestores/BlueMarble",xml,"text/xml");
+  assertEquals(200,response.getStatusCode());
+  dom=getAsDOM("/rest/workspaces/wcs/coveragestores/BlueMarble.xml");
+  assertXpathEvaluatesTo("false","/coverageStore/enabled",dom);
+  assertFalse(catalog.getCoverageStoreByName("wcs","BlueMarble").isEnabled());
+}

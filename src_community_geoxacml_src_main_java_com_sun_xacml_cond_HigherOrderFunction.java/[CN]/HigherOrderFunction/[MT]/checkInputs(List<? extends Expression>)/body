@@ -1,0 +1,22 @@
+{
+  Object[] list=inputs.toArray();
+  if (list.length != 3)   throw new IllegalArgumentException("requires three inputs");
+  Function function=null;
+  if (list[0] instanceof Function) {
+    function=(Function)(list[0]);
+  }
+ else   if (list[0] instanceof VariableReference) {
+    Expression xpr=((VariableReference)(list[0])).getReferencedDefinition().getExpression();
+    if (xpr instanceof Function)     function=(Function)xpr;
+  }
+  if (function == null)   throw new IllegalArgumentException("first arg to higher-order " + " function must be a function");
+  if (!function.getReturnType().toString().equals(BooleanAttribute.identifier))   throw new IllegalArgumentException("higher-order function must " + "use a boolean function");
+  Evaluatable eval1=(Evaluatable)(list[1]);
+  Evaluatable eval2=(Evaluatable)(list[2]);
+  if (secondIsBag && (!eval1.returnsBag()))   throw new IllegalArgumentException("first arg has to be a bag");
+  if (!eval2.returnsBag())   throw new IllegalArgumentException("second arg has to be a bag");
+  List<Evaluatable> args=new ArrayList<Evaluatable>();
+  args.add(eval1);
+  args.add(eval2);
+  function.checkInputsNoBag(args);
+}

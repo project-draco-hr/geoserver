@@ -1,0 +1,16 @@
+{
+  int i=token.indexOf(':');
+  if (i != -1 || geoserver.getService(WFSInfo.class).isCiteCompliant()) {
+    return super.parseToken(token);
+  }
+ else {
+    FeatureTypeInfo ftInfo=catalog.getFeatureTypeByName(token);
+    if (ftInfo == null) {
+      throw new WFSException("Could not find type name " + token,"InvalidParameterValue","typeName");
+    }
+ else {
+      final Name name=ftInfo.getFeatureType().getName();
+      return new QName(name.getNamespaceURI(),name.getLocalPart());
+    }
+  }
+}

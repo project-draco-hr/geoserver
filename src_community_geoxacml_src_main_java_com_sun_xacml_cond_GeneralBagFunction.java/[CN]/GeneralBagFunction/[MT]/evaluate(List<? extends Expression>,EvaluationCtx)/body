@@ -1,0 +1,28 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult result=evalArgs(inputs,context,argValues);
+  if (result != null)   return result;
+  AttributeValue attrResult=null;
+switch (getFunctionId()) {
+case ID_BASE_ONE_AND_ONLY:
+{
+      BagAttribute bag=(BagAttribute)(argValues[0]);
+      if (bag.size() != 1)       return makeProcessingError(getFunctionName() + " expects " + "a bag that contains a single "+ "element, got a bag with "+ bag.size()+ " elements");
+      attrResult=(AttributeValue)(bag.iterator().next());
+      break;
+    }
+case ID_BASE_BAG_SIZE:
+{
+    BagAttribute bag=(BagAttribute)(argValues[0]);
+    attrResult=new IntegerAttribute(bag.size());
+    break;
+  }
+case ID_BASE_BAG:
+{
+  List<AttributeValue> argsList=Arrays.asList(argValues);
+  attrResult=new BagAttribute(getReturnType(),argsList);
+  break;
+}
+}
+return new EvaluationResult(attrResult);
+}

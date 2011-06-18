@@ -1,0 +1,30 @@
+{
+  if (fc.getSchema().getGeometryDescriptor() == null) {
+    return fc;
+  }
+  CoordinateReferenceSystem nativeCRS=fc.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
+  if (nativeCRS == null) {
+    if (declaredCRS != null) {
+      fc=new ForceCoordinateSystemFeatureResults(fc,declaredCRS);
+      nativeCRS=declaredCRS;
+    }
+  }
+ else   if (srsHandling == ProjectionPolicy.FORCE_DECLARED && !nativeCRS.equals(declaredCRS)) {
+    fc=new ForceCoordinateSystemFeatureResults(fc,declaredCRS);
+    nativeCRS=declaredCRS;
+  }
+ else   if (srsHandling == ProjectionPolicy.REPROJECT_TO_DECLARED && targetCRS == null && !nativeCRS.equals(declaredCRS)) {
+    fc=new ReprojectFeatureResults(fc,declaredCRS);
+  }
+  if (targetCRS != null) {
+    if (nativeCRS == null) {
+      fc=new ReprojectFeatureResults(fc,targetCRS);
+    }
+ else {
+      if (!CRS.equalsIgnoreMetadata(nativeCRS,targetCRS)) {
+        fc=new ReprojectFeatureResults(fc,targetCRS);
+      }
+    }
+  }
+  return fc;
+}

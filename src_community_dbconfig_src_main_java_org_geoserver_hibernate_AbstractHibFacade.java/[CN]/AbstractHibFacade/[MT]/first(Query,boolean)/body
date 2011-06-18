@@ -1,0 +1,30 @@
+{
+  query.setMaxResults(doWarn ? 2 : 1);
+  query.setCacheable(true);
+  List<?> result=query.list();
+  if (result.isEmpty()) {
+    return null;
+  }
+ else {
+    if (result.size() > 1) {
+      throw new RuntimeException("Expected 1 result from " + query + " but got "+ result.size());
+    }
+    Object ret=result.get(0);
+    if (ret instanceof HibernateProxy) {
+      HibernateProxy proxy=(HibernateProxy)ret;
+      ret=proxy.getHibernateLazyInitializer().getImplementation();
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      StringBuilder callerChain=new StringBuilder();
+      for (      StackTraceElement stackTraceElement : new Throwable().getStackTrace()) {
+        if ("first".equals(stackTraceElement.getMethodName()))         continue;
+        String cname=stackTraceElement.getClassName();
+        if (cname.startsWith("org.spring"))         continue;
+        cname=cname.substring(cname.lastIndexOf(".") + 1);
+        callerChain.append(cname).append('.').append(stackTraceElement.getMethodName()).append(':').append(stackTraceElement.getLineNumber()).append(' ');
+      }
+      LOGGER.fine("FIRST -->" + ret.getClass().getSimpleName() + " --- "+ ret+ " { "+ callerChain+ "}");
+    }
+    return ret;
+  }
+}

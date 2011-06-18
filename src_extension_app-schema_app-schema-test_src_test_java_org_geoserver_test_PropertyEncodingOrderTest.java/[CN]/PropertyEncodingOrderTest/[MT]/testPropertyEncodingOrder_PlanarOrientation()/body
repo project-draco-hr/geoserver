@@ -1,0 +1,28 @@
+{
+  String path="wfs?request=GetFeature&typename=er:MineralOccurrence";
+  Document doc=getAsDOM(path);
+  LOGGER.info("WFS GetFeature&er:MineralOccurrence:\n" + prettyString(doc));
+  assertXpathCount(1,"//er:MineralOccurrence[@gml:id='er.mineraloccurrence.S0032895']",doc);
+  Node feature=doc.getElementsByTagName("er:MineralOccurrence").item(0);
+  assertEquals("er:MineralOccurrence",feature.getNodeName());
+  assertXpathEvaluatesTo("er.mineraloccurrence.S0032895","//er:MineralOccurrence/@gml:id",doc);
+  Node name=feature.getFirstChild();
+  assertEquals("gml:name",name.getNodeName());
+  assertXpathEvaluatesTo("Robinson Range - Deposit D","//er:MineralOccurrence[@gml:id='er.mineraloccurrence.S0032895']/gml:name",doc);
+  Node planarOrientation=name.getNextSibling();
+  assertEquals("er:planarOrientation",planarOrientation.getNodeName());
+  Node gsml_planarOrientation=planarOrientation.getFirstChild();
+  assertEquals("gsml:CGI_PlanarOrientation",gsml_planarOrientation.getNodeName());
+  Node convention=gsml_planarOrientation.getFirstChild();
+  assertEquals("gsml:convention",convention.getNodeName());
+  assertXpathEvaluatesTo("strike dip right hand rule","//er:MineralOccurrence[@gml:id='er.mineraloccurrence.S0032895']/er:planarOrientation/gsml:CGI_PlanarOrientation/gsml:convention",doc);
+  Node azimuth=convention.getNextSibling();
+  assertEquals("gsml:azimuth",azimuth.getNodeName());
+  assertXpathEvaluatesTo("50.0","//er:MineralOccurrence[@gml:id='er.mineraloccurrence.S0032895']/er:planarOrientation/gsml:CGI_PlanarOrientation/gsml:azimuth/gsml:CGI_NumericValue/gsml:principalValue",doc);
+  Node dip=azimuth.getNextSibling();
+  assertEquals("gsml:dip",dip.getNodeName());
+  assertXpathEvaluatesTo("60-80","//er:MineralOccurrence[@gml:id='er.mineraloccurrence.S0032895']/er:planarOrientation/gsml:CGI_PlanarOrientation/gsml:dip/gsml:CGI_TermValue/gsml:value",doc);
+  Node polarity=dip.getNextSibling();
+  assertEquals("gsml:polarity",polarity.getNodeName());
+  assertXpathEvaluatesTo("not applicable","//er:MineralOccurrence[@gml:id='er.mineraloccurrence.S0032895']/er:planarOrientation/gsml:CGI_PlanarOrientation/gsml:polarity",doc);
+}

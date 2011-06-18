@@ -1,0 +1,20 @@
+{
+  if (!isComplex()) {
+    return Collections.singletonList(ParameterType.LITERAL);
+  }
+ else {
+    Set<ParameterType> result=new LinkedHashSet<ParameterType>();
+    result.add(ParameterType.TEXT);
+    result.add(ParameterType.REFERENCE);
+    result.add(ParameterType.SUBPROCESS);
+    for (    ProcessParameterIO ppio : getProcessParameterIO()) {
+      if (FeatureCollection.class.isAssignableFrom(ppio.getType())) {
+        result.add(ParameterType.VECTOR_LAYER);
+      }
+ else       if (GridCoverage.class.isAssignableFrom(ppio.getType())) {
+        result.add(ParameterType.RASTER_LAYER);
+      }
+    }
+    return new ArrayList<ParameterType>(result);
+  }
+}

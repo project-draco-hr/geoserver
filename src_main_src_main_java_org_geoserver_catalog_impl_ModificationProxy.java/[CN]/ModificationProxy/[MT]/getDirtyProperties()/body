@@ -1,0 +1,23 @@
+{
+  List<String> propertyNames=new ArrayList<String>();
+  for (  String propertyName : properties().keySet()) {
+    Object value=properties.get(propertyName);
+    if (value instanceof Proxy) {
+      ModificationProxy h=handler(value);
+      if (h != null && !h.isDirty()) {
+        Object curr=unwrap(value);
+        try {
+          Object orig=unwrap(getter(propertyName).invoke(proxyObject,null));
+          if (curr == orig) {
+            continue;
+          }
+        }
+ catch (        Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+    propertyNames.add(propertyName);
+  }
+  return propertyNames;
+}

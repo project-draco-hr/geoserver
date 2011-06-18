@@ -1,0 +1,28 @@
+{
+  attributes.clear();
+  for (  AttributeDescriptor ad : ft.getAttributeDescriptors()) {
+    SQLViewAttribute at=new SQLViewAttribute(ad.getLocalName(),ad.getType().getBinding());
+    String attName=ad.getName().getLocalPart();
+    attributes.add(at);
+    if (ad instanceof GeometryDescriptor) {
+      GeometryDescriptor gd=(GeometryDescriptor)ad;
+      if (gd.getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID) != null) {
+        at.setSrid((Integer)gd.getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID));
+      }
+ else       if (gd.getCoordinateReferenceSystem() != null) {
+        try {
+          at.setSrid(CRS.lookupEpsgCode(gd.getCoordinateReferenceSystem(),false));
+        }
+ catch (        Exception e) {
+        }
+      }
+      if (vt != null && vt.getGeometries().contains(attName)) {
+        at.setSrid(vt.getNativeSrid(attName));
+        at.setType(vt.getGeometryType(attName));
+      }
+    }
+    if (vt != null && vt.getPrimaryKeyColumns() != null && vt.getPrimaryKeyColumns().contains(attName)) {
+      at.setPk(true);
+    }
+  }
+}

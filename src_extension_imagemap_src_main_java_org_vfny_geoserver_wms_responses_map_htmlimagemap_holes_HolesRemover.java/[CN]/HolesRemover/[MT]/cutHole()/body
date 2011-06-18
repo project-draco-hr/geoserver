@@ -1,0 +1,66 @@
+{
+  shapeVerts=ensureWindingOrder(shapeVerts,WINDING_COUNTER_CLOCKWISE);
+  holeVerts=ensureWindingOrder(holeVerts,WINDING_CLOCKWISE);
+  for (int i=0; i < shapeVerts.getNumPoints(); i++)   polygonVertices.addLast(new Vertex(shapeVerts.getCoordinateN(i),i));
+  CyclicalList holePolygon=new CyclicalList();
+  for (int i=0; i < holeVerts.getNumPoints(); i++)   holePolygon.add(new Vertex(holeVerts.getCoordinateN(i),i + polygonVertices.size()));
+  findConvexAndReflexVertices();
+  Vertex rightMostHoleVertex=(Vertex)holePolygon.get(0);
+  for (int count=0; count < holePolygon.size(); count++) {
+    Vertex v=(Vertex)holePolygon.get(count);
+    if (v.getPosition().x > rightMostHoleVertex.getPosition().x)     rightMostHoleVertex=v;
+  }
+  ArrayList segmentsToTest=new ArrayList();
+  for (int i=0; i < polygonVertices.size(); i++) {
+    Vertex a=(Vertex)polygonVertices.get(i);
+    Vertex b=(Vertex)polygonVertices.get(i + 1);
+    if ((a.getPosition().x > rightMostHoleVertex.getPosition().x || b.getPosition().x > rightMostHoleVertex.getPosition().x) && ((a.getPosition().y >= rightMostHoleVertex.getPosition().y && b.getPosition().y <= rightMostHoleVertex.getPosition().y) || (a.getPosition().y <= rightMostHoleVertex.getPosition().y && b.getPosition().y >= rightMostHoleVertex.getPosition().y)))     segmentsToTest.add(new LineSegment(a,b));
+  }
+  Float closestPoint=null;
+  LineSegment closestSegment=new LineSegment();
+  for (int count=0; count < segmentsToTest.size(); count++) {
+    LineSegment segment=(LineSegment)segmentsToTest.get(count);
+    Float intersection=segment.intersectsWithRay(rightMostHoleVertex.getPosition(),new Coordinate(1.0,0.0));
+    if (intersection != null) {
+      if (closestPoint == null || closestPoint.floatValue() > intersection.floatValue()) {
+        closestPoint=intersection;
+        closestSegment=segment;
+      }
+    }
+  }
+  if (closestPoint == null)   return shapeVerts;
+  Coordinate I=rightMostHoleVertex.getPosition();
+  GVector i=new GVector(new double[]{I.x,I.y});
+  i.add(new GVector(new double[]{closestPoint.floatValue(),0.0}));
+  Vertex P=(closestSegment.A.getPosition().x > closestSegment.B.getPosition().x) ? closestSegment.A : closestSegment.B;
+  Triangle mip=new Triangle(rightMostHoleVertex,new Vertex(I,1),P);
+  ArrayList interiorReflexVertices=new ArrayList();
+  for (int count=0; count < reflexVertices.size(); count++) {
+    Vertex v=(Vertex)reflexVertices.get(count);
+    if (mip.ContainsPoint(v))     interiorReflexVertices.add(v);
+  }
+  if (interiorReflexVertices.size() > 0) {
+    float closestDot=-1f;
+    for (int count=0; count < interiorReflexVertices.size(); count++) {
+      Vertex v=(Vertex)interiorReflexVertices.get(count);
+      GVector n=new GVector(new double[]{v.getPosition().x,v.getPosition().y});
+      n.sub(new GVector(new double[]{rightMostHoleVertex.getPosition().x,rightMostHoleVertex.getPosition().y}));
+      n.normalize();
+      GVector m=new GVector(new double[]{1.0,0.0});
+      float dot=(float)m.dot(n);
+      if (dot > closestDot) {
+        closestDot=dot;
+        P=v;
+      }
+    }
+  }
+  int mIndex=holePolygon.indexOf(rightMostHoleVertex);
+  int injectPoint=polygonVertices.indexOf(P) + 1;
+  for (int count=mIndex; count <= mIndex + holePolygon.size(); count++) {
+    polygonVertices.add(injectPoint++,holePolygon.get(count));
+  }
+  polygonVertices.add(injectPoint,P);
+  Coordinate[] newShapeVerts=new Coordinate[polygonVertices.size()];
+  for (int count=0; count < polygonVertices.size(); count++)   newShapeVerts[count]=((Vertex)polygonVertices.get(count)).getPosition();
+  return gFac.createLineString(newShapeVerts);
+}

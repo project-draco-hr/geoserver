@@ -1,0 +1,27 @@
+{
+  List<String> formats=this.availableWMSFormats;
+  if (formats != null) {
+    return formats;
+  }
+  formats=new ArrayList<String>();
+  final GeoServerApplication application=getGeoServerApplication();
+  final List<GetMapOutputFormat> outputFormats;
+  outputFormats=application.getBeansOfType(GetMapOutputFormat.class);
+  for (  GetMapOutputFormat producer : outputFormats) {
+    Set<String> producerFormats=new HashSet<String>(producer.getOutputFormatNames());
+    producerFormats.add(producer.getMimeType());
+    String knownFormat=producer.getMimeType();
+    for (    String formatName : producerFormats) {
+      String translatedFormatName=translateFormat("format.wms.",formatName);
+      if (!formatName.equals(translatedFormatName)) {
+        knownFormat=formatName;
+        break;
+      }
+    }
+    formats.add(knownFormat);
+  }
+  formats=new ArrayList<String>(new HashSet<String>(formats));
+  prepareFormatList(formats,new FormatComparator("format.wms."));
+  this.availableWMSFormats=formats;
+  return formats;
+}

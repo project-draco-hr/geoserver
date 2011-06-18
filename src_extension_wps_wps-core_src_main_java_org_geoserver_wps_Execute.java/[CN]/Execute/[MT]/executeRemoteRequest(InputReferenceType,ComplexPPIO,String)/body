@@ -1,0 +1,95 @@
+{
+  URL destination=new URL(ref.getHref());
+  HttpMethod method=null;
+  GetMethod refMethod=null;
+  InputStream input=null;
+  InputStream refInput=null;
+  try {
+    if ("http".equalsIgnoreCase(destination.getProtocol())) {
+      HttpClient client=new HttpClient();
+      HttpConnectionManagerParams params=new HttpConnectionManagerParams();
+      params.setSoTimeout(connectionTimeout);
+      params.setConnectionTimeout(connectionTimeout);
+      HttpConnectionManager manager=new SimpleHttpConnectionManager();
+      manager.setParams(params);
+      client.setHttpConnectionManager(manager);
+      if (ref.getMethod() == null || ref.getMethod() == MethodType.GET_LITERAL) {
+        GetMethod get=new GetMethod(ref.getHref());
+        get.setFollowRedirects(true);
+        method=get;
+      }
+ else {
+        String encoding=ref.getEncoding();
+        if (encoding == null) {
+          encoding="UTF-8";
+        }
+        PostMethod post=new PostMethod(ref.getHref());
+        Object body=ref.getBody();
+        if (body == null) {
+          if (ref.getBodyReference() != null) {
+            URL refDestination=new URL(ref.getBodyReference().getHref());
+            if ("http".equalsIgnoreCase(refDestination.getProtocol())) {
+              refMethod=new GetMethod(ref.getBodyReference().getHref());
+              refMethod.setFollowRedirects(true);
+              client.executeMethod(refMethod);
+              refInput=refMethod.getResponseBodyAsStream();
+            }
+ else {
+              URLConnection conn=refDestination.openConnection();
+              conn.setConnectTimeout(connectionTimeout);
+              conn.setReadTimeout(connectionTimeout);
+              refInput=conn.getInputStream();
+            }
+            post.setRequestEntity(new InputStreamRequestEntity(refInput,ppio.getMimeType()));
+          }
+ else {
+            throw new WPSException("A POST request should contain a non empty body");
+          }
+        }
+ else         if (body instanceof String) {
+          post.setRequestEntity(new StringRequestEntity((String)body,ppio.getMimeType(),encoding));
+        }
+ else {
+          throw new WPSException("The request body should be contained in a CDATA section, " + "otherwise it will get parsed as XML instead of being preserved as is");
+        }
+        method=post;
+      }
+      if (ref.getHeader() != null) {
+        for (Iterator it=ref.getHeader().iterator(); it.hasNext(); ) {
+          HeaderType header=(HeaderType)it.next();
+          method.setRequestHeader(header.getKey(),header.getValue());
+        }
+      }
+      int code=client.executeMethod(method);
+      if (code == 200) {
+        input=method.getResponseBodyAsStream();
+      }
+ else {
+        throw new WPSException("Error getting remote resources from " + ref.getHref() + ", http error "+ code+ ": "+ method.getStatusText());
+      }
+    }
+ else {
+      URLConnection conn=destination.openConnection();
+      conn.setConnectTimeout(connectionTimeout);
+      conn.setReadTimeout(connectionTimeout);
+      input=conn.getInputStream();
+    }
+    if (input != null) {
+      return ppio.decode(input);
+    }
+ else {
+      throw new WPSException("Could not find a mean to read input " + inputId);
+    }
+  }
+  finally {
+    if (input != null) {
+      input.close();
+    }
+    if (method != null) {
+      method.releaseConnection();
+    }
+    if (refMethod != null) {
+      refMethod.releaseConnection();
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  PyType type=type();
+  PythonInterpreter pi=py.interpreter();
+  pi.exec("from inspect import getargspec");
+  PyFunction getargspec=(PyFunction)pi.get("getargspec");
+  PyObject init=type.__getattr__("__init__");
+  PySequence argspec=(PySequence)getargspec.__call__(init.__getattr__("wrapped")).__getitem__(0);
+  PyDictionary params=(PyDictionary)init.__getattr__("params");
+  List<Param> list=new ArrayList();
+  for (  Object item : (Collection)argspec) {
+    String pname=item.toString();
+    if ("self".equals(pname))     continue;
+    PySequence pinfo=(PySequence)params.get(pname);
+    String pdesc=pinfo != null ? pinfo.__getitem__(0).toString() : pname;
+    Object ptype=null;
+    try {
+      ptype=pinfo != null ? pinfo.__getitem__(1) : null;
+    }
+ catch (    PyException e) {
+    }
+    Class clazz=null;
+    if (ptype != null && ptype instanceof PyType) {
+      clazz=Python.toJavaClass((PyType)ptype);
+    }
+    if (clazz == null) {
+      clazz=Object.class;
+    }
+    list.add(new Param(pname,clazz,pdesc));
+  }
+  return list;
+}

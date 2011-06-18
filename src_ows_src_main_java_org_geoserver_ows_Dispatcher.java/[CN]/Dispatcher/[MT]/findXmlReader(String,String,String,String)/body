@@ -1,0 +1,109 @@
+{
+  Collection xmlReaders=loadXmlReaders();
+  List matches=new ArrayList();
+  for (Iterator itr=xmlReaders.iterator(); itr.hasNext(); ) {
+    XmlRequestReader xmlReader=(XmlRequestReader)itr.next();
+    QName xmlElement=xmlReader.getElement();
+    if (xmlElement.getLocalPart().equalsIgnoreCase(element)) {
+      if (xmlElement.getNamespaceURI().equalsIgnoreCase(namespace)) {
+        matches.add(xmlReader);
+      }
+    }
+  }
+  if (matches.isEmpty()) {
+    if (namespace == null || namespace.equals("")) {
+      String msg="No namespace specified in request, searching for " + " xml reader by element name only";
+      logger.info(msg);
+      for (Iterator itr=xmlReaders.iterator(); itr.hasNext(); ) {
+        XmlRequestReader xmlReader=(XmlRequestReader)itr.next();
+        if (xmlReader.getElement().getLocalPart().equals(element)) {
+          matches.add(xmlReader);
+        }
+      }
+      if (!matches.isEmpty()) {
+        Iterator itr=matches.iterator();
+        XmlRequestReader first=(XmlRequestReader)itr.next();
+        while (itr.hasNext()) {
+          XmlRequestReader xmlReader=(XmlRequestReader)itr.next();
+          if (!first.getElement().equals(xmlReader.getElement())) {
+            matches.clear();
+            break;
+          }
+        }
+      }
+    }
+  }
+  if (matches.isEmpty()) {
+    String msg="No xml reader: (" + namespace + ","+ element+ ")";
+    logger.info(msg);
+    return null;
+  }
+  XmlRequestReader xmlReader=null;
+  if (matches.size() > 1) {
+    List vmatches=new ArrayList(matches);
+    if (serviceId != null) {
+      for (Iterator itr=vmatches.iterator(); itr.hasNext(); ) {
+        XmlRequestReader r=(XmlRequestReader)itr.next();
+        if (r.getServiceId() == null || serviceId.equalsIgnoreCase(r.getServiceId())) {
+          continue;
+        }
+        itr.remove();
+      }
+    }
+    if (ver != null) {
+      Version version=new Version(ver);
+      for (Iterator itr=vmatches.iterator(); itr.hasNext(); ) {
+        XmlRequestReader r=(XmlRequestReader)itr.next();
+        if (r.getVersion() == null || version.equals(r.getVersion())) {
+          continue;
+        }
+        itr.remove();
+      }
+      if (vmatches.isEmpty()) {
+        vmatches=new ArrayList(matches);
+      }
+    }
+    if (vmatches.size() > 1) {
+      Comparator comparator=new Comparator(){
+        public int compare(        Object o1,        Object o2){
+          XmlRequestReader r1=(XmlRequestReader)o1;
+          XmlRequestReader r2=(XmlRequestReader)o2;
+          Version v1=r1.getVersion();
+          Version v2=r2.getVersion();
+          if ((v1 == null) && (v2 == null)) {
+            return 0;
+          }
+          if ((v1 != null) && (v2 == null)) {
+            return 1;
+          }
+          if ((v1 == null) && (v2 != null)) {
+            return -1;
+          }
+          int versionCompare=v1.compareTo(v2);
+          if (versionCompare != 0) {
+            return versionCompare;
+          }
+          String sid1=r1.getServiceId();
+          String sid2=r2.getServiceId();
+          if ((sid1 == null) && (sid2 == null)) {
+            return 0;
+          }
+          if ((sid1 != null) && (sid2 == null)) {
+            return 1;
+          }
+          if ((sid1 == null) && (sid2 != null)) {
+            return -1;
+          }
+          return sid1.compareTo(sid2);
+        }
+      }
+;
+      Collections.sort(vmatches,comparator);
+    }
+    if (vmatches.size() > 0)     xmlReader=(XmlRequestReader)vmatches.get(vmatches.size() - 1);
+  }
+ else {
+    xmlReader=(XmlRequestReader)matches.get(0);
+  }
+  return xmlReader;
+}

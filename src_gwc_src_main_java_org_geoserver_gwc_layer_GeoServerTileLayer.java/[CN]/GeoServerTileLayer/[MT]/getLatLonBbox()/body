@@ -1,0 +1,37 @@
+{
+  final CoordinateReferenceSystem wgs84LonFirst;
+  try {
+    final boolean longitudeFirst=true;
+    wgs84LonFirst=CRS.decode("EPSG:4326",longitudeFirst);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  ReferencedEnvelope latLongBbox;
+  if (getLayerInfo() == null) {
+    LayerGroupInfo groupInfo=getLayerGroupInfo();
+    try {
+      ReferencedEnvelope bounds=groupInfo.getBounds();
+      boolean lenient=true;
+      latLongBbox=bounds.transform(wgs84LonFirst,lenient);
+    }
+ catch (    Exception e) {
+      String msg="Can't get lat long bounds for layer group " + groupInfo.getName();
+      LOGGER.log(Level.WARNING,msg,e);
+      throw new IllegalStateException(msg,e);
+    }
+  }
+ else {
+    ResourceInfo resourceInfo=getResourceInfo();
+    latLongBbox=resourceInfo.getLatLonBoundingBox();
+    if (null == latLongBbox) {
+      latLongBbox=new ReferencedEnvelope(wgs84LonFirst);
+    }
+    if (null == latLongBbox.getCoordinateReferenceSystem()) {
+      ReferencedEnvelope tmp=new ReferencedEnvelope(wgs84LonFirst);
+      tmp.init(latLongBbox.getMinX(),latLongBbox.getMaxX(),latLongBbox.getMinY(),latLongBbox.getMaxY());
+      latLongBbox=tmp;
+    }
+  }
+  return latLongBbox;
+}

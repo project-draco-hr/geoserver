@@ -1,0 +1,16 @@
+{
+  List<DataAccessFactory> factories=new ArrayList();
+  Iterator<DataAccessFactory> it=DataAccessFinder.getAvailableDataStores();
+  while (it.hasNext()) {
+    factories.add(it.next());
+  }
+  for (  DataAccessFactoryProducer producer : GeoServerExtensions.extensions(DataAccessFactoryProducer.class)) {
+    try {
+      factories.addAll(producer.getDataStoreFactories());
+    }
+ catch (    Throwable t) {
+      LOGGER.log(Level.WARNING,"Error occured loading data access factories. " + "Ignoring producer",t);
+    }
+  }
+  return factories;
+}

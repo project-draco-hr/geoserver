@@ -1,0 +1,35 @@
+{
+  start("PolyStyle");
+  if (symbolizer.getFill() != null) {
+    Double opacity=symbolizer.getFill().getOpacity().evaluate(feature,Double.class);
+    if (opacity == null || Double.isNaN(opacity)) {
+      opacity=1.0;
+    }
+    encodeColor((Color)symbolizer.getFill().getColor().evaluate(feature,Color.class),opacity);
+  }
+ else {
+    encodeColor("00aaaaaa");
+  }
+  if (symbolizer.getStroke() != null || forceOutline) {
+    element("outline","1");
+  }
+ else {
+    element("outline","0");
+  }
+  end("PolyStyle");
+  if (symbolizer.getStroke() != null) {
+    start("LineStyle");
+    Double opacity=symbolizer.getStroke().getOpacity().evaluate(feature,Double.class);
+    if (opacity == null || Double.isNaN(opacity)) {
+      opacity=1.0;
+    }
+    if (style != null) {
+      encodeColor(KMLUtils.colorToHex((Color)symbolizer.getStroke().getColor().evaluate(feature,Color.class),opacity));
+    }
+    Integer width=symbolizer.getStroke().getWidth().evaluate(feature,Integer.class);
+    if (width != null) {
+      element("width",Integer.toString(width));
+    }
+    end("LineStyle");
+  }
+}

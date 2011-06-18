@@ -1,0 +1,38 @@
+{
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Writing tiff image ...");
+  }
+  GetMapRequest request=mapContext.getRequest();
+  final String format=request.getFormat();
+  InverseColorMapOp paletteInverter=mapContext.getPaletteInverter();
+  if (IMAGE_GEOTIFF8.equalsIgnoreCase(format) || (paletteInverter != null)) {
+    image=forceIndexed8Bitmask(image,paletteInverter);
+  }
+  final GridCoverage2D gc=factory.create("geotiff",image,new GeneralEnvelope(mapContext.getAreaOfInterest()));
+  final ImageOutputStream imageOutStream=ImageIOExt.createImageOutputStream(image,outStream);
+  if (imageOutStream == null) {
+    throw new ServiceException("Unable to create ImageOutputStream.");
+  }
+  GeoTiffWriter writer=null;
+  try {
+    writer=new GeoTiffWriter(imageOutStream);
+    writer.write(gc,null);
+  }
+  finally {
+    try {
+      imageOutStream.close();
+    }
+ catch (    Throwable e) {
+      if (LOGGER.isLoggable(Level.FINEST))       LOGGER.log(Level.FINEST,"Unable to properly close output stream",e);
+    }
+    try {
+      if (writer != null)       writer.dispose();
+    }
+ catch (    Throwable e) {
+      if (LOGGER.isLoggable(Level.FINEST))       LOGGER.log(Level.FINEST,"Unable to properly dispose writer",e);
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Writing tiff image done!");
+  }
+}

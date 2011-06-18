@@ -1,0 +1,25 @@
+{
+  ConcurrentLinkedQueue<Worker> completed=new ConcurrentLinkedQueue<Worker>();
+  int groups=5;
+  ArrayList<Worker>[] workers=new ArrayList[groups];
+  for (int i=0; i < workers.length; i++) {
+    workers[i]=new ArrayList();
+    for (int j=0; j < groups; j++) {
+      workers[i].add(new Worker(i,j,completed));
+    }
+  }
+  for (int i=0; i < groups; i++) {
+    for (int j=0; j < workers.length; j++) {
+      Worker w=workers[j].get(i);
+      taskQueue.execute(w.group,w);
+    }
+  }
+  while (completed.size() < groups * workers.length) {
+    Thread.sleep(1000);
+  }
+  int[] status=new int[groups];
+  for (  Worker w : completed) {
+    assertEquals(status[w.group],w.seq.intValue());
+    status[w.group]++;
+  }
+}

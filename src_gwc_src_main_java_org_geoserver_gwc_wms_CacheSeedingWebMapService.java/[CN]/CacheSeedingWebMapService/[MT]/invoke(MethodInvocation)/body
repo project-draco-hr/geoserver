@@ -1,0 +1,17 @@
+{
+  final Method method=invocation.getMethod();
+  Assert.isTrue(method.getDeclaringClass().equals(WebMapService.class));
+  Assert.isTrue("getMap".equals(method.getName()));
+  final Object[] arguments=invocation.getArguments();
+  Assert.isTrue(arguments.length == 1);
+  Assert.isInstanceOf(GetMapRequest.class,arguments[0]);
+  final GetMapRequest request=(GetMapRequest)arguments[0];
+  WebMap map=(WebMap)invocation.proceed();
+  final Map<String,String> rawKvp=request.getRawKvp();
+  boolean isSeedingRequest=rawKvp != null && rawKvp.containsKey(GeoServerTileLayer.GWC_SEED_INTERCEPT_TOKEN);
+  if (isSeedingRequest) {
+    GeoServerTileLayer.WEB_MAP.set(map);
+    return null;
+  }
+  return map;
+}

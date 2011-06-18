@@ -1,0 +1,41 @@
+{
+  XStreamPersister xp=xpf.createXMLPersister();
+  final String name=xp.getClassAliasingMapper().serializedClass(clazz);
+  xstream.alias(name,clazz);
+  xstream.registerConverter(new CollectionConverter(xstream.getMapper()){
+    public boolean canConvert(    Class type){
+      return Collection.class.isAssignableFrom(type);
+    }
+    @Override protected void writeItem(    Object item,    MarshallingContext context,    HierarchicalStreamWriter writer){
+      writer.startNode(name);
+      context.convertAnother(item);
+      writer.endNode();
+    }
+  }
+);
+  xstream.registerConverter(new Converter(){
+    public boolean canConvert(    Class type){
+      return clazz.isAssignableFrom(type);
+    }
+    public void marshal(    Object source,    HierarchicalStreamWriter writer,    MarshallingContext context){
+      String ref=null;
+      if (OwsUtils.getter(clazz,"name",String.class) != null) {
+        ref=(String)OwsUtils.get(source,"name");
+      }
+ else       if (OwsUtils.getter(clazz,"id",String.class) != null) {
+        ref=(String)OwsUtils.get(source,"id");
+      }
+ else {
+        throw new RuntimeException("Could not determine identifier for: " + clazz.getName());
+      }
+      writer.startNode("name");
+      writer.setValue(ref);
+      writer.endNode();
+      encodeLink(encode(ref),writer);
+    }
+    public Object unmarshal(    HierarchicalStreamReader reader,    UnmarshallingContext context){
+      return null;
+    }
+  }
+);
+}

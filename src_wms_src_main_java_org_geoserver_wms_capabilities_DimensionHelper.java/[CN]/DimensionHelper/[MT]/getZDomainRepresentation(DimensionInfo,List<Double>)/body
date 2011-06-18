@@ -1,0 +1,47 @@
+{
+  String elevationMetadata=null;
+  final StringBuilder buff=new StringBuilder();
+  if (DimensionPresentation.LIST == dimension.getPresentation()) {
+    for (    Double val : values) {
+      buff.append(val);
+      buff.append(",");
+    }
+    elevationMetadata=buff.substring(0,buff.length() - 1).toString().replaceAll("\\[","").replaceAll("\\]","").replaceAll(" ","");
+  }
+ else   if (DimensionPresentation.CONTINUOUS_INTERVAL == dimension.getPresentation()) {
+    buff.append(values.get(0));
+    buff.append("/");
+    buff.append(values.get(values.size() - 1));
+    buff.append("/");
+    Double resolution=values.get(values.size() - 1) - values.get(0);
+    buff.append(resolution);
+    elevationMetadata=buff.toString();
+  }
+ else   if (DimensionPresentation.DISCRETE_INTERVAL == dimension.getPresentation()) {
+    buff.append(values.get(0));
+    buff.append("/");
+    buff.append(values.get(values.size() - 1));
+    buff.append("/");
+    BigDecimal resolution=dimension.getResolution();
+    if (resolution != null) {
+      buff.append(resolution.doubleValue());
+    }
+ else {
+      if (values.size() >= 2) {
+        int count=2, i=2;
+        Double[] zPositions=new Double[count];
+        for (        Double val : values) {
+          zPositions[count - i--]=val;
+          if (i == 0)           break;
+        }
+        double span=zPositions[count - 1] - zPositions[count - 2];
+        buff.append(span);
+      }
+ else {
+        buff.append(0.0);
+      }
+    }
+    elevationMetadata=buff.toString();
+  }
+  return elevationMetadata;
+}

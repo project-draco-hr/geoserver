@@ -1,0 +1,18 @@
+{
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.setName("test");
+  final ReferencedEnvelope re=new ReferencedEnvelope(-10,10,-10,10,null);
+  FeatureCollection fc=new ListFeatureCollection(tb.buildFeatureType()){
+    @Override public synchronized ReferencedEnvelope getBounds(){
+      return re;
+    }
+  }
+;
+  org.geotools.process.Process p=factory.create(new NameImpl("bean","Bounds"));
+  Map<String,Object> inputs=new HashMap<String,Object>();
+  inputs.put("features",fc);
+  Map<String,Object> result=p.execute(inputs,null);
+  assertEquals(1,result.size());
+  ReferencedEnvelope computed=(ReferencedEnvelope)result.get("bounds");
+  assertEquals(re,computed);
+}

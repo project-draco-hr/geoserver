@@ -1,0 +1,23 @@
+{
+  SimpleFeatureType schema=collection.getSchema();
+  SimpleFeatureStore fstore=null;
+  DataStore dstore=null;
+  File file=null;
+  try {
+    file=new File(tempDir,schema.getTypeName() + ".shp");
+    dstore=new ShapefileDataStore(file.toURL());
+    dstore.createSchema(schema);
+    fstore=(SimpleFeatureStore)dstore.getFeatureSource(schema.getTypeName());
+    fstore.addFeatures(collection);
+  }
+ catch (  IOException ioe) {
+    LOGGER.log(Level.WARNING,"Error while writing featuretype '" + schema.getTypeName() + "' to shapefile.",ioe);
+    throw new ServiceException(ioe);
+  }
+ finally {
+    if (dstore != null) {
+      dstore.dispose();
+    }
+  }
+  return file;
+}

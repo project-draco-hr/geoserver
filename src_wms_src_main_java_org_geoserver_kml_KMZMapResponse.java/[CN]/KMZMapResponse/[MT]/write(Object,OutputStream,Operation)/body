@@ -1,0 +1,54 @@
+{
+  Assert.isInstanceOf(XMLTransformerMap.class,value);
+  final XMLTransformerMap map=(XMLTransformerMap)value;
+  try {
+    final KMLTransformer transformer=(KMLTransformer)map.getTransformer();
+    final WMSMapContext mapContext=(WMSMapContext)map.getTransformerSubject();
+    ZipOutputStream zip=new ZipOutputStream(output);
+    ZipEntry entry=new ZipEntry("wms.kml");
+    zip.putNextEntry(entry);
+    try {
+      transformer.transform(mapContext,zip);
+      zip.closeEntry();
+    }
+ catch (    TransformerException e) {
+      throw (IOException)new IOException().initCause(e);
+    }
+    final RenderedImageMapOutputFormat pngProducer=new RenderedImageMapOutputFormat("image/png",wms);
+    final PNGMapResponse pngEncoder=new PNGMapResponse(wms);
+    ZipEntry images=new ZipEntry("images/");
+    zip.putNextEntry(images);
+    for (int i=0; i < mapContext.getLayerCount(); i++) {
+      MapLayer mapLayer=mapContext.getLayer(i);
+      WMSMapContext subContext=new WMSMapContext();
+      subContext.addLayer(mapLayer);
+      subContext.setRequest(mapContext.getRequest());
+      subContext.setMapHeight(mapContext.getMapHeight());
+      subContext.setMapWidth(mapContext.getMapWidth());
+      subContext.setAreaOfInterest(mapContext.getAreaOfInterest());
+      subContext.setBgColor(mapContext.getBgColor());
+      subContext.setBuffer(mapContext.getBuffer());
+      subContext.setContactInformation(mapContext.getContactInformation());
+      subContext.setKeywords(mapContext.getKeywords());
+      subContext.setAbstract(mapContext.getAbstract());
+      subContext.setTransparent(true);
+      RenderedImageMap imageMap;
+      try {
+        imageMap=pngProducer.produceMap(subContext);
+      }
+  finally {
+        subContext.dispose();
+      }
+      entry=new ZipEntry("images/layer_" + i + ".png");
+      zip.putNextEntry(entry);
+      pngEncoder.write(imageMap,zip,operation);
+      zip.closeEntry();
+    }
+    zip.closeEntry();
+    zip.finish();
+    zip.flush();
+  }
+  finally {
+    map.dispose();
+  }
+}

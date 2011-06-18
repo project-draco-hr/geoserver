@@ -1,0 +1,34 @@
+{
+  final GridCoverage baseCoverage=catalog.getCoverageByName(TASMANIA_BM.getLocalPart()).getGridCoverage(null,null);
+  final AffineTransform2D expectedTx=(AffineTransform2D)baseCoverage.getGridGeometry().getGridToCRS();
+  final GeneralEnvelope originalEnvelope=(GeneralEnvelope)baseCoverage.getEnvelope();
+  final GeneralEnvelope newEnvelope=new GeneralEnvelope(originalEnvelope);
+  newEnvelope.setEnvelope(originalEnvelope.getMinimum(0),originalEnvelope.getMaximum(1) - originalEnvelope.getSpan(1) / 2,originalEnvelope.getMinimum(0) + originalEnvelope.getSpan(0) / 2,originalEnvelope.getMaximum(1));
+  final MathTransform cornerWorldToGrid=PixelTranslation.translate(expectedTx,PixelInCell.CELL_CENTER,PixelInCell.CELL_CORNER);
+  final GeneralGridEnvelope expectedGridEnvelope=new GeneralGridEnvelope(CRS.transform(cornerWorldToGrid.inverse(),newEnvelope),PixelInCell.CELL_CORNER,false);
+  final StringBuilder envelopeBuilder=new StringBuilder();
+  envelopeBuilder.append(newEnvelope.getMinimum(0)).append(",");
+  envelopeBuilder.append(newEnvelope.getMinimum(1)).append(",");
+  envelopeBuilder.append(newEnvelope.getMaximum(0)).append(",");
+  envelopeBuilder.append(newEnvelope.getMaximum(1));
+  Map<String,Object> raw=baseMap();
+  final String layerID=getLayerId(TASMANIA_BM);
+  raw.put("sourcecoverage",layerID);
+  raw.put("version","1.0.0");
+  raw.put("format","image/geotiff");
+  raw.put("BBox",envelopeBuilder.toString());
+  raw.put("crs","EPSG:4326");
+  raw.put("resx",Double.toString(expectedTx.getScaleX()));
+  raw.put("resy",Double.toString(Math.abs(expectedTx.getScaleY())));
+  final GridCoverage[] coverages=executeGetCoverageKvp(raw);
+  final GridCoverage2D result=(GridCoverage2D)coverages[0];
+  assertTrue(coverages.length == 1);
+  final AffineTransform2D tx=(AffineTransform2D)result.getGridGeometry().getGridToCRS();
+  assertEquals("resx",expectedTx.getScaleX(),tx.getScaleX(),1E-6);
+  assertEquals("resx",Math.abs(expectedTx.getScaleY()),Math.abs(tx.getScaleY()),1E-6);
+  final GridEnvelope gridEnvelope=result.getGridGeometry().getGridRange();
+  assertEquals("w",180,gridEnvelope.getSpan(0));
+  assertEquals("h",180,gridEnvelope.getSpan(1));
+  assertEquals("grid envelope",expectedGridEnvelope,gridEnvelope);
+  ((GridCoverage2D)coverages[0]).dispose(true);
+}

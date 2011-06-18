@@ -1,0 +1,24 @@
+{
+  testAddStore();
+  NamespaceInfo ns=cat.getFactory().createNamespace();
+  ns.setPrefix("foo");
+  ns.setURI("http://foo.org");
+  cat.add(ns);
+  DataStoreInfo ds=cat.getDataStoreByName("foo","bar");
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.setName("baz");
+  tb.add("x",Integer.class);
+  tb.add("y",String.class);
+  ((DataStore)ds.getDataStore(null)).createSchema(tb.buildFeatureType());
+  assertNull(cat.getFeatureTypeByDataStore(ds,"baz"));
+  pi.exec("from geoserver.catalog import Catalog");
+  pi.exec("from geoserver.catalog import Layer");
+  pi.exec("cat = Catalog()");
+  pi.exec("st = cat['foo']['bar']");
+  pi.exec("l = Layer('baz', st)");
+  pi.exec("l.save()");
+  FeatureTypeInfo ft=cat.getFeatureTypeByDataStore(ds,"baz");
+  assertNotNull(ft);
+  assertNotNull(ft.getFeatureType());
+  assertNotNull(ft.getFeatureSource(null,null));
+}

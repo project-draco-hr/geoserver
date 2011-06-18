@@ -1,0 +1,26 @@
+{
+  Ows11Factory factory=Ows11Factory.eINSTANCE;
+  ExceptionReportType report=Ows11Util.exceptionReport(exception,verboseExceptions);
+  HttpServletResponse response=request.getHttpResponse();
+  response.setContentType("application/xml");
+  OWSConfiguration configuration=new OWSConfiguration();
+  Encoder encoder=new Encoder(configuration,configuration.schema());
+  encoder.setIndenting(true);
+  encoder.setIndentSize(2);
+  encoder.setLineWidth(60);
+  String schemaLocation=buildSchemaURL(baseURL(request.getHttpRequest()),"ows/1.1.0/owsAll.xsd");
+  encoder.setSchemaLocation(OWS.NAMESPACE,schemaLocation);
+  try {
+    encoder.encode(report,OWS.ExceptionReport,response.getOutputStream());
+  }
+ catch (  Exception ex) {
+    LOGGER.log(Level.INFO,"Problem writing exception information back to calling client:",ex);
+  }
+ finally {
+    try {
+      response.getOutputStream().flush();
+    }
+ catch (    IOException ioe) {
+    }
+  }
+}

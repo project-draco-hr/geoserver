@@ -1,0 +1,73 @@
+{
+  if (store == null || !(store instanceof WMSStoreInfo)) {
+    throw new IllegalStateException("WMS store not set.");
+  }
+  WMSStoreInfo wms=(WMSStoreInfo)store;
+  WMSLayerInfo wli=catalog.getFactory().createWMSLayer();
+  wli.setName(layerName);
+  wli.setNativeName(layerName);
+  wli.setStore(store);
+  wli.setEnabled(true);
+  WorkspaceInfo workspace=store.getWorkspace();
+  NamespaceInfo namespace=catalog.getNamespaceByPrefix(workspace.getName());
+  if (namespace == null) {
+    namespace=catalog.getDefaultNamespace();
+  }
+  wli.setNamespace(namespace);
+  Layer layer=wli.getWMSLayer(null);
+  for (  String srs : layer.getBoundingBoxes().keySet()) {
+    try {
+      CoordinateReferenceSystem crs=CRS.decode(srs);
+      wli.setSRS(srs);
+      wli.setNativeCRS(crs);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.INFO,"Skipping " + srs + " definition, it was not recognized by the referencing subsystem");
+    }
+  }
+  if (wli.getSRS() == null) {
+    wli.setSRS("EPSG:4326");
+    wli.setNativeCRS(DefaultGeographicCRS.WGS84);
+  }
+  wli.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  GeneralEnvelope envelope=layer.getEnvelope(wli.getNativeCRS());
+  if (envelope != null) {
+    ReferencedEnvelope re=new ReferencedEnvelope(envelope.getMinimum(0),envelope.getMaximum(0),envelope.getMinimum(1),envelope.getMaximum(1),wli.getNativeCRS());
+    if (wli.getNativeCRS() instanceof GeographicCRS) {
+      WebMapServer mapServer=wms.getWebMapServer(null);
+      Version version=new Version(mapServer.getCapabilities().getVersion());
+      if (version.compareTo(new Version("1.3.0")) >= 0) {
+        double minx=re.getMinX();
+        double miny=re.getMinY();
+        double maxx=re.getMaxX();
+        double maxy=re.getMaxY();
+        re=new ReferencedEnvelope(miny,maxy,minx,maxx,wli.getNativeCRS());
+      }
+    }
+    wli.setNativeBoundingBox(re);
+  }
+  CRSEnvelope llbbox=layer.getLatLonBoundingBox();
+  if (llbbox != null) {
+    ReferencedEnvelope re=new ReferencedEnvelope(llbbox.getMinX(),llbbox.getMaxX(),llbbox.getMinY(),llbbox.getMaxY(),DefaultGeographicCRS.WGS84);
+    wli.setLatLonBoundingBox(re);
+  }
+ else   if (wli.getNativeBoundingBox() != null) {
+    try {
+      wli.setLatLonBoundingBox(wli.getNativeBoundingBox().transform(DefaultGeographicCRS.WGS84,true));
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.INFO,"Could not transform native bbox into a lat/lon one",e);
+    }
+  }
+  wli.setAbstract(layer.get_abstract());
+  wli.setDescription(layer.get_abstract());
+  wli.setTitle(layer.getTitle());
+  if (layer.getKeywords() != null) {
+    wli.getKeywords().addAll(Arrays.asList(layer.getKeywords()));
+  }
+  String published=wli.getName();
+  if (published.contains(":")) {
+    wli.setName(published.substring(published.lastIndexOf(':') + 1));
+  }
+  return wli;
+}

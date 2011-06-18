@@ -1,0 +1,240 @@
+{
+  GetMapRequest getMap=(GetMapRequest)super.read(request,kvp,rawKvp);
+  getMap.setRawKvp(rawKvp);
+  if (kvp.containsKey("crs")) {
+    getMap.setSRS((String)kvp.get("crs"));
+  }
+  String epsgCode=getMap.getSRS();
+  epsgCode=WMS.toInternalSRS(epsgCode,WMS.version(getMap.getVersion()));
+  getMap.setSRS(epsgCode);
+  if (epsgCode != null) {
+    try {
+      CoordinateReferenceSystem mapcrs=CRS.decode(epsgCode);
+      getMap.setCrs(mapcrs);
+    }
+ catch (    Exception e) {
+      throw new ServiceException("Error occurred decoding the espg code " + epsgCode,e,WMSErrorCode.INVALID_CRS.get(getMap.getVersion()));
+    }
+  }
+  String remoteOwsType=getMap.getRemoteOwsType();
+  remoteOwsType=remoteOwsType != null ? remoteOwsType.toUpperCase() : null;
+  if (remoteOwsType != null && !"WFS".equals(remoteOwsType)) {
+    throw new ServiceException("Unsupported remote OWS type '" + remoteOwsType + "'");
+  }
+  URL remoteOwsUrl=getMap.getRemoteOwsURL();
+  if (remoteOwsUrl != null && remoteOwsType == null) {
+    throw new ServiceException("REMOTE_OWS_URL specified, but REMOTE_OWS_TYPE is missing");
+  }
+  final List<Object> requestedLayerInfos=new ArrayList<Object>();
+  String layerParam=(String)rawKvp.get("LAYERS");
+  if (layerParam != null) {
+    List<String> layerNames=KvpUtils.readFlat(layerParam);
+    requestedLayerInfos.addAll(parseLayers(layerNames,remoteOwsUrl,remoteOwsType));
+    List<MapLayerInfo> layers=new ArrayList<MapLayerInfo>();
+    for (    Object o : requestedLayerInfos) {
+      if (o instanceof LayerInfo) {
+        layers.add(new MapLayerInfo((LayerInfo)o));
+      }
+ else       if (o instanceof LayerGroupInfo) {
+        for (        LayerInfo l : ((LayerGroupInfo)o).getLayers()) {
+          layers.add(new MapLayerInfo(l));
+        }
+      }
+ else       if (o instanceof MapLayerInfo) {
+        layers.add((MapLayerInfo)o);
+      }
+    }
+    getMap.setLayers(layers);
+  }
+  String stylesParam=(String)kvp.get("STYLES");
+  List<String> styleNameList=new ArrayList<String>();
+  if (stylesParam != null) {
+    styleNameList.addAll(KvpUtils.readFlat(stylesParam));
+  }
+  List<Filter> filters=parseFilters(getMap);
+  if (getMap.getSldBody() != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Getting layers and styles from SLD_BODY");
+    }
+    if (getMap.getValidateSchema().booleanValue()) {
+      ByteArrayInputStream stream=new ByteArrayInputStream(getMap.getSldBody().getBytes());
+      List errors=validateSld(stream,getMap);
+      if (errors.size() != 0) {
+        throw new ServiceException(SLDValidator.getErrorMessage(new ByteArrayInputStream(getMap.getSldBody().getBytes()),errors));
+      }
+    }
+    InputStream input=new ByteArrayInputStream(getMap.getSldBody().getBytes());
+    StyledLayerDescriptor sld=parseSld(getMap,input);
+    processSld(getMap,requestedLayerInfos,sld,styleNameList);
+    getMap.setFilter(filters);
+  }
+ else   if (getMap.getSld() != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Getting layers and styles from reomte SLD");
+    }
+    URL sldUrl=getMap.getSld();
+    if (getMap.getValidateSchema().booleanValue()) {
+      InputStream input=Requests.getInputStream(sldUrl);
+      List errors=null;
+      try {
+        errors=validateSld(input,getMap);
+      }
+  finally {
+        input.close();
+      }
+      if ((errors != null) && (errors.size() != 0)) {
+        input=Requests.getInputStream(sldUrl);
+        try {
+          throw new ServiceException(SLDValidator.getErrorMessage(input,errors));
+        }
+  finally {
+          input.close();
+        }
+      }
+    }
+    InputStream input=Requests.getInputStream(sldUrl);
+    try {
+      StyledLayerDescriptor sld=parseSld(getMap,input);
+      processSld(getMap,requestedLayerInfos,sld,styleNameList);
+    }
+  finally {
+      input.close();
+    }
+    getMap.setFilter(filters);
+  }
+ else {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Getting layers and styles from LAYERS and STYLES");
+    }
+    if (styleNameList.size() > 0) {
+      List<Style> parseStyles=parseStyles(styleNameList);
+      getMap.setStyles(parseStyles);
+    }
+    if (isParseStyle() && requestedLayerInfos.size() > 0) {
+      List<Style> oldStyles=getMap.getStyles() != null ? new ArrayList(getMap.getStyles()) : new ArrayList();
+      List<Style> newStyles=new ArrayList<Style>();
+      List<Filter> newFilters=filters == null ? null : new ArrayList<Filter>();
+      for (int i=0; i < requestedLayerInfos.size(); i++) {
+        Object o=requestedLayerInfos.get(i);
+        Style style=oldStyles.isEmpty() ? null : (Style)oldStyles.get(i);
+        if (o instanceof LayerGroupInfo) {
+          LayerGroupInfo groupInfo=(LayerGroupInfo)o;
+          for (int j=0; j < groupInfo.getStyles().size(); j++) {
+            StyleInfo si=groupInfo.getStyles().get(j);
+            if (si != null) {
+              newStyles.add(si.getStyle());
+            }
+ else {
+              LayerInfo layer=groupInfo.getLayers().get(j);
+              newStyles.add(getDefaultStyle(layer));
+            }
+          }
+          if (filters != null) {
+            for (int j=0; j < groupInfo.getLayers().size(); j++) {
+              newFilters.add(getFilter(filters,i));
+            }
+          }
+        }
+ else         if (o instanceof LayerInfo) {
+          style=oldStyles.size() > 0 ? oldStyles.get(i) : null;
+          if (style != null) {
+            newStyles.add(style);
+          }
+ else {
+            LayerInfo layer=(LayerInfo)o;
+            newStyles.add(getDefaultStyle(layer));
+          }
+          if (filters != null)           newFilters.add(getFilter(filters,i));
+        }
+ else         if (o instanceof MapLayerInfo) {
+          style=oldStyles.size() > 0 ? oldStyles.get(i) : null;
+          if (style != null) {
+            newStyles.add(style);
+          }
+ else {
+            throw new ServiceException("no style requested for layer " + ((MapLayerInfo)o).getName(),"NoDefaultStyle");
+          }
+          if (filters != null)           newFilters.add(getFilter(filters,i));
+        }
+      }
+      getMap.setStyles(newStyles);
+      getMap.setFilter(newFilters);
+    }
+    List<MapLayerInfo> layers=getMap.getLayers();
+    if (isParseStyle() && (layers != null) && (layers.size() > 0)) {
+      final List styles=getMap.getStyles();
+      if (layers.size() != styles.size()) {
+        String msg=layers.size() + " layers requested, but found " + styles.size()+ " styles specified. ";
+        throw new ServiceException(msg,getClass().getName());
+      }
+      for (int i=0; i < styles.size(); i++) {
+        Style currStyle=(Style)getMap.getStyles().get(i);
+        if (currStyle == null)         throw new ServiceException("Could not find a style for layer " + getMap.getLayers().get(i).getName() + ", either none was specified or no default style is available for it","NoDefaultStyle");
+        checkStyle(currStyle,layers.get(i));
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine(new StringBuffer("establishing ").append(currStyle.getName()).append(" style for ").append(layers.get(i).getName()).toString());
+        }
+      }
+    }
+    List mapFilters=getMap.getFilter();
+    List<MapLayerInfo> mapLayers=getMap.getLayers();
+    if (mapFilters != null && mapFilters.size() != mapLayers.size()) {
+      String msg=mapLayers.size() + " layers requested, but found " + mapFilters.size()+ " filters specified. ";
+      throw new ServiceException(msg,getClass().getName());
+    }
+  }
+  List<Map<String,String>> viewParams=getMap.getViewParams();
+  if (viewParams != null && viewParams.size() > 0) {
+    int layerCount=getMap.getLayers().size();
+    if (viewParams.size() == 1 && layerCount > 1) {
+      List<Map<String,String>> replacement=new ArrayList<Map<String,String>>();
+      for (int i=0; i < layerCount; i++) {
+        replacement.add(viewParams.get(0));
+      }
+      getMap.setViewParams(replacement);
+    }
+ else     if (viewParams.size() != layerCount) {
+      String msg=layerCount + " layers requested, but found " + viewParams.size()+ " view params specified. ";
+      throw new ServiceException(msg,getClass().getName());
+    }
+  }
+  boolean hasTime=false;
+  boolean hasElevation=false;
+  for (  MapLayerInfo layer : getMap.getLayers()) {
+    if (layer.getType() == MapLayerInfo.TYPE_VECTOR) {
+      MetadataMap metadata=layer.getFeature().getMetadata();
+      DimensionInfo elevationInfo=metadata.get(ResourceInfo.ELEVATION,DimensionInfo.class);
+      hasElevation|=elevationInfo != null && elevationInfo.isEnabled();
+      DimensionInfo timeInfo=metadata.get(ResourceInfo.TIME,DimensionInfo.class);
+      hasTime|=timeInfo != null && timeInfo.isEnabled();
+    }
+ else     if (layer.getType() == MapLayerInfo.TYPE_RASTER) {
+      AbstractGridCoverage2DReader reader;
+      try {
+        reader=(AbstractGridCoverage2DReader)layer.getCoverageReader();
+      }
+ catch (      IOException e) {
+        throw new ServiceException(e);
+      }
+      if (reader != null) {
+        final String[] metadataNames=reader.getMetadataNames();
+        if (metadataNames != null)         for (        String metadataDomain : metadataNames) {
+          if (metadataDomain.equalsIgnoreCase("ELEVATION_DOMAIN"))           if (reader.getMetadataValue("HAS_ELEVATION_DOMAIN") != null && Boolean.parseBoolean(reader.getMetadataValue("HAS_ELEVATION_DOMAIN")))           hasElevation=true;
+          if (metadataDomain.equalsIgnoreCase("TIME_DOMAIN"))           if (reader.getMetadataValue("HAS_TIME_DOMAIN") != null && Boolean.parseBoolean(reader.getMetadataValue("HAS_TIME_DOMAIN")))           hasTime=true;
+          if (hasTime && hasElevation)           break;
+        }
+      }
+      if (hasTime && hasElevation)       break;
+    }
+  }
+  if (hasTime && (getMap.getTime() == null || getMap.getTime().isEmpty())) {
+    getMap.setTime(Arrays.asList((Object)null));
+  }
+  if (hasElevation && (getMap.getElevation() == null || getMap.getElevation().isEmpty())) {
+    getMap.setElevation(Arrays.asList((Object)null));
+  }
+  if ((getMap.getElevation() != null && getMap.getElevation().size() > 1) && (getMap.getTime() != null && getMap.getTime().size() > 1)) {
+    throw new ServiceException("TIME and ELEVATION values cannot be both multivalued");
+  }
+  return getMap;
+}

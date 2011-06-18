@@ -1,0 +1,23 @@
+{
+  Python.LOGGER.fine("Performning process lookup");
+  Set<Name> names=new TreeSet<Name>();
+  Python py=py();
+  try {
+    File processRoot=py.getProcessRoot();
+    for (    String file : processRoot.list()) {
+      if (file.endsWith(".py")) {
+        File f=new File(processRoot,file);
+        PythonProcessAdapter adapter=new PythonProcessAdapter(f,py);
+        Python.LOGGER.finest("Examining " + f.getAbsolutePath() + " for process functions");
+        for (        String n : adapter.getNames()) {
+          Python.LOGGER.finest("Found process function " + n);
+          names.add(new NameImpl(FilenameUtils.getBaseName(file),n));
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    Python.LOGGER.log(Level.WARNING,"Error looking up processes",e);
+  }
+  return names;
+}

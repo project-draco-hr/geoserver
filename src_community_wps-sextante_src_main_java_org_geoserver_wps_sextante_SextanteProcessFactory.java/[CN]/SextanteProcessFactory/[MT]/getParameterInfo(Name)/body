@@ -1,0 +1,42 @@
+{
+  checkName(name);
+  GeoAlgorithm algorithm=Sextante.getAlgorithmFromCommandLineName(name.getLocalPart());
+  ParametersSet paramSet=algorithm.getParameters();
+  Map<String,Parameter<?>> paramInfo=new LinkedHashMap<String,Parameter<?>>();
+  boolean hasRasterInput=false;
+  for (int i=0; i < paramSet.getNumberOfParameters(); i++) {
+    es.unex.sextante.parameters.Parameter param=paramSet.getParameter(i);
+    String title=param.getParameterDescription();
+    String description=title;
+    try {
+      String td=param.getParameterAdditionalInfo().getTextDescription();
+      if (td != null) {
+        description+=" - " + td;
+      }
+    }
+ catch (    NullParameterAdditionalInfoException e) {
+    }
+    hasRasterInput=hasRasterInput || IRasterLayer.class.isAssignableFrom(param.getParameterClass());
+    paramInfo.put(param.getParameterName(),new Parameter(param.getParameterName(),mapToGeoTools(param.getParameterClass()),Text.text(title),Text.text(description),getAdditionalInfoMap(param)));
+  }
+  boolean hasRasterOutput=false;
+  OutputObjectsSet ooset=algorithm.getOutputObjects();
+  for (int i=0; i < ooset.getOutputObjectsCount(); i++) {
+    Output output=ooset.getOutput(i);
+    if (output instanceof OutputRasterLayer) {
+      hasRasterOutput=true;
+      break;
+    }
+  }
+  if (hasRasterInput || hasRasterOutput) {
+    if (hasRasterInput) {
+      paramInfo.put(SEXTANTE_GRID_ENVELOPE,new Parameter(SEXTANTE_GRID_ENVELOPE,Envelope.class,Text.text("Grid bounds (defaults to the bounds of the inputs)"),Text.text("The real world coordinates bounding the grid"),false,0,1,null,null));
+      paramInfo.put(SEXTANTE_GRID_CELL_SIZE,new Parameter(SEXTANTE_GRID_CELL_SIZE,Double.class,Text.text("Cell size (defaults to the size of the first input)"),Text.text("The cell size in real world units"),false,0,1,null,null));
+    }
+ else {
+      paramInfo.put(SEXTANTE_GRID_ENVELOPE,new Parameter(SEXTANTE_GRID_ENVELOPE,Envelope.class,Text.text("Grid bounds"),Text.text("The real world coordinates bounding the grid"),true,1,1,null,null));
+      paramInfo.put(SEXTANTE_GRID_CELL_SIZE,new Parameter(SEXTANTE_GRID_CELL_SIZE,Double.class,Text.text("Cell size"),Text.text("The cell size in real world units"),true,1,1,null,null));
+    }
+  }
+  return paramInfo;
+}

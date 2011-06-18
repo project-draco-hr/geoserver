@@ -1,0 +1,33 @@
+{
+  if (format.equalsIgnoreCase("jpeg")) {
+    format="image/jpeg";
+  }
+  Iterator it=ImageIO.getImageWritersByMIMEType(format);
+  if (!it.hasNext()) {
+    throw new IllegalArgumentException("Format not supported: " + format);
+  }
+  ImageWriter writer=(ImageWriter)it.next();
+  ImageOutputStream ioutstream=null;
+  IIOMetadata meta=writer.getDefaultStreamMetadata(writer.getDefaultWriteParam());
+  ImageWriteParam param=writer.getDefaultWriteParam();
+  if (format.equalsIgnoreCase("image/jpeg")) {
+    param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+    param.setCompressionQuality(0.9f);
+    meta=writer.getDefaultStreamMetadata(param);
+    BufferedImage curImage=new BufferedImage(image.getWidth(),image.getHeight(),BufferedImage.TYPE_3BYTE_BGR);
+    Graphics2D g=(Graphics2D)curImage.createGraphics();
+    g.drawImage(image,0,0,null);
+    image=curImage;
+    ioutstream=ImageIOExt.createImageOutputStream(image,outStream);
+    writer.setOutput(ioutstream);
+    writer.write(image);
+    ioutstream.close();
+    writer.dispose();
+    return;
+  }
+  ioutstream=ImageIOExt.createImageOutputStream(image,outStream);
+  writer.setOutput(ioutstream);
+  writer.write(meta,new IIOImage(image,null,meta),param);
+  ioutstream.close();
+  writer.dispose();
+}

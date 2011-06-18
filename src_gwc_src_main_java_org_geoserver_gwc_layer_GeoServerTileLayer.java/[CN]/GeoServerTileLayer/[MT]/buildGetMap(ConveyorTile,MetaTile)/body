@@ -1,0 +1,30 @@
+{
+  Map<String,String> params=new HashMap<String,String>();
+  final MimeType mimeType=tile.getMimeType();
+  final String gridSetId=tile.getGridSetId();
+  final GridSubset gridSubset=getGridSubset(gridSetId);
+  int width=metaTile.getMetaTileWidth();
+  int height=metaTile.getMetaTileHeight();
+  String srs=gridSubset.getSRS().toString();
+  String format=mimeType.getFormat();
+  BoundingBox bbox=metaTile.getMetaTileBounds();
+  params.put("SERVICE","WMS");
+  params.put("VERSION","1.1.1");
+  params.put("REQUEST","GetMap");
+  params.put("LAYERS",getName());
+  params.put("SRS",srs);
+  params.put("FORMAT",format);
+  params.put("WIDTH",String.valueOf(width));
+  params.put("HEIGHT",String.valueOf(height));
+  params.put("BBOX",bbox.toString());
+  params.put("EXCEPTIONS",GetMapRequest.SE_XML);
+  params.put("STYLES","");
+  params.put("TRANSPARENT","true");
+  params.put(GWC_SEED_INTERCEPT_TOKEN,"true");
+  Map<String,String> filteredParams=tile.getFullParameters();
+  if (filteredParams.isEmpty()) {
+    filteredParams=getDefaultParameterFilters();
+  }
+  params.putAll(filteredParams);
+  return params;
+}

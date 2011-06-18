@@ -1,0 +1,25 @@
+{
+  if (changes == null)   return;
+  List<DeleteElementType> deletes=changes.getDelete();
+  List<UpdateElementType> updates=changes.getUpdate();
+  List<InsertElementType> inserts=changes.getInsert();
+  for (  DeleteElementType delete : deletes) {
+    store.removeFeatures(delete.getFilter());
+  }
+  for (  UpdateElementType update : updates) {
+    List<PropertyType> props=update.getProperty();
+    List<AttributeDescriptor> atts=new ArrayList<AttributeDescriptor>(props.size());
+    List<Object> values=new ArrayList<Object>(props.size());
+    for (    PropertyType prop : props) {
+      atts.add(store.getSchema().getDescriptor(prop.getName().getLocalPart()));
+      values.add(prop.getValue());
+    }
+    AttributeDescriptor[] attArray=(AttributeDescriptor[])atts.toArray(new AttributeDescriptor[atts.size()]);
+    Object[] valArray=(Object[])values.toArray(new Object[values.size()]);
+    store.modifyFeatures(attArray,valArray,update.getFilter());
+  }
+  for (  InsertElementType insert : inserts) {
+    List<SimpleFeature> features=insert.getFeature();
+    store.addFeatures(DataUtilities.collection(features));
+  }
+}

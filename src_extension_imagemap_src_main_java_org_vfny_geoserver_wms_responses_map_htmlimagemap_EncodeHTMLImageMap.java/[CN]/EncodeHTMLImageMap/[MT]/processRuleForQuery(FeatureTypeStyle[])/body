@@ -1,0 +1,38 @@
+{
+  try {
+    final List<Filter> filtersToDS=new ArrayList<Filter>();
+    final int stylesLength=styles.length;
+    int styleRulesLength;
+    FeatureTypeStyle style;
+    int u=0;
+    Rule r;
+    for (int t=0; t < stylesLength; t++) {
+      style=styles[t];
+      Rule[] rules=style.getRules();
+      styleRulesLength=rules.length;
+      for (u=0; u < styleRulesLength; u++) {
+        r=rules[u];
+        if (r.getFilter() == null)         return null;
+        if (r.hasElseFilter())         return null;
+        filtersToDS.add(r.getFilter());
+      }
+    }
+    Filter ruleFiltersCombined=null;
+    Filter newFilter;
+    if (filtersToDS.size() == 1) {
+      ruleFiltersCombined=filtersToDS.get(0);
+    }
+ else     if (filtersToDS.size() < maxFilterSize) {
+      ruleFiltersCombined=filtersToDS.get(0);
+      final int size=filtersToDS.size();
+      for (int t=1; t < size; t++) {
+        newFilter=filtersToDS.get(t);
+        ruleFiltersCombined=filterFactory.or(ruleFiltersCombined,newFilter);
+      }
+    }
+    return ruleFiltersCombined;
+  }
+ catch (  Exception e) {
+    return null;
+  }
+}

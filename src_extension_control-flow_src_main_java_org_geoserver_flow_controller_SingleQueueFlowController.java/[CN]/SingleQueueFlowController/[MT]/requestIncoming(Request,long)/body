@@ -1,0 +1,20 @@
+{
+  boolean retval=true;
+  if (matchesRequest(request)) {
+    try {
+      if (timeout > 0) {
+        retval=queue.offer(request,timeout,TimeUnit.MILLISECONDS);
+      }
+ else {
+        queue.put(request);
+      }
+    }
+ catch (    InterruptedException e) {
+      LOGGER.log(Level.WARNING,"Unexpected interruption while blocking on the request queue");
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine(this + " queue size " + queue.size());
+    }
+  }
+  return retval;
+}

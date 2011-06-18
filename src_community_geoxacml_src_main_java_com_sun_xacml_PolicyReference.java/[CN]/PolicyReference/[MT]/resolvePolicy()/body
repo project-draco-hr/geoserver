@@ -1,0 +1,10 @@
+{
+  if (finder == null) {
+    if (logger.isLoggable(Level.WARNING))     logger.warning("PolicyReference with id " + reference.toString() + " was queried but was "+ "not configured with a PolicyFinder");
+    throw new ProcessingException("couldn't find the policy with " + "a null finder");
+  }
+  PolicyFinderResult pfr=finder.findPolicy(reference,policyType,constraints,parentMetaData);
+  if (pfr.notApplicable())   throw new ProcessingException("couldn't resolve the policy");
+  if (pfr.indeterminate())   throw new ProcessingException("error resolving the policy");
+  return pfr.getPolicy();
+}

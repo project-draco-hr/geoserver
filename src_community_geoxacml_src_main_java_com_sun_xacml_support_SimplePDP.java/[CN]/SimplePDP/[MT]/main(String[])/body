@@ -1,0 +1,21 @@
+{
+  if (args.length < 2) {
+    System.out.println("Usage: -config <request>");
+    System.out.println("       <request> <policy> [policies]");
+    System.exit(1);
+  }
+  SimplePDP simplePDP=null;
+  String requestFile=null;
+  if (args[0].equals("-config")) {
+    requestFile=args[1];
+    simplePDP=new SimplePDP();
+  }
+ else {
+    requestFile=args[0];
+    String[] policyFiles=new String[args.length - 1];
+    for (int i=1; i < args.length; i++)     policyFiles[i - 1]=args[i];
+    simplePDP=new SimplePDP(policyFiles);
+  }
+  ResponseCtx response=simplePDP.evaluate(requestFile);
+  response.encode(System.out,new Indenter());
+}

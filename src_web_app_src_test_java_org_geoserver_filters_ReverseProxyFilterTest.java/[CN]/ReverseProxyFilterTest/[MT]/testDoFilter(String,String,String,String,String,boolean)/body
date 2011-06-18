@@ -1,0 +1,50 @@
+{
+  GeoServer mockGeoServer=getMockGeoServer(proxyBaseUrl);
+  ApplicationContextMock context=new ApplicationContextMock();
+  context.putBean(mockGeoServer);
+  GeoServerExtensions ext=new GeoServerExtensions();
+  ext.setApplicationContext(context);
+  MockFilterConfig config=new MockFilterConfig(){
+    public String getInitParameter(    String name){
+      if ("mime-types".equals(name)) {
+        return DEFAULT_MIME_TYPES_REGEX;
+      }
+ else       if ("enabled".equals(name)) {
+        return String.valueOf(filterIsEnabled);
+      }
+      return null;
+    }
+  }
+;
+  MockHttpServletRequest req=new MockHttpServletRequest();
+  req.setRequestURL(requestBaseUrl + requestResource);
+  URL url=new URL(requestBaseUrl);
+  req.setServerName(url.getHost());
+  req.setScheme(url.getProtocol());
+  req.setServerPort(url.getPort() == -1 ? 80 : url.getPort());
+  req.setContextPath(url.getPath());
+  MockHttpServletResponse res=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain();
+  MockHttpSession session=new MockHttpSession();
+  req.setSession(session);
+  MockServletContext servletContext=new MockServletContext();
+  session.setupServletContext(servletContext);
+  filter.init(config);
+  Servlet servlet=new HttpServlet(){
+    public void service(    ServletRequest req,    ServletResponse res) throws ServletException, IOException {
+      res.setContentType(contentType);
+      PrintWriter writer=res.getWriter();
+      BufferedReader reader=new BufferedReader(new StringReader(content));
+      String line;
+      while ((line=reader.readLine()) != null) {
+        writer.println(line);
+      }
+      writer.flush();
+    }
+  }
+;
+  chain.setServlet(servlet);
+  filter.doFilter(req,res,chain);
+  String result=res.getOutputStreamContent();
+  return result;
+}

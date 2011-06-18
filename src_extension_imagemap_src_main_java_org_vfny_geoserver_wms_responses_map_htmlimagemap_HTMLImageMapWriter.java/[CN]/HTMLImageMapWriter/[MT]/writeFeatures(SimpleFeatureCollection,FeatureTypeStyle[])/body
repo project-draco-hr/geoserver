@@ -1,0 +1,31 @@
+{
+  SimpleFeature ft;
+  SimpleFeatureIterator iter=null;
+  try {
+    SimpleFeatureType featureType=fColl.getSchema();
+    Class<?> gtype=featureType.getGeometryDescriptor().getType().getBinding();
+    iter=fColl.features();
+    while (iter.hasNext()) {
+      ft=iter.next();
+      Geometry geo=(Geometry)ft.getDefaultGeometry();
+      if (!clippingBox.contains(geo)) {
+        try {
+          Geometry clippedGeometry=clippingBox.intersection(geo);
+          ft.setDefaultGeometry(clippedGeometry);
+        }
+ catch (        Throwable e) {
+        }
+      }
+      HTMLImageMapFeatureWriter featureWriter=(HTMLImageMapFeatureWriter)writers.get(ft.getDefaultGeometry().getClass());
+      featureWriter.writeFeature(ft,ftsList);
+      ft=null;
+    }
+    LOGGER.fine("encoded " + featureType.getTypeName());
+  }
+ catch (  NoSuchElementException ex) {
+    throw new DataSourceException(ex.getMessage(),ex);
+  }
+ finally {
+    if (iter != null)     fColl.close(iter);
+  }
+}

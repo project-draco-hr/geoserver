@@ -1,0 +1,33 @@
+{
+  Fragment f=new Fragment(id,"menuFragment",MapPreviewPage.this);
+  WebMarkupContainer menu=new WebMarkupContainer("menu");
+  RepeatingView wmsFormats=new RepeatingView("wmsFormats");
+  for (int i=0; i < wmsOutputFormats.size(); i++) {
+    String wmsOutputFormat=wmsOutputFormats.get(i);
+    String label=translateFormat("format.wms.",wmsOutputFormat);
+    Label format=new Label(i + "",label);
+    format.add(new AttributeModifier("value",true,new Model(wmsOutputFormat)));
+    wmsFormats.add(format);
+  }
+  menu.add(wmsFormats);
+  boolean vector=layer.groupInfo == null && (layer.layerInfo.getType() == LayerInfo.Type.VECTOR || layer.layerInfo.getType() == LayerInfo.Type.REMOTE);
+  WebMarkupContainer wfsFormatsGroup=new WebMarkupContainer("wfs");
+  RepeatingView wfsFormats=new RepeatingView("wfsFormats");
+  if (vector) {
+    for (int i=0; i < wfsOutputFormats.size(); i++) {
+      String wfsOutputFormat=wfsOutputFormats.get(i);
+      String label=translateFormat("format.wfs.",wfsOutputFormat);
+      Label format=new Label(i + "",label);
+      format.add(new AttributeModifier("value",true,new Model(wfsOutputFormat)));
+      wfsFormats.add(format);
+    }
+  }
+  wfsFormatsGroup.add(wfsFormats);
+  menu.add(wfsFormatsGroup);
+  String wmsUrl="'" + layer.getWmsLink() + "&format=' + this.options[this.selectedIndex].value";
+  String wfsUrl="'" + layer.getBaseUrl("ows") + "?service=WFS&version=1.0.0&request=GetFeature&typeName="+ layer.getName()+ "&maxFeatures=50"+ "&outputFormat=' + this.options[this.selectedIndex].value";
+  String choice="(this.options[this.selectedIndex].parentNode.label == 'WMS') ? " + wmsUrl + " : "+ wfsUrl;
+  menu.add(new AttributeAppender("onchange",new Model("window.open(" + choice + ");this.selectedIndex=0"),";"));
+  f.add(menu);
+  return f;
+}

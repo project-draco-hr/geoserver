@@ -1,0 +1,27 @@
+{
+  final ColorModel cm=originalImage.getColorModel();
+  final boolean dataTypeByte=originalImage.getSampleModel().getDataType() == DataBuffer.TYPE_BYTE;
+  RenderedImage image;
+  if ((cm instanceof IndexColorModel) && dataTypeByte) {
+    final IndexColorModel icm=(IndexColorModel)cm;
+    if (icm.getTransparency() != Transparency.TRANSLUCENT) {
+      image=originalImage;
+    }
+ else {
+      image=new ImageWorker(originalImage).forceBitmaskIndexColorModel().getRenderedImage();
+    }
+  }
+ else {
+    image=new ImageWorker(originalImage).rescaleToBytes().getRenderedImage();
+    if (invColorMap != null) {
+      image=invColorMap.filterRenderedImage(image);
+    }
+ else {
+      image=new ImageWorker(image).forceComponentColorModel().getRenderedImage();
+      int subsx=1 + (int)(Math.log(image.getWidth()) / Math.log(32));
+      int subsy=1 + (int)(Math.log(image.getHeight()) / Math.log(32));
+      image=new CustomPaletteBuilder(image,256,subsx,subsy,1).buildPalette().getIndexedImage();
+    }
+  }
+  return image;
+}

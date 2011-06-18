@@ -1,0 +1,36 @@
+{
+  if (a == null)   return b;
+  if (b == null)   return a;
+  final CatalogMode mode=intersection(a.getMode(),b.getMode());
+  final MultiPolygon rasterFilter;
+{
+    MultiPolygon aFilter=a.getRasterFilter(), bFilter=b.getRasterFilter();
+    if (aFilter == null)     rasterFilter=bFilter;
+ else     if (bFilter == null)     rasterFilter=aFilter;
+ else {
+      Geometry intersection=aFilter.intersection(bFilter);
+      if (intersection instanceof MultiPolygon) {
+        rasterFilter=(MultiPolygon)intersection;
+      }
+ else {
+        final List<Polygon> accum=new ArrayList<Polygon>();
+        intersection.apply(new GeometryComponentFilter(){
+          public void filter(          Geometry geom){
+            if (geom instanceof Polygon)             accum.add((Polygon)geom);
+          }
+        }
+);
+        rasterFilter=geomFactory.createMultiPolygon(accum.toArray(new Polygon[accum.size()]));
+      }
+    }
+  }
+  final Filter readFilter;
+  if (rasterFilter != null && rasterFilter.getNumGeometries() == 0) {
+    readFilter=Filter.EXCLUDE;
+  }
+ else {
+    readFilter=intersection(a.getReadFilter(),b.getReadFilter());
+  }
+  GeneralParameterValue[] params=intersection(a.getParams(),b.getParams());
+  return new CoverageAccessLimits(mode,readFilter,rasterFilter,params);
+}

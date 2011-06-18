@@ -1,0 +1,50 @@
+{
+  if (rangeSubset == null)   return;
+  if (rangeSubset.getFieldSubset().size() > 1) {
+    throw new WcsException("Multi field coverages are not supported yet",InvalidParameterValue,"RangeSubset");
+  }
+  FieldSubsetType field=(FieldSubsetType)rangeSubset.getFieldSubset().get(0);
+  final String fieldId=field.getIdentifier().getValue();
+  if (!fieldId.equalsIgnoreCase("contents"))   throw new WcsException("Unknown field " + fieldId,InvalidParameterValue,"RangeSubset");
+  String interpolation=field.getInterpolationType();
+  if (interpolation != null) {
+    boolean interpolationSupported=false;
+    if (interpolation.equalsIgnoreCase("nearest")) {
+      interpolation="nearest neighbor";
+    }
+    for (Iterator it=info.getInterpolationMethods().iterator(); it.hasNext(); ) {
+      String method=(String)it.next();
+      if (interpolation.equalsIgnoreCase(method)) {
+        interpolationSupported=true;
+      }
+    }
+    if (!interpolationSupported)     throw new WcsException("The requested Interpolation method is not supported by this Coverage.",InvalidParameterValue,"RangeSubset");
+  }
+  if (field.getAxisSubset().size() > 1) {
+    throw new WcsException("Multi axis coverages are not supported yet",InvalidParameterValue,"RangeSubset");
+  }
+ else   if (field.getAxisSubset().size() == 0)   return;
+  AxisSubsetType axisSubset=(AxisSubsetType)field.getAxisSubset().get(0);
+  final String axisId=axisSubset.getIdentifier();
+  if (!axisId.equalsIgnoreCase("Bands"))   throw new WcsException("Unknown axis " + axisId + " in field "+ fieldId,InvalidParameterValue,"RangeSubset");
+  List<CoverageDimensionInfo> dimensions=info.getDimensions();
+  Set<String> dimensionMap=new HashSet<String>();
+  for (int i=0; i < dimensions.size(); i++) {
+    String keyName=dimensions.get(i).getName().replace(' ','_');
+    dimensionMap.add(keyName);
+  }
+  List keys=axisSubset.getKey();
+  int[] bands=new int[keys.size()];
+  for (int j=0; j < bands.length; j++) {
+    final String key=(String)keys.get(j);
+    String parsedKey=null;
+    for (    String dimensionName : dimensionMap) {
+      if (dimensionName.equalsIgnoreCase(key)) {
+        parsedKey=dimensionName;
+        break;
+      }
+    }
+    if (parsedKey == null)     throw new WcsException("Unknown field/axis/key combination " + fieldId + "/"+ axisSubset.getIdentifier()+ "/"+ key,InvalidParameterValue,"RangeSubset");
+ else     keys.set(j,parsedKey);
+  }
+}

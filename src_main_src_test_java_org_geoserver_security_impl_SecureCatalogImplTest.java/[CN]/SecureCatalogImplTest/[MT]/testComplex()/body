@@ -1,0 +1,32 @@
+{
+  ResourceAccessManager manager=buildManager("complex.properties");
+  SecureCatalogImpl sc=new SecureCatalogImpl(catalog,manager);
+  SecurityContextHolder.getContext().setAuthentication(anonymous);
+  assertTrue(sc.getFeatureTypeByName("topp:roads") instanceof SecuredFeatureTypeInfo);
+  assertTrue(sc.getDataStoreByName("roads") instanceof SecuredDataStoreInfo);
+  assertNull(sc.getFeatureTypeByName("topp:states"));
+  assertTrue(sc.getDataStoreByName("states") instanceof SecuredDataStoreInfo);
+  assertTrue(sc.getFeatureTypeByName("topp:landmarks") instanceof SecuredFeatureTypeInfo);
+  assertNull(sc.getFeatureTypeByName("topp:bases"));
+  SecurityContextHolder.getContext().setAuthentication(roUser);
+  assertTrue(sc.getFeatureTypeByName("topp:roads") instanceof SecuredFeatureTypeInfo);
+  assertTrue(sc.getDataStoreByName("roads") instanceof SecuredDataStoreInfo);
+  assertTrue(sc.getFeatureTypeByName("topp:states") instanceof SecuredFeatureTypeInfo);
+  assertTrue(sc.getDataStoreByName("states") instanceof SecuredDataStoreInfo);
+  assertTrue(sc.getFeatureTypeByName("topp:landmarks") instanceof SecuredFeatureTypeInfo);
+  assertNull(sc.getFeatureTypeByName("topp:bases"));
+  SecurityContextHolder.getContext().setAuthentication(rwUser);
+  assertTrue(sc.getFeatureTypeByName("topp:roads") instanceof SecuredFeatureTypeInfo);
+  assertTrue(sc.getDataStoreByName("roads") instanceof SecuredDataStoreInfo);
+  assertSame(states,sc.getFeatureTypeByName("topp:states"));
+  assertTrue(sc.getDataStoreByName("states") instanceof SecuredDataStoreInfo);
+  assertSame(landmarks,sc.getFeatureTypeByName("topp:landmarks"));
+  assertNull(sc.getFeatureTypeByName("topp:bases"));
+  SecurityContextHolder.getContext().setAuthentication(milUser);
+  assertTrue(sc.getFeatureTypeByName("topp:roads") instanceof SecuredFeatureTypeInfo);
+  assertTrue(sc.getDataStoreByName("roads") instanceof SecuredDataStoreInfo);
+  assertNull(sc.getFeatureTypeByName("topp:states"));
+  assertTrue(sc.getDataStoreByName("states") instanceof SecuredDataStoreInfo);
+  assertTrue(sc.getFeatureTypeByName("topp:landmarks") instanceof SecuredFeatureTypeInfo);
+  assertSame(bases,sc.getFeatureTypeByName("topp:bases"));
+}

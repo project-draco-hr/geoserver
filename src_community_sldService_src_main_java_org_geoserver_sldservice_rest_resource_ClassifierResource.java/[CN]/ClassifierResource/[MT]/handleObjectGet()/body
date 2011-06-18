@@ -1,0 +1,22 @@
+{
+  Request req=getRequest();
+  Map attributes=req.getAttributes();
+  Form parameters=req.getResourceRef().getQueryAsForm();
+  String layer=getAttribute("layer");
+  if (layer == null) {
+    return new ArrayList();
+  }
+  LayerInfo layerInfo=catalog.getLayerByName(layer);
+  if (layerInfo != null) {
+    List<Rule> rules=this.generateClassifiedSLD(attributes,parameters);
+    RulesList jsonRules=null;
+    if (rules != null)     jsonRules=generateRulesList(layer,getRequest(),rules);
+    if (jsonRules != null) {
+      return jsonRules;
+    }
+ else {
+      throw new RestletException("Error generating Classification!",Status.CLIENT_ERROR_BAD_REQUEST);
+    }
+  }
+  return new ArrayList();
+}

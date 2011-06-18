@@ -1,0 +1,38 @@
+{
+  String styleName=(String)rawKvp.get("STYLE");
+  String sldUrl=(String)rawKvp.get("SLD");
+  String sldBody=(String)rawKvp.get("SLD_BODY");
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine(new StringBuffer("looking for style ").append(styleName).toString());
+  }
+  Style sldStyle=null;
+  if (sldUrl != null) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("taking style from SLD parameter");
+    }
+    Style[] styles=loadRemoteStyle(sldUrl);
+    sldStyle=findStyle(styleName,styles);
+  }
+ else   if (sldBody != null) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("taking style from SLD_BODY parameter");
+    }
+    Style[] styles=parseSldBody(sldBody);
+    sldStyle=findStyle(styleName,styles);
+  }
+ else   if ((styleName != null) && !"".equals(styleName)) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("taking style from STYLE parameter");
+    }
+    sldStyle=wms.getStyleByName(styleName);
+  }
+ else {
+    sldStyle=layer.getDefaultStyle();
+  }
+  req.setStyle(sldStyle);
+  String rule=(String)rawKvp.get("RULE");
+  Rule sldRule=extractRule(sldStyle,rule);
+  if (sldRule != null) {
+    req.setRule(sldRule);
+  }
+}

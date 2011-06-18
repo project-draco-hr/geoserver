@@ -1,0 +1,39 @@
+{
+  int i=path.lastIndexOf("/");
+  if (i != -1) {
+    String p=path.substring(i + 1);
+    if (GS_PROPERTIES.matcher(p).matches()) {
+      try {
+        Enumeration<URL> urls=getClass().getClassLoader().getResources(p);
+        Properties properties=new Properties();
+        while (urls.hasMoreElements()) {
+          URL url=urls.nextElement();
+          InputStream in=url.openStream();
+          properties.load(in);
+          in.close();
+        }
+        final ByteArrayOutputStream out=new ByteArrayOutputStream();
+        properties.store(out,"");
+        return new AbstractResourceStream(){
+          public InputStream getInputStream() throws ResourceStreamNotFoundException {
+            return new ByteArrayInputStream(out.toByteArray());
+          }
+          public void close() throws IOException {
+            out.close();
+          }
+        }
+;
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.WARNING,"",e);
+      }
+    }
+ else     if (GS_LOCAL_I18N.matcher(path).matches()) {
+      return null;
+    }
+ else     if (path.matches("org/geoserver/.*" + clazz.getName() + ".*_.*.html")) {
+      return null;
+    }
+  }
+  return super.locate(clazz,path);
+}

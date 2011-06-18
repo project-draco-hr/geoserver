@@ -1,0 +1,10 @@
+{
+  String xml="<wfs:GetFeature " + GETFEATURE_ATTRIBUTES + ">"+ "    <wfs:Query typeName=\"gsml:MappedFeature\">"+ "        <ogc:Filter>"+ "            <ogc:PropertyIsEqualTo>"+ "                <ogc:PropertyName>gsml:specification/gsml:GeologicUnit/gml:name</ogc:PropertyName>"+ "                <ogc:Literal>Yaugher Volcanic Group</ogc:Literal>"+ "            </ogc:PropertyIsEqualTo>"+ "        </ogc:Filter>"+ "    </wfs:Query> "+ "</wfs:GetFeature>";
+  validate(xml);
+  Document doc=postAsDOM("wfs",xml);
+  LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo("1","/wfs:FeatureCollection/@numberOfFeatures",doc);
+  assertXpathCount(1,"//gsml:MappedFeature",doc);
+  assertXpathEvaluatesTo("mf1","//gsml:MappedFeature/@gml:id",doc);
+}

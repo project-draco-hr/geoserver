@@ -1,0 +1,20 @@
+{
+  boolean truncate=false;
+  if (changedProperties.contains("layers")) {
+    final int layersIndex=changedProperties.indexOf("layers");
+    Object oldLayers=oldValues.get(layersIndex);
+    Object newLayers=newValues.get(layersIndex);
+    truncate=!oldLayers.equals(newLayers);
+  }
+  if (!truncate && changedProperties.contains("styles")) {
+    final int stylesIndex=changedProperties.indexOf("styles");
+    Object oldStyles=oldValues.get(stylesIndex);
+    Object newStyles=newValues.get(stylesIndex);
+    truncate=!oldStyles.equals(newStyles);
+  }
+  if (truncate) {
+    log.info("Truncating TileLayer for layer group '" + lgInfo.getName() + "' due to a change in its layers or styles");
+    String layerName=lgInfo.getName();
+    catalogConfig.truncate(layerName);
+  }
+}

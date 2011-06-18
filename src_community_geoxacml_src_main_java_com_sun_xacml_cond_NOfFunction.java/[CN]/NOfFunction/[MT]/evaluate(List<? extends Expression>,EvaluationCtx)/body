@@ -1,0 +1,21 @@
+{
+  Iterator<? extends Expression> it=inputs.iterator();
+  Evaluatable eval=(Evaluatable)(it.next());
+  EvaluationResult result=eval.evaluate(context);
+  if (result.indeterminate())   return result;
+  long n=((IntegerAttribute)(result.getAttributeValue())).getValue();
+  if (n < 0)   return makeProcessingError("First argument to " + getFunctionName() + " cannot be negative.");
+  if (n == 0)   return EvaluationResult.getTrueInstance();
+  long remainingArgs=inputs.size() - 1;
+  if (n > remainingArgs)   return makeProcessingError("not enough arguments to n-of to " + "find " + n + " true values");
+  while (remainingArgs >= n) {
+    eval=(Evaluatable)(it.next());
+    result=eval.evaluate(context);
+    if (result.indeterminate())     return result;
+    if (((BooleanAttribute)(result.getAttributeValue())).getValue()) {
+      if (--n == 0)       return EvaluationResult.getTrueInstance();
+    }
+    remainingArgs--;
+  }
+  return EvaluationResult.getFalseInstance();
+}

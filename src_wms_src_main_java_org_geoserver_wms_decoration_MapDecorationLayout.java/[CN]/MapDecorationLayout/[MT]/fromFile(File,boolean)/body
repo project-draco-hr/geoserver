@@ -1,0 +1,42 @@
+{
+  MapDecorationLayout dl=tiled ? new MetatiledMapDecorationLayout() : new MapDecorationLayout();
+  Document confFile=new SAXBuilder().build(f);
+  for (  Element e : (List<Element>)confFile.getRootElement().getChildren("decoration")) {
+    Map<String,String> m=new HashMap<String,String>();
+    for (    Element option : (List<Element>)e.getChildren("option")) {
+      m.put(option.getAttributeValue("name"),option.getAttributeValue("value"));
+    }
+    MapDecoration decoration=getDecoration(e.getAttributeValue("type"));
+    if (decoration == null) {
+      LOGGER.log(Level.WARNING,"Unknown decoration type: " + e.getAttributeValue("type") + " requested.");
+      continue;
+    }
+    decoration.loadOptions(m);
+    Block.Position pos=Block.Position.fromString(e.getAttributeValue("affinity"));
+    if (pos == null) {
+      LOGGER.log(Level.WARNING,"Unknown affinity: " + e.getAttributeValue("affinity") + " requested.");
+      continue;
+    }
+    Dimension size=null;
+    try {
+      if (e.getAttributeValue("size") != null && !e.getAttributeValue("size").equalsIgnoreCase("auto")) {
+        String[] sizeArr=e.getAttributeValue("size").split(",");
+        size=new Dimension(Integer.valueOf(sizeArr[0]),Integer.valueOf(sizeArr[1]));
+      }
+    }
+ catch (    Exception exc) {
+      LOGGER.log(Level.WARNING,"Couldn't interpret size parameter: " + e.getAttributeValue("size"),e);
+    }
+    Point offset=null;
+    try {
+      String[] offsetArr=e.getAttributeValue("offset").split(",");
+      offset=new Point(Integer.valueOf(offsetArr[0]),Integer.valueOf(offsetArr[1]));
+    }
+ catch (    Exception exc) {
+      LOGGER.log(Level.WARNING,"Couldn't interpret size parameter: " + e.getAttributeValue("offset"));
+      offset=new Point(0,0);
+    }
+    dl.addBlock(new Block(decoration,pos,size,offset));
+  }
+  return dl;
+}

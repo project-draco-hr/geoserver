@@ -1,0 +1,127 @@
+{
+  FeatureLock fLock=null;
+  try {
+    List locks=request.getLock();
+    if ((locks == null) || locks.isEmpty()) {
+      String msg="A LockFeature request must contain at least one LOCK element";
+      throw new WFSException(msg);
+    }
+    LOGGER.info("locks size is " + locks.size());
+    fLock=newFeatureLock(request);
+    LockFeatureResponseType response=WfsFactory.eINSTANCE.createLockFeatureResponseType();
+    response.setLockId(fLock.getAuthorization());
+    response.setFeaturesLocked(WfsFactory.eINSTANCE.createFeaturesLockedType());
+    response.setFeaturesNotLocked(WfsFactory.eINSTANCE.createFeaturesNotLockedType());
+    for (int i=0, n=locks.size(); i < n; i++) {
+      LockType lock=(LockType)locks.get(i);
+      LOGGER.info("curLock is " + lock);
+      QName typeName=lock.getTypeName();
+      Filter filter=(Filter)lock.getFilter();
+      if (filter == null) {
+        filter=Filter.INCLUDE;
+      }
+      FeatureTypeInfo meta;
+      FeatureSource<? extends FeatureType,? extends Feature> source;
+      FeatureCollection<? extends FeatureType,? extends Feature> features;
+      try {
+        meta=catalog.getFeatureTypeByName(typeName.getNamespaceURI(),typeName.getLocalPart());
+        if (meta == null) {
+          throw new WFSException("Unknown feature type " + typeName.getPrefix() + ":"+ typeName.getLocalPart());
+        }
+        source=meta.getFeatureSource(null,null);
+        CoordinateReferenceSystem declaredCRS=WFSReprojectionUtil.getDeclaredCrs(source.getSchema(),request.getVersion());
+        filter=WFSReprojectionUtil.normalizeFilterCRS(filter,source.getSchema(),declaredCRS);
+        features=source.getFeatures(filter);
+        if (source instanceof FeatureLocking) {
+          ((FeatureLocking)source).setFeatureLock(fLock);
+        }
+      }
+ catch (      IOException e) {
+        throw new WFSException(e);
+      }
+      Iterator reader=null;
+      int numberLocked=-1;
+      try {
+        for (reader=features.iterator(); reader.hasNext(); ) {
+          SimpleFeature feature=(SimpleFeature)reader.next();
+          FeatureId fid=fid(feature.getID());
+          Id fidFilter=fidFilter(fid);
+          if (!(source instanceof FeatureLocking)) {
+            LOGGER.fine("Lock " + fid + " not supported by data store (authID:"+ fLock.getAuthorization()+ ")");
+            response.getFeaturesNotLocked().getFeatureId().add(fid);
+          }
+ else {
+            Query query=new Query(meta.getName(),(Filter)fidFilter,Query.DEFAULT_MAX,Query.ALL_NAMES,lock.getHandle());
+            numberLocked=((FeatureLocking)source).lockFeatures(query);
+            if (numberLocked == 1) {
+              LOGGER.fine("Lock " + fid + " (authID:"+ fLock.getAuthorization()+ ")");
+              response.getFeaturesLocked().getFeatureId().add(fid);
+            }
+ else             if (numberLocked == 0) {
+              LOGGER.fine("Lock " + fid + " conflict (authID:"+ fLock.getAuthorization()+ ")");
+              response.getFeaturesNotLocked().getFeatureId().add(fid);
+            }
+ else {
+              LOGGER.warning("Lock " + numberLocked + " "+ fid+ " (authID:"+ fLock.getAuthorization()+ ") duplicated FeatureID!");
+              response.getFeaturesLocked().getFeatureId().add(fid);
+            }
+          }
+        }
+      }
+ catch (      IOException ioe) {
+        throw new WFSException(ioe);
+      }
+ finally {
+        if (reader != null) {
+          features.close(reader);
+        }
+      }
+      if (numberLocked > 0) {
+        Transaction t=new DefaultTransaction();
+        try {
+          try {
+            t.addAuthorization(response.getLockId());
+            DataStore dataStore=(DataStore)source.getDataStore();
+            dataStore.getLockingManager().refresh(response.getLockId(),t);
+          }
+  finally {
+            t.commit();
+          }
+        }
+ catch (        IOException e) {
+          throw new WFSException(e);
+        }
+ finally {
+          try {
+            t.close();
+          }
+ catch (          IOException e) {
+            throw new WFSException(e);
+          }
+        }
+      }
+    }
+    boolean lockAll=!(request.getLockAction() == AllSomeType.SOME_LITERAL);
+    if (lockAll && !response.getFeaturesNotLocked().getFeatureId().isEmpty()) {
+      throw new WFSException("Could not aquire locks for:" + response.getFeaturesNotLocked());
+    }
+    if (response.getFeaturesLocked().getFeatureId().isEmpty()) {
+      response.setFeaturesLocked(null);
+    }
+    if (response.getFeaturesNotLocked().getFeatureId().isEmpty()) {
+      response.setFeaturesNotLocked(null);
+    }
+    return response;
+  }
+ catch (  WFSException e) {
+    if (fLock != null) {
+      try {
+        release(fLock.getAuthorization());
+      }
+ catch (      WFSException e1) {
+        LOGGER.log(Level.SEVERE,"Error occured releasing locks",e1);
+      }
+    }
+    throw e;
+  }
+}

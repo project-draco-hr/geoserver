@@ -1,0 +1,32 @@
+{
+  final List<DataStorePanelInfo> providers=app.getBeansOfType(DataStorePanelInfo.class);
+  DataStorePanelInfo panelInfo=null;
+  for (  DataStorePanelInfo provider : providers) {
+    if (storeInfo instanceof DataStoreInfo && "defaultVector".equals(provider.getId())) {
+      panelInfo=provider;
+      break;
+    }
+ else     if (storeInfo instanceof CoverageStoreInfo && "defaultRaster".equals(provider.getId())) {
+      panelInfo=provider;
+      break;
+    }
+  }
+  if (panelInfo == null) {
+    if (storeInfo instanceof DataStoreInfo) {
+      throw new IllegalStateException("Bean of type DataStorePanelInfo named " + "'defaultDataStorePanel' not provided by application context");
+    }
+ else     if (storeInfo instanceof CoverageStoreInfo) {
+      throw new IllegalStateException("Bean of type DataStorePanelInfo named " + "'defaultCoverageStorePanel' not provided by application context");
+    }
+ else {
+      throw new IllegalArgumentException("Unknown store type: " + storeInfo.getClass().getName());
+    }
+  }
+  if (panelInfo.getComponentClass() == null) {
+    throw new IllegalStateException("Default DataStorePanelInfo '" + panelInfo.getId() + "' does not define a componentClass property");
+  }
+  if (panelInfo.getIconBase() == null || panelInfo.getIcon() == null) {
+    throw new IllegalStateException("Default DataStorePanelInfo '" + panelInfo.getId() + "' does not define default icon");
+  }
+  return panelInfo;
+}

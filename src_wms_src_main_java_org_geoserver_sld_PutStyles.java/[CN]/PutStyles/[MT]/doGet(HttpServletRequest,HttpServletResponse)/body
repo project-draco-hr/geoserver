@@ -1,0 +1,30 @@
+{
+  LOGGER.info("PutStyles.doGet()");
+  Map requestParams=new HashMap();
+  String paramName;
+  String paramValue;
+  for (Enumeration pnames=request.getParameterNames(); pnames.hasMoreElements(); ) {
+    paramName=(String)pnames.nextElement();
+    paramValue=request.getParameter(paramName);
+    requestParams.put(paramName.toUpperCase(),paramValue);
+  }
+  PutStylesKvpReader requestReader=new PutStylesKvpReader(requestParams,(WMS)getServiceRef());
+  PutStylesRequest serviceRequest;
+  try {
+    serviceRequest=(PutStylesRequest)requestReader.getRequest(request);
+  }
+ catch (  ServiceException e) {
+    e.printStackTrace();
+    return;
+  }
+  ServletContext context=request.getSession().getServletContext();
+  try {
+    processSLD(serviceRequest,request,response,context);
+  }
+ catch (  SldException e) {
+    throw new ServletException(e);
+  }
+catch (  IOException e) {
+    throw new ServletException(e);
+  }
+}

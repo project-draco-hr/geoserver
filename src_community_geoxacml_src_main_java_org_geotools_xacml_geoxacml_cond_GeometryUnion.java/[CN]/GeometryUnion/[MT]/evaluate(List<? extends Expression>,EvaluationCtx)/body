@@ -1,0 +1,18 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult result=evalArgs(inputs,context,argValues);
+  if (result != null)   return result;
+  GeometryAttribute[] geomArray=new GeometryAttribute[2];
+  geomArray[0]=(GeometryAttribute)(argValues[0]);
+  geomArray[1]=(GeometryAttribute)(argValues[1]);
+  String targetSrsName=null;
+  Geometry resultGeom=null;
+  try {
+    targetSrsName=transformOnDemand(geomArray);
+    resultGeom=geomArray[0].getGeometry().union(geomArray[1].getGeometry());
+  }
+ catch (  Throwable t) {
+    return exceptionError(t);
+  }
+  return createGeometryInBagResult(resultGeom,targetSrsName);
+}

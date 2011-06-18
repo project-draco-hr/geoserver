@@ -1,0 +1,17 @@
+{
+  Version version=WMS.version(request.getVersion(),true);
+  if (!WMS.VERSION_1_1_1.equals(version) || !isTiled(request)) {
+    return;
+  }
+  String namespacePrefixFilter=request.getNamespace();
+  Iterable<TileLayer> tileLayers=gwc.getTileLayersByNamespacePrefix(namespacePrefixFilter);
+  for (  TileLayer layer : tileLayers) {
+    Map<String,GridSubset> gridSubsets=layer.getGridSubsets();
+    Collection<GridSubset> layerGrids=gridSubsets.values();
+    for (    GridSubset grid : layerGrids) {
+      for (      MimeType mime : layer.getMimeTypes()) {
+        vendorSpecificTileset(tx,layer,grid,mime.getFormat());
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  File configFile=findConfigFile();
+  Assert.notNull(configFile);
+  XStreamPersister xmlPersister=this.persisterFactory.createXMLPersister();
+  configureXstream(xmlPersister.getXStream());
+  try {
+    InputStream in=new FileInputStream(configFile);
+    try {
+      this.config=xmlPersister.load(in,GWCConfig.class);
+    }
+  finally {
+      in.close();
+    }
+    LOGGER.fine("GWC GeoServer specific configuration loaded from " + GWC_CONFIG_FILE);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error loading GWC GeoServer specific " + "configuration from " + configFile.getAbsolutePath() + ". Applying defaults.",e);
+    this.config=new GWCConfig();
+  }
+}

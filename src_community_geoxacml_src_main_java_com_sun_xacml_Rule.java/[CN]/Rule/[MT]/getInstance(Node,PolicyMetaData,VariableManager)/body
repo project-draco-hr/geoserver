@@ -1,0 +1,39 @@
+{
+  URI id=null;
+  int effect=0;
+  String description=null;
+  Target target=null;
+  Condition condition=null;
+  NamedNodeMap attrs=root.getAttributes();
+  try {
+    id=new URI(attrs.getNamedItem("RuleId").getNodeValue());
+  }
+ catch (  URISyntaxException use) {
+    throw new ParsingException("Error parsing required attribute " + "RuleId",use);
+  }
+  String str=attrs.getNamedItem("Effect").getNodeValue();
+  if (str.equals("Permit")) {
+    effect=Result.DECISION_PERMIT;
+  }
+ else   if (str.equals("Deny")) {
+    effect=Result.DECISION_DENY;
+  }
+ else {
+    throw new ParsingException("Invalid Effect: " + effect);
+  }
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String cname=child.getNodeName();
+    if (cname.equals("Description")) {
+      description=child.getFirstChild().getNodeValue();
+    }
+ else     if (cname.equals("Target")) {
+      target=Target.getInstance(child,metaData);
+    }
+ else     if (cname.equals("Condition")) {
+      condition=Condition.getInstance(child,metaData,manager);
+    }
+  }
+  return new Rule(id,effect,description,target,condition);
+}

@@ -1,0 +1,49 @@
+{
+  WFSInfo wfs=getInfo();
+  LockFeatureResponseType lockResponse=(LockFeatureResponseType)value;
+  if (new Version("1.1.0").equals(operation.getService().getVersion())) {
+    write1_1(lockResponse,output,operation);
+    return;
+  }
+  String indent=wfs.isVerbose() ? "   " : "";
+  Charset charset=Charset.forName(wfs.getGeoServer().getGlobal().getCharset());
+  BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(output,charset));
+  LockFeatureType lft=(LockFeatureType)operation.getParameters()[0];
+  writer.write("<?xml version=\"1.0\" encoding=\"" + charset.name() + "\"?>");
+  writer.write("<WFS_LockFeatureResponse " + "\n");
+  writer.write(indent + "xmlns=\"http://www.opengis.net/wfs\" " + "\n");
+  writer.write(indent + "xmlns:ogc=\"http://www.opengis.net/ogc\" " + "\n");
+  writer.write(indent + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " + "\n");
+  writer.write(indent + "xsi:schemaLocation=\"http://www.opengis.net/wfs ");
+  writer.write(buildSchemaURL(lft.getBaseUrl(),"wfs/1.0.0/WFS-transaction.xsd"));
+  writer.write("\">" + "\n");
+  writer.write(indent + "<LockId>" + lockResponse.getLockId()+ "</LockId>"+ "\n");
+  List featuresLocked=null;
+  if (lockResponse.getFeaturesLocked() != null) {
+    featuresLocked=lockResponse.getFeaturesLocked().getFeatureId();
+  }
+  List featuresNotLocked=null;
+  if (lockResponse.getFeaturesNotLocked() != null) {
+    featuresNotLocked=lockResponse.getFeaturesNotLocked().getFeatureId();
+  }
+  if ((featuresLocked != null) && !featuresLocked.isEmpty()) {
+    writer.write(indent + "<FeaturesLocked>" + "\n");
+    for (Iterator i=featuresLocked.iterator(); i.hasNext(); ) {
+      writer.write(indent + indent);
+      FeatureId featureId=(FeatureId)i.next();
+      writer.write("<ogc:FeatureId fid=\"" + featureId + "\"/>"+ "\n");
+    }
+    writer.write(indent + "</FeaturesLocked>" + "\n");
+  }
+  if ((featuresNotLocked != null) && !featuresNotLocked.isEmpty()) {
+    writer.write("<FeaturesNotLocked>" + "\n");
+    for (Iterator i=featuresNotLocked.iterator(); i.hasNext(); ) {
+      writer.write(indent + indent);
+      FeatureId featureId=(FeatureId)i.next();
+      writer.write("<ogc:FeatureId fid=\"" + featureId + "\"/>"+ "\n");
+    }
+    writer.write("</FeaturesNotLocked>" + "\n");
+  }
+  writer.write("</WFS_LockFeatureResponse>");
+  writer.flush();
+}

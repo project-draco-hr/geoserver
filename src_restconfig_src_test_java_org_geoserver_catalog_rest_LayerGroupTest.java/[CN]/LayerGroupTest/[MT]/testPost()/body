@@ -1,0 +1,16 @@
+{
+  String xml="<layerGroup>" + "<name>newLayerGroup</name>" + "<layers>"+ "<layer>Ponds</layer>"+ "<layer>Forests</layer>"+ "</layers>"+ "<styles>"+ "<style>polygon</style>"+ "<style>point</style>"+ "</styles>"+ "</layerGroup>";
+  MockHttpServletResponse response=postAsServletResponse("/rest/layergroups",xml);
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(response.getHeader("Location"));
+  assertTrue(response.getHeader("Location").endsWith("/layergroups/newLayerGroup"));
+  LayerGroupInfo lg=catalog.getLayerGroupByName("newLayerGroup");
+  assertNotNull(lg);
+  assertEquals(2,lg.getLayers().size());
+  assertEquals("Ponds",lg.getLayers().get(0).getName());
+  assertEquals("Forests",lg.getLayers().get(1).getName());
+  assertEquals(2,lg.getStyles().size());
+  assertEquals("polygon",lg.getStyles().get(0).getName());
+  assertEquals("point",lg.getStyles().get(1).getName());
+  assertNotNull(lg.getBounds());
+}

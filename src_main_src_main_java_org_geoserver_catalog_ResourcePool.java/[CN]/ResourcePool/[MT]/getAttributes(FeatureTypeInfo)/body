@@ -1,0 +1,24 @@
+{
+  if (info.getAttributes() != null && !info.getAttributes().isEmpty() && info.getAttributes().get(0).getBinding() != null) {
+    return info.getAttributes();
+  }
+  List<AttributeTypeInfo> atts=(List<AttributeTypeInfo>)featureTypeAttributeCache.get(info.getId());
+  if (atts == null) {
+synchronized (featureTypeAttributeCache) {
+      atts=(List<AttributeTypeInfo>)featureTypeAttributeCache.get(info.getId());
+      if (atts == null) {
+        atts=loadAttributes(info);
+        try {
+          handleSchemaOverride(atts,info);
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.WARNING,"Error occured applying schema override for " + info.getName(),e);
+        }
+        if (info.getId() != null) {
+          featureTypeAttributeCache.put(info.getId(),atts);
+        }
+      }
+    }
+  }
+  return atts;
+}

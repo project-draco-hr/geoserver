@@ -1,0 +1,38 @@
+{
+  if (layer.getResource() instanceof WMSLayerInfo) {
+  }
+ else {
+    start("Style");
+    StyleInfo defaultStyle=layer.getDefaultStyle();
+    if (defaultStyle == null) {
+      throw new NullPointerException("Layer " + layer.getName() + " has no default style");
+    }
+    Style ftStyle;
+    try {
+      ftStyle=defaultStyle.getStyle();
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+    element("Name",defaultStyle.getName());
+    element("Title",ftStyle.getTitle());
+    element("Abstract",ftStyle.getAbstract());
+    handleLegendURL(layer.getName(),layer.getLegend(),null);
+    end("Style");
+    Set<StyleInfo> styles=layer.getStyles();
+    for (    StyleInfo styleInfo : styles) {
+      try {
+        ftStyle=styleInfo.getStyle();
+      }
+ catch (      IOException e) {
+        throw new RuntimeException(e);
+      }
+      start("Style");
+      element("Name",styleInfo.getName());
+      element("Title",ftStyle.getTitle());
+      element("Abstract",ftStyle.getAbstract());
+      handleLegendURL(layer.getName(),null,styleInfo);
+      end("Style");
+    }
+  }
+}

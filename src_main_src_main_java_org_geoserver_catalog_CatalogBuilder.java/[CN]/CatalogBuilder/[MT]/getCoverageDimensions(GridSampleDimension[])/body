@@ -1,0 +1,37 @@
+{
+  final int length=sampleDimensions.length;
+  List<CoverageDimensionInfo> dims=new ArrayList<CoverageDimensionInfo>();
+  for (int i=0; i < length; i++) {
+    CoverageDimensionInfo dim=catalog.getFactory().createCoverageDimension();
+    dim.setName(sampleDimensions[i].getDescription().toString(Locale.getDefault()));
+    StringBuilder label=new StringBuilder("GridSampleDimension".intern());
+    final Unit uom=sampleDimensions[i].getUnits();
+    if (uom != null) {
+      label.append("(".intern());
+      parseUOM(label,uom);
+      label.append(")".intern());
+    }
+    label.append("[".intern());
+    label.append(sampleDimensions[i].getMinimumValue());
+    label.append(",".intern());
+    label.append(sampleDimensions[i].getMaximumValue());
+    label.append("]".intern());
+    dim.setDescription(label.toString());
+    dim.setRange(sampleDimensions[i].getRange());
+    final List<Category> categories=sampleDimensions[i].getCategories();
+    if (categories != null) {
+      for (      Category cat : categories) {
+        if ((cat != null) && cat.getName().toString().equalsIgnoreCase("no data")) {
+          double min=cat.getRange().getMinimum();
+          double max=cat.getRange().getMaximum();
+          dim.getNullValues().add(min);
+          if (min != max) {
+            dim.getNullValues().add(max);
+          }
+        }
+      }
+    }
+    dims.add(dim);
+  }
+  return dims;
+}

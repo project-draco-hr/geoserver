@@ -1,0 +1,27 @@
+{
+  boolean negative=false;
+  long years=0;
+  long months=0;
+  if (pattern == null) {
+    try {
+      pattern=Pattern.compile(patternString);
+    }
+ catch (    PatternSyntaxException e) {
+      throw new ParsingException("unexpected pattern syntax error");
+    }
+  }
+  Matcher matcher=pattern.matcher(value);
+  boolean matches=matcher.matches();
+  if (!matches) {
+    throw new ParsingException("Syntax error in yearMonthDuration");
+  }
+  if (matcher.start(GROUP_SIGN) != -1)   negative=true;
+  try {
+    years=parseGroup(matcher,GROUP_YEARS);
+    months=parseGroup(matcher,GROUP_MONTHS);
+  }
+ catch (  NumberFormatException e) {
+    throw new ParsingException("Unable to handle number size");
+  }
+  return new YearMonthDurationAttribute(negative,years,months);
+}

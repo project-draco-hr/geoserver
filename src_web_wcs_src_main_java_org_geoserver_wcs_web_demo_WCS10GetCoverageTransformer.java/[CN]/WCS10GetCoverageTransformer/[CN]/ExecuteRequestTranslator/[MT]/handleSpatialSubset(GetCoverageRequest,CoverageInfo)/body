@@ -1,0 +1,27 @@
+{
+  start("spatialSubset");
+  final ReferencedEnvelope bounds=request.bounds;
+  CoordinateReferenceSystem boundsCrs=bounds.getCoordinateReferenceSystem();
+  final String epsgCode=epsgCode(boundsCrs);
+  start("gml:Envelope",attributes("srsName",epsgCode));
+  element("gml:pos",bounds.getMinX() + " " + bounds.getMinY());
+  element("gml:pos",bounds.getMaxX() + " " + bounds.getMaxY());
+  end("gml:Envelope");
+  start("gml:Grid",attributes("dimension","2"));
+  final GridEnvelope2D limits=request.sourceGridRange;
+  start("gml:limits");
+  start("gml:GridEnvelope");
+  element("gml:low",(int)limits.getMinX() + " " + (int)limits.getMinY());
+  element("gml:high",(int)limits.getMaxX() + " " + (int)limits.getMaxY());
+  end("gml:GridEnvelope");
+  end("gml:limits");
+  CoordinateReferenceSystem gridCrs=coverage.getCRS();
+  for (int dn=0; dn < gridCrs.getCoordinateSystem().getDimension(); dn++) {
+    String axisName=gridCrs.getCoordinateSystem().getAxis(dn).getAbbreviation();
+    axisName=axisName.toLowerCase().startsWith("lon") ? "x" : axisName;
+    axisName=axisName.toLowerCase().startsWith("lat") ? "y" : axisName;
+    element("gml:axisName",axisName);
+  }
+  end("gml:Grid");
+  end("spatialSubset");
+}

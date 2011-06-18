@@ -1,0 +1,36 @@
+{
+  super.setUpInternal();
+  HashMap params=new HashMap();
+  params.put(JDBCDataStoreFactory.NAMESPACE.key,MockData.DEFAULT_URI);
+  params.put(JDBCDataStoreFactory.DATABASE.key,"acme");
+  params.put(JDBCDataStoreFactory.DBTYPE.key,"h2");
+  H2DataStoreFactory fac=new H2DataStoreFactory();
+  fac.setBaseDirectory(getTestData().getDataDirectoryRoot());
+  JDBCDataStore ds=fac.createDataStore(params);
+  try {
+    if (ds.getSchema("widgets") != null) {
+      return;
+    }
+  }
+ catch (  Exception e) {
+  }
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.setName("widgets");
+  tb.setSRS("EPSG:4326");
+  tb.add("g",Point.class);
+  tb.add("name",String.class);
+  ds.createSchema(tb.buildFeatureType());
+  FeatureWriter fw=ds.getFeatureWriterAppend("widgets",Transaction.AUTO_COMMIT);
+  fw.hasNext();
+  SimpleFeature sf=(SimpleFeature)fw.next();
+  sf.setAttribute("g",new GeometryFactory().createPoint(new Coordinate(1,1)));
+  sf.setAttribute("name","one");
+  fw.write();
+  fw.hasNext();
+  sf=(SimpleFeature)fw.next();
+  sf.setAttribute("g",new GeometryFactory().createPoint(new Coordinate(2,2)));
+  sf.setAttribute("name","two");
+  fw.write();
+  fw.close();
+  ds.dispose();
+}

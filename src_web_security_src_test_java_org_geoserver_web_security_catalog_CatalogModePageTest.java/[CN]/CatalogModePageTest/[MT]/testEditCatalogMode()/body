@@ -1,0 +1,16 @@
+{
+  tester.assertRenderedPage(CatalogModePage.class);
+  assertFalse(("CHALLENGE".equals(tester.getComponentFromLastRenderedPage("catalogModeForm:catalogMode").getDefaultModelObject())));
+  final FormTester form=tester.newFormTester("catalogModeForm");
+  form.select("catalogMode",1);
+  form.getForm().visitChildren(RadioChoice.class,new IVisitor(){
+    public Object component(    final Component component){
+      if (component.getId().equals("catalogMode")) {
+        ((RadioChoice)component).onSelectionChanged();
+      }
+      return CONTINUE_TRAVERSAL;
+    }
+  }
+);
+  assertEquals("MIXED",tester.getComponentFromLastRenderedPage("catalogModeForm:catalogMode").getDefaultModelObject().toString());
+}

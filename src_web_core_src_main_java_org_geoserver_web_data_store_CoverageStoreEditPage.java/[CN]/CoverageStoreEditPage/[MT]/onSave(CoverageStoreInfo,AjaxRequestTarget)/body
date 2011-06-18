@@ -1,0 +1,31 @@
+{
+  if (null == info.getType()) {
+    throw new IllegalArgumentException("Coverage type has not been set");
+  }
+  final Catalog catalog=getCatalog();
+  final ResourcePool resourcePool=catalog.getResourcePool();
+  resourcePool.clear(info);
+  if (info.isEnabled()) {
+    LOGGER.finer("Store " + info.getName() + " is enabled, verifying factory availability "+ "before saving it...");
+    AbstractGridFormat gridFormat=resourcePool.getGridCoverageFormat(info);
+    if (gridFormat == null) {
+      throw new IllegalArgumentException("No grid format found capable of connecting to the provided URL." + " To save the store disable it, and check the required libraries are in place");
+    }
+    try {
+      GridCoverageReader reader=resourcePool.getGridCoverageReader(info,GeoTools.getDefaultHints());
+      LOGGER.info("Connection to store " + info.getName() + " validated. Got a "+ reader.getClass().getName()+ ". Saving store");
+      doSaveStore(info);
+      setResponsePage(StorePage.class);
+    }
+ catch (    IOException e) {
+      confirmSaveOnConnectionFailure(info,requestTarget,e);
+    }
+catch (    RuntimeException e) {
+      confirmSaveOnConnectionFailure(info,requestTarget,e);
+    }
+  }
+ else {
+    doSaveStore(info);
+    setResponsePage(StorePage.class);
+  }
+}

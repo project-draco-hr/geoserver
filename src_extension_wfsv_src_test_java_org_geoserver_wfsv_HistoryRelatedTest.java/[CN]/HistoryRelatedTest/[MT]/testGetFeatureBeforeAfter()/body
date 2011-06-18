@@ -1,0 +1,14 @@
+{
+  String before="<wfs:GetFeature service=\"WFS\" version=\"1.0.0\"\r\n" + "  outputFormat=\"GML2\"\r\n" + "  xmlns:topp=\"http://www.openplans.org/topp\"\r\n"+ "  xmlns:wfs=\"http://www.opengis.net/wfs\"\r\n"+ "  xmlns:ogc=\"http://www.opengis.net/ogc\"\r\n"+ "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n"+ "  xsi:schemaLocation=\"http://www.opengis.net/wfs\r\n"+ "                      http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\">\r\n"+ "  <wfs:Query typeName=\"topp:archsites\" featureVersion=\"1\"/>\r\n"+ "</wfs:GetFeature>\r\n";
+  Document doc=postAsDOM(root(),before);
+  assertXpathEvaluatesTo("4","count(/wfs:FeatureCollection/gml:featureMember)",doc);
+  assertXpathEvaluatesTo("Signature Rock","//topp:archsites[@fid=\"archsites.1\"]/topp:str1",doc);
+  assertXpathEvaluatesTo("1","count(//topp:archsites[@fid=\"archsites.2\"])",doc);
+  assertXpathEvaluatesTo("0","count(//topp:archsites[@fid=\"archsites.5\"])",doc);
+  String current="<wfs:GetFeature service=\"WFS\" version=\"1.0.0\"\r\n" + "  outputFormat=\"GML2\"\r\n" + "  xmlns:topp=\"http://www.openplans.org/topp\"\r\n"+ "  xmlns:wfs=\"http://www.opengis.net/wfs\"\r\n"+ "  xmlns:ogc=\"http://www.opengis.net/ogc\"\r\n"+ "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n"+ "  xsi:schemaLocation=\"http://www.opengis.net/wfs\r\n"+ "                      http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\">\r\n"+ "  <wfs:Query typeName=\"topp:archsites\"/>\r\n"+ "</wfs:GetFeature>\r\n";
+  doc=postAsDOM(root(),current);
+  assertXpathEvaluatesTo("4","count(/wfs:FeatureCollection/gml:featureMember)",doc);
+  assertXpathEvaluatesTo("Signature Rock, updated","//topp:archsites[@fid=\"archsites.1\"]/topp:str1",doc);
+  assertXpathEvaluatesTo("0","count(//topp:archsites[@fid=\"archsites.2\"])",doc);
+  assertXpathEvaluatesTo("1","count(//topp:archsites[@fid=\"archsites.5\"])",doc);
+}

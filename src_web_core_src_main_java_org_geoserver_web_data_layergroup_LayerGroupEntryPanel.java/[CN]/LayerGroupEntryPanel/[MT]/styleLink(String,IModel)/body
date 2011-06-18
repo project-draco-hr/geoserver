@@ -1,0 +1,35 @@
+{
+  LayerGroupEntry entry=(LayerGroupEntry)itemModel.getObject();
+  String styleName;
+  boolean defaultStyle=true;
+  if (entry.getStyle() != null) {
+    styleName=entry.getStyle().getName();
+    defaultStyle=false;
+  }
+ else   if (entry.getLayer().getDefaultStyle() != null) {
+    styleName=entry.getLayer().getDefaultStyle().getName();
+  }
+ else {
+    styleName=null;
+  }
+  SimpleAjaxLink link=new SimpleAjaxLink(id,new Model(styleName)){
+    @Override public void onClick(    AjaxRequestTarget target){
+      popupWindow.setInitialHeight(375);
+      popupWindow.setInitialWidth(525);
+      popupWindow.setTitle(new ParamResourceModel("chooseStyle",this));
+      popupWindow.setContent(new StyleListPanel(popupWindow.getContentId()){
+        @Override protected void handleStyle(        StyleInfo style,        AjaxRequestTarget target){
+          popupWindow.close(target);
+          LayerGroupEntry entry=(LayerGroupEntry)itemModel.getObject();
+          entry.setStyle(style);
+          target.addComponent(layerTable);
+        }
+      }
+);
+      popupWindow.show(target);
+    }
+  }
+;
+  link.getLink().setEnabled(!defaultStyle);
+  return link;
+}

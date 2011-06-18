@@ -1,0 +1,38 @@
+{
+  WFSInfo wfs=getGeoServer().getService(WFSInfo.class);
+  boolean encodeFeatureMember=wfs.isEncodeFeatureMember();
+  wfs.setEncodeFeatureMember(false);
+  getGeoServer().save(wfs);
+  Document doc=getAsDOM("wfs?request=GetFeature&typename=gsml:MappedFeature,gsml:GeologicUnit");
+  LOGGER.info("WFS GetFeature&typename=gsml:MappedFeature,gsml:GeologicUnit response:\n" + prettyString(doc));
+  checkSchemaLocation(doc);
+  assertXpathEvaluatesTo("7","/wfs:FeatureCollection/@numberOfFeatures",doc);
+  assertXpathCount(4,"//gsml:MappedFeature",doc);
+  assertEquals(1,doc.getElementsByTagName("gml:featureMembers").getLength());
+  assertEquals(0,doc.getElementsByTagName("gml:featureMember").getLength());
+{
+    String id="mf1";
+    checkMf1Content(id,doc);
+  }
+{
+    String id="mf2";
+    checkMf2Content(id,doc);
+  }
+{
+    String id="mf3";
+    checkMf3Content(id,doc);
+  }
+{
+    String id="mf4";
+    checkMf4Content(id,doc);
+  }
+  assertXpathCount(1,"//gsml:GeologicUnit[@gml:id='gu.25699']",doc);
+  assertXpathCount(1,"//gsml:GeologicUnit[@gml:id='gu.25678']",doc);
+  assertXpathCount(1,"//gsml:GeologicUnit[@gml:id='gu.25682']",doc);
+  assertXpathCount(1,"//gsml:GeologicUnit[@xlink:href='#gu.25699']",doc);
+  assertXpathCount(1,"//gsml:GeologicUnit[@xlink:href='#gu.25678']",doc);
+  assertXpathCount(1,"//gsml:GeologicUnit[@xlink:href='#gu.25682']",doc);
+  wfs=getGeoServer().getService(WFSInfo.class);
+  wfs.setEncodeFeatureMember(encodeFeatureMember);
+  getGeoServer().save(wfs);
+}

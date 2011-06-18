@@ -1,0 +1,36 @@
+{
+  WorkspaceInfo ws=null;
+  if (request.context != null) {
+    String first=request.context;
+    String last=null;
+    int slash=first.indexOf('/');
+    if (slash > -1) {
+      last=first.substring(slash + 1);
+      first=first.substring(0,slash);
+    }
+    ws=catalog.getWorkspaceByName(first);
+    if (ws != null) {
+      LocalWorkspace.set(ws);
+      if (last != null) {
+        NamespaceInfo ns=catalog.getNamespaceByPrefix(ws.getName());
+        if (ns != null) {
+          LayerInfo l=catalog.getLayerByName(new NameImpl(ns.getURI(),last));
+          if (l != null) {
+            LocalLayer.set(l);
+          }
+ else {
+          }
+        }
+      }
+    }
+ else {
+      if (!gs.getGlobal().isGlobalServices()) {
+        throw new ServiceException("No such workspace '" + request.context + "'");
+      }
+    }
+  }
+ else   if (!gs.getGlobal().isGlobalServices()) {
+    throw new ServiceException("No workspace specified");
+  }
+  return request;
+}

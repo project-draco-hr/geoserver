@@ -1,0 +1,77 @@
+{
+  GeoTiffReader reader=null;
+  List<File> removeFiles=new ArrayList<File>();
+  String location=null;
+  try {
+    File tempFolder=config.getTempFolder();
+    File loggingFolder=config.getLoggingFolder();
+    boolean forceTransparent=false;
+    if (transparent == null) {
+      transparent=true;
+    }
+    ColorModel cm=coverage.getRenderedImage().getColorModel();
+    if (cm.getTransparency() == Transparency.OPAQUE && transparent) {
+      forceTransparent=true;
+    }
+    final Object fileSource=coverage.getProperty(AbstractGridCoverage2DReader.FILE_SOURCE_PROPERTY);
+    if (fileSource != null && fileSource instanceof String) {
+      location=(String)fileSource;
+    }
+    if (location == null) {
+      RenderedImage image=coverage.getRenderedImage();
+      if (forceTransparent) {
+        ImageWorker iw=new ImageWorker(image);
+        iw.forceComponentColorModel();
+        final ImageLayout tempLayout=new ImageLayout(image);
+        tempLayout.unsetValid(ImageLayout.COLOR_MODEL_MASK).unsetValid(ImageLayout.SAMPLE_MODEL_MASK);
+        RenderedImage alpha=ConstantDescriptor.create(Float.valueOf(image.getWidth()),Float.valueOf(image.getHeight()),new Byte[]{Byte.valueOf((byte)255)},new RenderingHints(JAI.KEY_IMAGE_LAYOUT,tempLayout));
+        iw.addBand(alpha,false);
+        image=iw.getRenderedImage();
+        cm=image.getColorModel();
+      }
+      File storedImageFile=storeImage(image,tempFolder);
+      location=storedImageFile.getAbsolutePath();
+      removeFiles.add(storedImageFile);
+    }
+    final int gcpNum[]=new int[1];
+    final String gcp=parseGcps(gcps,gcpNum);
+    File vrtFile=addGroundControlPoints(location,gcp,config.getGdalTranslateParameters());
+    if (vrtFile == null || !vrtFile.exists() || !vrtFile.canRead()) {
+      throw new IOException("Unable to get a valid file with attached Ground Control Points");
+    }
+    removeFiles.add(vrtFile);
+    File warpedFile=warpFile(vrtFile,bbox,crs,width,height,warpOrder,tempFolder,loggingFolder,config.getExecutionTimeout(),config.getGdalWarpingParameters());
+    if (warpedFile == null || !warpedFile.exists() || !warpedFile.canRead()) {
+      throw new IOException("Unable to get a valid georectified file");
+    }
+    boolean expand=false;
+    if (cm instanceof IndexColorModel) {
+      expand=true;
+    }
+ else     if (cm instanceof ComponentColorModel && cm.getNumComponents() == 1 && cm.getComponentSize()[0] == 1) {
+      expand=true;
+    }
+    if (expand) {
+      removeFiles.add(warpedFile);
+      warpedFile=expandRgba(warpedFile.getAbsolutePath());
+    }
+    if (resourceManager != null) {
+      resourceManager.addResource(new WPSFileResource(warpedFile));
+    }
+    reader=new GeoTiffReader(warpedFile);
+    GridCoverage2D cov=addLocationProperty(reader.read(null),warpedFile);
+    return cov;
+  }
+  finally {
+    if (reader != null) {
+      try {
+        reader.dispose();
+      }
+ catch (      Throwable t) {
+      }
+    }
+    for (    File file : removeFiles) {
+      deleteFile(file);
+    }
+  }
+}

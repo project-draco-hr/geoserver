@@ -1,0 +1,102 @@
+{
+  String coverage=name.getLocalPart();
+  File coverageDir=new File(coverages,coverage);
+  coverageDir.mkdir();
+  File info=new File(coverageDir,"info.xml");
+  info.createNewFile();
+  AbstractGridFormat format=(AbstractGridFormat)GridFormatFinder.findFormat(coverageFile);
+  AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)format.getReader(coverageFile);
+  if (reader == null) {
+    throw new RuntimeException("No reader for " + coverageFile.getCanonicalPath() + " with format "+ format.getName());
+  }
+  FileWriter writer=new FileWriter(info);
+  writer.write("<coverage format=\"" + coverage + "\">\n");
+  writer.write("<name>" + coverage + "</name>\n");
+  writer.write("<label>" + coverage + "</label>\n");
+  writer.write("<description>" + coverage + " description</description>\n");
+  writer.write("<metadataLink about = \"http://www.remotesensing.org:16080/websites/geotiff/geotiff.html\" metadataType = \"other\" />");
+  writer.write("<keywords>WCS," + coverage + " </keywords>\n");
+  if (styleName == null)   styleName="raster";
+  writer.write("<styles default=\"" + styleName + "\"/>\n");
+  CoordinateReferenceSystem crs=reader.getCrs();
+  GeneralEnvelope envelope=reader.getOriginalEnvelope();
+  GeneralEnvelope wgs84envelope=CoverageStoreUtils.getWGS84LonLatEnvelope(envelope);
+  final String nativeCrsName=CRS.lookupIdentifier(crs,false);
+  writer.write("<envelope crs=\"" + crs.toString().replaceAll("\"","'") + "\" srsName=\""+ nativeCrsName+ "\">\n");
+  writer.write("<pos>" + wgs84envelope.getMinimum(0) + " "+ wgs84envelope.getMinimum(1)+ "</pos>\n");
+  writer.write("<pos>" + wgs84envelope.getMaximum(0) + " "+ wgs84envelope.getMaximum(1)+ "</pos>\n");
+  writer.write("</envelope>\n");
+  final ParameterValueGroup readParams=reader.getFormat().getReadParameters();
+  final Map parameters=CoverageUtils.getParametersKVP(readParams);
+  double[] minCP=envelope.getLowerCorner().getCoordinate();
+  double[] maxCP=new double[]{minCP[0] + (envelope.getSpan(0) / 20.0),minCP[1] + (envelope.getSpan(1) / 20.0)};
+  final GeneralEnvelope subEnvelope=new GeneralEnvelope(minCP,maxCP);
+  subEnvelope.setCoordinateReferenceSystem(reader.getCrs());
+  parameters.put(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString(),new GridGeometry2D(reader.getOriginalGridRange(),subEnvelope));
+  GridCoverage2D gc=(GridCoverage2D)reader.read(CoverageUtils.getParameters(readParams,parameters,true));
+  final GridGeometry geometry=gc.getGridGeometry();
+  final int dimensions=geometry.getGridRange().getDimension();
+  String lower="";
+  String upper="";
+  for (int i=0; i < dimensions; i++) {
+    lower=lower + geometry.getGridRange().getLow(i) + " ";
+    upper=upper + geometry.getGridRange().getHigh(i) + " ";
+  }
+  writer.write("<grid dimension = \"" + dimensions + "\">\n");
+  writer.write("<low>" + lower + "</low>\n");
+  writer.write("<high>" + upper + "</high>\n");
+  final CoordinateSystem cs=crs.getCoordinateSystem();
+  for (int i=0; i < cs.getDimension(); i++) {
+    writer.write("<axisName>" + cs.getAxis(i).getName().getCode() + "</axisName>\n");
+  }
+  if (geometry.getGridToCRS() instanceof AffineTransform) {
+    AffineTransform aTX=(AffineTransform)geometry.getGridToCRS();
+    writer.write("<geoTransform>");
+    writer.write("<scaleX>" + aTX.getScaleX() + "</scaleX>\n");
+    writer.write("<scaleY>" + aTX.getScaleY() + "</scaleY>\n");
+    writer.write("<shearX>" + aTX.getShearX() + "</shearX>\n");
+    writer.write("<shearY>" + aTX.getShearY() + "</shearY>\n");
+    writer.write("<translateX>" + aTX.getTranslateX() + "</translateX>\n");
+    writer.write("<translateY>" + aTX.getTranslateY() + "</translateY>\n");
+    writer.write("</geoTransform>\n");
+  }
+  writer.write("</grid>\n");
+  final GridSampleDimension[] sd=gc.getSampleDimensions();
+  for (int i=0; i < sd.length; i++) {
+    writer.write("<CoverageDimension>\n");
+    writer.write("<name>" + sd[i].getDescription().toString() + "</name>\n");
+    writer.write("<interval>\n");
+    writer.write("<min>" + sd[i].getMinimumValue() + "</min>\n");
+    writer.write("<max>" + sd[i].getMaximumValue() + "</max>\n");
+    writer.write("</interval>\n");
+    final List<Category> categories=sd[i].getCategories();
+    if (categories != null && categories.size() >= 1) {
+      writer.write("<nullValues>\n");
+      for (Iterator<Category> it=sd[i].getCategories().iterator(); it.hasNext(); ) {
+        Category cat=(Category)it.next();
+        if ((cat != null) && cat.getName().toString().equalsIgnoreCase("no data")) {
+          double min=cat.getRange().getMinimum();
+          double max=cat.getRange().getMaximum();
+          writer.write("<value>" + min + "</value>\n");
+          if (min != max)           writer.write("<value>" + max + "</value>\n");
+        }
+      }
+      writer.write("</nullValues>\n");
+    }
+ else     writer.write("<nullValues/>\n");
+    writer.write("</CoverageDimension>\n");
+  }
+  writer.write("<supportedCRSs>\n");
+  writer.write("<requestCRSs>" + nativeCrsName + "</requestCRSs>\n");
+  writer.write("<responseCRSs>" + nativeCrsName + "</responseCRSs>\n");
+  writer.write("</supportedCRSs>\n");
+  writer.write("<supportedFormats nativeFormat = \"" + format.getName() + "\">\n");
+  writer.write("<formats>ARCGRID,ARCGRID-GZIP,GEOTIFF,PNG,GIF,TIFF</formats>\n");
+  writer.write("</supportedFormats>\n");
+  writer.write("<supportedInterpolations default = \"nearest neighbor\">\n");
+  writer.write("<interpolationMethods>nearest neighbor</interpolationMethods>\n");
+  writer.write("</supportedInterpolations>\n");
+  writer.write("</coverage>\n");
+  writer.flush();
+  writer.close();
+}

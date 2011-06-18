@@ -1,0 +1,15 @@
+{
+  if (a == null)   return b;
+  if (b == null)   return a;
+  CatalogMode mode=intersection(a.getMode(),b.getMode());
+  Filter readFilter=intersection(a.getReadFilter(),b.getReadFilter());
+  MultiPolygon rasterFilter=null;
+{
+    MultiPolygon aFilter=a.getRasterFilter(), bFilter=b.getRasterFilter();
+    if (aFilter == null)     rasterFilter=bFilter;
+ else     if (bFilter == null)     rasterFilter=aFilter;
+ else     rasterFilter=(MultiPolygon)aFilter.intersection(bFilter);
+  }
+  boolean allowFeatureInfo=a.isAllowFeatureInfo() && b.isAllowFeatureInfo();
+  return new WMSAccessLimits(mode,readFilter,rasterFilter,allowFeatureInfo);
+}

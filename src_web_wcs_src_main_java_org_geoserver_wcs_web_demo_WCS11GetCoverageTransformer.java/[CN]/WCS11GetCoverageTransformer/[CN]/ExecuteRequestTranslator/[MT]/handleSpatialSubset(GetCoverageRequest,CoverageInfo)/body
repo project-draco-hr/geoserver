@@ -1,0 +1,15 @@
+{
+  try {
+    ReferencedEnvelope bounds=request.bounds;
+    CoordinateReferenceSystem boundsCrs=bounds.getCoordinateReferenceSystem();
+    final String epsgCode=epsgUrnCode(boundsCrs);
+    bounds=bounds.transform(CRS.decode(epsgCode),true);
+    start("ows:BoundingBox",attributes("crs",epsgCode));
+    element("ows:LowerCorner",bounds.getMinX() + " " + bounds.getMinY());
+    element("ows:UpperCorner",bounds.getMaxX() + " " + bounds.getMaxY());
+    end("ows:BoundingBox");
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+}

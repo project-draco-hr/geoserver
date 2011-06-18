@@ -1,0 +1,50 @@
+{
+  URI id;
+  int fulfillOn=-1;
+  List<Attribute> assignments=new ArrayList<Attribute>();
+  AttributeFactory attrFactory=AttributeFactory.getInstance();
+  NamedNodeMap attrs=root.getAttributes();
+  try {
+    id=new URI(attrs.getNamedItem("ObligationId").getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing required attriubte " + "ObligationId",e);
+  }
+  String effect=null;
+  try {
+    effect=attrs.getNamedItem("FulfillOn").getNodeValue();
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing required attriubte " + "FulfillOn",e);
+  }
+  if (effect.equals("Permit")) {
+    fulfillOn=Result.DECISION_PERMIT;
+  }
+ else   if (effect.equals("Deny")) {
+    fulfillOn=Result.DECISION_DENY;
+  }
+ else {
+    throw new ParsingException("Invlid Effect type: " + effect);
+  }
+  NodeList nodes=root.getChildNodes();
+  for (int i=0; i < nodes.getLength(); i++) {
+    Node node=nodes.item(i);
+    if (node.getNodeName().equals("AttributeAssignment")) {
+      try {
+        URI attrId=new URI(node.getAttributes().getNamedItem("AttributeId").getNodeValue());
+        AttributeValue attrValue=attrFactory.createValue(node);
+        assignments.add(new Attribute(attrId,null,null,attrValue));
+      }
+ catch (      URISyntaxException use) {
+        throw new ParsingException("Error parsing URI",use);
+      }
+catch (      UnknownIdentifierException uie) {
+        throw new ParsingException("Unknown AttributeId",uie);
+      }
+catch (      Exception e) {
+        throw new ParsingException("Error parsing attribute " + "assignments",e);
+      }
+    }
+  }
+  return new Obligation(id,fulfillOn,assignments);
+}

@@ -1,0 +1,25 @@
+{
+  GetMapRequest request=new GetMapRequest();
+  final WMSMapContext map=new WMSMapContext();
+  map.setMapWidth(100);
+  map.setMapHeight(100);
+  map.setRequest(request);
+  final ReferencedEnvelope bounds=new ReferencedEnvelope(-180,180,-90,90,DefaultGeographicCRS.WGS84);
+  map.setAreaOfInterest(bounds);
+  final FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(STREAMS.getNamespaceURI(),STREAMS.getLocalPart());
+  final SimpleFeatureSource featureSource=(SimpleFeatureSource)ftInfo.getFeatureSource(null,null);
+  DecoratingFeatureSource source;
+  source=new DecoratingFeatureSource(featureSource){
+    @Override public SimpleFeatureCollection getFeatures(    Query query) throws IOException {
+      throw new RuntimeException(renderExceptionToThrow);
+    }
+  }
+;
+  StyleInfo someStyle=getCatalog().getStyles().get(0);
+  map.addLayer(source,someStyle.getStyle());
+  request.setFormat(getMapFormat());
+  RenderedImageMap imageMap=this.rasterMapProducer.produceMap(map);
+  BufferedImage image=(BufferedImage)imageMap.getImage();
+  imageMap.dispose();
+  return image;
+}

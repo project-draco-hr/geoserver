@@ -1,0 +1,17 @@
+{
+  Document doc=getAsDOM("wfs?service=WFS&request=getCapabilities&version=1.1.0");
+  XpathEngine engine=XMLUnit.newXpathEngine();
+  NodeList formats=engine.getMatchingNodes("//ows:Operation[@name=\"GetFeature\"]/ows:Parameter[@name=\"outputFormat\"]/ows:Value",doc);
+  Set<String> s1=new TreeSet<String>();
+  for (int i=0; i < formats.getLength(); i++) {
+    String format=formats.item(i).getFirstChild().getNodeValue();
+    s1.add(format);
+  }
+  List<WFSGetFeatureOutputFormat> extensions=GeoServerExtensions.extensions(WFSGetFeatureOutputFormat.class);
+  Set<String> s2=new TreeSet<String>();
+  for (Iterator e=extensions.iterator(); e.hasNext(); ) {
+    WFSGetFeatureOutputFormat extension=(WFSGetFeatureOutputFormat)e.next();
+    s2.addAll(extension.getOutputFormats());
+  }
+  assertEquals(s1,s2);
+}

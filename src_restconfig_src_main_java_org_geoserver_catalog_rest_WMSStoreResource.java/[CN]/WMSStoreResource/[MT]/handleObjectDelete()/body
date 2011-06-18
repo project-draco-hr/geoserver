@@ -1,0 +1,16 @@
+{
+  String workspace=getAttribute("workspace");
+  String wmsstore=getAttribute("wmsstore");
+  boolean recurse=getQueryStringValue("recurse",Boolean.class,false);
+  WMSStoreInfo wms=catalog.getStoreByName(workspace,wmsstore,WMSStoreInfo.class);
+  if (!recurse) {
+    if (!catalog.getResourcesByStore(wms,WMSLayerInfo.class).isEmpty()) {
+      throw new RestletException("store not empty",Status.CLIENT_ERROR_FORBIDDEN);
+    }
+    catalog.remove(wms);
+  }
+ else {
+    new CascadeDeleteVisitor(catalog).visit(wms);
+  }
+  LOGGER.info("DELETE wms store " + workspace + ","+ wmsstore);
+}

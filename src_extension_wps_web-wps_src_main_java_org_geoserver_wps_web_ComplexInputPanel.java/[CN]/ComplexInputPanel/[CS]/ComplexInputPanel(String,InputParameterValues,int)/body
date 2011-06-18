@@ -1,0 +1,29 @@
+{
+  super(id);
+  setOutputMarkupId(true);
+  setDefaultModel(new PropertyModel(pv,"values[" + valueIndex + "]"));
+  valueModel=new PropertyModel(getDefaultModel(),"value");
+  mimeTypes=pv.getSupportedMime();
+  List<ParameterType> ptypes=pv.getSupportedTypes();
+  ptypes.remove(ParameterType.LITERAL);
+  typeChoice=new DropDownChoice("type",new PropertyModel(getDefaultModelObject(),"type"),ptypes);
+  add(typeChoice);
+  subprocesswindow=new ModalWindow("subprocessPopupWindow");
+  subprocesswindow.setInitialWidth(700);
+  subprocesswindow.setInitialHeight(500);
+  add(subprocesswindow);
+  subprocesswindow.setPageCreator(new ModalWindow.PageCreator(){
+    public Page createPage(){
+      return new SubProcessBuilder((ExecuteRequest)subprocesswindow.getDefaultModelObject(),subprocesswindow);
+    }
+  }
+);
+  updateEditor();
+  typeChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      updateEditor();
+      target.addComponent(ComplexInputPanel.this);
+    }
+  }
+);
+}

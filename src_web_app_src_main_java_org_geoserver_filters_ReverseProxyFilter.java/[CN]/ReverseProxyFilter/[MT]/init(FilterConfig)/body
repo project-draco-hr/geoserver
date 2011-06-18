@@ -1,0 +1,21 @@
+{
+  final String enabledInitParam=filterConfig.getInitParameter(ENABLED_INIT_PARAM);
+  this.filterIsEnabled=Boolean.valueOf(enabledInitParam).booleanValue();
+  if (filterIsEnabled) {
+    final String mimeTypesInitParam=filterConfig.getInitParameter(MIME_TYPES_INIT_PARAM);
+    GeoServer geoServerConfig=GeoServerExtensions.bean(GeoServer.class);
+    if (geoServerConfig == null) {
+      throw new ServletException("No " + GeoServer.class.getName() + " found, the system is either not properly "+ "configured or the method to get to the GeoServer "+ "config instance have changed!");
+    }
+    geoServer=geoServerConfig.getGlobal();
+    if (geoServer == null) {
+      throw new ServletException("No GeoServerInfo instance found. Needed to look for the proxy base URL");
+    }
+    Set<Pattern> patterns=parsePatterns(geoServer,mimeTypesInitParam);
+    this.mimeTypePatterns.addAll(patterns);
+    LOGGER.finer("Reverse Proxy Filter configured");
+  }
+ else {
+    LOGGER.fine("Reverse Proxy Filter is disabled by configuration");
+  }
+}

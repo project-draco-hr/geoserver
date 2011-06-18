@@ -1,0 +1,20 @@
+{
+  if (IS_OGR_AVAILABLE == null) {
+    try {
+      File props=new File("./src/test/resources/ogr2ogr.properties");
+      Properties p=new Properties();
+      p.load(new FileInputStream(props));
+      OGR2OGR=p.getProperty("ogr2ogr");
+      if (OGR2OGR == null)       OGR2OGR="ogr2ogr";
+      GDAL_DATA=p.getProperty("gdalData");
+      OGRWrapper ogr=new OGRWrapper(OGR2OGR,GDAL_DATA);
+      IS_OGR_AVAILABLE=ogr.isAvailable();
+    }
+ catch (    Exception e) {
+      IS_OGR_AVAILABLE=false;
+      e.printStackTrace();
+      LOGGER.log(Level.SEVERE,"Disabling ogr2ogr output format tests, as ogr2ogr lookup failed",e);
+    }
+  }
+  return IS_OGR_AVAILABLE;
+}

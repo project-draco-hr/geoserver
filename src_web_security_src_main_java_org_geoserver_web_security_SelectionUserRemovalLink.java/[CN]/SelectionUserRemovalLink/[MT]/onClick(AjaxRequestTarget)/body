@@ -1,0 +1,37 @@
+{
+  final List<User> selection=users.getSelection();
+  if (selection.size() == 0)   return;
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    protected Component getContents(    String id){
+      return new ConfirmRemovalUserPanel(id,selection){
+        @Override protected StringResourceModel canRemove(        User user){
+          return SelectionUserRemovalLink.this.canRemove(user);
+        }
+      }
+;
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      GeoserverUserDao dao=GeoserverUserDao.get();
+      for (      User user : selection) {
+        if (!user.getUsername().equals("admin"))         dao.removeUser(user.getUsername());
+      }
+      try {
+        dao.storeUsers();
+      }
+ catch (      IOException e) {
+        e.printStackTrace();
+      }
+      users.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (users.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(SelectionUserRemovalLink.this);
+        target.addComponent(users);
+      }
+    }
+  }
+);
+}

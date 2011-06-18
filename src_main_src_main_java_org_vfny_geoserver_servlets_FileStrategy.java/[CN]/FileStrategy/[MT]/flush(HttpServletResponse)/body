@@ -1,0 +1,40 @@
+{
+  if ((temp == null) || (response == null) || (safe == null)|| !temp.exists()) {
+    LOGGER.fine("temp is " + temp + ", response is "+ response+ " safe is "+ safe+ ", temp exists "+ temp.exists());
+    throw new IllegalStateException("flush should only be called after getDestination");
+  }
+  InputStream copy=null;
+  try {
+    safe.flush();
+    safe.close();
+    safe=null;
+    copy=new BufferedInputStream(new FileInputStream(temp));
+    OutputStream out=response.getOutputStream();
+    out=new BufferedOutputStream(out,1024 * 1024);
+    byte[] buffer=new byte[BUFF_SIZE];
+    int b;
+    while ((b=copy.read(buffer,0,BUFF_SIZE)) > 0) {
+      out.write(buffer,0,b);
+    }
+    out.flush();
+  }
+ catch (  IOException ioe) {
+    throw ioe;
+  }
+ finally {
+    if (copy != null) {
+      try {
+        copy.close();
+      }
+ catch (      Exception ex) {
+      }
+    }
+    copy=null;
+    if ((temp != null) && temp.exists()) {
+      temp.delete();
+    }
+    temp=null;
+    response=null;
+    safe=null;
+  }
+}

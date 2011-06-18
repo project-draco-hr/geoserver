@@ -1,0 +1,25 @@
+{
+  try {
+synchronized (xp) {
+      File temp=new File(f.getParentFile(),f.getName() + ".tmp");
+      if (temp.exists()) {
+        temp.delete();
+      }
+      BufferedOutputStream out=null;
+      try {
+        out=new BufferedOutputStream(new FileOutputStream(temp));
+        xp.save(o,out);
+        out.flush();
+      }
+  finally {
+        if (out != null)         org.apache.commons.io.IOUtils.closeQuietly(out);
+      }
+      rename(temp,f);
+    }
+    LOGGER.fine("Persisted " + o.getClass().getName() + " to "+ f.getAbsolutePath());
+  }
+ catch (  Exception e) {
+    String msg="Error persisting " + o + " to "+ f.getCanonicalPath();
+    throw new CatalogException(msg,e);
+  }
+}

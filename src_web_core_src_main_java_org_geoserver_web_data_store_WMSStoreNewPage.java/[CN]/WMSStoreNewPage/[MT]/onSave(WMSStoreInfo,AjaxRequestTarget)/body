@@ -1,0 +1,26 @@
+{
+  WMSStoreInfo savedStore=getCatalog().getFactory().createWebMapServer();
+  clone(info,savedStore);
+  try {
+    getCatalog().save(savedStore);
+  }
+ catch (  RuntimeException e) {
+    LOGGER.log(Level.INFO,"Adding the store for " + info.getCapabilitiesURL(),e);
+    throw new IllegalArgumentException("The WMS store could not be saved. Failure message: " + e.getMessage());
+  }
+  NewLayerPage layerChooserPage;
+  try {
+    layerChooserPage=new NewLayerPage(savedStore.getId());
+  }
+ catch (  RuntimeException e) {
+    LOGGER.log(Level.INFO,"Getting list of layers for the WMS store " + info.getCapabilitiesURL(),e);
+    try {
+      getCatalog().remove(savedStore);
+    }
+ catch (    RuntimeErrorException shouldNotHappen) {
+      LOGGER.log(Level.WARNING,"Can't remove CoverageStoreInfo after adding it!",e);
+    }
+    throw new IllegalArgumentException(e.getMessage(),e);
+  }
+  setResponsePage(layerChooserPage);
+}

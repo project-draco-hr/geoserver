@@ -1,0 +1,31 @@
+{
+  Map<String,Object> raw=baseMap();
+  final String layerId=getLayerId(TASMANIA_BM);
+  raw.put("identifier",layerId);
+  raw.put("format","image/tiff");
+  raw.put("BoundingBox","-45,146,-42,147");
+  raw.put("GridOrigin","10.5,-30.2");
+  GetCoverageType getCoverage=(GetCoverageType)reader.read(reader.createRequest(),parseKvp(raw),raw);
+  Double[] origin=(Double[])getCoverage.getOutput().getGridCRS().getGridOrigin();
+  assertEquals(2,origin.length);
+  assertEquals(10.5,origin[0]);
+  assertEquals(-30.2,origin[1]);
+  raw.put("GridOrigin","12");
+  try {
+    reader.read(reader.createRequest(),parseKvp(raw),raw);
+    fail("We should have had a WcsException here?");
+  }
+ catch (  WcsException e) {
+    assertEquals(InvalidParameterValue.name(),e.getCode());
+    assertEquals("GridOrigin",e.getLocator());
+  }
+  raw.put("GridOrigin","12,a");
+  try {
+    reader.read(reader.createRequest(),parseKvp(raw),raw);
+    fail("We should have had a WcsException here?");
+  }
+ catch (  WcsException e) {
+    assertEquals(InvalidParameterValue.name(),e.getCode());
+    assertEquals("GridOrigin",e.getLocator());
+  }
+}

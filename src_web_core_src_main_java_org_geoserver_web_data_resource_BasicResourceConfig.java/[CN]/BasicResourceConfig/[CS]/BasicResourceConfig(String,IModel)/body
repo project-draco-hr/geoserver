@@ -1,0 +1,35 @@
+{
+  super(id,model);
+  TextField name=new TextField("name");
+  name.setRequired(true);
+  add(name);
+  add(new TextField("title"));
+  add(new TextArea("abstract"));
+  add(new KeywordsEditor("keywords",LiveCollectionModel.list(new PropertyModel(model,"keywords"))));
+  add(new MetadataLinkEditor("metadataLinks",model));
+  final Form refForm=new Form("referencingForm");
+  add(refForm);
+  PropertyModel nativeBBoxModel=new PropertyModel(model,"nativeBoundingBox");
+  final EnvelopePanel nativeBBox=new EnvelopePanel("nativeBoundingBox",nativeBBoxModel);
+  nativeBBox.setOutputMarkupId(true);
+  refForm.add(nativeBBox);
+  refForm.add(computeNativeBoundsLink(refForm,nativeBBox));
+  final EnvelopePanel latLonPanel=new EnvelopePanel("latLonBoundingBox",new PropertyModel(model,"latLonBoundingBox"));
+  latLonPanel.setOutputMarkupId(true);
+  latLonPanel.setRequired(true);
+  refForm.add(latLonPanel);
+  refForm.add(computeLatLonBoundsLink(refForm,nativeBBox,latLonPanel));
+  CRSPanel nativeCRS=new CRSPanel("nativeSRS",new PropertyModel(model,"nativeCRS"));
+  nativeCRS.setReadOnly(true);
+  refForm.add(nativeCRS);
+  declaredCRS=new CRSPanel("declaredSRS",new SRSToCRSModel(new PropertyModel(model,"sRS")));
+  declaredCRS.setRequired(true);
+  refForm.add(declaredCRS);
+  projectionPolicy=new DropDownChoice("srsHandling",new PropertyModel(model,"projectionPolicy"),Arrays.asList(ProjectionPolicy.values()),new ProjectionPolicyRenderer());
+  ResourceInfo ri=(ResourceInfo)model.getObject();
+  if (((ResourceInfo)model.getObject()).getCRS() == null) {
+    ri.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  }
+  refForm.add(projectionPolicy);
+  refForm.add(new ReprojectionIsPossibleValidator(nativeCRS,declaredCRS,projectionPolicy));
+}

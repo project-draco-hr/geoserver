@@ -1,0 +1,29 @@
+{
+  writer.writeStartElement("url");
+{
+    writer.writeStartElement("loc");
+    writer.writeCharacters(kmlMetadataUrl(layerName));
+    writer.writeEndElement();
+    Long lastMod=metadata.get(LAST_MODIFIED,Long.class);
+    if (lastMod != null) {
+      Date parsed;
+      try {
+        parsed=LAST_MOD_FORMATTER_GMT.parse(LAST_MOD_FORMATTER.format(new Date(lastMod.longValue())));
+      }
+ catch (      ParseException e) {
+        parsed=new Date(lastMod.longValue());
+      }
+      writer.writeStartElement("lastmod");
+      writer.writeCharacters(LAST_MOD_FORMATTER_GMT.format(parsed));
+      writer.writeEndElement();
+    }
+    writer.writeStartElement(GEO_NS,"geo");
+{
+      writer.writeStartElement(GEO_NS,"format");
+      writer.writeCharacters("kml");
+      writer.writeEndElement();
+    }
+    writer.writeEndElement();
+  }
+  writer.writeEndElement();
+}

@@ -1,0 +1,78 @@
+{
+  ParametersSet paramSet=(ParametersSet)m_Algorithm.getParameters();
+  boolean gridExtendRequired=false;
+  for (  String sKey : input.keySet()) {
+    if (SEXTANTE_GRID_CELL_SIZE.equals(sKey) || SEXTANTE_GRID_ENVELOPE.equals(sKey)) {
+      continue;
+    }
+    Object paramValue=input.get(sKey);
+    Parameter param=paramSet.getParameter(sKey);
+    if (paramValue instanceof FeatureCollection) {
+      param.setParameterValue(GTVectorLayer.createLayer(DataUtilities.source((FeatureCollection)paramValue),Query.ALL));
+    }
+ else     if (paramValue instanceof GridCoverage2D) {
+      GTRasterLayer layer=new GTRasterLayer();
+      gridExtendRequired=true;
+      layer.create(paramValue);
+      param.setParameterValue(layer);
+    }
+ else {
+      param.setParameterValue(paramValue);
+    }
+  }
+  OutputObjectsSet outputs=m_Algorithm.getOutputObjects();
+  for (int i=0; i < outputs.getOutputObjectsCount(); i++) {
+    Output output=outputs.getOutput(i);
+    if (output instanceof OutputRasterLayer) {
+      gridExtendRequired=true;
+    }
+  }
+  if (gridExtendRequired) {
+    double cellSize=Double.NaN;
+    if (input.get(SEXTANTE_GRID_CELL_SIZE) != null) {
+      cellSize=(Double)input.get(SEXTANTE_GRID_CELL_SIZE);
+    }
+ else {
+      for (      String sKey : input.keySet()) {
+        Object value=paramSet.getParameter(sKey).getParameterValueAsObject();
+        if (value instanceof GTRasterLayer) {
+          cellSize=((GTRasterLayer)value).getLayerCellSize();
+          return;
+        }
+      }
+    }
+    if (Double.isNaN(cellSize)) {
+      throw new GeoAlgorithmExecutionException(SEXTANTE_GRID_CELL_SIZE + " parameter could not be derived from inputs, and is not available among ");
+    }
+    Envelope envelope=null;
+    if (input.get(SEXTANTE_GRID_ENVELOPE) != null) {
+      envelope=(Envelope)input.get(SEXTANTE_GRID_ENVELOPE);
+    }
+ else {
+      for (      String sKey : input.keySet()) {
+        Object value=paramSet.getParameter(sKey).getParameterValueAsObject();
+        if (value instanceof GTRasterLayer) {
+          GridExtent ge=((GTRasterLayer)value).getLayerGridExtent();
+          Envelope genv=new Envelope(ge.getXMin(),ge.getXMax(),ge.getYMin(),ge.getYMax());
+          if (envelope == null) {
+            envelope=genv;
+          }
+ else {
+            envelope.expandToInclude(genv);
+          }
+          return;
+        }
+      }
+    }
+    if (envelope == null) {
+      if (Double.isNaN(cellSize)) {
+        throw new GeoAlgorithmExecutionException(SEXTANTE_GRID_ENVELOPE + " parameter could not be derived from inputs, and is not available among ");
+      }
+    }
+    GridExtent extent=new GridExtent();
+    extent.setXRange(envelope.getMinX(),envelope.getMaxX());
+    extent.setYRange(envelope.getMinY(),envelope.getMaxY());
+    extent.setCellSize(cellSize);
+    m_Algorithm.setGridExtent(extent);
+  }
+}

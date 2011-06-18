@@ -1,0 +1,92 @@
+{
+  super(id,model);
+  final WebMarkupContainer configsContainer=new WebMarkupContainer("configContainer");
+  configsContainer.setOutputMarkupId(true);
+  add(configsContainer);
+  final WebMarkupContainer configs=new WebMarkupContainer("configs");
+  configs.setOutputMarkupId(true);
+  configs.setVisible(getModelObject().isEnabled());
+  configsContainer.add(configs);
+  final PropertyModel<Boolean> enabledModel=new PropertyModel<Boolean>(model,"enabled");
+  enabled=new CheckBox("enabled",enabledModel);
+  add(enabled);
+  enabled.add(new AjaxFormComponentUpdatingBehavior("onclick"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      Boolean visile=enabled.getModelObject();
+      configs.setVisible(visile);
+      target.addComponent(configsContainer);
+    }
+  }
+);
+  Label noAttributeMessage=new Label("noAttributeMsg","");
+  add(noAttributeMessage);
+  WebMarkupContainer attContainer=new WebMarkupContainer("attributeContainer");
+  configs.add(attContainer);
+  List<String> attributes=getAttributesOfType(resource,type);
+  attribute=new DropDownChoice<String>("attribute",new PropertyModel<String>(model,"attribute"),attributes);
+  attribute.setOutputMarkupId(true);
+  attribute.setRequired(true);
+  attContainer.add(attribute);
+  if (resource instanceof FeatureTypeInfo) {
+    if (attributes.isEmpty()) {
+      disableDimension(type,configs,noAttributeMessage);
+    }
+ else {
+      noAttributeMessage.setVisible(false);
+    }
+  }
+ else   if (resource instanceof CoverageInfo) {
+    attContainer.setVisible(false);
+    attribute.setRequired(false);
+    try {
+      GridCoverageReader reader=((CoverageInfo)resource).getGridCoverageReader(null,null);
+      if (Number.class.isAssignableFrom(type)) {
+        String elev=reader.getMetadataValue(AbstractGridCoverage2DReader.HAS_ELEVATION_DOMAIN);
+        if (!Boolean.parseBoolean(elev)) {
+          disableDimension(type,configs,noAttributeMessage);
+        }
+      }
+ else       if (Date.class.isAssignableFrom(type)) {
+        String time=reader.getMetadataValue(AbstractGridCoverage2DReader.HAS_TIME_DOMAIN);
+        if (!Boolean.parseBoolean(time)) {
+          disableDimension(type,configs,noAttributeMessage);
+        }
+      }
+    }
+ catch (    IOException e) {
+      throw new WicketRuntimeException(e);
+    }
+  }
+  final WebMarkupContainer resContainer=new WebMarkupContainer("resolutionContainer");
+  resContainer.setOutputMarkupId(true);
+  configs.add(resContainer);
+  final WebMarkupContainer resolutions=new WebMarkupContainer("resolutions");
+  resolutions.setVisible(model.getObject().getPresentation() == DimensionPresentation.DISCRETE_INTERVAL);
+  resolutions.setOutputMarkupId(true);
+  resContainer.add(resolutions);
+  presentation=new DropDownChoice<DimensionPresentation>("presentation",new PropertyModel<DimensionPresentation>(model,"presentation"),PRESENTATION_MODES,new PresentationModeRenderer());
+  configs.add(presentation);
+  presentation.setRequired(true);
+  presentation.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      boolean visible=presentation.getModelObject() == DimensionPresentation.DISCRETE_INTERVAL;
+      resolutions.setVisible(visible);
+      target.addComponent(resContainer);
+    }
+  }
+);
+  IModel<BigDecimal> rmodel=new PropertyModel<BigDecimal>(model,"resolution");
+  resTime=new PeriodEditor("resTime",rmodel);
+  resolutions.add(resTime);
+  resElevation=new TextField<BigDecimal>("resElevation",rmodel);
+  resolutions.add(resElevation);
+  time=Date.class.isAssignableFrom(type);
+  if (time) {
+    resElevation.setVisible(false);
+    resTime.setRequired(true);
+  }
+ else {
+    resTime.setVisible(false);
+    resElevation.setRequired(true);
+  }
+}

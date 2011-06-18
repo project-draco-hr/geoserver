@@ -1,0 +1,28 @@
+{
+  String value=null;
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer(new StringBuffer("getting element text for ").append(elem).toString());
+  }
+  if (elem != null) {
+    Node child;
+    NodeList childs=elem.getChildNodes();
+    int nChilds=childs.getLength();
+    for (int i=0; i < nChilds; i++) {
+      child=childs.item(i);
+      if (child.getNodeType() == Node.TEXT_NODE) {
+        value=child.getNodeValue();
+        if (mandatory && "".equals(value.trim())) {
+          throw new Exception(elem.getNodeName() + " text is empty");
+        }
+        break;
+      }
+    }
+    if (mandatory && (value == null)) {
+      throw new Exception(elem.getNodeName() + " element does not contains text");
+    }
+  }
+ else {
+    throw new Exception("Argument element can't be null");
+  }
+  return value;
+}

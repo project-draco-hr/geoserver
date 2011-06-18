@@ -1,0 +1,22 @@
+{
+  String format=getAttribute(request,"format");
+  String datastore=getAttribute(request,"datastore");
+  String coveragestore=getAttribute(request,"coveragestore");
+  if (datastore != null) {
+    return new DataStoreFileResource(request,response,format,catalog);
+  }
+ else {
+    String coverageFormatName=formatToCoverageStoreFormat.get(format);
+    if (coverageFormatName == null) {
+      throw new RestletException("Unsupported format: " + format,Status.CLIENT_ERROR_BAD_REQUEST);
+    }
+    Format coverageFormat=null;
+    try {
+      coverageFormat=CoverageStoreUtils.acquireFormat(coverageFormatName);
+    }
+ catch (    Exception e) {
+      throw new RestletException("Coveragestore format unavailable: " + coverageFormatName,Status.SERVER_ERROR_INTERNAL);
+    }
+    return new CoverageStoreFileResource(request,response,coverageFormat,catalog);
+  }
+}

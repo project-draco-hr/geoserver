@@ -1,0 +1,23 @@
+{
+  BufferedWriter out=null;
+  Map<String,String> escapedMap=new HashMap<String,String>();
+  for (  Map.Entry<String,String> entry : filters.entrySet()) {
+    escapedMap.put("${" + entry.getKey() + "}",entry.getValue());
+  }
+  try {
+    out=new BufferedWriter(new FileWriter(to));
+    String line=null;
+    while ((line=from.readLine()) != null) {
+      for (      Map.Entry<String,String> entry : escapedMap.entrySet()) {
+        line=line.replace(entry.getKey(),entry.getValue());
+      }
+      out.write(line);
+      out.newLine();
+    }
+    out.flush();
+  }
+  finally {
+    from.close();
+    out.close();
+  }
+}

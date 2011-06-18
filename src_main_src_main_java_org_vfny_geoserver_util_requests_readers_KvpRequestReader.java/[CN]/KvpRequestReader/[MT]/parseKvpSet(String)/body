@@ -1,0 +1,43 @@
+{
+  String cleanRequest=clean(qString);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("clean request is " + cleanRequest);
+  }
+  Map kvps=null;
+  kvps=new HashMap(10);
+  StringTokenizer requestKeywords=new StringTokenizer(cleanRequest.trim(),KEYWORD_DELIMITER);
+  while (requestKeywords.hasMoreTokens()) {
+    String kvpPair=requestKeywords.nextToken();
+    String key;
+    String value;
+    if (kvpPair.toUpperCase().startsWith("FILTER")) {
+      String filterVal=kvpPair.substring(7);
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.finest("putting filter value " + filterVal);
+      }
+      kvps.put("FILTER",filterVal);
+    }
+ else     if (kvpPair.toUpperCase().startsWith("SLD_BODY")) {
+      String sldBodyVal=kvpPair.substring(9);
+      kvps.put("SLD_BODY",sldBodyVal);
+    }
+ else {
+      StringTokenizer requestValues=new StringTokenizer(kvpPair,VALUE_DELIMITER);
+      if (requestValues.hasMoreTokens()) {
+        key=requestValues.nextToken().toUpperCase();
+        if (requestValues.hasMoreTokens()) {
+          value=requestValues.nextToken();
+          LOGGER.finest("putting kvp pair: " + key + ": "+ value);
+          kvps.put(key,value);
+        }
+ else {
+          kvps.put(key,"");
+        }
+      }
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("returning parsed " + kvps);
+  }
+  return kvps;
+}

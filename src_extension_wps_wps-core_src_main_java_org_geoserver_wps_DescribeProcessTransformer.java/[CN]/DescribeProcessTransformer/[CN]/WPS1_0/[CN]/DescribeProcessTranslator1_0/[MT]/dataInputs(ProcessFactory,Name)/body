@@ -1,0 +1,27 @@
+{
+  start("DataInputs");
+  for (  Parameter<?> inputIdentifier : pf.getParameterInfo(processName).values()) {
+    AttributesImpl attributes=new AttributesImpl();
+    int maxOccurs=inputIdentifier.maxOccurs;
+    if (-1 == maxOccurs) {
+      maxOccurs=Integer.MAX_VALUE;
+    }
+    attributes.addAttribute("","minOccurs","minOccurs","","" + inputIdentifier.minOccurs);
+    attributes.addAttribute("","maxOccurs","maxOccurs","","" + maxOccurs);
+    start("Input",attributes);
+    element("ows:Identifier",inputIdentifier.key);
+    element("ows:Title",inputIdentifier.title.toString(this.locale));
+    element("ows:Abstract",inputIdentifier.description.toString(this.locale));
+    Transmuter transmuter=this.dataTransformer.getDefaultTransmuter(inputIdentifier.type);
+    if (transmuter instanceof ComplexTransmuter) {
+      start("ComplexData");
+      this.complexParameter((ComplexTransmuter)transmuter);
+      end("ComplexData");
+    }
+ else {
+      this.literalData((LiteralTransmuter)transmuter);
+    }
+    end("Input");
+  }
+  end("DataInputs");
+}

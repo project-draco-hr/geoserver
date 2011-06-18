@@ -1,0 +1,34 @@
+{
+  ReferencedEnvelope bounds=null;
+  if (rinfo instanceof FeatureTypeInfo) {
+    FeatureTypeInfo ftinfo=(FeatureTypeInfo)rinfo;
+    bounds=ftinfo.getFeatureSource(null,null).getBounds();
+    CoordinateReferenceSystem crs=ftinfo.getNativeCRS();
+    if (bounds != null && bounds.getCoordinateReferenceSystem() == null && crs != null) {
+      bounds=new ReferencedEnvelope(bounds,crs);
+    }
+    if (bounds != null) {
+      double expandBy=1;
+      if (bounds.getCoordinateReferenceSystem() instanceof GeographicCRS) {
+        expandBy=0.0001;
+      }
+      if (bounds.getWidth() == 0 || bounds.getHeight() == 0) {
+        bounds.expandBy(expandBy);
+      }
+    }
+  }
+ else   if (rinfo instanceof CoverageInfo) {
+    CoverageInfo cinfo=(CoverageInfo)rinfo;
+    AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)cinfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
+    bounds=new ReferencedEnvelope(reader.getOriginalEnvelope());
+  }
+  if (rinfo.getProjectionPolicy() == ProjectionPolicy.REPROJECT_TO_DECLARED && bounds != null) {
+    try {
+      bounds=bounds.transform(rinfo.getCRS(),true);
+    }
+ catch (    Exception e) {
+      throw (IOException)new IOException("transform error").initCause(e);
+    }
+  }
+  return bounds;
+}

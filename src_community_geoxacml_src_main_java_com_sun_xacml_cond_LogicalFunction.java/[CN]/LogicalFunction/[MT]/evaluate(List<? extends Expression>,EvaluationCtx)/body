@@ -1,0 +1,20 @@
+{
+  Iterator<? extends Expression> it=inputs.iterator();
+  while (it.hasNext()) {
+    Evaluatable eval=(Evaluatable)(it.next());
+    EvaluationResult result=eval.evaluate(context);
+    if (result.indeterminate())     return result;
+    AttributeValue value=result.getAttributeValue();
+    boolean argBooleanValue=((BooleanAttribute)value).getValue();
+switch (getFunctionId()) {
+case ID_OR:
+      if (argBooleanValue)       return EvaluationResult.getTrueInstance();
+    break;
+case ID_AND:
+  if (!argBooleanValue)   return EvaluationResult.getFalseInstance();
+break;
+}
+}
+if (getFunctionId() == ID_OR) return EvaluationResult.getFalseInstance();
+ else return EvaluationResult.getTrueInstance();
+}

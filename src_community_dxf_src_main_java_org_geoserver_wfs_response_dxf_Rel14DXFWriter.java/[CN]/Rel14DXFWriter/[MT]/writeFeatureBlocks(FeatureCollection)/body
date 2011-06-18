@@ -1,0 +1,22 @@
+{
+  FeatureIterator<SimpleFeature> iter=coll.features();
+  try {
+    while (iter.hasNext()) {
+      SimpleFeature f=iter.next();
+      String fid=f.getID();
+      if (blockNames.containsKey(fid)) {
+        String ownerHandle=blockHandles.get(fid);
+        String name=blockNames.get(fid);
+        String startHandle=getNewHandle("Block");
+        String endHandle=getNewHandle("Block");
+        String layer=getLayerName(coll);
+        writeStartBlock(startHandle,ownerHandle,false,"0",name);
+        writeGeometry(layer,ownerHandle,(Geometry)f.getDefaultGeometry());
+        writeEndBlock(endHandle,ownerHandle,false,"0",name);
+      }
+    }
+  }
+  finally {
+    coll.close(iter);
+  }
+}

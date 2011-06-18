@@ -1,0 +1,18 @@
+{
+  try {
+    VirtualTable vt=buildVirtualTable();
+    SimpleFeatureType rawFeatureType=getFeatureType(vt);
+    tinfo.getMetadata().put(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,vt);
+    CoordinateReferenceSystem crs=rawFeatureType.getCoordinateReferenceSystem();
+    if (crs != null) {
+      tinfo.setNativeCRS(crs);
+    }
+    tinfo.setNativeName(vt.getName());
+    previusPage.updateResource(tinfo);
+    setResponsePage(previusPage);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to create feature type",e);
+    error(new ParamResourceModel("creationFailure",this,getFirstErrorMessage(e)).getString());
+  }
+}

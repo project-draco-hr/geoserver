@@ -1,0 +1,18 @@
+{
+  final String rule=ruleKey + "=" + ruleValue;
+  String[] elements=parseElements(ruleKey);
+  if (elements.length != 2) {
+    LOGGER.warning("Invalid rule " + rule + ", the expected format is service.method=role1,role2,...");
+    return null;
+  }
+  String service=elements[0];
+  String method=elements[1];
+  Set<String> roles=parseRoles(ruleValue);
+  if (ANY.equals(service)) {
+    if (!ANY.equals(method)) {
+      LOGGER.warning("Invalid rule " + rule + ", when namespace "+ "is * then also layer must be *. Skipping rule "+ rule);
+      return null;
+    }
+  }
+  return new ServiceAccessRule(service,method,roles);
+}

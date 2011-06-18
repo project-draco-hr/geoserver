@@ -1,0 +1,23 @@
+{
+  GeoServer gs=getGeoServer();
+  GSSInfo gssInfo=gs.getService(GSSInfo.class);
+  gssInfo.setMode(GSSMode.Central);
+  gssInfo.setVersioningDataStore(getCatalog().getDataStoreByName("synch"));
+  gs.save(gssInfo);
+  Map gssBeans=applicationContext.getBeansOfType(DefaultGeoServerSynchronizationService.class);
+  gss=(DefaultGeoServerSynchronizationService)gssBeans.values().iterator().next();
+  gss.core.ensureCentralEnabled();
+  synch=(SynchronizationManager)applicationContext.getBeansOfType(SynchronizationManager.class).values().iterator().next();
+  Timer timer=(Timer)applicationContext.getBean("gssTimerFactory");
+  timer.cancel();
+  synchStore=(VersioningDataStore)getCatalog().getDataStoreByName("synch").getDataStore(null);
+  FeatureStore<SimpleFeatureType,SimpleFeature> fs=(FeatureStore<SimpleFeatureType,SimpleFeature>)synchStore.getFeatureSource(SYNCH_TABLES);
+  long restrectedId=addFeature(fs,"restricted","2");
+  long roadsId=addFeature(fs,"roads","2");
+  synchStore.setVersioned("restricted",true,null,null);
+  synchStore.setVersioned("roads",true,null,null);
+  fsUnits=(FeatureStore<SimpleFeatureType,SimpleFeature>)synchStore.getFeatureSource(SYNCH_UNITS);
+  long mangoId=addFeature(fsUnits,"unit1","http://localhost:8081/geoserver/ows",null,null,null,null,60,10,false);
+  fsUnitTables=(FeatureStore<SimpleFeatureType,SimpleFeature>)synchStore.getFeatureSource(SYNCH_UNIT_TABLES);
+  addFeature(fsUnitTables,mangoId,restrectedId,null,null,null,null);
+}

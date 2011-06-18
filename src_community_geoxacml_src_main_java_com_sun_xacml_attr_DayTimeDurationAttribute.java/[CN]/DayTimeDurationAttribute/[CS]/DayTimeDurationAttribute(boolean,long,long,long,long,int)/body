@@ -1,0 +1,27 @@
+{
+  super(identifierURI);
+  this.negative=negative;
+  this.days=days;
+  this.hours=hours;
+  this.minutes=minutes;
+  this.seconds=seconds;
+  this.nanoseconds=nanoseconds;
+  if ((days > Integer.MAX_VALUE) || (hours > Integer.MAX_VALUE) || (minutes > Integer.MAX_VALUE)|| (seconds > Integer.MAX_VALUE)) {
+    if (big24 == null) {
+      big24=BigInteger.valueOf(24);
+      big60=BigInteger.valueOf(60);
+      big1000=BigInteger.valueOf(1000);
+      bigMaxLong=BigInteger.valueOf(Long.MAX_VALUE);
+    }
+    BigInteger bigDays=BigInteger.valueOf(days);
+    BigInteger bigHours=BigInteger.valueOf(hours);
+    BigInteger bigMinutes=BigInteger.valueOf(minutes);
+    BigInteger bigSeconds=BigInteger.valueOf(seconds);
+    BigInteger bigTotal=bigDays.multiply(big24).add(bigHours).multiply(big60).add(bigMinutes).multiply(big60).add(bigSeconds).multiply(big1000);
+    if (bigTotal.compareTo(bigMaxLong) == 1)     throw new IllegalArgumentException("total number of " + "milliseconds " + "exceeds Long.MAX_VALUE");
+    totalMillis=bigTotal.longValue();
+  }
+ else {
+    totalMillis=((((((days * 24) + hours) * 60) + minutes) * 60) + seconds) * 1000;
+  }
+}

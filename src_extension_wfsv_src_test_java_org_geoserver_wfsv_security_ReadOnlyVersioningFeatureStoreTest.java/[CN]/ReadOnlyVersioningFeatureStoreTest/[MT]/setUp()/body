@@ -1,0 +1,13 @@
+{
+  super.setUp();
+  schema=DataUtilities.createType(SCHEMA,"id:int");
+  dsMock=createNiceMock(VersioningDataStore.class);
+  replay(dsMock);
+  fsMock=createNiceMock(VersioningFeatureStore.class);
+  fsMock.removeFeatures(Filter.INCLUDE);
+  fsMock.rollback("0",Filter.INCLUDE,null);
+  expect(fsMock.getDataStore()).andReturn(dsMock);
+  expect(fsMock.getSchema()).andReturn(schema).anyTimes();
+  replay(fsMock);
+  secured=(ReadOnlyVersioningFeatureStore)SecuredObjects.secure(fsMock,WrapperPolicy.readOnlyChallenge(null));
+}

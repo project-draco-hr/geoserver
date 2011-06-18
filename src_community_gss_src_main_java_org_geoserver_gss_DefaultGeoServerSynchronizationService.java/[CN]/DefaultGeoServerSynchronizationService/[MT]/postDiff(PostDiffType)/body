@@ -1,0 +1,120 @@
+{
+  core.ensureUnitEnabled();
+  Transaction transaction=new DefaultTransaction();
+  try {
+    checkSyncronized(request.getTypeName());
+    SimpleFeature record=getLastSynchronizationRecord(request.getTypeName());
+    long lastCentralRevision=-1;
+    long lastLocalRevision=-1;
+    if (record != null) {
+      lastCentralRevision=((Number)record.getAttribute("central_revision")).longValue();
+      lastLocalRevision=((Number)record.getAttribute("local_revision")).longValue();
+    }
+    if (request.getFromVersion() != lastCentralRevision) {
+      throw new GSSException("Invalid fromVersion, it should be " + lastCentralRevision,GSSExceptionCode.InvalidParameterValue,FROM_VERSION);
+    }
+    if (request.getFromVersion() > request.getToVersion()) {
+      throw new GSSException("Invalid toVersion " + request.getToVersion() + ", it should be higher than fromVersion: "+ request.getFromVersion(),GSSExceptionCode.InvalidParameterValue,TO_VERSION);
+    }
+    VersioningDataStore ds=core.getVersioningStore();
+    String tableName=request.getTypeName().getLocalPart();
+    VersioningFeatureStore fs=(VersioningFeatureStore)ds.getFeatureSource(tableName);
+    FeatureStore history=(FeatureStore)ds.getFeatureSource(SYNCH_HISTORY);
+    PropertyIsEqualTo ftSyncRecord=ff.equals(ff.property("table_name"),ff.literal(tableName));
+    TransactionType changes=request.getTransaction();
+    int changesCount=core.countChanges(changes);
+    if (changesCount == 0) {
+      String lastLocalRevisionId=lastLocalRevision != -1 ? String.valueOf(lastLocalRevision) : "FIRST";
+      if (fs.getLog(lastLocalRevisionId,"LAST",null,null,1).size() == 0) {
+        long newCentralRevision=request.getToVersion();
+        if (lastCentralRevision != newCentralRevision || record == null) {
+          SimpleFeatureType hft=(SimpleFeatureType)history.getSchema();
+          SimpleFeature f=SimpleFeatureBuilder.build(hft,new Object[]{tableName,lastLocalRevision,newCentralRevision},null);
+          history.addFeatures(DataUtilities.collection(f));
+        }
+        return new PostDiffResponseType();
+      }
+    }
+    transaction.putProperty(VersioningDataStore.AUTHOR,"gss");
+    transaction.putProperty(VersioningDataStore.MESSAGE,"Applying " + changesCount + " changes coming from Central on layer '"+ tableName+ "'");
+    VersioningFeatureStore conflicts=(VersioningFeatureStore)ds.getFeatureSource(SYNCH_CONFLICTS);
+    conflicts.setTransaction(transaction);
+    history.setTransaction(transaction);
+    fs.setTransaction(transaction);
+    long newLocalRevision=Long.parseLong(conflicts.getVersion());
+    LOGGER.info("About to apply " + core.countChanges(changes) + " changes coming from Central");
+    if (core.countChanges(changes) > 0) {
+      List<DeleteElementType> deletes=changes.getDelete();
+      List<UpdateElementType> updates=changes.getUpdate();
+      Set<FeatureId> deletedFids=getEObjectFids(deletes);
+      Set<FeatureId> updatedFids=getEObjectFids(updates);
+      Set<FeatureId> changedFids=new HashSet<FeatureId>();
+      changedFids.addAll(deletedFids);
+      changedFids.addAll(updatedFids);
+      if (changedFids.size() > 0) {
+        String newLocalRevisionId=String.valueOf(newLocalRevision);
+        String lastLocalRevisionId=lastLocalRevision != -1 ? String.valueOf(lastLocalRevision) : "FIRST";
+        FeatureDiffReader localChanges=fs.getDifferences(lastLocalRevisionId,newLocalRevisionId,ff.id(changedFids),null);
+        while (localChanges.hasNext()) {
+          FeatureDiff fd=localChanges.next();
+          FeatureId diffFeatureId=ff.featureId(fd.getID());
+          if (fd.getState() == FeatureDiff.INSERTED) {
+            throw new GSSException("A new locally inserted feature has the same " + "id as a modified feature coming from Central, this is impossible, " + "there is either a bug in ID generation or someone manually tampered with it!");
+          }
+ else           if (fd.getState() == FeatureDiff.DELETED) {
+            if (deletedFids.contains(diffFeatureId)) {
+              saveCleanMergeMarker(fs,conflicts,lastLocalRevisionId,newLocalRevision,fd.getID());
+            }
+ else {
+              handleDeletionConflict(fs,conflicts,lastLocalRevisionId,newLocalRevision,fd.getID());
+            }
+          }
+ else {
+            if (updatedFids.contains(diffFeatureId)) {
+              if (isSameUpdate(fd,findUpdate(fd.getID(),updates))) {
+                saveCleanMergeMarker(fs,conflicts,lastLocalRevisionId,newLocalRevision,fd.getID());
+              }
+ else {
+                handleUpdateConflict(fs,conflicts,lastLocalRevisionId,newLocalRevision,fd.getID());
+              }
+            }
+ else {
+              handleUpdateConflict(fs,conflicts,lastLocalRevisionId,newLocalRevision,fd.getID());
+            }
+          }
+        }
+        localChanges.close();
+      }
+      core.applyChanges(changes,fs);
+    }
+    long newCentralRevision=request.getToVersion();
+    SimpleFeatureType hft=(SimpleFeatureType)history.getSchema();
+    SimpleFeature f=SimpleFeatureBuilder.build(hft,new Object[]{tableName,newLocalRevision,newCentralRevision},null);
+    history.addFeatures(DataUtilities.collection(f));
+    transaction.commit();
+    LOGGER.info(core.countChanges(changes) + " changes coming from Central succesfully applied");
+  }
+ catch (  Throwable t) {
+    try {
+      transaction.rollback();
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.SEVERE,"Rollback failed. This is unexpected",e);
+    }
+    if (t instanceof GSSException) {
+      throw (GSSException)t;
+    }
+ else {
+      throw new GSSException("Error occurred while applyling the diff",t);
+    }
+  }
+ finally {
+    try {
+      transaction.close();
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.SEVERE,"Transaction close failed. This is unexpected",e);
+    }
+  }
+  return new PostDiffResponseType();
+}

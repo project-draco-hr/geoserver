@@ -1,0 +1,19 @@
+{
+  final FormTester requestFormTester=tester.newFormTester("demoRequestsForm");
+  final String requestName="WMS_describeLayer.url";
+  requestFormTester.select("demoRequestsList",1);
+  tester.executeAjaxEvent("demoRequestsForm:demoRequestsList","onchange");
+  tester.assertModelValue("demoRequestsForm:demoRequestsList",requestName);
+  final String modifiedUrl="http://modified/url";
+  TextField url=(TextField)tester.getComponentFromLastRenderedPage("demoRequestsForm:url");
+  url.setModelValue(new String[]{modifiedUrl});
+  assertEquals(modifiedUrl,url.getValue());
+  final boolean isAjax=true;
+  tester.clickLink("demoRequestsForm:submit",isAjax);
+  tester.assertVisible("responseWindow");
+  IModel model=tester.getLastRenderedPage().getDefaultModel();
+  assertTrue(model.getObject() instanceof DemoRequest);
+  DemoRequest req=(DemoRequest)model.getObject();
+  String requestUrl=req.getRequestUrl();
+  assertEquals(modifiedUrl,requestUrl);
+}

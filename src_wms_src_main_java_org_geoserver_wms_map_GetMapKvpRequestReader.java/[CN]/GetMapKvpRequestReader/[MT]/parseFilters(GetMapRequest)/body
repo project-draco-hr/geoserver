@@ -1,0 +1,25 @@
+{
+  List<Filter> filters=(getMap.getFilter() != null) ? getMap.getFilter() : Collections.emptyList();
+  List cqlFilters=(getMap.getCQLFilter() != null) ? getMap.getCQLFilter() : Collections.EMPTY_LIST;
+  List featureId=(getMap.getFeatureId() != null) ? getMap.getFeatureId() : Collections.EMPTY_LIST;
+  if (!featureId.isEmpty()) {
+    if (!filters.isEmpty()) {
+      throw new ServiceException("GetMap KVP request contained " + "conflicting filters.  Filter: " + filters + ", fid: "+ featureId);
+    }
+    Set ids=new HashSet();
+    for (Iterator i=featureId.iterator(); i.hasNext(); ) {
+      ids.add(filterFactory.featureId((String)i.next()));
+    }
+    filters=Collections.singletonList((Filter)filterFactory.id(ids));
+  }
+  if (!cqlFilters.isEmpty()) {
+    if (!filters.isEmpty()) {
+      throw new ServiceException("GetMap KVP request contained " + "conflicting filters.  Filter: " + filters + ", fid: "+ featureId+ ", cql: "+ cqlFilters);
+    }
+    filters=cqlFilters;
+  }
+  if (filters.size() == 0) {
+    filters=null;
+  }
+  return filters;
+}

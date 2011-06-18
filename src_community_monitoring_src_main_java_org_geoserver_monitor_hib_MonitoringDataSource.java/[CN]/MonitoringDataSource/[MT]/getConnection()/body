@@ -1,0 +1,20 @@
+{
+  try {
+    if (getDriverClassName() == null) {
+synchronized (this) {
+        if (getDriverClassName() == null) {
+          initializeDataSource();
+        }
+      }
+    }
+    return super.getConnection();
+  }
+ catch (  Exception e) {
+    config.setError(e);
+    config.setEnabled(false);
+    if (e instanceof SQLException) {
+      throw (SQLException)e;
+    }
+    throw (SQLException)new SQLException().initCause(e);
+  }
+}

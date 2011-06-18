@@ -1,0 +1,15 @@
+{
+  GridCoverage[] coverages=(GridCoverage[])value;
+  GetCoverageType request=(GetCoverageType)operation.getParameters()[0];
+  String outputFormat=request.getOutput().getFormat().getValue();
+  if (delegate == null)   delegate=CoverageResponseDelegateFactory.encoderFor(outputFormat);
+  if (delegate == null)   throw new WcsException("Could not find encoder for output format " + outputFormat);
+  final GridCoverage2D coverage=(GridCoverage2D)coverages[0];
+  try {
+    delegate.prepare(outputFormat,coverage);
+    delegate.encode(output);
+    output.flush();
+  }
+  finally {
+  }
+}

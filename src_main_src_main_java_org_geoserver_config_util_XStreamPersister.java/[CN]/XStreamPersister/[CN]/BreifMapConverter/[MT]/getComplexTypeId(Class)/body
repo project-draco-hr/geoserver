@@ -1,0 +1,31 @@
+{
+  String typeId=backwardBreifMap.get(clazz);
+  if (typeId == null) {
+    List<Class> matches=new ArrayList<Class>();
+    collectSuperclasses(clazz,matches);
+    for (Iterator it=matches.iterator(); it.hasNext(); ) {
+      Class sper=(Class)it.next();
+      if (backwardBreifMap.get(sper) == null) {
+        it.remove();
+      }
+    }
+    if (matches.size() > 1) {
+      Comparator comparator=new Comparator<Class>(){
+        public int compare(        Class c1,        Class c2){
+          if (c2.isAssignableFrom(c1)) {
+            return -1;
+          }
+ else {
+            return 1;
+          }
+        }
+      }
+;
+      Collections.sort(matches,comparator);
+    }
+    if (matches.size() > 0) {
+      typeId=backwardBreifMap.get(matches.get(0));
+    }
+  }
+  return typeId;
+}

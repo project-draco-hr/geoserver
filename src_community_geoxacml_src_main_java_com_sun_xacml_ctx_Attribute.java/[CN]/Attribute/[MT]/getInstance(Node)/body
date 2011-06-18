@@ -1,0 +1,52 @@
+{
+  URI id=null;
+  URI type=null;
+  String issuer=null;
+  DateTimeAttribute issueInstant=null;
+  List<AttributeValue> valueList=new ArrayList<AttributeValue>();
+  AttributeFactory attrFactory=AttributeFactory.getInstance();
+  if (!root.getNodeName().equals("Attribute")) {
+    throw new ParsingException("Attribute object cannot be created " + "with root node of type: " + root.getNodeName());
+  }
+  NamedNodeMap attrs=root.getAttributes();
+  try {
+    id=new URI(attrs.getNamedItem("AttributeId").getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing required attribute " + "AttributeId in AttributeType",e);
+  }
+  try {
+    type=new URI(attrs.getNamedItem("DataType").getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing required attribute " + "DataType in AttributeType",e);
+  }
+  try {
+    Node issuerNode=attrs.getNamedItem("Issuer");
+    if (issuerNode != null)     issuer=issuerNode.getNodeValue();
+    Node instantNode=attrs.getNamedItem("IssueInstant");
+    if (instantNode != null)     issueInstant=DateTimeAttribute.getInstance(instantNode.getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing optional AttributeType" + " attribute",e);
+  }
+  NodeList nodes=root.getChildNodes();
+  for (int i=0; i < nodes.getLength(); i++) {
+    Node node=nodes.item(i);
+    if (node.getNodeName().equals("AttributeValue")) {
+      try {
+        AttributeValue value=attrFactory.createValue(node,type);
+        valueList.add(value);
+      }
+ catch (      UnknownIdentifierException uie) {
+        throw new ParsingException("Unknown AttributeId",uie);
+      }
+    }
+  }
+  if (valueList.isEmpty())   throw new ParsingException("Attribute must contain a value");
+ else   if (valueList.size() == 1)   return new Attribute(id,type,issuer,issueInstant,valueList.get(0));
+ else {
+    BagAttribute bag=new BagAttribute(type,valueList);
+    return new Attribute(id,type,issuer,issueInstant,bag);
+  }
+}

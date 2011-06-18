@@ -1,0 +1,24 @@
+{
+  try {
+    if (myWatcher == null) {
+    }
+ else     if (myWatcher.isStale()) {
+      Properties prop=myWatcher.getProperties();
+      UserAttributeEditor uae=new UserAttributeEditor();
+      myDetailStorage.clear();
+      Iterator<Object> it=prop.keySet().iterator();
+      while (it.hasNext()) {
+        String username=(String)it.next();
+        uae.setAsText(prop.getProperty(username));
+        UserAttribute attrs=(UserAttribute)uae.getValue();
+        if (attrs != null) {
+          myDetailStorage.put(username,makeUser(username,attrs));
+        }
+      }
+    }
+  }
+ catch (  IOException ioe) {
+    myDetailStorage.clear();
+    createDefaultUser();
+  }
+}

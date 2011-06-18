@@ -1,0 +1,49 @@
+{
+  Version version=(ver != null) ? new Version(ver) : null;
+  Collection services=loadServices();
+  if (id.contains("/")) {
+    id=id.substring(id.indexOf("/") + 1);
+  }
+  List matches=new ArrayList();
+  for (Iterator itr=services.iterator(); itr.hasNext(); ) {
+    Service sBean=(Service)itr.next();
+    if (sBean.getId().equalsIgnoreCase(id)) {
+      matches.add(sBean);
+    }
+  }
+  if (matches.isEmpty()) {
+    return null;
+  }
+  Service sBean=null;
+  if (matches.size() > 1) {
+    List vmatches=new ArrayList(matches);
+    if (version != null) {
+      for (Iterator itr=vmatches.iterator(); itr.hasNext(); ) {
+        Service s=(Service)itr.next();
+        if (version.equals(s.getVersion())) {
+          continue;
+        }
+        itr.remove();
+      }
+      if (vmatches.isEmpty()) {
+        vmatches=new ArrayList(matches);
+      }
+    }
+    if (vmatches.size() > 1) {
+      Comparator comparator=new Comparator(){
+        public int compare(        Object o1,        Object o2){
+          Service s1=(Service)o1;
+          Service s2=(Service)o2;
+          return s1.getVersion().compareTo(s2.getVersion());
+        }
+      }
+;
+      Collections.sort(vmatches,comparator);
+    }
+    sBean=(Service)vmatches.get(vmatches.size() - 1);
+  }
+ else {
+    sBean=(Service)matches.get(0);
+  }
+  return sBean;
+}

@@ -1,0 +1,31 @@
+{
+  getCatalog().getResourcePool().clear(info);
+  final String exceptionMessage;
+{
+    String message=error.getMessage();
+    if (message == null && error.getCause() != null) {
+      message=error.getCause().getMessage();
+    }
+    exceptionMessage=message;
+  }
+  dialog.showOkCancel(requestTarget,new GeoServerDialog.DialogDelegate(){
+    boolean accepted=false;
+    @Override protected Component getContents(    String id){
+      return new StoreConnectionFailedInformationPanel(id,info.getName(),exceptionMessage);
+    }
+    @Override protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      doSaveStore(info);
+      accepted=true;
+      return true;
+    }
+    @Override protected boolean onCancel(    AjaxRequestTarget target){
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (accepted) {
+        setResponsePage(StorePage.class);
+      }
+    }
+  }
+);
+}

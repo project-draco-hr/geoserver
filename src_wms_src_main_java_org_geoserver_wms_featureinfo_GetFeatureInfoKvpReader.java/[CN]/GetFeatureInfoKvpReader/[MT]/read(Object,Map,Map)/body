@@ -1,0 +1,82 @@
+{
+  GetFeatureInfoRequest request=(GetFeatureInfoRequest)super.read(req,kvp,rawKvp);
+  request.setRawKvp(rawKvp);
+  request.setQueryLayers(new MapLayerInfoKvpParser("QUERY_LAYERS",wms).parse((String)rawKvp.get("QUERY_LAYERS")));
+  if (request.getQueryLayers() == null || request.getQueryLayers().size() == 0) {
+    throw new ServiceException("No QUERY_LAYERS has been requested, or no " + "queriable layer in the request anyways");
+  }
+  GetMapRequest getMapPart=new GetMapRequest();
+  try {
+    getMapPart=getMapReader.read(getMapPart,kvp,rawKvp);
+  }
+ catch (  ServiceException se) {
+    throw se;
+  }
+catch (  Exception e) {
+    throw new ServiceException(e);
+  }
+  request.setGetMapRequest(getMapPart);
+  List<MapLayerInfo> getMapLayers=getMapPart.getLayers();
+  List<MapLayerInfo> queryLayers=new ArrayList<MapLayerInfo>(request.getQueryLayers());
+  queryLayers.removeAll(getMapLayers);
+  if (queryLayers.size() > 0) {
+    throw new ServiceException("QUERY_LAYERS contains layers not cited in LAYERS. " + "It should be a proper subset of those instead");
+  }
+  for (  MapLayerInfo l : request.getQueryLayers()) {
+    LayerInfo layerInfo=l.getLayerInfo();
+    if (!wms.isQueryable(layerInfo)) {
+      throw new ServiceException("Layer " + l.getName() + " is not queryable",WMSErrorCode.LAYER_NOT_QUERYABLE.get(request.getVersion()),"QUERY_LAYERS");
+    }
+  }
+  String format=(String)(kvp.containsKey("INFO_FORMAT") ? kvp.get("INFO_FORMAT") : null);
+  if (format == null) {
+    format="text/plain";
+  }
+ else {
+    List<String> infoFormats=wms.getAvailableFeatureInfoFormats();
+    if (!infoFormats.contains(format)) {
+      throw new ServiceException("Invalid format '" + format + "', supported formats are "+ infoFormats,"InvalidFormat","info_format");
+    }
+  }
+  request.setInfoFormat(format);
+  request.setFeatureCount(1);
+  try {
+    int maxFeatures=Integer.parseInt(String.valueOf(kvp.get("FEATURE_COUNT")));
+    request.setFeatureCount(maxFeatures);
+  }
+ catch (  NumberFormatException ex) {
+  }
+  Version version=wms.negotiateVersion(request.getVersion());
+  request.setVersion(version.toString());
+  String colPixel, rowPixel;
+  if (version.compareTo(WMS.VERSION_1_3_0) >= 0) {
+    colPixel="I";
+    rowPixel="J";
+    if (!kvp.containsKey(colPixel) && !kvp.containsKey(rowPixel)) {
+      if (!wms.getServiceInfo().isCiteCompliant() && kvp.containsKey("X") && kvp.containsKey("Y")) {
+        colPixel="X";
+        rowPixel="Y";
+      }
+    }
+  }
+ else {
+    colPixel="X";
+    rowPixel="Y";
+  }
+  try {
+    String colParam=String.valueOf(kvp.get(colPixel));
+    String rowParam=String.valueOf(kvp.get(rowPixel));
+    int x=Integer.parseInt(colParam);
+    int y=Integer.parseInt(rowParam);
+    if (x < 0 || x > getMapPart.getWidth() || y < 0 || y > getMapPart.getHeight()) {
+      throw new ServiceException(String.format("%d, %d not in dimensions of image: %d, %d",x,y,getMapPart.getWidth(),getMapPart.getHeight()),"InvalidPoint");
+    }
+    request.setXPixel(x);
+    request.setYPixel(y);
+  }
+ catch (  NumberFormatException ex) {
+    String msg=colPixel + " and " + rowPixel+ " incorrectly specified";
+    throw new ServiceException(msg,"InvalidPoint");
+  }
+  return request;
+}

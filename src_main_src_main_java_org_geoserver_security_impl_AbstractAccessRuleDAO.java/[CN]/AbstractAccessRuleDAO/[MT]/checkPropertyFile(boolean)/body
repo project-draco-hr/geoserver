@@ -1,0 +1,33 @@
+{
+  try {
+    if (rules == null || force) {
+      if (securityDir == null || !securityDir.exists()) {
+        this.rules=new TreeSet<R>();
+      }
+ else {
+        File layers=new File(securityDir,propertyFileName);
+        if (!layers.exists()) {
+          InputStream in=getClass().getResourceAsStream(propertyFileName + ".template");
+          if (in != null) {
+            dd.copyToSecurityDir(in,propertyFileName);
+          }
+        }
+        if (!layers.exists()) {
+          this.rules=new TreeSet<R>();
+        }
+ else {
+          watcher=new PropertyFileWatcher(layers);
+          loadRules(watcher.getProperties());
+        }
+      }
+      lastModified=System.currentTimeMillis();
+    }
+ else     if (isModified()) {
+      loadRules(watcher.getProperties());
+      lastModified=System.currentTimeMillis();
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to reload data access rules from layers.properties, keeping old rules",e);
+  }
+}

@@ -1,0 +1,52 @@
+{
+  FeatureTypeInfo ftInfo=getFeatureTypeInfo(c);
+  c=remapCollectionSchema(c,null);
+  SimpleFeatureType schema=c.getSchema();
+  boolean shapefileCreated=false;
+  Map<Class,StoreWriter> writers=new HashMap<Class,StoreWriter>();
+  SimpleFeatureIterator it;
+  try {
+    it=c.features();
+    while (it.hasNext()) {
+      SimpleFeature f=it.next();
+      if (f.getDefaultGeometry() == null) {
+        LOGGER.warning("Skipping " + f.getID() + " as its geometry is null");
+        continue;
+      }
+      FeatureWriter<SimpleFeatureType,SimpleFeature> writer=getFeatureWriter(ftInfo,f,writers,tempDir,charset);
+      SimpleFeature fw=writer.next();
+      for (      AttributeDescriptor d : fw.getFeatureType().getAttributeDescriptors()) {
+        fw.setAttribute(d.getLocalName(),f.getAttribute(d.getLocalName()));
+      }
+      fw.setDefaultGeometry(f.getDefaultGeometry());
+      writer.write();
+      shapefileCreated=true;
+      writer.getFeatureType().getName().getLocalPart();
+      String geometryType=(String)getGeometryType((Geometry)f.getDefaultGeometry()).get("geometryType");
+      String fileName=new FileNameSource(getClass()).getShapeName(ftInfo,geometryType);
+      changeWKTFormatIfFileFormatIsESRI(tempDir,request,fileName,schema);
+    }
+  }
+ catch (  FactoryException fe) {
+    LOGGER.log(Level.WARNING,"Error while getting EPSG code from FeatureType",fe);
+    throw new ServiceException(fe);
+  }
+catch (  IOException ioe) {
+    LOGGER.log(Level.WARNING,"Error while writing featuretype '" + schema.getTypeName() + "' to shapefile.",ioe);
+    throw new ServiceException(ioe);
+  }
+ finally {
+    IOException stored=null;
+    for (    StoreWriter sw : writers.values()) {
+      try {
+        sw.writer.close();
+        sw.dstore.dispose();
+      }
+ catch (      IOException e) {
+        stored=e;
+      }
+    }
+    if (stored != null)     throw new ServiceException(stored);
+  }
+  return shapefileCreated;
+}

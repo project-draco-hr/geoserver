@@ -1,0 +1,20 @@
+{
+  AbstractPolicy selectedPolicy=null;
+  Iterator<AbstractPolicy> it=policies.iterator();
+  while (it.hasNext()) {
+    AbstractPolicy policy=it.next();
+    MatchResult match=policy.match(context);
+    int result=match.getResult();
+    if (result == MatchResult.INDETERMINATE)     return new PolicyFinderResult(match.getStatus());
+    if (result == MatchResult.MATCH) {
+      if (selectedPolicy != null) {
+        ArrayList<String> code=new ArrayList<String>();
+        code.add(Status.STATUS_PROCESSING_ERROR);
+        Status status=new Status(code,"too many applicable " + "top-level policies");
+        return new PolicyFinderResult(status);
+      }
+      selectedPolicy=policy;
+    }
+  }
+  return new PolicyFinderResult(selectedPolicy);
+}

@@ -1,0 +1,16 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult result=evalArgs(inputs,context,argValues);
+  if (result != null)   return result;
+  String str=((AnyURIAttribute)(argValues[0])).getValue().toString();
+  for (int i=1; i < argValues.length; i++)   str+=((StringAttribute)(argValues[i])).getValue();
+  try {
+    return new EvaluationResult(new AnyURIAttribute(new URI(str)));
+  }
+ catch (  URISyntaxException use) {
+    List<String> code=new ArrayList<String>();
+    code.add(Status.STATUS_PROCESSING_ERROR);
+    String message=NAME_URI_STRING_CONCATENATE + " didn't produce" + " a valid URI: "+ str;
+    return new EvaluationResult(new Status(code,message));
+  }
+}

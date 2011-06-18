@@ -1,0 +1,32 @@
+{
+  Map<String,String> params=new HashMap<String,String>();
+  if (storeInfo instanceof CoverageStoreInfo) {
+    String url=((CoverageStoreInfo)storeInfo).getURL();
+    if (null != url && url.startsWith("sde:")) {
+      ArcSDEConnectionConfig connectionConfig;
+      connectionConfig=ArcSDERasterFormat.sdeURLToConnectionConfig(new StringBuffer(url));
+      params.put(SERVER_NAME_PARAM_NAME,connectionConfig.getServerName());
+      params.put(PORT_NUMBER_PARAM_NAME,connectionConfig.getPortNumber().toString());
+      params.put(INSTANCE_NAME_PARAM_NAME,connectionConfig.getDatabaseName());
+      params.put(USER_NAME_PARAM_NAME,connectionConfig.getUserName());
+      params.put(PASSWORD_PARAM_NAME,connectionConfig.getPassword());
+      int idx=url.lastIndexOf('#');
+      if (idx > 0) {
+        String tableName=url.substring(idx + 1);
+        params.put(RasterTableSelectionPanel.TABLE_NAME,tableName);
+      }
+    }
+ else {
+      params.put(PORT_NUMBER_PARAM_NAME,"5151");
+    }
+  }
+ else {
+    Map<String,Serializable> storeParams=((DataStoreInfo)storeInfo).getConnectionParameters();
+    params.put(SERVER_NAME_PARAM_NAME,(String)storeParams.get(SERVER_NAME_PARAM_NAME));
+    params.put(PORT_NUMBER_PARAM_NAME,String.valueOf(storeParams.get(PORT_NUMBER_PARAM_NAME)));
+    params.put(INSTANCE_NAME_PARAM_NAME,(String)storeParams.get(INSTANCE_NAME_PARAM_NAME));
+    params.put(USER_NAME_PARAM_NAME,(String)storeParams.get(USER_NAME_PARAM_NAME));
+    params.put(PASSWORD_PARAM_NAME,(String)storeParams.get(PASSWORD_PARAM_NAME));
+  }
+  return params;
+}

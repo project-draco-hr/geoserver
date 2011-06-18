@@ -1,0 +1,24 @@
+{
+  return new GeoServerAjaxFormLink("refresh"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      sqlEditor.processInput();
+      parameters.processInputs();
+      guessCheckbox.processInput();
+      if (sql != null && !"".equals(sql.trim())) {
+        SimpleFeatureType newSchema=null;
+        try {
+          newSchema=testViewDefinition(guessGeometrySrid);
+          if (newSchema != null) {
+            attProvider.setFeatureType(newSchema,null);
+            target.addComponent(attributes);
+          }
+        }
+ catch (        IOException e) {
+          LOGGER.log(Level.INFO,"Error testing SQL query",e);
+          error(getFirstErrorMessage(e));
+        }
+      }
+    }
+  }
+;
+}

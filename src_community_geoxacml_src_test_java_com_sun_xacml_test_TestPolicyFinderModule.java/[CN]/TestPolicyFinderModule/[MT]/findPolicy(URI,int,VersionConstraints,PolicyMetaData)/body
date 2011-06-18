@@ -1,0 +1,22 @@
+{
+  String fileName=null;
+  if (type == PolicyReference.POLICY_REFERENCE) {
+    if (policyRefs == null)     return new PolicyFinderResult();
+    fileName=(String)(policyRefs.get(idReference.toString()));
+  }
+ else {
+    if (policySetRefs == null)     return new PolicyFinderResult();
+    fileName=(String)(policySetRefs.get(idReference.toString()));
+  }
+  if (fileName == null)   return new PolicyFinderResult();
+  if (type == PolicyReference.POLICY_REFERENCE)   fileName=policyRefPrefix + fileName;
+ else   fileName=policySetRefPrefix + fileName;
+  AbstractPolicy policy=loadPolicy(fileName,finder);
+  if (policy == null) {
+    ArrayList<String> code=new ArrayList<String>();
+    code.add(Status.STATUS_PROCESSING_ERROR);
+    Status status=new Status(code,"couldn't load referenced policy");
+    return new PolicyFinderResult(status);
+  }
+  return new PolicyFinderResult(policy);
+}

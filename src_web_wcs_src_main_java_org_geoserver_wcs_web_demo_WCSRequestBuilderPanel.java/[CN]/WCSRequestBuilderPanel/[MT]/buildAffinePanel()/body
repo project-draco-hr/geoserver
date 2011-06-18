@@ -1,0 +1,36 @@
+{
+  targetlayoutContainer=new WebMarkupContainer("targetLayoutContainer");
+  details.add(targetlayoutContainer);
+  targetlayoutContainer.setVisible(false);
+  targetLayoutChooser=new DropDownChoice<TargetLayout>("targetLayout",new Model(TargetLayout.Automatic),Arrays.asList(TargetLayout.values()),new TargetLayoutRenderer());
+  targetlayoutContainer.add(targetLayoutChooser);
+  g2w=new AffineTransformPanel("targetGridToWorld",new PropertyModel(getCoverage,"targetGridToWorld"));
+  targetlayoutContainer.add(g2w);
+  g2w.setVisible(false);
+  g2w.setOutputMarkupId(true);
+  targetLayoutChooser.add(new AjaxFormSubmitBehavior("onchange"){
+    @Override protected void onError(    AjaxRequestTarget target){
+      onSubmit(target);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target){
+      if (targetLayoutChooser.getModelObject() == TargetLayout.Affine) {
+        AffineTransform at=guessGridToWorld(false);
+        g2w.setResolutionModeEnabled(false);
+        g2w.setModelObject(at);
+        g2w.setVisible(true);
+      }
+ else       if (targetLayoutChooser.getModelObject() == TargetLayout.Resolution) {
+        AffineTransform at=guessGridToWorld(true);
+        g2w.setResolutionModeEnabled(true);
+        g2w.setModelObject(at);
+        g2w.setVisible(true);
+      }
+ else {
+        g2w.setModelObject(null);
+        g2w.setVisible(false);
+      }
+      target.addComponent(WCSRequestBuilderPanel.this);
+    }
+  }
+);
+}

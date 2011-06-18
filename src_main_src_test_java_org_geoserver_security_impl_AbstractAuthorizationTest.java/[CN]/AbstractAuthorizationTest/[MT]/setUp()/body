@@ -1,0 +1,30 @@
+{
+  super.setUp();
+  rwUser=new TestingAuthenticationToken("rw","supersecret",new GrantedAuthority[]{new GrantedAuthorityImpl("READER"),new GrantedAuthorityImpl("WRITER")});
+  roUser=new TestingAuthenticationToken("ro","supersecret",new GrantedAuthority[]{new GrantedAuthorityImpl("READER")});
+  anonymous=new TestingAuthenticationToken("anonymous",null);
+  milUser=new TestingAuthenticationToken("military","supersecret",new GrantedAuthority[]{new GrantedAuthorityImpl("MILITARY")});
+  root=new TestingAuthenticationToken("admin","geoserver",new GrantedAuthority[]{new GrantedAuthorityImpl(SecureTreeNode.ROOT_ROLE)});
+  catalog=createNiceMock(Catalog.class);
+  expect(catalog.getWorkspace((String)anyObject())).andReturn(createNiceMock(WorkspaceInfo.class)).anyTimes();
+  replay(catalog);
+  toppWs=createNiceMock(WorkspaceInfo.class);
+  expect(toppWs.getName()).andReturn("topp").anyTimes();
+  replay(toppWs);
+  nurcWs=createNiceMock(WorkspaceInfo.class);
+  expect(nurcWs.getName()).andReturn("nurc").anyTimes();
+  replay(nurcWs);
+  statesLayer=buildLayer("states",toppWs,FeatureTypeInfo.class);
+  roadsLayer=buildLayer("roads",toppWs,FeatureTypeInfo.class);
+  landmarksLayer=buildLayer("landmarks",toppWs,FeatureTypeInfo.class);
+  basesLayer=buildLayer("bases",toppWs,FeatureTypeInfo.class);
+  arcGridLayer=buildLayer("arc.grid",nurcWs,CoverageInfo.class);
+  states=(FeatureTypeInfo)statesLayer.getResource();
+  statesStore=states.getStore();
+  arcGrid=(CoverageInfo)arcGridLayer.getResource();
+  arcGridStore=(CoverageStoreInfo)arcGrid.getStore();
+  roads=(FeatureTypeInfo)roadsLayer.getResource();
+  roadsStore=roads.getStore();
+  landmarks=(FeatureTypeInfo)landmarksLayer.getResource();
+  bases=(FeatureTypeInfo)basesLayer.getResource();
+}

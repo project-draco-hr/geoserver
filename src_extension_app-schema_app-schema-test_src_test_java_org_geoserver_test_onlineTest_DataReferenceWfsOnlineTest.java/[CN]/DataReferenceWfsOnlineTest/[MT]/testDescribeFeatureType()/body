@@ -1,0 +1,30 @@
+{
+  Document doc=getAsDOM("wfs?request=DescribeFeatureType&typename=gsml:MappedFeature");
+  LOGGER.info("WFS DescribeFeatureType, typename=gsml:MappedFeature response:\n" + prettyString(doc));
+  assertEquals("xsd:schema",doc.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo(AbstractAppSchemaMockData.GSML_URI,"//@targetNamespace",doc);
+  assertXpathCount(1,"//xsd:include",doc);
+  assertXpathCount(0,"//xsd:import",doc);
+  assertXpathEvaluatesTo(AbstractAppSchemaMockData.GSML_SCHEMA_LOCATION_URL,"//xsd:include/@schemaLocation",doc);
+  assertXpathCount(0,"//xsd:complexType",doc);
+  assertXpathCount(0,"//xsd:element",doc);
+  doc=getAsDOM("wfs?request=DescribeFeatureType&typename=gsml:GeologicUnit");
+  LOGGER.info("WFS DescribeFeatureType, typename=gsml:GeologicUnit response:\n" + prettyString(doc));
+  assertEquals("xsd:schema",doc.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo(AbstractAppSchemaMockData.GSML_URI,"//@targetNamespace",doc);
+  assertXpathCount(1,"//xsd:include",doc);
+  assertXpathCount(0,"//xsd:import",doc);
+  assertXpathEvaluatesTo(AbstractAppSchemaMockData.GSML_SCHEMA_LOCATION_URL,"//xsd:include/@schemaLocation",doc);
+  assertXpathCount(0,"//xsd:complexType",doc);
+  assertXpathCount(0,"//xsd:element",doc);
+  doc=getAsDOM("wfs?request=DescribeFeatureType&typename=gsml:Contact");
+  LOGGER.info("WFS DescribeFeatureType, typename=gsml:Contact response:\n" + prettyString(doc));
+  testConsistantSchema(doc);
+  doc=null;
+  System.gc();
+  doc=getAsDOM("wfs?request=DescribeFeatureType&typename=gsml:Contact,gsml:MappedFeature");
+  LOGGER.info("WFS DescribeFeatureType, typename=gsml:Contact,gsml:MappedFeature response:\n" + prettyString(doc));
+  testConsistantSchema(doc);
+  doc=getAsDOM("wfs?request=DescribeFeatureType");
+  LOGGER.info("WFS DescribeFeatureType, typename=none response:\n" + prettyString(doc));
+}

@@ -1,0 +1,20 @@
+{
+  CoordinateReferenceSystem nativeCrs;
+  CoordinateReferenceSystem declaredCrs;
+  ProjectionPolicy policy;
+  nativeCrs=(CoordinateReferenceSystem)nativeCRS.getConvertedInput();
+  declaredCrs=(CoordinateReferenceSystem)declaredCRS.getConvertedInput();
+  policy=(ProjectionPolicy)projectionPolicy.getConvertedInput();
+  if (policy == ProjectionPolicy.REPROJECT_TO_DECLARED) {
+    final boolean lenient=true;
+    try {
+      CRS.findMathTransform(nativeCrs,declaredCrs,lenient);
+    }
+ catch (    FactoryException e) {
+      String msgKey="BasicResourceConfig.noTransformFromNativeToDeclaredCRS";
+      String errMsg=e.getMessage();
+      String message=(String)new ResourceModel(msgKey).getObject();
+      form.error(message,Collections.singletonMap("error",errMsg));
+    }
+  }
+}

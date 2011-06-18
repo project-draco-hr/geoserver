@@ -1,0 +1,11 @@
+{
+  GrantedAuthority[] auths=getUserAttribute().getAuthorities();
+  XACMLRole[] roles=new XACMLRole[auths.length];
+  for (int i=0; i < auths.length; i++) {
+    roles[i]=new XACMLRole(auths[i].getAuthority());
+    roles[i].setRoleAttributesProcessed(true);
+  }
+  AnonymousAuthenticationToken auth=new AnonymousAuthenticationToken(getKey(),getUserAttribute().getPassword(),roles);
+  auth.setDetails(authenticationDetailsSource.buildDetails((HttpServletRequest)request));
+  return auth;
+}

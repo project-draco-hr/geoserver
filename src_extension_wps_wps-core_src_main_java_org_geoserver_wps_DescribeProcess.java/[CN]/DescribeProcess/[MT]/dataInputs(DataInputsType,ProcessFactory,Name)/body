@@ -1,0 +1,63 @@
+{
+  for (  Parameter<?> p : pf.getParameterInfo(name).values()) {
+    InputDescriptionType input=wpsf.createInputDescriptionType();
+    inputs.getInput().add(input);
+    input.setIdentifier(Ows11Util.code(p.key));
+    input.setTitle(Ows11Util.languageString(p.title));
+    input.setAbstract(Ows11Util.languageString(p.description));
+    input.setMaxOccurs(p.maxOccurs == -1 ? BigInteger.valueOf(Long.MAX_VALUE) : BigInteger.valueOf(p.maxOccurs));
+    input.setMinOccurs(BigInteger.valueOf(p.minOccurs));
+    List<ProcessParameterIO> ppios=ProcessParameterIO.findAll(p,context);
+    if (ppios.isEmpty()) {
+      throw new WPSException("Could not find process parameter for type " + p.key + ","+ p.type);
+    }
+    if (ppios.get(0) instanceof LiteralPPIO) {
+      LiteralPPIO lppio=(LiteralPPIO)ppios.get(0);
+      LiteralInputType literal=wpsf.createLiteralInputType();
+      input.setLiteralData(literal);
+      if (!String.class.equals(lppio.getType())) {
+        Class type=lppio.getType();
+        if (PRIMITIVE_TO_WRAPPER.containsKey(type)) {
+          type=PRIMITIVE_TO_WRAPPER.get(type);
+        }
+        Name typeName=xsp.name(type);
+        if (typeName != null) {
+          literal.setDataType(Ows11Util.type("xs:" + typeName.getLocalPart()));
+        }
+      }
+      if (lppio.getType().isEnum()) {
+        Object[] enumValues=lppio.getType().getEnumConstants();
+        AllowedValuesType allowed=owsf.createAllowedValuesType();
+        for (        Object value : enumValues) {
+          ValueType vt=owsf.createValueType();
+          vt.setValue(value.toString());
+          allowed.getValue().add(vt);
+        }
+        literal.setAllowedValues(allowed);
+      }
+ else {
+        literal.setAnyValue(owsf.createAnyValueType());
+      }
+    }
+ else     if (ppios.get(0) instanceof BoundingBoxPPIO) {
+      input.setBoundingBoxData(buildSupportedCRSType());
+    }
+ else {
+      SupportedComplexDataInputType complex=wpsf.createSupportedComplexDataInputType();
+      input.setComplexData(complex);
+      complex.setSupported(wpsf.createComplexDataCombinationsType());
+      for (      ProcessParameterIO ppio : ppios) {
+        ComplexPPIO cppio=(ComplexPPIO)ppio;
+        ComplexDataDescriptionType format=wpsf.createComplexDataDescriptionType();
+        format.setMimeType(cppio.getMimeType());
+        complex.getSupported().getFormat().add(format);
+        if (complex.getDefault() == null) {
+          ComplexDataDescriptionType def=wpsf.createComplexDataDescriptionType();
+          def.setMimeType(format.getMimeType());
+          complex.setDefault(wpsf.createComplexDataCombinationType());
+          complex.getDefault().setFormat(def);
+        }
+      }
+    }
+  }
+}

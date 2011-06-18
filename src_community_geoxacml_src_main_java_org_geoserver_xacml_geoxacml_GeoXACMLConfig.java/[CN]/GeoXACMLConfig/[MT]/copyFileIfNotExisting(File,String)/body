@@ -1,0 +1,18 @@
+{
+  File file=new File(geoServerDataDir,relativePath);
+  if (file.exists())   return;
+  URL sourceURL=GeoXACMLConfig.class.getResource("/geoserverdatadir/" + relativePath);
+  try {
+    InputStream in=sourceURL.openStream();
+    OutputStream out=new FileOutputStream(file);
+    byte[] buffer=new byte[4096];
+    int bytesread=0;
+    while ((bytesread=in.read(buffer)) > 0)     out.write(buffer,0,bytesread);
+    in.close();
+    out.close();
+  }
+ catch (  Exception e) {
+    XACMLUtil.getXACMLLogger().severe("Could not create default repository file " + relativePath);
+    throw new RuntimeException(e);
+  }
+}

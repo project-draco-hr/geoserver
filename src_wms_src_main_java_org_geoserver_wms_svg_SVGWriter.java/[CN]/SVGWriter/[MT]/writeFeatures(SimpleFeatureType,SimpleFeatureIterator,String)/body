@@ -1,0 +1,36 @@
+{
+  SimpleFeature ft;
+  try {
+    Class gtype=featureType.getGeometryDescriptor().getType().getBinding();
+    boolean doCollect=false;
+    setGeometryType(gtype);
+    setPointsAsCircles("#circle".equals(style));
+    if ((style != null) && !"#circle".equals(style) && style.startsWith("#")) {
+      style=style.substring(1);
+    }
+ else {
+      style=null;
+    }
+    setAttributeStyle(style);
+    setUpWriterHandler(featureType,doCollect);
+    if (doCollect) {
+      write("<path ");
+      write("d=\"");
+    }
+    while (reader.hasNext()) {
+      ft=reader.next();
+      writeFeature(ft);
+      ft=null;
+    }
+    if (doCollect) {
+      write("\"/>\n");
+    }
+    LOGGER.fine("encoded " + featureType.getTypeName());
+  }
+ catch (  NoSuchElementException ex) {
+    throw new DataSourceException(ex.getMessage(),ex);
+  }
+catch (  Exception ex) {
+    throw new DataSourceException(ex.getMessage(),ex);
+  }
+}

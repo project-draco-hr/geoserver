@@ -1,0 +1,70 @@
+{
+  int encodedLen=encoded.length();
+  int maxBytes=(encodedLen / 4) * 3;
+  ByteArrayOutputStream ba=new ByteArrayOutputStream(maxBytes);
+  byte[] quantum=new byte[3];
+  initDecodeArray();
+  int state=NO_CHARS_DECODED;
+  for (int encodedNdx=0; encodedNdx < encodedLen; encodedNdx++) {
+    int encodedChar=encoded.charAt(encodedNdx);
+    int decodedChar;
+    if (encodedChar > MAX_BASE64_CHAR)     decodedChar=-1;
+ else     decodedChar=Base64DecodeArray[encodedChar];
+    if (decodedChar == -1) {
+      if (ignoreBadChars)       continue;
+      throw new IOException("Invalid character");
+    }
+    if (decodedChar > PAD_INDEX) {
+      continue;
+    }
+switch (state) {
+case NO_CHARS_DECODED:
+      if (decodedChar == PAD_INDEX) {
+        throw new IOException("Pad character in invalid position");
+      }
+    quantum[0]=(byte)((decodedChar << 2) & 0xFC);
+  state=ONE_CHAR_DECODED;
+break;
+case ONE_CHAR_DECODED:
+if (decodedChar == PAD_INDEX) {
+throw new IOException("Pad character in invalid position");
+}
+quantum[0]=(byte)(quantum[0] | ((decodedChar >> 4) & 0x3));
+quantum[1]=(byte)((decodedChar << 4) & 0xF0);
+state=TWO_CHARS_DECODED;
+break;
+case TWO_CHARS_DECODED:
+if (decodedChar == PAD_INDEX) {
+ba.write(quantum,0,1);
+state=PAD_THREE_READ;
+}
+ else {
+quantum[1]=(byte)(quantum[1] | ((decodedChar >> 2) & 0x0F));
+quantum[2]=(byte)((decodedChar << 6) & 0xC0);
+state=THREE_CHARS_DECODED;
+}
+break;
+case THREE_CHARS_DECODED:
+if (decodedChar == PAD_INDEX) {
+ba.write(quantum,0,2);
+state=PAD_FOUR_READ;
+}
+ else {
+quantum[2]=(byte)(quantum[2] | decodedChar);
+ba.write(quantum,0,3);
+state=NO_CHARS_DECODED;
+}
+break;
+case PAD_THREE_READ:
+if (decodedChar != PAD_INDEX) {
+throw new IOException("Missing pad character");
+}
+state=PAD_FOUR_READ;
+break;
+case PAD_FOUR_READ:
+throw new IOException("Invalid input follows pad character");
+}
+}
+if (state != NO_CHARS_DECODED && state != PAD_FOUR_READ) throw new IOException("Invalid sequence of input characters");
+return ba.toByteArray();
+}

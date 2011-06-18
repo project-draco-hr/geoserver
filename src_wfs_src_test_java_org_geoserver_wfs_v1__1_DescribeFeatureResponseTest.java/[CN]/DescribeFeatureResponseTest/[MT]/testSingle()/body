@@ -1,0 +1,11 @@
+{
+  Catalog catalog=getCatalog();
+  FeatureTypeInfo meta=getFeatureTypeInfo(MockData.BASIC_POLYGONS);
+  ByteArrayOutputStream output=new ByteArrayOutputStream();
+  XmlSchemaEncoder response=new XmlSchemaEncoder.V11(getGeoServer());
+  response.write(new FeatureTypeInfo[]{meta},output,request());
+  Element schema=ReaderUtils.parse(new StringReader(new String(output.toByteArray())));
+  assertEquals("xsd:schema",schema.getNodeName());
+  NodeList types=schema.getElementsByTagName("xsd:complexType");
+  assertEquals(1,types.getLength());
+}

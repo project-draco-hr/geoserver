@@ -1,0 +1,28 @@
+{
+  Document doc=getAsDOM("wfs?request=GetFeature&typename=ex:geomContainer");
+  LOGGER.info("WFS GetFeature&typename=ex:geomContainer response:\n" + prettyString(doc));
+  CoordinateReferenceSystem sourceCRS=(CoordinateReferenceSystem)CRS.decode(EPSG_4283);
+  CoordinateReferenceSystem targetCRS=(CoordinateReferenceSystem)CRS.decode(EPSG_4326);
+  MathTransform transform=CRS.findMathTransform(sourceCRS,targetCRS);
+  GeometryFactory factory=new GeometryFactory();
+  Polygon srcPolygon=factory.createPolygon(factory.createLinearRing(factory.getCoordinateSequenceFactory().create(new Coordinate[]{new Coordinate(-1.2,52.5),new Coordinate(-1.2,52.6),new Coordinate(-1.1,52.6),new Coordinate(-1.1,52.5),new Coordinate(-1.2,52.5)})),null);
+  Polygon targetPolygon=(Polygon)JTS.transform(srcPolygon,transform);
+  StringBuffer polygonBuffer=new StringBuffer();
+  for (  Coordinate coord : targetPolygon.getCoordinates()) {
+    polygonBuffer.append(coord.x).append(" ");
+    polygonBuffer.append(coord.y).append(" ");
+  }
+  String targetPolygonCoords=polygonBuffer.toString().trim();
+  Point targetPoint=(Point)JTS.transform(factory.createPoint(new Coordinate(42.58,31.29)),transform);
+  String targetPointCoord=targetPoint.getCoordinate().x + " " + targetPoint.getCoordinate().y;
+  assertXpathEvaluatesTo("52.5 -1.2 52.6 -1.2 52.6 -1.1 52.5 -1.1 52.5 -1.2","//ex:geomContainer[@gml:id='1']/ex:nestedFeature[2]/ex:nestedGeom[@gml:id='secondNested.2']/ex:nestedFeature/ex:nestedGeom[@gml:id='thirdNested.1']/ex:geom/gml:Polygon/gml:exterior/gml:LinearRing/gml:posList",doc);
+  assertXpathEvaluatesTo("urn:x-ogc:def:crs:EPSG:4283","//ex:geomContainer[@gml:id='2']/ex:nestedFeature[2]/ex:nestedGeom[@gml:id='secondNested.1']/ex:nestedFeature/ex:nestedGeom[@gml:id='thirdNested.2']/ex:geom/gml:Point/@srsName",doc);
+  assertXpathEvaluatesTo("31.29 42.58","//ex:geomContainer[@gml:id='2']/ex:nestedFeature[2]/ex:nestedGeom[@gml:id='secondNested.1']/ex:nestedFeature/ex:nestedGeom[@gml:id='thirdNested.2']/ex:geom/gml:Point/gml:pos",doc);
+  assertXpathEvaluatesTo("NAME","//ex:geomContainer[@gml:id='2']/ex:nestedFeature[2]/ex:nestedGeom[@gml:id='secondNested.1']/ex:name",doc);
+  assertXpathCount(0,"//ex:geomContainer[@gml:id='2']/ex:nestedFeature[2]/ex:nestedGeom[@gml:id='secondNested.1']/ex:geom",doc);
+  doc=getAsDOM("wfs?request=GetFeature&typename=ex:geomContainer&srsName=urn:x-ogc:def:crs:EPSG:4326");
+  LOGGER.info("WFS GetFeature&typename=ex:geomContainer response:\n" + prettyString(doc));
+  assertXpathEvaluatesTo(targetPolygonCoords,"//ex:geomContainer[@gml:id='1']/ex:nestedFeature[2]/ex:nestedGeom[@gml:id='secondNested.2']/ex:nestedFeature/ex:nestedGeom[@gml:id='thirdNested.1']/ex:geom/gml:Polygon/gml:exterior/gml:LinearRing/gml:posList",doc);
+  assertXpathEvaluatesTo("urn:x-ogc:def:crs:EPSG:4326","//ex:geomContainer[@gml:id='2']/ex:nestedFeature[2]/ex:nestedGeom[@gml:id='secondNested.1']/ex:nestedFeature/ex:nestedGeom[@gml:id='thirdNested.2']/ex:geom/gml:Point/@srsName",doc);
+  assertXpathEvaluatesTo(targetPointCoord,"//ex:geomContainer[@gml:id='2']/ex:nestedFeature[2]/ex:nestedGeom[@gml:id='secondNested.1']/ex:nestedFeature/ex:nestedGeom[@gml:id='thirdNested.2']/ex:geom/gml:Point/gml:pos",doc);
+}

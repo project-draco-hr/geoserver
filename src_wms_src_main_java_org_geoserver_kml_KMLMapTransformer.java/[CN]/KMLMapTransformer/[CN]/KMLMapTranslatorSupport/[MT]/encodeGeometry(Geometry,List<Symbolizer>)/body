@@ -1,0 +1,23 @@
+{
+  if (geometry instanceof GeometryCollection) {
+    GeometryCollection collection=(GeometryCollection)geometry;
+    for (int i=0; i < collection.getNumGeometries(); i++) {
+      encodeGeometry(collection.getGeometryN(i),symbolizers);
+    }
+  }
+ else   if (geometry instanceof Point) {
+    Coordinate centroid=((Point)geometry).getCoordinate();
+    start("Point");
+    if (!Double.isNaN(centroid.z)) {
+      geometryTranslator.insertExtrudeTags(geometry);
+      element("coordinates",centroid.x + "," + centroid.y+ ","+ centroid.z);
+    }
+ else {
+      element("coordinates",centroid.x + "," + centroid.y);
+    }
+    end("Point");
+  }
+ else {
+    geometryTranslator.encode(geometry);
+  }
+}

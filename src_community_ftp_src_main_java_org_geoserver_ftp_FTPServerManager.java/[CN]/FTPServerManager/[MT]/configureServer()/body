@@ -1,0 +1,52 @@
+{
+  FtpServerFactory serverFactory=new FtpServerFactory();
+  ListenerFactory listenerFactory=new ListenerFactory();
+  DataConnectionConfigurationFactory dataConnConfigFac=new DataConnectionConfigurationFactory();
+  DataConnectionConfiguration connectionConfiguration=dataConnConfigFac.createDataConnectionConfiguration();
+  LOGGER.info("Configuring GeoServer's FTP Server...");
+  String passivePorts=config.getPassivePorts();
+  if (passivePorts != null && passivePorts.trim().length() > 0) {
+    try {
+      LOGGER.info("Setting FTP passive ports: " + passivePorts + ". May take a few seconds while checking if they're already bound.");
+      dataConnConfigFac.setPassivePorts(passivePorts);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Error setting the FTP server passive ports, " + "check the ftp.xml config file. Format is '\"\"|<minPort[-maxPort]>  ",e);
+    }
+  }
+  String passiveAddress=config.getPassiveAddress();
+  if (passiveAddress == null || passiveAddress.trim().length() == 0 || FTPConfig.DEFAULT_PASSIVE_ADDRESS.equals(passiveAddress)) {
+    LOGGER.info("Passive address is the default server address");
+  }
+ else {
+    LOGGER.info("Passive address: " + passiveAddress);
+    dataConnConfigFac.setPassiveAddress(passiveAddress);
+  }
+  String pasvExternalAddress=config.getPassiveExternalAddress();
+  if (pasvExternalAddress == null || pasvExternalAddress.trim().length() == 0 || FTPConfig.DEFAULT_PASSIVE_ADDRESS.equals(pasvExternalAddress)) {
+    LOGGER.info("Passive external address is the default server address");
+  }
+ else {
+    LOGGER.info("Passive external address: " + pasvExternalAddress);
+    dataConnConfigFac.setPassiveExternalAddress(pasvExternalAddress);
+  }
+  LOGGER.info("FTP port: " + config.getFtpPort());
+  listenerFactory.setPort(config.getFtpPort());
+  LOGGER.info("Iddle timeout: " + config.getIdleTimeout() + "s");
+  listenerFactory.setIdleTimeout(config.getIdleTimeout());
+  String serverAddress=config.getServerAddress();
+  if (serverAddress == null || serverAddress.trim().length() > 0 || serverAddress.toLowerCase().equals(FTPConfig.ALL_SERVER_ADDRESSES_FLAG)) {
+    LOGGER.info("Bound to all available network interfaces");
+  }
+ else {
+    LOGGER.info("Bound to server address: " + serverAddress);
+    listenerFactory.setServerAddress(config.getServerAddress());
+  }
+  listenerFactory.setDataConnectionConfiguration(connectionConfiguration);
+  serverFactory.addListener("default",listenerFactory.createListener());
+  serverFactory.setUserManager(userManager);
+  Map<String,Ftplet> ftplets=callbacks.getFtpLets();
+  LOGGER.info("FTPLet callbacks: " + ftplets);
+  serverFactory.setFtplets(ftplets);
+  ftp=serverFactory.createServer();
+}

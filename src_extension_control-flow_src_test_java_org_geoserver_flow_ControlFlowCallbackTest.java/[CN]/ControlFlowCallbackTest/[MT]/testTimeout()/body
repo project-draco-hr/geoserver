@@ -1,0 +1,22 @@
+{
+  ControlFlowCallback callback=new ControlFlowCallback();
+  TestingConfigurator tc=new TestingConfigurator();
+  tc.timeout=300;
+  CountingController c1=new CountingController(2,200);
+  CountingController c2=new CountingController(1,200);
+  tc.controllers.add(c1);
+  tc.controllers.add(c2);
+  callback.configurator=tc;
+  try {
+    callback.operationDispatched(null,null);
+    fail("A HTTP 503 should have been raised!");
+  }
+ catch (  HttpErrorCodeException e) {
+    assertEquals(503,e.getErrorCode());
+  }
+  assertEquals(1,c1.requestIncomingCalls);
+  assertEquals(0,c1.requestCompleteCalls);
+  assertEquals(1,c2.requestIncomingCalls);
+  assertEquals(0,c1.requestCompleteCalls);
+  callback.finished(null);
+}

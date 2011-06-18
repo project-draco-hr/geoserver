@@ -1,0 +1,31 @@
+{
+  if (gmtCalendar == null) {
+    TimeZone gmtTimeZone=TimeZone.getTimeZone("GMT");
+    gmtCalendar=Calendar.getInstance(gmtTimeZone,Locale.US);
+  }
+  StringBuffer buf=new StringBuffer(16);
+synchronized (gmtCalendar) {
+    gmtCalendar.setTime(value);
+    gmtCalendar.add(Calendar.MINUTE,timeZone);
+    int year=gmtCalendar.get(Calendar.YEAR);
+    buf.append(zeroPadInt(year,4));
+    buf.append('-');
+    int month=gmtCalendar.get(Calendar.MONTH) + 1;
+    buf.append(zeroPadInt(month,2));
+    buf.append('-');
+    int dom=gmtCalendar.get(Calendar.DAY_OF_MONTH);
+    buf.append(zeroPadInt(dom,2));
+  }
+  int tzNoSign=timeZone;
+  if (timeZone < 0) {
+    tzNoSign=-tzNoSign;
+    buf.append('-');
+  }
+ else   buf.append('+');
+  int tzHours=tzNoSign / 60;
+  buf.append(zeroPadInt(tzHours,2));
+  buf.append(':');
+  int tzMinutes=tzNoSign % 60;
+  buf.append(zeroPadInt(tzMinutes,2));
+  return buf.toString();
+}

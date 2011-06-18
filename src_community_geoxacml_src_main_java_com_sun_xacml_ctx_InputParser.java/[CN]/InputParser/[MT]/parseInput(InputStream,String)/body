@@ -1,0 +1,27 @@
+{
+  NodeList nodes=null;
+  try {
+    DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
+    factory.setIgnoringComments(true);
+    DocumentBuilder builder=null;
+    factory.setNamespaceAware(true);
+    if (ipReference == null) {
+      factory.setValidating(false);
+      builder=factory.newDocumentBuilder();
+    }
+ else {
+      factory.setValidating(true);
+      factory.setAttribute(JAXP_SCHEMA_LANGUAGE,W3C_XML_SCHEMA);
+      factory.setAttribute(JAXP_SCHEMA_SOURCE,ipReference.schemaFile);
+      builder=factory.newDocumentBuilder();
+      builder.setErrorHandler(ipReference);
+    }
+    Document doc=builder.parse(input);
+    nodes=doc.getElementsByTagName(rootTag);
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error tring to parse " + rootTag + "Type",e);
+  }
+  if (nodes.getLength() != 1)   throw new ParsingException("Only one " + rootTag + "Type allowed "+ "at the root of a Context doc");
+  return nodes.item(0);
+}

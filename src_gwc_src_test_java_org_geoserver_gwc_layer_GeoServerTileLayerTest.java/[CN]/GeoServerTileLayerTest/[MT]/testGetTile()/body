@@ -1,0 +1,25 @@
+{
+  Resource mockResult=mock(Resource.class);
+  ArgumentCaptor<Map> argument=ArgumentCaptor.forClass(Map.class);
+  Mockito.when(catalogConfig.dispatchOwsRequest(argument.capture(),(Cookie[])anyObject())).thenReturn(mockResult);
+  BufferedImage image=new BufferedImage(256,256,BufferedImage.TYPE_INT_ARGB);
+  RenderedImageMap fakeDispatchedMap=new RenderedImageMap(new WMSMapContext(),image,"image/png");
+  RenderedImageMapResponse fakeResponseEncoder=mock(RenderedImageMapResponse.class);
+  MimeType mimeType=MimeType.createFromFormat("image/png");
+  when(catalogConfig.getResponseEncoder(eq(mimeType),(WebMap)anyObject())).thenReturn(fakeResponseEncoder);
+  StorageBroker storageBroker=mock(StorageBroker.class);
+  when(storageBroker.get((TileObject)anyObject())).thenReturn(false);
+  layerInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerInfo);
+  MockHttpServletRequest servletReq=new MockHttpServletRequest();
+  HttpServletResponse servletResp=new MockHttpServletResponse();
+  long[] tileIndex={0,0,0};
+  ConveyorTile tile=new ConveyorTile(storageBroker,layerInfoTileLayer.getName(),"EPSG:4326",tileIndex,mimeType,null,servletReq,servletResp);
+  GeoServerTileLayer.WEB_MAP.set(fakeDispatchedMap);
+  ConveyorTile returned=layerInfoTileLayer.getTile(tile);
+  assertNotNull(returned);
+  assertNotNull(returned.getBlob());
+  assertEquals(CacheResult.MISS,returned.getCacheResult());
+  assertEquals(200,returned.getStatus());
+  verify(storageBroker,atLeastOnce()).get((TileObject)anyObject());
+  verify(catalogConfig,times(1)).getResponseEncoder(eq(mimeType),isA(RenderedImageMap.class));
+}

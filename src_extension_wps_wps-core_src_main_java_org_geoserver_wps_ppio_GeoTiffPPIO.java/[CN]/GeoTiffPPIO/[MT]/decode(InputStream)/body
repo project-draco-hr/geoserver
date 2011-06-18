@@ -1,0 +1,17 @@
+{
+  File root=new File(System.getProperty("java.io.tmpdir","."));
+  File f=File.createTempFile("wps","tiff",root);
+  FileOutputStream os=null;
+  try {
+    os=new FileOutputStream(f);
+    IOUtils.copy(input,os);
+  }
+  finally {
+    IOUtils.closeQuietly(os);
+  }
+  AbstractGridFormat format=GridFormatFinder.findFormat(f);
+  if (format instanceof UnknownFormat) {
+    throw new WPSException("Could not find the GeoTIFF GT2 format, please check it's in the classpath");
+  }
+  return format.getReader(f).read(null);
+}

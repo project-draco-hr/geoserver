@@ -1,0 +1,23 @@
+{
+  final TextField mimetype=new TextField("mimetype",new Model(""));
+  final Form form=new Form("form"){
+    @Override protected void onSubmit(){
+      String newMimetype=mimetype.getDefaultModelObjectAsString();
+      ProxyConfig config=ProxyConfig.loadConfFromDisk();
+      config.mimetypeWhitelist.add(newMimetype);
+      ProxyConfig.writeConfigToDisk(config);
+      setResponsePage(ProxyAdminPage.class);
+    }
+  }
+;
+  form.add(mimetype);
+  form.setMarkupId("mainForm");
+  add(form);
+  AjaxLink cancelLink=new AjaxLink("cancel"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      setResponsePage(ProxyAdminPage.class);
+    }
+  }
+;
+  add(cancelLink);
+}

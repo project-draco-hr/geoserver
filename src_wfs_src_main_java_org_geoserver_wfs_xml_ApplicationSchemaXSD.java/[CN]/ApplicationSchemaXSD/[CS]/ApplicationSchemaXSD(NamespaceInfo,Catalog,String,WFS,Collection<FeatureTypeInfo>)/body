@@ -1,0 +1,31 @@
+{
+  this.ns=ns;
+  this.catalog=catalog;
+  this.baseURL=baseURL;
+  this.wfs=wfs;
+  this.types=types;
+  if (this.types == null) {
+    types=Collections.EMPTY_LIST;
+  }
+  if (this.ns == null) {
+    if (!types.isEmpty()) {
+      Iterator<FeatureTypeInfo> i=types.iterator();
+      NamespaceInfo namespace=i.next().getNamespace();
+      while (i.hasNext()) {
+        FeatureTypeInfo type=i.next();
+        if (!namespace.equals(type.getNamespace())) {
+          namespace=null;
+          break;
+        }
+      }
+      if (namespace != null) {
+        this.ns=namespace;
+      }
+    }
+  }
+  Set<Schema> profiles=new LinkedHashSet<Schema>();
+  for (  XSD xsd : wfs.getAllDependencies()) {
+    profiles.add(xsd.getTypeMappingProfile());
+  }
+  typeMappingProfile=new TypeMappingProfile(profiles);
+}

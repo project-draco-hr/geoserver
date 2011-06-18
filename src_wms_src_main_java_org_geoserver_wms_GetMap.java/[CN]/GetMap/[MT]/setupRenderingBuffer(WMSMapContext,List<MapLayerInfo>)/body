@@ -1,0 +1,31 @@
+{
+  if (map.getBuffer() > 0) {
+    return;
+  }
+  int[] layerBuffers=new int[layers.size()];
+  boolean computeBuffer=false;
+  for (int i=0; i < layers.size(); i++) {
+    final LayerInfo layerInfo=layers.get(i).getLayerInfo();
+    if (layerInfo != null) {
+      Integer layerBuffer=layerInfo.getMetadata().get(LayerInfo.BUFFER,Integer.class);
+      if (layerBuffer != null && layerBuffer > 0) {
+        computeBuffer=true;
+        layerBuffers[i]=layerBuffer;
+      }
+    }
+  }
+  if (computeBuffer) {
+    final double scaleDenominator=getRequestScale(map);
+    int buffer=0;
+    for (int i=0; i < layers.size(); i++) {
+      int layerBuffer=layerBuffers[i];
+      if (layerBuffer == 0) {
+        layerBuffer=computeLayerBuffer(map.getLayer(i).getStyle(),scaleDenominator);
+      }
+      if (layerBuffer > buffer) {
+        buffer=layerBuffer;
+      }
+    }
+    map.setBuffer(buffer);
+  }
+}

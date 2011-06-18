@@ -1,0 +1,15 @@
+{
+  Quota limit=globalQuotaModel.getObject();
+  Quota used=globalUsedQuotaModel.getObject();
+  BigInteger limitValue=limit.getBytes();
+  BigInteger usedValue=used.getBytes();
+  StorageUnit bestUnitForLimit=StorageUnit.bestFit(limitValue);
+  StorageUnit bestUnitForUsed=StorageUnit.bestFit(usedValue);
+  StorageUnit biggerUnit=bestUnitForLimit.compareTo(bestUnitForUsed) > 0 ? bestUnitForLimit : bestUnitForUsed;
+  BigDecimal showLimit=StorageUnit.B.convertTo(new BigDecimal(limitValue),biggerUnit);
+  BigDecimal showUsed=StorageUnit.B.convertTo(new BigDecimal(usedValue),biggerUnit);
+  final IModel<Number> limitModel=new Model<Number>(showLimit);
+  final IModel<Number> usedModel=new Model<Number>(showUsed);
+  StatusBar statusBar=new StatusBar("globalQuotaProgressBar",limitModel,usedModel,progressMessageModel);
+  add(statusBar);
+}

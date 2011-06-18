@@ -1,0 +1,13 @@
+{
+  Iterator it=m.entrySet().iterator();
+  while (it.hasNext()) {
+    Map.Entry entry=(Map.Entry)it.next();
+    Restlet restlet=(getApplicationContext().getBean(entry.getValue().toString()) instanceof Resource) ? new BeanResourceFinder(getApplicationContext(),entry.getValue().toString()) : new BeanDelegatingRestlet(getApplicationContext(),entry.getValue().toString());
+    String path=entry.getKey().toString();
+    r.attach(path,restlet);
+    if (path.indexOf("?") == -1) {
+      r.attach(path + "?{q}",restlet);
+    }
+ else     LOG.fine("Query string already listed in restlet mapping: " + path);
+  }
+}

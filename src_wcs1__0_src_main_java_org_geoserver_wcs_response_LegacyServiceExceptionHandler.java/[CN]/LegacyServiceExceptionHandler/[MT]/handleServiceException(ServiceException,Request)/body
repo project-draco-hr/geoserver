@@ -1,0 +1,52 @@
+{
+  String tab="   ";
+  StringBuffer sb=new StringBuffer();
+  sb.append("<?xml version=\"1.0\"");
+  sb.append(" encoding=\"UTF-8\"");
+  if (dtdLocation != null) {
+    sb.append(" standalone=\"no\"");
+  }
+  sb.append("?>");
+  if (dtdLocation != null) {
+    String fullDtdLocation=buildSchemaURL(baseURL(request.getHttpRequest()),dtdLocation);
+    sb.append("<!DOCTYPE ServiceExceptionReport SYSTEM \"" + fullDtdLocation + "\"> ");
+  }
+  sb.append("<ServiceExceptionReport version=\"" + version + "\" ");
+  if ((schemaLocation != null) && (dtdLocation == null)) {
+    String fullSchemaLocation=buildSchemaURL(baseURL(request.getHttpRequest()),schemaLocation);
+    sb.append("xmlns=\"http://www.opengis.net/ogc\" ");
+    sb.append("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+    sb.append("xsi:schemaLocation=\"http://www.opengis.net/ogc " + fullSchemaLocation + "\"");
+  }
+  sb.append(">");
+  sb.append(tab + "<ServiceException");
+  if ((exception.getCode() != null) && !exception.getCode().equals("")) {
+    sb.append(" code=\"" + exception.getCode() + "\"");
+  }
+  if ((exception.getLocator() != null) && !exception.getLocator().equals("")) {
+    sb.append(" locator=\"" + exception.getLocator() + "\"");
+  }
+  sb.append(">");
+  if ((exception.getMessage() != null)) {
+    sb.append("\n" + tab + tab);
+    OwsUtils.dumpExceptionMessages(exception,sb,true);
+    if (geoServer.getGlobal().isVerboseExceptions()) {
+      ByteArrayOutputStream stackTrace=new ByteArrayOutputStream();
+      exception.printStackTrace(new PrintStream(stackTrace));
+      sb.append("\nDetails:\n");
+      sb.append(ResponseUtils.encodeXML(new String(stackTrace.toByteArray())));
+    }
+  }
+  sb.append("\n</ServiceException>");
+  sb.append("</ServiceExceptionReport>");
+  HttpServletResponse response=request.getHttpResponse();
+  response.setContentType(contentType);
+  response.setCharacterEncoding("UTF-8");
+  try {
+    response.getOutputStream().write(sb.toString().getBytes());
+    response.getOutputStream().flush();
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.INFO,"Problem writing exception information back to calling client:",e);
+  }
+}

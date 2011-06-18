@@ -1,0 +1,33 @@
+{
+  reset(ft);
+  GeometryCollection geomCollection=(GeometryCollection)ft.getDefaultGeometry();
+  for (int i=0; i < geomCollection.getNumGeometries(); i++) {
+    Geometry geom=geomCollection.getGeometryN(i);
+    if (geom != null) {
+      Class<?> gtype=geom.getClass();
+      delegateWriter=(HTMLImageMapFeatureWriter)writers.get(gtype);
+      if (processStyle(ft,fts)) {
+        try {
+          startElement(ft,"." + i);
+          startGeometry(geom);
+          writeGeometry(geom,buffer);
+          endGeometry(geom);
+          endElement(ft);
+          commitBuffer();
+        }
+ catch (        IOException e) {
+          buffer=new StringBuffer();
+          if (LOGGER.isLoggable(Level.WARNING))           LOGGER.warning("Problems encoding shape: " + e.getMessage());
+        }
+catch (        Throwable t) {
+          buffer=new StringBuffer();
+          if (LOGGER.isLoggable(Level.SEVERE))           LOGGER.severe("Problems encoding shape: " + t.getMessage());
+        }
+      }
+    }
+ else {
+      buffer=new StringBuffer();
+      if (LOGGER.isLoggable(Level.WARNING))       LOGGER.warning("Problems encoding shape: null geometry");
+    }
+  }
+}

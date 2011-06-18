@@ -1,0 +1,31 @@
+{
+  if (tryCache && tryCacheFetch(tile)) {
+    return finalizeTile(tile);
+  }
+  final GeoServerMetaTile metaTile=createMetaTile(tile,metaX,metaY);
+  final GridLocObj metaGridLoc;
+  metaGridLoc=META_GRID_LOCKS.unique(new GridLocObj(metaTile.getMetaGridPos(),32));
+synchronized (metaGridLoc) {
+    if (tryCache && tryCacheFetch(tile)) {
+      LOGGER.finest("--> " + Thread.currentThread().getName() + " returns cache hit for "+ Arrays.toString(metaTile.getMetaGridPos()));
+    }
+ else {
+      LOGGER.finer("--> " + Thread.currentThread().getName() + " submitting getMap request for meta grid location "+ Arrays.toString(metaTile.getMetaGridPos())+ " on "+ metaTile);
+      WebMap map;
+      try {
+        map=dispatchGetMap(tile,metaTile);
+        Assert.notNull(map,"Did not obtain a WebMap from GeoServer's Dispatcher");
+        metaTile.setWebMap(map);
+        saveTiles(metaTile,tile);
+      }
+ catch (      Exception e) {
+        e.printStackTrace();
+        throw new GeoWebCacheException("Problem communicating with GeoServer",e);
+      }
+ finally {
+        META_GRID_LOCKS.remove(metaGridLoc);
+      }
+    }
+  }
+  return finalizeTile(tile);
+}

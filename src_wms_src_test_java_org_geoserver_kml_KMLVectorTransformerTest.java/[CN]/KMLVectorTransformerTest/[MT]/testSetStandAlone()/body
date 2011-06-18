@@ -1,0 +1,16 @@
+{
+  SimpleFeatureCollection features=FeatureCollections.newCollection();
+  Style style=mockData.getDefaultStyle().getStyle();
+  MapLayer mapLayer=new DefaultMapLayer(features,style);
+  WMSMapContext mapContext=new WMSMapContext();
+  GetMapRequest request=mockData.createRequest();
+  mapContext.setRequest(request);
+  KMLVectorTransformer transformer=new KMLVectorTransformer(mockData.getWMS(),mapContext,mapLayer);
+  Document document;
+  transformer.setStandAlone(true);
+  document=WMSTestSupport.transform(features,transformer);
+  assertEquals("kml",document.getDocumentElement().getNodeName());
+  transformer.setStandAlone(false);
+  document=WMSTestSupport.transform(features,transformer);
+  assertEquals("Document",document.getDocumentElement().getNodeName());
+}

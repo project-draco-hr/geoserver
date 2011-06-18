@@ -1,0 +1,61 @@
+{
+  FeatureIterator fi=null;
+  try {
+    String layerName=getParameters().get(0).evaluate(object,String.class);
+    if (layerName == null) {
+      throw new IllegalArgumentException("The first argument should be a vector layer name");
+    }
+    FeatureTypeInfo ft=catalog.getFeatureTypeByName(layerName);
+    if (ft == null) {
+      throw new IllegalArgumentException("Could not find vector layer " + layerName + " in the GeoServer catalog");
+    }
+    String attribute=getParameters().get(1).evaluate(object,String.class);
+    if (attribute == null) {
+      throw new IllegalArgumentException("The second argument of the query " + "function should be the attribute name");
+    }
+    if (ft.getFeatureType().getDescriptor(attribute) == null) {
+      throw new IllegalArgumentException("Attribute " + attribute + " could not be found in layer "+ layerName);
+    }
+    String cql=getParameters().get(2).evaluate(object,String.class);
+    if (cql == null) {
+      throw new IllegalArgumentException("The third argument of the query " + "function should be a valid (E)CQL filter");
+    }
+    Filter filter;
+    try {
+      filter=(Filter)ECQL.toFilter(cql);
+    }
+ catch (    Exception e) {
+      throw new IllegalArgumentException("The third argument of the query " + "function should be a valid (E)CQL filter",e);
+    }
+    Query query=new Query(null,filter,new String[]{attribute});
+    query.setMaxFeatures(maxResults + 1);
+    FeatureSource fs=ft.getFeatureSource(null,null);
+    fi=fs.getFeatures(query).features();
+    List<Object> results=new ArrayList<Object>(maxResults);
+    while (fi.hasNext()) {
+      Feature f=fi.next();
+      Object value=f.getProperty(attribute).getValue();
+      results.add(value);
+    }
+    if (results.size() == 0) {
+      return null;
+    }
+    if (maxResults > 0 && results.size() > maxResults && !single) {
+      throw new IllegalStateException("The query in " + getName() + " returns too many "+ "features, the limit is "+ maxResults);
+    }
+    if (maxResults == 1) {
+      return results.get(0);
+    }
+ else {
+      return results;
+    }
+  }
+ catch (  IOException e) {
+    throw new RuntimeException("Failed to evaluated the query: " + e.getMessage(),e);
+  }
+ finally {
+    if (fi != null) {
+      fi.close();
+    }
+  }
+}

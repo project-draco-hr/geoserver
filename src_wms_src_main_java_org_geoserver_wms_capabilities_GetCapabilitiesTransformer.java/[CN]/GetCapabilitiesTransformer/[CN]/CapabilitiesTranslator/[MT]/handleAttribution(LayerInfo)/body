@@ -1,0 +1,35 @@
+{
+  AttributionInfo attribution=layer.getAttribution();
+  String title=attribution.getTitle();
+  String url=attribution.getHref();
+  String logoURL=attribution.getLogoURL();
+  String logoType=attribution.getLogoType();
+  int logoWidth=attribution.getLogoWidth();
+  int logoHeight=attribution.getLogoHeight();
+  boolean titleGood=(title != null), urlGood=(url != null), logoGood=(logoURL != null && logoType != null && logoWidth > 0 && logoHeight > 0);
+  if (titleGood || urlGood || logoGood) {
+    start("Attribution");
+    if (titleGood)     element("Title",title);
+    if (urlGood) {
+      AttributesImpl urlAttributes=new AttributesImpl();
+      urlAttributes.addAttribute("","xmlns:xlink","xmlns:xlink","",XLINK_NS);
+      urlAttributes.addAttribute(XLINK_NS,"type","xlink:type","","simple");
+      urlAttributes.addAttribute(XLINK_NS,"href","xlink:href","",url);
+      element("OnlineResource",null,urlAttributes);
+    }
+    if (logoGood) {
+      AttributesImpl logoAttributes=new AttributesImpl();
+      logoAttributes.addAttribute("","","height","","" + logoHeight);
+      logoAttributes.addAttribute("","","width","","" + logoWidth);
+      start("LogoURL",logoAttributes);
+      element("Format",logoType);
+      AttributesImpl urlAttributes=new AttributesImpl();
+      urlAttributes.addAttribute("","xmlns:xlink","xmlns:xlink","",XLINK_NS);
+      urlAttributes.addAttribute(XLINK_NS,"type","xlink:type","","simple");
+      urlAttributes.addAttribute(XLINK_NS,"href","xlink:href","",logoURL);
+      element("OnlineResource",null,urlAttributes);
+      end("LogoURL");
+    }
+    end("Attribution");
+  }
+}

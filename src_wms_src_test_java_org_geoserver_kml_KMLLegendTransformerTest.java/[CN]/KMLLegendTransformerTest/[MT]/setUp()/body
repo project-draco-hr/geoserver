@@ -1,0 +1,21 @@
+{
+  mockData=new WMSMockData();
+  mockData.setUp();
+  httpreq=new MockHttpServletRequest();
+  MockHttpSession session=new MockHttpSession();
+  httpreq.setSession(session);
+  MockServletContext context=new MockServletContext();
+  session.setupServletContext(context);
+  MapLayerInfo layer=mockData.addFeatureTypeLayer("TestPoints",Point.class);
+  mapContext=new WMSMapContext();
+  GetMapRequest request=mockData.createRequest();
+  request.setLayers(Collections.singletonList(layer));
+  SimpleFeatureSource featureSource;
+  featureSource=(SimpleFeatureSource)((FeatureTypeInfo)layer.getFeature()).getFeatureSource(null,null);
+  mapLayer=new DefaultMapLayer(featureSource,mockData.getDefaultStyle().getStyle());
+  httpreq.setScheme("http");
+  httpreq.setServerName("geoserver.org");
+  httpreq.setServerPort(8181);
+  httpreq.setContextPath("/geoserver");
+  mapContext.setRequest(request);
+}

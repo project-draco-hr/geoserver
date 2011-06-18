@@ -1,0 +1,11 @@
+{
+  MockHttpServletResponse resp=getAsServletResponse("wfs?request=GetFeature&typeName=sf:PrimitiveGeoFeature&outputFormat=csv");
+  FeatureSource fs=getFeatureSource(MockData.PRIMITIVEGEOFEATURE);
+  assertEquals("text/csv",resp.getContentType());
+  assertEquals("attachment; filename=PrimitiveGeoFeature.csv",resp.getHeader("Content-Disposition"));
+  List<String[]> lines=readLines(resp.getOutputStreamContent());
+  assertEquals(fs.getCount(Query.ALL) + 1,lines.size());
+  for (  String[] line : lines) {
+    assertEquals(fs.getSchema().getDescriptors().size() + 1,line.length);
+  }
+}

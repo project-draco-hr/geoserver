@@ -1,0 +1,50 @@
+{
+  super(componentId,storeEditForm);
+  final IModel model=storeEditForm.getModel();
+  setDefaultModel(model);
+  final CoverageStoreInfo storeInfo=(CoverageStoreInfo)storeEditForm.getModelObject();
+{
+    Map<String,String> existingParameters=parseConnectionParameters(storeInfo);
+    Map<String,Serializable> connectionParameters=storeInfo.getConnectionParameters();
+    connectionParameters.putAll(existingParameters);
+  }
+  final IModel paramsModel=new PropertyModel(model,"connectionParameters");
+  addConnectionPrototypePanel(storeInfo);
+  server=addTextPanel(paramsModel,SERVER_PARAM);
+  port=addTextPanel(paramsModel,PORT_PARAM);
+  instance=addTextPanel(paramsModel,INSTANCE_PARAM);
+  user=addTextPanel(paramsModel,USER_PARAM);
+  password=addPasswordPanel(paramsModel);
+  server.setOutputMarkupId(true);
+  port.setOutputMarkupId(true);
+  instance.setOutputMarkupId(true);
+  user.setOutputMarkupId(true);
+  password.setOutputMarkupId(true);
+  table=addRasterTable(storeInfo,paramsModel);
+  storeEditForm.add(new IFormValidator(){
+    private static final long serialVersionUID=1L;
+    public FormComponent[] getDependentFormComponents(){
+      return new FormComponent[]{server,port,instance,user,password,table};
+    }
+    public void validate(    final Form form){
+      CoverageStoreInfo storeInfo=(CoverageStoreInfo)form.getModelObject();
+      final String serverVal=server.getValue();
+      final String portVal=port.getValue();
+      final String instanceVal=instance.getValue();
+      final String userVal=user.getValue();
+      final String passwordVal=password.getValue();
+      final String tableVal=table.getValue();
+      StringBuilder urlb=new StringBuilder("sde://");
+      urlb.append(userVal).append(":").append(passwordVal).append("@");
+      urlb.append(serverVal).append(":").append(portVal).append("/");
+      if (instanceVal != null && instanceVal.trim().length() > 0) {
+        urlb.append(instanceVal);
+      }
+      urlb.append("#").append(tableVal);
+      String coverageUrl=urlb.toString();
+      LOGGER.info("Coverage URL: '" + coverageUrl + "'");
+      storeInfo.setURL(coverageUrl);
+    }
+  }
+);
+}

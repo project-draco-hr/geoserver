@@ -1,0 +1,16 @@
+{
+  PrintStream out=new PrintStream(output);
+  String indent=indenter.makeString();
+  out.println(indent + "<Policy PolicyId=\"" + getId().toString()+ "\" RuleCombiningAlgId=\""+ getCombiningAlg().getIdentifier().toString()+ "\">");
+  indenter.in();
+  String nextIndent=indenter.makeString();
+  String description=getDescription();
+  if (description != null)   out.println(nextIndent + "<Description>" + description+ "</Description>");
+  String version=getDefaultVersion();
+  if (version != null)   out.println("<PolicyDefaults><XPathVersion>" + version + "</XPathVersion></PolicyDefaults>");
+  getTarget().encode(output,indenter);
+  for (  VariableDefinition def : definitions)   def.encode(output,indenter);
+  encodeCommonElements(output,indenter);
+  indenter.out();
+  out.println(indent + "</Policy>");
+}

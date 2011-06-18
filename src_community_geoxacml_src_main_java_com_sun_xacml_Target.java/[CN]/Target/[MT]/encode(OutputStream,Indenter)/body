@@ -1,0 +1,18 @@
+{
+  PrintStream out=new PrintStream(output);
+  String indent=indenter.makeString();
+  boolean matchesAny=(subjectsSection.matchesAny() && resourcesSection.matchesAny() && actionsSection.matchesAny()&& environmentsSection.matchesAny());
+  if (matchesAny && (xacmlVersion == PolicyMetaData.XACML_VERSION_2_0)) {
+    out.println("<Target/>");
+  }
+ else {
+    out.println(indent + "<Target>");
+    indenter.in();
+    subjectsSection.encode(output,indenter);
+    resourcesSection.encode(output,indenter);
+    actionsSection.encode(output,indenter);
+    if (xacmlVersion == PolicyMetaData.XACML_VERSION_2_0)     environmentsSection.encode(output,indenter);
+    indenter.out();
+    out.println(indent + "</Target>");
+  }
+}

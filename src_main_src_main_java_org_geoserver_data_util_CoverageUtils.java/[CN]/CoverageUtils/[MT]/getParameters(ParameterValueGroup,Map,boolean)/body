@@ -1,0 +1,26 @@
+{
+  final List<ParameterValue<?>> parameters=new ArrayList<ParameterValue<?>>();
+  final String readGeometryKey=AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString();
+  if ((params != null) && (params.values().size() > 0)) {
+    final List<GeneralParameterValue> elements=params.values();
+    for (    GeneralParameterValue elem : elements) {
+      final ParameterValue<?> val=(ParameterValue<?>)elem;
+      if (val != null) {
+        final ParameterDescriptor<?> descr=val.getDescriptor();
+        final String _key=descr.getName().toString();
+        if ("namespace".equals(_key)) {
+          continue;
+        }
+        if (_key.equalsIgnoreCase(readGeometryKey) && !readGeom) {
+          continue;
+        }
+        final Object value=CoverageUtils.getCvParamValue(_key,val,values);
+        parameters.add(new DefaultParameterDescriptor(_key,descr.getValueClass(),null,value).createValue());
+      }
+    }
+    return (!parameters.isEmpty()) ? (GeneralParameterValue[])parameters.toArray(new GeneralParameterValue[parameters.size()]) : null;
+  }
+ else {
+    return null;
+  }
+}

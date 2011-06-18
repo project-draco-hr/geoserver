@@ -1,0 +1,27 @@
+{
+  checkName(name);
+  GeoAlgorithm algorithm=Sextante.getAlgorithmFromCommandLineName(name.getLocalPart());
+  Class outputClass=null;
+  OutputObjectsSet ooset=algorithm.getOutputObjects();
+  Map<String,Parameter<?>> outputInfo=new HashMap<String,Parameter<?>>();
+  for (int i=0; i < ooset.getOutputObjectsCount(); i++) {
+    Output output=ooset.getOutput(i);
+    if (output instanceof OutputVectorLayer) {
+      outputClass=FeatureCollection.class;
+    }
+ else     if (output instanceof OutputRasterLayer) {
+      outputClass=GridCoverage2D.class;
+    }
+ else     if (output instanceof OutputTable) {
+      outputClass=FeatureCollection.class;
+    }
+ else     if (output instanceof OutputText) {
+      outputClass=String.class;
+    }
+ else {
+      throw new IllegalArgumentException("Don't know how to handle output of type" + output.getClass());
+    }
+    outputInfo.put(output.getName(),new Parameter(output.getName(),outputClass,Text.text(output.getDescription()),Text.text(output.getDescription())));
+  }
+  return outputInfo;
+}

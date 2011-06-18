@@ -1,0 +1,23 @@
+{
+  final List<EObject> transactionElements=getTransactionElements(request);
+  ReferencedEnvelope affectedBounds;
+  Set<String> affectedLayers;
+  for (  EObject transactionElement : transactionElements) {
+    affectedBounds=this.affectedBounds.remove(transactionElement);
+    affectedLayers=this.affectedLayers.remove(transactionElement);
+    if (committed && affectedBounds != null) {
+      Assert.notNull(affectedLayers);
+      if (affectedBounds.isEmpty()) {
+        continue;
+      }
+      for (      String layerName : affectedLayers) {
+        try {
+          gwc.truncate(layerName,affectedBounds);
+        }
+ catch (        GeoWebCacheException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+}

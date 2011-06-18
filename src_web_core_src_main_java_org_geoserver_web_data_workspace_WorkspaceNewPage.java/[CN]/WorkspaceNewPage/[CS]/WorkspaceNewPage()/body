@@ -1,0 +1,38 @@
+{
+  WorkspaceInfo ws=getCatalog().getFactory().createWorkspace();
+  form=new Form("form",new CompoundPropertyModel(ws)){
+    @Override protected void onSubmit(){
+      Catalog catalog=getCatalog();
+      WorkspaceInfo ws=(WorkspaceInfo)form.getModelObject();
+      NamespaceInfo ns=catalog.getFactory().createNamespace();
+      ns.setPrefix(ws.getName());
+      ns.setURI(nsUriTextField.getDefaultModelObjectAsString());
+      catalog.add(ws);
+      catalog.add(ns);
+      if (defaultWs)       catalog.setDefaultWorkspace(ws);
+      setResponsePage(WorkspacePage.class);
+    }
+  }
+;
+  add(form);
+  TextField nameTextField=new TextField("name");
+  nameTextField.setRequired(true);
+  nameTextField.add(new XMLNameValidator());
+  form.add(nameTextField.setRequired(true));
+  nsUriTextField=new TextField("uri",new Model());
+  nsUriTextField.setRequired(true);
+  nsUriTextField.add(new URIValidator());
+  form.add(nsUriTextField);
+  CheckBox defaultChk=new CheckBox("default",new PropertyModel(this,"defaultWs"));
+  form.add(defaultChk);
+  SubmitLink submitLink=new SubmitLink("submit",form);
+  form.add(submitLink);
+  form.setDefaultButton(submitLink);
+  AjaxLink cancelLink=new AjaxLink("cancel"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      setResponsePage(WorkspacePage.class);
+    }
+  }
+;
+  form.add(cancelLink);
+}

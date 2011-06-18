@@ -1,0 +1,13 @@
+{
+  LayerGroupInfo lg=(LayerGroupInfo)object;
+  LOGGER.info("POST layer group " + lg.getName());
+  if (lg.getLayers().isEmpty()) {
+    throw new RestletException("layer group must not be empty",Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+  if (lg.getBounds() == null) {
+    LOGGER.fine("Auto calculating layer group bounds");
+    new CatalogBuilder(catalog).calculateLayerGroupBounds(lg);
+  }
+  catalog.add(lg);
+  return lg.getName();
+}

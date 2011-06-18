@@ -1,0 +1,22 @@
+{
+  Boolean strict=(Boolean)kvp.get("strict");
+  if (strict == null) {
+    strict=Boolean.FALSE;
+  }
+  Parser parser=new Parser(configuration);
+  List<NamespaceInfo> namespaces=catalog.getNamespaces();
+  for (  NamespaceInfo ns : namespaces) {
+    parser.getNamespaces().declarePrefix(ns.getPrefix(),ns.getURI());
+  }
+  parser.setValidating(strict.booleanValue());
+  Object parsed=parser.parse(reader);
+  if (strict.booleanValue() && !parser.getValidationErrors().isEmpty()) {
+    WFSException exception=new WFSException("Invalid request","InvalidParameterValue");
+    for (Iterator e=parser.getValidationErrors().iterator(); e.hasNext(); ) {
+      Exception error=(Exception)e.next();
+      exception.getExceptionText().add(error.getLocalizedMessage());
+    }
+    throw exception;
+  }
+  return parsed;
+}

@@ -1,0 +1,14 @@
+{
+  HashMap kvp=new HashMap();
+  URL url=GetMapKvpRequestReader.class.getResource("BasicPolygonsLibraryNoDefault.sld");
+  kvp.put("sld",URLDecoder.decode(url.toExternalForm(),"UTF-8"));
+  kvp.put("layers",MockData.BASIC_POLYGONS.getPrefix() + ":" + MockData.BASIC_POLYGONS.getLocalPart());
+  GetMapRequest request=(GetMapRequest)reader.createRequest();
+  reader.setLaxStyleMatchAllowed(false);
+  request=(GetMapRequest)reader.read(request,parseKvp(kvp),caseInsensitiveKvp(kvp));
+  assertNotNull(request.getSld());
+  assertEquals(url,request.getSld());
+  final Style style=(Style)request.getStyles().get(0);
+  assertNotNull(style);
+  assertEquals("BasicPolygons",style.getName());
+}

@@ -1,0 +1,50 @@
+{
+  start("wcs:rangeSet");
+  start("wcs:RangeSet");
+  element("wcs:name",ci.getName());
+  element("wcs:label",ci.getTitle());
+  start("wcs:axisDescription");
+  start("wcs:AxisDescription");
+  int numSampleDimensions=ci.getDimensions().size();
+  element("wcs:name","Band");
+  element("wcs:label","Band");
+  start("wcs:values");
+  if (numSampleDimensions > 1) {
+    start("wcs:interval");
+    element("wcs:min","1");
+    element("wcs:max",String.valueOf(numSampleDimensions));
+    end("wcs:interval");
+  }
+ else {
+    element("wcs:singleValue","1");
+  }
+  end("wcs:values");
+  end("wcs:AxisDescription");
+  AbstractGridCoverage2DReader reader=null;
+  try {
+    reader=(AbstractGridCoverage2DReader)ci.getGridCoverageReader(null,GeoTools.getDefaultHints());
+  }
+ catch (  IOException e) {
+    LOGGER.severe("Unable to acquire a reader for this coverage with format: " + ci.getStore().getFormat().getName());
+  }
+  if (reader == null)   throw new WcsException("Unable to acquire a reader for this coverage with format: " + ci.getStore().getFormat().getName());
+  final String[] metadataNames=reader.getMetadataNames();
+  String elevationMetadata=null;
+  if (metadataNames != null && metadataNames.length > 0) {
+    elevationMetadata=reader.getMetadataValue("ELEVATION_DOMAIN");
+    start("wcs:AxisDescription");
+    element("wcs:name","ELEVATION");
+    element("wcs:label","ELEVATION");
+    start("wcs:values");
+    final String[] values=elevationMetadata.split(",");
+    for (    String s : values) {
+      element("wcs:singleValue",s);
+    }
+    element("wcs:default",values[0]);
+    end("wcs:values");
+    end("wcs:AxisDescription");
+  }
+  end("wcs:axisDescription");
+  end("wcs:RangeSet");
+  end("wcs:rangeSet");
+}

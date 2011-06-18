@@ -1,0 +1,66 @@
+{
+  if (storeInfo.getWorkspace() == null) {
+    throw new IllegalArgumentException("Workspace not provided");
+  }
+  final Catalog catalog=getCatalog();
+  final ResourcePool resourcePool=catalog.getResourcePool();
+  DataAccessFactory dsFactory;
+  try {
+    dsFactory=resourcePool.getDataStoreFactory(storeInfo);
+  }
+ catch (  IOException e) {
+    String msg=(String)new ResourceModel("AbstractDataAccessPage.cantGetDataStoreFactory").getObject();
+    msg+=": " + e.getMessage();
+    throw new IllegalArgumentException(msg);
+  }
+  if (dsFactory == null) {
+    String msg=(String)new ResourceModel("AbstractDataAccessPage.cantGetDataStoreFactory").getObject();
+    throw new IllegalArgumentException(msg);
+  }
+  final IModel model=new CompoundPropertyModel(storeInfo);
+  final Form paramsForm=new Form("dataStoreForm",model);
+  add(paramsForm);
+  paramsForm.add(new Label("storeType",dsFactory.getDisplayName()));
+  paramsForm.add(new Label("storeTypeDescription",dsFactory.getDescription()));
+{
+    final IModel wsModel=new PropertyModel(model,"workspace");
+    final IModel wsLabelModel=new ResourceModel("AbstractDataAccessPage.workspace");
+    workspacePanel=new WorkspacePanel("workspacePanel",wsModel,wsLabelModel,true);
+  }
+  paramsForm.add(workspacePanel);
+  final TextParamPanel dataStoreNamePanel;
+  dataStoreNamePanel=new TextParamPanel("dataStoreNamePanel",new PropertyModel(model,"name"),new ResourceModel("AbstractDataAccessPage.dataSrcName","Data Source Name"),true);
+  paramsForm.add(dataStoreNamePanel);
+  paramsForm.add(new TextParamPanel("dataStoreDescriptionPanel",new PropertyModel(model,"description"),new ResourceModel("description","Description"),false,(IValidator[])null));
+  paramsForm.add(new CheckBoxParamPanel("dataStoreEnabledPanel",new PropertyModel(model,"enabled"),new ResourceModel("enabled","Enabled")));
+  final StoreEditPanel storeEditPanel;
+{
+    GeoServerApplication app=getGeoServerApplication();
+    storeEditPanel=StoreExtensionPoints.getStoreEditPanel("parametersPanel",paramsForm,storeInfo,app);
+  }
+  paramsForm.add(storeEditPanel);
+  paramsForm.add(new FeedbackPanel("feedback"));
+  final String dataStoreInfoId=storeInfo.getId();
+  StoreNameValidator storeNameValidator=new StoreNameValidator(workspacePanel.getFormComponent(),dataStoreNamePanel.getFormComponent(),dataStoreInfoId);
+  paramsForm.add(storeNameValidator);
+  paramsForm.add(new BookmarkablePageLink("cancel",StorePage.class));
+  paramsForm.add(new AjaxSubmitLink("save",paramsForm){
+    private static final long serialVersionUID=1L;
+    @Override protected void onError(    AjaxRequestTarget target,    Form form){
+      super.onError(target,form);
+      target.addComponent(paramsForm);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      try {
+        DataStoreInfo dataStore=(DataStoreInfo)form.getModelObject();
+        onSaveDataStore(dataStore,target);
+      }
+ catch (      IllegalArgumentException e) {
+        paramsForm.error(e.getMessage());
+        target.addComponent(paramsForm);
+      }
+    }
+  }
+);
+  makeNamespaceSyncUpWithWorkspace();
+}

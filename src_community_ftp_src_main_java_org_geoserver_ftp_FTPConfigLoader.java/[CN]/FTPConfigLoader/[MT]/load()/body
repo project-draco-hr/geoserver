@@ -1,0 +1,27 @@
+{
+  InputStream in=null;
+  try {
+    File configFile=findConfigFile();
+    if (!configFile.exists()) {
+      FTPConfig ftpConfig=new FTPConfig();
+      save(ftpConfig);
+      return ftpConfig;
+    }
+    in=new FileInputStream(configFile);
+    XStream xs=getPersister();
+    FTPConfig config=(FTPConfig)xs.fromXML(in);
+    return config;
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+ finally {
+    if (in != null) {
+      try {
+        in.close();
+      }
+ catch (      IOException ignore) {
+      }
+    }
+  }
+}

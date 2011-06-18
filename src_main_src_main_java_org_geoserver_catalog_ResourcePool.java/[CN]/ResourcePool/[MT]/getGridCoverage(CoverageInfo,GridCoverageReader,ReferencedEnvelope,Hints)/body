@@ -1,0 +1,55 @@
+{
+  ReferencedEnvelope coverageBounds;
+  try {
+    coverageBounds=info.boundingBox();
+  }
+ catch (  Exception e) {
+    throw (IOException)new IOException("unable to calculate coverage bounds").initCause(e);
+  }
+  GeneralEnvelope envelope=null;
+  if (env == null) {
+    envelope=new GeneralEnvelope(coverageBounds);
+  }
+ else {
+    envelope=new GeneralEnvelope(env);
+  }
+  final CoordinateReferenceSystem sourceCRS=envelope.getCoordinateReferenceSystem();
+  CoordinateReferenceSystem destCRS;
+  try {
+    destCRS=info.getCRS();
+  }
+ catch (  Exception e) {
+    final IOException ioe=new IOException("unable to determine coverage crs");
+    ioe.initCause(e);
+    throw ioe;
+  }
+  if (!CRS.equalsIgnoreMetadata(sourceCRS,destCRS)) {
+    MathTransform transform;
+    try {
+      transform=CRS.findMathTransform(sourceCRS,destCRS,true);
+    }
+ catch (    FactoryException e) {
+      final IOException ioe=new IOException("unable to determine coverage crs");
+      ioe.initCause(e);
+      throw ioe;
+    }
+    if (!transform.isIdentity()) {
+      try {
+        envelope=CRS.transform(transform,envelope);
+      }
+ catch (      TransformException e) {
+        throw (IOException)new IOException("error occured transforming envelope").initCause(e);
+      }
+    }
+  }
+  envelope.intersect(coverageBounds);
+  if (envelope.isEmpty()) {
+    return null;
+  }
+  envelope.setCoordinateReferenceSystem(destCRS);
+  GridCoverage gc=reader.read(CoverageUtils.getParameters(reader.getFormat().getReadParameters(),info.getParameters()));
+  if ((gc == null) || !(gc instanceof GridCoverage2D)) {
+    throw new IOException("The requested coverage could not be found.");
+  }
+  return gc;
+}

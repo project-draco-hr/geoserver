@@ -1,0 +1,20 @@
+{
+  WMSMapContext map=new WMSMapContext(createGetMapRequest(MockData.LINES));
+  map.addLayer(createMapLayer(MockData.LINES));
+  Document document;
+  try {
+    document=getRSSResponse(map,AtomGeoRSSTransformer.GeometryEncoding.LATLONG);
+  }
+  finally {
+    map.dispose();
+  }
+  NodeList items=document.getDocumentElement().getElementsByTagName("item");
+  assertEquals(1,items.getLength());
+  for (int i=0; i < items.getLength(); i++) {
+    Element item=(Element)items.item(i);
+    double lat=Double.parseDouble(getOrdinate(item,"geo:lat"));
+    double lon=Double.parseDouble(getOrdinate(item,"geo:long"));
+    assertTrue("Expected valid latitude value: " + lat,lat >= -90 && lat <= 90);
+    assertTrue("Expected valid longitude value: " + lon,lon >= -180 && lon <= 180);
+  }
+}

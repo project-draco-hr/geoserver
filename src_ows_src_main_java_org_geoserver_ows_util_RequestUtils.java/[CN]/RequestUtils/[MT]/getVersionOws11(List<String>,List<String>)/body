@@ -1,0 +1,22 @@
+{
+  TreeSet<Version> provided=new TreeSet<Version>();
+  for (  String v : providedList) {
+    provided.add(new Version(v));
+  }
+  if (acceptedList == null || acceptedList.isEmpty())   return provided.last().toString();
+  List<Version> accepted=new ArrayList<Version>();
+  for (  String v : acceptedList) {
+    checkVersionNumber(v,"AcceptVersions");
+    accepted.add(new Version(v));
+  }
+  Version negotiated=null;
+  for (Iterator<Version> v=accepted.iterator(); v.hasNext(); ) {
+    Version version=(Version)v.next();
+    if (provided.contains(version)) {
+      negotiated=version;
+      break;
+    }
+  }
+  if (negotiated == null)   throw new ServiceException("Could not find any matching version","VersionNegotiationFailed");
+  return negotiated.toString();
+}

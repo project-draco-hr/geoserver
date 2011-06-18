@@ -1,0 +1,13 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName(MockData.LINES.getLocalPart());
+  assertEquals("EPSG:3004",fti.getSRS());
+  assertEquals(ProjectionPolicy.NONE,fti.getProjectionPolicy());
+  FeatureCollection fc=fti.getFeatureSource(null,null).getFeatures();
+  assertEquals(CRS.decode("EPSG:32615"),fc.getSchema().getCoordinateReferenceSystem());
+  FeatureIterator fi=fc.features();
+  Feature f=fi.next();
+  Geometry g=(Geometry)f.getDefaultGeometryProperty().getValue();
+  assertTrue(g.equalsExact(WKT.read("LINESTRING(500125 500025,500175 500075)")));
+  fi.close();
+  assertEquals(CRS.decode("EPSG:32615"),f.getType().getCoordinateReferenceSystem());
+}

@@ -1,0 +1,24 @@
+{
+  PropertyType property=wfsfactory.createPropertyType();
+  String name=(String)node.getChildValue("Name");
+  QName qName=(QName)new XSQNameBinding(namespaceContext).parse(null,name);
+  property.setName(qName);
+  if (node.hasChild("Value")) {
+    Object object=node.getChildValue("Value");
+    if (object instanceof Map) {
+      Map map=(Map)object;
+      if (!map.isEmpty()) {
+        if (map.containsKey(null)) {
+          property.setValue(map.get(null));
+        }
+ else {
+          property.setValue(map.values().iterator().next());
+        }
+      }
+    }
+ else {
+      property.setValue(object);
+    }
+  }
+  return property;
+}

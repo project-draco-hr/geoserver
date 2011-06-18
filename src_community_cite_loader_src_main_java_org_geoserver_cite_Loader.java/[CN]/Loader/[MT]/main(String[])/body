@@ -1,0 +1,35 @@
+{
+  String datasource=null;
+  String service=null;
+  for (int i=0; i < args.length; i++) {
+    if ("-d".equals(args[i]) && i < args.length - 1) {
+      datasource=args[++i];
+    }
+    if ("-s".equals(args[i]) && i < args.length - 1) {
+      service=args[++i];
+    }
+  }
+  if (datasource == null || service == null) {
+    usage();
+    System.exit(1);
+  }
+  if (!new File(datasource + ".properties").exists()) {
+    System.out.print("No such file: " + datasource + ".properties");
+  }
+  Properties p=new Properties();
+  p.load(new FileInputStream(datasource + ".properties"));
+  Loader l=new Loader();
+  l.loadDataStore(p);
+  if (new File(datasource + ".aliases").exists()) {
+    p=new Properties();
+    p.load(new FileInputStream(datasource + ".aliases"));
+    l.loadAliases(p);
+  }
+  if (service.toLowerCase().startsWith("wfs-1.0")) {
+    l.loadWFS10();
+  }
+  if (service.toLowerCase().startsWith("wfs-1.1")) {
+    l.loadWFS11();
+  }
+  l.dispose();
+}

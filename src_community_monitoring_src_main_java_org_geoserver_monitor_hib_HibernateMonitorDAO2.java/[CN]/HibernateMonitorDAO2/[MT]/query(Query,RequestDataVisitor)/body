@@ -1,0 +1,28 @@
+{
+  List<Object> objs=new ArrayList();
+  org.hibernate.Query query=toQuery(q,objs);
+  Iterator it=query.iterate();
+  try {
+    if (q.getProperties().isEmpty() && q.getAggregates().isEmpty()) {
+      while (it.hasNext()) {
+        visitor.visit((RequestData)it.next());
+      }
+    }
+ else {
+      while (it.hasNext()) {
+        int nprops=q.getProperties().size() + q.getAggregates().size();
+        Object[] values=nprops == 1 ? new Object[]{it.next()} : (Object[])it.next();
+        RequestData data=toRequest(values,q);
+        Object[] aggregates=!q.getAggregates().isEmpty() ? new Object[q.getAggregates().size()] : null;
+        int off=q.getProperties().size();
+        for (int i=0; i < q.getAggregates().size(); i++) {
+          aggregates[i]=values[off + i];
+        }
+        visitor.visit(data,aggregates);
+      }
+    }
+  }
+  finally {
+    hib.closeIterator(it);
+  }
+}

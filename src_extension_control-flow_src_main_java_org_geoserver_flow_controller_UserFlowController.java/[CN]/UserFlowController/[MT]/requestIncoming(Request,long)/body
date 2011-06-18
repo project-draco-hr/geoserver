@@ -1,0 +1,57 @@
+{
+  boolean retval=true;
+  long now=System.currentTimeMillis();
+  Cookie idCookie=null;
+  Cookie[] cookies=request.getHttpRequest().getCookies();
+  if (cookies != null) {
+    for (    Cookie cookie : cookies) {
+      if (cookie.getName().equals(COOKIE_NAME)) {
+        idCookie=cookie;
+        break;
+      }
+    }
+  }
+  TimedBlockingQueue queue=null;
+  if (idCookie != null) {
+    queue=queues.get(idCookie.getValue());
+  }
+  if (queue == null) {
+    idCookie=new Cookie(COOKIE_NAME,COOKIE_PREFIX + new UID().toString());
+    queue=new TimedBlockingQueue(queueSize,true);
+    queues.put(idCookie.getValue(),queue);
+  }
+  QUEUE_ID.set(idCookie.getValue());
+  request.getHttpResponse().addCookie(idCookie);
+  try {
+    if (timeout > 0) {
+      retval=queue.offer(request,timeout,TimeUnit.MILLISECONDS);
+    }
+ else {
+      queue.put(request);
+    }
+  }
+ catch (  InterruptedException e) {
+    LOGGER.log(Level.WARNING,"Unexpected interruption while " + "blocking on the request queue");
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("UserFlowController(" + queueSize + ","+ idCookie.getValue()+ ") queue size "+ queue.size());
+    LOGGER.fine("UserFlowController(" + queueSize + ","+ idCookie.getValue()+ ") total queues "+ queues.size());
+  }
+  if ((queues.size() > maxQueues && (now - lastCleanup) > (maxAge / 10)) || (now - lastCleanup) > maxAge) {
+    int cleanupCount=0;
+synchronized (queues) {
+      for (      String key : queues.keySet()) {
+        TimedBlockingQueue tbq=queues.get(key);
+        if (now - tbq.lastModified > maxAge && tbq.size() == 0) {
+          queues.remove(key);
+          cleanupCount++;
+        }
+      }
+      lastCleanup=now;
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("UserFlowController(" + queueSize + ") purged "+ cleanupCount+ " stale queues");
+      }
+    }
+  }
+  return retval;
+}

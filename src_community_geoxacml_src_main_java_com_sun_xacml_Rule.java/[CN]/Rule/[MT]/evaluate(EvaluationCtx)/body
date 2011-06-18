@@ -1,0 +1,18 @@
+{
+  if (target != null) {
+    MatchResult match=target.match(context);
+    int result=match.getResult();
+    if (result == MatchResult.NO_MATCH)     return new Result(Result.DECISION_NOT_APPLICABLE,context.getResourceId().encode());
+    if (result == MatchResult.INDETERMINATE)     return new Result(Result.DECISION_INDETERMINATE,match.getStatus(),context.getResourceId().encode());
+  }
+  if (condition == null)   return new Result(effectAttr,context.getResourceId().encode());
+  EvaluationResult result=condition.evaluate(context);
+  if (result.indeterminate()) {
+    return new Result(Result.DECISION_INDETERMINATE,result.getStatus(),context.getResourceId().encode());
+  }
+ else {
+    BooleanAttribute bool=(BooleanAttribute)(result.getAttributeValue());
+    if (bool.getValue())     return new Result(effectAttr,context.getResourceId().encode());
+ else     return new Result(Result.DECISION_NOT_APPLICABLE,context.getResourceId().encode());
+  }
+}

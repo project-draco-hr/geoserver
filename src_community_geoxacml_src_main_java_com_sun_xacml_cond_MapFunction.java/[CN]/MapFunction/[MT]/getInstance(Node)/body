@@ -1,0 +1,31 @@
+{
+  URI returnType=null;
+  NodeList nodes=root.getChildNodes();
+  for (int i=0; i < nodes.getLength(); i++) {
+    Node node=nodes.item(i);
+    if (node.getNodeName().equals("Function")) {
+      String funcName=node.getAttributes().getNamedItem("FunctionId").getNodeValue();
+      FunctionFactory factory=FunctionFactory.getGeneralInstance();
+      try {
+        Function function=factory.createFunction(funcName);
+        returnType=function.getReturnType();
+        break;
+      }
+ catch (      FunctionTypeException fte) {
+        try {
+          Function function=factory.createAbstractFunction(funcName,root);
+          returnType=function.getReturnType();
+          break;
+        }
+ catch (        Exception e) {
+          throw new ParsingException("invalid abstract map",e);
+        }
+      }
+catch (      Exception e) {
+        throw new ParsingException("couldn't parse map body",e);
+      }
+    }
+  }
+  if (returnType == null)   throw new ParsingException("couldn't find the return type");
+  return new MapFunction(returnType);
+}

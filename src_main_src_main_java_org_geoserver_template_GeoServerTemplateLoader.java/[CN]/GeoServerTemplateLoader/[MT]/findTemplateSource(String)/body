@@ -1,0 +1,33 @@
+{
+  File template=null;
+  if (resource != null) {
+    template=dd.findSuppResourceFile(resource,path);
+    if (template == null) {
+      template=dd.findSuppStoreFile(resource.getStore(),path);
+    }
+    if (template == null) {
+      template=dd.findSuppWorkspaceFile(resource.getStore().getWorkspace(),path);
+    }
+    if (template == null) {
+      template=dd.findSuppWorkspacesFile(resource.getStore().getWorkspace(),path);
+    }
+    if (template != null) {
+      return template;
+    }
+  }
+  template=findTemplateSourceLegacy(path);
+  if (template != null) {
+    return template;
+  }
+  template=(File)fileTemplateLoader.findTemplateSource("templates" + File.separator + path);
+  if (template != null) {
+    return template;
+  }
+  if (classTemplateLoader != null) {
+    Object source=classTemplateLoader.findTemplateSource(path);
+    if (source != null) {
+      return new ClassTemplateSource(path,source);
+    }
+  }
+  return null;
+}

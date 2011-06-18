@@ -1,0 +1,23 @@
+{
+  String workspace=getAttribute("workspace");
+  String datastore=getAttribute("datastore");
+  DataStoreInfo info=catalog.getDataStoreByName(workspace,datastore);
+  if (info == null) {
+    throw new RestletException("No such datastore: " + datastore,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  List<String> available=new ArrayList<String>();
+  try {
+    DataStore ds=(DataStore)info.getDataStore(null);
+    String[] featureTypeNames=ds.getTypeNames();
+    for (    String featureTypeName : featureTypeNames) {
+      FeatureTypeInfo ftinfo=catalog.getFeatureTypeByDataStore(info,featureTypeName);
+      if (ftinfo == null) {
+        available.add(featureTypeName);
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new RestletException("Could not load datastore: " + datastore,Status.SERVER_ERROR_INTERNAL,e);
+  }
+  return available;
+}

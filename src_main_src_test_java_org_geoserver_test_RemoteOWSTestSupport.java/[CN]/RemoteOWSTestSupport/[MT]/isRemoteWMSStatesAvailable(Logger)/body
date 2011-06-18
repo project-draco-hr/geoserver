@@ -1,0 +1,26 @@
+{
+  if (remoteWMSStatesAvailable == null) {
+    String value=System.getProperty("remoteOwsTests");
+    if (value == null || !"TRUE".equalsIgnoreCase(value)) {
+      logger.log(Level.WARNING,"Skipping remote OWS test because they were not enabled via -DremoteOwsTests=true");
+      remoteWMSStatesAvailable=Boolean.FALSE;
+    }
+ else {
+      try {
+        remoteWMSStatesAvailable=Boolean.FALSE;
+        WebMapServer server=new WebMapServer(new URL(WMS_SERVER_URL + "service=WMS&request=GetCapabilities"),5000);
+        for (        Layer l : server.getCapabilities().getLayerList()) {
+          if ("topp:states".equals(l.getName())) {
+            remoteWMSStatesAvailable=Boolean.TRUE;
+            break;
+          }
+        }
+      }
+ catch (      Exception e) {
+        logger.log(Level.WARNING,"Skipping remote WMS test, either demo  " + "is down or the topp:states layer is not there",e);
+        remoteWMSStatesAvailable=Boolean.FALSE;
+      }
+    }
+  }
+  return remoteWMSStatesAvailable.booleanValue();
+}

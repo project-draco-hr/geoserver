@@ -1,0 +1,26 @@
+{
+  HashMap map=new HashMap();
+  if (rawOptionString == null) {
+    return map;
+  }
+  StringTokenizer semiColonSplitter=new StringTokenizer(rawOptionString,";");
+  while (semiColonSplitter.hasMoreElements()) {
+    String curKVP=semiColonSplitter.nextToken();
+    final int cloc=curKVP.indexOf(":");
+    if (cloc <= 0) {
+      throw new IllegalArgumentException("Key-value-pair: '" + curKVP + "' isn't properly formed.  It must be of the form 'Key:Value1,Value2...'");
+    }
+    String key=curKVP.substring(0,cloc);
+    String values=curKVP.substring(cloc + 1,curKVP.length());
+    if (values.indexOf(",") != -1) {
+      List valueList=new ArrayList();
+      StringTokenizer commaSplitter=new StringTokenizer(values,",");
+      while (commaSplitter.hasMoreElements())       valueList.add(commaSplitter.nextToken());
+      map.put(key,valueList);
+    }
+ else {
+      map.put(key,values);
+    }
+  }
+  return map;
+}

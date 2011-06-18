@@ -1,0 +1,34 @@
+{
+  TargetSection subjects=null;
+  TargetSection resources=null;
+  TargetSection actions=null;
+  TargetSection environments=null;
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String name=child.getNodeName();
+    if (name.equals("Subjects")) {
+      subjects=TargetSection.getInstance(child,TargetMatch.SUBJECT,metaData);
+    }
+ else     if (name.equals("Resources")) {
+      resources=TargetSection.getInstance(child,TargetMatch.RESOURCE,metaData);
+    }
+ else     if (name.equals("Actions")) {
+      actions=TargetSection.getInstance(child,TargetMatch.ACTION,metaData);
+    }
+ else     if (name.equals("Environments")) {
+      environments=TargetSection.getInstance(child,TargetMatch.ENVIRONMENT,metaData);
+    }
+  }
+  int version=metaData.getXACMLVersion();
+  if (subjects == null)   subjects=new TargetSection(null,TargetMatch.SUBJECT,version);
+  if (resources == null)   resources=new TargetSection(null,TargetMatch.RESOURCE,version);
+  if (actions == null)   actions=new TargetSection(null,TargetMatch.ACTION,version);
+  if (version == PolicyMetaData.XACML_VERSION_2_0) {
+    if (environments == null)     environments=new TargetSection(null,TargetMatch.ENVIRONMENT,version);
+    return new Target(subjects,resources,actions,environments);
+  }
+ else {
+    return new Target(subjects,resources,actions);
+  }
+}

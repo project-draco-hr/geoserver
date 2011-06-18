@@ -1,0 +1,22 @@
+{
+  addFeatureType();
+  TestListener tl=new TestListener();
+  catalog.addListener(tl);
+  assertTrue(tl.added.isEmpty());
+  catalog.add(l);
+  assertEquals(1,tl.added.size());
+  assertEquals(l,tl.added.get(0).getSource());
+  LayerInfo l2=catalog.getLayerByName(l.getName());
+  l2.setPath("newPath");
+  assertTrue(tl.modified.isEmpty());
+  catalog.save(l2);
+  assertEquals(1,tl.modified.size());
+  assertEquals(l2,tl.modified.get(0).getSource());
+  assertTrue(tl.modified.get(0).getPropertyNames().contains("path"));
+  assertTrue(tl.modified.get(0).getOldValues().contains(null));
+  assertTrue(tl.modified.get(0).getNewValues().contains("newPath"));
+  assertTrue(tl.removed.isEmpty());
+  catalog.remove(l2);
+  assertEquals(1,tl.removed.size());
+  assertEquals(l2,tl.removed.get(0).getSource());
+}

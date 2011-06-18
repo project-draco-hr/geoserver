@@ -1,0 +1,32 @@
+{
+  URI reference=null;
+  int policyType;
+  String name=root.getNodeName();
+  if (name.equals("PolicyIdReference")) {
+    policyType=POLICY_REFERENCE;
+  }
+ else   if (name.equals("PolicySetIdReference")) {
+    policyType=POLICYSET_REFERENCE;
+  }
+ else {
+    throw new ParsingException("Unknown reference type: " + name);
+  }
+  try {
+    reference=new URI(root.getFirstChild().getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Invalid URI in Reference",e);
+  }
+  NamedNodeMap map=root.getAttributes();
+  String versionConstraint=null;
+  Node versionNode=map.getNamedItem("Version");
+  if (versionNode != null)   versionConstraint=versionNode.getNodeValue();
+  String earlyConstraint=null;
+  Node earlyNode=map.getNamedItem("EarliestVersion");
+  if (earlyNode != null)   earlyConstraint=earlyNode.getNodeValue();
+  String lateConstraint=null;
+  Node lateNode=map.getNamedItem("LatestVersion");
+  if (lateNode != null)   lateConstraint=lateNode.getNodeValue();
+  VersionConstraints constraints=new VersionConstraints(versionConstraint,earlyConstraint,lateConstraint);
+  return new PolicyReference(reference,policyType,constraints,finder,metaData);
+}

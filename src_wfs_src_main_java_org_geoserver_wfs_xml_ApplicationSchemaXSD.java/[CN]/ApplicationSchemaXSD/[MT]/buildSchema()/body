@@ -1,0 +1,36 @@
+{
+  XSDFactory factory=XSDFactory.eINSTANCE;
+  XSDSchema schema=factory.createXSDSchema();
+  schema.setSchemaForSchemaQNamePrefix("xsd");
+  schema.getQNamePrefixToNamespaceMap().put("xsd",XSDConstants.SCHEMA_FOR_SCHEMA_URI_2001);
+  schema.setElementFormDefault(XSDForm.get(XSDForm.QUALIFIED));
+  if (ns == null) {
+    if (types.isEmpty()) {
+      buildSchemaImports(catalog.getNamespaces(),schema,factory);
+    }
+ else {
+      Set<NamespaceInfo> namespaces=new HashSet<NamespaceInfo>();
+      for (      FeatureTypeInfo type : types) {
+        namespaces.add(type.getNamespace());
+      }
+      buildSchemaImports(namespaces,schema,factory);
+    }
+  }
+ else {
+    schema.setTargetNamespace(ns.getURI());
+    schema.getQNamePrefixToNamespaceMap().put(ns.getPrefix(),ns.getURI());
+    schema.getQNamePrefixToNamespaceMap().put("wfs",WFS.NAMESPACE);
+    schema.getQNamePrefixToNamespaceMap().put("gml",GML.NAMESPACE);
+    Schemas.importSchema(schema,wfs.getSchema());
+    schema.resolveElementDeclaration(WFS.NAMESPACE,"FeatureCollection");
+    Collection<FeatureTypeInfo> featureTypes=types;
+    if (featureTypes == null || featureTypes.isEmpty()) {
+      featureTypes=catalog.getFeatureTypesByNamespace(ns);
+    }
+    SchemaIndexImpl index=new SchemaIndexImpl(new XSDSchema[]{schema});
+    for (    FeatureTypeInfo featureType : featureTypes) {
+      buildSchemaContent(featureType,schema,factory,index);
+    }
+  }
+  return schema;
+}

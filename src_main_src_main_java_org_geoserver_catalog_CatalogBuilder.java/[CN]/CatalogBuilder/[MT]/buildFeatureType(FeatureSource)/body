@@ -1,0 +1,31 @@
+{
+  if (store == null || !(store instanceof DataStoreInfo)) {
+    throw new IllegalStateException("Data store not set.");
+  }
+  FeatureType featureType=featureSource.getSchema();
+  FeatureTypeInfo ftinfo=catalog.getFactory().createFeatureType();
+  ftinfo.setStore(store);
+  ftinfo.setEnabled(true);
+  ftinfo.setNativeName(featureType.getName().getLocalPart());
+  ftinfo.setName(featureType.getName().getLocalPart());
+  WorkspaceInfo workspace=store.getWorkspace();
+  NamespaceInfo namespace=catalog.getNamespaceByPrefix(workspace.getName());
+  if (namespace == null) {
+    namespace=catalog.getDefaultNamespace();
+  }
+  ftinfo.setNamespace(namespace);
+  CoordinateReferenceSystem crs=featureType.getCoordinateReferenceSystem();
+  if (crs == null && featureType.getGeometryDescriptor() != null) {
+    crs=featureType.getGeometryDescriptor().getCoordinateReferenceSystem();
+  }
+  ftinfo.setNativeCRS(crs);
+  try {
+    lookupSRS(ftinfo,false);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"SRS lookup failed",e);
+  }
+  setupProjectionPolicy(ftinfo);
+  ftinfo.setTitle(featureType.getName().getLocalPart());
+  return ftinfo;
+}

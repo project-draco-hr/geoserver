@@ -1,0 +1,40 @@
+{
+  int firstQuestionMarkIndex=url.indexOf("?");
+  if (firstQuestionMarkIndex != -1) {
+    url=url.substring(0,firstQuestionMarkIndex);
+  }
+  if (isConvertUrlToLowercaseBeforeComparison()) {
+    url=url.toLowerCase();
+    if (log.isDebugEnabled()) {
+      log.debug("Converted URL to lowercase, from: '" + url + "'; to: '"+ url+ "'  and httpMethod= "+ httpMethod);
+    }
+  }
+  Iterator iter=requestMap.iterator();
+  while (iter.hasNext()) {
+    EntryHolder entryHolder=(EntryHolder)iter.next();
+    String antPath=entryHolder.getAntPath();
+    String[] methodList=entryHolder.getHttpMethodList();
+    if (log.isDebugEnabled()) {
+      log.debug("~~~~~~~~~~ antPath= " + antPath + " methodList= "+ methodList);
+      if (methodList != null) {
+        for (int ii=0; ii < methodList.length; ii++)         log.debug("method[" + ii + "]: "+ methodList[ii]);
+      }
+    }
+    boolean matchedPath=pathMatcher.match(antPath,url);
+    boolean matchedMethods=true;
+    if (methodList != null) {
+      matchedMethods=false;
+      for (int ii=0; ii < methodList.length; ii++) {
+        if (methodList[ii].equals(httpMethod)) {
+          matchedMethods=true;
+          break;
+        }
+      }
+    }
+    if (log.isDebugEnabled())     log.debug("Candidate is: '" + url + "'; antPath is "+ antPath+ "; matchedPath="+ matchedPath+ "; matchedMethods="+ matchedMethods);
+    if (matchedPath && matchedMethods) {
+      return entryHolder.getConfigAttributes();
+    }
+  }
+  return null;
+}

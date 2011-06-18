@@ -1,0 +1,24 @@
+{
+  Map<String,Object> raw=getWorld();
+  authenticate("cite_noworld_challenge","cite");
+  try {
+    executeGetCoverageKvp(raw);
+    fail("This should have failed with a security exception");
+  }
+ catch (  Throwable e) {
+    Throwable se=null;
+    while (e.getCause() != null && e.getCause() != e) {
+      e=e.getCause();
+      if (SecurityUtils.isSecurityException(e)) {
+        se=e;
+      }
+    }
+    if (e == null) {
+      fail("We should have got some sort of SpringSecurityException");
+    }
+ else {
+      assertTrue(se.getMessage().contains("World"));
+      assertTrue(se.getMessage().contains("privileges"));
+    }
+  }
+}

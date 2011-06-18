@@ -1,0 +1,32 @@
+{
+  final StoreInfo storeInfo=(StoreInfo)getDefaultModelObject();
+  final Catalog catalog=storeInfo.getCatalog();
+  List<StoreInfo> stores=catalog.getStores(StoreInfo.class);
+  stores=new ArrayList<StoreInfo>(stores);
+{
+    final String arcsdeCoverageType=ArcSDERasterFormat.getInstance().getName();
+    final String arcsdeVectorType=new ArcSDEDataStoreFactory().getDisplayName();
+    StoreInfo store;
+    String type;
+    for (Iterator<StoreInfo> it=stores.iterator(); it.hasNext(); ) {
+      store=it.next();
+      type=store.getType();
+      if (arcsdeCoverageType.equals(type) || arcsdeVectorType.equals(type)) {
+        continue;
+      }
+ else {
+        it.remove();
+      }
+    }
+  }
+  Collections.sort(stores,new Comparator<StoreInfo>(){
+    public int compare(    StoreInfo o1,    StoreInfo o2){
+      if (o1.getWorkspace().equals(o2.getWorkspace())) {
+        return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(),o2.getName());
+      }
+      return String.CASE_INSENSITIVE_ORDER.compare(o1.getWorkspace().getName(),o2.getWorkspace().getName());
+    }
+  }
+);
+  return stores;
+}

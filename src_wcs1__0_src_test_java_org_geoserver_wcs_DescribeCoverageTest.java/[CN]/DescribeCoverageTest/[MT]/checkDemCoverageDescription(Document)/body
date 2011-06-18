@@ -1,0 +1,23 @@
+{
+  assertEquals(1,dom.getElementsByTagName("wcs:CoverageDescription").getLength());
+  assertEquals(1,dom.getElementsByTagName("wcs:CoverageOffering").getLength());
+  assertXpathEvaluatesTo(getLayerId(TASMANIA_DEM),"/wcs:CoverageDescription/wcs:CoverageOffering/wcs:name",dom);
+  Node gridOffsets=xpath.getMatchingNodes("/wcs:CoverageDescription/wcs:CoverageOffering/" + "wcs:domainSet/wcs:spatialDomain/gml:RectifiedGrid/gml:offsetVector",dom).item(0);
+  String[] offsetStrsLow=gridOffsets.getTextContent().split(" ");
+  gridOffsets=xpath.getMatchingNodes("/wcs:CoverageDescription/wcs:CoverageOffering/" + "wcs:domainSet/wcs:spatialDomain/gml:RectifiedGrid/gml:offsetVector",dom).item(1);
+  String[] offsetStrsHigh=gridOffsets.getTextContent().split(" ");
+  assertEquals(2,offsetStrsLow.length);
+  assertEquals(2,offsetStrsHigh.length);
+  double[] offsets=new double[4];
+  for (int i=0; i < offsetStrsLow.length; i++) {
+    offsets[i]=Double.parseDouble(offsetStrsLow[i]);
+  }
+  for (int i=2; i < 2 + offsetStrsHigh.length; i++) {
+    offsets[i]=Double.parseDouble(offsetStrsHigh[i - 2]);
+  }
+  assertTrue(offsets[0] > 0);
+  assertEquals(0.0,offsets[1]);
+  assertEquals(0.0,offsets[2]);
+  assertTrue(offsets[3] < 0);
+  assertEquals(1,dom.getElementsByTagName("wcs:AxisDescription").getLength());
+}

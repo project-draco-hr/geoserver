@@ -1,0 +1,97 @@
+{
+  LOGGER.info("Processing SLD");
+  String sld_remote=serviceRequest.getSLD();
+  if ((sld_remote != null) && !sld_remote.equals("")) {
+    throw new java.lang.UnsupportedOperationException("SLD= param not yet implemented. Use SLD_BODY=");
+  }
+  String sld_body=serviceRequest.getSldBody();
+  if ((sld_body == null) || (sld_body == "")) {
+    throw new IllegalArgumentException("The body of the SLD cannot be empty!");
+  }
+  File temp=null;
+  Node rootNode=null;
+  try {
+    temp=File.createTempFile("putStyles","xml");
+    FileOutputStream fos=new FileOutputStream(temp);
+    BufferedOutputStream tempOut=new BufferedOutputStream(fos);
+    byte[] bytes=sld_body.getBytes();
+    for (int i=0; i < bytes.length; i++) {
+      tempOut.write(bytes[i]);
+    }
+    tempOut.flush();
+    tempOut.close();
+    BufferedInputStream fs=new BufferedInputStream(new FileInputStream(temp));
+    CharArrayReader xml=new CharArrayReader(sld_body.toCharArray());
+    rootNode=generateDOM(xml);
+    SLDValidator validator=new SLDValidator();
+    String baseURL=ResponseUtils.baseURL(request);
+    List errors=validator.validateSLD(fs,baseURL);
+    if (errors.size() != 0) {
+      throw new SldException(SLDValidator.getErrorMessage(xml,errors));
+    }
+  }
+  finally {
+    if (temp != null)     temp.delete();
+  }
+  Node n_namedLayer=getNode(rootNode,"NamedLayer");
+  Node n_layerName=getNode(n_namedLayer,"Name");
+  Node n_userStyle=getNode(n_namedLayer,"UserStyle");
+  Node n_styleName=getNode(n_userStyle,"Name");
+  String layerName=getNodeValue(n_layerName);
+  String styleName=getNodeValue(n_styleName);
+  LOGGER.info("PutStyles SLD:\nLayer: " + layerName + ", style: "+ styleName);
+  StyleInfoImpl style=new StyleInfoImpl(getCatalog());
+  style.setId(styleName);
+  File data_dir=GeoserverDataDirectory.getGeoserverDataDirectory();
+  File style_dir;
+  try {
+    style_dir=GeoserverDataDirectory.findConfigDir(data_dir,"styles");
+  }
+ catch (  ConfigurationException cfe) {
+    LOGGER.warning("no style dir found, creating new one");
+    style_dir=new File(data_dir,"styles");
+  }
+  File styleFile=new File(style_dir,styleName + ".sld");
+  LOGGER.info("Saving new SLD file to " + styleFile.getPath());
+  StringBuffer sldText=new StringBuffer();
+  sldText.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  sldText.append("<StyledLayerDescriptor version=\"1.0.0\"\n");
+  sldText.append("	xsi:schemaLocation=\"http://www.opengis.net/sld StyledLayerDescriptor.xsd\"\n");
+  sldText.append("	xmlns=\"http://www.opengis.net/sld\" xmlns:ogc=\"http://www.opengis.net/ogc\"\n");
+  sldText.append("	xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
+  sldText.append("	xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n");
+  FileOutputStream style_fos=new FileOutputStream(styleFile);
+  String sldBody=serviceRequest.getSldBody();
+  int start=sldBody.indexOf("<NamedLayer>");
+  int end=sldBody.indexOf("</NamedLayer>");
+  sldText.append(sldBody.substring(start,end));
+  sldText.append("</NamedLayer>\n");
+  sldText.append("</StyledLayerDescriptor>");
+  style_fos.write(sldText.toString().getBytes());
+  style_fos.flush();
+  style_fos.close();
+  style.setFilename(styleFile.getAbsolutePath());
+  getCatalog().add(style);
+  List<LayerInfo> keys=getCatalog().getLayers();
+  Iterator<LayerInfo> it=keys.iterator();
+  layerName=null;
+  while (it.hasNext()) {
+    String o=it.next().getName();
+    String[] os=o.split(":");
+    String name=os.length == 1 ? os[0] : os[1];
+    if (name.equalsIgnoreCase(layerName)) {
+      layerName=o;
+      break;
+    }
+  }
+  if (layerName != null) {
+    LayerInfo featureTypeConfig=getCatalog().getLayerByName(layerName);
+    featureTypeConfig.setDefaultStyle(style);
+  }
+  LOGGER.info("sending back result");
+  String message="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<sld:success>success</sld:success>";
+  BufferedOutputStream out=new BufferedOutputStream(response.getOutputStream());
+  byte[] msg=message.getBytes();
+  out.write(msg);
+  out.flush();
+}

@@ -1,0 +1,21 @@
+{
+  AttributeValue retVal=null;
+  if (object instanceof String)   retVal=new StringAttribute((String)object);
+  if (object instanceof URI)   retVal=new AnyURIAttribute((URI)object);
+  if (object instanceof Boolean)   retVal=((Boolean)object) ? BooleanAttribute.getTrueInstance() : BooleanAttribute.getFalseInstance();
+  if (object instanceof Double)   retVal=new DoubleAttribute((Double)object);
+  if (object instanceof Float)   retVal=new DoubleAttribute((Float)object);
+  if (object instanceof Integer)   retVal=new IntegerAttribute((Integer)object);
+  if (object instanceof Date)   retVal=new DateTimeAttribute((Date)object);
+  if (object instanceof Geometry) {
+    Geometry g=(Geometry)object;
+    String gmlType=XACMLUtil.getGMLTypeFor(g);
+    try {
+      retVal=new GeometryAttribute(g,g.getUserData().toString(),null,GMLVersion.Version3,gmlType);
+    }
+ catch (    URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  return retVal;
+}

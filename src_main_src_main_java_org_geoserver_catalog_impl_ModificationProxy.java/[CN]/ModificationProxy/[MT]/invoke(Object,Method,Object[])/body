@@ -1,0 +1,61 @@
+{
+  String property=null;
+  if ((method.getName().startsWith("get") || method.getName().startsWith("is")) && method.getParameterTypes().length == 0) {
+    property=method.getName().substring(method.getName().startsWith("get") ? 3 : 2);
+    if (properties != null && properties().containsKey(property)) {
+      return properties().get(property);
+    }
+ else {
+      if (Collection.class.isAssignableFrom(method.getReturnType())) {
+        Collection real=(Collection)method.invoke(proxyObject,null);
+        if (real == null) {
+          return null;
+        }
+        Collection wrap=real.getClass().newInstance();
+        wrap.addAll(real);
+        properties().put(property,wrap);
+        Collection clone=real.getClass().newInstance();
+        clone.addAll(real);
+        oldCollectionValues().put(property,clone);
+        return wrap;
+      }
+ else       if (Map.class.isAssignableFrom(method.getReturnType())) {
+        Map real=(Map)method.invoke(proxyObject,null);
+        if (real == null) {
+          return null;
+        }
+        Map wrap=real.getClass().newInstance();
+        wrap.putAll(real);
+        properties().put(property,wrap);
+        Map clone=real.getClass().newInstance();
+        clone.putAll(real);
+        oldCollectionValues().put(property,clone);
+        return wrap;
+      }
+ else {
+      }
+    }
+  }
+  if (method.getName().startsWith("set") && args.length == 1) {
+    property=method.getName().substring(3);
+    properties().put(property,args[0]);
+    return null;
+  }
+  try {
+    Object result=method.invoke(proxyObject,args);
+    if (result != null && shouldProxyProperty(result.getClass())) {
+      Object o=ModificationProxy.unwrap(result);
+      if (o == result) {
+        result=ModificationProxy.create(result,(Class)method.getReturnType());
+        properties().put(property,result);
+      }
+ else {
+      }
+    }
+    return result;
+  }
+ catch (  InvocationTargetException e) {
+    Throwable targetException=e.getTargetException();
+    throw targetException;
+  }
+}

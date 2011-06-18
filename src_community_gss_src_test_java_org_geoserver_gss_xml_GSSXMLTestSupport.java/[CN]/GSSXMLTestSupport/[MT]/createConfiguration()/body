@@ -1,0 +1,15 @@
+{
+  ResourcePool resourcePool=createNiceMock(ResourcePool.class);
+  Catalog catalog=createNiceMock(Catalog.class);
+  expect(catalog.getResourceLoader()).andReturn(null).anyTimes();
+  expect(catalog.getResourcePool()).andReturn(resourcePool).anyTimes();
+  expect(catalog.getFeatureTypes()).andReturn(Collections.EMPTY_LIST).anyTimes();
+  replay(catalog);
+  GeoServer gs=createNiceMock(GeoServer.class);
+  expect(gs.getService(WFSInfo.class)).andReturn(new WFSInfoImpl()).anyTimes();
+  expect(gs.getCatalog()).andReturn(catalog).anyTimes();
+  replay(gs);
+  FeatureTypeSchemaBuilder.GML3 schemaBuilder=new FeatureTypeSchemaBuilder.GML3(gs);
+  WFS wfs=new WFS(schemaBuilder);
+  return new GSSConfiguration(new WFSConfiguration(catalog,schemaBuilder,wfs),new GSS(wfs),catalog);
+}

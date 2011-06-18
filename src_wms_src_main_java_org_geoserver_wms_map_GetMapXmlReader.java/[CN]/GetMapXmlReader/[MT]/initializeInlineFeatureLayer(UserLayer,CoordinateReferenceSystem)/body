@@ -1,0 +1,19 @@
+{
+  final DataStore inlineDatastore=ul.getInlineFeatureDatastore();
+  final SimpleFeatureSource source;
+  if (ul.getInlineFeatureType().getCoordinateReferenceSystem() == null) {
+    LOGGER.warning("No CRS set on inline features default geometry.  " + "Assuming the requestor has their inlinefeatures in the boundingbox CRS.");
+    SimpleFeatureType currFt=ul.getInlineFeatureType();
+    Query q=new Query(currFt.getTypeName(),Filter.INCLUDE);
+    FeatureReader<SimpleFeatureType,SimpleFeature> ilReader;
+    ilReader=inlineDatastore.getFeatureReader(q,Transaction.AUTO_COMMIT);
+    ForceCoordinateSystemFeatureReader reader=new ForceCoordinateSystemFeatureReader(ilReader,requestCrs);
+    MemoryDataStore reTypedDS=new MemoryDataStore(reader);
+    source=reTypedDS.getFeatureSource(reTypedDS.getTypeNames()[0]);
+  }
+ else {
+    source=inlineDatastore.getFeatureSource(inlineDatastore.getTypeNames()[0]);
+  }
+  MapLayerInfo mapLayer=new MapLayerInfo(source);
+  return mapLayer;
+}

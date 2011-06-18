@@ -1,0 +1,31 @@
+{
+  int decision=-1;
+  Status status=null;
+  String resource=null;
+  Set<Obligation> obligations=null;
+  NamedNodeMap attrs=root.getAttributes();
+  Node resourceAttr=attrs.getNamedItem("ResourceId");
+  if (resourceAttr != null)   resource=resourceAttr.getNodeValue();
+  NodeList nodes=root.getChildNodes();
+  for (int i=0; i < nodes.getLength(); i++) {
+    Node node=nodes.item(i);
+    String name=node.getNodeName();
+    if (name.equals("Decision")) {
+      String type=node.getFirstChild().getNodeValue();
+      for (int j=0; j < DECISIONS.length; j++) {
+        if (DECISIONS[j].equals(type)) {
+          decision=j;
+          break;
+        }
+      }
+      if (decision == -1)       throw new ParsingException("Unknown Decision: " + type);
+    }
+ else     if (name.equals("Status")) {
+      status=Status.getInstance(node);
+    }
+ else     if (name.equals("Obligations")) {
+      obligations=parseObligations(node);
+    }
+  }
+  return new Result(decision,status,resource,obligations);
+}

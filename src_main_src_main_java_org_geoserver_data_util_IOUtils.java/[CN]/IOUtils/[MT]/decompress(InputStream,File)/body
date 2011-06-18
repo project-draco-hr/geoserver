@@ -1,0 +1,19 @@
+{
+  ZipInputStream zin=new ZipInputStream(input);
+  ZipEntry entry=null;
+  byte[] buffer=new byte[1024];
+  while ((entry=zin.getNextEntry()) != null) {
+    File f=new File(destDir,entry.getName());
+    if (entry.isDirectory()) {
+      f.mkdirs();
+      continue;
+    }
+    BufferedOutputStream out=new BufferedOutputStream(new FileOutputStream(f));
+    int n=-1;
+    while ((n=zin.read(buffer)) != -1) {
+      out.write(buffer,0,n);
+    }
+    out.flush();
+    out.close();
+  }
+}

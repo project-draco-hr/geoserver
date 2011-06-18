@@ -1,0 +1,27 @@
+{
+  PolicyFinderResult result=null;
+  for (  PolicyFinderModule module : requestModules) {
+    PolicyFinderResult newResult=module.findPolicy(context);
+    if (newResult.indeterminate()) {
+      if (logger.isLoggable(Level.INFO))       logger.info("An error occured while trying to find a " + "single applicable policy for a request: " + newResult.getStatus().getMessage());
+      return newResult;
+    }
+    if (!newResult.notApplicable()) {
+      if (result != null) {
+        logger.info("More than one top-level applicable policy " + "for the request");
+        ArrayList<String> code=new ArrayList<String>();
+        code.add(Status.STATUS_PROCESSING_ERROR);
+        Status status=new Status(code,"too many applicable " + "top-level policies");
+        return new PolicyFinderResult(status);
+      }
+      result=newResult;
+    }
+  }
+  if (result != null) {
+    return result;
+  }
+ else {
+    logger.info("No applicable policies were found for the request");
+    return new PolicyFinderResult();
+  }
+}

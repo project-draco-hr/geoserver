@@ -1,0 +1,28 @@
+{
+  try {
+    if (node.hasAttribute("srsName")) {
+      CRS.decode(node.getAttributeValue("srsName").toString());
+    }
+  }
+ catch (  NoSuchAuthorityCodeException e) {
+    throw new WFSException("Invalid Authority Code: " + e.getAuthorityCode(),"InvalidParameterValue");
+  }
+  Geometry geometry=(Geometry)super.parse(instance,node,value);
+  if (geometry != null) {
+    if (geometry.getUserData() == null) {
+      if (crs != null) {
+        geometry.setUserData(crs);
+      }
+ else {
+      }
+    }
+    CoordinateReferenceSystem crs=(CoordinateReferenceSystem)geometry.getUserData();
+    if (crs != null)     try {
+      JTS.checkCoordinatesRange(geometry,crs);
+    }
+ catch (    PointOutsideEnvelopeException e) {
+      throw new WFSException(e,"InvalidParameterValue");
+    }
+  }
+  return geometry;
+}

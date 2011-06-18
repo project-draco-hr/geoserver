@@ -1,0 +1,28 @@
+{
+  PolicyFinderResult result=null;
+  if ((type != PolicyReference.POLICY_REFERENCE) && (type != PolicyReference.POLICYSET_REFERENCE))   throw new IllegalArgumentException("Unknown reference type");
+  for (  PolicyFinderModule module : referenceModules) {
+    PolicyFinderResult newResult=module.findPolicy(idReference,type,constraints,parentMetaData);
+    if (newResult.indeterminate()) {
+      if (logger.isLoggable(Level.INFO))       logger.info("An error occured while trying to find the " + "referenced policy " + idReference.toString() + ": "+ newResult.getStatus().getMessage());
+      return newResult;
+    }
+    if (!newResult.notApplicable()) {
+      if (result != null) {
+        if (logger.isLoggable(Level.INFO))         logger.info("More than one policy applies for the " + "reference: " + idReference.toString());
+        ArrayList<String> code=new ArrayList<String>();
+        code.add(Status.STATUS_PROCESSING_ERROR);
+        Status status=new Status(code,"too many applicable " + "top-level policies");
+        return new PolicyFinderResult(status);
+      }
+      result=newResult;
+    }
+  }
+  if (result != null) {
+    return result;
+  }
+ else {
+    if (logger.isLoggable(Level.INFO))     logger.info("No policies were resolved for the reference: " + idReference.toString());
+    return new PolicyFinderResult();
+  }
+}

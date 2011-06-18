@@ -1,0 +1,33 @@
+{
+  geoServer.addListener(new ConfigurationListenerAdapter(){
+    @Override public void handleLoggingChange(    LoggingInfo logging,    List<String> propertyNames,    List<Object> oldValues,    List<Object> newValues){
+      if (!relinquishLoggingControl) {
+        boolean reload=false;
+        String loggingLevel=logging.getLevel();
+        String loggingLocation=logging.getLocation();
+        Boolean stdOutLogging=logging.isStdOutLogging();
+        if (propertyNames.contains("level")) {
+          loggingLevel=(String)newValues.get(propertyNames.indexOf("level"));
+          reload=true;
+        }
+        if (propertyNames.contains("location")) {
+          loggingLocation=(String)newValues.get(propertyNames.indexOf("location"));
+          reload=true;
+        }
+        if (propertyNames.contains("stdOutLogging")) {
+          stdOutLogging=(Boolean)newValues.get(propertyNames.indexOf("stdOutLogging"));
+          reload=true;
+        }
+        if (reload) {
+          try {
+            LoggingUtils.initLogging(resourceLoader,loggingLevel,!stdOutLogging,loggingLocation);
+          }
+ catch (          Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
+  }
+);
+}

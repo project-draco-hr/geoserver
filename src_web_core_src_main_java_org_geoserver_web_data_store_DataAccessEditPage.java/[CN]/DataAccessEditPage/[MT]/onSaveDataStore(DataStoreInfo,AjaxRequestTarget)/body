@@ -1,0 +1,26 @@
+{
+  final Catalog catalog=getCatalog();
+  final ResourcePool resourcePool=catalog.getResourcePool();
+  resourcePool.clear(info);
+  if (info.isEnabled()) {
+    DataAccess<? extends FeatureType,? extends Feature> dataStore;
+    try {
+      dataStore=catalog.getResourcePool().getDataStore(info);
+      LOGGER.finer("connection parameters verified for store " + info.getName() + ". Got a "+ dataStore.getClass().getName());
+      doSaveStore(info);
+      setResponsePage(StorePage.class);
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.WARNING,"Error obtaining datastore with the modified values",e);
+      confirmSaveOnConnectionFailure(info,requestTarget,e);
+    }
+catch (    RuntimeException e) {
+      LOGGER.log(Level.WARNING,"Error obtaining datastore with the modified values",e);
+      confirmSaveOnConnectionFailure(info,requestTarget,e);
+    }
+  }
+ else {
+    doSaveStore(info);
+    setResponsePage(StorePage.class);
+  }
+}

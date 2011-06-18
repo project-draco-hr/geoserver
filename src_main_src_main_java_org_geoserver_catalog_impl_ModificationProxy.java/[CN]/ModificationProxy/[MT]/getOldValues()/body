@@ -1,0 +1,21 @@
+{
+  List<Object> oldValues=new ArrayList<Object>();
+  for (  String propertyName : getDirtyProperties()) {
+    if (oldCollectionValues().containsKey(propertyName)) {
+      oldValues.add(oldCollectionValues.get(propertyName));
+    }
+ else {
+      try {
+        Method g=getter(propertyName);
+        if (g == null) {
+          throw new IllegalArgumentException("No such property: " + propertyName);
+        }
+        oldValues.add(g.invoke(proxyObject,null));
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  return oldValues;
+}

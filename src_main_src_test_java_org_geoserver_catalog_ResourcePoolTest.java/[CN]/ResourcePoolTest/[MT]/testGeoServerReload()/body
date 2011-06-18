@@ -1,0 +1,20 @@
+{
+  Catalog cat=getCatalog();
+  FeatureTypeInfo lakes=cat.getFeatureTypeByName(MockData.LAKES.getNamespaceURI(),MockData.LAKES.getLocalPart());
+  assertFalse("foo".equals(lakes.getTitle()));
+  File info=getResourceLoader().find("featureTypes","cite_Lakes","info.xml");
+  FileReader in=new FileReader(info);
+  Element dom=ReaderUtils.parse(in);
+  Element title=ReaderUtils.getChildElement(dom,"title");
+  title.getFirstChild().setNodeValue("foo");
+  OutputStream output=new FileOutputStream(info);
+  try {
+    TransformerFactory.newInstance().newTransformer().transform(new DOMSource(dom),new StreamResult(output));
+  }
+  finally {
+    output.close();
+  }
+  getGeoServer().reload();
+  lakes=cat.getFeatureTypeByName(MockData.LAKES.getNamespaceURI(),MockData.LAKES.getLocalPart());
+  assertEquals("foo",lakes.getTitle());
+}

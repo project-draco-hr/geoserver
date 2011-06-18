@@ -1,0 +1,19 @@
+{
+  ReadOnlyVersioningDataStore secured=(ReadOnlyVersioningDataStore)SecuredObjects.secure(mock,WrapperPolicy.readOnlyChallenge(null));
+  assertTrue(secured.isVersioned(SCHEMA));
+  try {
+    secured.setVersioned(SCHEMA,true,null,null);
+    fail("Should have thrown a security exception...");
+  }
+ catch (  Throwable e) {
+    if (SecurityUtils.isSecurityException(e) == false)     fail("Should have thrown a security exception...");
+  }
+  ReadOnlyVersioningFeatureStore store=(ReadOnlyVersioningFeatureStore)secured.getFeatureSource(SCHEMA);
+  try {
+    store.removeFeatures(Filter.INCLUDE);
+    fail("Should have thrown a security exception");
+  }
+ catch (  Throwable e) {
+    if (SecurityUtils.isSecurityException(e) == false)     fail("Should have thrown a security exception...");
+  }
+}

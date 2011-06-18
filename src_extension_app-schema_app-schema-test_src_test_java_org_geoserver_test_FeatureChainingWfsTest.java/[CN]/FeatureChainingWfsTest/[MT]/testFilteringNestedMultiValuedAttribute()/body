@@ -1,0 +1,21 @@
+{
+  String xml="<wfs:GetFeature " + GETFEATURE_ATTRIBUTES + ">"+ "    <wfs:Query typeName=\"gsml:MappedFeature\">"+ "        <ogc:Filter>"+ "            <ogc:PropertyIsEqualTo>"+ "                <ogc:Literal>Yaugher Volcanic Group 2</ogc:Literal>"+ "                <ogc:PropertyName>gsml:specification/gsml:GeologicUnit/gml:name</ogc:PropertyName>"+ "            </ogc:PropertyIsEqualTo>"+ "        </ogc:Filter>"+ "    </wfs:Query> "+ "</wfs:GetFeature>";
+  validate(xml);
+  Document doc=postAsDOM("wfs",xml);
+  LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo("2","/wfs:FeatureCollection/@numberOfFeatures",doc);
+  assertXpathCount(2,"//gsml:MappedFeature",doc);
+  assertXpathEvaluatesTo("mf2","(//gsml:MappedFeature)[1]/@gml:id",doc);
+  assertXpathEvaluatesTo("mf3","(//gsml:MappedFeature)[2]/@gml:id",doc);
+  xml="<wfs:GetFeature " + GETFEATURE_ATTRIBUTES + ">"+ "    <wfs:Query typeName=\"gsml:MappedFeature\">"+ "        <ogc:Filter>"+ "            <ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escapeChar=\"!\">"+ "                <ogc:PropertyName>gsml:specification/gsml:GeologicUnit/gml:name</ogc:PropertyName>"+ "                <ogc:Literal>Yaugher Volcanic Group*</ogc:Literal>"+ "            </ogc:PropertyIsLike>"+ "        </ogc:Filter>"+ "    </wfs:Query> "+ "</wfs:GetFeature>";
+  validate(xml);
+  doc=postAsDOM("wfs",xml);
+  LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo("3","/wfs:FeatureCollection/@numberOfFeatures",doc);
+  assertXpathCount(3,"//gsml:MappedFeature",doc);
+  assertXpathEvaluatesTo("mf1","(//gsml:MappedFeature)[1]/@gml:id",doc);
+  assertXpathEvaluatesTo("mf2","(//gsml:MappedFeature)[2]/@gml:id",doc);
+  assertXpathEvaluatesTo("mf3","(//gsml:MappedFeature)[3]/@gml:id",doc);
+}

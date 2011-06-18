@@ -1,0 +1,52 @@
+{
+  final WMSMapContext mapContext=(WMSMapContext)o;
+  final GetMapRequest request=mapContext.getRequest();
+  final MapLayer[] layers=mapContext.getLayers();
+  final KMLLookAt lookAtOpts=new KMLLookAt(request.getFormatOptions());
+  start("kml",KMLUtils.attributes(new String[]{"xmlns","http://www.opengis.net/kml/2.2","xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance","xsi:schemaLocation","http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd"}));
+  scaleDenominator=1;
+  try {
+    scaleDenominator=RendererUtilities.calculateScale(mapContext.getAreaOfInterest(),mapContext.getMapWidth(),mapContext.getMapHeight(),null);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error calculating scale denominator",e);
+  }
+  LOGGER.log(Level.FINE,"scale denominator = " + scaleDenominator);
+  boolean group=(layers.length > 1) || request.getLegend();
+  if (group) {
+    StringBuffer sb=new StringBuffer();
+    for (int i=0; i < layers.length; i++) {
+      sb.append(layers[i].getTitle() + ",");
+    }
+    sb.setLength(sb.length() - 1);
+    start("Document");
+    element("name",sb.toString());
+  }
+  for (int i=0; i < layers.length; i++) {
+    MapLayer layer=layers[i];
+    MapLayerInfo layerInfo=mapContext.getRequest().getLayers().get(i);
+    Boolean superoverlay=(Boolean)mapContext.getRequest().getFormatOptions().get("superoverlay");
+    superoverlay=(superoverlay == null ? Boolean.FALSE : superoverlay);
+    if (superoverlay) {
+      encodeSuperOverlayLayer(mapContext,layer);
+    }
+ else {
+      if (layerInfo.getType() != MapLayerInfo.TYPE_RASTER) {
+        encodeVectorLayer(mapContext,layer,lookAtOpts);
+      }
+ else {
+        encodeRasterLayer(mapContext,layer,lookAtOpts);
+      }
+    }
+  }
+  if (request.getLegend()) {
+    for (int i=0; i < layers.length; i++) {
+      MapLayer layer=layers[i];
+      encodeLegend(mapContext,layer);
+    }
+  }
+  if (group) {
+    end("Document");
+  }
+  end("kml");
+}

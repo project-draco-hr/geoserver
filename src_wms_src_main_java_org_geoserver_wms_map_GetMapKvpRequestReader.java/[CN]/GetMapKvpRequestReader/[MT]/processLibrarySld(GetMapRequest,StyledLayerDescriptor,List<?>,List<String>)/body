@@ -1,0 +1,41 @@
+{
+  final StyledLayer[] styledLayers=sld.getStyledLayers();
+  final int slCount=styledLayers.length;
+  if (slCount == 0) {
+    throw new ServiceException("SLD document contains no layers");
+  }
+  final List<MapLayerInfo> layers=new ArrayList<MapLayerInfo>();
+  final List<Style> styles=new ArrayList<Style>();
+  MapLayerInfo currLayer=null;
+  String styleName=null;
+  for (int i=0; i < requestedLayers.size(); i++) {
+    if (styleNames != null && styleNames.size() > 0) {
+      styleName=styleNames.get(i);
+    }
+    Object o=requestedLayers.get(i);
+    if (o instanceof LayerInfo) {
+      currLayer=new MapLayerInfo((LayerInfo)o);
+      if (styledLayers[i] instanceof NamedLayer) {
+        NamedLayer namedLayer=((NamedLayer)styledLayers[i]);
+        currLayer.setLayerFeatureConstraints(namedLayer.getLayerFeatureConstraints());
+      }
+      layers.add(currLayer);
+      Style style=findStyleOf(request,currLayer,styleName,styledLayers);
+      styles.add(style);
+    }
+ else     if (o instanceof LayerGroupInfo) {
+      List<LayerInfo> subLayers=((LayerGroupInfo)o).getLayers();
+      for (      LayerInfo layer : subLayers) {
+        currLayer=new MapLayerInfo(layer);
+        layers.add(currLayer);
+        Style style=findStyleOf(request,currLayer,styleName,styledLayers);
+        styles.add(style);
+      }
+    }
+ else {
+      throw new IllegalArgumentException("Unknown layer info type: " + o);
+    }
+  }
+  request.setLayers(layers);
+  request.setStyles(styles);
+}

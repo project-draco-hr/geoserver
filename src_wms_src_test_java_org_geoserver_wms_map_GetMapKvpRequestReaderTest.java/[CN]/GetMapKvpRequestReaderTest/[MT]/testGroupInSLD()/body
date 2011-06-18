@@ -1,0 +1,18 @@
+{
+  final HashMap kvp=new HashMap();
+  kvp.put("srs","epsg:4326");
+  kvp.put("bbox","124.38035938267053,-58.45445933799711,169.29632161732948,-24.767487662002893");
+  kvp.put("width","640");
+  kvp.put("height","480");
+  kvp.put("format","image/png");
+  final URL url=GetMapKvpRequestReader.class.getResource("BaseMapGroup.sld");
+  kvp.put("sld",URLDecoder.decode(url.toString(),"UTF-8"));
+  kvp.put("version","1.1.1");
+  GetMapRequest request=(GetMapRequest)reader.createRequest();
+  request=(GetMapRequest)reader.read(request,parseKvp(kvp),kvp);
+  assertEquals(1,request.getLayers().size());
+  assertEquals(1,request.getStyles().size());
+  assertEquals(getLayerId(MockData.BASIC_POLYGONS),request.getLayers().get(0).getName());
+  Style expectedStyle=getCatalog().getStyleByName("polygon").getStyle();
+  assertEquals(expectedStyle,request.getStyles().get(0));
+}

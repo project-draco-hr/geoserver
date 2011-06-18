@@ -1,0 +1,34 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult evalResult=evalArgs(inputs,context,argValues);
+  if (evalResult != null)   return evalResult;
+  BagAttribute[] bags=new BagAttribute[2];
+  bags[0]=(BagAttribute)(argValues[0]);
+  bags[1]=(BagAttribute)(argValues[1]);
+  AttributeValue result=null;
+  Set<AttributeValue> set=new HashSet<AttributeValue>();
+switch (getFunctionId()) {
+case ID_BASE_INTERSECTION:
+    Iterator<AttributeValue> it=bags[0].iterator();
+  while (it.hasNext()) {
+    AttributeValue value=(AttributeValue)(it.next());
+    if (bags[1].contains(value)) {
+      set.add(value);
+    }
+  }
+result=new BagAttribute(bags[0].getType(),set);
+break;
+case ID_BASE_UNION:
+Iterator<AttributeValue> it0=bags[0].iterator();
+while (it0.hasNext()) {
+set.add(it0.next());
+}
+Iterator<AttributeValue> it1=bags[1].iterator();
+while (it1.hasNext()) {
+set.add(it1.next());
+}
+result=new BagAttribute(bags[0].getType(),set);
+break;
+}
+return new EvaluationResult(result);
+}

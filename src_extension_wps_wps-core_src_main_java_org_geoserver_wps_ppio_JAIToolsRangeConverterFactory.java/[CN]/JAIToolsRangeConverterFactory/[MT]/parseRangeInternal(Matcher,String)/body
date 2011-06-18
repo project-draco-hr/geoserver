@@ -1,0 +1,23 @@
+{
+  Double min=null;
+  Double max=null;
+  if (m.groupCount() != 4) {
+    throw new IllegalStateException("Range returned wrong group count (" + sRange + ") : "+ m.groupCount());
+  }
+  if (m.group(2) != null) {
+    min=new Double(m.group(2));
+  }
+  if (m.group(3) != null) {
+    max=new Double(m.group(3));
+  }
+  boolean inclmin;
+  if (m.group(1).equals("("))   inclmin=false;
+ else   if (m.group(1).equals("["))   inclmin=true;
+ else   throw new IllegalArgumentException("Bad min delimiter (" + sRange + ")");
+  boolean inclmax;
+  if (m.group(4).equals(")"))   inclmax=false;
+ else   if (m.group(4).equals("]"))   inclmax=true;
+ else   throw new IllegalArgumentException("Bad max delimiter (" + sRange + ")");
+  if (min != null && max != null && min > max)   throw new IllegalArgumentException("Bad min/max relation (" + sRange + ")");
+  return new Range<Double>(min,inclmin,max,inclmax);
+}

@@ -1,0 +1,22 @@
+{
+  String workspace=getAttribute("workspace");
+  boolean recurse=getQueryStringValue("recurse",Boolean.class,false);
+  WorkspaceInfo ws=catalog.getWorkspaceByName(workspace);
+  if (!recurse) {
+    if (!catalog.getStoresByWorkspace(ws,StoreInfo.class).isEmpty()) {
+      throw new RestletException("Workspace not empty",Status.CLIENT_ERROR_FORBIDDEN);
+    }
+    NamespaceInfo ns=catalog.getNamespaceByPrefix(ws.getName());
+    if (ns != null) {
+      if (!catalog.getFeatureTypesByNamespace(ns).isEmpty()) {
+        throw new RestletException("Namespace for workspace not empty.",Status.CLIENT_ERROR_FORBIDDEN);
+      }
+      catalog.remove(ns);
+    }
+    catalog.remove(ws);
+  }
+ else {
+    new CascadeDeleteVisitor(catalog).visit(ws);
+  }
+  LOGGER.info("DELETE workspace " + ws);
+}

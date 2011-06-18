@@ -1,0 +1,23 @@
+{
+  String workspace=getAttribute("workspace");
+  String datastore=getAttribute("datastore");
+  String featuretype=getAttribute("featuretype");
+  boolean recurse=getQueryStringValue("recurse",Boolean.class,false);
+  DataStoreInfo ds=catalog.getDataStoreByName(workspace,datastore);
+  FeatureTypeInfo ft=catalog.getFeatureTypeByDataStore(ds,featuretype);
+  List<LayerInfo> layers=catalog.getLayers(ft);
+  if (recurse) {
+    for (    LayerInfo l : layers) {
+      catalog.remove(l);
+      LOGGER.info("DELETE layer " + l.getName());
+    }
+  }
+ else {
+    if (!layers.isEmpty()) {
+      throw new RestletException("feature type referenced by layer(s)",Status.CLIENT_ERROR_FORBIDDEN);
+    }
+  }
+  catalog.remove(ft);
+  clear(ft);
+  LOGGER.info("DELETE feature type" + datastore + ","+ featuretype);
+}

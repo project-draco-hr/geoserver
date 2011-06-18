@@ -1,0 +1,21 @@
+{
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  Python py=py();
+  List<FunctionName> names=new ArrayList<FunctionName>();
+  try {
+    File filterRoot=py.getFilterRoot();
+    for (    String file : filterRoot.list()) {
+      if (file.endsWith(".py")) {
+        PythonFilterFunctionAdapter adapter=new PythonFilterFunctionAdapter(new File(filterRoot,file),py);
+        for (        String name : adapter.getNames()) {
+          FunctionName fname=ff.functionName(name,adapter.getParameterNames(name).size());
+          names.add(fname);
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    Python.LOGGER.log(Level.WARNING,"Error looking up filter functions",e);
+  }
+  return names;
+}

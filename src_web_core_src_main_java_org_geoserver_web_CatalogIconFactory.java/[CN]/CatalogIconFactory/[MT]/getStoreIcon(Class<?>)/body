@@ -1,0 +1,26 @@
+{
+  final List<DataStorePanelInfo> infos;
+  infos=GeoServerApplication.get().getBeansOfType(DataStorePanelInfo.class);
+  for (  DataStorePanelInfo panelInfo : infos) {
+    if (factoryClass.equals(panelInfo.getFactoryClass())) {
+      return new ResourceReference(panelInfo.getIconBase(),panelInfo.getIcon());
+    }
+  }
+  if (DataAccessFactory.class.isAssignableFrom(factoryClass)) {
+    for (    DataStorePanelInfo panelInfo : infos) {
+      if ("defaultVector".equals(panelInfo.getId())) {
+        return new ResourceReference(panelInfo.getIconBase(),panelInfo.getIcon());
+      }
+    }
+    return new ResourceReference(GeoServerApplication.class,"img/icons/geosilk/database_vector.png");
+  }
+ else   if (Format.class.isAssignableFrom(factoryClass)) {
+    for (    DataStorePanelInfo panelInfo : infos) {
+      if ("defaultRaster".equals(panelInfo.getId())) {
+        return new ResourceReference(panelInfo.getIconBase(),panelInfo.getIcon());
+      }
+    }
+    return new ResourceReference(GeoServerApplication.class,"img/icons/geosilk/page_white_raster.png");
+  }
+  throw new IllegalArgumentException("Unrecognized store format class: " + factoryClass);
+}

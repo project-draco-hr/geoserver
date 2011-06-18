@@ -1,0 +1,26 @@
+{
+  if (baseDirectory == null) {
+    if (applicationContext instanceof WebApplicationContext) {
+      String data=lookupGeoServerDataDirectory(((WebApplicationContext)applicationContext).getServletContext());
+      if (data != null) {
+        setBaseDirectory(new File(data));
+      }
+    }
+  }
+  if (baseDirectory != null) {
+    addSearchLocation(new File(baseDirectory,"data"));
+  }
+  if (applicationContext instanceof WebApplicationContext) {
+    ServletContext servletContext=((WebApplicationContext)applicationContext).getServletContext();
+    if (servletContext != null) {
+      String path=servletContext.getRealPath("WEB-INF");
+      if (path != null) {
+        addSearchLocation(new File(path));
+      }
+      path=servletContext.getRealPath("/");
+      if (path != null) {
+        addSearchLocation(new File(path));
+      }
+    }
+  }
+}

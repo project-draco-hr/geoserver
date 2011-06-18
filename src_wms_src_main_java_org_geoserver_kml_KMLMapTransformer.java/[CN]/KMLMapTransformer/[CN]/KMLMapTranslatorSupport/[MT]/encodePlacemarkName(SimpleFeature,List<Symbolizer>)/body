@@ -1,0 +1,28 @@
+{
+  String title=template.title(feature);
+  boolean trySLD=false;
+  if (title == null || "".equals(title)) {
+    title=feature.getID();
+  }
+  if (title.equals(feature.getID())) {
+    trySLD=true;
+  }
+  if (trySLD) {
+    StringBuffer label=new StringBuffer();
+    for (    Symbolizer sym : symbolizers) {
+      if (sym instanceof TextSymbolizer) {
+        Expression e=SLD.textLabel((TextSymbolizer)sym);
+        String value=e.evaluate(feature,String.class);
+        if ((value != null) && !"".equals(value.trim())) {
+          label.append(value);
+        }
+      }
+    }
+    if (label.length() > 0) {
+      title=label.toString();
+    }
+  }
+  start("name");
+  cdata(title);
+  end("name");
+}

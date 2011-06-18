@@ -1,0 +1,38 @@
+{
+  DataFormat df=null;
+  String ext=(String)getRequest().getAttributes().get("format");
+  if (ext == null) {
+    ext=(String)getRequest().getAttributes().get("type");
+  }
+  if (ext == null) {
+    String uri=getRequest().getResourceRef() != null ? getRequest().getResourceRef().getLastSegment() : null;
+    if (uri != null) {
+      ext=ResponseUtils.getExtension(uri);
+    }
+  }
+  if (ext != null) {
+    MediaType mt=MediaTypes.getMediaTypeForExtension(ext);
+    if (mt != null) {
+      df=lookupFormat(mt);
+    }
+  }
+  List<Preference<MediaType>> accepts=null;
+  if (df == null) {
+    accepts=new ArrayList(getRequest().getClientInfo().getAcceptedMediaTypes());
+    for (Iterator<Preference<MediaType>> i=accepts.iterator(); i.hasNext(); ) {
+      Preference<MediaType> pref=i.next();
+      if (pref.getMetadata().equals(MediaType.ALL)) {
+        i.remove();
+        continue;
+      }
+      df=lookupFormat(pref.getMetadata());
+      if (df != null) {
+        break;
+      }
+    }
+  }
+  if (df == null && accepts.isEmpty()) {
+    df=getFormats().values().iterator().next();
+  }
+  return df;
+}

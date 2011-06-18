@@ -1,0 +1,20 @@
+{
+  super(id,diskQuotaConfigModel);
+  final DiskQuotaConfig diskQuotaConfig=diskQuotaConfigModel.getObject();
+  Quota globalQuota=diskQuotaConfig.getGlobalQuota();
+  if (globalQuota == null) {
+    LOGGER.info("There's no GWC global disk quota configured, setting a default of 100MiB");
+    globalQuota=new Quota(100,StorageUnit.MiB);
+    diskQuotaConfig.setGlobalQuota(globalQuota);
+  }
+  BigInteger bytes=globalQuota.getBytes();
+  StorageUnit bestRepresentedUnit=StorageUnit.bestFit(bytes);
+  BigDecimal transformedQuota=StorageUnit.B.convertTo(new BigDecimal(bytes),bestRepresentedUnit);
+  configQuotaValueModel=new Model<Double>(transformedQuota.doubleValue());
+  configQuotaUnitModel=new Model<StorageUnit>(bestRepresentedUnit);
+  addDiskQuotaIntegrationEnablement(diskQuotaConfigModel);
+  addDiskBlockSizeConfig(diskQuotaConfigModel);
+  addCleanUpFrequencyConfig(diskQuotaConfigModel);
+  addGlobalQuotaConfig(diskQuotaConfigModel,configQuotaValueModel,configQuotaUnitModel);
+  addGlobalExpirationPolicyConfig(diskQuotaConfigModel);
+}

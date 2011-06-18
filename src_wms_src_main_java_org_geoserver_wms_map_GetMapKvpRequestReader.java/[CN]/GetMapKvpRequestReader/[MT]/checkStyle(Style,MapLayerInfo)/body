@@ -1,0 +1,23 @@
+{
+  if (mapLayerInfo.getType() == mapLayerInfo.TYPE_RASTER) {
+    return;
+  }
+  StyleAttributeExtractor sae=new StyleAttributeExtractor();
+  sae.visit(style);
+  Set<PropertyName> styleAttributes=sae.getAttributes();
+  FeatureType type=null;
+  if (mapLayerInfo.getType() == MapLayerInfo.TYPE_VECTOR || mapLayerInfo.getType() == MapLayerInfo.TYPE_REMOTE_VECTOR) {
+    try {
+      if (mapLayerInfo.getType() == MapLayerInfo.TYPE_VECTOR)       type=mapLayerInfo.getFeature().getFeatureType();
+ else       type=mapLayerInfo.getRemoteFeatureSource().getSchema();
+    }
+ catch (    IOException ioe) {
+      throw new RuntimeException("Error getting FeatureType, this should never happen!",ioe);
+    }
+  }
+  for (  PropertyName attName : styleAttributes) {
+    if (attName.evaluate(type) == null) {
+      throw new ServiceException("The requested Style can not be used with this layer.  The style specifies " + "an attribute of " + attName + " and the layer is: "+ mapLayerInfo.getName());
+    }
+  }
+}

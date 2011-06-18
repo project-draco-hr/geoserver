@@ -1,0 +1,18 @@
+{
+  request.setFormat(DummyRasterMapProducer.MIME_TYPE);
+  MapLayerInfo layer=mockData.addFeatureTypeLayer("testSingleVectorLayer",Point.class);
+  request.setLayers(Arrays.asList(layer));
+  final DummyRasterMapProducer producer=new DummyRasterMapProducer();
+  final WMS wms=new WMS(mockData.getGeoServer()){
+    @Override public GetMapOutputFormat getMapOutputFormat(    final String mimeType){
+      if (DummyRasterMapProducer.MIME_TYPE.equals(mimeType)) {
+        return producer;
+      }
+      return null;
+    }
+  }
+;
+  getMapOp=new GetMap(wms);
+  getMapOp.run(request);
+  assertTrue(producer.produceMapCalled);
+}

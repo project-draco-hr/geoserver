@@ -1,0 +1,16 @@
+{
+  String geometry=form.getFirstValue("geometry");
+  if (geometry == null) {
+    return Filter.INCLUDE;
+  }
+ else {
+    try {
+      Geometry geom=new GeometryJSON().read(geometry);
+      final double tolerance=getTolerance(form);
+      return geometryFilter(schema,geom,tolerance);
+    }
+ catch (    IOException e) {
+      throw new RestletException("Could not parse the geometry geojson: " + e.getMessage(),Status.CLIENT_ERROR_BAD_REQUEST);
+    }
+  }
+}

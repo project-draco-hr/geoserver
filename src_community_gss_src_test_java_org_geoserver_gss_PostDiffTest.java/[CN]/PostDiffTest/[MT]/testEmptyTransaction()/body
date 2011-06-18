@@ -1,0 +1,11 @@
+{
+  MockHttpServletResponse response=postAsServletResponse(root(true),loadTextResource("PostDiffEmptyTransaction.xml"));
+  checkPostDiffSuccessResponse(response);
+  VersioningDataStore synch=(VersioningDataStore)getCatalog().getDataStoreByName("synch").getDataStore(null);
+  FeatureSource<SimpleFeatureType,SimpleFeature> fs=synch.getFeatureSource(SYNCH_HISTORY);
+  FeatureCollection fc=fs.getFeatures(ff.equals(ff.property("table_name"),ff.literal("restricted")));
+  FeatureIterator fi=fc.features();
+  SimpleFeature f=(SimpleFeature)fi.next();
+  fi.close();
+  assertEquals(12l,f.getAttribute("central_revision"));
+}

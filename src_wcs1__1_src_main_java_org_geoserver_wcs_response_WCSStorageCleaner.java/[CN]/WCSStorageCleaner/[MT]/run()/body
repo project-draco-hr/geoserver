@@ -1,0 +1,15 @@
+{
+  try {
+    File temp=GeoserverDataDirectory.findConfigDir(GeoserverDataDirectory.getGeoserverDataDirectory(),"temp");
+    if (temp == null || !temp.exists())     return;
+    File wcsTemp=new File(temp,"wcs");
+    if (!wcsTemp.exists())     return;
+    long now=System.currentTimeMillis();
+    for (    File f : wcsTemp.listFiles()) {
+      if (now - f.lastModified() > (expirationDelay * 1000))       f.delete();
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error occurred while trying to clean up " + "old coverages from temp storage",e);
+  }
+}

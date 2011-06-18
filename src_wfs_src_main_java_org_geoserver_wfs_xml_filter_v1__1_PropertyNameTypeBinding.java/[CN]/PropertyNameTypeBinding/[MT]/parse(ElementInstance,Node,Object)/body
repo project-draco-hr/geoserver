@@ -1,0 +1,15 @@
+{
+  PropertyName propertyName=(PropertyName)super.parse(instance,node,value);
+  String name=propertyName.getPropertyName();
+  if (name != null && name.matches("\\w+:\\w+")) {
+    String prefix=name.substring(0,name.indexOf(':'));
+    String namespaceURI=namespaceSupport.getURI(prefix);
+    if (!GML.NAMESPACE.equals(namespaceURI) && (catalog.getNamespaceByURI(namespaceURI) == null)) {
+      throw new WFSException("Illegal attribute namespace: " + namespaceURI);
+    }
+  }
+  if (factory instanceof FilterFactory2) {
+    return ((FilterFactory2)factory).property(propertyName.getPropertyName(),namespaceSupport);
+  }
+  return propertyName;
+}

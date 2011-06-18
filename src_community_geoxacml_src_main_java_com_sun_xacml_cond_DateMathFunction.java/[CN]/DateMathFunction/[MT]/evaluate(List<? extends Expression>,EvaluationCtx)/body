@@ -1,0 +1,70 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult result=evalArgs(inputs,context,argValues);
+  if (result != null)   return result;
+  AttributeValue attrResult=null;
+switch (getFunctionId()) {
+case ID_DATETIME_ADD_DAYTIMEDURATION:
+case ID_DATETIME_SUBTRACT_DAYTIMEDURATION:
+{
+      DateTimeAttribute dateTime=(DateTimeAttribute)argValues[0];
+      DayTimeDurationAttribute duration=(DayTimeDurationAttribute)argValues[1];
+      int sign=1;
+      if (getFunctionId() == ID_DATETIME_SUBTRACT_DAYTIMEDURATION)       sign=-sign;
+      if (duration.isNegative())       sign=-sign;
+      long millis=sign * duration.getTotalSeconds();
+      long nanoseconds=dateTime.getNanoseconds();
+      nanoseconds=nanoseconds + (sign * duration.getNanoseconds());
+      if (nanoseconds >= 1000000000) {
+        nanoseconds-=1000000000;
+        millis+=1000;
+      }
+      if (nanoseconds < 0) {
+        nanoseconds+=1000000000;
+        millis-=1000;
+      }
+      millis=millis + dateTime.getValue().getTime();
+      attrResult=new DateTimeAttribute(new Date(millis),(int)nanoseconds,dateTime.getTimeZone(),dateTime.getDefaultedTimeZone());
+      break;
+    }
+case ID_DATETIME_ADD_YEARMONTHDURATION:
+case ID_DATETIME_SUBTRACT_YEARMONTHDURATION:
+{
+    DateTimeAttribute dateTime=(DateTimeAttribute)argValues[0];
+    YearMonthDurationAttribute duration=(YearMonthDurationAttribute)argValues[1];
+    int sign=1;
+    if (getFunctionId() == ID_DATETIME_SUBTRACT_YEARMONTHDURATION)     sign=-sign;
+    if (duration.isNegative())     sign=-sign;
+    Calendar cal=new GregorianCalendar();
+    cal.setTime(dateTime.getValue());
+    long years=sign * duration.getYears();
+    long months=sign * duration.getMonths();
+    if ((years > Integer.MAX_VALUE) || (years < Integer.MIN_VALUE))     return makeProcessingError("years too large");
+    if ((months > Integer.MAX_VALUE) || (months < Integer.MIN_VALUE))     return makeProcessingError("months too large");
+    cal.add(Calendar.YEAR,(int)years);
+    cal.add(Calendar.MONTH,(int)months);
+    attrResult=new DateTimeAttribute(cal.getTime(),dateTime.getNanoseconds(),dateTime.getTimeZone(),dateTime.getDefaultedTimeZone());
+    break;
+  }
+case ID_DATE_ADD_YEARMONTHDURATION:
+case ID_DATE_SUBTRACT_YEARMONTHDURATION:
+{
+  DateAttribute date=(DateAttribute)argValues[0];
+  YearMonthDurationAttribute duration=(YearMonthDurationAttribute)argValues[1];
+  int sign=1;
+  if (getFunctionId() == ID_DATE_SUBTRACT_YEARMONTHDURATION)   sign=-sign;
+  if (duration.isNegative())   sign=-sign;
+  Calendar cal=new GregorianCalendar();
+  cal.setTime(date.getValue());
+  long years=sign * duration.getYears();
+  long months=sign * duration.getMonths();
+  if ((years > Integer.MAX_VALUE) || (years < Integer.MIN_VALUE))   return makeProcessingError("years too large");
+  if ((months > Integer.MAX_VALUE) || (months < Integer.MIN_VALUE))   return makeProcessingError("months too large");
+  cal.add(Calendar.YEAR,(int)years);
+  cal.add(Calendar.MONTH,(int)months);
+  attrResult=new DateAttribute(cal.getTime(),date.getTimeZone(),date.getDefaultedTimeZone());
+  break;
+}
+}
+return new EvaluationResult(attrResult);
+}

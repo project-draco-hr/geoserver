@@ -1,0 +1,16 @@
+{
+  for (  AttributeFinderModule module : designatorModules) {
+    Set<Integer> types=module.getSupportedDesignatorTypes();
+    if ((types == null) || (types.contains(new Integer(designatorType)))) {
+      EvaluationResult result=module.findAttribute(attributeType,attributeId,issuer,subjectCategory,context,designatorType);
+      if (result.indeterminate()) {
+        if (logger.isLoggable(Level.INFO))         logger.info("Error while trying to resolve values: " + result.getStatus().getMessage());
+        return result;
+      }
+      BagAttribute bag=(BagAttribute)(result.getAttributeValue());
+      if (!bag.isEmpty())       return result;
+    }
+  }
+  if (logger.isLoggable(Level.FINE))   logger.fine("Failed to resolve any values for " + attributeId.toString());
+  return new EvaluationResult(BagAttribute.createEmptyBag(attributeType));
+}

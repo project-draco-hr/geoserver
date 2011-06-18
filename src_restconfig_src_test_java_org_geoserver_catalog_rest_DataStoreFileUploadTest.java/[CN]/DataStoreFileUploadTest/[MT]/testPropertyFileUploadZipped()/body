@@ -1,0 +1,12 @@
+{
+  byte[] bytes=propertyFile();
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  ZipOutputStream zout=new ZipOutputStream(out);
+  zout.putNextEntry(new ZipEntry("pds.properties"));
+  zout.write(bytes);
+  zout.flush();
+  zout.close();
+  put("/rest/workspaces/gs/datastores/pds/file.properties",out.toByteArray(),"application/zip");
+  Document dom=getAsDOM("wfs?request=getfeature&typename=gs:pds");
+  assertFeatures(dom);
+}

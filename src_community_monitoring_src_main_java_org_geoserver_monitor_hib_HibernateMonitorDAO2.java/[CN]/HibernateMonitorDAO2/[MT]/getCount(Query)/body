@@ -1,0 +1,18 @@
+{
+  q=q.clone();
+  q.getAggregates().clear();
+  q.getProperties().clear();
+  q.getGroupBy().clear();
+  q.setSortBy(null);
+  q.setSortOrder(null);
+  q.aggregate("count()");
+  org.hibernate.Query query=toQuery(q);
+  long count=((Number)query.uniqueResult()).longValue();
+  if (q.getOffset() != null) {
+    count=Math.max(0,count - q.getOffset());
+  }
+  if (q.getCount() != null) {
+    count=Math.min(count,q.getCount());
+  }
+  return count;
+}

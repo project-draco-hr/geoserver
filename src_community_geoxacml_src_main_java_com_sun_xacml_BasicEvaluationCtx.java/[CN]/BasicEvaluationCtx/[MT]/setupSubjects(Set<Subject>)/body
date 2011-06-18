@@ -1,0 +1,26 @@
+{
+  if (subjects.size() == 0)   throw new ParsingException("Request must a contain subject");
+  for (  Subject subject : subjects) {
+    URI category=subject.getCategory();
+    Map<String,Set<Attribute>> categoryMap=null;
+    if (subjectMap.containsKey(category)) {
+      categoryMap=subjectMap.get(category);
+    }
+ else {
+      categoryMap=new HashMap<String,Set<Attribute>>();
+      subjectMap.put(category,categoryMap);
+    }
+    for (    Attribute attr : subject.getAttributes()) {
+      String id=attr.getId().toString();
+      if (categoryMap.containsKey(id)) {
+        Set<Attribute> existingIds=categoryMap.get(id);
+        existingIds.add(attr);
+      }
+ else {
+        HashSet<Attribute> newIds=new HashSet<Attribute>();
+        newIds.add(attr);
+        categoryMap.put(id,newIds);
+      }
+    }
+  }
+}

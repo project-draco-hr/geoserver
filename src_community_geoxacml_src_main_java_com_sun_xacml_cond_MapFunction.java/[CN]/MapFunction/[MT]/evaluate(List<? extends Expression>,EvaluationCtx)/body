@@ -1,0 +1,25 @@
+{
+  Iterator<? extends Expression> iterator=inputs.iterator();
+  Function function=null;
+  Expression xpr=iterator.next();
+  if (xpr instanceof Function) {
+    function=(Function)xpr;
+  }
+ else {
+    function=(Function)(((VariableReference)xpr).getReferencedDefinition().getExpression());
+  }
+  Evaluatable eval=(Evaluatable)(iterator.next());
+  EvaluationResult result=eval.evaluate(context);
+  if (result.indeterminate())   return result;
+  BagAttribute bag=(BagAttribute)(result.getAttributeValue());
+  Iterator<AttributeValue> it=bag.iterator();
+  List<AttributeValue> outputs=new ArrayList<AttributeValue>();
+  while (it.hasNext()) {
+    List<AttributeValue> params=new ArrayList<AttributeValue>();
+    params.add(it.next());
+    result=function.evaluate(params,context);
+    if (result.indeterminate())     return result;
+    outputs.add(result.getAttributeValue());
+  }
+  return new EvaluationResult(new BagAttribute(returnType,outputs));
+}

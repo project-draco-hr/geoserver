@@ -1,0 +1,74 @@
+{
+  boolean cacheable=isCacheable(info) && handleProjectionPolicy;
+  FeatureType ft=(FeatureType)featureTypeCache.get(info.getId());
+  if (ft == null || !cacheable) {
+synchronized (featureTypeCache) {
+      ft=(FeatureType)featureTypeCache.get(info.getId());
+      if (ft == null || !cacheable) {
+        DataAccess<? extends FeatureType,? extends Feature> dataAccess=getDataStore(info.getStore());
+        VirtualTable vt=null;
+        String vtName=null;
+        if (dataAccess instanceof JDBCDataStore && info.getMetadata() != null && (info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE) instanceof VirtualTable)) {
+          JDBCDataStore jstore=(JDBCDataStore)dataAccess;
+          vt=info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class);
+          if (!cacheable) {
+            final String[] typeNames=jstore.getTypeNames();
+            do {
+              vtName=UUID.randomUUID().toString();
+            }
+ while (Arrays.asList(typeNames).contains(vtName));
+            jstore.addVirtualTable(new VirtualTable(vtName,vt));
+            ft=jstore.getSchema(vtName);
+          }
+ else {
+            vtName=vt.getName();
+            jstore.addVirtualTable(vt);
+            ft=jstore.getSchema(vt.getName());
+          }
+        }
+ else {
+          ft=dataAccess.getSchema(info.getQualifiedNativeName());
+        }
+        if (ft instanceof SimpleFeatureType) {
+          SimpleFeatureType sft=(SimpleFeatureType)ft;
+          SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+          tb.setName(info.getName());
+          tb.setNamespaceURI(info.getNamespace().getURI());
+          if (info.getAttributes() == null || info.getAttributes().isEmpty()) {
+            for (            PropertyDescriptor pd : ft.getDescriptors()) {
+              if (!(pd instanceof AttributeDescriptor)) {
+                continue;
+              }
+              AttributeDescriptor ad=(AttributeDescriptor)pd;
+              if (handleProjectionPolicy) {
+                ad=handleDescriptor(ad,info);
+              }
+              tb.add(ad);
+            }
+          }
+ else {
+            for (            AttributeTypeInfo att : info.getAttributes()) {
+              String attName=att.getName();
+              PropertyDescriptor pd=ft.getDescriptor(attName);
+              if (pd == null || !(pd instanceof AttributeDescriptor)) {
+                throw new IOException("the SimpleFeatureType " + info.getPrefixedName() + " does not contains the configured attribute "+ attName+ ". Check your schema configuration");
+              }
+              AttributeDescriptor ad=(AttributeDescriptor)pd;
+              ad=handleDescriptor(ad,info);
+              tb.add((AttributeDescriptor)ad);
+            }
+          }
+          ft=tb.buildFeatureType();
+        }
+        if (cacheable) {
+          featureTypeCache.put(info.getId(),ft);
+        }
+ else         if (vtName != null) {
+          JDBCDataStore jstore=(JDBCDataStore)dataAccess;
+          jstore.removeVirtualTable(vtName);
+        }
+      }
+    }
+  }
+  return ft;
+}

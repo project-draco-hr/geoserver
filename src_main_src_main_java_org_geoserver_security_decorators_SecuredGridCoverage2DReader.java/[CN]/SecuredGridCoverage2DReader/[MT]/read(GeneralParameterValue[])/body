@@ -1,0 +1,40 @@
+{
+  MultiPolygon rasterFilter=null;
+  if (policy.getLimits() instanceof CoverageAccessLimits) {
+    CoverageAccessLimits limits=(CoverageAccessLimits)policy.getLimits();
+    rasterFilter=limits.getRasterFilter();
+    final GeneralParameterValue[] limitParams=limits.getParams();
+    if (parameters == null) {
+      parameters=limitParams;
+    }
+ else     if (limitParams != null) {
+      List<GeneralParameterValue> params=new ArrayList<GeneralParameterValue>(Arrays.asList(parameters));
+      for (      GeneralParameterValue lparam : limitParams) {
+        final GeneralParameterDescriptor ldescriptor=lparam.getDescriptor();
+        for (Iterator it=params.iterator(); it.hasNext(); ) {
+          GeneralParameterValue param=(GeneralParameterValue)it.next();
+          if (param.getDescriptor().equals(lparam.getDescriptor())) {
+            it.remove();
+            break;
+          }
+        }
+        params.add(lparam);
+      }
+      parameters=(GeneralParameterValue[])params.toArray(new GeneralParameterValue[params.size()]);
+    }
+  }
+  GridCoverage2D grid=delegate.read(parameters);
+  if (rasterFilter != null) {
+    Geometry coverageBounds=JTS.toGeometry((Envelope)new ReferencedEnvelope(grid.getEnvelope2D()));
+    if (coverageBounds.intersects(rasterFilter)) {
+      final ParameterValueGroup param=(ParameterValueGroup)cropParams.clone();
+      param.parameter("source").setValue(grid);
+      param.parameter("ROI").setValue(rasterFilter);
+      grid=(GridCoverage2D)coverageCropFactory.doOperation(param,hints);
+    }
+ else {
+      return null;
+    }
+  }
+  return grid;
+}

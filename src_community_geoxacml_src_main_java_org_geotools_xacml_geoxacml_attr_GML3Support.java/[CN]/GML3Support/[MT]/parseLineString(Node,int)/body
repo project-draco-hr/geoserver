@@ -1,0 +1,24 @@
+{
+  List<Node> coordinates=getChildren(node,"pos");
+  if (!coordinates.isEmpty() && (coordinates.size() >= 2)) {
+    Coordinate[] coordArray=new Coordinate[coordinates.size()];
+    for (int i=0; i < coordinates.size(); i++) {
+      coordArray[i]=parseDirectPosition(coordinates.get(i),srsDimension);
+    }
+    return gf.createLineString(coordArray);
+  }
+  if (!coordinates.isEmpty()) {
+    throw new GMLException(LINESTRING_ERROR);
+  }
+  Node coords=getChild(node,"posList");
+  if (coords != null) {
+    CoordinateSequence cs=parseDirectPositionList(coords,srsDimension);
+    if (cs.size() < 2) {
+      throw new GMLException(LINESTRING_ERROR);
+    }
+    return gf.createLineString(cs);
+  }
+  LineString ls=parseLineStringGML2(node);
+  if (ls == null)   throw new GMLException("Could not find \"pos\",\"posList\",\"coords\" or \"coordinates\"  for LinearRing");
+  return ls;
+}

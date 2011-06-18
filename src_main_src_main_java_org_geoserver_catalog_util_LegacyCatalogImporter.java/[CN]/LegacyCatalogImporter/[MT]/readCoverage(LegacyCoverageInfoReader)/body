@@ -1,0 +1,77 @@
+{
+  CatalogFactory factory=catalog.getFactory();
+  String coverageStoreName=cInfoReader.format();
+  CoverageStoreInfo coverageStore=catalog.getCoverageStoreByName(coverageStoreName);
+  if (coverageStore == null) {
+    LOGGER.warning("Ignoring coverage: '" + cInfoReader.parentDirectoryName() + "', coverage store '"+ coverageStoreName+ "'  not found");
+    return null;
+  }
+  if (!coverageStore.isEnabled()) {
+    LOGGER.info("Ignoring coverage: '" + cInfoReader.parentDirectoryName() + "', coverage store is disabled");
+    return null;
+  }
+  CoverageInfo coverage=factory.createCoverage();
+  coverage.setStore(coverageStore);
+  coverage.setName(cInfoReader.name());
+  coverage.setNativeName(cInfoReader.name());
+  coverage.setTitle(cInfoReader.label());
+  coverage.setDescription(cInfoReader.description());
+  coverage.getKeywords().addAll(cInfoReader.keywords());
+  Map<String,Object> envelope=cInfoReader.envelope();
+  String userDefinedCrsIdentifier=(String)envelope.get("srsName");
+  String nativeCrsWkt=(String)envelope.get("crs");
+  coverage.setSRS(userDefinedCrsIdentifier);
+  CoordinateReferenceSystem crs=CRS.parseWKT(nativeCrsWkt);
+  coverage.setNativeCRS(crs);
+  ReferencedEnvelope bounds=new ReferencedEnvelope((Double)envelope.get("x1"),(Double)envelope.get("x2"),(Double)envelope.get("y1"),(Double)envelope.get("y2"),crs);
+  coverage.setNativeBoundingBox(bounds);
+  GeneralEnvelope boundsLatLon=CoverageStoreUtils.getWGS84LonLatEnvelope(new GeneralEnvelope(bounds));
+  coverage.setLatLonBoundingBox(new ReferencedEnvelope(boundsLatLon));
+  GeneralEnvelope gridEnvelope=new GeneralEnvelope(bounds);
+  Map grid=cInfoReader.grid();
+  if (grid != null) {
+    int[] low=(int[])grid.get("low");
+    int[] high=(int[])grid.get("high");
+    GeneralGridEnvelope range=new GeneralGridEnvelope(low,high);
+    Map<String,Double> tx=(Map<String,Double>)grid.get("geoTransform");
+    if (tx != null) {
+      double[] matrix=new double[3 * 3];
+      matrix[0]=tx.get("scaleX") != null ? tx.get("scaleX") : matrix[0];
+      matrix[1]=tx.get("shearX") != null ? tx.get("shearX") : matrix[1];
+      matrix[2]=tx.get("translateX") != null ? tx.get("translateX") : matrix[2];
+      matrix[3]=tx.get("shearY") != null ? tx.get("shearY") : matrix[3];
+      matrix[4]=tx.get("scaleY") != null ? tx.get("scaleY") : matrix[4];
+      matrix[5]=tx.get("translateY") != null ? tx.get("translateY") : matrix[5];
+      matrix[8]=1.0;
+      MathTransform gridToCRS=new DefaultMathTransformFactory().createAffineTransform(new GeneralMatrix(3,3,matrix));
+      coverage.setGrid(new GridGeometry2D(range,gridToCRS,crs));
+    }
+ else {
+      coverage.setGrid(new GridGeometry2D(range,gridEnvelope));
+    }
+  }
+ else {
+    GeneralGridEnvelope range=new GeneralGridEnvelope(new int[]{0,0},new int[]{1,1});
+    coverage.setGrid(new GridGeometry2D(range,gridEnvelope));
+  }
+  for (Iterator x=cInfoReader.coverageDimensions().iterator(); x.hasNext(); ) {
+    Map map=(Map)x.next();
+    CoverageDimensionInfo cd=factory.createCoverageDimension();
+    cd.setName((String)map.get("name"));
+    cd.setDescription((String)map.get("description"));
+    cd.setRange(NumberRange.create((Double)map.get("min"),(Double)map.get("max")));
+    coverage.getDimensions().add(cd);
+  }
+  coverage.setNativeFormat(cInfoReader.nativeFormat());
+  coverage.getSupportedFormats().addAll(cInfoReader.supportedFormats());
+  coverage.setDefaultInterpolationMethod(cInfoReader.defaultInterpolation());
+  coverage.getInterpolationMethods().addAll(cInfoReader.supportedInterpolations());
+  coverage.getRequestSRS().addAll(cInfoReader.requestCRSs());
+  coverage.getResponseSRS().addAll(cInfoReader.responseCRSs());
+  coverage.getMetadata().put("dirName",cInfoReader.parentDirectoryName());
+  coverage.setEnabled(coverageStore.isEnabled());
+  coverage.getParameters().putAll(cInfoReader.parameters());
+  String prefix=catalog.getCoverageStoreByName(coverageStoreName).getWorkspace().getName();
+  coverage.setNamespace(catalog.getNamespaceByPrefix(prefix));
+  return coverage;
+}

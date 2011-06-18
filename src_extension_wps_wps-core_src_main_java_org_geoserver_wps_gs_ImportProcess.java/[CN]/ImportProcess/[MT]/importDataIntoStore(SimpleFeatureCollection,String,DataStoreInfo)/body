@@ -1,0 +1,44 @@
+{
+  SimpleFeatureType targetType;
+  DataStore ds=(DataStore)storeInfo.getDataStore(null);
+  SimpleFeatureType sourceType=features.getSchema();
+  if (name != null) {
+    SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+    tb.init(sourceType);
+    tb.setName(name);
+    sourceType=tb.buildFeatureType();
+  }
+  ds.createSchema(sourceType);
+  targetType=ds.getSchema(sourceType.getTypeName());
+  if (targetType == null) {
+    targetType=ds.getSchema(sourceType.getTypeName().toUpperCase());
+  }
+  if (targetType == null) {
+    throw new WPSException("The target schema was created, but with a name " + "that we cannot relate to the one we provided the data store. Cannot proceeed further");
+  }
+ else {
+    String newLayerName=storeInfo.getWorkspace().getName() + ":" + targetType.getTypeName();
+    LayerInfo layer=catalog.getLayerByName(newLayerName);
+    if (layer != null) {
+      throw new ProcessException("Target layer " + newLayerName + " already exists in the catalog");
+    }
+  }
+  Map<String,String> mapping=buildAttributeMapping(sourceType,targetType);
+  Transaction t=new DefaultTransaction();
+  SimpleFeatureStore fstore=(SimpleFeatureStore)ds.getFeatureSource(targetType.getTypeName());
+  fstore.setTransaction(t);
+  SimpleFeatureIterator fi=features.features();
+  SimpleFeatureBuilder fb=new SimpleFeatureBuilder(targetType);
+  while (fi.hasNext()) {
+    SimpleFeature source=fi.next();
+    fb.reset();
+    for (    String sname : mapping.keySet()) {
+      fb.set(mapping.get(sname),source.getAttribute(sname));
+    }
+    SimpleFeature target=fb.buildFeature(null);
+    fstore.addFeatures(DataUtilities.collection(target));
+  }
+  t.commit();
+  t.close();
+  return targetType;
+}

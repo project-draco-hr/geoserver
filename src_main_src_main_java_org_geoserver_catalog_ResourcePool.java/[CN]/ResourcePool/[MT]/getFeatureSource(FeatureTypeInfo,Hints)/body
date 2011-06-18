@@ -1,0 +1,69 @@
+{
+  DataAccess<? extends FeatureType,? extends Feature> dataAccess=getDataStore(info.getStore());
+  if (!(dataAccess instanceof DataStore)) {
+    return dataAccess.getFeatureSource(info.getQualifiedName());
+  }
+  DataStore dataStore=(DataStore)dataAccess;
+  SimpleFeatureSource fs;
+  if (dataStore instanceof JDBCDataStore && info.getMetadata() != null && info.getMetadata().containsKey(FeatureTypeInfo.JDBC_VIRTUAL_TABLE)) {
+    VirtualTable vt=(VirtualTable)info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE);
+    JDBCDataStore jstore=(JDBCDataStore)dataStore;
+    jstore.addVirtualTable(vt);
+  }
+  final String typeName=info.getNativeName();
+  final String alias=info.getName();
+  final SimpleFeatureType nativeFeatureType=dataStore.getSchema(typeName);
+  final SimpleFeatureType renamedFeatureType=(SimpleFeatureType)getFeatureType(info,false);
+  if (!typeName.equals(alias) || DataUtilities.compare(nativeFeatureType,renamedFeatureType) != 0) {
+    fs=RetypingFeatureSource.getRetypingSource(dataStore.getFeatureSource(typeName),renamedFeatureType);
+  }
+ else {
+    fs=dataStore.getFeatureSource(info.getQualifiedName());
+  }
+  Boolean reproject=Boolean.TRUE;
+  if (hints != null) {
+    if (hints.get(REPROJECT) != null) {
+      reproject=(Boolean)hints.get(REPROJECT);
+    }
+  }
+  ProjectionPolicy ppolicy=info.getProjectionPolicy();
+  if (ppolicy == ProjectionPolicy.REPROJECT_TO_DECLARED && !reproject) {
+    ppolicy=ProjectionPolicy.NONE;
+  }
+  List<AttributeTypeInfo> attributes=info.attributes();
+  if (attributes == null || attributes.isEmpty()) {
+    return fs;
+  }
+ else {
+    CoordinateReferenceSystem resultCRS=null;
+    GeometryDescriptor gd=fs.getSchema().getGeometryDescriptor();
+    CoordinateReferenceSystem nativeCRS=gd != null ? gd.getCoordinateReferenceSystem() : null;
+    if (ppolicy == ProjectionPolicy.NONE && nativeCRS != null) {
+      resultCRS=nativeCRS;
+    }
+ else {
+      resultCRS=getCRS(info.getSRS());
+    }
+    SimpleFeatureType schema=(SimpleFeatureType)getFeatureType(info);
+    try {
+      if (!CRS.equalsIgnoreMetadata(resultCRS,schema.getCoordinateReferenceSystem()))       schema=FeatureTypes.transform(schema,resultCRS);
+    }
+ catch (    Exception e) {
+      throw new DataSourceException("Problem forcing CRS onto feature type",e);
+    }
+    try {
+      if (VERSIONING_FS != null && GS_VERSIONING_FS != null && VERSIONING_FS.isAssignableFrom(fs.getClass())) {
+        try {
+          Method m=GS_VERSIONING_FS.getMethod("create",VERSIONING_FS,SimpleFeatureType.class,Filter.class,CoordinateReferenceSystem.class,int.class);
+          return (FeatureSource)m.invoke(null,fs,schema,info.getFilter(),resultCRS,info.getProjectionPolicy().getCode());
+        }
+ catch (        Exception e) {
+          throw new DataSourceException("Creation of a versioning wrapper failed",e);
+        }
+      }
+    }
+ catch (    ClassCastException e) {
+    }
+    return GeoServerFeatureLocking.create(fs,schema,info.getFilter(),resultCRS,info.getProjectionPolicy().getCode());
+  }
+}

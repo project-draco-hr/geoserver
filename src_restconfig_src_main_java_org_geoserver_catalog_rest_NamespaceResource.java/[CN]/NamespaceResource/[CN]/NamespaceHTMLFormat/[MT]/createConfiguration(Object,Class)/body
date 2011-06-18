@@ -1,0 +1,12 @@
+{
+  Configuration cfg=super.createConfiguration(data,clazz);
+  cfg.setObjectWrapper(new ObjectToMapWrapper<NamespaceInfo>(NamespaceInfo.class){
+    @Override protected void wrapInternal(    Map properties,    SimpleHash model,    NamespaceInfo object){
+      List<ResourceInfo> stores=catalog.getResourcesByNamespace(object,ResourceInfo.class);
+      properties.put("resources",new CollectionModel(stores,new ObjectToMapWrapper(ResourceInfo.class)));
+      properties.put("isDefault",object.equals(catalog.getDefaultNamespace()));
+    }
+  }
+);
+  return cfg;
+}

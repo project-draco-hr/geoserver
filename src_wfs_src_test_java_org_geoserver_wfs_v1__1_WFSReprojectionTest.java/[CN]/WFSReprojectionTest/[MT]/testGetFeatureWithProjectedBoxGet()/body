@@ -1,0 +1,23 @@
+{
+  WFSInfo wfs=getWFS();
+  boolean oldFeatureBounding=wfs.isFeatureBounding();
+  wfs.setFeatureBounding(true);
+  getGeoServer().save(wfs);
+  try {
+    String q="wfs?request=getfeature&service=wfs&version=1.1&typeName=" + MockData.POLYGONS.getLocalPart();
+    Document dom=getAsDOM(q);
+    Element envelope=getFirstElementByTagName(dom,"gml:Envelope");
+    String lc=getFirstElementByTagName(envelope,"gml:lowerCorner").getFirstChild().getNodeValue();
+    String uc=getFirstElementByTagName(envelope,"gml:upperCorner").getFirstChild().getNodeValue();
+    double[] c=new double[]{Double.parseDouble(lc.split(" ")[0]),Double.parseDouble(lc.split(" ")[1]),Double.parseDouble(uc.split(" ")[0]),Double.parseDouble(uc.split(" ")[1])};
+    double[] cr=new double[4];
+    tx.transform(c,0,cr,0,2);
+    q+="&bbox=" + cr[0] + ","+ cr[1]+ ","+ cr[2]+ ","+ cr[3]+ ","+ TARGET_CRS_CODE;
+    dom=getAsDOM(q);
+    assertEquals(1,dom.getElementsByTagName(MockData.POLYGONS.getPrefix() + ":" + MockData.POLYGONS.getLocalPart()).getLength());
+  }
+  finally {
+    wfs.setFeatureBounding(oldFeatureBounding);
+    getGeoServer().save(wfs);
+  }
+}

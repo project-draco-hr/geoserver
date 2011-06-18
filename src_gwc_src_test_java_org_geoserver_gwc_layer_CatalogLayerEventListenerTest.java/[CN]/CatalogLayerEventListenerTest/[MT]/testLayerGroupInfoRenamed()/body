@@ -1,0 +1,14 @@
+{
+  final String renamedGroupName=LAYER_GROUP_NAME + "_Renamed";
+  when(mockLayerGroupInfo.getName()).thenReturn(renamedGroupName);
+  CatalogModifyEvent modifyEvent=mock(CatalogModifyEvent.class);
+  when(modifyEvent.getSource()).thenReturn(mockLayerGroupInfo);
+  when(modifyEvent.getPropertyNames()).thenReturn(Arrays.asList("name"));
+  when(modifyEvent.getOldValues()).thenReturn(Arrays.asList((Object)LAYER_GROUP_NAME));
+  when(modifyEvent.getNewValues()).thenReturn(Arrays.asList((Object)renamedGroupName));
+  listener.handleModifyEvent(modifyEvent);
+  CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
+  when(postModifyEvent.getSource()).thenReturn(mockLayerGroupInfo);
+  listener.handlePostModifyEvent(postModifyEvent);
+  verify(mockConfiguration).renameTileLayer(eq(LAYER_GROUP_NAME),eq(renamedGroupName));
+}

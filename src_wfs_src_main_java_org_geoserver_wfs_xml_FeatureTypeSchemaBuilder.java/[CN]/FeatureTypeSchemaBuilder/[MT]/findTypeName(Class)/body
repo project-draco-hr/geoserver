@@ -1,0 +1,31 @@
+{
+  for (Iterator p=profiles.iterator(); p.hasNext(); ) {
+    Object profile=p.next();
+    Name name=null;
+    if (profile instanceof TypeMappingProfile) {
+      name=((TypeMappingProfile)profile).name(binding);
+    }
+ else     if (profile instanceof Schema) {
+      Schema schema=(Schema)profile;
+      for (      Map.Entry<Name,AttributeType> e : schema.entrySet()) {
+        AttributeType at=e.getValue();
+        if (at.getBinding() != null && at.getBinding().equals(binding)) {
+          name=at.getName();
+          break;
+        }
+      }
+      if (name == null) {
+        for (        AttributeType at : schema.values()) {
+          if (binding.isAssignableFrom(at.getBinding())) {
+            name=at.getName();
+            break;
+          }
+        }
+      }
+    }
+    if (name != null) {
+      return name;
+    }
+  }
+  return null;
+}

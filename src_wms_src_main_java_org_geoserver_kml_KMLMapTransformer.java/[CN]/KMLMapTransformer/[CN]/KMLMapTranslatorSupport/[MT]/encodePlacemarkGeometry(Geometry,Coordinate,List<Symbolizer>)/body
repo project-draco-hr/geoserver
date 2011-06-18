@@ -1,0 +1,16 @@
+{
+  if (geometry instanceof Point || (geometry instanceof MultiPoint) && ((MultiPoint)geometry).getNumPoints() == 1) {
+    encodeGeometry(geometry,symbolizers);
+  }
+ else {
+    start("MultiGeometry");
+    if (!Double.isNaN(geometry.getCoordinate().z)) {
+      centroid.z=geometry.getCoordinate().z;
+    }
+    if (centroid != null) {
+      encodeGeometry(new GeometryFactory().createPoint(centroid),null);
+    }
+    encodeGeometry(geometry,symbolizers);
+    end("MultiGeometry");
+  }
+}

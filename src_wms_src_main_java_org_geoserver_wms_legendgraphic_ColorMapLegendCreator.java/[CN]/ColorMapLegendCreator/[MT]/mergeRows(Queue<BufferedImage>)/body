@@ -1,0 +1,20 @@
+{
+  final Dimension finalDimension=new Dimension();
+  final int numRows=legendsQueue.size();
+  finalDimension.setSize(Math.max(footerW,colorW + ruleW + labelW) + 2 * dx + 2 * margin,rowH * numRows + 2 * margin + (numRows - 1) * dy);
+  final int totalWidth=(int)finalDimension.getWidth();
+  final int totalHeight=(int)finalDimension.getHeight();
+  final BufferedImage finalLegend=ImageUtils.createImage(totalWidth,totalHeight,(IndexColorModel)null,transparent);
+  final Map<Key,Object> hintsMap=new HashMap<Key,Object>();
+  Graphics2D finalGraphics=ImageUtils.prepareTransparency(transparent,backgroundColor,finalLegend,hintsMap);
+  hintsMap.put(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+  finalGraphics.setRenderingHints(hintsMap);
+  int topOfRow=(int)(margin + 0.5);
+  for (int i=0; i < numRows; i++) {
+    final BufferedImage img=legendsQueue.remove();
+    finalGraphics.drawImage(img,(int)(margin + 0.5),topOfRow,null);
+    topOfRow+=img.getHeight() + dy;
+  }
+  finalGraphics.dispose();
+  return finalLegend;
+}

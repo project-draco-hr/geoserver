@@ -1,0 +1,60 @@
+{
+  String req=getAttribute("request");
+  if (req == null) {
+    Form form=null;
+    if (getRequest().getResourceRef() != null) {
+      form=getRequest().getResourceRef().getQueryAsForm();
+    }
+ else {
+      form=new Form();
+    }
+    String from=form.getFirstValue("from");
+    String to=form.getFirstValue("to");
+    Query q=new Query().between(from != null ? parseDate(from) : null,to != null ? parseDate(to) : null);
+    String filter=form.getFirstValue("filter");
+    if (filter != null) {
+      try {
+        parseFilter(filter,q);
+      }
+ catch (      Exception e) {
+        throw new RestletException("Error parsing filter " + filter,Status.CLIENT_ERROR_BAD_REQUEST,e);
+      }
+    }
+    String sortBy;
+    SortOrder sortOrder;
+    String order=form.getFirstValue("order");
+    if (order != null) {
+      int semi=order.indexOf(';');
+      if (semi != -1) {
+        String[] split=order.split(";");
+        sortBy=split[0];
+        sortOrder=SortOrder.valueOf(split[1]);
+      }
+ else {
+        sortBy=order;
+        sortOrder=SortOrder.ASC;
+      }
+      q.sort(sortBy,sortOrder);
+    }
+    String offset=form.getFirstValue("offset");
+    String count=form.getFirstValue("count");
+    q.page(offset != null ? Long.parseLong(offset) : null,count != null ? Long.parseLong(count) : null);
+    String live=form.getFirstValue("live");
+    if (live != null) {
+      if ("yes".equalsIgnoreCase(live) || "true".equalsIgnoreCase(live)) {
+        q.filter("status",Arrays.asList(org.geoserver.monitor.RequestData.Status.RUNNING,org.geoserver.monitor.RequestData.Status.WAITING,org.geoserver.monitor.RequestData.Status.CANCELLING),Comparison.IN);
+      }
+ else {
+        q.filter("status",Arrays.asList(org.geoserver.monitor.RequestData.Status.FINISHED,org.geoserver.monitor.RequestData.Status.FAILED),Comparison.IN);
+      }
+    }
+    return q;
+  }
+ else {
+    RequestData data=monitor.getDAO().getRequest(Long.parseLong(req));
+    if (data == null) {
+      throw new RestletException("No such request" + req,Status.CLIENT_ERROR_NOT_FOUND);
+    }
+    return data;
+  }
+}

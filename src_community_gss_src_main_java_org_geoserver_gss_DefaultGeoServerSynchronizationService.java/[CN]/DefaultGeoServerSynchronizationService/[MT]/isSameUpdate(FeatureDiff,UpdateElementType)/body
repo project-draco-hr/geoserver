@@ -1,0 +1,32 @@
+{
+  List<PropertyType> updateProperties=update.getProperty();
+  Set<String> fdAttributes=new HashSet<String>(fd.getChangedAttributes());
+  if (updateProperties.size() != fdAttributes.size()) {
+    return false;
+  }
+  for (  PropertyType pt : updateProperties) {
+    String attName=pt.getName().getLocalPart();
+    if (!fdAttributes.contains(attName)) {
+      return false;
+    }
+    Object fdValue=fd.getFeature().getAttribute(attName);
+    Object upValue=pt.getValue();
+    if (fdValue == null && upValue == null) {
+      continue;
+    }
+ else     if (fdValue != null && upValue != null) {
+      Class target=fd.getFeature().getType().getDescriptor(attName).getType().getBinding();
+      upValue=Converters.convert(upValue,target);
+      if (upValue == null) {
+        return false;
+      }
+      if (!fdValue.equals(upValue)) {
+        return false;
+      }
+    }
+ else {
+      return false;
+    }
+  }
+  return true;
+}

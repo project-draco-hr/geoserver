@@ -1,0 +1,19 @@
+{
+  PDP pdp=GeoXACMLConfig.getPDP();
+  DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
+  factory.setIgnoringComments(true);
+  factory.setIgnoringElementContentWhitespace(true);
+  factory.setNamespaceAware(true);
+  String booleanString=req.getParameter("validate");
+  Boolean validate=new Boolean(booleanString);
+  if (validate) {
+    factory.setSchema(GeoXACML.getContextSchema());
+    logger.info("Request validation enabled");
+  }
+  DocumentBuilder builder=factory.newDocumentBuilder();
+  Document doc=builder.parse(req.getInputStream());
+  RequestCtx request=RequestCtx.getInstance(doc.getDocumentElement());
+  ResponseCtx response=pdp.evaluate(request);
+  response.encode(resp.getOutputStream(),new Indenter(0),true);
+  return null;
+}

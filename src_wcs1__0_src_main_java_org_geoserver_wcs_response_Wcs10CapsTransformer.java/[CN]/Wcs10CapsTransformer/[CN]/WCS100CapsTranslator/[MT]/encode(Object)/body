@@ -1,0 +1,57 @@
+{
+  if (!(o instanceof GetCapabilitiesType)) {
+    throw new IllegalArgumentException(new StringBuffer("Not a GetCapabilitiesType: ").append(o).toString());
+  }
+  this.request=(GetCapabilitiesType)o;
+  final long updateSequence=wcs.getGeoServer().getGlobal().getUpdateSequence();
+  long requestedUpdateSequence=-1;
+  if (request.getUpdateSequence() != null) {
+    try {
+      requestedUpdateSequence=Long.parseLong(request.getUpdateSequence());
+    }
+ catch (    NumberFormatException e) {
+      if (request.getUpdateSequence().length() == 0)       requestedUpdateSequence=0;
+ else       throw new WcsException("Invalid update sequence number format, " + "should be an integer",WcsExceptionCode.InvalidUpdateSequence,"updateSequence");
+    }
+    if (requestedUpdateSequence > updateSequence) {
+      throw new WcsException("Invalid update sequence value, it's higher " + "than the current value, " + updateSequence,WcsExceptionCode.InvalidUpdateSequence,"updateSequence");
+    }
+    if (requestedUpdateSequence == updateSequence) {
+      throw new WcsException("WCS capabilities document is current (updateSequence = " + updateSequence + ")",WcsExceptionCode.CurrentUpdateSequence,"");
+    }
+  }
+  final AttributesImpl attributes=new AttributesImpl();
+  attributes.addAttribute("","version","version","",CUR_VERSION);
+  attributes.addAttribute("","xmlns:wcs","xmlns:wcs","",WCS_URI);
+  attributes.addAttribute("","xmlns:xlink","xmlns:xlink","","http://www.w3.org/1999/xlink");
+  attributes.addAttribute("","xmlns:ogc","xmlns:ogc","","http://www.opengis.net/ogc");
+  attributes.addAttribute("","xmlns:ows","xmlns:ows","","http://www.opengis.net/ows/1.1");
+  attributes.addAttribute("","xmlns:gml","xmlns:gml","","http://www.opengis.net/gml");
+  final String prefixDef=new StringBuffer("xmlns:").append(XSI_PREFIX).toString();
+  attributes.addAttribute("",prefixDef,prefixDef,"",XSI_URI);
+  final String locationAtt=new StringBuffer(XSI_PREFIX).append(":schemaLocation").toString();
+  final String locationDef=WCS_URI + " " + buildURL(request.getBaseUrl(),appendPath(SCHEMAS,"wcs/1.0.0/wcsCapabilities.xsd"),null,URLType.RESOURCE);
+  attributes.addAttribute("",locationAtt,locationAtt,"",locationDef);
+  attributes.addAttribute("","updateSequence","updateSequence","",String.valueOf(updateSequence));
+  start("wcs:WCS_Capabilities",attributes);
+  boolean allSections;
+  CapabilitiesSectionType section;
+  if (request.getSection() == null) {
+    allSections=true;
+    section=CapabilitiesSectionType.get("/");
+  }
+ else {
+    section=request.getSection();
+    allSections=(section.get("/").equals(section));
+  }
+  final Set<String> knownSections=new HashSet<String>(Arrays.asList("/","/WCS_Capabilities/Service","/WCS_Capabilities/Capability","/WCS_Capabilities/ContentMetadata"));
+  if (!knownSections.contains(section.getLiteral()))   throw new WcsException("Unknown section " + section,WcsExceptionCode.InvalidParameterValue,"Sections");
+  if (requestedUpdateSequence < updateSequence) {
+    if (allSections || section.equals(CapabilitiesSectionType.WCS_CAPABILITIES_SERVICE_LITERAL)) {
+      handleService(allSections);
+    }
+    if (allSections || section.equals(CapabilitiesSectionType.WCS_CAPABILITIES_CAPABILITY_LITERAL))     handleCapabilities(allSections);
+    if (allSections || section.equals(CapabilitiesSectionType.WCS_CAPABILITIES_CONTENT_METADATA_LITERAL))     handleContentMetadata(allSections);
+  }
+  end("wcs:WCS_Capabilities");
+}

@@ -1,0 +1,18 @@
+{
+  Style style=styleCache.get(info);
+  if (style == null) {
+synchronized (styleCache) {
+      style=styleCache.get(info);
+      if (style == null) {
+        File styleFile=GeoserverDataDirectory.findStyleFile(info.getFilename());
+        if (styleFile == null) {
+          throw new IOException("No such file: " + info.getFilename());
+        }
+        style=Styles.style(Styles.parse(styleFile,info.getSLDVersion()));
+        style.setName(info.getName());
+        styleCache.put(info,style);
+      }
+    }
+  }
+  return style;
+}

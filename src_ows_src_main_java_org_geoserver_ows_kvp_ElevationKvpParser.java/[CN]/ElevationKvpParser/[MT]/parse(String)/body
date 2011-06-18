@@ -1,0 +1,61 @@
+{
+  if (value == null) {
+    return Collections.emptyList();
+  }
+  value=value.trim();
+  if (value.length() == 0) {
+    return Collections.emptyList();
+  }
+  final Set values=new TreeSet(new Comparator(){
+    public int compare(    Object o1,    Object o2){
+      final boolean o1Double=o1 instanceof Double;
+      final boolean o2Double=o2 instanceof Double;
+      if (o1Double) {
+        final Double left=(Double)o1;
+        if (o2Double) {
+          return left.compareTo((Double)o2);
+        }
+        return left.compareTo(((NumberRange<Double>)o2).getMinValue());
+      }
+      final NumberRange left=(NumberRange)o1;
+      if (o2Double) {
+        return left.getMinValue().compareTo(((Double)o2));
+      }
+      return left.getMinValue().compareTo(((NumberRange)o2).getMinValue());
+    }
+  }
+);
+  final String[] listValues=value.split(",");
+  for (  String d : listValues) {
+    if (d.indexOf("/") <= 0) {
+      addValue(values,Double.valueOf(d.trim()));
+    }
+ else {
+      String[] period=d.split("/");
+      if (period.length == 2) {
+        final Double begin=Double.valueOf(period[0]);
+        final Double end=Double.valueOf(period[1]);
+        addPeriod(values,NumberRange.create(begin,end));
+      }
+ else       if (period.length == 3) {
+        final Double begin=Double.valueOf(period[0]);
+        final Double end=Double.valueOf(period[1]);
+        final Double increment=Double.valueOf(period[2]);
+        Double step;
+        int j=0;
+        while ((step=j * increment + begin) <= end) {
+          addValue(values,step);
+          j++;
+          if (j >= MAX_ELEMENTS_ELEVATIONS_KVP) {
+            if (LOGGER.isLoggable(Level.INFO))             LOGGER.info("Lmiting number of elements in this periodo to " + MAX_ELEMENTS_ELEVATIONS_KVP);
+            break;
+          }
+        }
+      }
+ else {
+        throw new ParseException("Invalid elevation parameter: " + period,0);
+      }
+    }
+  }
+  return new ArrayList(values);
+}

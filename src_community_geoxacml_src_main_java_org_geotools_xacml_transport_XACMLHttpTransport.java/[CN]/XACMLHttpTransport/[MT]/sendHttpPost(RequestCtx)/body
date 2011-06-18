@@ -1,0 +1,29 @@
+{
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  requestCtx.encode(bout,new Indenter(0),true);
+  byte[] byteArray=bout.toByteArray();
+  byte[] msgDigest=getDigestBytes(byteArray);
+  if (msgDigest != null) {
+    ResponseCtx responseCtx=DigestMap.get().get(new String(msgDigest));
+    if (responseCtx != null) {
+      return responseCtx;
+    }
+  }
+  try {
+    HttpURLConnection conn=(HttpURLConnection)pdpURL.openConnection();
+    conn.setRequestMethod("POST");
+    conn.setRequestProperty("Content-type","text/xml, application/xml");
+    conn.setDoOutput(true);
+    OutputStream out=conn.getOutputStream();
+    out.write(byteArray);
+    out.close();
+    InputStream in=conn.getInputStream();
+    ResponseCtx result=ResponseCtx.getInstance(in);
+    in.close();
+    if (msgDigest != null)     DigestMap.get().put(new String(msgDigest),result);
+    return result;
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+}

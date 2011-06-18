@@ -1,0 +1,25 @@
+{
+  for (Enumeration e=namespaceSupport.getDeclaredPrefixes(); e.hasMoreElements(); ) {
+    String pre=(String)e.nextElement();
+    String uri=namespaceSupport.getURI(pre);
+    if ("".equals(pre)) {
+      attribute("xmlns" + pre,uri);
+    }
+ else {
+      attribute("xmlns:" + pre,uri);
+    }
+  }
+  if (!schemaLocations.isEmpty()) {
+    StringBuffer buffer=new StringBuffer();
+    for (Iterator e=schemaLocations.entrySet().iterator(); e.hasNext(); ) {
+      Map.Entry entry=(Entry)e.next();
+      String uri=(String)entry.getKey();
+      String location=(String)entry.getValue();
+      buffer.append(uri + " " + location);
+      if (e.hasNext()) {
+        buffer.append(" ");
+      }
+    }
+    attribute("xs:schemaLocation",buffer.toString());
+  }
+}

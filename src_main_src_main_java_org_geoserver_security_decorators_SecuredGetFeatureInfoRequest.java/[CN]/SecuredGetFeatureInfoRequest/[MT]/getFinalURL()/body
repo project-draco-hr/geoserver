@@ -1,0 +1,29 @@
+{
+  for (int i=0; i < queryLayers.size(); i++) {
+    Layer layer=queryLayers.get(i);
+    if (layer instanceof SecuredWMSLayer) {
+      SecuredWMSLayer secured=(SecuredWMSLayer)layer;
+      final WrapperPolicy policy=secured.getPolicy();
+      if (policy.getLimits() instanceof WMSAccessLimits) {
+        WMSAccessLimits limits=(WMSAccessLimits)policy.getLimits();
+        if (!limits.isAllowFeatureInfo()) {
+          if (policy.getResponse() == org.geoserver.security.Response.CHALLENGE) {
+            SecureCatalogImpl.unauthorizedAccess(layer.getName());
+          }
+ else {
+            throw new IllegalArgumentException("Layer " + layer.getName() + " is not queriable");
+          }
+        }
+      }
+      delegate.addQueryLayer(layer);
+    }
+  }
+  if (getMap instanceof SecuredGetMapRequest) {
+    SecuredGetMapRequest sgm=(SecuredGetMapRequest)getMap;
+    String encodedFilter=sgm.buildCQLFilter();
+    if (encodedFilter != null) {
+      delegate.setProperty("CQL_FILTER",encodedFilter);
+    }
+  }
+  return delegate.getFinalURL();
+}

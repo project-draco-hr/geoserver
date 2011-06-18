@@ -1,0 +1,11 @@
+{
+  FeatureTypeInfo meta1=getFeatureTypeInfo(MockData.BASIC_POLYGONS);
+  FeatureTypeInfo meta2=getFeatureTypeInfo(MockData.POLYGONS);
+  ByteArrayOutputStream output=new ByteArrayOutputStream();
+  XmlSchemaEncoder response=new XmlSchemaEncoder.V11(getGeoServer());
+  response.write(new FeatureTypeInfo[]{meta1,meta2},output,request());
+  Element schema=ReaderUtils.parse(new StringReader(new String(output.toByteArray())));
+  assertEquals("xsd:schema",schema.getNodeName());
+  NodeList imprts=schema.getElementsByTagName("xsd:import");
+  assertEquals(2,imprts.getLength());
+}

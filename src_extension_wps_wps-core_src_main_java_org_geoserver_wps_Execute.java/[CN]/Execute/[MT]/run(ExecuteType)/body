@@ -1,0 +1,107 @@
+{
+  Date started=Calendar.getInstance().getTime();
+  Map<String,ProcessOutput> outputMap=executeInternal(request);
+  Wps10Factory f=Wps10Factory.eINSTANCE;
+  ExecuteResponseType response=f.createExecuteResponseType();
+  response.setLang("en");
+  if (request.getBaseUrl() != null) {
+    response.setServiceInstance(ResponseUtils.appendQueryString(ResponseUtils.buildURL(request.getBaseUrl(),"ows",null,URLType.SERVICE),""));
+  }
+  Name processName=Ows11Util.name(request.getIdentifier());
+  ProcessFactory pf=Processors.createProcessFactory(processName);
+  final ProcessBriefType process=f.createProcessBriefType();
+  response.setProcess(process);
+  process.setIdentifier(request.getIdentifier());
+  process.setProcessVersion(pf.getVersion(processName));
+  process.setTitle(Ows11Util.languageString(pf.getTitle(processName)));
+  process.setAbstract(Ows11Util.languageString(pf.getDescription(processName)));
+  response.setStatus(f.createStatusType());
+  response.getStatus().setCreationTime(Converters.convert(started,XMLGregorianCalendar.class));
+  response.getStatus().setProcessSucceeded("Process succeeded.");
+  response.setDataInputs(f.createDataInputsType1());
+  for (Iterator i=request.getDataInputs().getInput().iterator(); i.hasNext(); ) {
+    InputType input=(InputType)i.next();
+    response.getDataInputs().getInput().add(EMFUtils.clone(input,f,true));
+  }
+  OutputDefinitionsType outputs=f.createOutputDefinitionsType();
+  response.setOutputDefinitions(outputs);
+  Map<String,Parameter<?>> outs=pf.getResultInfo(processName,null);
+  Map<String,ProcessParameterIO> ppios=new HashMap();
+  for (  String key : outputMap.keySet()) {
+    Parameter p=pf.getResultInfo(processName,null).get(key);
+    if (p == null) {
+      throw new WPSException("No such output: " + key);
+    }
+    String mime=outputMap.get(key).definition.getMimeType();
+    ProcessParameterIO ppio=ProcessParameterIO.find(p,context,mime);
+    if (ppio == null) {
+      throw new WPSException("Unable to encode output: " + p.key);
+    }
+    ppios.put(p.key,ppio);
+    DocumentOutputDefinitionType output=f.createDocumentOutputDefinitionType();
+    outputs.getOutput().add(output);
+    output.setIdentifier(Ows11Util.code(p.key));
+    if (ppio instanceof ComplexPPIO) {
+      output.setMimeType(((ComplexPPIO)ppio).getMimeType());
+      if (ppio instanceof BinaryPPIO) {
+        output.setEncoding("base64");
+      }
+ else       if (ppio instanceof XMLPPIO) {
+        output.setEncoding("utf-8");
+      }
+    }
+  }
+  ProcessOutputsType1 processOutputs=f.createProcessOutputsType1();
+  response.setProcessOutputs(processOutputs);
+  for (  String key : outputMap.keySet()) {
+    OutputDataType output=f.createOutputDataType();
+    output.setIdentifier(Ows11Util.code(key));
+    output.setTitle(Ows11Util.languageString(pf.getResultInfo(processName,null).get(key).description));
+    processOutputs.getOutput().add(output);
+    final Object o=outputMap.get(key).object;
+    ProcessParameterIO ppio=ppios.get(key);
+    if (ppio instanceof ReferencePPIO) {
+      OutputReferenceType ref=f.createOutputReferenceType();
+      output.setReference(ref);
+      ref.setMimeType(outputMap.get(key).definition.getMimeType());
+      ref.setHref(((ReferencePPIO)ppio).encode(o).toString());
+    }
+ else {
+      DataType data=f.createDataType();
+      output.setData(data);
+      try {
+        if (ppio instanceof LiteralPPIO) {
+          LiteralDataType literal=f.createLiteralDataType();
+          data.setLiteralData(literal);
+          literal.setValue(((LiteralPPIO)ppio).encode(o));
+        }
+ else         if (ppio instanceof BoundingBoxPPIO) {
+          BoundingBoxType bbox=((BoundingBoxPPIO)ppio).encode(o);
+          data.setBoundingBoxData(bbox);
+        }
+ else         if (ppio instanceof ComplexPPIO) {
+          ComplexDataType complex=f.createComplexDataType();
+          data.setComplexData(complex);
+          ComplexPPIO cppio=(ComplexPPIO)ppio;
+          complex.setMimeType(cppio.getMimeType());
+          if (cppio instanceof XMLPPIO) {
+            complex.getData().add(new XMLEncoderDelegate((XMLPPIO)cppio,o));
+          }
+ else           if (cppio instanceof CDataPPIO) {
+            complex.getData().add(new CDataEncoderDelegate((CDataPPIO)cppio,o));
+          }
+ else           if (cppio instanceof BinaryPPIO) {
+            complex.getData().add(new BinaryEncoderDelegate((BinaryPPIO)cppio,o));
+          }
+ else {
+            throw new WPSException("Don't know how to encode an output whose PPIO is " + cppio);
+          }
+        }
+      }
+ catch (      Exception e) {
+        throw new WPSException("Failed to encode the " + key + " output",e);
+      }
+    }
+  }
+  return response;
+}

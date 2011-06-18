@@ -1,0 +1,23 @@
+{
+  boolean atLeastOne=false;
+  AbstractPolicy selectedPolicy=null;
+  Iterator<? extends CombinerElement> it=policyElements.iterator();
+  while (it.hasNext()) {
+    AbstractPolicy policy=((PolicyCombinerElement)(it.next())).getPolicy();
+    MatchResult match=policy.match(context);
+    int result=match.getResult();
+    if (result == MatchResult.INDETERMINATE)     return new Result(Result.DECISION_INDETERMINATE,match.getStatus(),context.getResourceId().encode());
+    if (result == MatchResult.MATCH) {
+      if (atLeastOne) {
+        List<String> code=new ArrayList<String>();
+        code.add(Status.STATUS_PROCESSING_ERROR);
+        String message="Too many applicable policies";
+        return new Result(Result.DECISION_INDETERMINATE,new Status(code,message),context.getResourceId().encode());
+      }
+      atLeastOne=true;
+      selectedPolicy=policy;
+    }
+  }
+  if (atLeastOne)   return selectedPolicy.evaluate(context);
+  return new Result(Result.DECISION_NOT_APPLICABLE,context.getResourceId().encode());
+}

@@ -1,0 +1,25 @@
+{
+  URLConnection conn=url.openConnection();
+  if (conn instanceof HttpURLConnection) {
+    conn.setRequestProperty("Accept-Encoding","gzip, deflate");
+  }
+  conn.connect();
+  if (conn instanceof HttpURLConnection) {
+    String encoding=conn.getContentEncoding();
+    if (encoding == null) {
+      encoding="";
+    }
+    if (encoding.equalsIgnoreCase("gzip")) {
+      return new GZIPInputStream(conn.getInputStream());
+    }
+ else     if (encoding.equalsIgnoreCase("deflate")) {
+      return new InflaterInputStream(conn.getInputStream(),new Inflater(true));
+    }
+ else {
+      return conn.getInputStream();
+    }
+  }
+ else {
+    return conn.getInputStream();
+  }
+}

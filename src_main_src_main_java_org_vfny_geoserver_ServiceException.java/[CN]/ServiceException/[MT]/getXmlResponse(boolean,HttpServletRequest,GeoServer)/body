@@ -1,0 +1,25 @@
+{
+  LOGGER.warning("encountered error: " + getMessage() + "\nStackTrace: "+ createStackTrace());
+  String indent="   ";
+  StringBuffer returnXml=new StringBuffer("<?xml version=\"1.0\" ?>\n");
+  returnXml.append("<ServiceExceptionReport\n");
+  returnXml.append(indent + "version=\"1.2.0\"\n");
+  returnXml.append(indent + "xmlns=\"http://www.opengis.net/ogc\"\n");
+  returnXml.append(indent + "xmlns:xsi=\"http://www.w3.org/2001/" + "XMLSchema-instance\"\n");
+  returnXml.append(indent);
+  returnXml.append("xsi:schemaLocation=\"http://www.opengis.net/ogc ");
+  returnXml.append(Requests.getSchemaBaseUrl(request,geoserver) + "/wfs/1.0.0/OGC-exception.xsd\">\n");
+  returnXml.append(indent + "<ServiceException");
+  if (!isEmpty(getCode())) {
+    returnXml.append(" code=\"" + getCode() + "\"");
+  }
+  if (!isEmpty(this.locator)) {
+    returnXml.append(" locator=\"" + this.locator + "\"");
+  }
+  returnXml.append(">\n" + indent + indent);
+  returnXml.append(getXmlMessage(printStackTrace));
+  returnXml.append(indent + "</ServiceException>\n");
+  returnXml.append("</ServiceExceptionReport>");
+  LOGGER.fine("return wfs exception is " + returnXml);
+  return returnXml.toString();
+}

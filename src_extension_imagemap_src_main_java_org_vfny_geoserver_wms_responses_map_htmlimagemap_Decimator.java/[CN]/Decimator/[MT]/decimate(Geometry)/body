@@ -1,0 +1,44 @@
+{
+  GeometryFactory gFac=new GeometryFactory(geom.getPrecisionModel(),geom.getSRID());
+  if (spanx == -1)   return geom;
+  if (geom instanceof MultiPoint) {
+    return geom;
+  }
+  if (geom instanceof GeometryCollection) {
+    GeometryCollection collection=(GeometryCollection)geom;
+    Geometry[] result=new Geometry[collection.getDimension()];
+    final int numGeometries=collection.getNumGeometries();
+    for (int i=0; i < numGeometries; i++) {
+      result[i]=decimate(collection.getGeometryN(i));
+    }
+    return gFac.createGeometryCollection(result);
+  }
+ else   if (geom instanceof LineString) {
+    LineString line=(LineString)geom;
+    CoordinateSequence seq=(CoordinateSequence)line.getCoordinateSequence();
+    LiteCoordinateSequence lseq=new LiteCoordinateSequence(seq.toCoordinateArray());
+    if (decimateOnEnvelope(line,lseq)) {
+      if (lseq.size() >= 2)       return gFac.createLineString(lseq);
+    }
+    if (lseq.size() >= 2)     return gFac.createLineString(decimate(lseq));
+    return null;
+  }
+ else   if (geom instanceof Polygon) {
+    Polygon line=(Polygon)geom;
+    Coordinate[] exterior=decimate(line.getExteriorRing()).getCoordinates();
+    forceClosed(exterior);
+    if (exterior.length > 3) {
+      LinearRing ring=gFac.createLinearRing(exterior);
+      final int numRings=line.getNumInteriorRing();
+      List<LinearRing> rings=new ArrayList<LinearRing>();
+      for (int i=0; i < numRings; i++) {
+        Coordinate[] interior=decimate(line.getInteriorRingN(i)).getCoordinates();
+        forceClosed(interior);
+        if (interior.length > 3)         rings.add(gFac.createLinearRing(interior));
+      }
+      return gFac.createPolygon(ring,rings.toArray(new LinearRing[]{}));
+    }
+    return null;
+  }
+  return geom;
+}

@@ -1,0 +1,15 @@
+{
+  XACMLTransport transport=new XACMLHttpTransportFactory(getPDPUrl(),true).getXACMLTransport();
+  List<RequestCtx> requestList=createRequestList();
+  List<ResponseCtx> responseList=null;
+  try {
+    responseList=transport.evaluateRequestCtxList(requestList);
+  }
+ catch (  RuntimeException rtex) {
+    if (rtex.getCause() instanceof ConnectException) {
+      Logger.getAnonymousLogger().info(getNoRemoteGeoserverMsg());
+      return;
+    }
+  }
+  checkResponseList(responseList);
+}

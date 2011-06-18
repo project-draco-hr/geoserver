@@ -1,0 +1,42 @@
+{
+  if (isProperty(f.getLeft())) {
+    prefix((String)f.getLeft(),prefix,sb);
+  }
+ else {
+    sb.append(" ?");
+    objs.add(f.getLeft());
+  }
+  if (f.getRight() == null) {
+    sb.append(" IS");
+    if (f.getType() != Comparison.EQ) {
+      sb.append(" NOT");
+    }
+    sb.append(" NULL");
+  }
+ else {
+    sb.append(" ").append(f.getType());
+    if (f.getType() == Comparison.IN) {
+      if (isProperty(f.getRight())) {
+        sb.append(" elements(").append(f.getRight()).append(")");
+      }
+ else {
+        sb.append(" (");
+        for (        Object o : (List)f.getRight()) {
+          sb.append("?, ");
+          objs.add(o);
+        }
+        sb.setLength(sb.length() - 2);
+        sb.append(")");
+      }
+    }
+ else {
+      if (isProperty(f.getRight())) {
+        prefix((String)f.getRight(),prefix,sb);
+      }
+ else {
+        sb.append(" ?");
+        objs.add(f.getRight());
+      }
+    }
+  }
+}

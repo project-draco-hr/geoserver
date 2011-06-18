@@ -1,0 +1,25 @@
+{
+  boolean atLeastOneError=false;
+  boolean potentialPermit=false;
+  boolean atLeastOneDeny=false;
+  Result firstIndeterminateResult=null;
+  Iterator<? extends CombinerElement> it=ruleElements.iterator();
+  while (it.hasNext()) {
+    Rule rule=((RuleCombinerElement)(it.next())).getRule();
+    Result result=rule.evaluate(context);
+    int value=result.getDecision();
+    if (value == Result.DECISION_PERMIT)     return result;
+    if (value == Result.DECISION_INDETERMINATE) {
+      atLeastOneError=true;
+      if (firstIndeterminateResult == null)       firstIndeterminateResult=result;
+      if (rule.getEffect() == Result.DECISION_PERMIT)       potentialPermit=true;
+    }
+ else {
+      if (value == Result.DECISION_DENY)       atLeastOneDeny=true;
+    }
+  }
+  if (potentialPermit)   return firstIndeterminateResult;
+  if (atLeastOneDeny)   return new Result(Result.DECISION_DENY,context.getResourceId().encode());
+  if (atLeastOneError)   return firstIndeterminateResult;
+  return new Result(Result.DECISION_NOT_APPLICABLE,context.getResourceId().encode());
+}

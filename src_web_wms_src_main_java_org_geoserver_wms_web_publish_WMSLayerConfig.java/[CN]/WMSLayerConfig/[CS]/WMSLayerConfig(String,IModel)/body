@@ -1,0 +1,47 @@
+{
+  super(id,layerModel);
+  add(new CheckBox("queryableEnabled",new PropertyModel(layerModel,"queryable")));
+  WebMarkupContainer styleContainer=new WebMarkupContainer("styles");
+  add(styleContainer);
+  ResourceInfo resource=((LayerInfo)layerModel.getObject()).getResource();
+  styleContainer.setVisible(resource instanceof CoverageInfo || resource instanceof FeatureTypeInfo);
+  StylesModel styles=new StylesModel();
+  final PropertyModel defaultStyleModel=new PropertyModel(layerModel,"defaultStyle");
+  final DropDownChoice defaultStyle=new DropDownChoice("defaultStyle",defaultStyleModel,styles,new StyleChoiceRenderer());
+  defaultStyle.setRequired(true);
+  styleContainer.add(defaultStyle);
+  final Image defStyleImg=new Image("defaultStyleLegendGraphic");
+  defStyleImg.setOutputMarkupId(true);
+  styleContainer.add(defStyleImg);
+  String wmsURL=getRequest().getRelativePathPrefixToContextRoot();
+  wmsURL+=wmsURL.endsWith("/") ? "wms?" : "/wms?";
+  final LegendGraphicAjaxUpdater defaultStyleUpdater;
+  defaultStyleUpdater=new LegendGraphicAjaxUpdater(wmsURL,defStyleImg,defaultStyleModel);
+  defaultStyle.add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      defaultStyleUpdater.updateStyleImage(target);
+    }
+  }
+);
+  IModel stylesModel=LiveCollectionModel.set(new PropertyModel(layerModel,"styles"));
+  Palette extraStyles=new Palette("extraStyles",stylesModel,styles,new StyleNameRenderer(),10,false){
+    /** 
+ * Override otherwise the header is not i18n'ized
+ */
+    @Override public Component newSelectedHeader(    final String componentId){
+      return new Label(componentId,new ResourceModel("ExtraStylesPalette.selectedHeader"));
+    }
+    /** 
+ * Override otherwise the header is not i18n'ized
+ */
+    @Override public Component newAvailableHeader(    final String componentId){
+      return new Label(componentId,new ResourceModel("ExtraStylesPalette.availableHeader"));
+    }
+  }
+;
+  styleContainer.add(extraStyles);
+  TextField renderingBuffer=new TextField("renderingBuffer",new MapModel(new PropertyModel(layerModel,"metadata"),LayerInfo.BUFFER),Integer.class);
+  renderingBuffer.add(NumberValidator.minimum(0));
+  styleContainer.add(renderingBuffer);
+  add(new TextField("wmsPath",new PropertyModel(layerModel,"path")));
+}

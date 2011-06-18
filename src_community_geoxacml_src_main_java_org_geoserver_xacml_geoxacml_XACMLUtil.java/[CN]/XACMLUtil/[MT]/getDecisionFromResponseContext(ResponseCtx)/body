@@ -1,0 +1,29 @@
+{
+  Set<Result> results=responseCtx.getResults();
+  Set<String> resources=new HashSet<String>();
+  boolean hasPermit=false, hasDeny=false;
+  for (  Result result : results) {
+    int decision=result.getDecision();
+    resources.add(result.getResource());
+    if (decision == Result.DECISION_INDETERMINATE)     return Result.DECISION_INDETERMINATE;
+    if (decision == Result.DECISION_DENY) {
+      hasDeny=true;
+    }
+    if (decision == Result.DECISION_PERMIT) {
+      hasPermit=true;
+    }
+  }
+  if (hasDeny && hasPermit) {
+    logDecision(Result.DECISION_INDETERMINATE,resources);
+    return Result.DECISION_INDETERMINATE;
+  }
+  if (!hasDeny && !hasPermit) {
+    logDecision(Result.DECISION_NOT_APPLICABLE,resources);
+    return Result.DECISION_NOT_APPLICABLE;
+  }
+  if (hasDeny) {
+    logDecision(Result.DECISION_DENY,resources);
+    return Result.DECISION_DENY;
+  }
+  return Result.DECISION_PERMIT;
+}

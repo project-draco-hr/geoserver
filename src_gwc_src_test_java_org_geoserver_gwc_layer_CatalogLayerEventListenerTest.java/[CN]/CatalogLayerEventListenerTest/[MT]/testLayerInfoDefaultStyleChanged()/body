@@ -1,0 +1,22 @@
+{
+  final String oldName="oldStyle";
+  final String newName="newStyle";
+  StyleInfo oldStyle=mock(StyleInfo.class);
+  when(oldStyle.getName()).thenReturn(oldName);
+  StyleInfo newStyle=mock(StyleInfo.class);
+  when(newStyle.getName()).thenReturn(newName);
+  when(mockLayerInfo.getDefaultStyle()).thenReturn(newStyle);
+  CatalogModifyEvent modifyEvent=mock(CatalogModifyEvent.class);
+  when(modifyEvent.getSource()).thenReturn(mockLayerInfo);
+  when(modifyEvent.getPropertyNames()).thenReturn(Arrays.asList("defaultStyle"));
+  when(modifyEvent.getOldValues()).thenReturn(Collections.singletonList((Object)oldStyle));
+  when(modifyEvent.getNewValues()).thenReturn(Collections.singletonList((Object)newStyle));
+  GeoServerTileLayer tileLayer=mock(GeoServerTileLayer.class);
+  when(mockConfiguration.getTileLayer(eq(PREFIXED_RESOURCE_NAME))).thenReturn(tileLayer);
+  listener.handleModifyEvent(modifyEvent);
+  CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
+  when(postModifyEvent.getSource()).thenReturn(mockLayerInfo);
+  listener.handlePostModifyEvent(postModifyEvent);
+  verify(mockConfiguration).truncate(eq(PREFIXED_RESOURCE_NAME),eq(oldName));
+  verify(mockConfiguration).save(same(tileLayer));
+}

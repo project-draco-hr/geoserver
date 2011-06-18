@@ -1,0 +1,17 @@
+{
+  Set<Attribute> attrSet=map.get(id.toString());
+  if (attrSet == null) {
+    return callHelper(type,id,issuer,category,designatorType);
+  }
+  List<AttributeValue> attributes=new ArrayList<AttributeValue>();
+  for (  Attribute attr : attrSet) {
+    if ((attr.getType().equals(type)) && ((issuer == null) || ((attr.getIssuer() != null) && (attr.getIssuer().equals(issuer.toString()))))) {
+      attributes.add(attr.getValue());
+    }
+  }
+  if (attributes.size() == 0) {
+    if (logger.isLoggable(Level.FINE))     logger.fine("Attribute not in request: " + id.toString() + " ... querying AttributeFinder");
+    return callHelper(type,id,issuer,category,designatorType);
+  }
+  return new EvaluationResult(new BagAttribute(type,attributes));
+}

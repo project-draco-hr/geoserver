@@ -1,0 +1,19 @@
+{
+  LOGGER.info("Loading " + schema.getTypeName());
+  try {
+    dataStore.createSchema(schema);
+  }
+ catch (  Exception e) {
+    try {
+      if (dataStore.getSchema(schema.getName()) == null) {
+        throw e;
+      }
+    }
+ catch (    Exception e2) {
+      throw e;
+    }
+    FeatureStore store=(FeatureStore)dataStore.getFeatureSource(schema.getName());
+    store.removeFeatures(Filter.INCLUDE);
+  }
+  return dataStore.getFeatureWriterAppend(schema.getTypeName(),Transaction.AUTO_COMMIT);
+}

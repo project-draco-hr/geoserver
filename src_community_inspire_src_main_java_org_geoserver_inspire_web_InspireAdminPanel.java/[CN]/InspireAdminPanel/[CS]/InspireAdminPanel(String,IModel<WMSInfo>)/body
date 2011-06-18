@@ -1,0 +1,28 @@
+{
+  super(id,model);
+  PropertyModel<MetadataMap> metadata=new PropertyModel<MetadataMap>(model,"metadata");
+  add(new LanguageDropDownChoice("language",new MapModel(metadata,LANGUAGE.key)));
+  TextField textField=new TextField("metadataURL",new MapModel(metadata,SERVICE_METADATA_URL.key));
+  add(textField);
+  textField.add(new AttributeModifier("title",true,new ResourceModel("InspireAdminPanel.metadataURL.title")));
+  final Map<String,String> mdUrlTypes=new HashMap<String,String>();
+  mdUrlTypes.put("application/vnd.ogc.csw.GetRecordByIdResponse_xml","CSW GetRecordById Response");
+  mdUrlTypes.put("application/vnd.iso.19139+xml","ISO 19139 ServiceMetadata record");
+  IModel<String> urlTypeModel=new MapModel(metadata,SERVICE_METADATA_TYPE.key);
+  IChoiceRenderer<String> urlTypeChoiceRenderer=new IChoiceRenderer<String>(){
+    private static final long serialVersionUID=1L;
+    public Object getDisplayValue(    final String key){
+      final String resourceKey="InspireAdminPanel.metadataURLType." + key;
+      final String defaultValue=key;
+      final String displayValue=new ResourceModel(resourceKey,defaultValue).getObject();
+      return displayValue;
+    }
+    public String getIdValue(    final String key,    int index){
+      return key;
+    }
+  }
+;
+  List<String> urlTypeChoices=new ArrayList<String>(mdUrlTypes.keySet());
+  DropDownChoice<String> serviceMetadataRecordType=new DropDownChoice<String>("metadataURLType",urlTypeModel,urlTypeChoices,urlTypeChoiceRenderer);
+  add(serviceMetadataRecordType);
+}

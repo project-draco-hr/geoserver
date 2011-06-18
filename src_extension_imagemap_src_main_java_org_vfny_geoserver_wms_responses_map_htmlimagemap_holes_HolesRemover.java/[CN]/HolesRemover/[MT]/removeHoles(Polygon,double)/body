@@ -1,0 +1,13 @@
+{
+  GeometryFactory gFac=new GeometryFactory(poly.getPrecisionModel(),poly.getSRID());
+  LineString result=poly.getExteriorRing();
+  for (int holeCount=0; holeCount < poly.getNumInteriorRing(); holeCount++) {
+    LineString hole=poly.getInteriorRingN(holeCount);
+    if (!skipHole(hole,scale)) {
+      HolesRemover remover=new HolesRemover(result,hole,gFac);
+      result=remover.cutHole();
+    }
+  }
+  LinearRing resultRing=gFac.createLinearRing(result.getCoordinates());
+  return gFac.createPolygon(resultRing,new LinearRing[]{});
+}

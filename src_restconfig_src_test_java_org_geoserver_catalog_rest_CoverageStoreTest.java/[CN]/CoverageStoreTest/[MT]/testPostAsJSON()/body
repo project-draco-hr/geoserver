@@ -1,0 +1,11 @@
+{
+  File f=setupNewCoverageStore();
+  String json="{'coverageStore':{" + "'name':'newCoverageStore'," + "'type': 'WorldImage',"+ "'url':'" + f.getAbsolutePath().replace('\\','/') + "',"+ "'workspace':'wcs',"+ "}"+ "}";
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/wcs/coveragestores",json,"text/json");
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(response.getHeader("Location"));
+  assertTrue(response.getHeader("Location").endsWith("/workspaces/wcs/coveragestores/newCoverageStore"));
+  CoverageStoreInfo newCoverageStore=catalog.getCoverageStoreByName("newCoverageStore");
+  assertNotNull(newCoverageStore);
+  assertNotNull(newCoverageStore.getFormat());
+}

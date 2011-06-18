@@ -1,0 +1,14 @@
+{
+  FactoryRegistry writerRegistry=getServiceRegistry();
+  Iterator<DXFWriter> it=writerRegistry.getServiceProviders(DXFWriter.class,null,null);
+  DXFWriter candidate;
+  while (it.hasNext()) {
+    candidate=it.next();
+    LOGGER.log(Level.FINE,"Evaluating candidate: " + candidate.getDescription());
+    if (candidate.supportsVersion(version)) {
+      LOGGER.log(Level.FINE,"Chosen candidate: " + candidate.getDescription());
+      return candidate.newInstance(writer);
+    }
+  }
+  return null;
+}

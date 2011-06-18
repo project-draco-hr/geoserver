@@ -1,0 +1,33 @@
+{
+  Map kvp=new HashMap();
+  String paramName;
+  String paramValue;
+  for (Enumeration pnames=request.getParameterNames(); pnames.hasMoreElements(); ) {
+    paramName=(String)pnames.nextElement();
+    paramValue=request.getParameter(paramName);
+    kvp.put(paramName.toUpperCase(),paramValue);
+  }
+  Class clazz=GeoServerImpl.unwrap(service).getClass();
+  Constructor constructor=null;
+  while (clazz != null && constructor == null) {
+    try {
+      constructor=delegateClass.getConstructor(new Class[]{Map.class,clazz});
+    }
+ catch (    NoSuchMethodException e) {
+      Class[] classes=clazz.getInterfaces();
+      for (      Class c : classes) {
+        try {
+          constructor=delegateClass.getConstructor(new Class[]{Map.class,c});
+        }
+ catch (        NoSuchMethodException e2) {
+        }
+      }
+      clazz=clazz.getSuperclass();
+    }
+  }
+  if (constructor == null) {
+    throw new IllegalStateException("No appropriate constructor");
+  }
+  KvpRequestReader delegate=(KvpRequestReader)constructor.newInstance(new Object[]{kvp,service});
+  return delegate.getRequest(request);
+}

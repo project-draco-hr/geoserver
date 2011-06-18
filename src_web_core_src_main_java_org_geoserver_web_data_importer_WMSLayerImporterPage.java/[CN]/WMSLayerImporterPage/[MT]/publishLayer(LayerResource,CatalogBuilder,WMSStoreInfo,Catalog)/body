@@ -1,0 +1,36 @@
+{
+  WMSLayerInfo wli;
+  LayerInfo li;
+  try {
+    wli=builder.buildWMSLayer(layer.getLocalName());
+    li=builder.buildLayer(wli);
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Error building WMS cascading layer " + layer.getLocalName(),e);
+    layer.setStatus(LayerStatus.ERROR);
+    layer.setError(e.getMessage());
+    errorCount++;
+    return;
+  }
+  WMSLayerInfo exists=catalog.getResourceByStore(store,li.getName(),WMSLayerInfo.class);
+  if (exists != null) {
+    builder.updateWMSLayer(exists,wli);
+    layer.setStatus(LayerStatus.UPDATED);
+    updateCount++;
+  }
+ else {
+    try {
+      catalog.add(wli);
+      catalog.add(li);
+      layer.setStatus(LayerStatus.NEWLY_PUBLISHED);
+      importCount++;
+    }
+ catch (    Exception e) {
+      catalog.remove(wli);
+      LOGGER.log(Level.WARNING,"Error auto configuring WMS cascading layer " + li.getName(),e);
+      layer.setStatus(LayerStatus.ERROR);
+      layer.setError(e.getMessage());
+      errorCount++;
+    }
+  }
+}

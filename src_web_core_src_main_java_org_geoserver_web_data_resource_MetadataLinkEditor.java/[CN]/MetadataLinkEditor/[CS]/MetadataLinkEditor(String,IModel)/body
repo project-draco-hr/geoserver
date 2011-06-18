@@ -1,0 +1,56 @@
+{
+  super(id,resourceModel);
+  final WebMarkupContainer container=new WebMarkupContainer("container");
+  container.setOutputMarkupId(true);
+  add(container);
+  table=new WebMarkupContainer("table");
+  table.setOutputMarkupId(true);
+  container.add(table);
+  links=new ListView("links",new PropertyModel(resourceModel,"metadataLinks")){
+    @Override protected void populateItem(    ListItem item){
+      item.add(new SimpleAttributeModifier("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
+      DropDownChoice dropDownChoice=new DropDownChoice("type",new PropertyModel(item.getModel(),"metadataType"),LINK_TYPES);
+      dropDownChoice.setRequired(true);
+      item.add(dropDownChoice);
+      FormComponentFeedbackBorder urlBorder=new FormComponentFeedbackBorder("urlBorder");
+      item.add(urlBorder);
+      TextField format=new TextField("format",new PropertyModel(item.getModel(),"type"));
+      format.setRequired(true);
+      item.add(format);
+      TextField url=new TextField("metadataLinkURL",new PropertyModel(item.getModel(),"content"));
+      url.add(new UrlValidator());
+      url.setRequired(true);
+      urlBorder.add(url);
+      AjaxLink link=new AjaxLink("removeLink",item.getModel()){
+        @Override public void onClick(        AjaxRequestTarget target){
+          ResourceInfo ri=(ResourceInfo)resourceModel.getObject();
+          ri.getMetadataLinks().remove(getModelObject());
+          updateLinksVisibility();
+          target.addComponent(container);
+        }
+      }
+;
+      item.add(link);
+    }
+  }
+;
+  links.setReuseItems(true);
+  table.add(links);
+  noMetadata=new Label("noLinks",new ResourceModel("noMetadataLinksSoFar"));
+  container.add(noMetadata);
+  updateLinksVisibility();
+  AjaxButton button=new AjaxButton("addlink"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      ResourceInfo ri=(ResourceInfo)resourceModel.getObject();
+      MetadataLinkInfo link=ri.getCatalog().getFactory().createMetadataLink();
+      ;
+      link.setMetadataType(LINK_TYPES.get(0));
+      link.setType("text/plain");
+      ri.getMetadataLinks().add(link);
+      updateLinksVisibility();
+      target.addComponent(container);
+    }
+  }
+;
+  add(button);
+}

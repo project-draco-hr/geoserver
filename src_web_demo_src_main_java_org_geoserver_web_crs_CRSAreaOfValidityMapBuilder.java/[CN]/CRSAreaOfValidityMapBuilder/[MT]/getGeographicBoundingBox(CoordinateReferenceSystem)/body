@@ -1,0 +1,21 @@
+{
+  GeographicBoundingBox envelope=CRS.getGeographicBoundingBox(crs);
+  if (envelope == null) {
+    return null;
+  }
+  final double westBoundLongitude=envelope.getWestBoundLongitude();
+  final double eastBoundLongitude=envelope.getEastBoundLongitude();
+  final double southBoundLatitude=envelope.getSouthBoundLatitude();
+  final double northBoundLatitude=envelope.getNorthBoundLatitude();
+  final int numSteps=80;
+  Geometry geogBoundingGeom;
+  if (westBoundLongitude < eastBoundLongitude) {
+    geogBoundingGeom=createBoundingPolygon(westBoundLongitude,eastBoundLongitude,southBoundLatitude,northBoundLatitude,numSteps);
+  }
+ else {
+    Polygon eastPolygon=createBoundingPolygon(-180,eastBoundLongitude,southBoundLatitude,northBoundLatitude,numSteps);
+    Polygon westPolygon=createBoundingPolygon(westBoundLongitude,180,southBoundLatitude,northBoundLatitude,numSteps);
+    geogBoundingGeom=gf.createMultiPolygon(new Polygon[]{eastPolygon,westPolygon});
+  }
+  return geogBoundingGeom;
+}

@@ -1,0 +1,26 @@
+{
+  for (Iterator n=namespaces.entrySet().iterator(); n.hasNext(); ) {
+    Map.Entry entry=(Map.Entry)n.next();
+    if (entry.getKey() == null || "".equals(entry.getKey())) {
+      continue;
+    }
+    NamespaceInfo namespace=factory.createNamespace();
+    namespace.setPrefix((String)entry.getKey());
+    namespace.setURI((String)entry.getValue());
+    catalog.add(namespace);
+    WorkspaceInfo workspace=factory.createWorkspace();
+    workspace.setName((String)entry.getKey());
+    catalog.add(workspace);
+    if (namespace.getURI().equals(namespaces.get(""))) {
+      catalog.setDefaultNamespace(namespace);
+      catalog.setDefaultWorkspace(workspace);
+    }
+    LOGGER.info("Loaded namespace '" + namespace.getPrefix() + "' ("+ namespace.getURI()+ ")");
+  }
+  if (catalog.getDefaultNamespace() != null) {
+    LOGGER.info("Default namespace: '" + catalog.getDefaultNamespace().getPrefix() + "'");
+  }
+ else {
+    LOGGER.warning("No default namespace set.");
+  }
+}

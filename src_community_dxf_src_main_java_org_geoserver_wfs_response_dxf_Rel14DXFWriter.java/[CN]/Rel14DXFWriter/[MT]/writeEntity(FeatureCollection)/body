@@ -1,0 +1,25 @@
+{
+  String layer=getLayerName(coll);
+  if (geometryAsBlock) {
+    for (    String name : blockNames.values())     writeInsert(layer,name);
+  }
+ else {
+    FeatureIterator<SimpleFeature> iter=coll.features();
+    try {
+      while (iter.hasNext()) {
+        SimpleFeature f=iter.next();
+        String fid=f.getID();
+        if (blockNames.containsKey(fid)) {
+          String name=blockNames.get(fid);
+          writeInsert(layer,name);
+        }
+ else {
+          writeGeometry(layer,"1F",(Geometry)f.getDefaultGeometry());
+        }
+      }
+    }
+  finally {
+      coll.close(iter);
+    }
+  }
+}

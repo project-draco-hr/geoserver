@@ -1,0 +1,19 @@
+{
+  if (closed) {
+    throw new IOException("This output stream has already been closed");
+  }
+  gzipstream.finish();
+  byte[] bytes=baos.toByteArray();
+  String contentLength=Integer.toString(bytes.length);
+  if (response.containsHeader("Content-Length")) {
+    response.setHeader("Content-Length",contentLength);
+  }
+ else {
+    response.addHeader("Content-Length",contentLength);
+  }
+  response.addHeader("Content-Encoding","gzip");
+  output.write(bytes);
+  output.flush();
+  output.close();
+  closed=true;
+}

@@ -1,0 +1,40 @@
+{
+  StyleBuilder sb=new StyleBuilder();
+  ColorMap originalColorMap=rasterSymbolizer.getColorMap();
+  ColorMap resampledColorMap=null;
+  int numClasses=originalColorMap.getColorMapEntries().length;
+  if (classes > 0) {
+    final String[] labels=new String[classes];
+    final double[] quantities=new double[classes];
+    ColorRamp colorRamp=null;
+    double res=(max - min) / (classes - 1);
+    for (int c=0; c < classes; c++) {
+      labels[c]="values";
+      quantities[c]=min + res * c;
+    }
+switch (ramp) {
+case RED:
+      colorRamp=new RedColorRamp();
+    break;
+case BLUE:
+  colorRamp=new BlueColorRamp();
+break;
+case GRAY:
+colorRamp=new GrayColorRamp();
+break;
+case RANDOM:
+colorRamp=new RandomColorRamp();
+break;
+}
+colorRamp.setNumClasses(classes);
+resampledColorMap=sb.createColorMap(labels,quantities,colorRamp.getRamp().toArray(new Color[1]),ColorMap.TYPE_RAMP);
+FilterFactory2 filterFactory=CommonFactoryFinder.getFilterFactory2(null);
+resampledColorMap.getColorMapEntry(0).setOpacity(filterFactory.literal(0));
+}
+ else {
+return defaultStyle.getStyle();
+}
+rasterSymbolizer.setColorMap(resampledColorMap);
+Style style=sb.createStyle(layerName,rasterSymbolizer);
+return style;
+}

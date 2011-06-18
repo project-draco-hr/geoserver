@@ -1,0 +1,34 @@
+{
+  org.geotools.util.Utilities.ensureNonNull("fc",fc);
+  Utilities.ensureNonNull("destination",destination);
+  if (destination.exists()) {
+    if (destination.isDirectory())     throw new IOException("The provided destination maps to a directory:" + destination);
+    if (!destination.canWrite())     throw new IOException("The provided destination maps to an existing file that cannot be deleted:" + destination);
+    if (!destination.delete())     throw new IOException("The provided destination maps to an existing file that cannot be deleted:" + destination);
+  }
+  final DataStoreFactorySpi dataStoreFactory=new ShapefileDataStoreFactory();
+  Map<String,Serializable> params=new HashMap<String,Serializable>();
+  params.put("url",destination.toURI().toURL());
+  params.put("create spatial index",Boolean.TRUE);
+  ShapefileDataStore store=null;
+  Transaction transaction=null;
+  try {
+    store=(ShapefileDataStore)dataStoreFactory.createNewDataStore(params);
+    store.createSchema(fc.getSchema());
+    final SimpleFeatureStore featureStore=(SimpleFeatureStore)store.getFeatureSource(fc.getSchema().getName());
+    transaction=featureStore.getTransaction();
+    featureStore.addFeatures(fc);
+  }
+ catch (  IOException e) {
+    e.printStackTrace();
+  }
+ finally {
+    if (transaction != null) {
+      transaction.commit();
+      transaction.close();
+    }
+    if (store != null) {
+      store.dispose();
+    }
+  }
+}

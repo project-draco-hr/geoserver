@@ -1,0 +1,31 @@
+{
+  Class<?> factoryClass=null;
+  Catalog catalog=storeInfo.getCatalog();
+  final ResourcePool resourcePool=catalog.getResourcePool();
+  if (storeInfo instanceof DataStoreInfo) {
+    DataAccessFactory dataStoreFactory=null;
+    try {
+      dataStoreFactory=resourcePool.getDataStoreFactory((DataStoreInfo)storeInfo);
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.INFO,"factory class for storeInfo " + storeInfo.getName() + " not found",e);
+    }
+    if (dataStoreFactory != null) {
+      return getStoreIcon(dataStoreFactory.getClass());
+    }
+  }
+ else   if (storeInfo instanceof CoverageStoreInfo) {
+    AbstractGridFormat format=resourcePool.getGridCoverageFormat((CoverageStoreInfo)storeInfo);
+    if (format != null) {
+      return getStoreIcon(format.getClass());
+    }
+  }
+ else   if (storeInfo instanceof WMSStoreInfo) {
+    return MAP_STORE_ICON;
+  }
+ else {
+    throw new IllegalStateException(storeInfo.getClass().getName());
+  }
+  LOGGER.info("Could not determine icon for StoreInfo " + storeInfo.getName() + ". Using 'unknown' icon.");
+  return UNKNOWN_ICON;
+}

@@ -1,0 +1,29 @@
+{
+  FeatureTypeInfo typeInfo=(FeatureTypeInfo)layer.getResource();
+  DimensionInfo timeInfo=typeInfo.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+  DimensionInfo elevInfo=typeInfo.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
+  boolean hasTime=timeInfo != null && timeInfo.isEnabled();
+  boolean hasElevation=elevInfo != null && elevInfo.isEnabled();
+  if (!hasTime && !hasElevation) {
+    return;
+  }
+  if (mode == Mode.WMS11) {
+    declareWMS11Dimensions(hasTime,hasElevation);
+  }
+  if (hasTime) {
+    try {
+      handleTimeDimensionVector(typeInfo);
+    }
+ catch (    IOException e) {
+      throw new RuntimeException("Failed to handle time attribute for layer " + e);
+    }
+  }
+  if (hasElevation) {
+    try {
+      handleElevationDimensionVector(typeInfo);
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+}

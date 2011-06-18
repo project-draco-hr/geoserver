@@ -1,0 +1,220 @@
+{
+  if (LOGGER.isLoggable(Level.FINEST)) {
+    LOGGER.finest(new StringBuffer("execute CoverageRequest response. Called request is: ").append(request).toString());
+  }
+  WCSInfo wcs=getServiceInfo();
+  CoverageInfo meta=null;
+  GridCoverage2D coverage=null;
+  try {
+    CodeType identifier=request.getIdentifier();
+    if (identifier == null)     throw new WcsException("Internal error, the coverage identifier must not be null",InvalidParameterValue,"identifier");
+    meta=catalog.getCoverageByName(identifier.getValue());
+    if (meta == null) {
+      throw new WcsException("No such coverage: " + request.getIdentifier().getValue());
+    }
+    checkDomainSubset(meta,request.getDomainSubset(),wcs);
+    checkRangeSubset(meta,request.getRangeSubset());
+    checkOutput(meta,request.getOutput());
+    final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)meta.getGridCoverageReader(null,WCSUtils.getReaderHints(wcs));
+    final GeneralEnvelope originalEnvelope=reader.getOriginalEnvelope();
+    final BoundingBoxType bbox=request.getDomainSubset().getBoundingBox();
+    final CoordinateReferenceSystem nativeCRS=originalEnvelope.getCoordinateReferenceSystem();
+    final GeneralEnvelope requestedEnvelopeInSourceCRS;
+    final GeneralEnvelope requestedEnvelope;
+    MathTransform bboxToNativeTx=null;
+    if (bbox != null) {
+      double[] lowerCorner=new double[bbox.getLowerCorner().size()];
+      double[] upperCorner=new double[bbox.getUpperCorner().size()];
+      for (int i=0; i < lowerCorner.length; i++) {
+        lowerCorner[i]=(Double)bbox.getLowerCorner().get(i);
+        upperCorner[i]=(Double)bbox.getUpperCorner().get(i);
+      }
+      requestedEnvelope=new GeneralEnvelope(lowerCorner,upperCorner);
+      if (bbox.getCrs() == null) {
+        requestedEnvelope.setCoordinateReferenceSystem(nativeCRS);
+        requestedEnvelopeInSourceCRS=requestedEnvelope;
+      }
+ else {
+        final CoordinateReferenceSystem bboxCRS=CRS.decode(bbox.getCrs());
+        requestedEnvelope.setCoordinateReferenceSystem(bboxCRS);
+        bboxToNativeTx=CRS.findMathTransform(bboxCRS,nativeCRS,true);
+        if (!bboxToNativeTx.isIdentity()) {
+          requestedEnvelopeInSourceCRS=CRS.transform(bboxToNativeTx,requestedEnvelope);
+          requestedEnvelopeInSourceCRS.setCoordinateReferenceSystem(nativeCRS);
+        }
+ else         requestedEnvelopeInSourceCRS=new GeneralEnvelope(requestedEnvelope);
+      }
+    }
+ else {
+      requestedEnvelopeInSourceCRS=reader.getOriginalEnvelope();
+      requestedEnvelope=requestedEnvelopeInSourceCRS;
+    }
+    final GridCrsType gridCRS=request.getOutput().getGridCRS();
+    final CoordinateReferenceSystem targetCRS;
+    if (gridCRS == null)     targetCRS=reader.getOriginalEnvelope().getCoordinateReferenceSystem();
+ else     targetCRS=CRS.decode(gridCRS.getGridBaseCRS());
+    int elevationLevels=0;
+    double[] elevations=null;
+    MathTransform gridToCRS=reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER);
+    if (gridCRS != null) {
+      Double[] origin=(Double[])gridCRS.getGridOrigin();
+      Double[] offsets=(Double[])gridCRS.getGridOffsets();
+      if (origin == null) {
+        origin=new Double[]{0.0,0.0};
+      }
+      if (offsets == null) {
+        if (!(gridToCRS instanceof AffineTransform2D) && !(gridToCRS instanceof IdentityTransform))         throw new WcsException("Internal error, the coverage we're playing with does not have an affine transform...");
+        if (gridToCRS instanceof IdentityTransform) {
+          if (gridCRS.getGridType().equals(GridType.GT2dSimpleGrid.getXmlConstant()) || gridCRS.getGridType().equals(GridType.GT2dGridIn2dCrs.getXmlConstant()))           offsets=new Double[]{1.0,1.0};
+ else           offsets=new Double[]{1.0,0.0,0.0,0.0,1.0,0.0};
+        }
+ else {
+          AffineTransform2D affine=(AffineTransform2D)gridToCRS;
+          if (gridCRS.getGridType().equals(GridType.GT2dSimpleGrid.getXmlConstant()) || gridCRS.getGridType().equals(GridType.GT2dGridIn2dCrs.getXmlConstant()))           offsets=new Double[]{affine.getScaleX(),affine.getScaleY()};
+ else           offsets=new Double[]{affine.getScaleX(),affine.getShearX(),affine.getShearY(),affine.getScaleY()};
+        }
+      }
+      AffineTransform tx;
+      if (gridCRS.getGridType().equals(GridType.GT2dSimpleGrid.getXmlConstant())) {
+        tx=new AffineTransform(offsets[0],0,0,offsets[1],origin[0],origin[1]);
+      }
+ else       if (gridCRS.getGridType().equals(GridType.GT2dGridIn2dCrs.getXmlConstant())) {
+        tx=new AffineTransform(offsets[0],offsets[1],offsets[2],offsets[3],origin[0],origin[1]);
+      }
+ else {
+        tx=new AffineTransform(offsets[0],offsets[4],offsets[1],offsets[3],origin[0],origin[1]);
+        if (origin.length != 3 || offsets.length != 6)         throw new WcsException("",InvalidParameterValue,"GridCRS");
+        elevationLevels=(int)Math.round(requestedEnvelope.getUpperCorner().getOrdinate(2) - requestedEnvelope.getLowerCorner().getOrdinate(2));
+        if (elevationLevels > 0) {
+          elevations=new double[elevationLevels];
+          elevations[0]=requestedEnvelope.getLowerCorner().getOrdinate(2);
+          elevations[elevationLevels - 1]=requestedEnvelope.getUpperCorner().getOrdinate(2);
+          if (elevationLevels > 2) {
+            final int adjustedLevelsNum=elevationLevels - 1;
+            double step=(elevations[elevationLevels - 1] - elevations[0]) / adjustedLevelsNum;
+            for (int i=1; i < adjustedLevelsNum; i++)             elevations[i]=elevations[i - 1] + step;
+          }
+        }
+      }
+      gridToCRS=new AffineTransform2D(tx);
+    }
+    final List<Date> timeValues=new LinkedList<Date>();
+    TimeSequenceType temporalSubset=request.getDomainSubset().getTemporalSubset();
+    if (temporalSubset != null && temporalSubset.getTimePosition() != null && temporalSubset.getTimePosition().size() > 0) {
+      for (Iterator it=temporalSubset.getTimePosition().iterator(); it.hasNext(); ) {
+        Date tp=(Date)it.next();
+        timeValues.add(tp);
+      }
+    }
+ else     if (temporalSubset != null && temporalSubset.getTimePeriod() != null && temporalSubset.getTimePeriod().size() > 0) {
+      for (Iterator it=temporalSubset.getTimePeriod().iterator(); it.hasNext(); ) {
+        TimePeriodType tp=(TimePeriodType)it.next();
+        Date beginning=(Date)tp.getBeginPosition();
+        Date ending=(Date)tp.getEndPosition();
+        timeValues.add(beginning);
+        timeValues.add(ending);
+      }
+    }
+    final GeneralEnvelope intersectionEnvelopeInSourceCRS=new GeneralEnvelope(requestedEnvelopeInSourceCRS);
+    intersectionEnvelopeInSourceCRS.intersect(originalEnvelope);
+    final GeneralEnvelope intersectionEnvelope=bboxToNativeTx.isIdentity() ? new GeneralEnvelope(intersectionEnvelopeInSourceCRS) : CRS.transform(bboxToNativeTx.inverse(),intersectionEnvelopeInSourceCRS);
+    intersectionEnvelope.setCoordinateReferenceSystem(targetCRS);
+    final GridGeometry2D requestedGridGeometry=new GridGeometry2D(PixelInCell.CELL_CORNER,gridToCRS,intersectionEnvelopeInSourceCRS,null);
+    final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
+    GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,meta.getParameters());
+    readParameters=(readParameters != null ? readParameters : new GeneralParameterValue[0]);
+    final ParameterValue requestedGridGeometryParam=new DefaultParameterDescriptor(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString(),GeneralGridGeometry.class,null,requestedGridGeometry).createValue();
+    final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
+    ParameterValue time=null;
+    boolean hasTime=timeValues.size() > 0;
+    ParameterValue elevation=null;
+    boolean hasElevation=elevations != null && !Double.isNaN(elevations[0]);
+    if (hasElevation || hasTime) {
+      for (      GeneralParameterDescriptor pd : parameterDescriptors) {
+        final String code=pd.getName().getCode();
+        if (code.equalsIgnoreCase("TIME")) {
+          time=(ParameterValue)pd.createValue();
+          time.setValue(timeValues);
+        }
+        if (code.equalsIgnoreCase("ELEVATION")) {
+          elevation=(ParameterValue)pd.createValue();
+          elevation.setValue(elevations[0]);
+        }
+        if ((hasElevation && elevation != null && hasTime && time != null) || !hasElevation && hasTime && time != null || hasElevation && elevation != null && !hasTime)         break;
+      }
+    }
+    int addedParams=1 + (hasTime ? 1 : 0) + (hasElevation ? 1 : 0);
+    GeneralParameterValue[] readParametersClone=new GeneralParameterValue[readParameters.length + addedParams--];
+    System.arraycopy(readParameters,0,readParametersClone,0,readParameters.length);
+    readParametersClone[readParameters.length + addedParams--]=requestedGridGeometryParam;
+    if (hasTime)     readParametersClone[readParameters.length + addedParams--]=time;
+    if (hasElevation)     readParametersClone[readParameters.length + addedParams--]=elevation;
+    readParameters=readParametersClone;
+    WCSUtils.checkInputLimits(wcs,meta,reader,requestedGridGeometry);
+    coverage=(GridCoverage2D)reader.read(readParameters);
+    if ((coverage == null) || !(coverage instanceof GridCoverage2D)) {
+      throw new IOException("The requested coverage could not be found.");
+    }
+    WCSUtils.checkInputLimits(wcs,coverage);
+    GridCoverage2D bandSelectedCoverage=coverage;
+    String interpolationType=null;
+    if (request.getRangeSubset() != null) {
+      if (request.getRangeSubset().getFieldSubset().size() > 1) {
+        throw new WcsException("Multi field coverages are not supported yet");
+      }
+      FieldSubsetType field=(FieldSubsetType)request.getRangeSubset().getFieldSubset().get(0);
+      interpolationType=field.getInterpolationType();
+      if (field.getAxisSubset().size() > 1) {
+        throw new WcsException("Multi axis coverages are not supported yet");
+      }
+      if (field.getAxisSubset().size() == 1) {
+        List<CoverageDimensionInfo> dimensions=meta.getDimensions();
+        Map<String,Integer> dimensionMap=new HashMap<String,Integer>();
+        for (int i=0; i < dimensions.size(); i++) {
+          String keyName=dimensions.get(i).getName().replace(' ','_');
+          dimensionMap.put(keyName,i);
+        }
+        AxisSubsetType axisSubset=(AxisSubsetType)field.getAxisSubset().get(0);
+        List keys=axisSubset.getKey();
+        int[] bands=new int[keys.size()];
+        for (int j=0; j < bands.length; j++) {
+          final String key=(String)keys.get(j);
+          Integer index=dimensionMap.get(key);
+          if (index == null)           throw new WcsException("Unknown field/axis/key combination " + field.getIdentifier().getValue() + "/"+ axisSubset.getIdentifier()+ "/"+ key);
+          bands[j]=index;
+        }
+        try {
+          bandSelectedCoverage=(GridCoverage2D)WCSUtils.bandSelect(coverage,bands);
+        }
+ catch (        WcsException e) {
+          throw new WcsException(e.getLocalizedMessage());
+        }
+      }
+    }
+    Interpolation interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+    if (interpolationType != null) {
+      if (interpolationType.equalsIgnoreCase("bilinear")) {
+        interpolation=Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
+      }
+ else       if (interpolationType.equalsIgnoreCase("bicubic")) {
+        interpolation=Interpolation.getInstance(Interpolation.INTERP_BICUBIC);
+      }
+ else       if (interpolationType.equalsIgnoreCase("nearest")) {
+        interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+      }
+    }
+    final GridGeometry2D destinationGridGeometry=new GridGeometry2D(PixelInCell.CELL_CORNER,gridToCRS,intersectionEnvelope,null);
+    WCSUtils.checkOutputLimits(wcs,destinationGridGeometry.getGridRange2D(),bandSelectedCoverage.getRenderedImage().getSampleModel());
+    if (!CRS.equalsIgnoreMetadata(nativeCRS,targetCRS) || !bandSelectedCoverage.getGridGeometry().equals(destinationGridGeometry)) {
+      final GridCoverage2D reprojectedCoverage=WCSUtils.resample(bandSelectedCoverage,nativeCRS,targetCRS,destinationGridGeometry,interpolation);
+      return new GridCoverage[]{reprojectedCoverage};
+    }
+ else {
+      return new GridCoverage[]{bandSelectedCoverage};
+    }
+  }
+ catch (  Throwable e) {
+    if (e instanceof WcsException)     throw (WcsException)e;
+ else     throw new WcsException(e);
+  }
+}

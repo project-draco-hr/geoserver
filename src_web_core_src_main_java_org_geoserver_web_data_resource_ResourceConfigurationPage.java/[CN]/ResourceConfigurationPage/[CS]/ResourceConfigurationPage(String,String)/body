@@ -1,0 +1,22 @@
+{
+  LayerInfo layer;
+  if (workspaceName != null) {
+    NamespaceInfo ns=getCatalog().getNamespaceByPrefix(workspaceName);
+    if (ns == null) {
+      throw new RuntimeException("Could not find workspace " + workspaceName);
+    }
+    String nsURI=ns.getURI();
+    layer=getCatalog().getLayerByName(new NameImpl(nsURI,layerName));
+  }
+ else {
+    layer=getCatalog().getLayerByName(layerName);
+  }
+  if (layer == null) {
+    error(new ParamResourceModel("ResourceConfigurationPage.notFound",this,layerName).getString());
+    setResponsePage(LayerPage.class);
+    return;
+  }
+  setup(getCatalog().getResource(layer.getResource().getId(),ResourceInfo.class),layer);
+  this.isNew=false;
+  initComponents();
+}

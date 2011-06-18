@@ -1,0 +1,47 @@
+{
+  Assert.notNull(webMap,"webMap is not set");
+  if (!(webMap instanceof RenderedImageMap)) {
+    throw new IllegalArgumentException("Only RenderedImageMaps are supported so far: " + webMap.getClass().getName());
+  }
+  final RenderedImageMapResponse mapEncoder;
+{
+    final Response responseEncoder=mediator.getResponseEncoder(responseFormat,webMap);
+    mapEncoder=(RenderedImageMapResponse)responseEncoder;
+  }
+  RenderedImageMap tileMap=(RenderedImageMap)webMap;
+  if (this.tiles.length > 1) {
+    final Rectangle tileDim=this.tiles[tileIdx];
+    final RenderedImage tile=createTile(tileDim.x,tileDim.y,tileDim.width,tileDim.height);
+    final String mimeType=webMap.getMimeType();
+    final WMSMapContext tileContext;
+{
+      final WMSMapContext metaTileContext=((RenderedImageMap)webMap).getMapContext();
+      tileContext=new WMSMapContext();
+      tileContext.setRequest(metaTileContext.getRequest());
+      tileContext.setBgColor(metaTileContext.getBgColor());
+      tileContext.setMapWidth(tileDim.width);
+      tileContext.setMapHeight(tileDim.height);
+      tileContext.setPaletteInverter(metaTileContext.getPaletteInverter());
+      tileContext.setTransparent(tileContext.isTransparent());
+      long[][] tileIndexes=getTilesGridPositions();
+      BoundingBox tileBounds=gridSubset.boundsFromIndex(tileIndexes[tileIdx]);
+      ReferencedEnvelope tilebbox=new ReferencedEnvelope(metaTileContext.getCoordinateReferenceSystem());
+      tilebbox.init(tileBounds.getMinX(),tileBounds.getMaxX(),tileBounds.getMinY(),tileBounds.getMaxY());
+      tileContext.setAreaOfInterest(tilebbox);
+    }
+    tileMap=new RenderedImageMap(tileContext,tile,mimeType);
+  }
+  try {
+    OutputStream outStream=target.getOutputStream();
+    try {
+      mapEncoder.write(tileMap,outStream,null);
+      return true;
+    }
+  finally {
+      outStream.close();
+    }
+  }
+  finally {
+    tileMap.dispose();
+  }
+}

@@ -1,0 +1,35 @@
+{
+  RequestCtx request=null;
+  try {
+    request=RequestCtx.getInstance(new FileInputStream(TestSupport.getGeoXACMLFNFor("wildcard","WildCardRequest.xml")));
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    Assert.fail(e.getMessage());
+  }
+  ResponseCtx response=null;
+  XACMLTransport transport=new XACMLHttpTransportFactory(getPDPUrl(),false).getXACMLTransport();
+  try {
+    response=transport.evaluateRequestCtx(request);
+  }
+ catch (  RuntimeException rtex) {
+    if (rtex.getCause() instanceof ConnectException) {
+      Logger.getAnonymousLogger().info(getNoRemoteGeoserverMsg());
+      return;
+    }
+  }
+  Result result=(Result)response.getResults().iterator().next();
+  assertTrue(result != null);
+  transport=new XACMLHttpTransportFactory(getPDPUrl(),true).getXACMLTransport();
+  try {
+    response=transport.evaluateRequestCtx(request);
+  }
+ catch (  RuntimeException rtex) {
+    if (rtex.getCause() instanceof ConnectException) {
+      Logger.getAnonymousLogger().info(getNoRemoteGeoserverMsg());
+      return;
+    }
+  }
+  result=(Result)response.getResults().iterator().next();
+  assertTrue(result != null);
+}

@@ -1,0 +1,21 @@
+{
+  WMSMapContext map=new WMSMapContext(createGetMapRequest(MockData.BASIC_POLYGONS));
+  map.addLayer(createMapLayer(MockData.BASIC_POLYGONS));
+  Document document;
+  try {
+    document=getRSSResponse(map,AtomGeoRSSTransformer.GeometryEncoding.LATLONG);
+  }
+  finally {
+    map.dispose();
+  }
+  Element element=document.getDocumentElement();
+  assertEquals("rss",element.getNodeName());
+  NodeList items=element.getElementsByTagName("item");
+  int n=getFeatureSource(MockData.BASIC_POLYGONS).getCount(Query.ALL);
+  assertEquals(n,items.getLength());
+  for (int i=0; i < items.getLength(); i++) {
+    Element item=(Element)items.item(i);
+    assertEquals(1,item.getElementsByTagName("geo:lat").getLength());
+    assertEquals(1,item.getElementsByTagName("geo:long").getLength());
+  }
+}

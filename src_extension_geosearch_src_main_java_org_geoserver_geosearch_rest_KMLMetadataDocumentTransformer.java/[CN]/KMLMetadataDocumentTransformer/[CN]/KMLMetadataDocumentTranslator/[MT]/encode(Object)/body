@@ -1,0 +1,57 @@
+{
+  final WMSMapContext mapContext=(WMSMapContext)o;
+  final GetMapRequest request=mapContext.getRequest();
+  final MapLayer[] layers=mapContext.getLayers();
+  final KMLLookAt lookAtOpts=new KMLLookAt(request.getFormatOptions());
+  start("kml",KMLUtils.attributes(new String[]{"xmlns","http://www.opengis.net/kml/2.2","xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance","xmlns:atom","http://www.w3.org/2005/Atom","xsi:schemaLocation","http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd"}));
+  scaleDenominator=1;
+  try {
+    scaleDenominator=RendererUtilities.calculateScale(mapContext.getAreaOfInterest(),mapContext.getMapWidth(),mapContext.getMapHeight(),null);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error calculating scale denominator",e);
+  }
+  LOGGER.log(Level.FINE,"scale denominator = " + scaleDenominator);
+  start("Document");
+  String title=mapContext.getTitle();
+  element("name",title);
+  element("visibility","1");
+  element("open","1");
+  GeoServerInfo geoServerInfo=wms.getGeoServer().getGlobal();
+  element("atom:author",geoServerInfo.getContact().getContactPerson());
+  element("atom:link",wms.getGeoServer().getGlobal().getOnlineResource());
+  String abstract1=mapContext.getAbstract();
+  element("description",abstract1);
+  KMLNetworkLinkTransformer networkLinkTransformer=new KMLNetworkLinkTransformer(wms);
+  networkLinkTransformer.setStandalone(false);
+  networkLinkTransformer.setInline(true);
+  networkLinkTransformer.setIndentation(getIndentation());
+  networkLinkTransformer.setOmitXMLDeclaration(true);
+  networkLinkTransformer.setEncodeAsRegion(true);
+  networkLinkTransformer.createTranslator(contentHandler).encode(mapContext);
+  boolean includeSampleData=false;
+  for (int i=0; i < layers.length; i++) {
+    MapLayerInfo layerInfo=mapContext.getRequest().getLayers().get(i);
+    final int type=layerInfo.getType();
+    if (MapLayerInfo.TYPE_VECTOR == type || MapLayerInfo.TYPE_REMOTE_VECTOR == type) {
+      includeSampleData=true;
+    }
+  }
+  if (includeSampleData) {
+    start("Folder");
+    element("name","Sample data");
+    for (int i=0; i < layers.length; i++) {
+      MapLayer layer=layers[i];
+      MapLayerInfo layerInfo=mapContext.getRequest().getLayers().get(i);
+      if (layerInfo.getType() != MapLayerInfo.TYPE_RASTER) {
+        encodeVectorLayer(mapContext,layer,lookAtOpts);
+      }
+ else {
+        encodeRasterLayer(mapContext,layer,lookAtOpts);
+      }
+    }
+    end("Folder");
+  }
+  end("Document");
+  end("kml");
+}

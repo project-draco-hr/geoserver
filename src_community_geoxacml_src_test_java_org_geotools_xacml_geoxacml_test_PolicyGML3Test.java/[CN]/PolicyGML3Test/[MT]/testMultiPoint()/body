@@ -1,0 +1,19 @@
+{
+  GeometryAttribute[] array=new GeometryAttribute[2];
+  AbstractPolicy p1=TestSupport.policyFromFile(TestSupport.getGeoXACMLFNFor("gml3","MultiPointPolicy.xml"));
+  array[0]=TestSupport.getGeometryAttribute(p1);
+  AbstractPolicy p2=policyFromAttributeEncoding(array[0],xmlTemplate);
+  array[1]=TestSupport.getGeometryAttribute(p2);
+  for (  GeometryAttribute attr : array) {
+    assertTrue(attr.getSrsName().equals("EPSG:4326"));
+    assertTrue(attr.getGid().equals("MultiPoint"));
+    assertTrue(attr.getGmlVersion() == GMLVersion.Version3);
+    MultiPoint multipoint=(MultiPoint)attr.getGeometry();
+    Point point=(Point)multipoint.getGeometryN(0);
+    assertTrue(point.getX() == 5.5);
+    assertTrue(point.getY() == 6.6);
+    point=(Point)multipoint.getGeometryN(1);
+    assertTrue(point.getX() == 7.7);
+    assertTrue(point.getY() == 8.8);
+  }
+}

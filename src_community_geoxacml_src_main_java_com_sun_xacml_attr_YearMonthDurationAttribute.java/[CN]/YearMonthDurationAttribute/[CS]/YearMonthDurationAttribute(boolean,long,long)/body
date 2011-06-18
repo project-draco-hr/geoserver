@@ -1,0 +1,21 @@
+{
+  super(identifierURI);
+  this.negative=negative;
+  this.years=years;
+  this.months=months;
+  if ((years > Integer.MAX_VALUE) || (months > Integer.MAX_VALUE)) {
+    if (big12 == null) {
+      big12=BigInteger.valueOf(12);
+      bigMaxLong=BigInteger.valueOf(Long.MAX_VALUE);
+    }
+    BigInteger bigMonths=BigInteger.valueOf(months);
+    BigInteger bigYears=BigInteger.valueOf(years);
+    BigInteger bigTotal=bigYears.multiply(big12).add(bigMonths);
+    if (bigTotal.compareTo(bigMaxLong) == 1)     throw new IllegalArgumentException("total number of " + "months " + "exceeds Long.MAX_VALUE");
+    totalMonths=bigTotal.longValue();
+    if (negative)     totalMonths=-totalMonths;
+  }
+ else {
+    totalMonths=((years * 12) + months) * (negative ? -1 : 1);
+  }
+}

@@ -1,0 +1,17 @@
+{
+  DataStore ds=createNiceMock(DataStore.class);
+  replay(ds);
+  FeatureSource fs=createNiceMock(FeatureSource.class);
+  FeatureCollection fc=createNiceMock(FeatureCollection.class);
+  expect(fs.getDataStore()).andReturn(ds);
+  expect(fs.getFeatures()).andReturn(fc).anyTimes();
+  expect(fs.getFeatures((Filter)anyObject())).andReturn(fc).anyTimes();
+  expect(fs.getFeatures((Query)anyObject())).andReturn(fc).anyTimes();
+  replay(fs);
+  SecuredFeatureSource ro=new SecuredFeatureSource(fs,WrapperPolicy.hide(null));
+  assertTrue(ro.getDataStore() instanceof ReadOnlyDataStore);
+  SecuredFeatureCollection collection=(SecuredFeatureCollection)ro.getFeatures();
+  assertTrue(ro.policy.isHide());
+  assertTrue(ro.getFeatures(Filter.INCLUDE) instanceof SecuredFeatureCollection);
+  assertTrue(ro.getFeatures(new Query()) instanceof SecuredFeatureCollection);
+}

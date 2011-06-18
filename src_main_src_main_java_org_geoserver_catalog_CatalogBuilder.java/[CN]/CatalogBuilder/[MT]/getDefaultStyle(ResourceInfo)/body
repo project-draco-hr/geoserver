@@ -1,0 +1,21 @@
+{
+  if (resource instanceof CoverageInfo || resource instanceof WMSLayerInfo)   return catalog.getStyleByName(StyleInfo.DEFAULT_RASTER);
+  String styleName;
+  FeatureTypeInfo featureType=(FeatureTypeInfo)resource;
+  GeometryDescriptor gd=featureType.getFeatureType().getGeometryDescriptor();
+  if (gd == null)   return null;
+  Class gtype=gd.getType().getBinding();
+  if (Point.class.isAssignableFrom(gtype) || MultiPoint.class.isAssignableFrom(gtype)) {
+    styleName=StyleInfo.DEFAULT_POINT;
+  }
+ else   if (LineString.class.isAssignableFrom(gtype) || MultiLineString.class.isAssignableFrom(gtype)) {
+    styleName=StyleInfo.DEFAULT_LINE;
+  }
+ else   if (Polygon.class.isAssignableFrom(gtype) || MultiPolygon.class.isAssignableFrom(gtype)) {
+    styleName=StyleInfo.DEFAULT_POLYGON;
+  }
+ else {
+    styleName=StyleInfo.DEFAULT_POINT;
+  }
+  return catalog.getStyleByName(styleName);
+}

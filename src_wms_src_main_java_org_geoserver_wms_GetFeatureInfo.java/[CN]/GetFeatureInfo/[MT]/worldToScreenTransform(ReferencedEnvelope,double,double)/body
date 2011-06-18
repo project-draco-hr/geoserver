@@ -1,0 +1,16 @@
+{
+  CoordinateReferenceSystem crs=mapExtent.getCoordinateReferenceSystem();
+  boolean swap=crs != null && CRS.getAxisOrder(crs) == AxisOrder.NORTH_EAST;
+  if (swap) {
+    mapExtent=new ReferencedEnvelope(mapExtent.getMinY(),mapExtent.getMaxY(),mapExtent.getMinX(),mapExtent.getMaxX(),null);
+  }
+  double scaleX=(double)width / mapExtent.getWidth();
+  double scaleY=(double)height / mapExtent.getHeight();
+  double tx=-mapExtent.getMinX() * scaleX;
+  double ty=(mapExtent.getMinY() * scaleY) + height;
+  AffineTransform at=new AffineTransform(scaleX,0.0d,0.0d,-scaleY,tx,ty);
+  if (swap) {
+    at.concatenate(new AffineTransform(0,1,1,0,0,0));
+  }
+  return at;
+}

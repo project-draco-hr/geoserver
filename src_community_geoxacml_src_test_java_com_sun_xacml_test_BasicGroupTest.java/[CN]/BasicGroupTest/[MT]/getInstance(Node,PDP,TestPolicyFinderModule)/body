@@ -1,0 +1,17 @@
+{
+  NamedNodeMap map=root.getAttributes();
+  String name=map.getNamedItem("name").getNodeValue();
+  boolean experimental=false;
+  Node attrNode=map.getNamedItem("experimental");
+  if (attrNode == null)   experimental=false;
+ else   experimental=attrNode.getNodeValue().equals("true");
+  NodeList children=root.getChildNodes();
+  ArrayList<Test> tests=new ArrayList<Test>();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String nodeName=child.getNodeName();
+    if (nodeName.equals("group"))     tests.add(BasicGroupTest.getInstance(child,pdp,module));
+ else     if (nodeName.equals("test"))     tests.add(BasicTest.getInstance(child,pdp,module));
+  }
+  return new BasicGroupTest(name,experimental,tests);
+}

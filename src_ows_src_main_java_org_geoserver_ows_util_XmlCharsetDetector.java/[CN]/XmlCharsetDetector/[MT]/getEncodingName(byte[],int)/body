@@ -1,0 +1,46 @@
+{
+  if (count < 2) {
+    return new EncodingInfo("UTF-8",null);
+  }
+  int b0=b4[0] & 0xFF;
+  int b1=b4[1] & 0xFF;
+  if ((b0 == 0xFE) && (b1 == 0xFF)) {
+    return new EncodingInfo("UTF-16BE",new Boolean(true),true);
+  }
+  if ((b0 == 0xFF) && (b1 == 0xFE)) {
+    return new EncodingInfo("UTF-16LE",new Boolean(false),true);
+  }
+  if (count < 3) {
+    return new EncodingInfo("UTF-8",null);
+  }
+  int b2=b4[2] & 0xFF;
+  if ((b0 == 0xEF) && (b1 == 0xBB) && (b2 == 0xBF)) {
+    return new EncodingInfo("UTF-8",null,true);
+  }
+  if (count < 4) {
+    return new EncodingInfo("UTF-8",null);
+  }
+  int b3=b4[3] & 0xFF;
+  if ((b0 == 0x00) && (b1 == 0x00) && (b2 == 0x00)&& (b3 == 0x3C)) {
+    return new EncodingInfo("ISO-10646-UCS-4",new Boolean(true));
+  }
+  if ((b0 == 0x3C) && (b1 == 0x00) && (b2 == 0x00)&& (b3 == 0x00)) {
+    return new EncodingInfo("ISO-10646-UCS-4",new Boolean(false));
+  }
+  if ((b0 == 0x00) && (b1 == 0x00) && (b2 == 0x3C)&& (b3 == 0x00)) {
+    return new EncodingInfo("ISO-10646-UCS-4",null);
+  }
+  if ((b0 == 0x00) && (b1 == 0x3C) && (b2 == 0x00)&& (b3 == 0x00)) {
+    return new EncodingInfo("ISO-10646-UCS-4",null);
+  }
+  if ((b0 == 0x00) && (b1 == 0x3C) && (b2 == 0x00)&& (b3 == 0x3F)) {
+    return new EncodingInfo("UTF-16BE",new Boolean(true));
+  }
+  if ((b0 == 0x3C) && (b1 == 0x00) && (b2 == 0x3F)&& (b3 == 0x00)) {
+    return new EncodingInfo("UTF-16LE",new Boolean(false));
+  }
+  if ((b0 == 0x4C) && (b1 == 0x6F) && (b2 == 0xA7)&& (b3 == 0x94)) {
+    return new EncodingInfo("CP037",null);
+  }
+  return new EncodingInfo("UTF-8",null);
+}

@@ -1,0 +1,18 @@
+{
+  FeatureTypeInfo fti=(FeatureTypeInfo)object;
+  SimpleFeatureType schema=(SimpleFeatureType)fti.getFeatureType();
+  Writer writer=null;
+  try {
+    writer=new OutputStreamWriter(out);
+    writer.write("[");
+    Map<String,String> attributes=new LinkedHashMap<String,String>();
+    for (    AttributeDescriptor att : schema.getAttributeDescriptors()) {
+      attributes.put(att.getLocalName(),findAttributeType(att));
+    }
+    JSONObject.writeJSONString(attributes,writer);
+    writer.write("]");
+  }
+  finally {
+    IOUtils.closeQuietly(writer);
+  }
+}

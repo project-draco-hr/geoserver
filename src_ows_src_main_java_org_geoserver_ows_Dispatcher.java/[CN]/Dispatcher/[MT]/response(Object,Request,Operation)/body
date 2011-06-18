@@ -1,0 +1,78 @@
+{
+  if (result != null) {
+    List responses=GeoServerExtensions.extensions(Response.class);
+    O:     for (Iterator itr=responses.iterator(); itr.hasNext(); ) {
+      Response response=(Response)itr.next();
+      Class binding=response.getBinding();
+      if (!binding.isAssignableFrom(result.getClass()) || !response.canHandle(opDescriptor)) {
+        itr.remove();
+        continue;
+      }
+      Set outputFormats=response.getOutputFormats();
+      if ((req.getOutputFormat() != null) && (!outputFormats.isEmpty()) && !outputFormats.contains(req.getOutputFormat())) {
+        for (Iterator of=outputFormats.iterator(); of.hasNext(); ) {
+          String outputFormat=(String)of.next();
+          if (req.getOutputFormat().equalsIgnoreCase(outputFormat)) {
+            continue O;
+          }
+        }
+        itr.remove();
+      }
+    }
+    if (responses.isEmpty()) {
+      String msg="No response: ( object = " + result.getClass();
+      if (req.getOutputFormat() != null) {
+        msg+=(", outputFormat = " + req.getOutputFormat());
+      }
+      msg+=" )";
+      throw new RuntimeException(msg);
+    }
+    if (responses.size() > 1) {
+      Collections.sort(responses,new Comparator(){
+        public int compare(        Object o1,        Object o2){
+          Class c1=((Response)o1).getBinding();
+          Class c2=((Response)o2).getBinding();
+          if (c1.equals(c2)) {
+            return 0;
+          }
+          if (c1.isAssignableFrom(c2)) {
+            return 1;
+          }
+          if (c2.isAssignableFrom(c1)) {
+            ;
+          }
+          return -1;
+        }
+      }
+);
+      Response r1=(Response)responses.get(0);
+      Response r2=(Response)responses.get(1);
+      if (r1.getBinding().equals(r2.getBinding())) {
+        String msg="Multiple responses: (" + result.getClass() + ")";
+        throw new RuntimeException(msg);
+      }
+    }
+    Response response=(Response)responses.get(0);
+    response=fireResponseDispatchedCallback(req,opDescriptor,result,response);
+    ServiceStrategy outputStrategy=findOutputStrategy(req.getHttpResponse());
+    if (outputStrategy == null) {
+      outputStrategy=new DefaultOutputStrategy();
+    }
+    req.getHttpResponse().setContentType(response.getMimeType(result,opDescriptor));
+    if (response.getHeaders(result,opDescriptor) != null) {
+      String[][] headers=response.getHeaders(result,opDescriptor);
+      for (int i=0; i < headers.length; i++) {
+        req.getHttpResponse().addHeader(headers[i][0],headers[i][1]);
+      }
+    }
+    OutputStream output=outputStrategy.getDestination(req.getHttpResponse());
+    response.write(result,output,opDescriptor);
+    try {
+      outputStrategy.flush(req.getHttpResponse());
+    }
+ catch (    IOException e) {
+      throw new ClientStreamAbortedException(e);
+    }
+    req.getHttpResponse().getOutputStream().flush();
+  }
+}

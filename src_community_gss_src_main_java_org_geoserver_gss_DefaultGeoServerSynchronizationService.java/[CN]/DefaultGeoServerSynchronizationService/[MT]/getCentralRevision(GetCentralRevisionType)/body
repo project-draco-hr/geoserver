@@ -1,0 +1,19 @@
+{
+  core.ensureUnitEnabled();
+  try {
+    CentralRevisionsType cr=new CentralRevisionsType();
+    for (    QName typeName : request.getTypeNames()) {
+      checkSyncronized(typeName);
+      SimpleFeature record=getLastSynchronizationRecord(typeName);
+      long revision=-1;
+      if (record != null) {
+        revision=((Number)record.getAttribute("central_revision")).longValue();
+      }
+      cr.getLayerRevisions().add(new LayerRevision(typeName,revision));
+    }
+    return cr;
+  }
+ catch (  IOException e) {
+    throw new GSSException("Could not compute the response",e);
+  }
+}

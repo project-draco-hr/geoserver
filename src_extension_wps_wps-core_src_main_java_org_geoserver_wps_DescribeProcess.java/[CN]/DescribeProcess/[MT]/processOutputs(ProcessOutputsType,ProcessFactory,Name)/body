@@ -1,0 +1,48 @@
+{
+  Map<String,Parameter<?>> outs=pf.getResultInfo(name,null);
+  for (  Parameter p : outs.values()) {
+    OutputDescriptionType output=wpsf.createOutputDescriptionType();
+    outputs.getOutput().add(output);
+    output.setIdentifier(Ows11Util.code(p.key));
+    output.setTitle(Ows11Util.languageString(p.title));
+    List<ProcessParameterIO> ppios=ProcessParameterIO.findAll(p,context);
+    if (ppios.isEmpty()) {
+      throw new WPSException("Could not find process parameter for type " + p.key + ","+ p.type);
+    }
+    if (ppios.get(0) instanceof LiteralPPIO) {
+      LiteralPPIO lppio=(LiteralPPIO)ppios.get(0);
+      LiteralOutputType literal=wpsf.createLiteralOutputType();
+      output.setLiteralOutput(literal);
+      if (!String.class.equals(lppio.getType())) {
+        Class type=lppio.getType();
+        if (PRIMITIVE_TO_WRAPPER.containsKey(type)) {
+          type=PRIMITIVE_TO_WRAPPER.get(type);
+        }
+        Name typeName=xsp.name(type);
+        if (typeName != null) {
+          literal.setDataType(Ows11Util.type(typeName.getLocalPart()));
+        }
+      }
+    }
+ else     if (ppios.get(0) instanceof BoundingBoxPPIO) {
+      output.setBoundingBoxOutput(buildSupportedCRSType());
+    }
+ else {
+      SupportedComplexDataType complex=wpsf.createSupportedComplexDataType();
+      output.setComplexOutput(complex);
+      complex.setSupported(wpsf.createComplexDataCombinationsType());
+      for (      ProcessParameterIO ppio : ppios) {
+        ComplexPPIO cppio=(ComplexPPIO)ppio;
+        ComplexDataDescriptionType format=wpsf.createComplexDataDescriptionType();
+        format.setMimeType(cppio.getMimeType());
+        complex.getSupported().getFormat().add(format);
+        if (complex.getDefault() == null) {
+          ComplexDataDescriptionType def=wpsf.createComplexDataDescriptionType();
+          def.setMimeType(format.getMimeType());
+          complex.setDefault(wpsf.createComplexDataCombinationType());
+          complex.getDefault().setFormat(def);
+        }
+      }
+    }
+  }
+}

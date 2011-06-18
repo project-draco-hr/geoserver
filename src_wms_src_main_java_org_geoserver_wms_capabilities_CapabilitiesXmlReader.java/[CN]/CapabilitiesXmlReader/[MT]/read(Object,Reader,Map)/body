@@ -1,0 +1,21 @@
+{
+  GetCapabilitiesRequest req=new GetCapabilitiesRequest();
+  CapabilitiesHandler currentRequest=new CapabilitiesHandler(req);
+  try {
+    SAXParserFactory factory=SAXParserFactory.newInstance();
+    SAXParser parser=factory.newSAXParser();
+    ParserAdapter adapter=new ParserAdapter(parser.getParser());
+    adapter.setContentHandler(currentRequest);
+    adapter.parse(new InputSource(reader));
+  }
+ catch (  SAXException e) {
+    throw new ServiceException(e,"XML capabilities request parsing error",getClass().getName());
+  }
+catch (  IOException e) {
+    throw new ServiceException(e,"XML capabilities request input error",getClass().getName());
+  }
+catch (  ParserConfigurationException e) {
+    throw new ServiceException(e,"Some sort of issue creating parser",getClass().getName());
+  }
+  return req;
+}

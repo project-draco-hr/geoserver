@@ -1,0 +1,27 @@
+{
+  Set<String> fids=null;
+  Statement st=null;
+  ResultSet rs=null;
+  try {
+    st=conn.createStatement();
+    rs=st.executeQuery("SELECT fid FROM TILECACHE where x = " + tile.x + " AND y = "+ tile.y+ " and z = "+ tile.z);
+    if (rs.next()) {
+      String fid=rs.getString(1);
+      if (fid == null) {
+        return Collections.emptySet();
+      }
+ else {
+        fids=new HashSet<String>();
+        fids.add(fid);
+      }
+    }
+    while (rs.next()) {
+      fids.add(rs.getString(1));
+    }
+  }
+  finally {
+    JDBCUtils.close(rs);
+    JDBCUtils.close(st);
+  }
+  return fids;
+}

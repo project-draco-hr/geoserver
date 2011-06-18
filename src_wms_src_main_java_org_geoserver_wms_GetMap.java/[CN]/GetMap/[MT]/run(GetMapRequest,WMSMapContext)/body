@@ -1,0 +1,50 @@
+{
+  assertMandatory(request);
+  final String outputFormat=request.getFormat();
+  GetMapOutputFormat delegate=getDelegate(outputFormat);
+  final CoordinateReferenceSystem mapcrs=request.getCrs();
+  final List<MapLayerInfo> layers=request.getLayers();
+  final Style[] styles=request.getStyles().toArray(new Style[]{});
+  final Filter[] filters=buildLayersFilters(request.getFilter(),layers);
+  final boolean isTiled=MetatileMapOutputFormat.isRequestTiled(request,delegate);
+  final MapProducerCapabilities cap=delegate.getCapabilities(request.getFormat());
+  if (cap != null && !cap.isTiledRequestsSupported() && isTiled) {
+    throw new ServiceException("Format " + request.getFormat() + " does not support tiled requests");
+  }
+  if (MetatileMapOutputFormat.isRequestTiled(request,delegate)) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("Tiled request detected, activating on the fly meta tiler");
+    }
+    delegate=new MetatileMapOutputFormat(request,(RenderedImageMapOutputFormat)delegate);
+  }
+  List<Object> times=request.getTime();
+  final int numTimes=times.size();
+  final List<Object> elevations=request.getElevation();
+  final int numElevations=elevations.size();
+  final boolean isMultivaluedSupported=(cap != null ? cap.isMultivalueRequestsSupported() : false);
+  if (numTimes > 1 && isMultivaluedSupported) {
+    WebMap map=null;
+    List<RenderedImage> images=new ArrayList<RenderedImage>();
+    for (    Object currentTime : times) {
+      map=executeInternal(mapContext,request,delegate,Arrays.asList(currentTime),elevations);
+      mapContext.clearLayerList();
+      images.add(((RenderedImageMap)map).getImage());
+    }
+    RenderedImageList imageList=new RenderedImageList(images);
+    return new RenderedImageMap(mapContext,imageList,map.getMimeType());
+  }
+ else   if (numElevations > 1 && isMultivaluedSupported) {
+    WebMap map=null;
+    List<RenderedImage> images=new ArrayList<RenderedImage>();
+    for (    Object currentElevation : elevations) {
+      map=executeInternal(mapContext,request,delegate,times,Arrays.asList(currentElevation));
+      mapContext.clearLayerList();
+      images.add(((RenderedImageMap)map).getImage());
+    }
+    RenderedImageList imageList=new RenderedImageList(images);
+    return new RenderedImageMap(mapContext,imageList,map.getMimeType());
+  }
+ else {
+    return executeInternal(mapContext,request,delegate,times,elevations);
+  }
+}

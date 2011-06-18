@@ -1,0 +1,27 @@
+{
+  if (isNull(resource.getName())) {
+    throw new NullPointerException("Resource name must not be null");
+  }
+  if (isNull(resource.getNativeName())) {
+    throw new NullPointerException("Resource native name must not be null");
+  }
+  if (resource.getStore() == null) {
+    throw new IllegalArgumentException("Resource must be part of a store");
+  }
+  if (resource.getNamespace() == null) {
+    throw new IllegalArgumentException("Resource must be part of a namespace");
+  }
+  StoreInfo store=resource.getStore();
+  ResourceInfo existing=getResourceByStore(store,resource.getName(),ResourceInfo.class);
+  if (existing != null && !existing.getId().equals(resource.getId())) {
+    String msg="Resource named '" + resource.getName() + "' already exists in store: '"+ store.getName()+ "'";
+    throw new IllegalArgumentException(msg);
+  }
+  NamespaceInfo namespace=resource.getNamespace();
+  existing=getResourceByName(namespace,resource.getName(),ResourceInfo.class);
+  if (existing != null && !existing.getId().equals(resource.getId())) {
+    String msg="Resource named '" + resource.getName() + "' already exists in namespace: '"+ namespace.getPrefix()+ "'";
+    throw new IllegalArgumentException(msg);
+  }
+  return postValidate(resource,isNew);
+}

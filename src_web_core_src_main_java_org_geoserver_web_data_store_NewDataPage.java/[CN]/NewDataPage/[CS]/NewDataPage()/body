@@ -1,0 +1,83 @@
+{
+  final boolean thereAreWorkspaces=!getCatalog().getWorkspaces().isEmpty();
+  if (!thereAreWorkspaces) {
+    super.error((String)new ResourceModel("NewDataPage.noWorkspacesErrorMessage").getObject());
+  }
+  final Form storeForm=new Form("storeForm");
+  add(storeForm);
+  final ArrayList<String> sortedDsNames=new ArrayList<String>(getAvailableDataStores().keySet());
+  Collections.sort(sortedDsNames);
+  final CatalogIconFactory icons=CatalogIconFactory.get();
+  final ListView dataStoreLinks=new ListView("vectorResources",sortedDsNames){
+    @Override protected void populateItem(    ListItem item){
+      final String dataStoreFactoryName=item.getDefaultModelObjectAsString();
+      final DataAccessFactory factory=getAvailableDataStores().get(dataStoreFactoryName);
+      final String description=factory.getDescription();
+      SubmitLink link;
+      link=new SubmitLink("resourcelink"){
+        @Override public void onSubmit(){
+          setResponsePage(new DataAccessNewPage(dataStoreFactoryName));
+        }
+      }
+;
+      link.setEnabled(thereAreWorkspaces);
+      link.add(new Label("resourcelabel",dataStoreFactoryName));
+      item.add(link);
+      item.add(new Label("resourceDescription",description));
+      Image icon=new Image("storeIcon",icons.getStoreIcon(factory.getClass()));
+      icon.add(new AttributeModifier("alt",true,new Model("")));
+      item.add(icon);
+    }
+  }
+;
+  final List<String> sortedCoverageNames=new ArrayList<String>();
+  sortedCoverageNames.addAll(getAvailableCoverageStores().keySet());
+  Collections.sort(sortedCoverageNames);
+  final ListView coverageLinks=new ListView("rasterResources",sortedCoverageNames){
+    @Override protected void populateItem(    ListItem item){
+      final String coverageFactoryName=item.getDefaultModelObjectAsString();
+      final Map<String,Format> coverages=getAvailableCoverageStores();
+      Format format=coverages.get(coverageFactoryName);
+      final String description=format.getDescription();
+      SubmitLink link;
+      link=new SubmitLink("resourcelink"){
+        @Override public void onSubmit(){
+          setResponsePage(new CoverageStoreNewPage(coverageFactoryName));
+        }
+      }
+;
+      link.setEnabled(thereAreWorkspaces);
+      link.add(new Label("resourcelabel",coverageFactoryName));
+      item.add(link);
+      item.add(new Label("resourceDescription",description));
+      Image icon=new Image("storeIcon",icons.getStoreIcon(format.getClass()));
+      icon.add(new AttributeModifier("alt",true,new Model("")));
+      item.add(icon);
+    }
+  }
+;
+  final List<OtherStoreDescription> otherStores=getOtherStores();
+  final ListView otherStoresLinks=new ListView("otherStores",otherStores){
+    @Override protected void populateItem(    ListItem item){
+      final OtherStoreDescription store=(OtherStoreDescription)item.getModelObject();
+      SubmitLink link;
+      link=new SubmitLink("resourcelink"){
+        @Override public void onSubmit(){
+          setResponsePage(store.configurationPage);
+        }
+      }
+;
+      link.setEnabled(thereAreWorkspaces);
+      link.add(new Label("resourcelabel",new ParamResourceModel("other." + store.key,NewDataPage.this)));
+      item.add(link);
+      item.add(new Label("resourceDescription",new ParamResourceModel("other." + store.key + ".description",NewDataPage.this)));
+      Image icon=new Image("storeIcon",store.icon);
+      icon.add(new AttributeModifier("alt",true,new Model("")));
+      item.add(icon);
+    }
+  }
+;
+  storeForm.add(dataStoreLinks);
+  storeForm.add(coverageLinks);
+  storeForm.add(otherStoresLinks);
+}

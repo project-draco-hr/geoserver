@@ -1,0 +1,25 @@
+{
+  boolean valid=true;
+  if (attribute.getName() == null || attribute.getName().trim().equals("")) {
+    nameField.error((IValidationError)new ValidationError().addMessageKey("Required"));
+    valid=false;
+  }
+  if (String.class.equals(attribute.getBinding())) {
+    try {
+      attribute.setSize(Integer.parseInt(size));
+      if (attribute.getSize() <= 0) {
+        sizeField.error(new ParamResourceModel("notPositive",this));
+        valid=false;
+      }
+    }
+ catch (    Exception e) {
+      sizeField.error(new ParamResourceModel("notInteger",this,size));
+      valid=false;
+    }
+  }
+  if (Geometry.class.isAssignableFrom(attribute.getBinding()) && attribute.getCrs() == null) {
+    crsField.error((IValidationError)new ValidationError().addMessageKey("Required"));
+    valid=false;
+  }
+  return valid;
+}

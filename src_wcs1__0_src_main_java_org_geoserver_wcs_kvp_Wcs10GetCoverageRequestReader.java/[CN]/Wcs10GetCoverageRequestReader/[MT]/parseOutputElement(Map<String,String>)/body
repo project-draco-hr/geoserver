@@ -1,0 +1,17 @@
+{
+  final OutputType output=Wcs10Factory.eINSTANCE.createOutputType();
+  final CodeType crsType=Gml4wcsFactory.eINSTANCE.createCodeType();
+  final CodeType formatType=Gml4wcsFactory.eINSTANCE.createCodeType();
+  String format=(String)kvp.get("format");
+  if (format == null)   throw new WcsException("format parameter is mandatory",MissingParameterValue,"format");
+  final String crsName=(String)(kvp.get("response_crs") != null ? kvp.get("response_crs") : kvp.get("crs"));
+  CoordinateReferenceSystem crs=null;
+  if (crsName != null) {
+    crs=decodeCRS100(crsName);
+    crsType.setValue(CRS.lookupIdentifier(crs,true));
+    output.setCrs(crsType);
+  }
+  formatType.setValue(format);
+  output.setFormat(formatType);
+  return output;
+}

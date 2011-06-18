@@ -1,0 +1,44 @@
+{
+  Date dateValue=null;
+  int nanoseconds=0;
+  int timeZone;
+  int defaultedTimeZone;
+  initParsers();
+  if (value.endsWith("Z"))   value=value.substring(0,value.length() - 1) + "+00:00";
+  int len=value.length();
+  boolean hasTimeZone=((value.charAt(len - 3) == ':') && ((value.charAt(len - 6) == '-') || (value.charAt(len - 6) == '+')));
+  int dotIndex=value.indexOf('.');
+  if (dotIndex != -1) {
+    int secondsEnd=value.length();
+    if (hasTimeZone)     secondsEnd-=6;
+    String nanoString=value.substring(dotIndex + 1,secondsEnd);
+    for (int i=nanoString.length() - 1; i >= 0; i--) {
+      char c=nanoString.charAt(i);
+      if ((c < '0') || (c > '9'))       throw new ParsingException("non-ascii digit found");
+    }
+    while (nanoString.length() < 9)     nanoString+="0";
+    if (nanoString.length() > 9) {
+      nanoString=nanoString.substring(0,9);
+    }
+    nanoseconds=Integer.parseInt(nanoString);
+    value=value.substring(0,dotIndex) + value.substring(secondsEnd,value.length());
+  }
+  if (hasTimeZone) {
+    len=value.length();
+    Date gmtValue=strictParse(zoneParser,value.substring(0,len - 6) + "+0000");
+    value=value.substring(0,len - 3) + value.substring(len - 2,len);
+    dateValue=strictParse(zoneParser,value);
+    timeZone=(int)(gmtValue.getTime() - dateValue.getTime());
+    timeZone=timeZone / 60000;
+    defaultedTimeZone=timeZone;
+  }
+ else {
+    dateValue=strictParse(simpleParser,value);
+    timeZone=TZ_UNSPECIFIED;
+    Date gmtValue=strictParse(zoneParser,value + "+0000");
+    defaultedTimeZone=(int)(gmtValue.getTime() - dateValue.getTime());
+    defaultedTimeZone=defaultedTimeZone / 60000;
+  }
+  DateTimeAttribute attr=new DateTimeAttribute(dateValue,nanoseconds,timeZone,defaultedTimeZone);
+  return attr;
+}

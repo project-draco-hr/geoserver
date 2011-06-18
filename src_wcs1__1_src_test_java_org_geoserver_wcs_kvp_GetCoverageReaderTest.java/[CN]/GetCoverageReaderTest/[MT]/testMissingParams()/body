@@ -1,0 +1,35 @@
+{
+  Map<String,Object> raw=baseMap();
+  try {
+    reader.read(reader.createRequest(),parseKvp(raw),raw);
+    fail("Hey, format is missing, this should have failed");
+  }
+ catch (  WcsException e) {
+    assertEquals("MissingParameterValue",e.getCode());
+  }
+  final String layerId=getLayerId(TASMANIA_BM);
+  raw.put("identifier",layerId);
+  try {
+    reader.read(reader.createRequest(),parseKvp(raw),raw);
+    fail("Hey, format is missing, this should have failed");
+  }
+ catch (  WcsException e) {
+    assertEquals("MissingParameterValue",e.getCode());
+  }
+  raw.put("format","image/tiff");
+  try {
+    reader.read(reader.createRequest(),parseKvp(raw),raw);
+    fail("Hey, boundingBox is missing, this should have failed");
+  }
+ catch (  WcsException e) {
+    assertEquals("MissingParameterValue",e.getCode());
+  }
+  raw.put("BoundingBox","-45,146,-42,147");
+  try {
+    reader.read(reader.createRequest(),parseKvp(raw),raw);
+  }
+ catch (  WcsException e) {
+    fail("This time all mandatory params where provided?");
+    assertEquals("MissingParameterValue",e.getCode());
+  }
+}

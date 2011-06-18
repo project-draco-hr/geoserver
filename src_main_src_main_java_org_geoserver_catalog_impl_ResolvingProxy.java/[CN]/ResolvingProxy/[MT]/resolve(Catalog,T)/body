@@ -1,0 +1,55 @@
+{
+  if (object instanceof Proxy) {
+    InvocationHandler h=Proxy.getInvocationHandler(object);
+    if (h instanceof ResolvingProxy) {
+      String ref=((ResolvingProxy)h).getRef();
+      if (object instanceof WorkspaceInfo) {
+        Object ws=catalog.getWorkspace(ref);
+        if (ws == null) {
+          ws=catalog.getWorkspaceByName(ref);
+        }
+        return (T)ws;
+      }
+      if (object instanceof NamespaceInfo) {
+        Object ns=catalog.getNamespace(ref);
+        if (ns == null) {
+          ns=catalog.getNamespaceByPrefix(ref);
+        }
+        return (T)ns;
+      }
+      if (object instanceof StoreInfo) {
+        if (object instanceof DataStoreInfo) {
+          return (T)catalog.getDataStore(ref);
+        }
+        if (object instanceof CoverageStoreInfo) {
+          return (T)catalog.getCoverageStore(ref);
+        }
+        return (T)catalog.getStore(ref,StoreInfo.class);
+      }
+      if (object instanceof ResourceInfo) {
+        if (object instanceof FeatureTypeInfo) {
+          return (T)catalog.getFeatureType(ref);
+        }
+        if (object instanceof CoverageInfo) {
+          return (T)catalog.getCoverage(ref);
+        }
+        return (T)catalog.getResource(ref,ResourceInfo.class);
+      }
+      if (object instanceof LayerInfo) {
+        Object l=catalog.getLayer(ref);
+        if (l == null) {
+          l=catalog.getLayerByName(ref);
+        }
+        return (T)l;
+      }
+      if (object instanceof StyleInfo) {
+        Object s=catalog.getStyle(ref);
+        if (s == null) {
+          s=catalog.getStyleByName(ref);
+        }
+        return (T)s;
+      }
+    }
+  }
+  return object;
+}

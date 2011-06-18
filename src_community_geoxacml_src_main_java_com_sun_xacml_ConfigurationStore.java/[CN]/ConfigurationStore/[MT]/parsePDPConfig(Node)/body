@@ -1,0 +1,26 @@
+{
+  ArrayList<AttributeFinderModule> attrModules=new ArrayList<AttributeFinderModule>();
+  HashSet<PolicyFinderModule> policyModules=new HashSet<PolicyFinderModule>();
+  ArrayList<ResourceFinderModule> rsrcModules=new ArrayList<ResourceFinderModule>();
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String name=child.getNodeName();
+    if (name.equals("policyFinderModule")) {
+      policyModules.add((PolicyFinderModule)loadClass("module",child));
+    }
+ else     if (name.equals("attributeFinderModule")) {
+      attrModules.add((AttributeFinderModule)loadClass("module",child));
+    }
+ else     if (name.equals("resourceFinderModule")) {
+      rsrcModules.add((ResourceFinderModule)loadClass("module",child));
+    }
+  }
+  AttributeFinder attrFinder=new AttributeFinder();
+  attrFinder.setModules(attrModules);
+  PolicyFinder policyFinder=new PolicyFinder();
+  policyFinder.setModules(policyModules);
+  ResourceFinder rsrcFinder=new ResourceFinder();
+  rsrcFinder.setModules(rsrcModules);
+  return new PDPConfig(attrFinder,policyFinder,rsrcFinder);
+}

@@ -1,0 +1,69 @@
+{
+  super(id);
+  LayerInfo layer=l;
+  Catalog catalog=((GeoServerApplication)getApplication()).getCatalog();
+  if (layer == null) {
+    layer=catalog.getLayers().get(0);
+  }
+  add(mapPanel=new OpenLayersMapPanel("map",layer));
+  Form form=new Form("form");
+  add(form);
+  form.add(sldTextArea=new TextArea("editor",new PropertyModel(this,"sld")));
+  sldTextArea.setOutputMarkupId(true);
+  updateSLD();
+  form.add(layerChoice=new DropDownChoice("layers",new Model(),catalog.getLayers(),new ChoiceRenderer(){
+    @Override public Object getDisplayValue(    Object object){
+      return ((LayerInfo)object).getName();
+    }
+  }
+));
+  layerChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      LayerInfo l=(LayerInfo)layerChoice.getModelObject();
+      mapPanel.update(l,null,target);
+      updateStyles(l);
+      target.addComponent(styleChoice);
+      updateSLD();
+      target.addComponent(sldTextArea);
+    }
+  }
+);
+  layerChoice.setModelObject(layer);
+  layerChoice.setEnabled(l == null);
+  form.add(styleChoice=new DropDownChoice("styles",new Model(),new ArrayList(layer.getStyles()),new ChoiceRenderer(){
+    @Override public Object getDisplayValue(    Object object){
+      return ((StyleInfo)object).getName();
+    }
+  }
+));
+  styleChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      StyleInfo s=(StyleInfo)styleChoice.getModelObject();
+      mapPanel.update(null,s,target);
+      updateSLD();
+      target.addComponent(sldTextArea);
+    }
+  }
+);
+  updateStyles(layer);
+  form.add(new AjaxButton("save",form){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      Catalog catalog=((GeoServerApplication)getApplication()).getCatalog();
+      StyleInfo style=(StyleInfo)styleChoice.getModelObject();
+      try {
+        catalog.getResourcePool().writeStyle(style,new ByteArrayInputStream(sld.getBytes()));
+        catalog.save(style);
+        mapPanel.update(null,style,target);
+      }
+ catch (      IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+);
+  form.add(new GeoServerAjaxFormLink("revert",form){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+    }
+  }
+);
+}

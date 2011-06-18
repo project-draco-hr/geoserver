@@ -1,0 +1,36 @@
+{
+  CoverageInfo cvInfo=(CoverageInfo)layer.getResource();
+  DimensionInfo timeInfo=cvInfo.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+  DimensionInfo elevInfo=cvInfo.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
+  boolean hasTime=timeInfo != null && timeInfo.isEnabled();
+  boolean hasElevation=elevInfo != null && elevInfo.isEnabled();
+  if (!hasTime && !hasElevation) {
+    return;
+  }
+  if (cvInfo == null)   throw new ServiceException("Unable to acquire coverage resource for layer: " + layer.getName());
+  Catalog catalog=cvInfo.getCatalog();
+  if (catalog == null)   throw new ServiceException("Unable to acquire catalog resource for layer: " + layer.getName());
+  CoverageStoreInfo csinfo=cvInfo.getStore();
+  if (csinfo == null)   throw new ServiceException("Unable to acquire coverage store resource for layer: " + layer.getName());
+  AbstractGridCoverage2DReader reader=null;
+  try {
+    reader=(AbstractGridCoverage2DReader)catalog.getResourcePool().getGridCoverageReader(csinfo,GeoTools.getDefaultHints());
+  }
+ catch (  Throwable t) {
+    LOGGER.log(Level.SEVERE,"Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName(),t);
+  }
+  if (reader == null)   throw new ServiceException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+  if (mode == Mode.WMS11) {
+    declareWMS11Dimensions(hasTime,hasElevation);
+  }
+  String hasTimeDomain=reader.getMetadataValue("HAS_TIME_DOMAIN");
+  hasTime=hasTime & "true".equalsIgnoreCase(hasTimeDomain);
+  if (hasTime) {
+    handleTimeDimensionRaster(timeInfo,reader);
+  }
+  String haselevationDomain=reader.getMetadataValue("HAS_ELEVATION_DOMAIN");
+  hasElevation=hasElevation & "true".equalsIgnoreCase(haselevationDomain);
+  if (hasElevation) {
+    handleElevationDimensionRaster(elevInfo,reader);
+  }
+}

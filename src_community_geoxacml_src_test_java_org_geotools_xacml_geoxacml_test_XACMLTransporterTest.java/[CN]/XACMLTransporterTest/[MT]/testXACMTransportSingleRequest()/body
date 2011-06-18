@@ -1,0 +1,21 @@
+{
+  PDP pdp=TestSupport.getPDP(TestSupport.getGeoXACMLFNFor("wildcard","WildCardPolicy.xml"));
+  RequestCtx request=null;
+  try {
+    request=RequestCtx.getInstance(new FileInputStream(TestSupport.getGeoXACMLFNFor("wildcard","WildCardRequest.xml")));
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    Assert.fail(e.getMessage());
+  }
+  XACMLTransport transport=new XACMLLocalTransportFactory(pdp,false).getXACMLTransport();
+  ResponseCtx response=transport.evaluateRequestCtx(request);
+  Result result=(Result)response.getResults().iterator().next();
+  assertTrue(result.getDecision() == Result.DECISION_PERMIT);
+  assertTrue(result.getStatus().getCode().iterator().next().equals(Status.STATUS_OK));
+  transport=new XACMLLocalTransportFactory(pdp,true).getXACMLTransport();
+  response=transport.evaluateRequestCtx(request);
+  result=(Result)response.getResults().iterator().next();
+  assertTrue(result.getDecision() == Result.DECISION_PERMIT);
+  assertTrue(result.getStatus().getCode().iterator().next().equals(Status.STATUS_OK));
+}

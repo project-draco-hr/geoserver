@@ -1,0 +1,33 @@
+{
+  super(id,paramVale);
+  String requiredMark=required ? " *" : "";
+  Label label=new Label("paramName",paramLabelModel.getObject() + requiredMark);
+  add(label);
+  ColorPickerField textField=new ColorPickerField("paramValue",paramVale,Color.class){
+    @Override public IConverter getConverter(    Class type){
+      return new IConverter(){
+        public String convertToString(        Object value,        Locale locale){
+          String input=(String)value;
+          if (input.startsWith("#"))           return input.substring(1);
+ else           return input;
+        }
+        public Object convertToObject(        String value,        Locale locale){
+          if (value.equals(""))           return value;
+          return "#" + value;
+        }
+      }
+;
+    }
+  }
+;
+  textField.setRequired(required);
+  textField.setLabel(paramLabelModel);
+  if (validators != null) {
+    for (    IValidator validator : validators) {
+      textField.add(validator);
+    }
+  }
+  FormComponentFeedbackBorder feedback=new FormComponentFeedbackBorder("border");
+  feedback.add(textField);
+  add(feedback);
+}

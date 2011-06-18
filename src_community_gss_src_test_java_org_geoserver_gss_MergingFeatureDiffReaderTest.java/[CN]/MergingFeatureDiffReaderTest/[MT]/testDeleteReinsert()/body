@@ -1,0 +1,20 @@
+{
+  VersioningFeatureStore restricted=(VersioningFeatureStore)synchStore.getFeatureSource("restricted");
+  SimpleFeatureType schema=restricted.getSchema();
+  Id removeFilter=ff.id(singleton(ff.featureId("restricted.d91fe390-bdc7-4b22-9316-2cd6c8737ef5")));
+  Transaction t=new DefaultTransaction();
+  restricted.setTransaction(t);
+  restricted.removeFeatures(removeFilter);
+  String v1=restricted.getVersion();
+  t.commit();
+  String v2=restricted.getVersion();
+  restricted.rollback("FIRST",null,null);
+  t.commit();
+  t.close();
+  restricted.setTransaction(Transaction.AUTO_COMMIT);
+  FeatureDiffReader r1=restricted.getDifferences("FIRST",v1,null,null);
+  FeatureDiffReader r2=restricted.getDifferences(v1,v2,null,null);
+  MergingFeatureDiffReader merge=new MergingFeatureDiffReader(r1,r2);
+  assertFalse(merge.hasNext());
+  merge.close();
+}

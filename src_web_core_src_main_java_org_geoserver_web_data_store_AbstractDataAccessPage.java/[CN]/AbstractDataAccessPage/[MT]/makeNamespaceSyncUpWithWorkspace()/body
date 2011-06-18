@@ -1,0 +1,21 @@
+{
+  final DropDownChoice wsDropDown=(DropDownChoice)workspacePanel.getFormComponent();
+  wsDropDown.add(new OnChangeAjaxBehavior(){
+    private static final long serialVersionUID=1L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      if (namespacePanel == null) {
+        Component paramsPanel=AbstractDataAccessPage.this.get("dataStoreForm:parametersPanel");
+        namespacePanel=findNamespacePanel((MarkupContainer)paramsPanel);
+        if (namespacePanel == null) {
+          return;
+        }
+      }
+      WorkspaceInfo ws=(WorkspaceInfo)wsDropDown.getModelObject();
+      String prefix=ws.getName();
+      NamespaceInfo namespaceInfo=getCatalog().getNamespaceByPrefix(prefix);
+      namespacePanel.setDefaultModelObject(namespaceInfo);
+      target.addComponent(namespacePanel.getFormComponent());
+    }
+  }
+);
+}

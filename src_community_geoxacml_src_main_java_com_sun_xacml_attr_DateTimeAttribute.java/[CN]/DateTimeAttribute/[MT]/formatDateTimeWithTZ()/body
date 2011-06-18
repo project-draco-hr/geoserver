@@ -1,0 +1,44 @@
+{
+  if (gmtCalendar == null) {
+    TimeZone gmtTimeZone=TimeZone.getTimeZone("GMT");
+    gmtCalendar=Calendar.getInstance(gmtTimeZone,Locale.US);
+  }
+  StringBuffer buf=new StringBuffer(35);
+synchronized (gmtCalendar) {
+    gmtCalendar.setTime(value);
+    gmtCalendar.add(Calendar.MINUTE,timeZone);
+    int year=gmtCalendar.get(Calendar.YEAR);
+    buf.append(DateAttribute.zeroPadInt(year,4));
+    buf.append('-');
+    int month=gmtCalendar.get(Calendar.MONTH) + 1;
+    buf.append(DateAttribute.zeroPadInt(month,2));
+    buf.append('-');
+    int dom=gmtCalendar.get(Calendar.DAY_OF_MONTH);
+    buf.append(DateAttribute.zeroPadInt(dom,2));
+    buf.append('T');
+    int hour=gmtCalendar.get(Calendar.HOUR_OF_DAY);
+    buf.append(DateAttribute.zeroPadInt(hour,2));
+    buf.append(':');
+    int minute=gmtCalendar.get(Calendar.MINUTE);
+    buf.append(DateAttribute.zeroPadInt(minute,2));
+    buf.append(':');
+    int second=gmtCalendar.get(Calendar.SECOND);
+    buf.append(DateAttribute.zeroPadInt(second,2));
+  }
+  if (nanoseconds != 0) {
+    buf.append('.');
+    buf.append(DateAttribute.zeroPadInt(nanoseconds,9));
+  }
+  int tzNoSign=timeZone;
+  if (timeZone < 0) {
+    tzNoSign=-tzNoSign;
+    buf.append('-');
+  }
+ else   buf.append('+');
+  int tzHours=tzNoSign / 60;
+  buf.append(DateAttribute.zeroPadInt(tzHours,2));
+  buf.append(':');
+  int tzMinutes=tzNoSign % 60;
+  buf.append(DateAttribute.zeroPadInt(tzMinutes,2));
+  return buf.toString();
+}

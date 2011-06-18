@@ -1,0 +1,39 @@
+{
+  ServiceStrategy theStrategy=null;
+  if (serviceStrategy == null) {
+    serviceStrategy=getServletContext().getInitParameter("serviceStrategy");
+  }
+  if (serviceStrategy != null) {
+    theStrategy=(ServiceStrategy)context.getBean(serviceStrategy);
+  }
+  if (theStrategy == null) {
+    theStrategy=(ServiceStrategy)context.getBean("PARTIAL-BUFFER2");
+  }
+  try {
+    theStrategy=(ServiceStrategy)theStrategy.clone();
+  }
+ catch (  CloneNotSupportedException e) {
+    LOGGER.log(Level.SEVERE,"Programming error found, service strategies should be cloneable, " + e,e);
+    throw new RuntimeException("Found a strategy that does not support cloning...",e);
+  }
+  if (theStrategy instanceof PartialBufferStrategy2) {
+    if (partialBufferSize == 0) {
+      String size=getServletContext().getInitParameter("PARTIAL_BUFFER_STRATEGY_SIZE");
+      if (size != null) {
+        try {
+          partialBufferSize=Integer.valueOf(size).intValue();
+          if (partialBufferSize <= 0) {
+            LOGGER.warning("Invalid partial buffer size, defaulting to " + PartialBufferedOutputStream2.DEFAULT_BUFFER_SIZE + " (was "+ partialBufferSize+ ")");
+            partialBufferSize=0;
+          }
+        }
+ catch (        NumberFormatException nfe) {
+          LOGGER.warning("Invalid partial buffer size, defaulting to " + PartialBufferedOutputStream2.DEFAULT_BUFFER_SIZE + " (was "+ partialBufferSize+ ")");
+          partialBufferSize=0;
+        }
+      }
+    }
+    ((PartialBufferStrategy2)theStrategy).setBufferSize(partialBufferSize);
+  }
+  return theStrategy;
+}

@@ -1,0 +1,37 @@
+{
+  try {
+    Template template=cfg.getTemplate("OpenLayersMapTemplate.ftl");
+    HashMap<String,Object> map=new HashMap<String,Object>();
+    map.put("context",mapContext);
+    map.put("pureCoverage",hasOnlyCoverages(mapContext));
+    map.put("styles",styleNames(mapContext));
+    map.put("request",mapContext.getRequest());
+    map.put("maxResolution",new Double(getMaxResolution(mapContext.getAreaOfInterest())));
+    String baseUrl=mapContext.getRequest().getBaseUrl();
+    map.put("baseUrl",canonicUrl(baseUrl));
+    String servicePath="wms";
+    if (LocalLayer.get() != null) {
+      servicePath=LocalLayer.get().getName() + "/" + servicePath;
+    }
+    if (LocalWorkspace.get() != null) {
+      servicePath=LocalWorkspace.get().getName() + "/" + servicePath;
+    }
+    map.put("servicePath",servicePath);
+    map.put("parameters",getLayerParameter(mapContext.getRequest().getRawKvp()));
+    map.put("units",getOLUnits(mapContext.getRequest()));
+    if (mapContext.getLayerCount() == 1) {
+      map.put("layerName",mapContext.getLayer(0).getTitle());
+    }
+ else {
+      map.put("layerName","Geoserver layers");
+    }
+    template.setOutputEncoding("UTF-8");
+    ByteArrayOutputStream buff=new ByteArrayOutputStream();
+    template.process(map,new OutputStreamWriter(buff,Charset.forName("UTF-8")));
+    RawMap result=new RawMap(mapContext,buff,MIME_TYPE);
+    return result;
+  }
+ catch (  TemplateException e) {
+    throw new ServiceException(e);
+  }
+}

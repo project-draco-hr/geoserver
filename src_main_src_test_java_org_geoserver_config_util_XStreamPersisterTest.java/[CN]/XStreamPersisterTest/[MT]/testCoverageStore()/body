@@ -1,0 +1,15 @@
+{
+  Catalog catalog=new CatalogImpl();
+  CatalogFactory cFactory=catalog.getFactory();
+  WorkspaceInfo ws=cFactory.createWorkspace();
+  ws.setName("foo");
+  CoverageStoreInfo cs1=cFactory.createCoverageStore();
+  cs1.setName("bar");
+  cs1.setWorkspace(ws);
+  ByteArrayOutputStream out=out();
+  persister.save(cs1,out);
+  CoverageStoreInfo ds2=persister.load(in(out),CoverageStoreInfo.class);
+  assertEquals("bar",ds2.getName());
+  Document dom=dom(in(out));
+  assertEquals("coverageStore",dom.getDocumentElement().getNodeName());
+}

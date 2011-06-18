@@ -1,0 +1,24 @@
+{
+  if (OPS == null) {
+synchronized (this) {
+      if (OPS == null) {
+        OPS=new HashMap();
+        for (        Service s : GeoServerExtensions.extensions(Service.class)) {
+          HashMap map=new HashMap();
+          OPS.put(s.getId().toUpperCase(),map);
+          for (          String o : s.getOperations()) {
+            map.put(o.toUpperCase(),o);
+          }
+        }
+      }
+    }
+  }
+  Map<String,String> map=OPS.get(op.getService().getId().toUpperCase());
+  if (map != null) {
+    String normalized=map.get(op.getId().toUpperCase());
+    if (normalized != null) {
+      return normalized;
+    }
+  }
+  return op.getId();
+}

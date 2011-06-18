@@ -1,0 +1,15 @@
+{
+  Map defaultParams=dataStoreFactoryToDefaultParams.get(factory.getClass().getCanonicalName());
+  if (defaultParams == null) {
+    throw new RuntimeException("Unable to auto create parameters for " + factory.getDisplayName());
+  }
+  HashMap params=new HashMap(defaultParams);
+  for (  Object o : params.entrySet()) {
+    Map.Entry e=(Map.Entry)o;
+    if (e.getValue() instanceof String) {
+      e.setValue(e.getValue().toString().replace("@NAME@",info.getName()));
+    }
+  }
+  params.put("namespace",namespace.getURI());
+  info.getConnectionParameters().putAll(params);
+}

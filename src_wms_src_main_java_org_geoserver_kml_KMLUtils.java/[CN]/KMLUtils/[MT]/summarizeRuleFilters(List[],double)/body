@@ -1,0 +1,18 @@
+{
+  if (rules[RULES].size() == 0 && rules[ELSE_RULES].size() > 0)   return Filter.EXCLUDE;
+  List filters=new ArrayList();
+  for (Iterator it=rules[RULES].iterator(); it.hasNext(); ) {
+    Rule rule=(Rule)it.next();
+    if (scaleDenominator <= 0 || isWithInScale(rule,scaleDenominator)) {
+      if (rule.getFilter() == null || Filter.INCLUDE.equals(rule.getFilter()))       return Filter.INCLUDE;
+ else       filters.add(rule.getFilter());
+    }
+  }
+  if (filters.size() > 0) {
+    FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+    return ff.or(filters);
+  }
+ else {
+    return Filter.EXCLUDE;
+  }
+}

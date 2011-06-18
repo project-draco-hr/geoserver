@@ -1,0 +1,22 @@
+{
+  List<T> result=new ArrayList<T>();
+  final Matcher[] matchers=getMatchers();
+  List<Property<T>> properties=getProperties();
+  for (  T item : items) {
+    ITEM:     for (    Property<T> property : properties) {
+      if (property.isSearchable()) {
+        Object value=property.getPropertyValue(item);
+        if (value != null) {
+          for (          Matcher matcher : matchers) {
+            matcher.reset(String.valueOf(value));
+            if (matcher.matches()) {
+              result.add(item);
+              break ITEM;
+            }
+          }
+        }
+      }
+    }
+  }
+  return result;
+}

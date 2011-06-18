@@ -1,0 +1,18 @@
+{
+  ApplicationContext appContext=createNiceMock(ApplicationContext.class);
+  ClassExclusionFilter filter=new ClassExclusionFilter();
+  filter.setBeanClass(GeoServerExtensionsTest.class);
+  expect(appContext.getBeanNamesForType(ExtensionFilter.class)).andReturn(new String[]{"filter"}).anyTimes();
+  expect(appContext.getBean("filter")).andReturn(filter).anyTimes();
+  expect(appContext.getBeanNamesForType(GeoServerExtensionsTest.class)).andReturn(new String[]{"testId"}).anyTimes();
+  expect(appContext.getBean("testId")).andReturn(this).anyTimes();
+  replay(appContext);
+  GeoServerExtensions gse=new GeoServerExtensions();
+  gse.setApplicationContext(appContext);
+  List<GeoServerExtensionsTest> extensions=gse.extensions(GeoServerExtensionsTest.class);
+  assertEquals(0,extensions.size());
+  filter.setBeanClass(Integer.class);
+  extensions=gse.extensions(GeoServerExtensionsTest.class);
+  assertEquals(1,extensions.size());
+  assertSame(this,extensions.get(0));
+}

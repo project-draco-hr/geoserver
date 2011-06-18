@@ -1,0 +1,26 @@
+{
+  inputNotNull(source,destination);
+  if (!source.isOpen() || !destination.isOpen())   throw new IllegalStateException("Source and destination channels must be open.");
+  FileLock lock=null;
+  try {
+    lock=destination.lock();
+    final long sourceSize=source.size();
+    long pos=0;
+    while (pos < sourceSize) {
+      final long remaining=(sourceSize - pos);
+      final int mappedZoneSize=remaining >= bufferSize ? bufferSize : (int)remaining;
+      destination.transferFrom(source,pos,mappedZoneSize);
+      pos+=mappedZoneSize;
+    }
+  }
+  finally {
+    if (lock != null) {
+      try {
+        lock.release();
+      }
+ catch (      Throwable t) {
+        if (LOGGER.isLoggable(Level.INFO))         LOGGER.log(Level.INFO,t.getLocalizedMessage(),t);
+      }
+    }
+  }
+}

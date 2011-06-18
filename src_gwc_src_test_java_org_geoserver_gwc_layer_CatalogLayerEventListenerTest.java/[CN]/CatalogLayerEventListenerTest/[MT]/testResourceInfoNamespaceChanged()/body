@@ -1,0 +1,17 @@
+{
+  NamespaceInfo newNamespace=mock(NamespaceInfo.class);
+  when(newNamespace.getPrefix()).thenReturn("newMock");
+  final String newPrefixedName=newNamespace.getPrefix() + ":" + mockResourceInfo.getName();
+  when(mockResourceInfo.getNamespace()).thenReturn(newNamespace);
+  when(mockResourceInfo.getPrefixedName()).thenReturn(newPrefixedName);
+  CatalogModifyEvent modifyEvent=mock(CatalogModifyEvent.class);
+  when(modifyEvent.getSource()).thenReturn(mockResourceInfo);
+  when(modifyEvent.getPropertyNames()).thenReturn(Arrays.asList("namespace"));
+  when(modifyEvent.getOldValues()).thenReturn(Arrays.asList((Object)mockNamespaceInfo));
+  when(modifyEvent.getNewValues()).thenReturn(Arrays.asList((Object)newNamespace));
+  listener.handleModifyEvent(modifyEvent);
+  CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
+  when(postModifyEvent.getSource()).thenReturn(mockResourceInfo);
+  listener.handlePostModifyEvent(postModifyEvent);
+  verify(mockConfiguration).renameTileLayer(eq(PREFIXED_RESOURCE_NAME),eq(newPrefixedName));
+}

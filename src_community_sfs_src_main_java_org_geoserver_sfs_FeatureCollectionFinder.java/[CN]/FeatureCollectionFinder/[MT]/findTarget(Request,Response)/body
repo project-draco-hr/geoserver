@@ -1,0 +1,34 @@
+{
+  String layerName=RESTUtils.getAttribute(request,"layer");
+  LayerInfo layer=catalog.getLayerByName(layerName);
+  if (layer == null || !layer.isEnabled() || !(layer.getResource() instanceof FeatureTypeInfo)) {
+    throw new RestletException("No such layer: " + layerName,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  final FeatureTypeInfo resource=(FeatureTypeInfo)layer.getResource();
+  try {
+    SimpleFeatureSource featureSource=(SimpleFeatureSource)resource.getFeatureSource(null,null);
+    Query query=buildQuery(request,featureSource.getSchema());
+    final QueryCapabilities queryCapabilities=featureSource.getQueryCapabilities();
+    if (!queryCapabilities.isOffsetSupported() && (query.getStartIndex() != null && query.getStartIndex() > 1)) {
+      throw new RestletException("Offset is not supported on this data source",Status.SERVER_ERROR_INTERNAL);
+    }
+    SimpleFeatureCollection features=featureSource.getFeatures(query);
+    Form form=request.getResourceRef().getQueryAsForm();
+    String mode=form.getFirstValue("mode");
+    if (mode == null || "features".equals(mode)) {
+      return new FeatureCollectionResource(getContext(),request,response,features);
+    }
+ else     if ("bounds".equals(mode)) {
+      return new BoundsResource(getContext(),request,response,features.getBounds());
+    }
+ else     if ("count".equals(mode)) {
+      return new CountResource(getContext(),request,response,features.size());
+    }
+ else {
+      throw new RestletException("Uknown mode '" + mode + "'",Status.SERVER_ERROR_INTERNAL);
+    }
+  }
+ catch (  IOException e) {
+    throw new RestletException("Internal error occurred while " + "retrieving the features to be returned",Status.SERVER_ERROR_INTERNAL,e);
+  }
+}

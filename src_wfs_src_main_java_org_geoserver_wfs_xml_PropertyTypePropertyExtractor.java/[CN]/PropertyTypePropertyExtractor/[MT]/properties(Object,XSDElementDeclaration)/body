@@ -1,0 +1,22 @@
+{
+  PropertyType property=(PropertyType)object;
+  List properties=new ArrayList(2);
+  properties.add(new Object[]{Schemas.getChildElementParticle(element.getType(),"Name",false),property.getName()});
+  QName newTypeName=guessValueType(property.getValue());
+  XSDTypeDefinition type=(newTypeName != null) ? index.getTypeDefinition(newTypeName) : null;
+  if (type != null) {
+    XSDElementDeclaration value=XSDFactory.eINSTANCE.createXSDElementDeclaration();
+    value.setName("Value");
+    value.setTypeDefinition(type);
+    XSDParticle particle=XSDFactory.eINSTANCE.createXSDParticle();
+    particle.setMinOccurs(1);
+    particle.setMaxOccurs(1);
+    particle.setContent(value);
+    properties.add(new Object[]{particle,property.getValue()});
+  }
+ else {
+    Object[] p=new Object[]{Schemas.getChildElementParticle(element.getType(),"Value",false),property.getValue()};
+    properties.add(p);
+  }
+  return properties;
+}

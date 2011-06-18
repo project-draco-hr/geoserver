@@ -1,0 +1,25 @@
+{
+  this.py=py;
+  this.fw=new FileWatcher<PyObject>(module){
+    @Override protected PyObject parseFileContents(    InputStream in) throws IOException {
+      PythonInterpreter pi=PythonFormatAdapter.this.py.interpreter();
+      pi.execfile(in);
+      PyStringMap locals=(PyStringMap)pi.getLocals();
+      for (      Object o : locals.keys()) {
+        String key=(String)o;
+        PyObject obj=locals.__getitem__(key);
+        if (obj instanceof PyFunction) {
+          try {
+            if (obj.__getattr__(getMarker()) != null) {
+              return obj;
+            }
+          }
+ catch (          PyException e) {
+          }
+        }
+      }
+      throw new IllegalStateException("No output format function found in " + fw.getFile().getAbsolutePath());
+    }
+  }
+;
+}

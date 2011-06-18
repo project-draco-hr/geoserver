@@ -1,0 +1,40 @@
+{
+  Set<Subject> newSubjects=new HashSet<Subject>();
+  Set<Attribute> newResource=null;
+  Set<Attribute> newAction=null;
+  Set<Attribute> newEnvironment=null;
+  String tagName=root.getNodeName();
+  if (!tagName.equals("Request")) {
+    throw new ParsingException("Request cannot be constructed using " + "type: " + root.getNodeName());
+  }
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node node=children.item(i);
+    String tag=node.getNodeName();
+    if (tag.equals("Subject")) {
+      Node catNode=node.getAttributes().getNamedItem("SubjectCategory");
+      URI category=null;
+      if (catNode != null) {
+        try {
+          category=new URI(catNode.getNodeValue());
+        }
+ catch (        Exception e) {
+          throw new ParsingException("Invalid Category URI",e);
+        }
+      }
+      Set<Attribute> attributes=parseAttributes(node);
+      newSubjects.add(new Subject(category,attributes));
+    }
+ else     if (tag.equals("Resource")) {
+      newResource=parseAttributes(node);
+    }
+ else     if (tag.equals("Action")) {
+      newAction=parseAttributes(node);
+    }
+ else     if (tag.equals("Environment")) {
+      newEnvironment=parseAttributes(node);
+    }
+  }
+  if (newEnvironment == null)   newEnvironment=new HashSet<Attribute>();
+  return new RequestCtx(newSubjects,newResource,newAction,newEnvironment,root);
+}

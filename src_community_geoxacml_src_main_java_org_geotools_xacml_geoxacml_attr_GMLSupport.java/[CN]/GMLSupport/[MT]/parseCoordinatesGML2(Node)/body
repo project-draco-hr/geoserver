@@ -1,0 +1,58 @@
+{
+  String decimal=".";
+  String cs=",";
+  String ts=" ";
+  NamedNodeMap attributeMap=node.getAttributes();
+  Node attribute=attributeMap.getNamedItem("decimal");
+  if (attribute != null) {
+    decimal=attribute.getTextContent();
+  }
+  attribute=attributeMap.getNamedItem("cs");
+  if (attribute != null) {
+    cs=attribute.getTextContent();
+  }
+  attribute=attributeMap.getNamedItem("ts");
+  if (attribute != null) {
+    ts=attribute.getTextContent();
+  }
+  String text=node.getTextContent();
+  final String anyBlankSeq="\\s+";
+  final String singleSpace=" ";
+  text=text.replaceAll(anyBlankSeq,singleSpace).trim();
+  StringTokenizer tuples=new StringTokenizer(text,ts);
+  CoordinateSequence seq=null;
+  int i=0;
+  int ncoords=tuples.countTokens();
+  while (tuples.hasMoreTokens()) {
+    String tuple=tuples.nextToken();
+    StringTokenizer oords=new StringTokenizer(tuple,cs);
+    String x=null;
+    String y=null;
+    String z=null;
+    String tmp=oords.nextToken();
+    int count=1;
+    x=".".equals(decimal) ? tmp : tmp.replaceAll(decimal,".");
+    if (oords.hasMoreTokens()) {
+      tmp=oords.nextToken();
+      count++;
+      y=".".equals(decimal) ? tmp : tmp.replaceAll(decimal,".");
+    }
+    if (oords.hasMoreTokens()) {
+      tmp=oords.nextToken();
+      count++;
+      z=".".equals(decimal) ? tmp : tmp.replaceAll(decimal,".");
+    }
+    if (seq == null) {
+      seq=csFactory.create(ncoords,count);
+    }
+    seq.setOrdinate(i,CoordinateSequence.X,Double.parseDouble(x));
+    if (y != null) {
+      seq.setOrdinate(i,CoordinateSequence.Y,Double.parseDouble(y));
+    }
+    if (z != null) {
+      seq.setOrdinate(i,CoordinateSequence.Z,Double.parseDouble(z));
+    }
+    i++;
+  }
+  return seq;
+}

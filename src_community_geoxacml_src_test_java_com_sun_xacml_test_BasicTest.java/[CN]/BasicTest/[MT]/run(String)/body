@@ -1,0 +1,53 @@
+{
+  System.out.print("test " + name + ": ");
+  int errorCount=0;
+  boolean failurePointReached=false;
+  try {
+    RequestCtx request=RequestCtx.getInstance(new FileInputStream(testPrefix + name + "Request.xml"));
+    if (policies == null) {
+      module.setPolicies(testPrefix + name + "Policy.xml");
+    }
+ else {
+      Iterator<String> it=policies.iterator();
+      Set<String> set=new HashSet<String>();
+      while (it.hasNext())       set.add(testPrefix + it.next());
+      module.setPolicies(set);
+    }
+    module.setPolicyRefs(policyRefs,testPrefix);
+    module.setPolicySetRefs(policySetRefs,testPrefix);
+    ResponseCtx response=pdp.evaluate(request);
+    if (errorExpected) {
+      System.out.println("failed");
+      errorCount++;
+    }
+ else {
+      failurePointReached=true;
+      ResponseCtx expectedResponse=ResponseCtx.getInstance(new FileInputStream(testPrefix + name + "Response.xml"));
+      boolean equiv=TestUtil.areEquivalent(response,expectedResponse);
+      if (equiv) {
+        System.out.println("passed");
+      }
+ else {
+        System.out.println("failed:");
+        response.encode(System.out);
+        errorCount++;
+      }
+    }
+  }
+ catch (  Exception e) {
+    if (!failurePointReached) {
+      if (errorExpected) {
+        System.out.println("passed");
+      }
+ else {
+        System.out.println("EXCEPTION: " + e.getMessage());
+        errorCount++;
+      }
+    }
+ else {
+      System.out.println("UNEXPECTED EXCEPTION: " + e.getMessage());
+      errorCount++;
+    }
+  }
+  return errorCount;
+}

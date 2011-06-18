@@ -1,0 +1,14 @@
+{
+  String ws=(String)request.getAttributes().get("workspace");
+  String wms=(String)request.getAttributes().get("wmsstore");
+  if (ws != null && catalog.getWorkspaceByName(ws) == null) {
+    throw new RestletException("No such workspace: " + ws,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (wms != null && catalog.getStoreByName(ws,wms,WMSStoreInfo.class) == null) {
+    throw new RestletException("No such wms store: " + ws + ","+ wms,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (wms == null && request.getMethod() == Method.GET) {
+    return new WMSStoreListResource(getContext(),request,response,catalog);
+  }
+  return new WMSStoreResource(null,request,response,catalog);
+}

@@ -1,0 +1,33 @@
+{
+  ClassProperties properties=getClassProperties(clazz);
+  for (  String p : properties.properties()) {
+    Method getter=properties.getter(p,null);
+    if (getter == null) {
+      continue;
+    }
+    Class type=getter.getReturnType();
+    Method setter=properties.setter(p,type);
+    if (setter == null && !(Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type))) {
+      continue;
+    }
+    try {
+      Object newValue=getter.invoke(source,null);
+      if (newValue == null) {
+        continue;
+      }
+      if (setter == null) {
+        if (Collection.class.isAssignableFrom(type)) {
+          updateCollectionProperty(target,(Collection)newValue,getter);
+        }
+ else         if (Map.class.isAssignableFrom(type)) {
+          updateMapProperty(target,(Map)newValue,getter);
+        }
+        continue;
+      }
+      setter.invoke(target,newValue);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  String vtName=(String)validatable.getValue();
+  final DataStoreInfo store=getCatalog().getStore(storeId,DataStoreInfo.class);
+  List<FeatureTypeInfo> ftis=getCatalog().getResourcesByStore(store,FeatureTypeInfo.class);
+  for (  FeatureTypeInfo curr : ftis) {
+    VirtualTable currvt=curr.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class);
+    if (currvt != null) {
+      if (typeInfoId == null || !typeInfoId.equals(curr.getId())) {
+        if (currvt.getName().equals(vtName)) {
+          Map<String,String> map=new HashMap<String,String>();
+          map.put("name",vtName);
+          map.put("typeName",curr.getName());
+          error(validatable,"duplicateSqlViewName",map);
+          return;
+        }
+      }
+    }
+  }
+}

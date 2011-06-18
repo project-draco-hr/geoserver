@@ -1,0 +1,25 @@
+{
+  if (!attributeId.toString().equals(ROLE_IDENTIFIER))   return new EvaluationResult(BagAttribute.createEmptyBag(attributeType));
+  if (!attributeType.toString().equals(StringAttribute.identifier))   return new EvaluationResult(BagAttribute.createEmptyBag(attributeType));
+  EvaluationResult result=context.getSubjectAttribute(attributeType,subjectIdentifier,issuer,subjectCategory);
+  if (result.indeterminate())   return result;
+  BagAttribute bag=(BagAttribute)(result.getAttributeValue());
+  if (bag.isEmpty()) {
+    ArrayList<String> code=new ArrayList<String>();
+    code.add(Status.STATUS_MISSING_ATTRIBUTE);
+    Status status=new Status(code,"missing subject-id");
+    return new EvaluationResult(status);
+  }
+  BagAttribute returnBag=null;
+  Iterator<AttributeValue> it=bag.iterator();
+  while (it.hasNext()) {
+    StringAttribute attr=(StringAttribute)(it.next());
+    if (attr.getValue().equals("Julius Hibbert")) {
+      Set<AttributeValue> set=new HashSet<AttributeValue>();
+      set.add(new StringAttribute("Physician"));
+      returnBag=new BagAttribute(attributeType,set);
+      break;
+    }
+  }
+  return new EvaluationResult(returnBag);
+}

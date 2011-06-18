@@ -1,0 +1,42 @@
+{
+  final Style gt2Style=request.getStyle();
+  final FeatureTypeStyle[] ftStyles=gt2Style.getFeatureTypeStyles();
+  final double scaleDenominator=request.getScale();
+  final Rule[] applicableRules;
+  if (request.getRule() != null) {
+    applicableRules=new Rule[]{request.getRule()};
+  }
+ else {
+    applicableRules=LegendUtils.getApplicableRules(ftStyles,scaleDenominator);
+  }
+  if (applicableRules.length != 1)   throw new IllegalArgumentException("Unable to create a legend for this style, we need exactly 1 rule");
+  width=request.getWidth();
+  height=request.getHeight();
+  if (width <= 0 || height <= 0)   throw new IllegalArgumentException("Invalid widht and or height for the GetLegendGraphicRequest");
+  final Symbolizer[] symbolizers=applicableRules[0].getSymbolizers();
+  if (symbolizers == null || symbolizers.length != 1 | symbolizers[0] == null)   throw new IllegalArgumentException("Unable to create a legend for this style, we need exactly 1 Symbolizer");
+  final Symbolizer symbolizer=symbolizers[0];
+  if (!(symbolizer instanceof RasterSymbolizer))   throw new IllegalArgumentException("Unable to create a legend for this style, we need a RasterSymbolizer");
+  rasterSymbolizer=(RasterSymbolizer)symbolizer;
+  transparent=request.isTransparent();
+  bgColor=LegendUtils.getBackgroundColor(request);
+  final ColorMap cmap=rasterSymbolizer.getColorMap();
+  final Builder cmapLegendBuilder=new ColorMapLegendCreator.Builder();
+  if (cmap != null && cmap.getColorMapEntries() != null && cmap.getColorMapEntries().length > 0) {
+    cmapLegendBuilder.setAdditionalOptions(request.getLegendOptions());
+    cmapLegendBuilder.setColorMapType(cmap.getType());
+    cmapLegendBuilder.setExtended(cmap.getExtendedColors());
+    cmapLegendBuilder.setRequestedDimension(new Dimension(width,height));
+    cmapLegendBuilder.setTransparent(transparent);
+    cmapLegendBuilder.setBackgroundColor(bgColor);
+    cmapLegendBuilder.setLabelFont(LegendUtils.getLabelFont(request));
+    cmapLegendBuilder.setLabelFontColor(LegendUtils.getLabelFontColor(request));
+    final ChannelSelection channelSelection=rasterSymbolizer.getChannelSelection();
+    cmapLegendBuilder.setBand(channelSelection != null ? channelSelection.getGrayChannel() : null);
+    final ColorMapEntry[] colorMapEntries=cmap.getColorMapEntries();
+    for (    ColorMapEntry ce : colorMapEntries)     if (ce != null)     cmapLegendBuilder.addColorMapEntry(ce);
+    cmapLegendBuilder.checkAdditionalOptions();
+    cMapLegendCreator=cmapLegendBuilder.create();
+  }
+ else   cMapLegendCreator=null;
+}

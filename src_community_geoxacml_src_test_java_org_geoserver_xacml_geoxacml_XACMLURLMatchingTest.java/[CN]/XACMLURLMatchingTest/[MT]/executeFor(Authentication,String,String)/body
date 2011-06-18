@@ -1,0 +1,15 @@
+{
+  HttpServletRequest mockRequest=EasyMock.createMock(HttpServletRequest.class);
+  EasyMock.expect(mockRequest.getMethod()).andReturn(method).anyTimes();
+  EasyMock.expect(mockRequest.getServletPath()).andReturn(path).anyTimes();
+  EasyMock.expect(mockRequest.getParameterMap()).andReturn(null).anyTimes();
+  EasyMock.expect(mockRequest.getRemoteHost()).andReturn("localhost").anyTimes();
+  EasyMock.expect(mockRequest.getRemoteAddr()).andReturn("127.0.0.1").anyTimes();
+  EasyMock.replay(mockRequest);
+  FilterInvocation filter=org.easymock.classextension.EasyMock.createMock(FilterInvocation.class);
+  org.easymock.classextension.EasyMock.expect(filter.getRequestUrl()).andReturn(path).anyTimes();
+  org.easymock.classextension.EasyMock.expect(filter.getHttpRequest()).andReturn(mockRequest).anyTimes();
+  org.easymock.classextension.EasyMock.replay(filter);
+  XACMLFilterDecisionVoter voter=new XACMLFilterDecisionVoter();
+  return voter.vote(aut,filter,new ConfigAttributeDefinition("xacml"));
+}

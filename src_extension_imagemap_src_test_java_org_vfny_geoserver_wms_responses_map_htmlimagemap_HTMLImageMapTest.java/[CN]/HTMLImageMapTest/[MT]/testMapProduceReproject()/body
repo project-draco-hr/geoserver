@@ -1,0 +1,22 @@
+{
+  final DataStore ds=getProjectedTestDataStore();
+  final FeatureSource<SimpleFeatureType,SimpleFeature> fs=ds.getFeatureSource("ProjectedPolygon");
+  final ReferencedEnvelope env=new ReferencedEnvelope(fs.getBounds(),CRS.decode("EPSG:3004"));
+  LOGGER.info("about to create map ctx for ProjectedPolygon with bounds " + env);
+  final WMSMapContext map=new WMSMapContext();
+  CoordinateReferenceSystem sourceCrs=CRS.decode("EPSG:3004");
+  CoordinateReferenceSystem targetCrs=CRS.decode("EPSG:3003");
+  MathTransform transform=CRS.findMathTransform(sourceCrs,targetCrs,true);
+  Envelope projEnv=JTS.transform(env,transform);
+  ReferencedEnvelope refEnv=new ReferencedEnvelope(projEnv,targetCrs);
+  map.setAreaOfInterest(refEnv);
+  map.setMapWidth(mapWidth);
+  map.setMapHeight(mapHeight);
+  map.setBgColor(Color.red);
+  map.setTransparent(false);
+  map.setCoordinateReferenceSystem(targetCrs);
+  Style basicStyle=getTestStyle("BasicPolygons.sld");
+  map.addLayer(fs,basicStyle);
+  EncodeHTMLImageMap result=mapProducer.produceMap(map);
+  assertTestResult("ProjectedPolygon",result);
+}

@@ -1,0 +1,35 @@
+{
+  if (ad instanceof GeometryDescriptor) {
+    GeometryDescriptor old=(GeometryDescriptor)ad;
+    try {
+      boolean rebuild=false;
+      if (old.getCoordinateReferenceSystem() == null) {
+        if (info.getProjectionPolicy() != ProjectionPolicy.FORCE_DECLARED) {
+          if (Proxy.isProxyClass(info.getClass())) {
+            FeatureTypeInfo inner=ModificationProxy.unwrap(info);
+            inner.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+          }
+ else {
+            info.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+          }
+        }
+        rebuild=true;
+      }
+ else {
+        ProjectionPolicy projPolicy=info.getProjectionPolicy();
+        if (projPolicy == ProjectionPolicy.REPROJECT_TO_DECLARED || projPolicy == ProjectionPolicy.FORCE_DECLARED) {
+          rebuild=true;
+        }
+      }
+      if (rebuild) {
+        AttributeTypeBuilder b=new AttributeTypeBuilder();
+        b.init(old);
+        b.setCRS(getCRS(info.getSRS()));
+        ad=b.buildDescriptor(old.getLocalName());
+      }
+    }
+ catch (    Exception e) {
+    }
+  }
+  return ad;
+}

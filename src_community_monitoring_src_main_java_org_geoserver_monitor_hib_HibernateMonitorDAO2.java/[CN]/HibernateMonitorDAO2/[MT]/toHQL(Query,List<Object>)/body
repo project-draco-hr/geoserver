@@ -1,0 +1,83 @@
+{
+  String entity=RequestData.class.getSimpleName();
+  String prefix=Character.toLowerCase(entity.charAt(0)) + "d";
+  boolean join=false;
+  StringBuffer sb=new StringBuffer("SELECT ");
+  if (q.getProperties().isEmpty() && q.getAggregates().isEmpty()) {
+    sb.append(prefix);
+  }
+ else {
+    for (    String prop : q.getProperties()) {
+      prefix(prop,prefix,sb).append(", ");
+      if (prop.equals("resource")) {
+        join=true;
+      }
+    }
+    for (    String agg : q.getAggregates()) {
+      if (agg.equals("count()")) {
+        agg="count(" + prefix + ")";
+      }
+      sb.append(agg).append(", ");
+    }
+    sb.setLength(sb.length() - 2);
+  }
+  sb.append(" FROM ").append(entity).append(" ").append(prefix);
+  if (!join && q.getFilter() != null) {
+    JoinDeterminer jt=new JoinDeterminer();
+    q.getFilter().accept(jt);
+    join=jt.doJoin();
+  }
+  if (join) {
+    sb.append(" LEFT JOIN ").append(prefix).append(".resources AS resource");
+  }
+  if (q.getFilter() != null) {
+    sb.append(" WHERE ");
+    q.getFilter().accept(new FilterEncoder(sb,prefix,objs));
+  }
+  if (q.getFromDate() != null || q.getToDate() != null) {
+    if (q.getFilter() != null) {
+      sb.append(" AND");
+    }
+ else {
+      sb.append(" WHERE");
+    }
+    sb.append(" ").append(prefix).append(".startTime");
+    if (q.getFromDate() != null && q.getToDate() != null) {
+      sb.append(" BETWEEN ? AND ?");
+      objs.add(q.getFromDate());
+      objs.add(q.getToDate());
+    }
+ else     if (q.getFromDate() != null) {
+      sb.append(" >= ?");
+      objs.add(q.getFromDate());
+    }
+ else {
+      sb.append(" <= ?");
+      objs.add(q.getToDate());
+    }
+  }
+  if (!q.getGroupBy().isEmpty()) {
+    sb.append(" GROUP BY ");
+    for (    String prop : q.getGroupBy()) {
+      prefix(prop,prefix,sb).append(",");
+    }
+    sb.setLength(sb.length() - 1);
+  }
+  if (q.getSortBy() != null) {
+    sb.append(" ORDER BY ");
+    String sortBy=q.getSortBy();
+    if (sortBy.equals("count()")) {
+      sb.append("count(" + prefix + ")");
+    }
+ else {
+      prefix(sortBy,prefix,sb);
+    }
+    sb.append(" ").append(q.getSortOrder());
+  }
+ else   if (q.getFromDate() != null || q.getToDate() != null) {
+    if (q.getAggregates().isEmpty()) {
+      sb.append(" ORDER BY ").append(prefix).append(".startTime").append(" ").append(SortOrder.DESC);
+    }
+  }
+  return sb.toString();
+}

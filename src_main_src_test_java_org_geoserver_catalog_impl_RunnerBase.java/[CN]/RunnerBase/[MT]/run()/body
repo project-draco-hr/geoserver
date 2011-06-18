@@ -1,0 +1,26 @@
+{
+  boolean readied=false;
+  try {
+    doBeforeReady();
+    if (ready != null) {
+      ready.countDown();
+      readied=true;
+      ready.await();
+    }
+    runInternal();
+  }
+ catch (  Exception e) {
+    if (ready != null && !readied) {
+      try {
+        ready.countDown();
+      }
+ catch (      Exception e2) {
+        e2.printStackTrace();
+      }
+    }
+    setProblem(e);
+  }
+  if (done != null) {
+    done.countDown();
+  }
+}

@@ -1,0 +1,6 @@
+{
+  String xml="<wps:Execute service='WPS' version='1.0.0' xmlns:xlink=\"http://www.w3.org/1999/xlink\" " + "xmlns:wps='http://www.opengis.net/wps/1.0.0' xmlns:wfs='http://www.opengis.net/wfs' " + "xmlns:ows='http://www.opengis.net/ows/1.1'>"+ "<ows:Identifier>gt:BufferFeatureCollection</ows:Identifier>"+ "<wps:DataInputs>"+ "    <wps:Input>\n"+ "<ows:Identifier>features</ows:Identifier>"+ "<wps:Data>"+ "<wps:ComplexData>" + readFileIntoString("states-FeatureCollection.xml") + "</wps:ComplexData>"+ "</wps:Data>"+ "</wps:Input>"+ "<wps:Input>"+ "<ows:Identifier>buffer</ows:Identifier>"+ "<wps:Data>"+ "<wps:LiteralData>10</wps:LiteralData>"+ "</wps:Data>"+ "</wps:Input>"+ "</wps:DataInputs>"+ "<wps:ResponseForm>"+ "<wps:RawDataOutput mimeType=\"application/zip\">"+ "<ows:Identifier>result</ows:Identifier>"+ "</wps:RawDataOutput>"+ "</wps:ResponseForm>"+ "</wps:Execute>";
+  MockHttpServletResponse r=postAsServletResponse("wps",xml);
+  assertEquals("application/zip",r.getContentType());
+  checkShapefileIntegrity(new String[]{"states"},getBinaryInputStream(r));
+}

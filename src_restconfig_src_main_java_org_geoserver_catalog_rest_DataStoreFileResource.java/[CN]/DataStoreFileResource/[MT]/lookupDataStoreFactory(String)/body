@@ -1,0 +1,15 @@
+{
+  String factoryClassName=formatToDataStoreFactory.get(format);
+  if (factoryClassName == null) {
+    throw new RestletException("Unsupported format: " + format,Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+  DataStoreFactorySpi factory;
+  try {
+    Class factoryClass=Class.forName(factoryClassName);
+    factory=(DataStoreFactorySpi)factoryClass.newInstance();
+  }
+ catch (  Exception e) {
+    throw new RestletException("Datastore format unavailable: " + factoryClassName,Status.SERVER_ERROR_INTERNAL);
+  }
+  return factory;
+}

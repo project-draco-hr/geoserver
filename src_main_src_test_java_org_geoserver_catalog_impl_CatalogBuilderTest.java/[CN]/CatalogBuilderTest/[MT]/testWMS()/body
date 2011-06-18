@@ -1,0 +1,21 @@
+{
+  if (!RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    LOGGER.warning("Remote OWS tests disabled, skipping catalog builder wms tests");
+    return;
+  }
+  Catalog cat=getCatalog();
+  CatalogBuilder cb=new CatalogBuilder(cat);
+  WMSStoreInfo wms=cb.buildWMSStore("demo");
+  wms.setCapabilitiesURL(RemoteOWSTestSupport.WMS_SERVER_URL + "service=WMS&request=GetCapabilities");
+  cat.save(wms);
+  cb.setStore(wms);
+  WMSLayerInfo wmsLayer=cb.buildWMSLayer("topp:states");
+  assertEquals("states",wmsLayer.getName());
+  assertEquals("topp:states",wmsLayer.getNativeName());
+  assertEquals("EPSG:4326",wmsLayer.getSRS());
+  assertEquals(CRS.decode("EPSG:4326"),wmsLayer.getNativeCRS());
+  assertNotNull(wmsLayer.getNativeBoundingBox());
+  assertNotNull(wmsLayer.getLatLonBoundingBox());
+  LayerInfo layer=cb.buildLayer(wmsLayer);
+  assertEquals(LayerInfo.Type.WMS,layer.getType());
+}

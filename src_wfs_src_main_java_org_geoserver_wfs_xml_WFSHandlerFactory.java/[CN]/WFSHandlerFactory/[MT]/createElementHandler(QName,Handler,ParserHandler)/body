@@ -1,0 +1,22 @@
+{
+  String namespaceURI=name.getNamespaceURI();
+  if (namespaceURI == null) {
+    namespaceURI=catalog.getDefaultNamespace().getURI();
+  }
+  try {
+    FeatureTypeInfo meta=catalog.getFeatureTypeByName(namespaceURI,name.getLocalPart());
+    if (meta != null) {
+      XSDSchema schema=schemaBuilder.build(meta,null);
+      for (Iterator e=schema.getElementDeclarations().iterator(); e.hasNext(); ) {
+        XSDElementDeclaration element=(XSDElementDeclaration)e.next();
+        if (name.getLocalPart().equals(element.getName())) {
+          return new ElementHandlerImpl(element,parent,parser);
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    logger.log(Level.WARNING,"Error building schema",e);
+  }
+  return null;
+}

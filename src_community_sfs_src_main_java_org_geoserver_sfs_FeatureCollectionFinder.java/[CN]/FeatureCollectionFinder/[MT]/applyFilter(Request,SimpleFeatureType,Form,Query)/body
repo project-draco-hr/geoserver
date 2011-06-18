@@ -1,0 +1,83 @@
+{
+  String fid=RESTUtils.getAttribute(request,"fid");
+  if (fid != null) {
+    final Id fidFilter=FF.id(Collections.singleton(FF.featureId(fid)));
+    query.setFilter(fidFilter);
+  }
+ else {
+    List<Filter> filters=new ArrayList<Filter>();
+    filters.add(buildGeometryFilter(schema,form));
+    filters.add(buildBBoxFilter(schema,form));
+    filters.add(buildXYToleranceFilter(schema,form));
+    String queryable=form.getFirstValue("queryable");
+    if (queryable != null) {
+      String[] attributes=queryable.split("\\s*,\\s*");
+      for (      String name : attributes) {
+        AttributeDescriptor ad=schema.getDescriptor(name);
+        if (ad == null) {
+          throw new RestletException("Uknown queryable attribute " + name,Status.CLIENT_ERROR_BAD_REQUEST);
+        }
+ else         if (ad instanceof GeometryDescriptor) {
+          throw new RestletException("queryable attribute " + name + " is a geometry, "+ "cannot perform non spatial filters on it",Status.CLIENT_ERROR_BAD_REQUEST);
+        }
+        final PropertyName property=FF.property(name);
+        final String prefix=name + "__";
+        for (        String paramName : form.getNames()) {
+          if (paramName.startsWith(prefix)) {
+            Literal value=FF.literal(form.getFirstValue(paramName));
+            String op=paramName.substring(prefix.length());
+            if ("eq".equals(op)) {
+              filters.add(FF.equals(property,value));
+            }
+ else             if ("ne".equals(op)) {
+              filters.add(FF.notEqual(property,value));
+            }
+ else             if ("lt".equals(op)) {
+              filters.add(FF.less(property,value));
+            }
+ else             if ("lte".equals(op)) {
+              filters.add(FF.lessOrEqual(property,value));
+            }
+ else             if ("ge".equals(op)) {
+              filters.add(FF.greater(property,value));
+            }
+ else             if ("gte".equals(op)) {
+              filters.add(FF.greaterOrEqual(property,value));
+            }
+ else             if ("like".equals(op)) {
+              String pattern=form.getFirstValue(paramName);
+              filters.add(FF.like(property,pattern,"%","_","\\",true));
+            }
+ else             if ("ilike".equals(op)) {
+              String pattern=form.getFirstValue(paramName);
+              filters.add(FF.like(property,pattern,"%","_","\\",false));
+            }
+ else {
+              throw new RestletException("Uknown query operand '" + op + "'",Status.CLIENT_ERROR_BAD_REQUEST);
+            }
+          }
+        }
+      }
+    }
+    if (filters.size() > 0) {
+      Filter result=FF.and(filters);
+      SimplifyingFilterVisitor simplifier=new SimplifyingFilterVisitor();
+      result=(Filter)result.accept(simplifier,null);
+      String crs=form.getFirstValue("crs");
+      if (crs == null) {
+        crs=form.getFirstValue("epsg");
+      }
+      if (crs != null) {
+        try {
+          CoordinateReferenceSystem sourceCrs=CRS.decode("EPSG:" + crs,true);
+          DefaultCRSFilterVisitor crsForcer=new DefaultCRSFilterVisitor(FF,sourceCrs);
+          result=(Filter)result.accept(crsForcer,null);
+        }
+ catch (        Exception e) {
+          throw new RestletException("Uknown EPSG code '" + crs + "'",Status.CLIENT_ERROR_BAD_REQUEST);
+        }
+      }
+      query.setFilter(result);
+    }
+  }
+}

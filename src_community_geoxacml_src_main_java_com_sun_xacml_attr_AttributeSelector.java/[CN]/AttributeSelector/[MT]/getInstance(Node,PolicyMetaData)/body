@@ -1,0 +1,34 @@
+{
+  URI type=null;
+  String contextPath=null;
+  boolean mustBePresent=false;
+  String xpathVersion=metaData.getXPathIdentifier();
+  if (xpathVersion == null)   throw new ParsingException("An XPathVersion is required for " + "any policies that use selectors");
+  NamedNodeMap attrs=root.getAttributes();
+  try {
+    type=new URI(attrs.getNamedItem("DataType").getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing required DataType " + "attribute in AttributeSelector",e);
+  }
+  try {
+    contextPath=attrs.getNamedItem("RequestContextPath").getNodeValue();
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing required " + "RequestContextPath attribute in " + "AttributeSelector",e);
+  }
+  try {
+    Node node=attrs.getNamedItem("MustBePresent");
+    if (node != null)     if (node.getNodeValue().equals("true"))     mustBePresent=true;
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing optional attributes " + "in AttributeSelector",e);
+  }
+  Node policyRoot=null;
+  Node node=root.getParentNode();
+  while ((node != null) && (node.getNodeType() == Node.ELEMENT_NODE)) {
+    policyRoot=node;
+    node=node.getParentNode();
+  }
+  return new AttributeSelector(type,contextPath,policyRoot,mustBePresent,xpathVersion);
+}

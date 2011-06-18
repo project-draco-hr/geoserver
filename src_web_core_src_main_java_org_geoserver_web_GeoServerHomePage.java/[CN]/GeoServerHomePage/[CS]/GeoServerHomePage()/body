@@ -1,0 +1,61 @@
+{
+  GeoServer gs=getGeoServer();
+  ContactInfo contact=gs.getGlobal().getContact();
+  add(new ExternalLink("contactURL",contact.getOnlineResource()).add(new Label("contactName",contact.getContactOrganization())));
+{
+    String version=String.valueOf(new ResourceModel("version").getObject());
+    String contactEmail=contact.getContactEmail();
+    HashMap<String,String> params=new HashMap<String,String>();
+    params.put("version",version);
+    params.put("contactEmail",contactEmail);
+    Label label=new Label("footerMessage",new StringResourceModel("GeoServerHomePage.footer",this,new Model(params)));
+    label.setEscapeModelStrings(false);
+    add(label);
+  }
+  Authentication auth=getSession().getAuthentication();
+  if (isAdmin(auth)) {
+    Fragment f=new Fragment("catalogLinks","catalogLinksFragment",this);
+    Catalog catalog=getCatalog();
+    f.add(new BookmarkablePageLink("layersLink",LayerPage.class).add(new Label("nlayers","" + catalog.getLayers().size())));
+    f.add(new BookmarkablePageLink("addLayerLink",NewLayerPage.class));
+    f.add(new BookmarkablePageLink("storesLink",StorePage.class).add(new Label("nstores","" + catalog.getStores(StoreInfo.class).size())));
+    f.add(new BookmarkablePageLink("addStoreLink",NewDataPage.class));
+    f.add(new BookmarkablePageLink("workspacesLink",WorkspacePage.class).add(new Label("nworkspaces","" + catalog.getWorkspaces().size())));
+    f.add(new BookmarkablePageLink("addWorkspaceLink",WorkspaceNewPage.class));
+    add(f);
+  }
+ else {
+    Label placeHolder=new Label("catalogLinks");
+    placeHolder.setVisible(false);
+    add(placeHolder);
+  }
+  final IModel<List<GeoServerHomePageContentProvider>> contentProviders;
+  contentProviders=getContentProviders(GeoServerHomePageContentProvider.class);
+  ListView<GeoServerHomePageContentProvider> contentView=new ListView<GeoServerHomePageContentProvider>("contributedContent",contentProviders){
+    private static final long serialVersionUID=1L;
+    @Override protected void populateItem(    ListItem<GeoServerHomePageContentProvider> item){
+      GeoServerHomePageContentProvider provider=item.getModelObject();
+      Component extraContent=provider.getPageBodyComponent("contentList");
+      if (null == extraContent) {
+        Label placeHolder=new Label("contentList");
+        placeHolder.setVisible(false);
+        extraContent=placeHolder;
+      }
+      item.add(extraContent);
+    }
+  }
+;
+  add(contentView);
+  final IModel<List<CapabilitiesHomePageLinkProvider>> capsProviders;
+  capsProviders=getContentProviders(CapabilitiesHomePageLinkProvider.class);
+  ListView<CapabilitiesHomePageLinkProvider> capsView=new ListView<CapabilitiesHomePageLinkProvider>("providedCaps",capsProviders){
+    private static final long serialVersionUID=1L;
+    @Override protected void populateItem(    ListItem<CapabilitiesHomePageLinkProvider> item){
+      CapabilitiesHomePageLinkProvider provider=item.getModelObject();
+      Component capsList=provider.getCapabilitiesComponent("capsList");
+      item.add(capsList);
+    }
+  }
+;
+  add(capsView);
+}

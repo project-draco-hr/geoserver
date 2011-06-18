@@ -1,0 +1,44 @@
+{
+  final ISessionPool pool;
+{
+    final ArcSDEConnectionConfig connectionConfig;
+    Map<String,Serializable> params=new HashMap<String,Serializable>();
+    params.put(SERVER_NAME_PARAM_NAME,server);
+    params.put(PORT_NUMBER_PARAM_NAME,port);
+    params.put(INSTANCE_NAME_PARAM_NAME,instance);
+    params.put(USER_NAME_PARAM_NAME,user);
+    params.put(PASSWORD_PARAM_NAME,password);
+    params.put(MIN_CONNECTIONS_PARAM_NAME,"1");
+    params.put(MAX_CONNECTIONS_PARAM_NAME,"1");
+    params.put(CONNECTION_TIMEOUT_PARAM_NAME,"1000");
+    connectionConfig=ArcSDEConnectionConfig.fromMap(params);
+    try {
+      pool=sessionFac.createPool(connectionConfig);
+    }
+ catch (    IOException e) {
+      throw new IllegalArgumentException(e.getMessage());
+    }
+  }
+  ISession session;
+  try {
+    session=pool.getSession();
+  }
+ catch (  IOException e) {
+    throw new IllegalAccessError(e.getMessage());
+  }
+catch (  UnavailableConnectionException e) {
+    throw new IllegalAccessError(e.getMessage());
+  }
+  final List<String> rasterTables;
+  try {
+    rasterTables=session.getRasterColumns();
+  }
+ catch (  IOException e) {
+    throw new IllegalArgumentException(e.getMessage());
+  }
+ finally {
+    session.dispose();
+    pool.close();
+  }
+  return rasterTables;
+}

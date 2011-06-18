@@ -1,0 +1,38 @@
+{
+  String workspace=getAttribute("workspace");
+  DataStoreInfo ds=(DataStoreInfo)object;
+  if (ds.getWorkspace() != null) {
+    WorkspaceInfo ws=(WorkspaceInfo)ds.getWorkspace();
+    if (!workspace.equals(ws.getName())) {
+      throw new RestletException("Expected workspace " + workspace + " but client specified "+ ws.getName(),Status.CLIENT_ERROR_FORBIDDEN);
+    }
+  }
+ else {
+    ds.setWorkspace(catalog.getWorkspaceByName(workspace));
+  }
+  ds.setEnabled(true);
+  Map params=ds.getConnectionParameters();
+  if (!ds.getConnectionParameters().containsKey("namespace")) {
+    WorkspaceInfo ws=ds.getWorkspace();
+    NamespaceInfo ns=catalog.getNamespaceByPrefix(ws.getName());
+    if (ns == null) {
+      ns=catalog.getDefaultNamespace();
+    }
+    if (ns != null) {
+      ds.getConnectionParameters().put("namespace",ns.getURI());
+    }
+  }
+  try {
+    DataAccessFactory factory=DataStoreUtils.aquireFactory(ds.getConnectionParameters());
+    ds.setType(factory.getDisplayName());
+  }
+ catch (  Exception e) {
+    LOGGER.warning("Unable to determine datastore type from connection parameters");
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"",e);
+    }
+  }
+  catalog.add((DataStoreInfo)object);
+  LOGGER.info("POST data store " + ds.getName());
+  return ds.getName();
+}

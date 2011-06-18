@@ -1,0 +1,31 @@
+{
+  ensureNotNull(req,"GetLegendGraphicRequestre");
+  final Map legendOptions=req.getLegendOptions();
+  if (legendOptions == null)   return DEFAULT_FONT;
+  String legendFontName=LegendUtils.DEFAULT_FONT_NAME;
+  if (legendOptions.get("fontName") != null) {
+    legendFontName=(String)legendOptions.get("fontName");
+  }
+  int legendFontFamily=LegendUtils.DEFAULT_FONT_TYPE;
+  if (legendOptions.get("fontStyle") != null) {
+    String legendFontFamily_=(String)legendOptions.get("fontStyle");
+    if (legendFontFamily_.equalsIgnoreCase("italic")) {
+      legendFontFamily=Font.ITALIC;
+    }
+ else     if (legendFontFamily_.equalsIgnoreCase("bold")) {
+      legendFontFamily=Font.BOLD;
+    }
+  }
+  int legendFontSize=LegendUtils.DEFAULT_FONT_SIZE;
+  if (legendOptions.get("fontSize") != null) {
+    try {
+      legendFontSize=Integer.valueOf((String)legendOptions.get("fontSize"));
+    }
+ catch (    NumberFormatException e) {
+      LOGGER.warning("Error trying to interpret legendOption 'fontSize': " + legendOptions.get("fontSize"));
+      legendFontSize=LegendUtils.DEFAULT_FONT_SIZE;
+    }
+  }
+  if (legendFontFamily == LegendUtils.DEFAULT_FONT_TYPE && legendFontName.equalsIgnoreCase(LegendUtils.DEFAULT_FONT_NAME) && (legendFontSize == LegendUtils.DEFAULT_FONT_SIZE || legendFontSize <= 0))   return DEFAULT_FONT;
+  return new Font(legendFontName,legendFontFamily,legendFontSize);
+}

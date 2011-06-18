@@ -1,0 +1,16 @@
+{
+  List<String> provided=new ArrayList<String>();
+  provided.add("1.0.0");
+  List<String> accepted=null;
+  if (request.getVersion() != null) {
+    accepted=new ArrayList<String>();
+    accepted.add(request.getVersion());
+  }
+  String version=RequestUtils.getVersionPreOws(provided,accepted);
+  if ("1.0.0".equals(version)) {
+    Wcs10CapsTransformer capsTransformer=new Wcs10CapsTransformer(geoServer);
+    capsTransformer.setEncoding(Charset.forName((getServiceInfo().getGeoServer().getGlobal().getCharset())));
+    return capsTransformer;
+  }
+  throw new WcsException("Could not understand version:" + version);
+}

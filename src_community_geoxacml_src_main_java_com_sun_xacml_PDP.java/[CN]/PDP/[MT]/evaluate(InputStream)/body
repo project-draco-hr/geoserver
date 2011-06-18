@@ -1,0 +1,17 @@
+{
+  RequestCtx request=null;
+  ResponseCtx response=null;
+  try {
+    request=RequestCtx.getInstance(input);
+  }
+ catch (  Exception pe) {
+    ArrayList<String> code=new ArrayList<String>();
+    code.add(Status.STATUS_SYNTAX_ERROR);
+    Status status=new Status(code,"invalid request: " + pe.getMessage());
+    response=new ResponseCtx(new Result(Result.DECISION_INDETERMINATE,status));
+  }
+  if (response == null)   response=evaluate(request);
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  response.encode(out,new Indenter());
+  return out;
+}

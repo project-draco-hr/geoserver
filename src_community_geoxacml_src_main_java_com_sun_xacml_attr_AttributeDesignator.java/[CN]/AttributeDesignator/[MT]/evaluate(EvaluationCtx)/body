@@ -1,0 +1,29 @@
+{
+  EvaluationResult result=null;
+switch (target) {
+case SUBJECT_TARGET:
+    result=context.getSubjectAttribute(type,id,issuer,subjectCategory);
+  break;
+case RESOURCE_TARGET:
+result=context.getResourceAttribute(type,id,issuer);
+break;
+case ACTION_TARGET:
+result=context.getActionAttribute(type,id,issuer);
+break;
+case ENVIRONMENT_TARGET:
+result=context.getEnvironmentAttribute(type,id,issuer);
+break;
+}
+if (result.indeterminate()) return result;
+BagAttribute bag=(BagAttribute)(result.getAttributeValue());
+if (bag.isEmpty()) {
+if (mustBePresent) {
+if (logger.isLoggable(Level.INFO)) logger.info("AttributeDesignator failed to resolve a " + "value for a required attribute: " + id.toString());
+ArrayList<String> code=new ArrayList<String>();
+code.add(Status.STATUS_MISSING_ATTRIBUTE);
+String message="Couldn't find " + targetTypes[target] + "AttributeDesignator attribute";
+return new EvaluationResult(new Status(code,message));
+}
+}
+return result;
+}

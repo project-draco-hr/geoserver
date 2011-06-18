@@ -1,0 +1,42 @@
+{
+  final CatalogIconFactory icons=CatalogIconFactory.get();
+  table=new GeoServerTablePanel<LayerInfo>("table",provider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<LayerInfo> property){
+      if (property == TYPE) {
+        Fragment f=new Fragment(id,"iconFragment",LayerPage.this);
+        f.add(new Image("layerIcon",icons.getSpecificLayerIcon((LayerInfo)itemModel.getObject())));
+        return f;
+      }
+ else       if (property == WORKSPACE) {
+        return workspaceLink(id,itemModel);
+      }
+ else       if (property == STORE) {
+        return storeLink(id,itemModel);
+      }
+ else       if (property == NAME) {
+        return layerLink(id,itemModel);
+      }
+ else       if (property == ENABLED) {
+        LayerInfo layerInfo=(LayerInfo)itemModel.getObject();
+        boolean enabled=layerInfo.enabled();
+        ResourceReference icon=enabled ? icons.getEnabledIcon() : icons.getDisabledIcon();
+        Fragment f=new Fragment(id,"iconFragment",LayerPage.this);
+        f.add(new Image("layerIcon",icon));
+        return f;
+      }
+ else       if (property == SRS) {
+        return new Label(id,SRS.getModel(itemModel));
+      }
+      throw new IllegalArgumentException("Don't know a property named " + property.getName());
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      removal.setEnabled(table.getSelection().size() > 0);
+      target.addComponent(removal);
+    }
+  }
+;
+  table.setOutputMarkupId(true);
+  add(table);
+  add(dialog=new GeoServerDialog("dialog"));
+  setHeaderPanel(headerPanel());
+}

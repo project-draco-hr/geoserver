@@ -1,0 +1,52 @@
+{
+  styleForm=new Form("form",new CompoundPropertyModel(style != null ? new StyleDetachableModel(style) : getCatalog().getFactory().createStyle())){
+    @Override protected void onSubmit(){
+      onStyleFormSubmit();
+    }
+  }
+;
+  styleForm.setMarkupId("mainForm");
+  add(styleForm);
+  styleForm.add(nameTextField=new TextField("name"));
+  nameTextField.setRequired(true);
+  styleForm.add(editor=new CodeMirrorEditor("editor",new PropertyModel(this,"rawSLD")));
+  editor.setTextAreaMarkupId("editor");
+  editor.setOutputMarkupId(true);
+  styleForm.add(editor);
+  if (style != null) {
+    try {
+      setRawSLD(readFile(style));
+    }
+ catch (    IOException e) {
+      Session.get().error(new ParamResourceModel("sldNotFound",this,style.getFilename()).getString());
+    }
+  }
+  styles=new DropDownChoice("existingStyles",new Model(),new StylesModel(),new StyleChoiceRenderer());
+  styles.setOutputMarkupId(true);
+  styles.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      styles.validate();
+      copyLink.setEnabled(styles.getConvertedInput() != null);
+      target.addComponent(copyLink);
+    }
+  }
+);
+  styleForm.add(styles);
+  copyLink=copyLink();
+  copyLink.setEnabled(false);
+  styleForm.add(copyLink);
+  uploadForm=uploadForm(styleForm);
+  uploadForm.setMultiPart(true);
+  uploadForm.setMaxSize(Bytes.megabytes(1));
+  uploadForm.setMarkupId("uploadForm");
+  add(uploadForm);
+  uploadForm.add(fileUploadField=new FileUploadField("filename"));
+  add(validateLink());
+  Link cancelLink=new Link("cancel"){
+    @Override public void onClick(){
+      setResponsePage(StylePage.class);
+    }
+  }
+;
+  add(cancelLink);
+}

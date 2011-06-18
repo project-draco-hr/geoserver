@@ -1,0 +1,36 @@
+{
+  String uriSpec=Converters.convert(validatable.getValue(),String.class);
+  try {
+    URI uri=new URI(uriSpec);
+    if (uri.getScheme() != null && !"file".equals(uri.getScheme())) {
+      if (delegate != null) {
+        delegate.validate(validatable);
+        InputStream is=null;
+        try {
+          URLConnection connection=uri.toURL().openConnection();
+          connection.setConnectTimeout(10000);
+          is=connection.getInputStream();
+        }
+ catch (        Exception e) {
+          error(validatable,"FileExistsValidator.unreachable",Collections.singletonMap("file",uriSpec));
+        }
+ finally {
+          IOUtils.closeQuietly(is);
+        }
+      }
+      return;
+    }
+ else {
+      String path=uri.getPath();
+      if (path != null && new File(path).exists()) {
+        return;
+      }
+    }
+  }
+ catch (  URISyntaxException e) {
+  }
+  File relFile=GeoserverDataDirectory.findDataFile(uriSpec);
+  if (relFile == null || !relFile.exists()) {
+    error(validatable,"FileExistsValidator.fileNotFoundError",Collections.singletonMap("file",uriSpec));
+  }
+}

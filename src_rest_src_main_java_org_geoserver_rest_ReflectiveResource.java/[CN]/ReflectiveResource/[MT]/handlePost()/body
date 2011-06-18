@@ -1,0 +1,23 @@
+{
+  DataFormat format=getFormatPostOrPut();
+  Object object=format.toObject(getRequest().getEntity());
+  String location=null;
+  try {
+    location=handleObjectPost(object);
+  }
+ catch (  Exception e) {
+    handleException(e);
+  }
+  if (location != null) {
+    String uri=getRequest().getResourceRef().getIdentifier();
+    int question=uri.indexOf('?');
+    if (question != -1) {
+      uri=uri.substring(0,question);
+    }
+    uri=ResponseUtils.appendPath(uri,location);
+    getResponse().redirectSeeOther(uri);
+    getResponse().setStatus(Status.SUCCESS_CREATED);
+  }
+ else {
+  }
+}

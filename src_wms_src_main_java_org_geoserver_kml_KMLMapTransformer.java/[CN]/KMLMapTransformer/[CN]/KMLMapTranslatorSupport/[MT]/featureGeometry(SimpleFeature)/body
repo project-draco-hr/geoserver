@@ -1,0 +1,19 @@
+{
+  Geometry geom=(Geometry)f.getDefaultGeometry();
+  try {
+    final double height=new FeatureHeightTemplate(template).execute(f);
+    if (!Double.isNaN(height) && height != 0) {
+      geom.apply(new CoordinateFilter(){
+        public void filter(        Coordinate c){
+          c.setCoordinate(new Coordinate(c.x,c.y,height));
+        }
+      }
+);
+      geom.geometryChanged();
+    }
+  }
+ catch (  IOException ioe) {
+    LOGGER.log(Level.WARNING,"Couldn't render height template for " + f.getID(),ioe);
+  }
+  return geom;
+}

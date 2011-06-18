@@ -1,0 +1,37 @@
+{
+  final List<ServiceAccessRule> selection=services.getSelection();
+  if (selection.size() == 0)   return;
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    protected Component getContents(    String id){
+      return new ConfirmRemovalServicePanel(id,selection){
+        @Override protected StringResourceModel canRemove(        ServiceAccessRule service){
+          return SelectionServiceRemovalLink.this.canRemove(service);
+        }
+      }
+;
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      ServiceAccessRuleDAO dao=ServiceAccessRuleDAO.get();
+      for (      ServiceAccessRule service : selection) {
+        dao.removeRule(service);
+      }
+      try {
+        dao.storeRules();
+      }
+ catch (      IOException e) {
+        e.printStackTrace();
+      }
+      services.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (services.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(SelectionServiceRemovalLink.this);
+        target.addComponent(services);
+      }
+    }
+  }
+);
+}

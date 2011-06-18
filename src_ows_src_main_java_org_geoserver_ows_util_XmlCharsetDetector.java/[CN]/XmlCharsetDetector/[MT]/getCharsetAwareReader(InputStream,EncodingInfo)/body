@@ -1,0 +1,71 @@
+{
+  RewindableInputStream stream;
+  stream=new RewindableInputStream(istream,false);
+  final byte[] b4=new byte[4];
+  int count=0;
+  for (; count < 4; count++) {
+    int b=stream.read();
+    if (-1 != b) {
+      b4[count]=(byte)b;
+    }
+ else {
+      break;
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer("First 4 bytes of XML doc are : " + Integer.toHexString((int)b4[0] & 0xff).toUpperCase() + " ('"+ (char)b4[0]+ "') "+ Integer.toHexString((int)b4[1] & 0xff).toUpperCase()+ " ('"+ (char)b4[1]+ "') "+ Integer.toHexString((int)b4[2] & 0xff).toUpperCase()+ " ('"+ (char)b4[2]+ "') "+ Integer.toHexString((int)b4[3] & 0xff).toUpperCase()+ " ('"+ (char)b4[3]+ "')");
+  }
+  encInfo.copyFrom(getEncodingName(b4,count));
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Charset detection phase 1. Inferred encoding: " + encInfo.toString());
+  }
+  stream.reset();
+  String ENCODING=encInfo.getEncoding().toUpperCase(Locale.ENGLISH);
+  Boolean isBigEndian=encInfo.isBigEndian();
+  boolean hasBOM=encInfo.hasBOM();
+  if (hasBOM && ENCODING.equals("UTF-8")) {
+    stream.skip(3);
+  }
+  if ((count > 1) && (ENCODING.equals("UTF-16LE") || ENCODING.equals("UTF-16BE"))) {
+    int b0=b4[0] & 0xFF;
+    int b1=b4[1] & 0xFF;
+    if (((b0 == 0xFF) && (b1 == 0xFE)) || ((b0 == 0xFE) && (b1 == 0xFF))) {
+      stream.skip(2);
+    }
+  }
+  Reader reader=null;
+  if ("ISO-10646-UCS-4".equals(ENCODING)) {
+    if (null != isBigEndian) {
+      boolean isBE=isBigEndian.booleanValue();
+      if (isBE) {
+        reader=new UCSReader(stream,UCSReader.UCS4BE);
+      }
+ else {
+        reader=new UCSReader(stream,UCSReader.UCS4LE);
+      }
+    }
+ else {
+      String s="Unsupported byte order for ISO-10646-UCS-4 encoding.";
+      throw new UnsupportedCharsetException(s);
+    }
+  }
+  if (null == reader) {
+    reader=new InputStreamReader(stream,ENCODING);
+  }
+  String declEncoding=getXmlEncoding(reader);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Charset detection phase 2. Charset in XML declaration " + "is `" + declEncoding + "`.");
+  }
+  stream.reset();
+  stream.setChunkedMode(true);
+  if ((null != declEncoding) && !declEncoding.equals(ENCODING)) {
+    if (!declEncoding.equals("ISO-10646-UCS-2")) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Declared charset differs from inferred one. " + "Trying to construct InputStreamReader for `" + declEncoding + "`.");
+      }
+      reader=new InputStreamReader(stream,declEncoding);
+      encInfo.setEncoding(declEncoding);
+    }
+  }
+  return reader;
+}

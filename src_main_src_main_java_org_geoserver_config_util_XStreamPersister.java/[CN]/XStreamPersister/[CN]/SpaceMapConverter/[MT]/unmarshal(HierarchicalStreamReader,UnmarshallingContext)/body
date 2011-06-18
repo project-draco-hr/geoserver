@@ -1,0 +1,25 @@
+{
+  Map map=new HashMap();
+  while (reader.hasMoreChildren()) {
+    reader.moveDown();
+    boolean def="true".equals(reader.getAttribute("default"));
+    if ("namespace".equals(name)) {
+      NamespaceInfoImpl ns=(NamespaceInfoImpl)context.convertAnother(map,NamespaceInfoImpl.class);
+      map.put(ns.getPrefix(),ns);
+      if (def) {
+        map.put(null,ns);
+      }
+      LOGGER.info("Loading namespace '" + ns.getPrefix() + "'");
+    }
+ else {
+      WorkspaceInfoImpl ws=(WorkspaceInfoImpl)context.convertAnother(map,WorkspaceInfoImpl.class);
+      map.put(ws.getName(),ws);
+      if (def) {
+        map.put(null,ws);
+      }
+      LOGGER.info("Loading workspace '" + ws.getName() + "'");
+    }
+    reader.moveUp();
+  }
+  return map;
+}

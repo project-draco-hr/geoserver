@@ -1,0 +1,28 @@
+{
+  FeatureTypeInfo meta=catalog.getFeatureTypeByName(instance.getNamespace(),instance.getName());
+  if (meta != null) {
+    FeatureType featureType=meta.getFeatureType();
+    for (    PropertyDescriptor pd : featureType.getDescriptors()) {
+      if (pd instanceof AttributeDescriptor) {
+        AttributeDescriptor attributeType=(AttributeDescriptor)pd;
+        String name=attributeType.getLocalName();
+        Class type=attributeType.getType().getBinding();
+        if ("boundedBy".equals(name)) {
+          Node boundedByNode=node.getChild("boundedBy");
+          if (boundedByNode.getValue() instanceof Envelope) {
+            Envelope bounds=(Envelope)boundedByNode.getValue();
+            if (type.isAssignableFrom(Polygon.class)) {
+              Polygon polygon=polygon(bounds);
+              boundedByNode.setValue(polygon);
+            }
+ else             if (type.isAssignableFrom(MultiPolygon.class)) {
+              MultiPolygon multiPolygon=geometryFactory.createMultiPolygon(new Polygon[]{polygon(bounds)});
+              boundedByNode.setValue(multiPolygon);
+            }
+          }
+        }
+      }
+    }
+  }
+  return super.parse(instance,node,value);
+}

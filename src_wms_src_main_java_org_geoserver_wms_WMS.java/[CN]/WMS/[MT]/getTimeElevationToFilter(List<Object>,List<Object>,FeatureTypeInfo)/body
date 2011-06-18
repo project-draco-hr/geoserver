@@ -1,0 +1,56 @@
+{
+  DimensionInfo timeInfo=typeInfo.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+  DimensionInfo elevationInfo=typeInfo.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
+  Filter result=null;
+  if (timeInfo != null && timeInfo.isEnabled() && times != null) {
+    final List<Filter> timeFilters=new ArrayList<Filter>();
+    for (    Object datetime : times) {
+      if (datetime == null) {
+        datetime=getCurrentTime(typeInfo);
+      }
+      PropertyName attribute=ff.property(timeInfo.getAttribute());
+      if (datetime instanceof Date) {
+        timeFilters.add(ff.equal(attribute,ff.literal(datetime),true));
+      }
+ else {
+        final DateRange range=(DateRange)datetime;
+        timeFilters.add(ff.between(attribute,ff.literal(range.getMinValue()),ff.literal(range.getMaxValue())));
+      }
+    }
+    final int sizeTime=timeFilters.size();
+    if (sizeTime > 1) {
+      result=ff.or(timeFilters);
+    }
+ else     if (sizeTime == 1) {
+      result=timeFilters.get(0);
+    }
+  }
+  if (elevationInfo != null && elevationInfo.isEnabled() && elevations != null) {
+    final List<Filter> elevationFilters=new ArrayList<Filter>();
+    for (    Object elevation : elevations) {
+      if (elevation == null) {
+        elevation=getDefaultElevation(typeInfo);
+      }
+      PropertyName attribute=ff.property(elevationInfo.getAttribute());
+      if (elevation instanceof Double) {
+        elevationFilters.add(ff.equal(attribute,ff.literal(elevation),true));
+      }
+ else {
+        final NumberRange range=(NumberRange)elevation;
+        elevationFilters.add(ff.between(attribute,ff.literal(range.getMinValue()),ff.literal(range.getMaxValue())));
+      }
+    }
+    final int size=elevationFilters.size();
+    Filter summary=null;
+    if (size > 1) {
+      summary=ff.or(elevationFilters);
+    }
+ else     if (size == 1) {
+      summary=elevationFilters.get(0);
+    }
+    if (summary != null) {
+      result=Filters.and(ff,result,summary);
+    }
+  }
+  return result;
+}

@@ -1,0 +1,18 @@
+{
+  SimpleFeatureLocking fl;
+  fl=(SimpleFeatureLocking)rts.getFeatureSource(RENAMED);
+  final FeatureLock lock=FeatureLockFactory.generate(10 * 60 * 1000);
+  Transaction t=new DefaultTransaction();
+  t.addAuthorization(lock.getAuthorization());
+  fl.setTransaction(t);
+  fl.setFeatureLock(lock);
+  SimpleFeatureLocking fl2;
+  fl2=(SimpleFeatureLocking)rts.getFeatureSource(RENAMED);
+  fl.setFeatureLock(lock);
+  fl2.setTransaction(new DefaultTransaction());
+  Query q=new Query(RENAMED,fidFilter);
+  assertEquals(1,fl.lockFeatures(q));
+  assertEquals(0,fl2.lockFeatures(q));
+  fl.unLockFeatures(q);
+  assertEquals(1,fl2.lockFeatures(q));
+}

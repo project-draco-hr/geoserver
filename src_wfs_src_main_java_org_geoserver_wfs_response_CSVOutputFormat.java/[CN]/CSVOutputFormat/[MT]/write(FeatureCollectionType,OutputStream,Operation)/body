@@ -1,0 +1,51 @@
+{
+  BufferedWriter w=new BufferedWriter(new OutputStreamWriter(output));
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)featureCollection.getFeature().get(0);
+  SimpleFeatureType ft=fc.getSchema();
+  w.write("FID,");
+  for (int i=0; i < ft.getAttributeCount(); i++) {
+    AttributeDescriptor ad=ft.getDescriptor(i);
+    w.write(prepCSVField(ad.getLocalName()));
+    if (i < ft.getAttributeCount() - 1) {
+      w.write(",");
+    }
+  }
+  w.write("\r\n");
+  NumberFormat coordFormatter=NumberFormat.getInstance(Locale.US);
+  coordFormatter.setMaximumFractionDigits(getInfo().getGeoServer().getGlobal().getNumDecimals());
+  coordFormatter.setGroupingUsed(false);
+  SimpleFeatureIterator i=fc.features();
+  try {
+    while (i.hasNext()) {
+      SimpleFeature f=i.next();
+      w.write(prepCSVField(f.getID()));
+      w.write(",");
+      for (int j=0; j < f.getAttributeCount(); j++) {
+        Object att=f.getAttribute(j);
+        if (att != null) {
+          String value=null;
+          if (att instanceof Number) {
+            value=coordFormatter.format(att);
+          }
+ else           if (att instanceof Date) {
+            if (att instanceof java.sql.Date)             value=DateUtil.serializeSqlDate((java.sql.Date)att);
+ else             if (att instanceof java.sql.Time)             value=DateUtil.serializeSqlTime((java.sql.Time)att);
+ else             value=DateUtil.serializeDateTime((Date)att);
+          }
+ else {
+            value=att.toString();
+          }
+          w.write(prepCSVField(value));
+        }
+        if (j < f.getAttributeCount() - 1) {
+          w.write(",");
+        }
+      }
+      w.write("\r\n");
+    }
+  }
+  finally {
+    fc.close(i);
+  }
+  w.flush();
+}

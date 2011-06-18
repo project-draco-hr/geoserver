@@ -1,0 +1,19 @@
+{
+  if (extraParams == null)   extraParams=Collections.EMPTY_MAP;
+  File directory=new File(data,name.getPrefix());
+  if (!directory.exists()) {
+    directory.mkdir();
+  }
+  File f=new File(directory,name.getLocalPart() + ".properties");
+  InputStream propertiesContents;
+  if (properties == null)   propertiesContents=new ByteArrayInputStream("-=".getBytes());
+ else   propertiesContents=properties.openStream();
+  IOUtils.copy(propertiesContents,f);
+  info(name,extraParams);
+  namespaces.put(name.getPrefix(),name.getNamespaceURI());
+  dataStoreNamepaces.put(name.getPrefix(),name.getPrefix());
+  Map params=new HashMap();
+  params.put(PropertyDataStoreFactory.DIRECTORY.key,directory);
+  params.put(PropertyDataStoreFactory.NAMESPACE.key,name.getNamespaceURI());
+  dataStores.put(name.getPrefix(),params);
+}

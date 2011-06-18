@@ -1,0 +1,15 @@
+{
+  CatalogModifyEvent modifyEvent=mock(CatalogModifyEvent.class);
+  when(modifyEvent.getSource()).thenReturn(mockLayerGroupInfo);
+  when(modifyEvent.getPropertyNames()).thenReturn(Arrays.asList("styles"));
+  List<StyleInfo> oldStyles=Collections.emptyList();
+  StyleInfo newStyle=mock(StyleInfo.class);
+  List<StyleInfo> newStyles=Collections.singletonList(newStyle);
+  when(modifyEvent.getOldValues()).thenReturn(Collections.singletonList((Object)oldStyles));
+  when(modifyEvent.getNewValues()).thenReturn(Collections.singletonList((Object)newStyles));
+  listener.handleModifyEvent(modifyEvent);
+  CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
+  when(postModifyEvent.getSource()).thenReturn(mockLayerGroupInfo);
+  listener.handlePostModifyEvent(postModifyEvent);
+  verify(mockConfiguration).truncate(eq(LAYER_GROUP_NAME));
+}

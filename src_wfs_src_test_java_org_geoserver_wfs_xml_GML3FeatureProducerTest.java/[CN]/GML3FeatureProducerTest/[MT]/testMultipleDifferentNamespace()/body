@@ -1,0 +1,11 @@
+{
+  FeatureCollectionType fcType=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  fcType.getFeature().add(getFeatureSource(MockData.SEVEN).getFeatures());
+  fcType.getFeature().add(getFeatureSource(MockData.POLYGONS).getFeatures());
+  int npolys=getFeatureSource(MockData.POLYGONS).getFeatures().size();
+  ByteArrayOutputStream output=new ByteArrayOutputStream();
+  producer().write(fcType,output,request(MockData.SEVEN,MockData.POLYGONS));
+  DocumentBuilder docBuilder=DocumentBuilderFactory.newInstance().newDocumentBuilder();
+  Document document=docBuilder.parse(new ByteArrayInputStream(output.toByteArray()));
+  assertEquals(7 + npolys,document.getElementsByTagName("cdf:Seven").getLength() + document.getElementsByTagName("cgf:Polygons").getLength());
+}

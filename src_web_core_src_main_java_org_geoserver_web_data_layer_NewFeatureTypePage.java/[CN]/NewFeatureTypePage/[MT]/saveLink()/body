@@ -1,0 +1,37 @@
+{
+  return new SubmitLink("save"){
+    @Override public void onSubmit(){
+      DataStore ds=null;
+      DataStoreInfo dsInfo=null;
+      try {
+        dsInfo=getCatalog().getDataStore(storeId);
+        ds=(DataStore)dsInfo.getDataStore(null);
+        if (Arrays.asList(ds.getTypeNames()).contains(name)) {
+          error(new ParamResourceModel("duplicateTypeName",this,dsInfo.getName(),name).getString());
+          return;
+        }
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+      if (attributesProvider.getAttributes().size() == 0) {
+        error(new ParamResourceModel("noAttributes",this).getString());
+        return;
+      }
+      try {
+        SimpleFeatureType featureType=buildFeatureType();
+        ds.createSchema(featureType);
+        CatalogBuilder builder=new CatalogBuilder(getCatalog());
+        builder.setStore(dsInfo);
+        FeatureTypeInfo fti=builder.buildFeatureType(getFeatureSource(ds));
+        LayerInfo layerInfo=builder.buildLayer(fti);
+        setResponsePage(new ResourceConfigurationPage(layerInfo,true));
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"Failed to create feature type",e);
+        error(new ParamResourceModel("creationFailure",this,e.getMessage()).getString());
+      }
+    }
+  }
+;
+}

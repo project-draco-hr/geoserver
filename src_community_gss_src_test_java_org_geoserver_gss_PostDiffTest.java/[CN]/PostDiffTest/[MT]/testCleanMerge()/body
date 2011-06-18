@@ -1,0 +1,13 @@
+{
+  VersioningFeatureStore restricted=(VersioningFeatureStore)synchStore.getFeatureSource("restricted");
+  SimpleFeatureType schema=restricted.getSchema();
+  Id updateFilter=ff.id(singleton(ff.featureId("restricted.be7cafea-d0b7-4257-9b9c-1ed3de3f7ef4")));
+  restricted.modifyFeatures(schema.getDescriptor("cat"),-48,updateFilter);
+  Id removeFilter=ff.id(singleton(ff.featureId("restricted.d91fe390-bdc7-4b22-9316-2cd6c8737ef5")));
+  restricted.removeFeatures(removeFilter);
+  assertEquals(3,restricted.getCount(Query.ALL));
+  MockHttpServletResponse response=postAsServletResponse(root(true),loadTextResource("PostDiffInitial.xml"));
+  checkPostDiffSuccessResponse(response);
+  checkPostDiffInitialChanges(restricted);
+  assertEquals(0,gss.getActiveConflicts("restricted").size());
+}

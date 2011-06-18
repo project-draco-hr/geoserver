@@ -1,0 +1,51 @@
+{
+  final Queue<BufferedImage> queue=new LinkedList<BufferedImage>();
+  final int rowHeight=(int)Math.round(rowH);
+  final int colorWidth=(int)Math.round(colorW);
+  final int ruleWidth=(int)Math.round(ruleW);
+  final int labelWidth=(int)Math.round(labelW);
+  final Rectangle clipboxA=new Rectangle(0,0,colorWidth,rowHeight);
+  final Rectangle clipboxB=new Rectangle(0,0,ruleWidth,rowHeight);
+  final Rectangle clipboxC=new Rectangle(0,0,labelWidth,rowHeight);
+  for (  ColorMapEntryLegendBuilder row : bodyRows) {
+    final Cell colorCell=row.getColorManager();
+    final BufferedImage colorCellLegend=new BufferedImage(colorWidth,rowHeight,BufferedImage.TYPE_INT_ARGB);
+    Graphics2D rlg=colorCellLegend.createGraphics();
+    rlg.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+    rlg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    colorCell.draw(rlg,clipboxA,border);
+    rlg.dispose();
+    BufferedImage ruleCellLegend=null;
+    if (forceRule) {
+      final Cell ruleCell=row.getRuleManager();
+      ruleCellLegend=new BufferedImage(ruleWidth,rowHeight,BufferedImage.TYPE_INT_ARGB);
+      rlg=ruleCellLegend.createGraphics();
+      rlg.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+      rlg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      ruleCell.draw(rlg,clipboxB,borderRule);
+      rlg.dispose();
+    }
+    if (labelWidth > 0) {
+      final Cell labelCell=row.getLabelManager();
+      if (labelCell != null) {
+        final BufferedImage labelCellLegend=new BufferedImage(labelWidth,rowHeight,BufferedImage.TYPE_INT_ARGB);
+        rlg=labelCellLegend.createGraphics();
+        rlg.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        rlg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        labelCell.draw(rlg,clipboxC,borderLabel);
+        rlg.dispose();
+        final Map<Key,Object> hintsMap=new HashMap<Key,Object>();
+        queue.add(LegendUtils.hMergeBufferedImages(colorCellLegend,ruleCellLegend,labelCellLegend,hintsMap,transparent,backgroundColor,dx));
+      }
+ else {
+        final Map<Key,Object> hintsMap=new HashMap<Key,Object>();
+        queue.add(LegendUtils.hMergeBufferedImages(colorCellLegend,ruleCellLegend,null,hintsMap,transparent,backgroundColor,dx));
+      }
+    }
+ else {
+      final Map<Key,Object> hintsMap=new HashMap<Key,Object>();
+      queue.add(LegendUtils.hMergeBufferedImages(colorCellLegend,ruleCellLegend,null,hintsMap,transparent,backgroundColor,dx));
+    }
+  }
+  return queue;
+}

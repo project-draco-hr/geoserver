@@ -1,0 +1,24 @@
+{
+  String capName="GetFeature";
+  start(capName);
+  String resultFormat="ResultFormat";
+  start(resultFormat);
+  if (wfs.isCiteCompliant()) {
+    element("GML2",null);
+  }
+ else {
+    Collection featureProducers=GeoServerExtensions.extensions(WFSGetFeatureOutputFormat.class);
+    Map dupes=new HashMap();
+    for (Iterator i=featureProducers.iterator(); i.hasNext(); ) {
+      WFSGetFeatureOutputFormat format=(WFSGetFeatureOutputFormat)i.next();
+      if (!dupes.containsKey(format.getCapabilitiesElementName())) {
+        element(format.getCapabilitiesElementName(),null);
+        dupes.put(format.getCapabilitiesElementName(),new Object());
+      }
+    }
+  }
+  end(resultFormat);
+  handleDcpType(capName,HTTP_GET);
+  handleDcpType(capName,HTTP_POST);
+  end(capName);
+}

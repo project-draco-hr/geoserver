@@ -1,0 +1,16 @@
+{
+  TreeSet<ServiceAccessRule> result=new TreeSet<ServiceAccessRule>();
+  for (  Map.Entry<Object,Object> entry : props.entrySet()) {
+    String ruleKey=(String)entry.getKey();
+    String ruleValue=(String)entry.getValue();
+    ServiceAccessRule rule=parseServiceAccessRule(ruleKey,ruleValue);
+    if (rule != null) {
+      if (result.contains(rule))       LOGGER.warning("Rule " + ruleKey + "."+ ruleValue+ " overwrites another rule on the same path");
+      result.add(rule);
+    }
+  }
+  if (result.size() == 0) {
+    result.add(new ServiceAccessRule(new ServiceAccessRule()));
+  }
+  rules=result;
+}

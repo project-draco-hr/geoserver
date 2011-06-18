@@ -1,0 +1,45 @@
+{
+  return new StaxWriter(qnameMap,out,writeStartEndDocument,isRepairingNamespace(),xmlFriendlyReplacer()){
+    private int indentLevel=0;
+    @Override public void startNode(    final String elementName){
+      XMLStreamWriter xmlStreamWriter=super.getXMLStreamWriter();
+      try {
+        xmlStreamWriter.writeCharacters("\n");
+        String comment=comments.get(elementName);
+        if (comment != null) {
+          indent(xmlStreamWriter);
+          xmlStreamWriter.writeComment(comment);
+          xmlStreamWriter.writeCharacters("\n");
+          indent(xmlStreamWriter);
+        }
+      }
+ catch (      XMLStreamException ignored) {
+      }
+      super.startNode(elementName);
+      indentLevel++;
+    }
+    private void indent(    XMLStreamWriter xmlStreamWriter) throws XMLStreamException {
+      for (int i=0; i < indentLevel; i++) {
+        xmlStreamWriter.writeCharacters("  ");
+      }
+    }
+    @Override public void endNode(){
+      indentLevel--;
+      System.err.println("indentLevel: " + indentLevel);
+      if (indentLevel == 0) {
+        XMLStreamWriter xmlStreamWriter=super.getXMLStreamWriter();
+        try {
+          xmlStreamWriter.writeCharacters("\n");
+          super.endNode();
+          xmlStreamWriter.writeCharacters("\n");
+        }
+ catch (        XMLStreamException ignored) {
+        }
+      }
+ else {
+        super.endNode();
+      }
+    }
+  }
+;
+}

@@ -1,0 +1,15 @@
+{
+  MockHttpServletResponse response=getAsServletResponse(root() + "data/cite:Buildings?queryable=FID&FID__eq=113&attrs=FID");
+  assertEquals(200,response.getStatusCode());
+  assertEquals(MediaType.APPLICATION_JSON.getName(),response.getContentType());
+  JSONObject collection=(JSONObject)json(response);
+  assertEquals("FeatureCollection",collection.getString("type"));
+  final JSONArray features=collection.getJSONArray("features");
+  assertEquals(1,features.size());
+  JSONObject feature=(JSONObject)features.get(0);
+  assertEquals("Feature",feature.getString("type"));
+  assertTrue(feature.has("geometry"));
+  final JSONObject properties=feature.getJSONObject("properties");
+  assertEquals("113",properties.getString("FID"));
+  assertFalse(properties.has("ADDRESS"));
+}

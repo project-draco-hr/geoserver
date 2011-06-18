@@ -1,0 +1,46 @@
+{
+  ensureNotNull(label);
+  ensureNotNull(g);
+  ensureNotNull(req);
+  BufferedImage renderedLabel;
+  Color labelColor=getLabelFontColor(req);
+  if ((label.indexOf("\n") != -1) || (label.indexOf("\\n") != -1)) {
+    Rectangle2D bounds=new Rectangle2D.Double(0,0,0,0);
+    ArrayList<Integer> lineHeight=new ArrayList<Integer>();
+    final String realLabel=label.replaceAll("\\\\n","\n");
+    StringTokenizer st=new StringTokenizer(realLabel,"\n\r\f");
+    while (st.hasMoreElements()) {
+      final String token=st.nextToken();
+      Rectangle2D thisLineBounds=g.getFontMetrics().getStringBounds(token,g);
+      final int thisLineHeight=(int)Math.ceil(thisLineBounds.getHeight());
+      bounds.add(0,thisLineHeight + bounds.getHeight());
+      bounds.add(thisLineBounds.getWidth(),0);
+      lineHeight.add((int)Math.ceil(thisLineBounds.getHeight()));
+    }
+    renderedLabel=new BufferedImage((int)Math.ceil(bounds.getWidth()),(int)Math.ceil(bounds.getHeight()),BufferedImage.TYPE_INT_ARGB);
+    st=new StringTokenizer(realLabel,"\n\r\f");
+    Graphics2D rlg=renderedLabel.createGraphics();
+    rlg.setColor(labelColor);
+    rlg.setFont(g.getFont());
+    rlg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,g.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING));
+    int y=0 - g.getFontMetrics().getDescent();
+    int c=0;
+    while (st.hasMoreElements()) {
+      y+=lineHeight.get(c++).intValue();
+      rlg.drawString(st.nextToken(),0,y);
+    }
+    rlg.dispose();
+  }
+ else {
+    int height=(int)Math.ceil(g.getFontMetrics().getStringBounds(label,g).getHeight());
+    int width=(int)Math.ceil(g.getFontMetrics().getStringBounds(label,g).getWidth());
+    renderedLabel=new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
+    Graphics2D rlg=renderedLabel.createGraphics();
+    rlg.setColor(labelColor);
+    rlg.setFont(g.getFont());
+    rlg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,g.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING));
+    rlg.drawString(label,0,height - rlg.getFontMetrics().getDescent());
+    rlg.dispose();
+  }
+  return renderedLabel;
+}

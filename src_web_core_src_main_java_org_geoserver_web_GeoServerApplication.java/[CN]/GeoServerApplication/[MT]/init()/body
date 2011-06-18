@@ -1,0 +1,19 @@
+{
+  getResourceSettings().setResourceStreamLocator(new GeoServerResourceStreamLocator());
+  List<IStringResourceLoader> alternateResourceLoaders=getBeansOfType(IStringResourceLoader.class);
+  for (  IStringResourceLoader loader : alternateResourceLoaders) {
+    LOGGER.info("Registering alternate resource loader: " + loader);
+    getResourceSettings().addStringResourceLoader(loader);
+  }
+  getResourceSettings().addStringResourceLoader(0,new GeoServerStringResourceLoader());
+  getResourceSettings().setDisableGZipCompression(true);
+  if (DEVELOPMENT.equalsIgnoreCase(getConfigurationType())) {
+    getMarkupSettings().setStripWicketTags(true);
+    HtmlValidationResponseFilter htmlvalidator=new GeoServerHTMLValidatorResponseFilter();
+    htmlvalidator.setIgnoreAutocomplete(true);
+    htmlvalidator.setIgnoreKnownWicketBugs(true);
+    getRequestCycleSettings().addResponseFilter(htmlvalidator);
+  }
+  getDebugSettings().setAjaxDebugModeEnabled(false);
+  getApplicationSettings().setPageExpiredErrorPage(GeoServerExpiredPage.class);
+}

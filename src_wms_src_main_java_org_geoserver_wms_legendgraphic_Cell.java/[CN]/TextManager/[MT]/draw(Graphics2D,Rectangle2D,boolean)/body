@@ -1,0 +1,43 @@
+{
+  final Font oldFont=graphics.getFont();
+  graphics.setColor(labelFontColor);
+  graphics.setFont(labelFont);
+  if (fontAntiAliasing)   graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+  final double minx=clipBox.getMinX();
+  final double miny=clipBox.getMinY();
+  final double w=clipBox.getWidth();
+  final double h=clipBox.getHeight();
+  final Dimension dimension=getPreferredDimension(graphics);
+  final int xText;
+switch (hAlign) {
+case CENTERED:
+    xText=(int)(minx + (w - dimension.getWidth()) / 2.0 + 0.5);
+  break;
+case LEFT:
+xText=(int)(minx + 0.5);
+break;
+case RIGHT:
+xText=(int)(minx + (w - dimension.getWidth()) + 0.5);
+break;
+case JUSTIFIED:
+throw new UnsupportedOperationException("Unsupported");
+default :
+throw new IllegalStateException("Unsupported horizontal alignment " + hAlign);
+}
+final int yText;
+switch (vAlign) {
+case BOTTOM:
+yText=(int)(miny + h - graphics.getFontMetrics().getDescent() + 0.5);
+break;
+case TOP:
+yText=(int)(miny + graphics.getFontMetrics().getHeight() + 0.5);
+break;
+case MIDDLE:
+yText=(int)(miny + (h + graphics.getFontMetrics().getHeight()) / 2 + 0.5);
+break;
+default :
+throw new IllegalStateException("Unsupported vertical alignment " + vAlign);
+}
+graphics.drawString(text,xText,yText);
+graphics.setFont(oldFont);
+}

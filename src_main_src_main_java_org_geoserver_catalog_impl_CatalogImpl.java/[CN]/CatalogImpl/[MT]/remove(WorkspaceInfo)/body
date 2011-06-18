@@ -1,0 +1,21 @@
+{
+  if (getNamespaceByPrefix(workspace.getName()) != null) {
+    throw new IllegalArgumentException("Cannot delete workspace with linked namespace");
+  }
+  if (!getStoresByWorkspace(workspace,StoreInfo.class).isEmpty()) {
+    throw new IllegalArgumentException("Cannot delete non-empty workspace.");
+  }
+synchronized (facade) {
+    facade.remove(workspace);
+    WorkspaceInfo defaultWorkspace=getDefaultWorkspace();
+    if (workspace.equals(defaultWorkspace) || defaultWorkspace == null) {
+      List<WorkspaceInfo> workspaces=facade.getWorkspaces();
+      defaultWorkspace=null;
+      if (!workspaces.isEmpty()) {
+        defaultWorkspace=workspaces.get(0);
+      }
+      setDefaultWorkspace(defaultWorkspace);
+    }
+  }
+  removed(workspace);
+}

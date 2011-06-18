@@ -1,0 +1,16 @@
+{
+  NamespaceInfo namespace=(NamespaceInfo)object;
+  String ns=getAttribute("namespace");
+  if ("default".equals(ns)) {
+    catalog.setDefaultNamespace(namespace);
+  }
+ else {
+    NamespaceInfo original=catalog.getNamespaceByPrefix(ns);
+    if (namespace.getPrefix() != null && !namespace.getPrefix().equals(original.getPrefix())) {
+      throw new RestletException("Can't change the prefix of a namespace.",Status.CLIENT_ERROR_FORBIDDEN);
+    }
+    new CatalogBuilder(catalog).updateNamespace(original,namespace);
+    catalog.save(original);
+  }
+  LOGGER.info("PUT namespace " + namespace);
+}

@@ -1,0 +1,50 @@
+{
+  super(root,"Policy","RuleCombiningAlgId");
+  List<Rule> rules=new ArrayList<Rule>();
+  HashMap<String,List<CombinerParameter>> parameters=new HashMap<String,List<CombinerParameter>>();
+  HashMap<String,Node> variableIds=new HashMap<String,Node>();
+  PolicyMetaData metaData=getMetaData();
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    if (child.getNodeName().equals("VariableDefinition")) {
+      String id=child.getAttributes().getNamedItem("VariableId").getNodeValue();
+      if (variableIds.containsKey(id))       throw new ParsingException("multiple definitions for " + "variable " + id);
+      variableIds.put(id,child);
+    }
+  }
+  VariableManager manager=new VariableManager(variableIds,metaData);
+  definitions=new HashSet<VariableDefinition>();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String name=child.getNodeName();
+    if (name.equals("Rule")) {
+      rules.add(Rule.getInstance(child,metaData,manager));
+    }
+ else     if (name.equals("RuleCombinerParameters")) {
+      String ref=child.getAttributes().getNamedItem("RuleIdRef").getNodeValue();
+      if (parameters.containsKey(ref)) {
+        List<CombinerParameter> list=parameters.get(ref);
+        parseParameters(list,child);
+      }
+ else {
+        List<CombinerParameter> list=new ArrayList<CombinerParameter>();
+        parseParameters(list,child);
+        parameters.put(ref,list);
+      }
+    }
+ else     if (name.equals("VariableDefinition")) {
+      String id=child.getAttributes().getNamedItem("VariableId").getNodeValue();
+      definitions.add(manager.getDefinition(id));
+    }
+  }
+  definitions=Collections.unmodifiableSet(definitions);
+  List<CombinerElement> elements=new ArrayList<CombinerElement>();
+  for (  Rule rule : rules) {
+    String id=rule.getId().toString();
+    List<CombinerParameter> list=parameters.remove(id);
+    elements.add(new RuleCombinerElement(rule,list));
+  }
+  if (!parameters.isEmpty())   throw new ParsingException("Unmatched parameters in Rule");
+  setChildren(elements);
+}

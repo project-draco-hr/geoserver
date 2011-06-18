@@ -1,0 +1,62 @@
+{
+  if (!file.exists() | !file.canRead())   throw new IllegalArgumentException("The provided file cannot be read.");
+  BufferedReader reader=null;
+  try {
+    reader=new BufferedReader(new FileReader(file));
+    boolean loadNext=false;
+    String temp=reader.readLine().trim();
+    if (temp.equalsIgnoreCase("JASC-PAL")) {
+      if (LOGGER.isLoggable(Level.FINE))       LOGGER.fine("Found header in palette file");
+      loadNext=true;
+    }
+    if (loadNext) {
+      temp=reader.readLine().trim();
+      if (temp.equalsIgnoreCase("0100")) {
+        if (LOGGER.isLoggable(Level.FINE))         LOGGER.fine("Found version in palette file");
+        loadNext=true;
+      }
+    }
+    if (loadNext)     temp=reader.readLine().trim();
+    this.mapsize=Integer.parseInt(temp);
+    if (mapsize > 256 || mapsize <= 0)     throw new IllegalArgumentException("The provided number of colors is invalid");
+    final byte colorMap[][]=new byte[3][mapsize < 256 ? mapsize + 1 : mapsize];
+    for (int i=0; i < mapsize; i++) {
+      temp=reader.readLine().trim();
+      if (temp.startsWith("#"))       temp="0x" + temp.substring(1);
+      if (temp.startsWith("0x") || temp.startsWith("0X")) {
+        final Color color=Color.decode(temp);
+        colorMap[0][i]=(byte)color.getRed();
+        colorMap[1][i]=(byte)color.getGreen();
+        colorMap[2][i]=(byte)color.getBlue();
+      }
+ else {
+        final StringTokenizer tokenizer=new StringTokenizer(temp," ",false);
+        int numComponents=0;
+        while (tokenizer.hasMoreTokens()) {
+          if (numComponents >= 3)           throw new IllegalArgumentException("The number of components in one the color is greater than 3!");
+          colorMap[numComponents++][i]=(byte)Integer.parseInt(tokenizer.nextToken());
+        }
+        if (numComponents != 3)         throw new IllegalArgumentException("The number of components in one the color is invalid!");
+      }
+    }
+    if (mapsize < 256)     this.indexColorModel=new IndexColorModel(8,mapsize + 1,colorMap[0],colorMap[1],colorMap[2],mapsize);
+ else     this.indexColorModel=new IndexColorModel(8,mapsize,colorMap[0],colorMap[1],colorMap[2]);
+  }
+ catch (  FileNotFoundException e) {
+    LOGGER.log(Level.SEVERE,e.getLocalizedMessage(),e);
+  }
+catch (  IOException e) {
+    LOGGER.log(Level.SEVERE,e.getLocalizedMessage(),e);
+  }
+catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,e.getLocalizedMessage(),e);
+  }
+ finally {
+    if (reader != null)     try {
+      reader.close();
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.INFO,e.getLocalizedMessage(),e);
+    }
+  }
+}

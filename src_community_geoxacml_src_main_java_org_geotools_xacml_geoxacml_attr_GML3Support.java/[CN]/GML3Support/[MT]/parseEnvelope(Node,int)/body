@@ -1,0 +1,21 @@
+{
+  List<Node> coordinates=getChildren(node,"pos");
+  if (!coordinates.isEmpty() && (coordinates.size() == 2)) {
+    Node n1=(Node)coordinates.get(0);
+    Node n2=(Node)coordinates.get(1);
+    Coordinate c1=parseDirectPosition(n1,srsDimension);
+    Coordinate c2=parseDirectPosition(n2,srsDimension);
+    return toGeometry(new Envelope(c1.x,c2.x,c1.y,c2.y));
+  }
+  if (!coordinates.isEmpty()) {
+    throw new GMLException("Envelope can have only two coordinates");
+  }
+  Node lower=getChild(node,"lowerCorner");
+  Node upper=getChild(node,"upperCorner");
+  if (lower != null && upper != null) {
+    Coordinate c1=parseDirectPosition(lower,srsDimension);
+    Coordinate c2=parseDirectPosition(upper,srsDimension);
+    return toGeometry(new Envelope(c1.x,c2.x,c1.y,c2.y));
+  }
+  throw new GMLException("Could not find direct positions for envelope");
+}

@@ -1,0 +1,32 @@
+{
+  Set<String> attributes=Collections.emptySet();
+  String attrs=form.getFirstValue("attrs");
+  if (attrs != null) {
+    String[] parsedAttributes=attrs.split("\\s*,\\s*");
+    attributes=new HashSet<String>(Arrays.asList(parsedAttributes));
+  }
+  List<String> properties=new ArrayList<String>();
+  boolean skipGeom="true".equals(form.getFirstValue("no_geom"));
+  boolean filterAttributes=attributes.size() > 0;
+  if (skipGeom || attributes.size() > 0) {
+    SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+    tb.setName(schema.getName());
+    for (    AttributeDescriptor attribute : schema.getAttributeDescriptors()) {
+      if (attribute instanceof GeometryDescriptor && skipGeom) {
+        continue;
+      }
+      final String name=attribute.getLocalName();
+      if (filterAttributes && !attributes.contains(name) && !attribute.equals(schema.getGeometryDescriptor())) {
+        continue;
+      }
+      properties.add(name);
+      attributes.remove(name);
+    }
+    if (properties.size() > 0) {
+      query.setPropertyNames(properties);
+    }
+    if (attributes.size() > 0) {
+      throw new RestletException("The following attributes are not known to this service: " + attributes,Status.CLIENT_ERROR_BAD_REQUEST);
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  super(id,model);
+  final Fragment attributePanel=new Fragment("attributePanel","attributePanelFragment",this);
+  attributePanel.setOutputMarkupId(true);
+  add(attributePanel);
+  ListView attributes=new ListView("attributes",new Model(){
+    @Override public Serializable getObject(){
+      FeatureTypeInfo typeInfo=(FeatureTypeInfo)model.getObject();
+      try {
+        final ResourcePool resourcePool=GeoServerApplication.get().getCatalog().getResourcePool();
+        return (Serializable)resourcePool.getAttributes(typeInfo);
+      }
+ catch (      IOException e) {
+        throw new WicketRuntimeException(e);
+      }
+    }
+  }
+){
+    @Override protected void populateItem(    ListItem item){
+      item.add(new SimpleAttributeModifier("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
+      AttributeTypeInfo attribute=(AttributeTypeInfo)item.getModelObject();
+      item.add(new Label("name",attribute.getName()));
+      item.add(new Label("minmax",attribute.getMinOccurs() + "/" + attribute.getMaxOccurs()));
+      try {
+        FeatureTypeInfo typeInfo=(FeatureTypeInfo)model.getObject();
+        final ResourcePool resourcePool=GeoServerApplication.get().getCatalog().getResourcePool();
+        final FeatureType featureType=resourcePool.getFeatureType(typeInfo);
+        org.opengis.feature.type.PropertyDescriptor pd=featureType.getDescriptor(attribute.getName());
+        String typeName="?";
+        String nillable="?";
+        try {
+          typeName=pd.getType().getBinding().getSimpleName();
+          nillable=String.valueOf(pd.isNillable());
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.INFO,"Could not find attribute " + attribute.getName() + " in feature type "+ featureType,e);
+        }
+        item.add(new Label("type",typeName));
+        item.add(new Label("nillable",nillable));
+      }
+ catch (      IOException e) {
+        item.add(new Label("type","?"));
+        item.add(new Label("nillable","?"));
+      }
+    }
+  }
+;
+  attributePanel.add(attributes);
+  WebMarkupContainer reloadContainer=new WebMarkupContainer("reloadContainer");
+  attributePanel.add(reloadContainer);
+  GeoServerAjaxFormLink reload=new GeoServerAjaxFormLink("reload"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      GeoServerApplication app=(GeoServerApplication)getApplication();
+      FeatureTypeInfo ft=(FeatureTypeInfo)getResourceInfo();
+      app.getCatalog().getResourcePool().clear(ft);
+      app.getCatalog().getResourcePool().clear(ft.getStore());
+      target.addComponent(attributePanel);
+    }
+  }
+;
+  reloadContainer.add(reload);
+  GeoServerAjaxFormLink warning=new GeoServerAjaxFormLink("reloadWarning"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      reloadWarningDialog.show(target);
+    }
+  }
+;
+  reloadContainer.add(warning);
+  add(reloadWarningDialog=new ModalWindow("reloadWarningDialog"));
+  reloadWarningDialog.setPageCreator(new ModalWindow.PageCreator(){
+    public Page createPage(){
+      return new ReloadWarningDialog(new StringResourceModel("featureTypeReloadWarning",FeatureResourceConfigurationPanel.this,null));
+    }
+  }
+);
+  reloadWarningDialog.setTitle(new StringResourceModel("warning",(Component)null,null));
+  reloadWarningDialog.setInitialHeight(100);
+  reloadWarningDialog.setInitialHeight(200);
+  WebMarkupContainer sqlViewContainer=new WebMarkupContainer("editSqlContainer");
+  attributePanel.add(sqlViewContainer);
+  sqlViewContainer.add(new Link("editSql"){
+    @Override public void onClick(){
+      FeatureTypeInfo typeInfo=(FeatureTypeInfo)model.getObject();
+      try {
+        setResponsePage(new SQLViewEditPage(typeInfo,((ResourceConfigurationPage)this.getPage())));
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"Failure opening the sql view edit page",e);
+        error(e.toString());
+      }
+    }
+  }
+);
+  FeatureTypeInfo typeInfo=(FeatureTypeInfo)model.getObject();
+  reloadContainer.setVisible(typeInfo.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class) == null);
+  sqlViewContainer.setVisible(!reloadContainer.isVisible());
+}

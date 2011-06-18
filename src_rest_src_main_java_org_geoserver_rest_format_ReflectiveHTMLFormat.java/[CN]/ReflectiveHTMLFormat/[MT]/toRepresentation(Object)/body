@@ -1,0 +1,56 @@
+{
+  Class clazz=this.clazz != null ? this.clazz : object.getClass();
+  Configuration configuration=createConfiguration(object,clazz);
+  final ObjectWrapper wrapper=configuration.getObjectWrapper();
+  configuration.setObjectWrapper(new ObjectWrapper(){
+    public TemplateModel wrap(    Object obj) throws TemplateModelException {
+      TemplateModel model=wrapper.wrap(obj);
+      if (model instanceof SimpleHash) {
+        SimpleHash hash=(SimpleHash)model;
+        if (hash.get("page") == null) {
+          PageInfo pageInfo=(PageInfo)request.getAttributes().get(PageInfo.KEY);
+          if (pageInfo != null) {
+            hash.put("page",pageInfo);
+          }
+        }
+      }
+      return model;
+    }
+  }
+);
+  Template template=null;
+  String templateName=getTemplateName(object);
+  if (templateName != null) {
+    template=tryLoadTemplate(configuration,templateName);
+    if (template == null)     template=tryLoadTemplate(configuration,templateName + ".ftl");
+  }
+  if (template == null && request != null) {
+    String r=request.getResourceRef().getLastSegment();
+    if (r.equals(""))     r=request.getResourceRef().getBaseRef().getLastSegment();
+    int i=r.lastIndexOf(".");
+    if (i != -1) {
+      r=r.substring(0,i);
+    }
+    template=tryLoadTemplate(configuration,r + ".ftl");
+  }
+  while (template == null && clazz != null) {
+    template=tryLoadTemplate(configuration,clazz.getSimpleName() + ".ftl");
+    if (template == null) {
+      for (      Class interfaze : clazz.getInterfaces()) {
+        template=tryLoadTemplate(configuration,interfaze.getSimpleName() + ".ftl");
+        if (template != null)         break;
+      }
+    }
+    if (clazz.getSuperclass() == Object.class) {
+      break;
+    }
+    clazz=clazz.getSuperclass();
+  }
+  if (template != null) {
+    templateName=template.getName();
+  }
+ else {
+    templateName="Object.ftl";
+  }
+  return new TemplateRepresentation(templateName,configuration,object,getMediaType());
+}

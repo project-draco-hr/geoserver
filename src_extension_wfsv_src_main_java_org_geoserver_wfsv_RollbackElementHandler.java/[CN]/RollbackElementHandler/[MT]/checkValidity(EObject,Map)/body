@@ -1,0 +1,21 @@
+{
+  if (!wfs.getServiceLevel().getOps().contains(WFSInfo.Operation.TRANSACTION_INSERT)) {
+    throw new WFSException("Transaction INSERT support is not enabled " + "(required for rollback)");
+  }
+  if (!wfs.getServiceLevel().getOps().contains(WFSInfo.Operation.TRANSACTION_UPDATE)) {
+    throw new WFSException("Transaction UPDATE support is not enabled " + "(required for rollback)");
+  }
+  if (!wfs.getServiceLevel().getOps().contains(WFSInfo.Operation.TRANSACTION_DELETE)) {
+    throw new WFSException("Transaction DELETE support is not enabled " + "(required for rollback)");
+  }
+  RollbackType rollback=(RollbackType)element;
+  FeatureTypeInfo info=(FeatureTypeInfo)featureTypeInfos.get(rollback.getTypeName());
+  try {
+    if (!(info.getFeatureSource(null,null) instanceof VersioningFeatureSource)) {
+      throw new WFSTransactionException("Cannot perform a rollback on " + info.getName() + " since the backing data store is not versioning","",rollback.getHandle());
+    }
+  }
+ catch (  IOException e) {
+    throw new WFSTransactionException("Cannot get the feature source for feature type " + info.getName(),e,rollback.getHandle());
+  }
+}

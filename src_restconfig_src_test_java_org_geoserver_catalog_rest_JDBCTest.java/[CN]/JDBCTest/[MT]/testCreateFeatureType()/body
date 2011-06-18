@@ -1,0 +1,11 @@
+{
+  testCreateDataStore();
+  DataStoreInfo ds=catalog.getDataStoreByName("gs","acme");
+  assertNull(catalog.getFeatureTypeByDataStore(ds,"widgets"));
+  String xml="<featureType>" + "<name>widgets</name>" + "</featureType>";
+  MockHttpServletResponse resp=postAsServletResponse("/rest/workspaces/gs/datastores/acme/featuretypes",xml);
+  assertEquals(201,resp.getStatusCode());
+  assertNotNull(catalog.getFeatureTypeByDataStore(ds,"widgets"));
+  Document dom=getAsDOM("wfs?request=getfeature&typename=gs:widgets");
+  assertEquals(2,dom.getElementsByTagName("gs:widgets").getLength());
+}

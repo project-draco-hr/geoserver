@@ -1,0 +1,18 @@
+{
+  final LayerInfo layer=getCatalog().getLayerByName(MockData.PONDS.getLocalPart());
+  FormTestPage page=new FormTestPage(new ComponentBuilder(){
+    public Component buildComponent(    String id){
+      return new AttributionLayerConfigPanel(id,new Model(layer));
+    }
+  }
+);
+  tester.startPage(page);
+  tester.assertRenderedPage(FormTestPage.class);
+  tester.assertComponent("form",Form.class);
+  tester.assertComponent("form:panel:wms.attribution.logo",TextField.class);
+  String target="http://example.com/";
+  FormTester ft=tester.newFormTester("form");
+  ft.setValue("panel:wms.attribution.logo",target);
+  ft.submit();
+  tester.assertModelValue("form:panel:wms.attribution.logo",target);
+}

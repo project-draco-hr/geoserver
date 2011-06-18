@@ -1,0 +1,34 @@
+{
+  Map<String,Object> raw=baseMap();
+  final String layerId=getLayerId(TASMANIA_BM);
+  raw.put("identifier",layerId);
+  raw.put("format","image/tiff");
+  raw.put("BoundingBox","-45,146,-42,147");
+  raw.put("gridType",GridType.GT2dGridIn2dCrs.getXmlConstant());
+  GetCoverageType getCoverage=(GetCoverageType)reader.read(reader.createRequest(),parseKvp(raw),raw);
+  assertEquals(GridType.GT2dGridIn2dCrs.getXmlConstant(),getCoverage.getOutput().getGridCRS().getGridType());
+  raw.put("gridType",GridType.GT2dSimpleGrid.getXmlConstant());
+  getCoverage=(GetCoverageType)reader.read(reader.createRequest(),parseKvp(raw),raw);
+  assertEquals(GridType.GT2dSimpleGrid.getXmlConstant(),getCoverage.getOutput().getGridCRS().getGridType());
+  raw.put("gridType",GridType.GT2dSimpleGrid.getXmlConstant().toUpperCase());
+  getCoverage=(GetCoverageType)reader.read(reader.createRequest(),parseKvp(raw),raw);
+  assertEquals(GridType.GT2dSimpleGrid.getXmlConstant(),getCoverage.getOutput().getGridCRS().getGridType());
+  raw.put("gridType",GridType.GT2dGridIn3dCrs.getXmlConstant());
+  try {
+    reader.read(reader.createRequest(),parseKvp(raw),raw);
+    fail("We should have had a WcsException here?");
+  }
+ catch (  WcsException e) {
+    assertEquals(InvalidParameterValue.name(),e.getCode());
+    assertEquals("GridType",e.getLocator());
+  }
+  raw.put("gridType","Hoolabaloola");
+  try {
+    reader.read(reader.createRequest(),parseKvp(raw),raw);
+    fail("We should have had a WcsException here?");
+  }
+ catch (  WcsException e) {
+    assertEquals(InvalidParameterValue.name(),e.getCode());
+    assertEquals("GridType",e.getLocator());
+  }
+}

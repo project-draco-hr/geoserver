@@ -1,0 +1,19 @@
+{
+  data=File.createTempFile("retype","data",new File("./target"));
+  data.delete();
+  data.mkdir();
+  final String fileName=MockData.BUILDINGS.getLocalPart() + ".properties";
+  URL properties=MockData.class.getResource(fileName);
+  IOUtils.copy(properties.openStream(),new File(data,fileName));
+  PropertyDataStore pds=new PropertyDataStore(data);
+  rts=new RetypingDataStore(pds){
+    @Override protected String transformFeatureTypeName(    String originalName){
+      if (originalName.equals(MockData.BUILDINGS.getLocalPart()))       return RENAMED;
+ else       return super.transformFeatureTypeName(originalName);
+    }
+  }
+;
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  fid=RENAMED + ".1107531701011";
+  fidFilter=ff.id(Collections.singleton(ff.featureId(fid)));
+}

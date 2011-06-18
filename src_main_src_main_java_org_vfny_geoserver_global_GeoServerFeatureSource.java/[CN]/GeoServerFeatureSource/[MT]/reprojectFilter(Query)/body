@@ -1,0 +1,34 @@
+{
+  SimpleFeatureType nativeFeatureType=source.getSchema();
+  final GeometryDescriptor geom=nativeFeatureType.getGeometryDescriptor();
+  if (geom == null)   return query;
+  try {
+    CoordinateReferenceSystem defaultCRS=null;
+    CoordinateReferenceSystem targetCRS=null;
+    CoordinateReferenceSystem nativeCRS=geom.getCoordinateReferenceSystem();
+    if (srsHandling == ProjectionPolicy.FORCE_DECLARED) {
+      defaultCRS=declaredCRS;
+      targetCRS=declaredCRS;
+      nativeFeatureType=FeatureTypes.transform(nativeFeatureType,declaredCRS);
+    }
+ else     if (srsHandling == ProjectionPolicy.REPROJECT_TO_DECLARED) {
+      defaultCRS=declaredCRS;
+      targetCRS=nativeCRS;
+    }
+ else {
+      defaultCRS=nativeCRS;
+      targetCRS=nativeCRS;
+    }
+    DefaultCRSFilterVisitor defaultCRSVisitor=new DefaultCRSFilterVisitor(ff,defaultCRS);
+    Filter filter=query.getFilter() != null ? query.getFilter() : Filter.INCLUDE;
+    Filter defaultedFilter=(Filter)filter.accept(defaultCRSVisitor,null);
+    ReprojectingFilterVisitor reprojectingVisitor=new ReprojectingFilterVisitor(ff,nativeFeatureType);
+    Filter reprojectedFilter=(Filter)defaultedFilter.accept(reprojectingVisitor,null);
+    Query reprojectedQuery=new Query(query);
+    reprojectedQuery.setFilter(reprojectedFilter);
+    return reprojectedQuery;
+  }
+ catch (  Exception e) {
+    throw new DataSourceException("Had troubles handling filter reprojection...",e);
+  }
+}

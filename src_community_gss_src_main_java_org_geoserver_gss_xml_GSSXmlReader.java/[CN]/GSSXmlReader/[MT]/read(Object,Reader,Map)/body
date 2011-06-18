@@ -1,0 +1,24 @@
+{
+  Parser parser=new Parser(configuration);
+  parser.setValidating(true);
+  Catalog catalog=geoServer.getCatalog();
+  List<NamespaceInfo> namespaces=catalog.getNamespaces();
+  for (  NamespaceInfo ns : namespaces) {
+    if (ns.equals(catalog.getDefaultNamespace()))     continue;
+    parser.getNamespaces().declarePrefix(ns.getPrefix(),ns.getURI());
+  }
+  InputSource source=new InputSource(reader);
+  source.setEncoding(geoServer.getGlobal().getCharset());
+  Object parsed=parser.parse(source);
+  if (!(parsed instanceof PostDiffType) && !(parsed instanceof GetDiffResponseType)) {
+    if (!parser.getValidationErrors().isEmpty()) {
+      WFSException exception=new WFSException("Invalid request","InvalidParameterValue");
+      for (Iterator e=parser.getValidationErrors().iterator(); e.hasNext(); ) {
+        Exception error=(Exception)e.next();
+        exception.getExceptionText().add(error.getLocalizedMessage());
+      }
+      throw exception;
+    }
+  }
+  return parsed;
+}

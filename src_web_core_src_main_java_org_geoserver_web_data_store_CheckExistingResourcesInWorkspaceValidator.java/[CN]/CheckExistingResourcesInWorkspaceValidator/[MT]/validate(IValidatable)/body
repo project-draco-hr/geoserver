@@ -1,0 +1,22 @@
+{
+  final Catalog catalog=GeoServerApplication.get().getCatalog();
+  final StoreInfo store=catalog.getStore(storeId,StoreInfo.class);
+  final WorkspaceInfo previousWorkspace=catalog.getWorkspace(wsId);
+  final WorkspaceInfo newWorkspace=(WorkspaceInfo)validatable.getValue();
+  if (previousWorkspace.equals(newWorkspace)) {
+    return;
+  }
+  final NamespaceInfo newNamespace=catalog.getNamespaceByPrefix(newWorkspace.getName());
+  List<ResourceInfo> configuredResources=catalog.getResourcesByStore(store,ResourceInfo.class);
+  StringBuilder sb=new StringBuilder();
+  for (  ResourceInfo res : configuredResources) {
+    ResourceInfo existing=catalog.getResourceByName(newNamespace,res.getName(),ResourceInfo.class);
+    if (existing != null) {
+      sb.append(existing.getName()).append(" ");
+    }
+  }
+  if (sb.length() > 0) {
+    String message="The following resources already exist on the same namespace: " + sb.toString();
+    validatable.error(new ValidationError().setMessage(message));
+  }
+}

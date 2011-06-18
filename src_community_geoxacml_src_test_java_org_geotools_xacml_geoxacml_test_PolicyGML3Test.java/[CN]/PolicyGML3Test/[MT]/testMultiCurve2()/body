@@ -1,0 +1,29 @@
+{
+  GeometryAttribute[] array=new GeometryAttribute[2];
+  AbstractPolicy p1=TestSupport.policyFromFile(TestSupport.getGeoXACMLFNFor("gml3","MultiCurvePolicy2.xml"));
+  array[0]=TestSupport.getGeometryAttribute(p1);
+  AbstractPolicy p2=policyFromAttributeEncoding(array[0],xmlTemplate);
+  array[1]=TestSupport.getGeometryAttribute(p2);
+  for (  GeometryAttribute attr : array) {
+    assertTrue(attr.getSrsName().equals("EPSG:4326"));
+    assertTrue(attr.getGid().equals("MultiCurve"));
+    assertTrue(attr.getGmlVersion() == GMLVersion.Version3);
+    MultiLineString mls=(MultiLineString)attr.getGeometry();
+    LineString ls=(LineString)mls.getGeometryN(0);
+    Coordinate[] coords=ls.getCoordinates();
+    assertTrue(coords[0].x == -1.1);
+    assertTrue(coords[0].y == -2.2);
+    assertTrue(coords[1].x == -3.3);
+    assertTrue(coords[1].y == -4.4);
+    assertTrue(coords[2].x == -5.5);
+    assertTrue(coords[2].y == -6.6);
+    ls=(LineString)mls.getGeometryN(1);
+    coords=ls.getCoordinates();
+    assertTrue(coords[0].x == 1.1);
+    assertTrue(coords[0].y == 2.2);
+    assertTrue(coords[1].x == 3.3);
+    assertTrue(coords[1].y == 4.4);
+    assertTrue(coords[2].x == 5.5);
+    assertTrue(coords[2].y == 6.6);
+  }
+}

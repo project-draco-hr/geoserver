@@ -1,0 +1,20 @@
+{
+  Map<String,Object> attributeMap=new LinkedHashMap<String,Object>();
+  Collection<PropertyDescriptor> descriptors=ft.getDescriptors();
+  for (Iterator<PropertyDescriptor> it=descriptors.iterator(); it.hasNext(); ) {
+    PropertyDescriptor descr=it.next();
+    Map<String,Object> attribute=new HashMap<String,Object>();
+    attribute.put("name",descr.getName().getLocalPart());
+    attribute.put("namespace",getNamespace(descr.getName()));
+    attribute.put("prefix",getPrefix(descr.getName()));
+    attribute.put("type",descr.getType().getBinding().getName());
+    attribute.put("isGeometry",Boolean.valueOf(Geometry.class.isAssignableFrom(descr.getType().getBinding())));
+    attributeMap.put(descr.getName().toString(),attribute);
+  }
+  SimpleHash map=new SimpleHash();
+  map.put("attributes",new SequenceMapModel(attributeMap,this));
+  map.put("name",ft.getName().getLocalPart());
+  map.put("namespace",getNamespace(ft.getName()));
+  map.put("prefix",getPrefix(ft.getName()));
+  return map;
+}

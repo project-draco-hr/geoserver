@@ -1,0 +1,12 @@
+{
+  super();
+  Authentication auth=getSession().getAuthentication();
+  if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+    HttpServletRequest httpRequest=((WebRequest)getRequest()).getHttpServletRequest();
+    SavedRequest savedRequest=new DefaultSavedRequest(httpRequest,new PortResolverImpl());
+    HttpSession session=httpRequest.getSession();
+    session.setAttribute(WebAttributes.SAVED_REQUEST,savedRequest);
+    setResponsePage(GeoServerLoginPage.class);
+  }
+ else   if (!getPageAuthorizer().isAccessAllowed(this.getClass(),auth))   setResponsePage(UnauthorizedPage.class);
+}

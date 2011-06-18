@@ -1,0 +1,32 @@
+{
+  for (  ExtendedCapabilitiesProvider cp : extCapsProviders) {
+    List<String> roots=cp.getVendorSpecificCapabilitiesRoots(request);
+    if (roots == null || roots.size() == 0) {
+      return;
+    }
+  }
+  start("VendorSpecificCapabilities");
+  for (  ExtendedCapabilitiesProvider cp : extCapsProviders) {
+    try {
+      cp.encode(new ExtendedCapabilitiesProvider.Translator(){
+        public void start(        String element){
+          CapabilitiesTranslator.this.start(element);
+        }
+        public void start(        String element,        Attributes attributes){
+          CapabilitiesTranslator.this.start(element,attributes);
+        }
+        public void chars(        String text){
+          CapabilitiesTranslator.this.chars(text);
+        }
+        public void end(        String element){
+          CapabilitiesTranslator.this.end(element);
+        }
+      }
+,wmsConfig.getServiceInfo(),request);
+    }
+ catch (    Exception e) {
+      throw new ServiceException("Extended capabilities provider threw error",e);
+    }
+  }
+  end("VendorSpecificCapabilities");
+}

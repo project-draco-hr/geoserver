@@ -1,0 +1,31 @@
+{
+  String service=request.getService();
+  String method=request.getRequest();
+  List<ServiceAccessRule> rules=dao.getRules();
+  ServiceAccessRule bestMatch=null;
+  for (  ServiceAccessRule rule : rules) {
+    if (rule.getService().equals(ServiceAccessRule.ANY) || rule.getService().equalsIgnoreCase(service)) {
+      if (rule.getMethod().equals(ServiceAccessRule.ANY) || rule.getMethod().equalsIgnoreCase(method)) {
+        bestMatch=rule;
+      }
+    }
+  }
+  if (bestMatch != null) {
+    Set<String> allowedRoles=bestMatch.getRoles();
+    if (!allowedRoles.contains(ServiceAccessRule.ANY) && !allowedRoles.isEmpty()) {
+      Authentication user=SecurityContextHolder.getContext().getAuthentication();
+      if (user == null || user.getAuthorities().size() == 0)       throw new InsufficientAuthenticationException("Cannot access " + service + "."+ method+ " as anonymous");
+      boolean roleFound=false;
+      for (      GrantedAuthority role : user.getAuthorities()) {
+        if (allowedRoles.contains(role.getAuthority())) {
+          roleFound=true;
+          break;
+        }
+      }
+      if (!roleFound) {
+        throw new AccessDeniedException("Cannot access " + service + "."+ method+ " with the current privileges");
+      }
+    }
+  }
+  return operation;
+}

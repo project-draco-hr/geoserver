@@ -1,0 +1,24 @@
+{
+  StringBuffer buf=new StringBuffer(xpr);
+  if (xpr.charAt(0) != '^')   buf=buf.insert(0,".*");
+  if (xpr.charAt(xpr.length() - 1) != '$')   buf=buf.insert(buf.length(),".*");
+  int idx=-1;
+  idx=buf.indexOf("\\p{Is",0);
+  while (idx != -1) {
+    buf=buf.replace(idx,idx + 5,"\\p{In");
+    idx=buf.indexOf("\\p{Is",idx);
+  }
+  idx=-1;
+  idx=buf.indexOf("\\P{Is",0);
+  while (idx != -1) {
+    buf=buf.replace(idx,idx + 5,"\\P{In");
+    idx=buf.indexOf("\\P{Is",idx);
+  }
+  idx=-1;
+  idx=buf.indexOf("-[",0);
+  while (idx != -1) {
+    buf=buf.replace(idx,idx + 2,"&&[^");
+    idx=buf.indexOf("-[",idx);
+  }
+  return Pattern.matches(buf.toString(),str);
+}

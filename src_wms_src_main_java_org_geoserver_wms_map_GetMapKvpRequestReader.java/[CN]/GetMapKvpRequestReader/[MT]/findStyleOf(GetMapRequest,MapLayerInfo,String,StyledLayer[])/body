@@ -1,0 +1,72 @@
+{
+  Style style=null;
+  String layerName=layer.getName();
+  StyledLayer sl;
+  for (int i=0; i < styledLayers.length; i++) {
+    sl=styledLayers[i];
+    if (layerName.equals(sl.getName())) {
+      if (sl instanceof UserLayer) {
+        Style[] styles=((UserLayer)sl).getUserStyles();
+        for (int j=0; style == null && styles != null && j < styles.length; j++) {
+          if (styleName == null || styleName.equals("") && styles[j].isDefault())           style=styles[j];
+ else           if (styleName != null && styleName.equals(styles[j].getName()))           style=styles[j];
+        }
+      }
+ else       if (sl instanceof NamedLayer) {
+        Style[] styles=((NamedLayer)sl).getStyles();
+        for (int j=0; style == null && styles != null && j < styles.length; j++) {
+          if ((styleName == null || styleName.equals("")) && styles[j].isDefault())           style=styles[j];
+ else           if (styleName != null && styleName.equals(styles[j].getName()))           style=styles[j];
+        }
+        if (style instanceof NamedStyle) {
+          style=findStyle(wms,request,style.getName());
+        }
+      }
+ else {
+        throw new RuntimeException("Unknown layer type: " + sl);
+      }
+      break;
+    }
+  }
+  if (style == null && laxStyleMatchAllowed) {
+    for (int i=0; i < styledLayers.length; i++) {
+      sl=styledLayers[i];
+      if (layerName.equals(sl.getName())) {
+        if (sl instanceof UserLayer) {
+          Style[] styles=((UserLayer)sl).getUserStyles();
+          if ((null != styles) && (0 < styles.length)) {
+            style=styles[0];
+          }
+        }
+ else         if (sl instanceof NamedLayer) {
+          Style[] styles=((NamedLayer)sl).getStyles();
+          if ((null != styles) && (0 < styles.length)) {
+            style=styles[0];
+          }
+          if (style instanceof NamedStyle) {
+            style=findStyle(wms,request,style.getName());
+          }
+        }
+ else {
+          throw new RuntimeException("Unknown layer type: " + sl);
+        }
+        break;
+      }
+    }
+  }
+  if (style == null) {
+    if (styleName == null || "".equals(styleName)) {
+      style=layer.getDefaultStyle();
+      if (style == null)       throw new ServiceException("Could not find a default style for " + layer.getName());
+    }
+ else {
+      style=wms.getStyleByName(styleName);
+      if (style == null) {
+        String msg="No such style: " + styleName;
+        throw new ServiceException(msg,"StyleNotDefined");
+      }
+    }
+  }
+  checkStyle(style,layer);
+  return style;
+}

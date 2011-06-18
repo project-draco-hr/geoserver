@@ -1,0 +1,19 @@
+{
+  if (watcher != null && watcher.isModified()) {
+synchronized (this) {
+      if (watcher.isModified()) {
+        filters=watcher.read();
+      }
+    }
+  }
+  String path=req.getServletPath() + req.getPathInfo();
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer("Testing " + path + " for monitor filtering");
+  }
+  for (  Filter f : filters) {
+    if (f.matches(path)) {
+      return true;
+    }
+  }
+  return false;
+}

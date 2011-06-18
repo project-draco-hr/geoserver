@@ -1,0 +1,19 @@
+{
+  Parser parser=new Parser(configuration);
+  parser.setValidating(true);
+  Object parsed;
+  try {
+    parsed=parser.parse(reader);
+  }
+ catch (  Exception e) {
+    throw new WPSException("Could not parse XML request.",e);
+  }
+  if (!parser.getValidationErrors().isEmpty()) {
+    WPSException exception=new WPSException("Invalid request","InvalidParameterValue");
+    for (    Exception error : (List<Exception>)parser.getValidationErrors()) {
+      LOGGER.warning(error.getLocalizedMessage());
+      exception.getExceptionText().add(error.getLocalizedMessage());
+    }
+  }
+  return parsed;
+}

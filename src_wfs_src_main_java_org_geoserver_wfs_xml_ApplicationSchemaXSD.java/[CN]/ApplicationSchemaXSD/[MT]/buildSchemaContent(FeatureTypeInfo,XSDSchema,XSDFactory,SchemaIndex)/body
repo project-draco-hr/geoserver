@@ -1,0 +1,76 @@
+{
+  String prefix=featureTypeInfo.getNamespace().getPrefix();
+  String store=featureTypeInfo.getStore().getName();
+  String name=featureTypeInfo.getName();
+  File schemaFile=null;
+  try {
+    schemaFile=catalog.getResourceLoader().find("workspaces" + "/" + prefix + "/"+ store+ "/"+ name+ "/schema.xsd");
+  }
+ catch (  IOException e1) {
+  }
+  if (schemaFile != null) {
+    List locators=new ArrayList();
+    for (    XSD xsd : wfs.getAllDependencies()) {
+      locators.add(xsd.createSchemaLocator());
+    }
+    XSDSchema ftSchema=null;
+    try {
+      ftSchema=Schemas.parse(schemaFile.getAbsolutePath(),locators,null);
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.WARNING,"Unable to parse schema: " + schemaFile.getAbsolutePath(),e);
+    }
+    if (ftSchema != null) {
+      List contents=ftSchema.getContents();
+      for (Iterator i=contents.iterator(); i.hasNext(); ) {
+        XSDSchemaContent content=(XSDSchemaContent)i.next();
+        content.setElement(null);
+      }
+      schema.getContents().addAll(contents);
+      schema.updateElement();
+      return;
+    }
+  }
+  SimpleFeatureType featureType=(SimpleFeatureType)featureTypeInfo.getFeatureType();
+  XSDComplexTypeDefinition complexType=factory.createXSDComplexTypeDefinition();
+  complexType.setName(name + "Type");
+  complexType.setDerivationMethod(XSDDerivationMethod.EXTENSION_LITERAL);
+  complexType.setBaseTypeDefinition(schema.resolveComplexTypeDefinition(GML.NAMESPACE,"AbstractFeatureType"));
+  XSDModelGroup group=factory.createXSDModelGroup();
+  group.setCompositor(XSDCompositor.SEQUENCE_LITERAL);
+  List attributes=featureType.getAttributeDescriptors();
+  for (int i=0; i < attributes.size(); i++) {
+    AttributeDescriptor attribute=(AttributeDescriptor)attributes.get(i);
+    if (filterAttributeType(attribute)) {
+      continue;
+    }
+    XSDElementDeclaration element=factory.createXSDElementDeclaration();
+    element.setName(attribute.getLocalName());
+    element.setNillable(attribute.isNillable());
+    Class binding=attribute.getType().getBinding();
+    Name typeName=findTypeName(binding);
+    if (typeName == null) {
+      throw new NullPointerException("Could not find a type for property: " + attribute.getName() + " of type: "+ binding.getName());
+    }
+    XSDTypeDefinition type=index.getTypeDefinition(new QName(typeName.getNamespaceURI(),typeName.getLocalPart()));
+    if (type == null) {
+      throw new IllegalStateException("Could not find type: " + typeName);
+    }
+    element.setTypeDefinition(type);
+    XSDParticle particle=factory.createXSDParticle();
+    particle.setMinOccurs(attribute.getMinOccurs());
+    particle.setMaxOccurs(attribute.getMaxOccurs());
+    particle.setContent(element);
+    group.getContents().add(particle);
+  }
+  XSDParticle particle=factory.createXSDParticle();
+  particle.setContent(group);
+  complexType.setContent(particle);
+  schema.getContents().add(complexType);
+  XSDElementDeclaration element=factory.createXSDElementDeclaration();
+  element.setName(name);
+  element.setSubstitutionGroupAffiliation(schema.resolveElementDeclaration(GML.NAMESPACE,"_Feature"));
+  element.setTypeDefinition(complexType);
+  schema.getContents().add(element);
+  schema.updateElement();
+}

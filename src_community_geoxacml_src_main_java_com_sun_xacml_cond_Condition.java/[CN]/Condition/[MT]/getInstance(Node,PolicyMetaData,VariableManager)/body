@@ -1,0 +1,17 @@
+{
+  if (metaData.getXACMLVersion() < PolicyMetaData.XACML_VERSION_2_0) {
+    Apply cond=Apply.getConditionInstance(root,metaData.getXPathIdentifier(),manager);
+    return new Condition(cond.getFunction(),cond.getChildren());
+  }
+ else {
+    Expression xpr=null;
+    NodeList nodes=root.getChildNodes();
+    for (int i=0; i < nodes.getLength(); i++) {
+      if (nodes.item(i).getNodeType() == Node.ELEMENT_NODE) {
+        xpr=ExpressionHandler.parseExpression(nodes.item(i),metaData,manager);
+        break;
+      }
+    }
+    return new Condition(xpr);
+  }
+}

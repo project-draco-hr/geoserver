@@ -1,0 +1,28 @@
+{
+  TreeSet<DataAccessRule> result=new TreeSet<DataAccessRule>();
+  catalogMode=CatalogMode.HIDE;
+  for (  Map.Entry<Object,Object> entry : props.entrySet()) {
+    String ruleKey=(String)entry.getKey();
+    String ruleValue=(String)entry.getValue();
+    if ("mode".equalsIgnoreCase(ruleKey)) {
+      try {
+        catalogMode=CatalogMode.valueOf(ruleValue.toUpperCase());
+      }
+ catch (      Exception e) {
+        LOGGER.warning("Invalid security mode " + ruleValue + " acceptable values are "+ Arrays.asList(CatalogMode.values()));
+      }
+    }
+ else {
+      DataAccessRule rule=parseDataAccessRule(ruleKey,ruleValue);
+      if (rule != null) {
+        if (result.contains(rule))         LOGGER.warning("Rule " + ruleKey + "."+ ruleValue+ " overwrites another rule on the same path");
+        result.add(rule);
+      }
+    }
+  }
+  if (result.size() == 0) {
+    result.add(new DataAccessRule(DataAccessRule.READ_ALL));
+    result.add(new DataAccessRule(DataAccessRule.WRITE_ALL));
+  }
+  rules=result;
+}

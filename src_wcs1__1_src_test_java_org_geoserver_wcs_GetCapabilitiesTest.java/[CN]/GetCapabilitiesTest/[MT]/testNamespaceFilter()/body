@@ -1,0 +1,12 @@
+{
+  Document dom=getAsDOM(BASEPATH + "?request=GetCapabilities&service=WCS&acceptversions=1.1.1&namespace=wcs");
+  Element e=dom.getDocumentElement();
+  assertEquals("Capabilities",e.getLocalName());
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  assertTrue(xpath.getMatchingNodes("//wcs:CoverageSummary/ows:Title[starts-with(., wcs)]",dom).getLength() > 0);
+  assertEquals(0,xpath.getMatchingNodes("//wcs:CoverageSummary/ows:Title[not(starts-with(., wcs))]",dom).getLength());
+  dom=getAsDOM(BASEPATH + "?request=GetCapabilities&service=WCS&acceptversions=1.1.1&namespace=NoThere");
+  e=dom.getDocumentElement();
+  assertEquals("Capabilities",e.getLocalName());
+  assertEquals(0,xpath.getMatchingNodes("//wcs:CoverageSummary",dom).getLength());
+}

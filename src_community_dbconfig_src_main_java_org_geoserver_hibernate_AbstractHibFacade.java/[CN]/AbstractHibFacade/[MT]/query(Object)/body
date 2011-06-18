@@ -1,0 +1,29 @@
+{
+  final StringBuilder builder=new StringBuilder();
+  int cnt=0;
+  for (  Object elem : elems) {
+    if (elem instanceof String) {
+      builder.append(elem);
+    }
+ else     if (elem instanceof Class) {
+      Class clazz=(Class)elem;
+      ClassMappings map=ClassMappings.fromInterface(clazz);
+      if (map != null) {
+        clazz=map.getImpl();
+      }
+      builder.append(clazz.getSimpleName());
+    }
+ else     if (elem instanceof QueryParam) {
+      builder.append(":param").append(cnt++);
+    }
+  }
+  Query query=sessionFactory.getCurrentSession().createQuery(builder.toString());
+  query.setCacheable(true);
+  cnt=0;
+  for (  Object elem : elems) {
+    if (elem instanceof QueryParam) {
+      query.setParameter("param" + (cnt++),((QueryParam)elem).param);
+    }
+  }
+  return query;
+}

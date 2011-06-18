@@ -1,0 +1,27 @@
+{
+  File[] files=directory.listFiles(filter);
+  byte[] buffer=new byte[4 * 1024];
+  for (  File file : files) {
+    if (file.exists()) {
+      if (file.isDirectory()) {
+        zipDirectory(file,prefix + file.getName() + "/",zipout,filter);
+      }
+ else {
+        ZipEntry entry=new ZipEntry(prefix + file.getName());
+        zipout.putNextEntry(entry);
+        InputStream in=new FileInputStream(file);
+        int c;
+        try {
+          while (-1 != (c=in.read(buffer))) {
+            zipout.write(buffer,0,c);
+          }
+          zipout.closeEntry();
+        }
+  finally {
+          in.close();
+        }
+      }
+    }
+  }
+  zipout.flush();
+}

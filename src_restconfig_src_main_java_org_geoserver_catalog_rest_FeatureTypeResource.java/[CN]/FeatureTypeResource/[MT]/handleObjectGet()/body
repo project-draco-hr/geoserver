@@ -1,0 +1,16 @@
+{
+  String workspace=getAttribute("workspace");
+  String datastore=getAttribute("datastore");
+  String featureType=getAttribute("featuretype");
+  if (datastore == null) {
+    LOGGER.fine("GET feature type" + workspace + ","+ featureType);
+    NamespaceInfo ns=catalog.getNamespaceByPrefix(workspace);
+    if (ns != null) {
+      return catalog.getFeatureTypeByName(ns,featureType);
+    }
+    throw new RestletException("",Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  LOGGER.fine("GET feature type" + datastore + ","+ featureType);
+  DataStoreInfo ds=catalog.getDataStoreByName(workspace,datastore);
+  return catalog.getFeatureTypeByDataStore(ds,featureType);
+}

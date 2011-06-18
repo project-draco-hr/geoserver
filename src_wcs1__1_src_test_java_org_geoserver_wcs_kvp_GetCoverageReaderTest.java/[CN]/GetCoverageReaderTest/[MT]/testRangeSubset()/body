@@ -1,0 +1,20 @@
+{
+  Map<String,Object> raw=baseMap();
+  final String layerId=getLayerId(TASMANIA_BM);
+  raw.put("identifier",layerId);
+  raw.put("format","image/tiff");
+  raw.put("BoundingBox","-45,146,-42,147");
+  raw.put("rangeSubset","BlueMarble:nearest[Bands[Red_band]]");
+  GetCoverageType getCoverage=(GetCoverageType)reader.read(reader.createRequest(),parseKvp(raw),raw);
+  RangeSubsetType rs=getCoverage.getRangeSubset();
+  assertNotNull(rs);
+  assertEquals(1,rs.getFieldSubset().size());
+  FieldSubsetType field=(FieldSubsetType)rs.getFieldSubset().get(0);
+  assertEquals("BlueMarble",field.getIdentifier().getValue());
+  assertEquals(1,field.getAxisSubset().size());
+  AxisSubsetType axis=(AxisSubsetType)field.getAxisSubset().get(0);
+  assertEquals("Bands",axis.getIdentifier());
+  List keys=axis.getKey();
+  assertEquals(1,keys.size());
+  assertEquals("Red_band",keys.get(0));
+}

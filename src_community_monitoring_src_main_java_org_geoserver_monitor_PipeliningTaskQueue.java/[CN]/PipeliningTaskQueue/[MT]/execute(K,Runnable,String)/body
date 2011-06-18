@@ -1,0 +1,16 @@
+{
+  Queue<Pipelineable<K>> pipeline=pipelines.get(key);
+  if (pipeline == null) {
+synchronized (pipelines) {
+      pipeline=pipelines.get(key);
+      if (pipeline == null) {
+        pipeline=new ConcurrentLinkedQueue();
+        pipelines.put(key,pipeline);
+      }
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINEST)) {
+    LOGGER.finest("Queuing task into pipeline " + key);
+  }
+  pipeline.add(new Pipelineable<K>(key,task));
+}

@@ -1,0 +1,37 @@
+{
+  QName restricted=new QName(SF_NAMESPACE,"restricted");
+  WfsFactory wfs=WfsFactory.eINSTANCE;
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  InsertElementType insert=wfs.createInsertElementType();
+  SimpleFeatureType ft=DataUtilities.createType("restricted","cat:java.lang.Long,the_geom:Polygon");
+  Geometry polygon=new WKTReader().read("POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))");
+  SimpleFeature f=SimpleFeatureBuilder.build(ft,new Object[]{123,polygon},"restricted.105");
+  insert.getFeature().add(f);
+  DeleteElementType delete=wfs.createDeleteElementType();
+  delete.setTypeName(restricted);
+  delete.setFilter(ff.id(Collections.singleton(ff.featureId("restricted.23"))));
+  UpdateElementType update=wfs.createUpdateElementType();
+  update.setTypeName(restricted);
+  update.setFilter(ff.id(Collections.singleton(ff.featureId("restricted.21"))));
+  PropertyType property=wfs.createPropertyType();
+  property.setName(new QName(SF_NAMESPACE,"cat"));
+  property.setValue(-48);
+  update.getProperty().add(property);
+  TransactionType transaction=wfs.createTransactionType();
+  transaction.getInsert().add(insert);
+  transaction.getUpdate().add(update);
+  transaction.getDelete().add(delete);
+  GetDiffResponseType response=new GetDiffResponseType();
+  response.setFromVersion(15);
+  response.setToVersion(47);
+  response.setTypeName(restricted);
+  response.setTransaction(transaction);
+  Document doc=encode(response,GSS.GetDiffResponse);
+  assertXpathEvaluatesTo("15","/gss:GetDiffResponse/@fromVersion",doc);
+  assertXpathEvaluatesTo("47","/gss:GetDiffResponse/@toVersion",doc);
+  assertXpathEvaluatesTo("sf:restricted","/gss:GetDiffResponse/@typeName",doc);
+  assertXpathExists("/gss:GetDiffResponse/gss:Changes",doc);
+  assertXpathExists("/gss:GetDiffResponse/gss:Changes/wfs:Insert",doc);
+  assertXpathExists("/gss:GetDiffResponse/gss:Changes/wfs:Update",doc);
+  assertXpathExists("/gss:GetDiffResponse/gss:Changes/wfs:Delete",doc);
+}

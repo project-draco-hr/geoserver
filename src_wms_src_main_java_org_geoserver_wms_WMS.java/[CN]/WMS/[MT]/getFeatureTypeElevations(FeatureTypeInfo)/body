@@ -1,0 +1,30 @@
+{
+  DimensionInfo elevation=typeInfo.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
+  if (elevation == null || !elevation.isEnabled()) {
+    throw new ServiceException("Layer " + typeInfo.getPrefixedName() + " does not have elevation support enabled");
+  }
+  FeatureCollection collection=getDimensionCollection(typeInfo,elevation);
+  TreeSet<Double> result=new TreeSet<Double>();
+  if (elevation.getPresentation() == DimensionPresentation.LIST || (elevation.getPresentation() == DimensionPresentation.DISCRETE_INTERVAL && elevation.getResolution() == null)) {
+    final UniqueVisitor visitor=new UniqueVisitor(elevation.getAttribute());
+    collection.accepts(visitor,null);
+    @SuppressWarnings("unchecked") Set<Object> values=visitor.getUnique();
+    if (values.size() <= 0) {
+      result=null;
+    }
+ else {
+      for (      Object value : values) {
+        result.add(((Number)value).doubleValue());
+      }
+    }
+  }
+ else {
+    final MinVisitor min=new MinVisitor(elevation.getAttribute());
+    collection.accepts(min,null);
+    result.add(((Number)min.getMin()).doubleValue());
+    final MaxVisitor max=new MaxVisitor(elevation.getAttribute());
+    collection.accepts(max,null);
+    result.add(((Number)max.getMax()).doubleValue());
+  }
+  return result;
+}

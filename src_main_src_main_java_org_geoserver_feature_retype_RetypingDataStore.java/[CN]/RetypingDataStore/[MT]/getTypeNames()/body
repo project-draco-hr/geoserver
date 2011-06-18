@@ -1,0 +1,23 @@
+{
+  String[] names=wrapped.getTypeNames();
+  List<String> transformedNames=new ArrayList<String>();
+  Map<String,FeatureTypeMap> backup=new HashMap<String,FeatureTypeMap>(forwardMap);
+  Map<String,FeatureTypeMap> forwardMapLocal=new ConcurrentHashMap<String,FeatureTypeMap>();
+  Map<String,FeatureTypeMap> backwardsMapLocal=new ConcurrentHashMap<String,FeatureTypeMap>();
+  for (int i=0; i < names.length; i++) {
+    String original=names[i];
+    String transformedName=transformFeatureTypeName(original);
+    if (transformedName != null) {
+      transformedNames.add(transformedName);
+      FeatureTypeMap map=backup.get(original);
+      if (map == null) {
+        map=new FeatureTypeMap(original,transformedName);
+      }
+      forwardMapLocal.put(map.getOriginalName(),map);
+      backwardsMapLocal.put(map.getName(),map);
+    }
+  }
+  forwardMap=forwardMapLocal;
+  backwardsMap=backwardsMapLocal;
+  return (String[])transformedNames.toArray(new String[transformedNames.size()]);
+}

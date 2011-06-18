@@ -1,0 +1,53 @@
+{
+  if (fixture == null)   return;
+  super.setUp();
+  Properties p=new Properties();
+  p.load(new FileInputStream(fixture));
+  Map<String,String> filters=new HashMap(p);
+  if (filteredPaths != null && filteredPaths.size() > 0) {
+    for (    String path : filteredPaths) {
+      File from=new File(source,path);
+      File to=new File(data,path);
+      IOUtils.filteredCopy(from,to,filters);
+    }
+  }
+  if (sqlScript != null) {
+    DataStore ds=null;
+    Connection conn=null;
+    Statement st=null;
+    BufferedReader reader=null;
+    try {
+      ds=DataStoreFinder.getDataStore(filters);
+      if (ds == null) {
+        final String warning="Disabling online test based on '" + fixtureId + "', "+ "could not find a data store compatible "+ "with the following connection properties: "+ filters;
+        disableTest(warning);
+        return;
+      }
+      conn=getDatabaseConnection(ds);
+      if (conn == null) {
+        final String warning="Disabling online test based on '" + fixtureId + "', "+ "could not extract a JDBC connection from the datastore '"+ ds.getClass()+ " obtained using the following "+ "connection properties: "+ filters;
+        disableTest(warning);
+        return;
+      }
+      reader=new BufferedReader(new FileReader(sqlScript));
+      st=conn.createStatement();
+      String command=null;
+      while ((command=reader.readLine()) != null) {
+        command=command.trim();
+        if ("".equals(command) || command.startsWith("--") || command.startsWith("#"))         continue;
+        try {
+          st.execute(command);
+        }
+ catch (        SQLException e) {
+          LOGGER.warning("Error executing \"" + command + "\": "+ e.getMessage());
+        }
+      }
+    }
+  finally {
+      JDBCUtils.close(st);
+      JDBCUtils.close(conn,null,null);
+      if (ds != null)       ds.dispose();
+      if (reader != null)       reader.close();
+    }
+  }
+}

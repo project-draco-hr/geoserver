@@ -1,0 +1,42 @@
+{
+  final String paramName=paramMetadata.getName();
+  final String paramLabel=paramMetadata.getName();
+  final boolean required=paramMetadata.isRequired();
+  final Class<?> binding=paramMetadata.getBinding();
+  Panel parameterPanel;
+  if ("dbtype".equals(paramName) || "filetype".equals(paramName)) {
+    IModel model=new MapModel(paramsModel,paramName);
+    TextParamPanel tp=new TextParamPanel(componentId,model,new ResourceModel(paramLabel,paramLabel),required);
+    tp.setVisible(false);
+    parameterPanel=tp;
+  }
+ else   if ("namespace".equals(paramName)) {
+    IModel namespaceModel=new NamespaceParamModel(paramsModel,paramName);
+    IModel paramLabelModel=new ResourceModel(paramLabel,paramLabel);
+    parameterPanel=new NamespacePanel(componentId,namespaceModel,paramLabelModel,true);
+  }
+ else   if (Boolean.class == binding) {
+    parameterPanel=new CheckBoxParamPanel(componentId,new MapModel(paramsModel,paramName),new ResourceModel(paramLabel,paramLabel));
+  }
+ else   if (String.class == binding && paramMetadata.isPassword()) {
+    parameterPanel=new PasswordParamPanel(componentId,new MapModel(paramsModel,paramName),new ResourceModel(paramLabel,paramLabel),required);
+  }
+ else {
+    IModel model;
+    if ("url".equalsIgnoreCase(paramName)) {
+      model=new URLModel(paramsModel,paramName);
+    }
+ else {
+      model=new MapModel(paramsModel,paramName);
+    }
+    TextParamPanel tp=new TextParamPanel(componentId,model,new ResourceModel(paramLabel,paramLabel),required);
+    if (paramName.equalsIgnoreCase("url")) {
+      tp.getFormComponent().add(new FileExistsValidator());
+    }
+    if (binding != null && !String.class.equals(binding) && !File.class.equals(binding) && !URL.class.equals(binding)) {
+      tp.getFormComponent().setType(binding);
+    }
+    parameterPanel=tp;
+  }
+  return parameterPanel;
+}

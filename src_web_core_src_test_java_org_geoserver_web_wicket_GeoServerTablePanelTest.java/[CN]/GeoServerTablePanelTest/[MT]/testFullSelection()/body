@@ -1,0 +1,22 @@
+{
+  tester.startPage(new FormTestPage(new ComponentBuilder(){
+    public Component buildComponent(    String id){
+      return new IntegerTable(id,true);
+    }
+  }
+));
+  tester.assertComponent("form:panel",IntegerTable.class);
+  IntegerTable table=(IntegerTable)tester.getComponentFromLastRenderedPage("form:panel");
+  String selectAllPath="form:panel:listContainer:selectAllContainer:selectAll";
+  String selectFirstPath="form:panel:listContainer:items:1:selectItemContainer:selectItem";
+  tester.assertComponent(selectAllPath,CheckBox.class);
+  tester.assertComponent(selectFirstPath,CheckBox.class);
+  assertEquals(0,table.getSelection().size());
+  FormTester ft=tester.newFormTester("form");
+  ft.setValue("panel:listContainer:selectAllContainer:selectAll","true");
+  tester.executeAjaxEvent(selectAllPath,"onclick");
+  assertEquals(10,table.getSelection().size());
+  assertEquals(new Integer(0),table.getSelection().get(0));
+  table.setSelection(false);
+  assertEquals(0,table.getSelection().size());
+}

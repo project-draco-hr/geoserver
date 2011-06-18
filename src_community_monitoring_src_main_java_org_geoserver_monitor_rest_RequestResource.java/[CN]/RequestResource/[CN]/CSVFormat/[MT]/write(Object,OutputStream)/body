@@ -1,0 +1,21 @@
+{
+  final BufferedWriter w=new BufferedWriter(new OutputStreamWriter(out));
+  StringBuffer sb=new StringBuffer();
+  for (  String fld : fields) {
+    sb.append(fld).append(",");
+  }
+  sb.setLength(sb.length() - 1);
+  w.write(sb.append("\n").toString());
+  handleRequests(object,new RequestDataVisitor(){
+    public void visit(    RequestData data,    Object... aggregates){
+      try {
+        writeRequest(data,w);
+      }
+ catch (      IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+,monitor);
+  w.flush();
+}

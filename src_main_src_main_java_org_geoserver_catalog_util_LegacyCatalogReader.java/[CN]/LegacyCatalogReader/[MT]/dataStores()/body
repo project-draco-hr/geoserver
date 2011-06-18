@@ -1,0 +1,24 @@
+{
+  Element dataStoresElement=ReaderUtils.getChildElement(catalog,"datastores",true);
+  NodeList dataStoreElements=dataStoresElement.getElementsByTagName("datastore");
+  Map dataStores=new LinkedHashMap();
+  for (int i=0; i < dataStoreElements.getLength(); i++) {
+    Element dataStoreElement=(Element)dataStoreElements.item(i);
+    Map dataStore=new HashMap();
+    String id=ReaderUtils.getAttribute(dataStoreElement,"id",true);
+    dataStore.put("id",id);
+    dataStore.put("namespace",ReaderUtils.getAttribute(dataStoreElement,"namespace",false));
+    dataStore.put("enabled",Boolean.valueOf(ReaderUtils.getBooleanAttribute(dataStoreElement,"enabled",false,true)));
+    try {
+      Map params=dataStoreParams(dataStoreElement);
+      dataStore.put("connectionParams",params);
+    }
+ catch (    Exception e) {
+      LOGGER.warning("Error reading data store paramaters: " + e.getMessage());
+      LOGGER.log(Level.INFO,"",e);
+      continue;
+    }
+    dataStores.put(id,dataStore);
+  }
+  return dataStores;
+}

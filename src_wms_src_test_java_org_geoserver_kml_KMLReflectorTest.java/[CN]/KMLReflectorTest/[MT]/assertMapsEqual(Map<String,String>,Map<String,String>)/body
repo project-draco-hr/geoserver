@@ -1,0 +1,22 @@
+{
+  for (  Map.Entry<String,String> entry : expected.entrySet()) {
+    if (entry.getKey().equalsIgnoreCase("format_options")) {
+      FormatOptionsKvpParser parser=new FormatOptionsKvpParser();
+      Map expectedFormatOptions=(Map)parser.parse(entry.getValue());
+      Map actualFormatOptions=(Map)parser.parse(actual.get(entry.getKey()));
+      for (      Object o : expectedFormatOptions.entrySet()) {
+        Map.Entry formatOption=(Map.Entry)o;
+        assertEquals(formatOption.getValue(),actualFormatOptions.get(formatOption.getKey()));
+      }
+      for (      Object key : actualFormatOptions.keySet()) {
+        assertTrue("found unexpected key " + key + " in format options",expectedFormatOptions.containsKey(key));
+      }
+    }
+ else {
+      assertEquals(entry.getValue(),actual.get(entry.getKey()));
+    }
+  }
+  for (  String key : actual.keySet()) {
+    assertTrue(expected.containsKey(key));
+  }
+}

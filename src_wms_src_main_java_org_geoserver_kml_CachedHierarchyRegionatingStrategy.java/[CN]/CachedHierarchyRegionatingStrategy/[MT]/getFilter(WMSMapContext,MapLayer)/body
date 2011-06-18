@@ -1,0 +1,36 @@
+{
+  Catalog catalog=gs.getCatalog();
+  Set<String> featuresInTile=Collections.emptySet();
+  try {
+    FeatureSource featureSource=layer.getFeatureSource();
+    featureType=catalog.getFeatureTypeByName(featureSource.getName());
+    String dataDir=catalog.getResourceLoader().getBaseDirectory().getCanonicalPath();
+    tableName=getDatabaseName(context,layer);
+    featuresPerTile=featureType.getMetadata().get("kml.regionateFeatureLimit",Integer.class);
+    if (featuresPerTile == null || featuresPerTile.intValue() <= 1)     featuresPerTile=64;
+    if (featureType.getFeatureType().getGeometryDescriptor() == null)     throw new ServiceException(featureType.getName() + " is geometryless, cannot generate KML!");
+    ReferencedEnvelope requestedEnvelope=context.getAreaOfInterest().transform(WGS84,true);
+    LOGGER.log(Level.FINE,"Requested tile: {0}",requestedEnvelope);
+    dataEnvelope=featureType.getLatLonBoundingBox();
+    Tile tile=new Tile(requestedEnvelope);
+    ReferencedEnvelope tileEnvelope=tile.getEnvelope();
+    if (!envelopeMatch(tileEnvelope,requestedEnvelope))     throw new ServiceException("Invalid bounding box request, it does not fit " + "the nearest regionating tile. Requested area: " + requestedEnvelope + ", "+ "nearest tile: "+ tileEnvelope);
+    featuresInTile=getFeaturesForTile(dataDir,tile);
+    LOGGER.log(Level.FINE,"Found " + featuresInTile.size() + " features in tile "+ tile.toString());
+  }
+ catch (  Throwable t) {
+    LOGGER.log(Level.SEVERE,"Error occurred while pre-processing regionated features",t);
+    throw new ServiceException("Failure while pre-processing regionated features");
+  }
+  if (featuresInTile.size() == 0) {
+    throw new HttpErrorCodeException(204);
+  }
+ else {
+    FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+    Set<FeatureId> ids=new HashSet<FeatureId>();
+    for (    String fid : featuresInTile) {
+      ids.add(ff.featureId(fid));
+    }
+    return ff.id(ids);
+  }
+}

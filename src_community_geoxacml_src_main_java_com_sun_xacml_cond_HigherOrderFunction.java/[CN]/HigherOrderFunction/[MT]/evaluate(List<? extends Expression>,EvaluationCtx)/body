@@ -1,0 +1,70 @@
+{
+  Iterator<? extends Expression> iterator=inputs.iterator();
+  Expression xpr=iterator.next();
+  Function function=null;
+  if (xpr instanceof Function) {
+    function=(Function)xpr;
+  }
+ else {
+    function=(Function)(((VariableReference)xpr).getReferencedDefinition().getExpression());
+  }
+  AttributeValue[] args=new AttributeValue[2];
+  Evaluatable eval=(Evaluatable)(iterator.next());
+  EvaluationResult result=eval.evaluate(context);
+  if (result.indeterminate())   return result;
+  args[0]=(AttributeValue)(result.getAttributeValue());
+  eval=(Evaluatable)(iterator.next());
+  result=eval.evaluate(context);
+  if (result.indeterminate())   return result;
+  args[1]=(AttributeValue)(result.getAttributeValue());
+  result=null;
+switch (functionId) {
+case ID_ANY_OF:
+{
+      result=any(args[0],(BagAttribute)(args[1]),function,context,false);
+      break;
+    }
+case ID_ALL_OF:
+{
+    result=all(args[0],(BagAttribute)(args[1]),function,context);
+    break;
+  }
+case ID_ANY_OF_ANY:
+{
+  result=new EvaluationResult(BooleanAttribute.getInstance(false));
+  Iterator<AttributeValue> it=((BagAttribute)args[0]).iterator();
+  BagAttribute bag=(BagAttribute)(args[1]);
+  while (it.hasNext()) {
+    AttributeValue value=it.next();
+    result=any(value,bag,function,context,false);
+    if (result.indeterminate())     return result;
+    if (((BooleanAttribute)(result.getAttributeValue())).getValue())     break;
+  }
+  break;
+}
+case ID_ALL_OF_ANY:
+{
+result=allOfAny((BagAttribute)(args[1]),(BagAttribute)(args[0]),function,context);
+break;
+}
+case ID_ANY_OF_ALL:
+{
+result=anyOfAll((BagAttribute)(args[0]),(BagAttribute)(args[1]),function,context);
+break;
+}
+case ID_ALL_OF_ALL:
+{
+result=new EvaluationResult(BooleanAttribute.getInstance(true));
+Iterator<AttributeValue> it=((BagAttribute)args[0]).iterator();
+BagAttribute bag=(BagAttribute)(args[1]);
+while (it.hasNext()) {
+AttributeValue value=it.next();
+result=all(value,bag,function,context);
+if (result.indeterminate()) return result;
+if (!((BooleanAttribute)(result.getAttributeValue())).getValue()) break;
+}
+break;
+}
+}
+return result;
+}

@@ -1,0 +1,36 @@
+{
+  GeoServerInfo g1=factory.createGlobal();
+  g1.setAdminPassword("foo");
+  g1.setAdminUsername("bar");
+  g1.setCharset("ISO-8859-1");
+  ContactInfo contact=factory.createContact();
+  g1.setContact(contact);
+  contact.setAddress("123");
+  contact.setAddressCity("Victoria");
+  contact.setAddressCountry("Canada");
+  contact.setAddressPostalCode("V1T3T8");
+  contact.setAddressState("BC");
+  contact.setAddressType("house");
+  contact.setContactEmail("bob@acme.org");
+  contact.setContactFacsimile("+1 250 123 4567");
+  contact.setContactOrganization("Acme");
+  contact.setContactPerson("Bob");
+  contact.setContactPosition("hacker");
+  contact.setContactVoice("+1 250 765 4321");
+  g1.setNumDecimals(2);
+  g1.setOnlineResource("http://acme.org");
+  g1.setProxyBaseUrl("http://proxy.acme.org");
+  g1.setSchemaBaseUrl("http://schemas.acme.org");
+  g1.setTitle("Acme's GeoServer");
+  g1.setUpdateSequence(123);
+  g1.setVerbose(true);
+  g1.setVerboseExceptions(true);
+  g1.getMetadata().put("one",new Integer(1));
+  g1.getMetadata().put("two",new Double(2.2));
+  ByteArrayOutputStream out=out();
+  persister.save(g1,out);
+  GeoServerInfo g2=persister.load(in(out),GeoServerInfo.class);
+  assertEquals(g1,g2);
+  Document dom=dom(in(out));
+  assertEquals("global",dom.getDocumentElement().getNodeName());
+}

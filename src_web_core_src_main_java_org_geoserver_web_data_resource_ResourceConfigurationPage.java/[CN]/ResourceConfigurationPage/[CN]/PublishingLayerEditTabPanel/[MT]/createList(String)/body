@@ -1,0 +1,17 @@
+{
+  List pubPanels=filterLayerPanels(((GeoServerApplication)getGeoServerApplication()).getBeansOfType(LayerConfigurationPanelInfo.class));
+  ListView pubPanelList=new ListView(id,pubPanels){
+    @Override protected void populateItem(    ListItem item){
+      LayerConfigurationPanelInfo panelInfo=(LayerConfigurationPanelInfo)item.getModelObject();
+      try {
+        LayerConfigurationPanel panel=panelInfo.getComponentClass().getConstructor(String.class,IModel.class).newInstance("content",myLayerModel);
+        item.add((Component)panel);
+      }
+ catch (      Exception e) {
+        throw new WicketRuntimeException("Failed to add pluggable layer configuration panels",e);
+      }
+    }
+  }
+;
+  return pubPanelList;
+}

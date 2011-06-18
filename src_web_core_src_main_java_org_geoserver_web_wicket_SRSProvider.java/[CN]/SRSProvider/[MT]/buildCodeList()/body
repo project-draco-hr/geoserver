@@ -1,0 +1,20 @@
+{
+  long t=System.currentTimeMillis();
+  Set<String> codes=CRS.getSupportedCodes("EPSG");
+  try {
+    codes.addAll(customFactory.getAuthorityCodes(CoordinateReferenceSystem.class));
+  }
+ catch (  FactoryException e) {
+    LOGGER.log(Level.WARNING,"Error occurred while trying to gather custom CRS codes",e);
+  }
+  Set<SRS> idSet=new HashSet<SRS>();
+  for (  String code : codes) {
+    String id=code.substring(code.indexOf(':') + 1);
+    if (NUMERIC.matcher(id).matches()) {
+      idSet.add(new SRS(id));
+    }
+  }
+  List<SRS> srsList=new ArrayList<SRS>(idSet);
+  Collections.sort(srsList,new CodeComparator());
+  return srsList;
+}

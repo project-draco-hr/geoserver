@@ -1,0 +1,18 @@
+{
+  GlobalFlowController controller=new GlobalFlowController(1);
+  FlowControllerTestingThread t1=new FlowControllerTestingThread(controller,new Request(),100,400);
+  FlowControllerTestingThread t2=new FlowControllerTestingThread(controller,new Request(),100,400);
+  try {
+    t1.start();
+    waitBlocked(t1,MAX_WAIT);
+    t2.start();
+    waitTerminated(t1,MAX_WAIT);
+    waitTerminated(t2,MAX_WAIT);
+    assertEquals(ThreadState.COMPLETE,t1.state);
+    assertEquals(ThreadState.TIMED_OUT,t2.state);
+  }
+  finally {
+    waitAndKill(t1,MAX_WAIT);
+    waitAndKill(t2,MAX_WAIT);
+  }
+}

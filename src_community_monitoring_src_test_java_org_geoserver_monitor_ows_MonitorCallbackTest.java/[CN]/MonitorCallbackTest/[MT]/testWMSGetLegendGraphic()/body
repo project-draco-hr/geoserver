@@ -1,0 +1,10 @@
+{
+  WMS wms=new WMS(createMock(GeoServer.class));
+  GetLegendGraphicRequest glg=new GetLegendGraphicRequest();
+  FeatureType type=createMock(FeatureType.class);
+  expect(type.getName()).andReturn(new NameImpl("http://acme.org","foo")).anyTimes();
+  replay(type);
+  glg.setLayer(type);
+  callback.operationDispatched(new Request(),op("GetFeatureInfo","WMS","1.1.1",glg));
+  assertEquals("http://acme.org:foo",data.getResources().get(0));
+}

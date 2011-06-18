@@ -1,0 +1,68 @@
+{
+  super(id);
+  this.roots=roots;
+  Map<CatalogInfo,StringResourceModel> notRemoved=new HashMap();
+  Catalog catalog=GeoServerApplication.get().getCatalog();
+  CascadeRemovalReporter visitor=new CascadeRemovalReporter(catalog);
+  for (Iterator<CatalogInfo> i=(Iterator<CatalogInfo>)roots.iterator(); i.hasNext(); ) {
+    CatalogInfo root=i.next();
+    StringResourceModel reason=canRemove(root);
+    if (reason != null) {
+      notRemoved.put(root,reason);
+      i.remove();
+    }
+ else {
+      root.accept(visitor);
+    }
+  }
+  visitor.removeAll(roots);
+  WebMarkupContainer root=new WebMarkupContainer("rootObjects");
+  root.add(new Label("rootObjectNames",names(roots)));
+  root.setVisible(!roots.isEmpty());
+  add(root);
+  WebMarkupContainer nr=new WebMarkupContainer("notRemovedObjects");
+  nr.setVisible(!notRemoved.isEmpty());
+  nr.add(notRemovedList(notRemoved));
+  add(nr);
+  WebMarkupContainer removed=new WebMarkupContainer("removedObjects");
+  List<CatalogInfo> cascaded=visitor.getObjects(CatalogInfo.class,DELETE);
+  for (Iterator it=cascaded.iterator(); it.hasNext(); ) {
+    CatalogInfo catalogInfo=(CatalogInfo)it.next();
+    if (catalogInfo instanceof ResourceInfo)     it.remove();
+  }
+  removed.setVisible(cascaded.size() > 0);
+  add(removed);
+  WebMarkupContainer wsr=new WebMarkupContainer("workspacesRemoved");
+  removed.add(wsr);
+  List<WorkspaceInfo> workspaces=visitor.getObjects(WorkspaceInfo.class);
+  if (workspaces.size() == 0)   wsr.setVisible(false);
+  wsr.add(new Label("workspaces",names(workspaces)));
+  WebMarkupContainer str=new WebMarkupContainer("storesRemoved");
+  removed.add(str);
+  List<StoreInfo> stores=visitor.getObjects(StoreInfo.class);
+  if (stores.size() == 0)   str.setVisible(false);
+  str.add(new Label("stores",names(stores)));
+  WebMarkupContainer lar=new WebMarkupContainer("layersRemoved");
+  removed.add(lar);
+  List<LayerInfo> layers=visitor.getObjects(LayerInfo.class,DELETE);
+  if (layers.size() == 0)   lar.setVisible(false);
+  lar.add(new Label("layers",names(layers)));
+  WebMarkupContainer grr=new WebMarkupContainer("groupsRemoved");
+  removed.add(grr);
+  List<LayerGroupInfo> groups=visitor.getObjects(LayerGroupInfo.class,DELETE);
+  if (groups.size() == 0)   grr.setVisible(false);
+  grr.add(new Label("groups",names(groups)));
+  WebMarkupContainer modified=new WebMarkupContainer("modifiedObjects");
+  modified.setVisible(visitor.getObjects(null,EXTRA_STYLE_REMOVED,GROUP_CHANGED,STYLE_RESET).size() > 0);
+  add(modified);
+  WebMarkupContainer lam=new WebMarkupContainer("layersModified");
+  modified.add(lam);
+  layers=visitor.getObjects(LayerInfo.class,STYLE_RESET,EXTRA_STYLE_REMOVED);
+  if (layers.size() == 0)   lam.setVisible(false);
+  lam.add(new Label("layers",names(layers)));
+  WebMarkupContainer grm=new WebMarkupContainer("groupsModified");
+  modified.add(grm);
+  groups=visitor.getObjects(LayerGroupInfo.class,GROUP_CHANGED);
+  if (groups.size() == 0)   grm.setVisible(false);
+  grm.add(new Label("groups",names(groups)));
+}

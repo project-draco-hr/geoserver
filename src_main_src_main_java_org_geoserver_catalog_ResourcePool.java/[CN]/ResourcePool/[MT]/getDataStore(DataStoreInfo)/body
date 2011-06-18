@@ -1,0 +1,62 @@
+{
+  try {
+    String id=info.getId();
+    DataAccess<? extends FeatureType,? extends Feature> dataStore;
+    dataStore=(DataAccess<? extends FeatureType,? extends Feature>)dataStoreCache.get(id);
+    if (dataStore == null) {
+synchronized (dataStoreCache) {
+        dataStore=(DataAccess<? extends FeatureType,? extends Feature>)dataStoreCache.get(id);
+        if (dataStore == null) {
+          Map<String,Serializable> connectionParameters=info.getConnectionParameters();
+          connectionParameters=DataStoreUtils.getParams(connectionParameters,null);
+          if (!connectionParameters.containsKey("namespace")) {
+            DataAccessFactory factory=null;
+            try {
+              factory=getDataStoreFactory(info);
+            }
+ catch (            Exception e) {
+            }
+            boolean supportsNamespace=true;
+            if (factory != null) {
+              supportsNamespace=false;
+              Param[] params=factory.getParametersInfo();
+              for (              Param p : params) {
+                if ("namespace".equalsIgnoreCase(p.key)) {
+                  supportsNamespace=true;
+                  break;
+                }
+              }
+            }
+            if (supportsNamespace) {
+              WorkspaceInfo ws=info.getWorkspace();
+              NamespaceInfo ns=info.getCatalog().getNamespaceByPrefix(ws.getName());
+              if (ns == null) {
+                ns=info.getCatalog().getDefaultNamespace();
+              }
+              if (ns != null) {
+                connectionParameters.put("namespace",ns.getURI());
+              }
+            }
+          }
+          dataStore=DataStoreUtils.getDataAccess(connectionParameters);
+          if (dataStore == null) {
+            dataStore=DataAccessFinder.getDataStore(connectionParameters);
+          }
+          if (dataStore == null) {
+            throw new NullPointerException("Could not acquire data access '" + info.getName() + "'");
+          }
+          if (id != null) {
+            dataStoreCache.put(id,dataStore);
+          }
+        }
+      }
+    }
+    return dataStore;
+  }
+ catch (  IOException ioe) {
+    throw ioe;
+  }
+catch (  Exception e) {
+    throw (IOException)new IOException().initCause(e);
+  }
+}

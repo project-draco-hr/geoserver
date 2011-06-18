@@ -1,0 +1,13 @@
+{
+  Document dom=getAsDOM("/rest/workspaces/sf/featuretypes/PrimitiveGeoFeature.xml");
+  assertEquals("featureType",dom.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo("PrimitiveGeoFeature","/featureType/name",dom);
+  assertXpathEvaluatesTo("EPSG:4326","/featureType/srs",dom);
+  assertEquals(CRS.decode("EPSG:4326").toWKT(),xp.evaluate("/featureType/nativeCRS",dom));
+  FeatureTypeInfo ft=catalog.getFeatureTypeByName("sf","PrimitiveGeoFeature");
+  ReferencedEnvelope re=ft.getLatLonBoundingBox();
+  assertXpathEvaluatesTo(re.getMinX() + "","/featureType/latLonBoundingBox/minx",dom);
+  assertXpathEvaluatesTo(re.getMaxX() + "","/featureType/latLonBoundingBox/maxx",dom);
+  assertXpathEvaluatesTo(re.getMinY() + "","/featureType/latLonBoundingBox/miny",dom);
+  assertXpathEvaluatesTo(re.getMaxY() + "","/featureType/latLonBoundingBox/maxy",dom);
+}

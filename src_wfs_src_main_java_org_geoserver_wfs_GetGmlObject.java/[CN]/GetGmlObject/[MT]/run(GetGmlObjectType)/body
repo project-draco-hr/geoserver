@@ -1,0 +1,30 @@
+{
+  GmlObjectId id=request.getGmlObjectId();
+  Hints hints=new Hints();
+  if (request.getTraverseXlinkDepth() != null) {
+    Integer depth=GetFeature.traverseXlinkDepth(request.getTraverseXlinkDepth());
+    hints.put(Hints.ASSOCIATION_TRAVERSAL_DEPTH,depth);
+  }
+  for (Iterator d=catalog.getDataStores().iterator(); d.hasNext(); ) {
+    DataStoreInfo dsInfo=(DataStoreInfo)d.next();
+    DataAccess<? extends FeatureType,? extends Feature> ds;
+    try {
+      ds=dsInfo.getDataStore(null);
+    }
+ catch (    IOException e) {
+      throw new WFSException(e);
+    }
+    if (ds instanceof GmlObjectStore) {
+      try {
+        Object obj=((GmlObjectStore)ds).getGmlObject(id,hints);
+        if (obj != null) {
+          return obj;
+        }
+      }
+ catch (      IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+  throw new WFSException("No such object: " + id);
+}

@@ -1,0 +1,16 @@
+{
+  String styleName=MockData.LAKES.getLocalPart();
+  String layerName=getLayerId(MockData.LAKES);
+  StyleInfo style=catalog.getStyleByName(styleName);
+  assertNotNull(style);
+  LayerInfo buildings=catalog.getLayerByName(getLayerId(MockData.BUILDINGS));
+  buildings.getStyles().add(style);
+  catalog.save(buildings);
+  buildings=catalog.getLayerByName(getLayerId(MockData.BUILDINGS));
+  assertTrue(buildings.getStyles().contains(style));
+  style.accept(visitor);
+  assertNull(catalog.getStyleByName(styleName));
+  assertEquals(StyleInfo.DEFAULT_POLYGON,catalog.getLayerByName(layerName).getDefaultStyle().getName());
+  buildings=catalog.getLayerByName(getLayerId(MockData.BUILDINGS));
+  assertFalse(buildings.getStyles().contains(style));
+}

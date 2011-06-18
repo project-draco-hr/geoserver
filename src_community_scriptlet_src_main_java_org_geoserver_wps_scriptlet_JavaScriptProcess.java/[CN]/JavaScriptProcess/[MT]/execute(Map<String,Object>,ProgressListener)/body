@@ -1,0 +1,20 @@
+{
+  Context cx=Context.enter();
+  Map<String,Object> results=null;
+  Object process=scope.get("process",scope);
+  try {
+    if (process instanceof Function) {
+      Function processFn=(Function)process;
+      Object[] args={mapToJsObject(input,scope)};
+      Object result=processFn.call(cx,scope,scope,args);
+      results=jsObjectToMap((Scriptable)result);
+    }
+ else {
+      throw new RuntimeException("Script for process: " + myScript.getName() + " is not a valid process script.");
+    }
+  }
+  finally {
+    Context.exit();
+  }
+  return results;
+}

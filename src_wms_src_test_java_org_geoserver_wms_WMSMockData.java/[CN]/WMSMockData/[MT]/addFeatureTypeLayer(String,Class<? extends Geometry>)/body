@@ -1,0 +1,45 @@
+{
+  final DataStore dataStore=this.dataStore;
+  FeatureTypeInfoImpl featureTypeInfo=new FeatureTypeInfoImpl(catalog){
+    /** 
+ * Override to avoid going down to the catalog and geoserver resource loader etc
+ */
+    @Override public FeatureSource getFeatureSource(    ProgressListener listener,    Hints hints){
+      try {
+        return dataStore.getFeatureSource(getQualifiedName());
+      }
+ catch (      IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+;
+  featureTypeInfo.setName(name);
+  featureTypeInfo.setNativeName(name);
+  featureTypeInfo.setEnabled(true);
+  final DefaultGeographicCRS wgs84=DefaultGeographicCRS.WGS84;
+  ReferencedEnvelope bbox=new ReferencedEnvelope(-180,180,-90,90,wgs84);
+  featureTypeInfo.setLatLonBoundingBox(bbox);
+  featureTypeInfo.setNamespace(namespaceInfo);
+  featureTypeInfo.setNativeBoundingBox(bbox);
+  featureTypeInfo.setNativeCRS(wgs84);
+  featureTypeInfo.setSRS("EPSG:4326");
+  featureTypeInfo.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  featureTypeInfo.setStore(dataStoreInfo);
+  catalog.add(featureTypeInfo);
+  LayerInfo layerInfo=new LayerInfoImpl();
+  layerInfo.setResource(featureTypeInfo);
+  layerInfo.setName(name);
+  layerInfo.setEnabled(true);
+  layerInfo.setDefaultStyle(defaultStyle);
+  layerInfo.setType(LayerInfo.Type.VECTOR);
+  catalog.add(layerInfo);
+  SimpleFeatureTypeBuilder ftb=new SimpleFeatureTypeBuilder();
+  ftb.setNamespaceURI(TEST_NAMESPACE);
+  ftb.setName(name);
+  ftb.add("name",String.class);
+  ftb.add("geom",geometryType,wgs84);
+  SimpleFeatureType featureType=ftb.buildFeatureType();
+  dataStore.createSchema(featureType);
+  return new MapLayerInfo(layerInfo);
+}

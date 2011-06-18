@@ -1,0 +1,17 @@
+{
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)((FeatureCollectionType)value).getFeature().get(0);
+  FeatureTypeInfo ftInfo=getFeatureTypeInfo(fc);
+  String filename=null;
+  GetFeatureType request=OwsUtils.parameter(operation.getParameters(),GetFeatureType.class);
+  if (request != null) {
+    Map<String,?> formatOptions=request.getFormatOptions();
+    filename=(String)formatOptions.get("FILENAME");
+  }
+  if (filename == null) {
+    filename=new FileNameSource(getClass()).getZipName(ftInfo);
+  }
+  if (filename == null) {
+    filename=ftInfo.getName();
+  }
+  return (String[][])new String[][]{{"Content-Disposition","attachment; filename=" + filename + (filename.endsWith(".zip") ? "" : ".zip")}};
+}

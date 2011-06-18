@@ -1,0 +1,43 @@
+{
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String name=child.getNodeName();
+    if (name.equals("function")) {
+      Function function=(Function)(loadClass("function",child));
+      try {
+        factory.addFunction(function);
+      }
+ catch (      IllegalArgumentException iae) {
+        throw new ParsingException("duplicate function",iae);
+      }
+    }
+ else     if (name.equals("abstractFunction")) {
+      URI identifier=null;
+      try {
+        identifier=new URI(child.getAttributes().getNamedItem("identifier").getNodeValue());
+      }
+ catch (      URISyntaxException urise) {
+        throw new ParsingException("invalid function identifier",urise);
+      }
+      FunctionProxy proxy=(FunctionProxy)(loadClass("abstract function",child));
+      try {
+        factory.addAbstractFunction(proxy,identifier);
+      }
+ catch (      IllegalArgumentException iae) {
+        throw new ParsingException("duplicate abstract function",iae);
+      }
+    }
+ else     if (name.equals("functionCluster")) {
+      FunctionCluster cluster=(FunctionCluster)(loadClass("function cluster",child));
+      for (      Function function : cluster.getSupportedFunctions()) {
+        try {
+          factory.addFunction(function);
+        }
+ catch (        IllegalArgumentException iae) {
+          throw new ParsingException("duplicate function",iae);
+        }
+      }
+    }
+  }
+}

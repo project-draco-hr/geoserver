@@ -1,0 +1,22 @@
+{
+  GetCapabilitiesRequest request=(GetCapabilitiesRequest)super.read(req,kvp,rawKvp);
+  request.setRawKvp(rawKvp);
+  String version=request.getVersion();
+  if (null == version || version.length() == 0) {
+    version=(String)rawKvp.get("WMTVER");
+  }
+  if (rawKvp.containsKey("VERSION") && rawKvp.containsKey("WMTVER")) {
+    String ver=(String)rawKvp.get("VERSION");
+    String wmtver=(String)rawKvp.get("WMTVER");
+    if (WMS.version(ver,true) != null && WMS.version(wmtver,true) == null) {
+      version=ver;
+    }
+ else     if (WMS.version(ver,true) == null && WMS.version(wmtver,true) != null) {
+      version=wmtver;
+    }
+  }
+  Version requestedVersion=WMS.version(version);
+  Version negotiatedVersion=wms.negotiateVersion(requestedVersion);
+  request.setVersion(negotiatedVersion.toString());
+  return request;
+}

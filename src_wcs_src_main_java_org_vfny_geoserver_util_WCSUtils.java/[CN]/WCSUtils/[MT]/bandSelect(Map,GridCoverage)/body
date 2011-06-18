@@ -1,0 +1,51 @@
+{
+  final int numDimensions=coverage.getNumSampleDimensions();
+  final Map dims=new HashMap();
+  final ArrayList selectedBands=new ArrayList();
+  for (int d=0; d < numDimensions; d++) {
+    dims.put("band" + (d + 1),new Integer(d));
+  }
+  if ((params != null) && !params.isEmpty()) {
+    for (Iterator p=params.keySet().iterator(); p.hasNext(); ) {
+      final String param=(String)p.next();
+      if (param.equalsIgnoreCase("BAND")) {
+        try {
+          final String values=(String)params.get(param);
+          if (values.indexOf("/") > 0) {
+            final String[] minMaxRes=values.split("/");
+            final int min=(int)Math.round(Double.parseDouble(minMaxRes[0]));
+            final int max=(int)Math.round(Double.parseDouble(minMaxRes[1]));
+            final double res=((minMaxRes.length > 2) ? Double.parseDouble(minMaxRes[2]) : 0.0);
+            for (int v=min; v <= max; v++) {
+              final String key=param.toLowerCase() + v;
+              if (dims.containsKey(key)) {
+                selectedBands.add(dims.get(key));
+              }
+            }
+          }
+ else {
+            final String[] bands=values.split(",");
+            for (int v=0; v < bands.length; v++) {
+              final String key=param.toLowerCase() + bands[v];
+              if (dims.containsKey(key)) {
+                selectedBands.add(dims.get(key));
+              }
+            }
+            if (selectedBands.size() == 0) {
+              throw new Exception("WRONG PARAM VALUES.");
+            }
+          }
+        }
+ catch (        Exception e) {
+          throw new WcsException("Band parameters incorrectly specified: " + e.getLocalizedMessage());
+        }
+      }
+    }
+  }
+  final int length=selectedBands.size();
+  final int[] bands=new int[length];
+  for (int b=0; b < length; b++) {
+    bands[b]=((Integer)selectedBands.get(b)).intValue();
+  }
+  return bandSelect(coverage,bands);
+}

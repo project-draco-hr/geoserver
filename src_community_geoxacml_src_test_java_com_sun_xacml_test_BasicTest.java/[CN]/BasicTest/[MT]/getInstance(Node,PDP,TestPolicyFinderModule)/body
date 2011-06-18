@@ -1,0 +1,29 @@
+{
+  NamedNodeMap map=root.getAttributes();
+  String name=map.getNamedItem("name").getNodeValue();
+  boolean errorExpected=isAttrTrue(map,"errorExpected");
+  boolean experimental=isAttrTrue(map,"experimental");
+  Set<String> policies=null;
+  Map<String,String> policyRefs=null;
+  Map<String,String> policySetRefs=null;
+  if (root.hasChildNodes()) {
+    NodeList children=root.getChildNodes();
+    for (int i=0; i < children.getLength(); i++) {
+      Node child=children.item(i);
+      String childName=child.getNodeName();
+      if (childName.equals("policy")) {
+        if (policies == null)         policies=new HashSet<String>();
+        policies.add(child.getFirstChild().getNodeValue());
+      }
+ else       if (childName.equals("policyReference")) {
+        if (policyRefs == null)         policyRefs=new HashMap<String,String>();
+        policyRefs.put(child.getAttributes().getNamedItem("ref").getNodeValue(),child.getFirstChild().getNodeValue());
+      }
+ else       if (childName.equals("policySetReference")) {
+        if (policySetRefs == null)         policySetRefs=new HashMap<String,String>();
+        policySetRefs.put(child.getAttributes().getNamedItem("ref").getNodeValue(),child.getFirstChild().getNodeValue());
+      }
+    }
+  }
+  return new BasicTest(pdp,module,policies,policyRefs,policySetRefs,name,errorExpected,experimental);
+}

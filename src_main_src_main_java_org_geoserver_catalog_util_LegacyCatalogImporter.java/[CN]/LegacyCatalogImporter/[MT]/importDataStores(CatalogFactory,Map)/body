@@ -1,0 +1,32 @@
+{
+  for (Iterator d=dataStores.values().iterator(); d.hasNext(); ) {
+    Map map=(Map)d.next();
+    DataStoreInfo dataStore=factory.createDataStore();
+    dataStore.setName((String)map.get("id"));
+    String namespacePrefix=(String)map.get("namespace");
+    dataStore.setWorkspace(catalog.getWorkspaceByName(namespacePrefix));
+    Map connectionParams=(Map)map.get("connectionParams");
+    for (Iterator e=connectionParams.entrySet().iterator(); e.hasNext(); ) {
+      Map.Entry entry=(Map.Entry)e.next();
+      String key=(String)entry.getKey();
+      Serializable value=(Serializable)entry.getValue();
+      dataStore.getConnectionParameters().put(key,value);
+    }
+    NamespaceInfo ns=catalog.getNamespaceByPrefix(dataStore.getWorkspace().getName());
+    dataStore.getConnectionParameters().put("namespace",ns.getURI());
+    dataStore.setEnabled((Boolean)map.get("enabled"));
+    catalog.add(dataStore);
+    if (dataStore.isEnabled()) {
+      try {
+        dataStore.getDataStore(null);
+        LOGGER.info("Processed data store '" + dataStore.getName() + "', "+ (dataStore.isEnabled() ? "enabled" : "disabled"));
+      }
+ catch (      Exception e) {
+        LOGGER.warning("Error connecting to '" + dataStore.getName() + "'");
+        LOGGER.log(Level.INFO,"",e);
+        dataStore.setError(e);
+        dataStore.setEnabled(false);
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  DataStoreInfo di=getCatalog().getDataStoreByName(workspaceName,storeName);
+  if (di == null) {
+    throw new IllegalArgumentException("Could not find a " + storeName + " store in the "+ workspaceName+ " workspace");
+  }
+  this.storeId=di.getId();
+  form=new Form("form");
+  form.setOutputMarkupId(true);
+  add(form);
+  form.add(new TextField("name",new PropertyModel(this,"name")).setRequired(true));
+  attributesProvider=new AttributesProvider();
+  attributeTable=new GeoServerTablePanel<AttributeDescription>("attributes",attributesProvider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<AttributeDescription> property){
+      AttributeDescription att=(AttributeDescription)itemModel.getObject();
+      if (property == AttributesProvider.NAME) {
+        Fragment f=new Fragment(id,"nameFragment",NewFeatureTypePage.this);
+        f.add(editAttributeLink(itemModel));
+        return f;
+      }
+ else       if (property == AttributesProvider.BINDING) {
+        return new Label(id,AttributeDescription.getLocalizedName(att.getBinding()));
+      }
+ else       if (property == AttributesProvider.CRS) {
+        if (att.getBinding() != null && Geometry.class.isAssignableFrom(att.getBinding())) {
+          try {
+            Integer epsgCode=CRS.lookupEpsgCode(att.getCrs(),false);
+            return new Label(id,"EPSG:" + epsgCode);
+          }
+ catch (          Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+ else {
+          return new Label(id,"");
+        }
+      }
+ else       if (property == AttributesProvider.SIZE) {
+        if (att.getBinding() != null && String.class.equals(att.getBinding())) {
+          return new Label(id,String.valueOf(att.getSize()));
+        }
+ else {
+          return new Label(id,"");
+        }
+      }
+ else       if (property == AttributesProvider.UPDOWN) {
+        return upDownFragment(id,att);
+      }
+      return null;
+    }
+  }
+;
+  attributeTable.setSortable(false);
+  attributeTable.setFilterable(false);
+  attributeTable.getBottomPager().setVisible(false);
+  form.add(attributeTable);
+  SubmitLink saveLink=saveLink();
+  form.add(saveLink);
+  form.setDefaultButton(saveLink);
+  form.add(cancelLink());
+  setHeaderPanel(headerPanel());
+}

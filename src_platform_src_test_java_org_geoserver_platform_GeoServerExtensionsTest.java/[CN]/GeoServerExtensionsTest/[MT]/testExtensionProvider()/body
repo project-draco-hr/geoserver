@@ -1,0 +1,17 @@
+{
+  ApplicationContext appContext=createMock(ApplicationContext.class);
+  GeoServerExtensions gse=new GeoServerExtensions();
+  gse.setApplicationContext(appContext);
+  expect(appContext.getBeanNamesForType(ExtensionFilter.class)).andReturn(new String[0]);
+  expect(appContext.getBeanNamesForType(GeoServerExtensionsTest.class)).andReturn(new String[0]);
+  expect(appContext.getBeanNamesForType(ExtensionProvider.class)).andReturn(new String[]{"testKey"});
+  ExtensionProvider xp=createMock(ExtensionProvider.class);
+  expect(xp.getExtensionPoint()).andReturn(GeoServerExtensionsTest.class);
+  expect(xp.getExtensions(GeoServerExtensionsTest.class)).andReturn(Arrays.asList(this));
+  expect(appContext.getBean("testKey")).andReturn(xp);
+  replay(xp);
+  replay(appContext);
+  assertEquals(1,GeoServerExtensions.extensions(GeoServerExtensionsTest.class).size());
+  verify(xp);
+  verify(appContext);
+}

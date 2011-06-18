@@ -1,0 +1,17 @@
+{
+  Document dom=getAsDOM("ows?service=WMS&version=1.3.0&request=GetCapabilities");
+  SchemaFactory factory=SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
+  URL schemaLocation=getClass().getResource("/geoserver/schemas/wms/1.3.0/capabilities_1_3_0.xsd");
+  Schema schema=factory.newSchema(schemaLocation);
+  Validator validator=schema.newValidator();
+  Source source=new DOMSource(dom);
+  try {
+    validator.validate(source);
+    assertTrue(true);
+  }
+ catch (  SAXException ex) {
+    LOGGER.log(Level.WARNING,"WMS 1.3.0 capabilities validation error",ex);
+    print(dom);
+    fail("WMS 1.3.0 capabilities validation error: " + ex.getMessage());
+  }
+}

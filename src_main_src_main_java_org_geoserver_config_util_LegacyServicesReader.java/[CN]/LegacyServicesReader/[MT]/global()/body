@@ -1,0 +1,38 @@
+{
+  if (global != null) {
+    return global;
+  }
+  Element globalElement=ReaderUtils.getChildElement(serverConfiguration,"global");
+  global=new HashMap();
+  value("verbose",globalElement,global,Boolean.class);
+  value("verboseExceptions",globalElement,global,Boolean.class);
+  value("charSet",globalElement,global,String.class);
+  text("updateSequence",globalElement,global,Integer.class,false,0);
+  text("log4jConfigFile",globalElement,global,String.class,false,"DEFAULT_LOGGING.properties");
+  text("logLocation",globalElement,global,String.class,false,"logs/geoserver.log");
+  value("suppressStdOutLogging",globalElement,global,Boolean.class,false,Boolean.FALSE);
+  value("maxFeatures",globalElement,global,Integer.class);
+  value("numDecimals",globalElement,global,Integer.class);
+  text("onlineResource",globalElement,global,String.class,false,"http://geoserver.org");
+  text("ProxyBaseUrl",globalElement,global,String.class);
+  try {
+    value("JaiMemoryCapacity",globalElement,global,Integer.class);
+    Integer jmc=(Integer)global.get("JaiMemoryCapacity");
+    if (jmc != null) {
+      double d=(double)(jmc / Runtime.getRuntime().maxMemory());
+      d=d > 1d ? 1d : d;
+      global.put("JaiMemoryCapacity",d);
+    }
+  }
+ catch (  Exception e) {
+    value("JaiMemoryCapacity",globalElement,global,Double.class);
+  }
+  value("JaiMemoryThreshold",globalElement,global,Double.class);
+  value("JaiTileThreads",globalElement,global,Integer.class);
+  value("JaiTilePriority",globalElement,global,Integer.class);
+  value("JaiRecycling",globalElement,global,Boolean.class);
+  value("ImageIOCache",globalElement,global,Boolean.class);
+  value("JaiJPEGNative",globalElement,global,Boolean.class);
+  value("JaiPNGNative",globalElement,global,Boolean.class);
+  return global;
+}

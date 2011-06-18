@@ -1,0 +1,17 @@
+{
+  if (object == null)   return null;
+  Class clazz=object.getClass();
+  SecuredObjectFactory candidate=FACTORY_CACHE.get(clazz);
+  if (candidate == null) {
+    List<SecuredObjectFactory> factories=GeoServerExtensions.extensions(SecuredObjectFactory.class);
+    for (    SecuredObjectFactory factory : factories) {
+      if (factory.canSecure(clazz)) {
+        candidate=factory;
+        break;
+      }
+    }
+    if (candidate == null)     throw new IllegalArgumentException("Could not find a security wrapper for class " + clazz + ", cannot secure the object");
+    FACTORY_CACHE.put(clazz,candidate);
+  }
+  return candidate.secure(object,policy);
+}

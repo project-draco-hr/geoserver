@@ -1,0 +1,30 @@
+{
+  Boolean strict=(Boolean)kvp.get("strict");
+  if (strict == null) {
+    strict=Boolean.FALSE;
+  }
+ else   if (wfs.isCiteCompliant()) {
+    strict=Boolean.TRUE;
+  }
+  Parser parser=new Parser(configuration);
+  parser.setValidating(strict);
+  List<NamespaceInfo> namespaces=configuration.getCatalog().getNamespaces();
+  for (  NamespaceInfo namespace : namespaces) {
+    if (namespace.equals(configuration.getCatalog().getDefaultNamespace()))     continue;
+    parser.getNamespaces().declarePrefix(namespace.getPrefix(),namespace.getURI());
+  }
+  InputSource source=new InputSource(reader);
+  source.setEncoding(wfs.getGeoServer().getGlobal().getCharset());
+  Object parsed=parser.parse(source);
+  if (!"Transaction".equalsIgnoreCase(getElement().getLocalPart())) {
+    if (!parser.getValidationErrors().isEmpty()) {
+      WFSException exception=new WFSException("Invalid request","InvalidParameterValue");
+      for (Iterator e=parser.getValidationErrors().iterator(); e.hasNext(); ) {
+        Exception error=(Exception)e.next();
+        exception.getExceptionText().add(error.getLocalizedMessage());
+      }
+      throw exception;
+    }
+  }
+  return parsed;
+}

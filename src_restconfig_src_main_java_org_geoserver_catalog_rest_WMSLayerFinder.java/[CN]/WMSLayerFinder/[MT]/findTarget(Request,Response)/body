@@ -1,0 +1,32 @@
+{
+  String ws=(String)request.getAttributes().get("workspace");
+  String wms=(String)request.getAttributes().get("wmsstore");
+  String wl=(String)request.getAttributes().get("wmslayer");
+  if (ws != null && catalog.getWorkspaceByName(ws) == null) {
+    throw new RestletException("No such workspace: " + ws,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (wms != null && catalog.getStoreByName(ws,wms,WMSStoreInfo.class) == null) {
+    throw new RestletException("No such wms store: " + ws + ","+ wms,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (wl != null) {
+    if (wms != null && catalog.getResourceByStore(catalog.getStoreByName(ws,wms,WMSStoreInfo.class),wl,WMSLayerInfo.class) == null) {
+      throw new RestletException("No such cascaded wms layer: " + ws + ","+ wms+ ","+ wl,Status.CLIENT_ERROR_NOT_FOUND);
+    }
+ else {
+      NamespaceInfo ns=catalog.getNamespaceByPrefix(ws);
+      if (ns == null || catalog.getResourceByName(ns,wl,WMSLayerInfo.class) == null) {
+        throw new RestletException("No such cascaded wms: " + ws + ","+ wl,Status.CLIENT_ERROR_NOT_FOUND);
+      }
+    }
+  }
+ else {
+    Form form=request.getResourceRef().getQueryAsForm();
+    if ("available".equalsIgnoreCase(form.getFirstValue("list"))) {
+      return new AvailableWMSLayerResource(null,request,response,catalog);
+    }
+    if (request.getMethod() == Method.GET) {
+      return new WMSLayerListResource(getContext(),request,response,catalog);
+    }
+  }
+  return new WMSLayerResource(null,request,response,catalog);
+}

@@ -1,0 +1,54 @@
+{
+  final GWCIconFactory icons=GWCIconFactory.get();
+  table=new GeoServerTablePanel<CachedLayerInfo>("table",provider,true){
+    private static final long serialVersionUID=1L;
+    @SuppressWarnings({"unchecked","rawtypes"}) @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<CachedLayerInfo> property){
+      if (property == TYPE) {
+        Fragment f=new Fragment(id,"iconFragment",CachedLayersPage.this);
+        CachedLayerInfo layerInfo=(CachedLayerInfo)itemModel.getObject();
+        TYPE type=layerInfo.getType();
+        ResourceReference layerIcon=icons.getSpecificLayerIcon(type);
+        f.add(new Image("layerIcon",layerIcon));
+        return f;
+      }
+ else       if (property == NAME) {
+        return cachedLayerLink(id,itemModel);
+      }
+ else       if (property == QUOTA_LIMIT) {
+        IModel<Quota> quotaLimitModel=property.getModel(itemModel);
+        return quotaLink(id,quotaLimitModel);
+      }
+ else       if (property == QUOTA_USAGE) {
+        IModel<Quota> quotaUsageModel=property.getModel(itemModel);
+        return quotaLink(id,quotaUsageModel);
+      }
+ else       if (property == ENABLED) {
+        CachedLayerInfo layerInfo=(CachedLayerInfo)itemModel.getObject();
+        boolean enabled=layerInfo.isEnabled();
+        ResourceReference icon;
+        if (enabled) {
+          icon=icons.getEnabledIcon();
+        }
+ else         if (layerInfo.getConfigErrorMessage() != null) {
+          icon=icons.getErrorIcon();
+        }
+ else {
+          icon=icons.getDisabledIcon();
+        }
+        Fragment f=new Fragment(id,"iconFragment",CachedLayersPage.this);
+        f.add(new Image("layerIcon",icon));
+        return f;
+      }
+      throw new IllegalArgumentException("Don't know a property named " + property.getName());
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      removal.setEnabled(table.getSelection().size() > 0);
+      target.addComponent(removal);
+    }
+  }
+;
+  table.setOutputMarkupId(true);
+  add(table);
+  add(dialog=new GeoServerDialog("dialog"));
+  setHeaderPanel(headerPanel());
+}

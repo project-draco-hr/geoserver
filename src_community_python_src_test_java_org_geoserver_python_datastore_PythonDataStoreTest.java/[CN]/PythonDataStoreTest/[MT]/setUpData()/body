@@ -1,0 +1,18 @@
+{
+  DeleteDbFiles.execute("target","foobar",true);
+  GeoServerResourceLoader loader=new GeoServerResourceLoader(new File("target"));
+  PythonInterpreter pi=new Python(loader).interpreter();
+  pi.exec("from geoscript.workspace import H2");
+  pi.exec("from geoscript.geom import Point");
+  pi.exec("h2 = H2('foobar', 'target')");
+  pi.exec("l = h2.create('bar', [('geom', Point, 'epsg:4326'), ('baz', str)])");
+  pi.exec("l.add([Point(10,10), 'ten'])");
+  pi.exec("l.add([Point(20,20), 'twenty'])");
+  final PyObject workspace=pi.get("h2");
+  dataStore=new PythonDataStore(null,null){
+    PyObject getWorkspace(){
+      return workspace;
+    }
+  }
+;
+}

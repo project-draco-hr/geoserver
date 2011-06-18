@@ -1,0 +1,48 @@
+{
+  TextArea srsList=new TextArea("srs",LiveCollectionModel.list(new PropertyModel(info,"sRS"))){
+    @Override public IConverter getConverter(    Class type){
+      return new SRSListConverter();
+    }
+  }
+;
+  srsList.add(new SRSListValidator());
+  srsList.setType(List.class);
+  form.add(srsList);
+  form.add(new DropDownChoice("interpolation",Arrays.asList(WMSInfo.WMSInterpolation.values()),new InterpolationRenderer()));
+  TextField<Integer> maxMemory=new TextField<Integer>("maxRequestMemory");
+  maxMemory.add(new MinimumValidator<Integer>(0));
+  form.add(maxMemory);
+  TextField<Integer> maxTime=new TextField<Integer>("maxRenderingTime");
+  maxTime.add(new MinimumValidator<Integer>(0));
+  form.add(maxTime);
+  TextField<Integer> maxErrors=new TextField<Integer>("maxRenderingErrors");
+  maxErrors.add(new MinimumValidator<Integer>(0));
+  form.add(maxErrors);
+  form.add(new CheckBox("watermark.enabled"));
+  form.add(new TextField("watermark.uRL").add(new FileExistsValidator(true)));
+  TextField<Integer> transparency=new TextField<Integer>("watermark.transparency");
+  transparency.add(new RangeValidator<Integer>(0,100));
+  form.add(transparency);
+  form.add(new DropDownChoice("watermark.position",Arrays.asList(Position.values()),new WatermarkPositionRenderer()));
+  PropertyModel metadataModel=new PropertyModel(info,"metadata");
+  form.add(new CheckBox("svg.antialias",new MapModel(metadataModel,"svgAntiAlias")));
+  form.add(new DropDownChoice("svg.producer",new MapModel(metadataModel,"svgRenderer"),SVG_RENDERERS,new SVGMethodRenderer()));
+  MapModel pngCompression=defaultedModel(metadataModel,WMS.PNG_COMPRESSION,WMS.PNG_COMPRESSION_DEFAULT);
+  TextField<Integer> pngCompressionField=new TextField<Integer>("png.compression",pngCompression,Integer.class);
+  pngCompressionField.add(new RangeValidator<Integer>(0,100));
+  form.add(pngCompressionField);
+  MapModel jpegCompression=defaultedModel(metadataModel,WMS.JPEG_COMPRESSION,WMS.JPEG_COMPRESSION_DEFAULT);
+  TextField<Integer> jpegCompressionField=new TextField<Integer>("jpeg.compression",jpegCompression,Integer.class);
+  jpegCompressionField.add(new RangeValidator<Integer>(0,100));
+  form.add(jpegCompressionField);
+  MapModel kmlReflectorMode=defaultedModel(metadataModel,WMS.KML_REFLECTOR_MODE,WMS.KML_REFLECTOR_MODE_DEFAULT);
+  form.add(new DropDownChoice("kml.defaultReflectorMode",kmlReflectorMode,KML_REFLECTOR_MODES));
+  MapModel kmlSuperoverlayMode=defaultedModel(metadataModel,WMS.KML_SUPEROVERLAY_MODE,WMS.KML_SUPEROVERLAY_MODE_DEFAULT);
+  form.add(new DropDownChoice("kml.superoverlayMode",kmlSuperoverlayMode,KML_SUPEROVERLAY_MODES));
+  form.add(new CheckBox("kml.kmattr",defaultedModel(metadataModel,WMS.KML_KMLATTR,WMS.KML_KMLATTR_DEFAULT)));
+  form.add(new CheckBox("kml.kmlplacemark",defaultedModel(metadataModel,WMS.KML_KMLPLACEMARK,WMS.KML_KMLPLACEMARK_DEFAULT)));
+  MapModel kmScore=defaultedModel(metadataModel,WMS.KML_KMSCORE,WMS.KML_KMSCORE_DEFAULT);
+  TextField<Integer> kmScoreField=new TextField<Integer>("kml.kmscore",kmScore,Integer.class);
+  kmScoreField.add(new RangeValidator<Integer>(0,100));
+  form.add(kmScoreField);
+}

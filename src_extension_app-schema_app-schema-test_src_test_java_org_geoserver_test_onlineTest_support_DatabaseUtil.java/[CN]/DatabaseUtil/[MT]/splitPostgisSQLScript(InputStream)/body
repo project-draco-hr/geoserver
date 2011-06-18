@@ -1,0 +1,35 @@
+{
+  StringBuilder contents=new StringBuilder();
+  ArrayList<String> statements=new ArrayList<String>();
+  try {
+    BufferedReader input=new BufferedReader(new InputStreamReader(new DataInputStream(inputStream)));
+    try {
+      String line=null;
+      PostgisIgnoreOperator pio=new PostgisIgnoreOperator();
+      while ((line=input.readLine()) != null) {
+        String trimedLine=line.trim();
+        if (trimedLine.startsWith("--") || trimedLine.equals("")) {
+          continue;
+        }
+        for (        String opr : pio.getOperators()) {
+          if (countMatches(trimedLine,opr) % 2 == 1) {
+            pio.setReverseStatus(opr);
+          }
+        }
+        contents.append(trimedLine + NEWLINE);
+        if (trimedLine.endsWith(";") && pio.isAllClosed()) {
+          statements.add(contents.toString());
+          pio.reset();
+          contents.setLength(0);
+        }
+      }
+      return statements;
+    }
+  finally {
+      input.close();
+    }
+  }
+ catch (  Exception e) {
+    throw e;
+  }
+}

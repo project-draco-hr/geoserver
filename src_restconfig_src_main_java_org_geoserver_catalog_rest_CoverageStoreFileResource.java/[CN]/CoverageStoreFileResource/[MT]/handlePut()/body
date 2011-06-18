@@ -1,0 +1,116 @@
+{
+  Request request=getRequest();
+  Response response=getResponse();
+  String workspace=getAttribute("workspace");
+  String coveragestore=getAttribute("coveragestore");
+  String format=getAttribute("format");
+  String method=getUploadMethod(request);
+  final File uploadedFile=doFileUpload(method,workspace,coveragestore,format);
+  Form form=request.getResourceRef().getQueryAsForm();
+  if ("yes".equalsIgnoreCase(form.getFirstValue("overviews"))) {
+    ;
+  }
+  CatalogBuilder builder=new CatalogBuilder(catalog);
+  builder.setWorkspace(catalog.getWorkspaceByName(workspace));
+  CoverageStoreInfo info=catalog.getCoverageStoreByName(workspace,coveragestore);
+  boolean add=false;
+  if (info == null) {
+    LOGGER.info("Auto-configuring coverage store: " + coveragestore);
+    info=builder.buildCoverageStore(coveragestore);
+    add=true;
+  }
+ else {
+    LOGGER.info("Using existing coverage store: " + coveragestore);
+  }
+  info.setType(coverageFormat.getName());
+  if (isInlineUpload(method)) {
+    info.setURL("file:data/" + workspace + "/"+ coveragestore+ "/"+ uploadedFile.getName());
+  }
+ else {
+    try {
+      info.setURL(uploadedFile.toURL().toExternalForm());
+    }
+ catch (    MalformedURLException e) {
+      throw new RestletException("url error",Status.SERVER_ERROR_INTERNAL,e);
+    }
+  }
+  if (add) {
+    catalog.add(info);
+  }
+ else {
+    catalog.save(info);
+  }
+  builder.setStore(info);
+  String configure=form.getFirstValue("configure");
+  if ("none".equalsIgnoreCase(configure)) {
+    getResponse().setStatus(Status.SUCCESS_CREATED);
+    return;
+  }
+  String coverage=uploadedFile.getName();
+  if (coverage.indexOf('.') != -1) {
+    coverage=coverage.substring(0,coverage.indexOf('.'));
+  }
+  try {
+    AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)((AbstractGridFormat)coverageFormat).getReader(uploadedFile.toURL());
+    if (reader == null) {
+      throw new RestletException("Could not aquire reader for coverage.",Status.SERVER_ERROR_INTERNAL);
+    }
+    final Map customParameters=new HashMap();
+    String useJAIImageReadParam=form.getFirstValue("USE_JAI_IMAGEREAD");
+    if (useJAIImageReadParam != null) {
+      customParameters.put(AbstractGridFormat.USE_JAI_IMAGEREAD.getName().toString(),Boolean.valueOf(useJAIImageReadParam));
+    }
+    CoverageInfo cinfo=builder.buildCoverage(reader,customParameters);
+    String coverageName=form.getFirstValue("coverageName");
+    if (coverageName != null) {
+      cinfo.setName(coverageName);
+    }
+    if (!add) {
+      CoverageInfo existing=catalog.getCoverageByCoverageStore(info,coverageName != null ? coverageName : coverage);
+      if (existing == null) {
+        List<CoverageInfo> coverages=catalog.getCoveragesByCoverageStore(info);
+        if (coverages.size() == 1) {
+          existing=coverages.get(0);
+        }
+        if (coverages.size() == 0) {
+          add=true;
+        }
+ else {
+          throw new RestletException("Unable to determine coverage to configure.",Status.SERVER_ERROR_INTERNAL);
+        }
+      }
+      if (existing != null) {
+        builder.updateCoverage(existing,cinfo);
+        catalog.save(existing);
+        cinfo=existing;
+      }
+    }
+    if ("UNKNOWN".equals(cinfo.getSRS())) {
+      cinfo.setSRS("EPSG:4326");
+    }
+    if (add) {
+      catalog.add(cinfo);
+      LayerInfo layerInfo=builder.buildLayer(cinfo);
+      boolean valid=true;
+      try {
+        if (!catalog.validate(layerInfo,true).isEmpty()) {
+          valid=false;
+        }
+      }
+ catch (      Exception e) {
+        valid=false;
+      }
+      layerInfo.setEnabled(valid);
+      catalog.add(layerInfo);
+    }
+ else {
+      catalog.save(cinfo);
+    }
+    DataFormat df=new CoverageStoreResource(getContext(),request,response,catalog).createXMLFormat(request,response);
+    response.setEntity(df.toRepresentation(info));
+    response.setStatus(Status.SUCCESS_CREATED);
+  }
+ catch (  Exception e) {
+    throw new RestletException("Error auto-configuring coverage",Status.SERVER_ERROR_INTERNAL,e);
+  }
+}

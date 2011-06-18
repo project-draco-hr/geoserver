@@ -1,0 +1,23 @@
+{
+  cleared=false;
+  ResourcePool pool=new ResourcePool(getCatalog()){
+    @Override public void clear(    FeatureTypeInfo info){
+      cleared=true;
+      super.clear(info);
+    }
+  }
+;
+  FeatureTypeInfo info=getCatalog().getFeatureTypeByName(MockData.LAKES.getNamespaceURI(),MockData.LAKES.getLocalPart());
+  assertNotNull(pool.getFeatureType(info));
+  info.setTitle("changed");
+  assertFalse(cleared);
+  getCatalog().save(info);
+  assertTrue(cleared);
+  cleared=false;
+  assertNotNull(pool.getFeatureType(info));
+  for (  LayerInfo l : getCatalog().getLayers(info)) {
+    getCatalog().remove(l);
+  }
+  getCatalog().remove(info);
+  assertTrue(cleared);
+}

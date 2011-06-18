@@ -1,0 +1,14 @@
+{
+  MockHttpServletResponse resp=getAsServletResponse("/rest/workspaces/gs/datastores/pds/file.properties");
+  assertEquals(404,resp.getStatusCode());
+  byte[] bytes=propertyFile();
+  put("/rest/workspaces/gs/datastores/pds/file.properties",bytes,"text/plain");
+  resp=getAsServletResponse("/rest/workspaces/gs/datastores/pds/file.properties");
+  assertEquals(200,resp.getStatusCode());
+  assertEquals("application/zip",resp.getContentType());
+  ByteArrayInputStream bin=getBinaryInputStream(resp);
+  ZipInputStream zin=new ZipInputStream(bin);
+  ZipEntry entry=zin.getNextEntry();
+  assertNotNull(entry);
+  assertEquals("pds.properties",entry.getName());
+}

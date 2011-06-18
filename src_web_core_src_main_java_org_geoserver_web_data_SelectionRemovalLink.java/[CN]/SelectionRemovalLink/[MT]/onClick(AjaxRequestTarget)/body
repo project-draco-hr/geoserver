@@ -1,0 +1,32 @@
+{
+  final List<? extends CatalogInfo> selection=catalogObjects.getSelection();
+  if (selection.size() == 0)   return;
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    protected Component getContents(    String id){
+      return new ConfirmRemovalPanel(id,selection){
+        @Override protected StringResourceModel canRemove(        CatalogInfo info){
+          return SelectionRemovalLink.this.canRemove(info);
+        }
+      }
+;
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      Catalog catalog=GeoServerApplication.get().getCatalog();
+      CascadeDeleteVisitor visitor=new CascadeDeleteVisitor(catalog);
+      for (      CatalogInfo ci : selection) {
+        ci.accept(visitor);
+      }
+      catalogObjects.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (catalogObjects.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(SelectionRemovalLink.this);
+        target.addComponent(catalogObjects);
+      }
+    }
+  }
+);
+}

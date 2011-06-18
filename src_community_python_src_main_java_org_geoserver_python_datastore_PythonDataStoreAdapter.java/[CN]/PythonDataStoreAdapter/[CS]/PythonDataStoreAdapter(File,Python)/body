@@ -1,0 +1,27 @@
+{
+  this.py=py;
+  fw=new FileWatcher<PyType>(file){
+    @Override protected PyType parseFileContents(    InputStream in) throws IOException {
+      PythonInterpreter pi=PythonDataStoreAdapter.this.py.interpreter();
+      pi.execfile(in);
+      PyStringMap locals=(PyStringMap)pi.getLocals();
+      for (      Object obj : locals.values()) {
+        if (obj instanceof PyType) {
+          PyType pobj=(PyType)obj;
+          try {
+            PyObject init=pobj.__getattr__("__init__");
+            if (init != null) {
+              if (init.__getattr__("__datastore__") != null) {
+                return (PyType)pobj;
+              }
+            }
+          }
+ catch (          PyException e) {
+          }
+        }
+      }
+      return null;
+    }
+  }
+;
+}

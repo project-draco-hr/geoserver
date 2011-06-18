@@ -1,0 +1,28 @@
+{
+  writer.writeStartDocument();
+  writer.writeStartElement("urlset");
+  writer.writeDefaultNamespace(SITEMAP_NS);
+  writer.writeNamespace("geo",GEO_NS);
+  writer.setDefaultNamespace(SITEMAP_NS);
+  writer.setPrefix("geo",GEO_NS);
+  for (  LayerInfo info : catalog.getLayers()) {
+    final MetadataMap metadata=info.getMetadata();
+    final Boolean indexingEnabled=metadata.get(INDEXING_ENABLED,Boolean.class);
+    if (null == indexingEnabled || Boolean.FALSE.equals(indexingEnabled)) {
+      continue;
+    }
+    final String layerName=info.getResource().getPrefixedName();
+    writeUrl(writer,metadata,layerName);
+  }
+  for (  LayerGroupInfo info : catalog.getLayerGroups()) {
+    final MetadataMap metadata=info.getMetadata();
+    final Boolean indexingEnabled=metadata.get(INDEXING_ENABLED,Boolean.class);
+    if (null == indexingEnabled || Boolean.FALSE.equals(indexingEnabled)) {
+      continue;
+    }
+    final String layerName=info.getName();
+    writeUrl(writer,metadata,layerName);
+  }
+  writer.writeEndElement();
+  writer.writeEndDocument();
+}

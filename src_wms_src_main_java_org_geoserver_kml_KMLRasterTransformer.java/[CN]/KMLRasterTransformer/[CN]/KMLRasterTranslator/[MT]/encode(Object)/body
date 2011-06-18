@@ -1,0 +1,91 @@
+{
+  MapLayer mapLayer=(MapLayer)o;
+  int mapLayerOrder=mapContext.indexOf(mapLayer);
+  if (isStandAlone()) {
+    start("kml");
+  }
+  ReferencedEnvelope box=new ReferencedEnvelope(mapContext.getAreaOfInterest());
+  boolean reprojectBBox=(box.getCoordinateReferenceSystem() != null) && !CRS.equalsIgnoreMetadata(box.getCoordinateReferenceSystem(),DefaultGeographicCRS.WGS84);
+  if (reprojectBBox) {
+    try {
+      box=box.transform(DefaultGeographicCRS.WGS84,true);
+    }
+ catch (    Exception e) {
+      throw new ServiceException("Could not transform bbox to WGS84",e,"ReprojectionError","");
+    }
+  }
+  start("Folder");
+  element("name","layer_" + mapLayerOrder);
+  element("description",mapLayer.getTitle());
+  if (lookAtOpts != null) {
+    if (box != null) {
+      KMLLookAtTransformer tx;
+      tx=new KMLLookAtTransformer(box,getIndentation(),getEncoding());
+      Translator translator=tx.createTranslator(contentHandler);
+      translator.encode(lookAtOpts);
+    }
+  }
+  start("GroundOverlay");
+  element("name",mapLayer.getTitle());
+  element("drawOrder",Integer.toString(mapLayerOrder));
+  start("Icon");
+  encodeHref(mapLayer);
+  element("viewRefreshMode","never");
+  element("viewBoundScale","0.75");
+  end("Icon");
+  start("LatLonBox");
+  element("north",Double.toString(box.getMaxY()));
+  element("south",Double.toString(box.getMinY()));
+  element("east",Double.toString(box.getMaxX()));
+  element("west",Double.toString(box.getMinX()));
+  end("LatLonBox");
+  end("GroundOverlay");
+  boolean kmplacemark=KMLUtils.getKmplacemark(mapContext.getRequest(),wms);
+  if (kmplacemark) {
+    SimpleFeatureCollection features=null;
+    try {
+      features=KMLUtils.loadFeatureCollection((SimpleFeatureSource)mapLayer.getFeatureSource(),mapLayer,mapContext,wms,scaleDenominator);
+    }
+ catch (    Exception ex) {
+      String msg="Error getting features.";
+      LOGGER.log(Level.WARNING,msg,ex);
+    }
+    if (features != null && features.size() > 0) {
+      Geometry geom=null;
+      Geometry centroidGeom=null;
+      Envelope aoi=mapContext.getAreaOfInterest();
+      GeometryFactory factory=new GeometryFactory();
+      Geometry displayGeom=factory.toGeometry(new Envelope(aoi.getMinX(),aoi.getMaxX(),aoi.getMinY(),aoi.getMaxY()));
+      SimpleFeatureType featureType=features.getSchema();
+      FeatureTypeStyle[] fts=KMLUtils.filterFeatureTypeStyles(mapLayer.getStyle(),featureType);
+      Iterator<SimpleFeature> iter=features.iterator();
+      while (iter.hasNext()) {
+        SimpleFeature ftr=iter.next();
+        geom=(Geometry)ftr.getDefaultGeometry();
+        List<Symbolizer> symbolizers=filterSymbolizers(ftr,fts);
+        if (symbolizers.size() != 0)         encodeStyle(ftr,symbolizers);
+        if (geom instanceof MultiPolygon) {
+          double maxSize=-1;
+          int numGeoms=geom.getNumGeometries();
+          for (int i=0; i < numGeoms; i++) {
+            Polygon poly=(Polygon)geom.getGeometryN(i);
+            if (poly.getArea() > maxSize) {
+              if (displayGeom.intersects(poly)) {
+                geom=poly;
+                maxSize=poly.getArea();
+              }
+            }
+          }
+        }
+        Geometry g1=displayGeom.intersection(geom);
+        if (g1.isEmpty())         continue;
+        centroidGeom=g1.getCentroid();
+        encodePlacemark(ftr,symbolizers,centroidGeom,lookAtOpts);
+      }
+    }
+  }
+  end("Folder");
+  if (isStandAlone()) {
+    end("kml");
+  }
+}

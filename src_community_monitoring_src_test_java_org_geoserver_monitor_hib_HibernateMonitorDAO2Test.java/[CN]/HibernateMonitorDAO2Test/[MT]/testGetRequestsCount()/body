@@ -1,0 +1,12 @@
+{
+  final List<Object> aggs=new ArrayList();
+  RequestDataVisitor v=new RequestDataVisitor(){
+    public void visit(    RequestData data,    Object... aggregates){
+      aggs.addAll(Arrays.asList(aggregates));
+    }
+  }
+;
+  dao.getRequests(new Query().aggregate("count()").filter("path","/foo",Comparison.EQ),v);
+  assertEquals(1,aggs.size());
+  assertEquals(4,((Number)aggs.get(0)).intValue());
+}

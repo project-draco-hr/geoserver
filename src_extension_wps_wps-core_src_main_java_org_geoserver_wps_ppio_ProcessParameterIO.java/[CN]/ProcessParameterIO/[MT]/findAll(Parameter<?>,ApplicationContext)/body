@@ -1,0 +1,28 @@
+{
+  if (p.type.isEnum()) {
+    List<ProcessParameterIO> result=new ArrayList<ProcessParameterIO>();
+    result.add(new LiteralPPIO(p.type));
+    return result;
+  }
+  List<ProcessParameterIO> l=new ArrayList<ProcessParameterIO>(defaults);
+  if (context != null) {
+    l.addAll(GeoServerExtensions.extensions(ProcessParameterIO.class,context));
+  }
+ else {
+    l.addAll(GeoServerExtensions.extensions(ProcessParameterIO.class));
+  }
+  List<ProcessParameterIO> matches=new ArrayList<ProcessParameterIO>();
+  for (  ProcessParameterIO ppio : l) {
+    if (ppio.getIdentifer() != null && ppio.getIdentifer().equals(p.key) && ppio.getType().isAssignableFrom(p.type)) {
+      matches.add(ppio);
+    }
+  }
+  if (matches.isEmpty()) {
+    for (    ProcessParameterIO ppio : l) {
+      if (ppio.getType().isAssignableFrom(p.type)) {
+        matches.add(ppio);
+      }
+    }
+  }
+  return matches;
+}

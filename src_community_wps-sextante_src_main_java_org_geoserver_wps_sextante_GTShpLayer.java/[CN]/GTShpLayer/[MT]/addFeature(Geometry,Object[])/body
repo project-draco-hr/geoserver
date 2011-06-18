@@ -1,0 +1,39 @@
+{
+  if (m_featWriter == null) {
+    SimpleFeatureType ft=((FeatureSource<SimpleFeatureType,SimpleFeature>)m_BaseDataObject).getSchema();
+    try {
+      m_featWriter=m_dataStore.getFeatureWriterAppend(ft.getTypeName(),DefaultTransaction.AUTO_COMMIT);
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  if (getFeatureSource() instanceof FeatureStore) {
+    Geometry geom;
+    GeometryFactory gf=new GeometryFactory();
+    if (g instanceof Polygon) {
+      geom=gf.createMultiPolygon(new Polygon[]{(Polygon)g});
+    }
+ else     if (g instanceof LineString) {
+      geom=gf.createMultiLineString(new LineString[]{(LineString)g});
+    }
+ else {
+      geom=g;
+    }
+    try {
+      List<Object> attributes=new ArrayList<Object>();
+      attributes.add(geom);
+      attributes.addAll(Arrays.asList(values));
+      SimpleFeature feature=m_featWriter.next();
+      feature.setAttributes(attributes);
+      m_featWriter.write();
+      m_iCount++;
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+ else {
+    throw new RuntimeException("Incorrect feature source");
+  }
+}

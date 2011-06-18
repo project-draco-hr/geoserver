@@ -1,0 +1,25 @@
+{
+  Class clazz=GeoServerImpl.unwrap(service).getClass();
+  Constructor constructor=null;
+  while (clazz != null && constructor == null) {
+    try {
+      constructor=delegateClass.getConstructor(new Class[]{clazz});
+    }
+ catch (    NoSuchMethodException e) {
+      Class[] classes=clazz.getInterfaces();
+      for (      Class c : classes) {
+        try {
+          constructor=delegateClass.getConstructor(new Class[]{c});
+        }
+ catch (        NoSuchMethodException e2) {
+        }
+      }
+      clazz=clazz.getSuperclass();
+    }
+  }
+  if (constructor == null) {
+    throw new IllegalStateException("No appropriate constructor");
+  }
+  XmlRequestReader delegate=(XmlRequestReader)constructor.newInstance(new Object[]{service});
+  return delegate.read(reader,httpRequest);
+}

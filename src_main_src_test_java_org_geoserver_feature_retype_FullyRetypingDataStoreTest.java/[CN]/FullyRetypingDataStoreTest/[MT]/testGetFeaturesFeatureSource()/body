@@ -1,0 +1,16 @@
+{
+  SimpleFeatureSource fs=rts.getFeatureSource(RENAMED);
+  assertEquals(primitive,fs.getSchema());
+  SimpleFeatureCollection fc=fs.getFeatures();
+  assertEquals(primitive,fc.getSchema());
+  assertTrue(fc.size() > 0);
+  FeatureIterator<SimpleFeature> it=fc.features();
+  SimpleFeature sf=it.next();
+  it.close();
+  assertEquals(primitive,sf.getFeatureType());
+  assertTrue("Feature id has not been renamed, it's still " + sf.getID(),sf.getID().startsWith(RENAMED));
+  assertEquals("description-f001",sf.getAttribute("description"));
+  assertTrue(new WKTReader().read("MULTIPOINT(39.73245 2.00342)").equalsExact((Geometry)sf.getAttribute("pointProperty")));
+  assertEquals(new Long(155),sf.getAttribute("intProperty"));
+  assertNull(sf.getAttribute("newProperty"));
+}

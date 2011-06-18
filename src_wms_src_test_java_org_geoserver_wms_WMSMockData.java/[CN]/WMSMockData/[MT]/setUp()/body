@@ -1,0 +1,50 @@
+{
+  mockMapProducer=new DummyRasterMapProducer();
+  catalog=new CatalogImpl();
+  namespaceInfo=new NamespaceInfoImpl();
+  namespaceInfo.setId("testNs");
+  namespaceInfo.setPrefix(TEST_NS_PREFIX);
+  namespaceInfo.setURI(TEST_NAMESPACE);
+  catalog.add(namespaceInfo);
+  workspaceInfo=new WorkspaceInfoImpl();
+  catalog.setDefaultWorkspace(workspaceInfo);
+  defaultStyle=new StyleInfoImpl(catalog){
+    /** 
+ * Override so it does not try to load a file from disk
+ */
+    @Override public Style getStyle() throws IOException {
+      StyleFactory styleFactory=CommonFactoryFinder.getStyleFactory(null);
+      Style style=styleFactory.createStyle();
+      style.setName("Default Style");
+      return style;
+    }
+  }
+;
+  defaultStyle.setFilename("defaultStyleFileName");
+  defaultStyle.setId("defaultStyleId");
+  defaultStyle.setName("defaultStyleName");
+  catalog.add(defaultStyle);
+  dataStoreInfo=new DataStoreInfoImpl(catalog);
+  dataStoreInfo.setName("mockDataStore");
+  dataStoreInfo.setEnabled(true);
+  dataStoreInfo.setWorkspace(workspaceInfo);
+  dataStore=new MemoryDataStore();
+  ResourcePool resourcePool=new ResourcePool(catalog){
+    @Override public DataStore getDataStore(    DataStoreInfo info) throws IOException {
+      return dataStore;
+    }
+  }
+;
+  catalog.setResourcePool(resourcePool);
+  mockGeoServer=new GeoServerImpl();
+  mockGeoServer.setCatalog(catalog);
+  GeoServerInfoImpl geoserverInfo=new GeoServerInfoImpl(mockGeoServer);
+  geoserverInfo.setId("geoserver");
+  mockGeoServer.setGlobal(geoserverInfo);
+  WMSInfoImpl wmsInfo=new WMSInfoImpl();
+  wmsInfo.setId("wms");
+  wmsInfo.setName("WMS");
+  wmsInfo.setEnabled(true);
+  mockGeoServer.add(wmsInfo);
+  mockWMS=new WMS(mockGeoServer);
+}

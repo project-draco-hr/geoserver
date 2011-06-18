@@ -1,0 +1,11 @@
+{
+  if (!response.getTransactionResults().getAction().isEmpty()) {
+    ActionType action=(ActionType)response.getTransactionResults().getAction().iterator().next();
+    throw new WFSException(action.getMessage(),action.getCode(),action.getLocator());
+  }
+  Encoder encoder=new Encoder(configuration,configuration.schema());
+  encoder.setEncoding(Charset.forName(getInfo().getGeoServer().getGlobal().getCharset()));
+  TransactionType req=(TransactionType)operation.getParameters()[0];
+  encoder.setSchemaLocation(org.geoserver.wfs.xml.v1_1_0.WFS.NAMESPACE,buildSchemaURL(req.getBaseUrl(),"wfs/1.1.0/wfs.xsd"));
+  encoder.encode(response,org.geoserver.wfs.xml.v1_1_0.WFS.TRANSACTIONRESPONSE,output);
+}

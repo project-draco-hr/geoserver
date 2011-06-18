@@ -1,0 +1,49 @@
+{
+  int[] high, low;
+  reader.moveDown();
+  reader.moveDown();
+  low=toIntArray(reader.getValue());
+  reader.moveUp();
+  reader.moveDown();
+  high=toIntArray(reader.getValue());
+  reader.moveUp();
+  reader.moveUp();
+  if (reader.hasMoreChildren()) {
+    reader.moveDown();
+  }
+  AffineTransform2D gridToCRS=null;
+  if ("transform".equals(reader.getNodeName())) {
+    double sx, sy, shx, shy, tx, ty;
+    reader.moveDown();
+    sx=Double.parseDouble(reader.getValue());
+    reader.moveUp();
+    reader.moveDown();
+    sy=Double.parseDouble(reader.getValue());
+    reader.moveUp();
+    reader.moveDown();
+    shx=Double.parseDouble(reader.getValue());
+    reader.moveUp();
+    reader.moveDown();
+    shy=Double.parseDouble(reader.getValue());
+    reader.moveUp();
+    reader.moveDown();
+    tx=Double.parseDouble(reader.getValue());
+    reader.moveUp();
+    reader.moveDown();
+    ty=Double.parseDouble(reader.getValue());
+    reader.moveUp();
+    gridToCRS=new AffineTransform2D(sx,shx,shy,sy,tx,ty);
+    reader.moveUp();
+    if (reader.hasMoreChildren()) {
+      reader.moveDown();
+    }
+  }
+  CoordinateReferenceSystem crs=null;
+  if ("crs".equals(reader.getNodeName())) {
+    crs=(CoordinateReferenceSystem)context.convertAnother(null,CoordinateReferenceSystem.class,new SingleValueConverterWrapper(new SRSConverter()));
+    reader.moveUp();
+  }
+  GeneralGridEnvelope gridRange=new GeneralGridEnvelope(low,high);
+  GridGeometry2D gg=new GridGeometry2D(gridRange,gridToCRS,crs);
+  return serializationMethodInvoker.callReadResolve(gg);
+}

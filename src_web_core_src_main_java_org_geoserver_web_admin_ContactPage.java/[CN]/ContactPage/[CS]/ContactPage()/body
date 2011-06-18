@@ -1,0 +1,34 @@
+{
+  final IModel geoServerModel=getGeoServerModel();
+  final IModel contactModel=getContactInfoModel();
+  Form form=new Form("form",new CompoundPropertyModel(contactModel));
+  add(form);
+  form.add(new TextField("contactPerson"));
+  form.add(new TextField("contactOrganization"));
+  form.add(new TextField("contactPosition"));
+  form.add(new TextField("addressType"));
+  form.add(new TextField("address"));
+  form.add(new TextField("addressCity"));
+  form.add(new TextField("addressState"));
+  form.add(new TextField("addressPostalCode"));
+  form.add(new TextField("addressCountry"));
+  form.add(new TextField("contactVoice"));
+  form.add(new TextField("contactFacsimile"));
+  form.add(new TextField("contactEmail"));
+  form.add(new Button("submit"){
+    @Override public void onSubmit(){
+      GeoServer gs=(GeoServer)geoServerModel.getObject();
+      GeoServerInfo global=gs.getGlobal();
+      global.setContact((ContactInfo)contactModel.getObject());
+      gs.save(global);
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+);
+  form.add(new Button("cancel"){
+    @Override public void onSubmit(){
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+);
+}

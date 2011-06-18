@@ -1,0 +1,38 @@
+{
+  MockHttpServletResponse resp=getAsServletResponse("wfs?request=GetFeature&version=1.0.0&typeName=sf:PrimitiveGeoFeature&outputFormat=excel2007");
+  InputStream in=getBinaryInputStream(resp);
+  assertEquals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",resp.getContentType());
+  assertEquals("attachment; filename=PrimitiveGeoFeature.xlsx",resp.getHeader("Content-Disposition"));
+  XSSFWorkbook wb=new XSSFWorkbook(in);
+  XSSFSheet sheet=wb.getSheet("PrimitiveGeoFeature");
+  assertNotNull(sheet);
+  FeatureSource fs=getFeatureSource(MockData.PRIMITIVEGEOFEATURE);
+  final int feautureRows=fs.getCount(Query.ALL);
+  assertEquals(feautureRows + 1,sheet.getPhysicalNumberOfRows());
+  final SimpleFeatureType schema=(SimpleFeatureType)fs.getSchema();
+  final XSSFRow header=sheet.getRow(0);
+  assertEquals("FID",header.getCell(0).getRichStringCellValue().toString());
+  for (int i=0; i < schema.getAttributeCount(); i++) {
+    assertEquals(schema.getDescriptor(i).getLocalName(),header.getCell(i + 1).getRichStringCellValue().toString());
+  }
+  FeatureIterator fi=fs.getFeatures().features();
+  SimpleFeature sf=(SimpleFeature)fi.next();
+  fi.close();
+  XSSFCell cell=sheet.getRow(1).getCell(1);
+  assertEquals(XSSFCell.CELL_TYPE_STRING,cell.getCellType());
+  assertEquals(sf.getAttribute(0),cell.getRichStringCellValue().toString());
+  cell=sheet.getRow(1).getCell(4);
+  assertEquals(XSSFCell.CELL_TYPE_STRING,cell.getCellType());
+  assertEquals(sf.getAttribute(3).toString(),cell.getRichStringCellValue().toString());
+  cell=sheet.getRow(1).getCell(6);
+  assertEquals(XSSFCell.CELL_TYPE_NUMERIC,cell.getCellType());
+  assertEquals(((Number)sf.getAttribute(5)).doubleValue(),cell.getNumericCellValue());
+  cell=sheet.getRow(1).getCell(10);
+  assertEquals(XSSFCell.CELL_TYPE_NUMERIC,cell.getCellType());
+  assertEquals(sf.getAttribute(9),cell.getDateCellValue());
+  cell=sheet.getRow(1).getCell(12);
+  assertEquals(XSSFCell.CELL_TYPE_BOOLEAN,cell.getCellType());
+  assertEquals(sf.getAttribute(11),cell.getBooleanCellValue());
+  cell=sheet.getRow(1).getCell(3);
+  assertNull(cell);
+}

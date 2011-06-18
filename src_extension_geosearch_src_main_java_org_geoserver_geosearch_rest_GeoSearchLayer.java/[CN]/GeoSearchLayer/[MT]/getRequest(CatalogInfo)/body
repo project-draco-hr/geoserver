@@ -1,0 +1,25 @@
+{
+  GetMapRequest request=new GetMapRequest();
+  request.setVersion("1.1.1");
+  Catalog catalog=geoserver.getCatalog();
+  List<MapLayerInfo> layers=expandLayers(catalog,info);
+  request.setLayers(layers);
+  request.setFormat(KMLMetadataDocumentMapOutputFormat.MIME_TYPE);
+  request.setBbox(getLatLonBbox(info));
+  request.setSRS("EPSG:4326");
+  String baseurl=getRequest().getRootRef().getParentRef().toString();
+  request.setBaseUrl(baseurl);
+  request.setRawKvp(new KvpMap());
+  int maxFeatures=1000;
+  if (info instanceof LayerGroupInfo) {
+    maxFeatures=maxFeatures / ((LayerGroupInfo)info).getLayers().size();
+  }
+  request.setMaxFeatures(maxFeatures);
+  try {
+    DefaultWebMapService.autoSetMissingProperties(request);
+  }
+ catch (  Exception e) {
+    throw new RestletException("Could not set figure out automatically a good preview link for " + info,Status.SERVER_ERROR_INTERNAL,e);
+  }
+  return request;
+}

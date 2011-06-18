@@ -1,0 +1,48 @@
+{
+  if (0 != fCharCount) {
+    fCharCount--;
+    return ((int)fCharBuf[fCharCount]) & 0xFFFF;
+  }
+  int b0=fInputStream.read() & 0xff;
+  if (b0 == 0xff) {
+    return -1;
+  }
+  int b1=fInputStream.read() & 0xff;
+  if (b1 == 0xff) {
+    return -1;
+  }
+  if (fEncoding >= 4) {
+    int b2=fInputStream.read() & 0xff;
+    if (b2 == 0xff) {
+      return -1;
+    }
+    int b3=fInputStream.read() & 0xff;
+    if (b3 == 0xff) {
+      return -1;
+    }
+    int codepoint;
+    if (UCS4BE == fEncoding) {
+      codepoint=((b0 << 24) + (b1 << 16) + (b2 << 8)+ b3);
+    }
+ else {
+      codepoint=((b3 << 24) + (b2 << 16) + (b1 << 8)+ b0);
+    }
+    if (!isSupplementaryCodePoint(codepoint)) {
+      return codepoint;
+    }
+ else {
+      int cp1=(codepoint - 0x10000) & 0xFFFFF;
+      int highSurrogate=0xD800 + (cp1 >>> 10);
+      fCharBuf[fCharCount]=(char)(0xDC00 + (cp1 & 0x3FF));
+      return highSurrogate;
+    }
+  }
+ else {
+    if (fEncoding == UCS2BE) {
+      return (b0 << 8) + b1;
+    }
+ else {
+      return (b1 << 8) + b0;
+    }
+  }
+}

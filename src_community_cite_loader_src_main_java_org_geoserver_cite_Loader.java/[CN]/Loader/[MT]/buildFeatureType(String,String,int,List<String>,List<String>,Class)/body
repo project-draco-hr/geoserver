@@ -1,0 +1,26 @@
+{
+  if (aliases != null && aliases.containsKey(name)) {
+    name=(String)aliases.get(name);
+  }
+  SimpleFeatureTypeBuilder b=new SimpleFeatureTypeBuilder();
+  b.setName(name);
+  b.setNamespaceURI(namespaceURI);
+  try {
+    b.setCRS(CRS.decode("EPSG:" + srid));
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  for (int i=0; i < names.size(); i++) {
+    String attName=names.get(i);
+    if (mandatory.contains(attName)) {
+      b.minOccurs(1);
+      b.nillable(false);
+    }
+    if ("description".equalsIgnoreCase(attName)) {
+      b.length(5000);
+    }
+    b.add(attName,types[i]);
+  }
+  return b.buildFeatureType();
+}

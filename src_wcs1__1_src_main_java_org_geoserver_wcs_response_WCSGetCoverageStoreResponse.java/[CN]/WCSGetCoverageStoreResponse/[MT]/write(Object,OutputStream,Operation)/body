@@ -1,0 +1,43 @@
+{
+  GridCoverage[] coverages=(GridCoverage[])value;
+  GetCoverageType request=(GetCoverageType)operation.getParameters()[0];
+  String outputFormat=request.getOutput().getFormat();
+  CoverageResponseDelegate delegate=CoverageResponseDelegateFactory.encoderFor(outputFormat);
+  if (delegate == null)   throw new WcsException("Could not find encoder for output format " + outputFormat);
+  final GridCoverage2D coverage=(GridCoverage2D)coverages[0];
+  CoverageInfo coverageInfo=catalog.getCoverageByName(request.getIdentifier().getValue());
+  File wcsStore=null;
+  try {
+    File temp=GeoserverDataDirectory.findCreateConfigDir("temp");
+    wcsStore=new File(temp,"wcs");
+    if (!wcsStore.exists())     wcsStore.mkdir();
+  }
+ catch (  Exception e) {
+    throw new WcsException("Could not create the temporary storage directory for WCS");
+  }
+  File coverageFile=null;
+  while (true) {
+    coverageFile=new File(wcsStore,coverageInfo.getName().replace(':','_') + "_" + System.nanoTime()+ "."+ delegate.getFileExtension());
+    if (!coverageFile.exists())     break;
+  }
+  OutputStream os=null;
+  try {
+    os=new BufferedOutputStream(new FileOutputStream(coverageFile));
+    delegate.prepare(outputFormat,coverage);
+    delegate.encode(os);
+    os.flush();
+  }
+  finally {
+    if (os != null)     os.close();
+  }
+  System.out.println(coverageFile);
+  final String coverageLocation=buildURL(request.getBaseUrl(),appendPath("temp/wcs",coverageFile.getName()),null,URLType.RESOURCE);
+  WCSInfo wcs=geoServer.getService(WCSInfo.class);
+  CoveragesTransformer tx=new CoveragesTransformer(wcs,request,coverageLocation);
+  try {
+    tx.transform(coverageInfo,output);
+  }
+ catch (  TransformerException e) {
+    throw new WcsException("Failure trying to encode Coverages response",e);
+  }
+}

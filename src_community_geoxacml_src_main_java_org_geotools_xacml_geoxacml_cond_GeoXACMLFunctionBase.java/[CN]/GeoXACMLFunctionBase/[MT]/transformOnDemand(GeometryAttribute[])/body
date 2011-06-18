@@ -1,0 +1,30 @@
+{
+  GeometryAttribute attr1=array[0];
+  GeometryAttribute attr2=array[1];
+  if (attr1.getSrsName() == null && attr2.getSrsName() == null)   return null;
+  if ((attr1.getSrsName() == null && attr2.getSrsName() != null) || (attr1.getSrsName() != null && attr2.getSrsName() == null)) {
+    throw new GeoXACMLException("Missing srsName");
+  }
+  if (attr1.getSrsName().equalsIgnoreCase(attr2.getSrsName()))   return attr1.getSrsName();
+  CoordinateReferenceSystem[] crsArray=new CoordinateReferenceSystem[2];
+  crsArray[0]=decodeCRS(array[0].getSrsName());
+  crsArray[1]=decodeCRS(array[1].getSrsName());
+  for (int i=0; i < crsArray.length; i++) {
+    if (crsArray[i] == null)     throw new GeoXACMLException("Cannod decode " + array[i].getSrsName());
+  }
+  if (CRS.equalsIgnoreMetadata(crsArray[0],crsArray[1]))   return array[0].getSrsName();
+  try {
+    for (int i=0; i < array.length; i++) {
+      Geometry newGeom=transformToCommonCRS(array[i].getGeometry(),array[i].getSrsName(),crsArray[i]);
+      if (newGeom != array[i].getGeometry()) {
+        GeometryAttribute newGeomAttr=new GeometryAttribute(newGeom,COMMON_CRS_NAME,array[i].getGid(),array[i].getGmlVersion(),array[i].getType().toString());
+        newGeomAttr.setSrsDimension(array[i].getSrsDimension());
+        array[i]=newGeomAttr;
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new GeoXACMLException(e);
+  }
+  return COMMON_CRS_NAME;
+}

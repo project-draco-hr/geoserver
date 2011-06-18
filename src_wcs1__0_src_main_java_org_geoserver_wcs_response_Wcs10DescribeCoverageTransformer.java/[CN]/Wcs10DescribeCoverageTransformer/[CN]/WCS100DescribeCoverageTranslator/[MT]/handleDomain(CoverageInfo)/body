@@ -1,0 +1,29 @@
+{
+  String timeMetadata=null;
+  String elevationMetadata=null;
+  CoverageStoreInfo csinfo=ci.getStore();
+  if (csinfo == null)   throw new WcsException("Unable to acquire coverage store resource for coverage: " + ci.getName());
+  AbstractGridCoverage2DReader reader=null;
+  try {
+    reader=(AbstractGridCoverage2DReader)ci.getGridCoverageReader(null,GeoTools.getDefaultHints());
+  }
+ catch (  IOException e) {
+    LOGGER.severe("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+  }
+  if (reader == null)   throw new WcsException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+  final String[] metadataNames=reader.getMetadataNames();
+  if (metadataNames != null && metadataNames.length > 0) {
+    timeMetadata=reader.getMetadataValue("TIME_DOMAIN");
+  }
+  start("wcs:domainSet");
+  start("wcs:spatialDomain");
+  handleBoundingBox(ci.getSRS(),ci.getNativeBoundingBox(),timeMetadata);
+  handleGrid(ci);
+  end("wcs:spatialDomain");
+  if (timeMetadata != null && timeMetadata.length() > 0) {
+    start("wcs:temporalDomain");
+    handleTemporalDomain(ci,timeMetadata);
+    end("wcs:temporalDomain");
+  }
+  end("wcs:domainSet");
+}

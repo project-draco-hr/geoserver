@@ -1,0 +1,73 @@
+{
+  core.ensureUnitEnabled();
+  FeatureIterator<SimpleFeature> fi=null;
+  try {
+    checkSyncronized(request.getTypeName());
+    SimpleFeature record=getLastSynchronizationRecord(request.getTypeName());
+    if (record == null) {
+      throw new GSSException("Out of order invocation, no PostDiff was called before GetDiff",GSSExceptionCode.InvalidParameterValue,FROM_VERSION);
+    }
+    long lastPostRevision=(Long)record.getAttribute("local_revision");
+    if (request.getFromVersion() > lastPostRevision) {
+      throw new GSSException("Invalid fromVersion, " + request.getFromVersion() + ", it is more recent than "+ "the latest PostDiff synchronisation: "+ lastPostRevision,GSSExceptionCode.InvalidParameterValue,FROM_VERSION);
+    }
+    VersioningDataStore ds=core.getVersioningStore();
+    DefaultQuery q=new DefaultQuery();
+    String tableName=request.getTypeName().getLocalPart();
+    Filter tableFilter=ff.equal(ff.property("table_name"),ff.literal(tableName),true);
+    Filter revisionFilter=ff.greater(ff.property("local_revision"),ff.literal(request.getFromVersion()));
+    q.setFilter(ff.and(tableFilter,revisionFilter));
+    q.setSortBy(new SortBy[]{ff.sort("local_revision",SortOrder.ASCENDING)});
+    fi=ds.getFeatureSource(SYNCH_HISTORY).getFeatures(q).features();
+    List<Long> intervals=new ArrayList<Long>();
+    intervals.add(request.getFromVersion());
+    while (fi.hasNext()) {
+      intervals.add((Long)fi.next().getAttribute("local_revision"));
+    }
+    fi.close();
+    TransactionType transaction;
+    if (intervals.size() > 1) {
+      Filter nonConflictingFilter=getFidConflictFilter(tableName,getActiveConflicts(tableName));
+      VersioningFeatureSource fs=(VersioningFeatureSource)ds.getFeatureSource(tableName);
+      FeatureDiffReader[] readers=new FeatureDiffReader[intervals.size() - 1];
+      for (int i=1; i < intervals.size(); i++) {
+        String fromVersion=String.valueOf(intervals.get(i - 1));
+        String toVersion=String.valueOf(intervals.get(i) - 1);
+        Filter filter=nonConflictingFilter;
+        Filter cleanMerges=getFidConflictFilter(tableName,getCleanMerges(tableName,intervals.get(i)));
+        if (cleanMerges != Filter.INCLUDE) {
+          if (filter != Filter.INCLUDE) {
+            filter=ff.and(cleanMerges,filter);
+          }
+ else {
+            filter=cleanMerges;
+          }
+        }
+        readers[i - 1]=fs.getDifferences(fromVersion,toVersion,filter,null);
+      }
+      FeatureDiffReader differences=new MergingFeatureDiffReader(readers);
+      transaction=new VersioningTransactionConverter().convert(differences,TransactionType.class);
+    }
+ else {
+      transaction=WfsFactory.eINSTANCE.createTransactionType();
+    }
+    transaction.setReleaseAction(null);
+    transaction.setVersion(null);
+    transaction.setService(null);
+    LOGGER.info("Sending back to Central " + core.countChanges(transaction) + " changes");
+    GetDiffResponseType response=new GetDiffResponseType();
+    response.setFromVersion(request.getFromVersion());
+    response.setToVersion(lastPostRevision);
+    response.setTypeName(request.getTypeName());
+    response.setTransaction(transaction);
+    return response;
+  }
+ catch (  IOException e) {
+    throw new GSSException("Failed to compute the GetDiff response",e);
+  }
+ finally {
+    if (fi != null) {
+      fi.close();
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  MapLayer mapLayer=createMapLayer(MockData.POINTS,"Bridge");
+  Document document;
+  FeatureSource<SimpleFeatureType,SimpleFeature> featureSource;
+  featureSource=(SimpleFeatureSource)mapLayer.getFeatureSource();
+  int nfeatures=featureSource.getFeatures().size();
+  WMSMapContext mapContext=new WMSMapContext(createGetMapRequest(MockData.POINTS));
+  try {
+    mapContext.addLayer(mapLayer);
+    KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContext,mapLayer);
+    transformer.setIndentation(2);
+    document=WMSTestSupport.transform(featureSource.getFeatures(),transformer);
+  }
+  finally {
+    mapContext.dispose();
+  }
+  XMLAssert.assertXpathEvaluatesTo("" + nfeatures,"count(//Style/IconStyle/Icon/href)",document);
+  XMLAssert.assertXpathEvaluatesTo("0","count(//Style/IconStyle/Icon/color)",document);
+}

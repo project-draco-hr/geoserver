@@ -1,0 +1,46 @@
+{
+  PrintStream out=new PrintStream(output);
+  if (header)   out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+  String topIndent=indenter.makeString();
+  out.println(topIndent + "<Request>");
+  indenter.in();
+  String indent=indenter.makeString();
+  indenter.in();
+  for (  Subject subject : subjects) {
+    out.print(indent + "<Subject SubjectCategory=\"" + subject.getCategory().toString()+ "\"");
+    Set<Attribute> subjectAttrs=subject.getAttributes();
+    if (subjectAttrs.size() == 0) {
+      out.println("/>");
+    }
+ else {
+      out.println(">");
+      encodeAttributes(subjectAttrs,out,indenter);
+      out.println(indent + "</Subject>");
+    }
+  }
+  if ((resource.size() != 0) || (resourceContent != null)) {
+    out.println(indent + "<Resource>");
+    if (resourceContent != null)     out.println(indenter.makeString() + "<ResourceContent>" + resourceContent+ "</ResourceContent>");
+    encodeAttributes(resource,out,indenter);
+    out.println(indent + "</Resource>");
+  }
+ else {
+    out.println(indent + "<Resource/>");
+  }
+  if (action.size() != 0) {
+    out.println(indent + "<Action>");
+    encodeAttributes(action,out,indenter);
+    out.println(indent + "</Action>");
+  }
+ else {
+    out.println(indent + "<Action/>");
+  }
+  if (environment.size() != 0) {
+    out.println(indent + "<Environment>");
+    encodeAttributes(environment,out,indenter);
+    out.println(indent + "</Environment>");
+  }
+  indenter.out();
+  indenter.out();
+  out.println(topIndent + "</Request>");
+}

@@ -1,0 +1,28 @@
+{
+  sourceGridContainer=new WebMarkupContainer("sourceGridContainer");
+  details.add(sourceGridContainer);
+  manualGrid=new CheckBox("manualGrid",new Model(Boolean.FALSE));
+  sourceGridContainer.add(manualGrid);
+  sourceGridRange=new GridPanel("sourceGrid",new PropertyModel(getCoverage,"sourceGridRange"));
+  sourceGridContainer.add(sourceGridRange);
+  sourceGridRange.setVisible(false);
+  sourceGridRange.setOutputMarkupId(true);
+  manualGrid.add(new AjaxFormSubmitBehavior("onchange"){
+    @Override protected void onError(    AjaxRequestTarget target){
+      onSubmit(target);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target){
+      if (manualGrid.getModelObject() == Boolean.TRUE) {
+        GridEnvelope2D grid=guessGridLimits();
+        sourceGridRange.setModelObject(grid);
+        sourceGridRange.setVisible(true);
+      }
+ else {
+        sourceGridRange.setModelObject(null);
+        sourceGridRange.setVisible(false);
+      }
+      target.addComponent(WCSRequestBuilderPanel.this);
+    }
+  }
+);
+}

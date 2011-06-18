@@ -1,0 +1,21 @@
+{
+  layerInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerInfo);
+  ParameterFilter stylesParamFilter=layerInfoTileLayer.getParameterFilters().get(0);
+  List<String> legalValues=stylesParamFilter.getLegalValues();
+  Map<String,String> requestParams;
+  Map<String,String> modifiedParams;
+  requestParams=Collections.singletonMap("sTyLeS","");
+  modifiedParams=layerInfoTileLayer.getModifiableParameters(requestParams,"UTF-8");
+  assertEquals(0,modifiedParams.size());
+  for (  String legalStyle : legalValues) {
+    requestParams=new HashMap<String,String>();
+    requestParams.put("sTyLeS",legalStyle);
+    modifiedParams=layerInfoTileLayer.getModifiableParameters(requestParams,"UTF-8");
+    if (legalStyle.equals(stylesParamFilter.getDefaultValue())) {
+      assertEquals(0,modifiedParams.size());
+    }
+ else {
+      assertEquals(Collections.singletonMap("STYLES",legalStyle),modifiedParams);
+    }
+  }
+}

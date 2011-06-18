@@ -1,0 +1,35 @@
+{
+  preprocessRequest(httpRequest);
+  Request request=new Request();
+  request.setHttpRequest(httpRequest);
+  request.setHttpResponse(httpResponse);
+  Service service=null;
+  try {
+    request=init(request);
+    REQUEST.set(request);
+    try {
+      service=service(request);
+    }
+ catch (    Throwable t) {
+      exception(t,null,request);
+      return null;
+    }
+    if (request.getError() != null) {
+      throw request.getError();
+    }
+    Operation operation=dispatch(request,service);
+    Object result=execute(request,operation);
+    if (result != null) {
+      response(result,request,operation);
+    }
+  }
+ catch (  Throwable t) {
+    if (isSecurityException(t))     throw (Exception)t;
+    exception(t,service,request);
+  }
+ finally {
+    fireFinishedCallback(request);
+    REQUEST.remove();
+  }
+  return null;
+}

@@ -1,0 +1,37 @@
+{
+  List<ExtendedCapabilitiesProvider> providers;
+  providers=wms.getAvailableExtendedCapabilitiesProviders();
+  StringBuilder vendorSpecificCapsElements=new StringBuilder("<!ELEMENT VendorSpecificCapabilities (");
+  StringBuilder internalDTDElements=new StringBuilder();
+  int numRoots=0;
+  for (  ExtendedCapabilitiesProvider provider : providers) {
+    List<String> roots=provider.getVendorSpecificCapabilitiesRoots(request);
+    if (roots != null && roots.size() > 0) {
+      for (      String vendorRoot : roots) {
+        numRoots++;
+        if (numRoots > 1) {
+          vendorSpecificCapsElements.append(", ");
+        }
+        vendorSpecificCapsElements.append(vendorRoot);
+      }
+      List<String> childDecls=provider.getVendorSpecificCapabilitiesChildDecls(request);
+      for (      String internalElement : childDecls) {
+        internalDTDElements.append(internalElement);
+        internalDTDElements.append('\n');
+      }
+    }
+  }
+  vendorSpecificCapsElements.append(") >\n");
+  String fullDTDDeclaration=null;
+  if (numRoots > 0) {
+    final String baseURL=request.getBaseUrl();
+    String dtdUrl=buildSchemaURL(baseURL,"wms/1.1.1/WMS_MS_Capabilities.dtd");
+    StringBuilder builder=new StringBuilder("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"");
+    builder.append(dtdUrl).append("\"[\n");
+    builder.append(vendorSpecificCapsElements);
+    builder.append(internalDTDElements);
+    builder.append("]>\n");
+    fullDTDDeclaration=builder.toString();
+  }
+  return fullDTDDeclaration;
+}

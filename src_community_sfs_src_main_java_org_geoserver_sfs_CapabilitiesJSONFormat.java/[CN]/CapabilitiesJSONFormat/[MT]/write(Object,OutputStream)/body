@@ -1,0 +1,21 @@
+{
+  Catalog catalog=(Catalog)object;
+  Writer writer=null;
+  try {
+    writer=new OutputStreamWriter(out);
+    writer.write("[");
+    List<LayerInfo> layers=getFeatureTypeLayers(catalog);
+    for (Iterator it=layers.iterator(); it.hasNext(); ) {
+      LayerInfo layerInfo=(LayerInfo)it.next();
+      Map json=toJSON(layerInfo);
+      JSONObject.writeJSONString(json,writer);
+      if (it.hasNext()) {
+        writer.write(",\n");
+      }
+    }
+    writer.write("]");
+  }
+  finally {
+    IOUtils.closeQuietly(writer);
+  }
+}

@@ -1,0 +1,71 @@
+{
+  Map<String,Object> inputs=new HashMap<String,Object>();
+  final Map<String,Parameter<?>> parameters=pf.getParameterInfo(processName);
+  for (Iterator i=request.getDataInputs().getInput().iterator(); i.hasNext(); ) {
+    InputType input=(InputType)i.next();
+    String inputId=input.getIdentifier().getValue();
+    Parameter p=parameters.get(inputId);
+    if (p == null) {
+      throw new WPSException("No such parameter: " + inputId);
+    }
+    String mime=null;
+    if (input.getData() != null && input.getData().getComplexData() != null) {
+      mime=input.getData().getComplexData().getMimeType();
+    }
+ else     if (input.getReference() != null) {
+      mime=input.getReference().getMimeType();
+    }
+    ProcessParameterIO ppio=ProcessParameterIO.find(p,context,mime);
+    if (ppio == null) {
+      throw new WPSException("Unable to decode input: " + inputId);
+    }
+    Object decoded=null;
+    try {
+      if (input.getReference() != null) {
+        InputReferenceType ref=input.getReference();
+        String href=ref.getHref();
+        if (href.startsWith("http://geoserver/wfs")) {
+          decoded=handleAsInternalWFS(ppio,ref);
+        }
+ else         if (href.startsWith("http://geoserver/wcs")) {
+          decoded=handleAsInternalWCS(ppio,ref);
+        }
+ else         if (href.startsWith("http://geoserver/wps")) {
+          decoded=handleAsInternalWPS(ppio,ref);
+        }
+ else {
+          decoded=executeRemoteRequest(ref,(ComplexPPIO)ppio,inputId);
+        }
+      }
+ else {
+        DataType data=input.getData();
+        if (data.getLiteralData() != null) {
+          LiteralDataType literal=data.getLiteralData();
+          decoded=((LiteralPPIO)ppio).decode(literal.getValue());
+        }
+ else         if (data.getComplexData() != null) {
+          ComplexDataType complex=data.getComplexData();
+          decoded=((ComplexPPIO)ppio).decode(complex.getData().get(0));
+        }
+ else         if (data.getBoundingBoxData() != null) {
+          decoded=((BoundingBoxPPIO)ppio).decode(data.getBoundingBoxData());
+        }
+      }
+    }
+ catch (    Exception e) {
+      throw new WPSException("Unable to decode input: " + inputId,e);
+    }
+    if (p.maxOccurs > 1) {
+      Collection values=(Collection)inputs.get(p.key);
+      if (values == null) {
+        values=new ArrayList();
+      }
+      values.add(decoded);
+      inputs.put(p.key,values);
+    }
+ else {
+      inputs.put(p.key,decoded);
+    }
+  }
+  return inputs;
+}

@@ -1,0 +1,26 @@
+{
+  this.wrapped=wrapped;
+  this.typeMap=typeMap;
+  this.store=new RetypingDataStore((DataStore)wrapped.getDataStore()){
+    @Override protected String transformFeatureTypeName(    String originalName){
+      if (typeMap.getOriginalName().equals(originalName)) {
+        return typeMap.getName();
+      }
+ else       if (typeMap.getName().equals(originalName)) {
+        return null;
+      }
+ else {
+        return originalName;
+      }
+    }
+    @Override protected SimpleFeatureType transformFeatureType(    SimpleFeatureType original) throws IOException {
+      if (typeMap.getOriginalName().equals(original)) {
+        return typeMap.featureType;
+      }
+ else {
+        return super.transformFeatureType(original);
+      }
+    }
+  }
+;
+}

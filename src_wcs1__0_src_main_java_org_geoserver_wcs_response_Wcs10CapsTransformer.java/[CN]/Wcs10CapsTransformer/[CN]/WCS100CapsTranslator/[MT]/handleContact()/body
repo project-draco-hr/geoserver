@@ -1,0 +1,78 @@
+{
+  final GeoServer gs=wcs.getGeoServer();
+  String tmp="";
+  if (((gs.getGlobal().getContact() != null) && (gs.getGlobal().getContact().getContactPerson() != "")) || ((gs.getGlobal().getContact().getContactOrganization() != null) && (gs.getGlobal().getContact().getContactOrganization() != ""))) {
+    start("wcs:responsibleParty");
+    tmp=gs.getGlobal().getContact().getContactPerson();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:individualName",tmp);
+    }
+ else {
+      element("wcs:individualName","");
+    }
+    tmp=gs.getGlobal().getContact().getContactOrganization();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:organisationName",tmp);
+    }
+    tmp=gs.getGlobal().getContact().getContactPosition();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:positionName",tmp);
+    }
+    start("wcs:contactInfo");
+    start("wcs:phone");
+    tmp=gs.getGlobal().getContact().getContactVoice();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:voice",tmp);
+    }
+    tmp=gs.getGlobal().getContact().getContactFacsimile();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:facsimile",tmp);
+    }
+    end("wcs:phone");
+    start("wcs:address");
+    tmp=gs.getGlobal().getContact().getAddressType();
+    if ((tmp != null) && (tmp != "")) {
+      String addr="";
+      addr=gs.getGlobal().getContact().getAddress();
+      if ((addr != null) && (addr != "")) {
+        element("wcs:deliveryPoint",tmp + " " + addr);
+      }
+    }
+ else {
+      tmp=gs.getGlobal().getContact().getAddress();
+      if ((tmp != null) && (tmp != "")) {
+        element("wcs:deliveryPoint",tmp);
+      }
+    }
+    tmp=gs.getGlobal().getContact().getAddressCity();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:city",tmp);
+    }
+    tmp=gs.getGlobal().getContact().getAddressState();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:administrativeArea",tmp);
+    }
+    tmp=gs.getGlobal().getContact().getAddressPostalCode();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:postalCode",tmp);
+    }
+    tmp=gs.getGlobal().getContact().getAddressCountry();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:country",tmp);
+    }
+    tmp=gs.getGlobal().getContact().getContactEmail();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:electronicMailAddress",tmp);
+    }
+    end("wcs:address");
+    tmp=gs.getGlobal().getContact().getOnlineResource();
+    if ((tmp != null) && (tmp != "")) {
+      AttributesImpl attributes=new AttributesImpl();
+      attributes.addAttribute("","xlink:href","xlink:href","",tmp);
+      start("wcs:onlineResource",attributes);
+      end("wcs:onlineResource");
+    }
+    end("wcs:contactInfo");
+    end("wcs:responsibleParty");
+  }
+}

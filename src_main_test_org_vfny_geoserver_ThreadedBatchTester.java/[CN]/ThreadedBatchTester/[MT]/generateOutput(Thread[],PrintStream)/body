@@ -1,0 +1,39 @@
+{
+  int good=0;
+  for (int i=0; i < runs; i++) {
+switch (((TestGetThread)threads[i]).getResult()) {
+case HttpURLConnection.HTTP_OK:
+      good++;
+default :
+  }
+}
+os.println(good + "/" + runs+ " Tests 'OK' ("+ ((good * 1.0) / (runs * 1.0))+ ")\n");
+for (int i=0; i < runs; i++) {
+  TestGetThread tpt=(TestGetThread)threads[i];
+  int result=tpt.getResult();
+  if (tpt.getTime2() == null) {
+    os.print(result + " Could not connect\n");
+  }
+ else   if (tpt.getTime3() == null) {
+    os.print(result + " Could not complete read\n");
+  }
+ else {
+    os.print(tpt.getResult() + ", ");
+    os.print(tpt.getTime1().getTime() + ", ");
+    if (tpt.getTime2() != null) {
+      os.print(tpt.getTime2().getTime() + ", ");
+    }
+    if (tpt.getTime3() != null) {
+      os.print(tpt.getTime3().getTime() + ", ");
+      double time=(tpt.getTime3().getTime() - tpt.getTime1().getTime()) / 1000.0;
+      os.print("time (s): " + time + "\n");
+    }
+ else {
+      os.print("null\n");
+    }
+  }
+}
+long end=new Date().getTime();
+os.println(good + "/" + runs+ " Tests 'OK' ("+ ((good * 1.0) / (runs * 1.0))+ ")\n");
+os.println("Total time (s): " + ((end - start) / 1000.0) + " (start: "+ start+ ", end: "+ end+ ")");
+}

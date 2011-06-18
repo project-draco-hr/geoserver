@@ -1,0 +1,16 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult result=evalArgs(inputs,context,argValues);
+  if (result != null)   return result;
+  TimeAttribute attr=(TimeAttribute)(argValues[0]);
+  long middleTime=attr.getMilliseconds();
+  long minTime=resolveTime(attr,(TimeAttribute)(argValues[1]));
+  long maxTime=resolveTime(attr,(TimeAttribute)(argValues[2]));
+  if (minTime == maxTime)   return EvaluationResult.getInstance(middleTime == minTime);
+  long shiftSpan;
+  if (minTime < maxTime)   shiftSpan=-minTime;
+ else   shiftSpan=MILLIS_PER_DAY - minTime;
+  maxTime=maxTime + shiftSpan;
+  middleTime=handleWrap(middleTime + shiftSpan);
+  return EvaluationResult.getInstance((middleTime >= 0) && (middleTime <= maxTime));
+}

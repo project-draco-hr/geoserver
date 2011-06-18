@@ -1,0 +1,20 @@
+{
+  ExecuteType execute=(ExecuteType)super.read(request,kvp,rawKvp);
+  Wps10Factory factory=Wps10Factory.eINSTANCE;
+  Name processName=Ows11Util.name(execute.getIdentifier());
+  ProcessFactory pf=Processors.createProcessFactory(processName);
+  if (pf == null) {
+    throw new WPSException("No such process: " + processName);
+  }
+  List<InputType> inputs=parseDataInputs(pf.getParameterInfo(processName),(String)rawKvp.get("DataInputs"));
+  DataInputsType1 input1=factory.createDataInputsType1();
+  input1.getInput().addAll(inputs);
+  execute.setDataInputs(input1);
+  if (rawKvp.containsKey("responseDocument")) {
+    execute.setResponseForm(parseResponseDocument(pf.getResultInfo(processName,null),(String)rawKvp.get("responseDocument")));
+  }
+ else   if (rawKvp.containsKey("rawDataOutput")) {
+    execute.setResponseForm(parseRawDataOutput(pf.getResultInfo(processName,null),(String)rawKvp.get("rawDataOutput")));
+  }
+  return execute;
+}

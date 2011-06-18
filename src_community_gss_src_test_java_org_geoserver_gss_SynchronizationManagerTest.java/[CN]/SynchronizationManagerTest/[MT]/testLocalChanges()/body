@@ -1,0 +1,37 @@
+{
+  VersioningFeatureStore restricted=(VersioningFeatureStore)synchStore.getFeatureSource("restricted");
+  SimpleFeatureType schema=restricted.getSchema();
+  Id removeFilter=ff.id(singleton(ff.featureId("restricted.c15e76ab-e44b-423e-8f85-f6d9927b878a")));
+  restricted.removeFeatures(removeFilter);
+  assertEquals(3,restricted.getCount(Query.ALL));
+  QName typeName=new QName("http://www.openplans.org/spearfish","restricted");
+  PostDiffType postDiff=new PostDiffType();
+  postDiff.setFromVersion(-1);
+  postDiff.setToVersion(3);
+  postDiff.setTypeName(typeName);
+  TransactionType changes=WfsFactory.eINSTANCE.createTransactionType();
+  DeleteElementType delete=WfsFactory.eINSTANCE.createDeleteElementType();
+  delete.setTypeName(typeName);
+  delete.setFilter(removeFilter);
+  changes.getDelete().add(delete);
+  postDiff.setTransaction(changes);
+  GSSClient client=createMock(GSSClient.class);
+  expect(client.getCentralRevision((QName)anyObject())).andReturn(new Long(-1));
+  client.postDiff(postDiff);
+  expect(client.getDiff((GetDiffType)anyObject())).andReturn(new GetDiffResponseType());
+  replay(client);
+  GSSClientFactory factory=createMock(GSSClientFactory.class);
+  expect(factory.createClient(new URL("http://localhost:8081/geoserver/ows"),null,null)).andReturn(client);
+  replay(factory);
+  synch.clientFactory=factory;
+  Date start=new Date();
+  synch.synchronizeOustandlingLayers();
+  Date end=new Date();
+  SimpleFeature f=getSingleFeature(fsUnitTables,ff.equal(ff.property("table_id"),ff.literal(1),false));
+  Date lastSynch=(Date)f.getAttribute("last_synchronization");
+  assertNotNull(lastSynch);
+  assertTrue(lastSynch.compareTo(start) >= 0 && lastSynch.compareTo(end) <= 0);
+  assertNull(f.getAttribute("last_failure"));
+  f=getSingleFeature(fsUnits,ff.equal(ff.property("unit_name"),ff.literal("unit1"),false));
+  assertFalse((Boolean)f.getAttribute("errors"));
+}

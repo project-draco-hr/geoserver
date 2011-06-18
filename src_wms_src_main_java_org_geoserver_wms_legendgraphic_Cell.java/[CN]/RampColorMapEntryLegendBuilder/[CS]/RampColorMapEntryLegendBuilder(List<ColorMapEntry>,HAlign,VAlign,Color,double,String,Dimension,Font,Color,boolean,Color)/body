@@ -1,0 +1,28 @@
+{
+  final ColorMapEntry previousCME=mapEntries.get(0);
+  final ColorMapEntry currentCME=mapEntries.get(1);
+  boolean leftEdge;
+  if (previousCME == null)   leftEdge=true;
+ else   leftEdge=false;
+  Color previousColor;
+  if (!leftEdge) {
+    previousColor=LegendUtils.color(previousCME);
+    final double opacity=LegendUtils.getOpacity(previousCME);
+    previousColor=new Color(previousColor.getRed(),previousColor.getGreen(),previousColor.getBlue(),(int)(255 * opacity + 0.5));
+  }
+ else   previousColor=null;
+  Color color=LegendUtils.color(currentCME);
+  double opacity=LegendUtils.getOpacity(currentCME);
+  color=new Color(color.getRed(),color.getGreen(),color.getBlue(),(int)(255 * opacity));
+  super.add(new GradientColorManager(color,opacity,previousColor,requestedDimension,borderColor));
+  String label=currentCME.getLabel();
+  double quantity=LegendUtils.getQuantity(currentCME);
+  String symbol=leftEdge ? " > " : " = ";
+  String rule=leftEdge ? Double.toString(quantity) + " " + symbol+ " x" : Double.toString(quantity) + " " + symbol+ " x";
+  super.add(new TextManager(rule,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));
+  if (label != null) {
+    hasLabel=true;
+    super.add(new TextManager(label,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));
+  }
+ else   super.add(null);
+}

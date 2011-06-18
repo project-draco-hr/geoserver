@@ -1,0 +1,24 @@
+{
+  URL url=null;
+  try {
+    url=new URL(idReference.toString());
+  }
+ catch (  MalformedURLException murle) {
+    return new PolicyFinderResult();
+  }
+  AbstractPolicy policy=null;
+  try {
+    policy=reader.readPolicy(url);
+  }
+ catch (  ParsingException pe) {
+    return new PolicyFinderResult();
+  }
+  if (type == PolicyReference.POLICY_REFERENCE) {
+    if (!(policy instanceof Policy))     return new PolicyFinderResult();
+  }
+ else {
+    if (!(policy instanceof PolicySet))     return new PolicyFinderResult();
+  }
+  if (!constraints.meetsConstraint(policy.getVersion()))   return new PolicyFinderResult();
+  return new PolicyFinderResult(policy);
+}

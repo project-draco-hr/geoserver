@@ -1,0 +1,11 @@
+{
+  testAddWMSStore();
+  WMSStoreInfo wms=catalog.getStoreByName("acme","demowms",WMSStoreInfo.class);
+  assertNull(wms.getCapabilitiesURL());
+  String capsURL="http://demo.opengeo.org:8080/geoserver/wms?request=GetCapabilites&service=WMS";
+  wms.setCapabilitiesURL(capsURL);
+  catalog.save(wms);
+  File f=new File(testData.getDataDirectoryRoot(),"workspaces/acme/demowms/wmsstore.xml");
+  Document dom=dom(f);
+  assertXpathEvaluatesTo(capsURL,"/wmsStore/capabilitiesURL/text()",dom);
+}

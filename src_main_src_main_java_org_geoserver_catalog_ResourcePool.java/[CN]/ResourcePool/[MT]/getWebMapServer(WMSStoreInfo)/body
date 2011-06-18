@@ -1,0 +1,22 @@
+{
+  try {
+    String id=info.getId();
+    WebMapServer wms=(WebMapServer)wmsCache.get(id);
+    if (wms == null) {
+synchronized (wmsCache) {
+        wms=(WebMapServer)wmsCache.get(id);
+        if (wms == null) {
+          wms=new WebMapServer(new URL(info.getCapabilitiesURL()));
+          wmsCache.put(id,wms);
+        }
+      }
+    }
+    return wms;
+  }
+ catch (  IOException ioe) {
+    throw ioe;
+  }
+catch (  Exception e) {
+    throw (IOException)new IOException().initCause(e);
+  }
+}

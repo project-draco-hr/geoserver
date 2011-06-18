@@ -1,0 +1,12 @@
+{
+  File dir=setupNewDataStore();
+  String json="{'dataStore':{" + "'connectionParameters': {" + "'namespace': {'string':'sf'},"+ "'directory': {'string':'" + dir.getAbsolutePath().replace('\\','/') + "'}"+ "},"+ "'workspace':'sf',"+ "'name':'newDataStore',"+ "}"+ "}";
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/sf/datastores",json,"text/json");
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(response.getHeader("Location"));
+  assertTrue(response.getHeader("Location").endsWith("/workspaces/sf/datastores/newDataStore"));
+  DataStoreInfo newDataStore=catalog.getDataStoreByName("newDataStore");
+  assertNotNull(newDataStore);
+  DataStore ds=(DataStore)newDataStore.getDataStore(null);
+  assertNotNull(ds);
+}

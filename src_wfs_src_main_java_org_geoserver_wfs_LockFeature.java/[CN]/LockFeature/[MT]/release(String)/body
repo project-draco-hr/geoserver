@@ -1,0 +1,46 @@
+{
+  try {
+    boolean refresh=false;
+    List dataStores=catalog.getDataStores();
+    for (Iterator i=dataStores.iterator(); i.hasNext(); ) {
+      DataStoreInfo meta=(DataStoreInfo)i.next();
+      DataStore dataStore=null;
+      if (meta.isEnabled()) {
+        DataAccess da=meta.getDataStore(null);
+        if (da instanceof DataStore) {
+          dataStore=(DataStore)da;
+        }
+      }
+      if (dataStore == null) {
+        continue;
+      }
+      LockingManager lockingManager=dataStore.getLockingManager();
+      if (lockingManager == null) {
+        continue;
+      }
+      org.geotools.data.Transaction t=new DefaultTransaction("Refresh " + meta.getWorkspace().getName());
+      try {
+        t.addAuthorization(lockId);
+        if (lockingManager.release(lockId,t)) {
+          refresh=true;
+        }
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.WARNING,e.getMessage(),e);
+      }
+ finally {
+        try {
+          t.close();
+        }
+ catch (        IOException closeException) {
+          LOGGER.log(Level.FINEST,closeException.getMessage(),closeException);
+        }
+      }
+    }
+    if (!refresh) {
+    }
+  }
+ catch (  Exception e) {
+    throw new WFSException(e);
+  }
+}

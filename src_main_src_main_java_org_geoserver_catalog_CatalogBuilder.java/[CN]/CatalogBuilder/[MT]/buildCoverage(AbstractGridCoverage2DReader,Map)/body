@@ -1,0 +1,92 @@
+{
+  if (store == null || !(store instanceof CoverageStoreInfo)) {
+    throw new IllegalStateException("Coverage store not set.");
+  }
+  CoverageStoreInfo csinfo=(CoverageStoreInfo)store;
+  CoverageInfo cinfo=catalog.getFactory().createCoverage();
+  cinfo.setStore(csinfo);
+  cinfo.setEnabled(true);
+  WorkspaceInfo workspace=store.getWorkspace();
+  NamespaceInfo namespace=catalog.getNamespaceByPrefix(workspace.getName());
+  if (namespace == null) {
+    namespace=catalog.getDefaultNamespace();
+  }
+  cinfo.setNamespace(namespace);
+  CoordinateReferenceSystem nativeCRS=reader.getCrs();
+  cinfo.setNativeCRS(nativeCRS);
+  if (nativeCRS != null && !nativeCRS.getIdentifiers().isEmpty()) {
+    cinfo.setSRS(nativeCRS.getIdentifiers().toArray()[0].toString());
+    cinfo.setProjectionPolicy(ProjectionPolicy.REPROJECT_TO_DECLARED);
+  }
+  if (nativeCRS == null) {
+    cinfo.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  }
+  GeneralEnvelope envelope=reader.getOriginalEnvelope();
+  cinfo.setNativeBoundingBox(new ReferencedEnvelope(envelope));
+  cinfo.setLatLonBoundingBox(new ReferencedEnvelope(CoverageStoreUtils.getWGS84LonLatEnvelope(envelope)));
+  GridEnvelope originalRange=reader.getOriginalGridRange();
+  cinfo.setGrid(new GridGeometry2D(originalRange,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),nativeCRS));
+  Format format=csinfo.getFormat();
+  final GridCoverage2D gc;
+  final ParameterValueGroup readParams=format.getReadParameters();
+  final Map parameters=CoverageUtils.getParametersKVP(readParams);
+  final int minX=originalRange.getLow(0);
+  final int minY=originalRange.getLow(1);
+  final int width=originalRange.getSpan(0);
+  final int height=originalRange.getSpan(1);
+  final int maxX=minX + (width <= 5 ? width : 5);
+  final int maxY=minY + (height <= 5 ? height : 5);
+  final GridEnvelope2D testRange=new GridEnvelope2D(minX,minY,maxX,maxY);
+  final MathTransform gridToWorldCorner=reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER);
+  final GeneralEnvelope testEnvelope=CRS.transform(gridToWorldCorner,new GeneralEnvelope(testRange.getBounds()));
+  testEnvelope.setCoordinateReferenceSystem(nativeCRS);
+  if (customParameters != null) {
+    parameters.putAll(customParameters);
+  }
+  parameters.put(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString(),new GridGeometry2D(testRange,testEnvelope));
+  gc=(GridCoverage2D)reader.read(CoverageUtils.getParameters(readParams,parameters,true));
+  if (gc == null) {
+    throw new Exception("Unable to acquire test coverage for format:" + format.getName());
+  }
+  parameters.remove(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString());
+  cinfo.getDimensions().addAll(getCoverageDimensions(gc.getSampleDimensions()));
+  String name=gc.getName().toString();
+  cinfo.setName(name);
+  cinfo.setTitle(name);
+  cinfo.setDescription(new StringBuilder("Generated from ").append(format.getName()).toString());
+  cinfo.getKeywords().add("WCS");
+  cinfo.getKeywords().add(format.getName());
+  cinfo.getKeywords().add(name);
+  cinfo.setNativeFormat(format.getName());
+  cinfo.getMetadata().put("dirName",new StringBuilder(store.getName()).append("_").append(name).toString());
+  if ((gc.getCoordinateReferenceSystem2D().getIdentifiers() != null) && !gc.getCoordinateReferenceSystem2D().getIdentifiers().isEmpty()) {
+    cinfo.getRequestSRS().add(((Identifier)gc.getCoordinateReferenceSystem2D().getIdentifiers().toArray()[0]).toString());
+  }
+  if ((gc.getCoordinateReferenceSystem2D().getIdentifiers() != null) && !gc.getCoordinateReferenceSystem2D().getIdentifiers().isEmpty()) {
+    cinfo.getResponseSRS().add(((Identifier)gc.getCoordinateReferenceSystem2D().getIdentifiers().toArray()[0]).toString());
+  }
+  final List formats=CoverageStoreUtils.listDataFormats();
+  for (Iterator i=formats.iterator(); i.hasNext(); ) {
+    final Format fTmp=(Format)i.next();
+    final String fName=fTmp.getName();
+    if (fName.equalsIgnoreCase("WorldImage")) {
+      cinfo.getSupportedFormats().add("GIF");
+      cinfo.getSupportedFormats().add("PNG");
+      cinfo.getSupportedFormats().add("JPEG");
+      cinfo.getSupportedFormats().add("TIFF");
+    }
+ else     if (fName.toLowerCase().startsWith("geotiff")) {
+      cinfo.getSupportedFormats().add("GEOTIFF");
+    }
+ else {
+      cinfo.getSupportedFormats().add(fName);
+    }
+  }
+  cinfo.setDefaultInterpolationMethod("nearest neighbor");
+  cinfo.getInterpolationMethods().add("nearest neighbor");
+  cinfo.getInterpolationMethods().add("bilinear");
+  cinfo.getInterpolationMethods().add("bicubic");
+  cinfo.getParameters().putAll(parameters);
+  gc.dispose(true);
+  return cinfo;
+}

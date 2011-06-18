@@ -1,0 +1,81 @@
+{
+  AttributesImpl qatts=new AttributesImpl();
+  boolean queryable=wmsConfig.isQueryable(layer);
+  qatts.addAttribute("","queryable","queryable","",queryable ? "1" : "0");
+  start("Layer",qatts);
+  element("Name",layer.getResource().getNamespace().getPrefix() + ":" + layer.getName());
+  element("Title",layer.getResource().getTitle());
+  element("Abstract",layer.getResource().getAbstract());
+  handleKeywordList(layer.getResource().getKeywords());
+  final String srs=layer.getResource().getSRS();
+  element("SRS",srs);
+  try {
+    CoordinateReferenceSystem crs=layer.getResource().getCRS();
+    String desc="WKT definition of this CRS:\n" + crs;
+    comment(desc);
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(Level.WARNING)) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+  }
+  Envelope bbox;
+  try {
+    bbox=layer.getResource().boundingBox();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Unexpected error obtaining bounding box for layer " + layer.getName(),e);
+  }
+  Envelope llbbox=layer.getResource().getLatLonBoundingBox();
+  handleLatLonBBox(llbbox);
+  if (bbox != null) {
+    handleBBox(bbox,srs);
+  }
+  String timeMetadata=null;
+  String elevationMetadata=null;
+  if (layer.getType() == Type.VECTOR) {
+    dimensionHelper.handleVectorLayerDimensions(layer);
+  }
+ else   if (layer.getType() == Type.RASTER) {
+    dimensionHelper.handleRasterLayerDimensions(layer);
+  }
+  handleAttribution(layer);
+  handleMetadataList(layer.getResource().getMetadataLinks());
+  if (layer.getResource() instanceof WMSLayerInfo) {
+  }
+ else {
+    start("Style");
+    StyleInfo defaultStyle=layer.getDefaultStyle();
+    if (defaultStyle == null) {
+      throw new NullPointerException("Layer " + layer.getName() + " has no default style");
+    }
+    Style ftStyle;
+    try {
+      ftStyle=defaultStyle.getStyle();
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+    element("Name",defaultStyle.getName());
+    element("Title",ftStyle.getTitle());
+    element("Abstract",ftStyle.getAbstract());
+    handleLegendURL(layer.getName(),layer.getLegend(),null);
+    end("Style");
+    Set<StyleInfo> styles=layer.getStyles();
+    for (    StyleInfo styleInfo : styles) {
+      try {
+        ftStyle=styleInfo.getStyle();
+      }
+ catch (      IOException e) {
+        throw new RuntimeException(e);
+      }
+      start("Style");
+      element("Name",styleInfo.getName());
+      element("Title",ftStyle.getTitle());
+      element("Abstract",ftStyle.getAbstract());
+      handleLegendURL(layer.getName(),null,styleInfo);
+      end("Style");
+    }
+  }
+  end("Layer");
+}

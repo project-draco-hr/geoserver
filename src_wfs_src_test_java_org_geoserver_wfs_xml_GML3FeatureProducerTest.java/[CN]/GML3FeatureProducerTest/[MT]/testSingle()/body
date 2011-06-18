@@ -1,0 +1,11 @@
+{
+  FeatureSource<? extends FeatureType,? extends Feature> source=getFeatureSource(MockData.SEVEN);
+  FeatureCollection<? extends FeatureType,? extends Feature> features=source.getFeatures();
+  FeatureCollectionType fcType=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  fcType.getFeature().add(features);
+  ByteArrayOutputStream output=new ByteArrayOutputStream();
+  producer().write(fcType,output,request(MockData.SEVEN));
+  DocumentBuilder docBuilder=DocumentBuilderFactory.newInstance().newDocumentBuilder();
+  Document document=docBuilder.parse(new ByteArrayInputStream(output.toByteArray()));
+  assertEquals(7,document.getElementsByTagName("cdf:Seven").getLength());
+}

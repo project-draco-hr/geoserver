@@ -1,0 +1,57 @@
+{
+  if ("SAFE".equals(name.toUpperCase())) {
+    return safePaletteInversion;
+  }
+  final PaletteCacheEntry entry=(PaletteCacheEntry)paletteCache.get(name);
+  if (entry != null) {
+    if (entry.isStale()) {
+      paletteCache.remove(name);
+    }
+ else {
+      return entry.eicm;
+    }
+  }
+  final File root=GeoserverDataDirectory.getGeoserverDataDirectory();
+  final File paletteDir=GeoserverDataDirectory.findConfigDir(root,"palettes");
+  final String[] names=new String[]{name + ".gif",name + ".png",name + ".pal",name + ".tif"};
+  final File[] paletteFiles=paletteDir.listFiles(new FilenameFilter(){
+    public boolean accept(    File dir,    String name){
+      for (int i=0; i < names.length; i++) {
+        if (name.toLowerCase().equals(names[i])) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+);
+  for (int i=0; i < paletteFiles.length; i++) {
+    final File file=paletteFiles[i];
+    final String fileName=file.getName();
+    if (fileName.endsWith("pal")) {
+      final IndexColorModel icm=new PALFileLoader(file).getIndexColorModel();
+      if (icm != null) {
+        final InverseColorMapOp eicm=new InverseColorMapOp(icm);
+        paletteCache.put(name,new PaletteCacheEntry(file,eicm));
+        return eicm;
+      }
+    }
+ else {
+      ImageInputStream iis=ImageIO.createImageInputStream(file);
+      final Iterator it=ImageIO.getImageReaders(iis);
+      if (it.hasNext()) {
+        final ImageReader reader=(ImageReader)it.next();
+        reader.setInput(iis);
+        final ColorModel cm=((ImageTypeSpecifier)reader.getImageTypes(0).next()).getColorModel();
+        if (cm instanceof IndexColorModel) {
+          final IndexColorModel icm=(IndexColorModel)cm;
+          final InverseColorMapOp eicm=new InverseColorMapOp(icm);
+          paletteCache.put(name,new PaletteCacheEntry(file,eicm));
+          return eicm;
+        }
+      }
+    }
+    LOG.warning("Skipping paletteInverter file " + file.getName() + " since color model is not indexed (no 256 colors paletteInverter)");
+  }
+  return null;
+}

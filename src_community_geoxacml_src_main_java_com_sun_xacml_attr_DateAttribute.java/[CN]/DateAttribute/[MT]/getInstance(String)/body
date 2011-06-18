@@ -1,0 +1,32 @@
+{
+  Date dateValue=null;
+  int timeZone;
+  int defaultedTimeZone;
+  if (simpleParser == null)   initParsers();
+  if (value.endsWith("Z")) {
+    value=value.substring(0,value.length() - 1) + "+0000";
+    dateValue=strictParse(zoneParser,value);
+    timeZone=0;
+    defaultedTimeZone=0;
+  }
+ else {
+    int len=value.length();
+    if ((len > 6) && (value.charAt(len - 3) == ':')) {
+      Date gmtValue=strictParse(zoneParser,value.substring(0,len - 6) + "+0000");
+      value=value.substring(0,len - 3) + value.substring(len - 2,len);
+      dateValue=strictParse(zoneParser,value);
+      timeZone=(int)(gmtValue.getTime() - dateValue.getTime());
+      timeZone=timeZone / 60000;
+      defaultedTimeZone=timeZone;
+    }
+ else {
+      dateValue=strictParse(simpleParser,value);
+      timeZone=TZ_UNSPECIFIED;
+      Date gmtValue=strictParse(zoneParser,value + "+0000");
+      defaultedTimeZone=(int)(gmtValue.getTime() - dateValue.getTime());
+      defaultedTimeZone=defaultedTimeZone / 60000;
+    }
+  }
+  DateAttribute attr=new DateAttribute(dateValue,timeZone,defaultedTimeZone);
+  return attr;
+}

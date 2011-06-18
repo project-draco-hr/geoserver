@@ -1,0 +1,23 @@
+{
+  GeoServer gs=getGeoServer();
+  GSSInfo gssInfo=gs.getService(GSSInfo.class);
+  gssInfo.setMode(GSSMode.Unit);
+  gssInfo.setVersioningDataStore(getCatalog().getDataStoreByName("synch"));
+  gs.save(gssInfo);
+  Map gssBeans=applicationContext.getBeansOfType(DefaultGeoServerSynchronizationService.class);
+  gss=(DefaultGeoServerSynchronizationService)gssBeans.values().iterator().next();
+  gss.core.ensureUnitEnabled();
+  synchStore=(VersioningDataStore)getCatalog().getDataStoreByName("synch").getDataStore(null);
+  FeatureStore<SimpleFeatureType,SimpleFeature> fs=(FeatureStore<SimpleFeatureType,SimpleFeature>)synchStore.getFeatureSource(SYNCH_TABLES);
+  SimpleFeatureBuilder fb=new SimpleFeatureBuilder(fs.getSchema());
+  fs.addFeatures(collection(fb.buildFeature(null,new Object[]{"restricted","2"})));
+  fs.addFeatures(collection(fb.buildFeature(null,new Object[]{"roads","2"})));
+  synchStore.setVersioned("restricted",true,null,null);
+  synchStore.setVersioned("roads",true,null,null);
+  assertNotNull(synchStore.getSchema(SYNCH_HISTORY));
+  assertFalse(synchStore.isVersioned(SYNCH_HISTORY));
+  assertNotNull(synchStore.getSchema(SYNCH_TABLES));
+  assertFalse(synchStore.isVersioned(SYNCH_TABLES));
+  assertEquals(0,gss.getActiveConflicts("restricted").size());
+  assertEquals(0,gss.getActiveConflicts("roads").size());
+}

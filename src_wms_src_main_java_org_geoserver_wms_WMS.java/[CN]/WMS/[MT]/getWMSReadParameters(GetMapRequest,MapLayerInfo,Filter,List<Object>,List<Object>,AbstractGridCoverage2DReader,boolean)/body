@@ -1,0 +1,31 @@
+{
+  final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
+  CoverageInfo coverage=mapLayerInfo.getCoverage();
+  MetadataMap metadata=coverage.getMetadata();
+  GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,coverage.getParameters(),readGeom);
+  final DimensionInfo timeInfo=metadata.get(ResourceInfo.TIME,DimensionInfo.class);
+  final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
+  if (timeInfo != null && timeInfo.isEnabled()) {
+    List<Object> fixedTimes=new ArrayList<Object>(times);
+    for (int i=0; i < fixedTimes.size(); i++) {
+      if (fixedTimes.get(i) == null) {
+        fixedTimes.set(i,getCurrentTime(coverage,reader));
+      }
+    }
+    readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,fixedTimes,"TIME","Time");
+  }
+  final DimensionInfo elevationInfo=metadata.get(ResourceInfo.ELEVATION,DimensionInfo.class);
+  if (elevationInfo != null && elevationInfo.isEnabled()) {
+    List<Object> fixedElevations=new ArrayList<Object>(elevations);
+    for (int i=0; i < fixedElevations.size(); i++) {
+      if (fixedElevations.get(i) == null) {
+        fixedElevations.set(i,getDefaultElevation(coverage,reader));
+      }
+    }
+    readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,fixedElevations,"ELEVATION","Elevation");
+  }
+  if (layerFilter != null) {
+    readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,layerFilter,"FILTER","Filter");
+  }
+  return readParameters;
+}

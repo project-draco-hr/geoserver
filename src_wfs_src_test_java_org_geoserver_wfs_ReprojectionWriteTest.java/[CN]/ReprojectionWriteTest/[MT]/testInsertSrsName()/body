@@ -1,0 +1,20 @@
+{
+  String q="wfs?request=getfeature&service=wfs&version=1.0.0&typeName=" + MockData.POLYGONS.getLocalPart();
+  Document dom=getAsDOM(q);
+  Element polygonProperty=getFirstElementByTagName(dom,"cgf:polygonProperty");
+  Element posList=getFirstElementByTagName(polygonProperty,"gml:coordinates");
+  double[] c=coordinates(posList.getFirstChild().getNodeValue());
+  double[] cr=new double[c.length];
+  tx.transform(c,0,cr,0,cr.length / 2);
+  String xml="<wfs:Transaction service=\"WFS\" version=\"1.0.0\" " + " xmlns:wfs=\"http://www.opengis.net/wfs\" " + " xmlns:gml=\"http://www.opengis.net/gml\" "+ " xmlns:cgf=\"" + MockData.CGF_URI + "\">"+ "<wfs:Insert handle=\"insert-1\" srsName=\""+ TARGET_CRS_CODE+ "\">"+ " <cgf:Polygons>"+ "<cgf:polygonProperty>"+ "<gml:Polygon >"+ "<gml:outerBoundaryIs>"+ "<gml:LinearRing>"+ "<gml:coordinates>";
+  for (int i=0; i < cr.length; ) {
+    xml+=cr[i++] + "," + cr[i++];
+    if (i < cr.length - 1) {
+      xml+=" ";
+    }
+  }
+  xml+="</gml:coordinates>" + "</gml:LinearRing>" + "</gml:outerBoundaryIs>"+ "</gml:Polygon>"+ "</cgf:polygonProperty>"+ " </cgf:Polygons>"+ "</wfs:Insert>"+ "</wfs:Transaction>";
+  postAsDOM("wfs",xml);
+  dom=getAsDOM(q);
+  assertEquals(2,dom.getElementsByTagName(MockData.POLYGONS.getPrefix() + ":" + MockData.POLYGONS.getLocalPart()).getLength());
+}

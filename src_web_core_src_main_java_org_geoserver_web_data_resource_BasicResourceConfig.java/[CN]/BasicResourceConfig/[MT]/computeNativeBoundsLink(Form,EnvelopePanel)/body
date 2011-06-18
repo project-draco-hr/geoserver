@@ -1,0 +1,23 @@
+{
+  return new AjaxSubmitLink("computeNative",refForm){
+    @Override public void onSubmit(    final AjaxRequestTarget target,    Form form){
+      form.process();
+      ResourceInfo resource=(ResourceInfo)BasicResourceConfig.this.getDefaultModelObject();
+      try {
+        CatalogBuilder cb=new CatalogBuilder(GeoServerApplication.get().getCatalog());
+        ReferencedEnvelope bounds=cb.getNativeBounds(resource);
+        resource.setNativeBoundingBox(bounds);
+        nativeBBox.setModelObject(bounds);
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.SEVERE,"Error computing the native BBOX",e);
+        error("Error computing the native BBOX:" + e.getMessage());
+      }
+      target.addComponent(nativeBBox);
+    }
+    public boolean getDefaultFormProcessing(){
+      return false;
+    }
+  }
+;
+}

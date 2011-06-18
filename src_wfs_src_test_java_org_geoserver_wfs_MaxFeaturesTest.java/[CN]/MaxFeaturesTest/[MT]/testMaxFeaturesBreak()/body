@@ -1,0 +1,13 @@
+{
+  FeatureTypeInfo info=getFeatureTypeInfo(MockData.FIFTEEN);
+  info.setMaxFeatures(3);
+  catalog.save(info);
+  info=getFeatureTypeInfo(MockData.BASIC_POLYGONS);
+  info.setMaxFeatures(2);
+  catalog.save(info);
+  Document doc=getAsDOM("wfs?request=GetFeature&typename=cdf:Fifteen,cite:BasicPolygon" + "s&version=1.0.0&service=wfs&maxFeatures=3");
+  assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
+  assertEquals(3,doc.getElementsByTagName("gml:featureMember").getLength());
+  assertEquals(3,doc.getElementsByTagName("cdf:Fifteen").getLength());
+  assertEquals(0,doc.getElementsByTagName("cite:BasicPolygons").getLength());
+}

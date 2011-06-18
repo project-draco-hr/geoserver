@@ -1,0 +1,13 @@
+{
+  Set<String> roles=getAuthorizedRoles(mode);
+  if (roles == null) {
+    return parent.canAccess(user,mode);
+  }
+  if (roles.equals(EVERYBODY))   return true;
+  if (user == null || user.getAuthorities() == null)   return false;
+  for (  GrantedAuthority authority : user.getAuthorities()) {
+    final String userRole=authority.getAuthority();
+    if (roles.contains(userRole) || ROOT_ROLE.equals(userRole))     return true;
+  }
+  return false;
+}

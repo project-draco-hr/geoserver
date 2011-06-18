@@ -1,0 +1,24 @@
+{
+  final IModel<Quota> globalQuotaModel=new PropertyModel<Quota>(diskQuotaModel,"globalQuota");
+  final IModel<Quota> globalUsedQuotaModel=new LoadableDetachableModel<Quota>(){
+    private static final long serialVersionUID=1L;
+    @Override protected Quota load(){
+      GWC gwc=GWC.get();
+      if (!gwc.isDiskQuotaAvailable()) {
+        return new Quota();
+      }
+      return gwc.getGlobalUsedQuota();
+    }
+  }
+;
+  Object[] progressMessageParams={globalUsedQuotaModel.getObject().toNiceString(),globalQuotaModel.getObject().toNiceString()};
+  IModel<String> progressMessageModel=new StringResourceModel("GWCSettingsPage.usedQuotaMessage",null,progressMessageParams);
+  addGlobalQuotaStatusBar(globalQuotaModel,globalUsedQuotaModel,progressMessageModel);
+  TextField<Double> quotaValue=new TextField<Double>("globalQuota",quotaValueModel);
+  quotaValue.setRequired(true);
+  add(quotaValue);
+  List<? extends StorageUnit> units=Arrays.asList(StorageUnit.MiB,StorageUnit.GiB,StorageUnit.TiB);
+  DropDownChoice<StorageUnit> quotaUnitChoice;
+  quotaUnitChoice=new DropDownChoice<StorageUnit>("globalQuotaUnits",unitModel,units);
+  add(quotaUnitChoice);
+}

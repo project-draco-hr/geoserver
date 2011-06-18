@@ -1,0 +1,13 @@
+{
+  Document dom=getAsDOM("/rest/workspaces/sf/wmslayers/states.xml");
+  assertEquals("wmsLayer",dom.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo("states","/wmsLayer/name",dom);
+  assertXpathEvaluatesTo("EPSG:4326","/wmsLayer/srs",dom);
+  assertEquals(CRS.decode("EPSG:4326").toWKT(),xp.evaluate("/wmsLayer/nativeCRS",dom));
+  WMSLayerInfo wml=catalog.getResourceByName("sf","states",WMSLayerInfo.class);
+  ReferencedEnvelope re=wml.getLatLonBoundingBox();
+  assertXpathEvaluatesTo(re.getMinX() + "","/wmsLayer/latLonBoundingBox/minx",dom);
+  assertXpathEvaluatesTo(re.getMaxX() + "","/wmsLayer/latLonBoundingBox/maxx",dom);
+  assertXpathEvaluatesTo(re.getMinY() + "","/wmsLayer/latLonBoundingBox/miny",dom);
+  assertXpathEvaluatesTo(re.getMaxY() + "","/wmsLayer/latLonBoundingBox/maxy",dom);
+}

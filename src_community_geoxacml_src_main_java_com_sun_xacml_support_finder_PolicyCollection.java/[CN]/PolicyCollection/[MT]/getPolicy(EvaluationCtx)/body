@@ -1,0 +1,27 @@
+{
+  ArrayList<AbstractPolicy> list=new ArrayList<AbstractPolicy>();
+  Iterator<TreeSet<AbstractPolicy>> it=policies.values().iterator();
+  while (it.hasNext()) {
+    AbstractPolicy policy=it.next().first();
+    MatchResult match=policy.match(context);
+    int result=match.getResult();
+    if (result == MatchResult.INDETERMINATE)     throw new TopLevelPolicyException(match.getStatus());
+    if (result == MatchResult.MATCH) {
+      if ((combiningAlg == null) && (list.size() > 0)) {
+        ArrayList<String> code=new ArrayList<String>();
+        code.add(Status.STATUS_PROCESSING_ERROR);
+        Status status=new Status(code,"too many applicable" + " top-level policies");
+        throw new TopLevelPolicyException(status);
+      }
+      list.add(policy);
+    }
+  }
+switch (list.size()) {
+case 0:
+    return null;
+case 1:
+  return ((AbstractPolicy)(list.get(0)));
+default :
+return new PolicySet(parentId,combiningAlg,target,list);
+}
+}

@@ -1,0 +1,23 @@
+{
+  tester=new WicketTester();
+  initResourceSettings(tester);
+  root=new File("target/test-dataview");
+  if (root.exists())   FileUtils.deleteDirectory(root);
+  root.mkdirs();
+  one=new File(root,"one.txt");
+  one.createNewFile();
+  two=new File(root,"two.sld");
+  two.createNewFile();
+  fileProvider=new FileProvider(root);
+  tester.startPage(new FormTestPage(new ComponentBuilder(){
+    public Component buildComponent(    String id){
+      return new FileDataView(id,fileProvider){
+        @Override protected void linkNameClicked(        File file,        AjaxRequestTarget target){
+          lastClicked=file;
+        }
+      }
+;
+    }
+  }
+));
+}

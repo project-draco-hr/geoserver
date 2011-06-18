@@ -1,0 +1,16 @@
+{
+  StringBuilder result=new StringBuilder(rfc3339.format(d));
+  Calendar cal=new GregorianCalendar();
+  cal.setTime(d);
+  cal.setTimeZone(TimeZone.getDefault());
+  int offset_millis=cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET);
+  int offset_hours=Math.abs(offset_millis / (1000 * 60 * 60));
+  int offset_minutes=Math.abs((offset_millis / (1000 * 60)) % 60);
+  if (offset_millis == 0) {
+    result.append("Z");
+  }
+ else {
+    result.append((offset_millis > 0) ? "+" : "-").append(doubleDigit.format(offset_hours)).append(":").append(doubleDigit.format(offset_minutes));
+  }
+  return result.toString();
+}

@@ -1,0 +1,80 @@
+{
+  CatalogFactory factory=catalog.getFactory();
+  FeatureTypeInfo featureType=factory.createFeatureType();
+  featureType.setNativeName(ftInfoReader.name());
+  if (ftInfoReader.alias() != null) {
+    featureType.setName(ftInfoReader.alias());
+  }
+ else {
+    featureType.setName(ftInfoReader.name());
+  }
+  featureType.setSRS("EPSG:" + ftInfoReader.srs());
+  ProjectionPolicy pp=ProjectionPolicy.get(ftInfoReader.srsHandling());
+  featureType.setProjectionPolicy(pp);
+  featureType.setTitle(ftInfoReader.title());
+  featureType.setAbstract(ftInfoReader.abstrct());
+  featureType.getKeywords().addAll(ftInfoReader.keywords());
+  for (  Map m : ftInfoReader.metadataLinks()) {
+    MetadataLinkInfo link=factory.createMetadataLink();
+    link.setContent((String)m.get(null));
+    link.setMetadataType((String)m.get("metadataType"));
+    link.setType((String)m.get("type"));
+    featureType.getMetadataLinks().add(link);
+  }
+  featureType.setLatLonBoundingBox(new ReferencedEnvelope(ftInfoReader.latLonBoundingBox(),DefaultGeographicCRS.WGS84));
+  featureType.setEnabled(true);
+  featureType.setMaxFeatures(ftInfoReader.maxFeatures());
+  featureType.getMetadata().put("dirName",ftInfoReader.parentDirectoryName());
+  featureType.getMetadata().put("indexingEnabled",ftInfoReader.searchable());
+  featureType.getMetadata().put("cachingEnabled",ftInfoReader.cachingEnabled());
+  featureType.getMetadata().put("cacheAgeMax",ftInfoReader.cacheAgeMax());
+  featureType.getMetadata().put("kml.regionateAttribute",ftInfoReader.regionateAttribute());
+  featureType.getMetadata().put("kml.regionateStrategy",ftInfoReader.regionateStrategy());
+  featureType.getMetadata().put("kml.regionateFeatureLimit",ftInfoReader.regionateFeatureLimit());
+  String dataStoreName=ftInfoReader.dataStore();
+  DataStoreInfo dataStore=catalog.getDataStoreByName(dataStoreName);
+  if (dataStore == null) {
+    LOGGER.warning("Ignoring feature type: '" + ftInfoReader.parentDirectoryName() + "', data store '"+ dataStoreName+ "'  not found");
+    return null;
+  }
+  featureType.setStore(dataStore);
+  String prefix=dataStore.getWorkspace().getName();
+  featureType.setNamespace(catalog.getNamespaceByPrefix(prefix));
+  if (featureType.isEnabled() && !dataStore.isEnabled()) {
+    LOGGER.info("Ignoring feature type: '" + ftInfoReader.parentDirectoryName() + "', data store is disabled");
+    featureType.setEnabled(false);
+  }
+  if (featureType.isEnabled()) {
+    Exception error=null;
+    DataAccess<? extends FeatureType,? extends Feature> ds=null;
+    try {
+      ds=dataStore.getDataStore(null);
+    }
+ catch (    Exception e) {
+      LOGGER.warning("Ignoring feature type: '" + featureType.getName() + "', error occured connecting to data store: "+ e.getMessage());
+      LOGGER.log(Level.INFO,"",e);
+      error=e;
+    }
+    if (error == null) {
+      try {
+        FeatureType ft=ds.getSchema(featureType.getQualifiedNativeName());
+        featureType.setNativeCRS(ft.getCoordinateReferenceSystem());
+      }
+ catch (      Exception e) {
+        LOGGER.warning("Ignoring feature type: '" + featureType.getNativeName() + "', error occured loading schema: "+ e.getMessage());
+        LOGGER.log(Level.INFO,"",e);
+        error=e;
+      }
+    }
+    if (error == null) {
+      Envelope nativeBBOX=ftInfoReader.nativeBoundingBox();
+      if (nativeBBOX != null) {
+        featureType.setNativeBoundingBox(new ReferencedEnvelope(nativeBBOX,featureType.getNativeCRS()));
+      }
+    }
+    if (error != null) {
+      featureType.setEnabled(false);
+    }
+  }
+  return featureType;
+}

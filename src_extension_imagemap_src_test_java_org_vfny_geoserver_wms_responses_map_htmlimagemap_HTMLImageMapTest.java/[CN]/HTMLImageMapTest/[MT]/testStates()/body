@@ -1,0 +1,15 @@
+{
+  File shapeFile=TestData.file(this,"featureTypes/states.shp");
+  ShapefileDataStore ds=new ShapefileDataStore(shapeFile.toURL());
+  final FeatureSource<SimpleFeatureType,SimpleFeature> fs=ds.getFeatureSource("states");
+  final ReferencedEnvelope env=new ReferencedEnvelope(fs.getBounds(),WGS84);
+  final WMSMapContext map=new WMSMapContext();
+  map.setAreaOfInterest(env);
+  map.setMapWidth(mapWidth);
+  map.setMapHeight(mapHeight);
+  map.setTransparent(false);
+  Style basicStyle=getTestStyle("Population.sld");
+  map.addLayer(fs,basicStyle);
+  EncodeHTMLImageMap imageMap=this.mapProducer.produceMap(map);
+  assertTestResult("States",imageMap);
+}

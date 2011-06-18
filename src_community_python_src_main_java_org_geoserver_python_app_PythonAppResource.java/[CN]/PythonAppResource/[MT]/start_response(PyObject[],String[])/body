@@ -1,0 +1,20 @@
+{
+  PyString status=(PyString)objs[0];
+  int space=status.toString().indexOf(' ');
+  WSGIResponse r=response.get();
+  if (space != -1) {
+    r.statusCode=status.toString().substring(0,space);
+    r.statusMessage=status.toString().substring(space + 1);
+  }
+ else {
+    r.statusCode=status.toString();
+  }
+  if (objs.length > 1) {
+    PyList headers=(PyList)objs[1];
+    for (Iterator i=headers.iterator(); i.hasNext(); ) {
+      PyTuple tup=(PyTuple)i.next();
+      r.headers.put(tup.get(0).toString(),tup.get(1).toString());
+    }
+  }
+  return null;
+}

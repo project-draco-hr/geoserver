@@ -1,0 +1,12 @@
+{
+  String request="wcs?service=WCS&version=1.1.1&request=GetCoverage" + "&identifier=" + getLayerId(TASMANIA_BM) + "&BoundingBox=-90,-180,90,180,urn:ogc:def:crs:EPSG:4326"+ "&GridBaseCRS=urn:ogc:def:crs:EPSG:4326"+ "&format=image/tiff";
+  MockHttpServletResponse response=getAsServletResponse(request);
+  Multipart multipart=getMultipart(response);
+  assertEquals(2,multipart.getCount());
+  BodyPart coveragePart=multipart.getBodyPart(1);
+  assertEquals("image/tiff",coveragePart.getContentType());
+  assertEquals("<theCoverage>",coveragePart.getHeader("Content-ID")[0]);
+  ImageReader reader=ImageIO.getImageReadersByFormatName("tiff").next();
+  reader.setInput(ImageIO.createImageInputStream(coveragePart.getInputStream()));
+  reader.read(0);
+}

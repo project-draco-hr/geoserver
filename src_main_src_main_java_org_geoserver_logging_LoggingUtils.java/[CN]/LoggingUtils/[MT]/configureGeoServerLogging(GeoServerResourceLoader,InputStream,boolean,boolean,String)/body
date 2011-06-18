@@ -1,0 +1,52 @@
+{
+  List<Appender> appenders=new ArrayList();
+  Enumeration a=LogManager.getRootLogger().getAllAppenders();
+  while (a.hasMoreElements()) {
+    Appender appender=(Appender)a.nextElement();
+    if (!(appender instanceof ConsoleAppender || appender instanceof FileAppender)) {
+      appenders.add(appender);
+    }
+  }
+  Properties lprops=new Properties();
+  lprops.load(loggingConfigStream);
+  LogManager.resetConfiguration();
+  PropertyConfigurator.configure(lprops);
+  if (!suppressFileLogging) {
+    Appender gslf=org.apache.log4j.Logger.getRootLogger().getAppender("geoserverlogfile");
+    if (gslf instanceof org.apache.log4j.RollingFileAppender) {
+      if (logFileName == null) {
+        logFileName=new File(loader.findOrCreateDirectory("logs"),"geoserver.log").getAbsolutePath();
+      }
+ else {
+        if (!new File(logFileName).isAbsolute()) {
+          logFileName=new File(loader.getBaseDirectory(),logFileName).getAbsolutePath();
+          LoggingInitializer.LOGGER.fine("Non-absolute pathname detected for logfile.  Setting logfile relative to data dir.");
+        }
+      }
+      lprops.setProperty("log4j.appender.geoserverlogfile.File",logFileName);
+      PropertyConfigurator.configure(lprops);
+      LoggingInitializer.LOGGER.fine("Logging output to file '" + logFileName + "'");
+    }
+ else     if (gslf != null) {
+      LoggingInitializer.LOGGER.warning("'log4j.appender.geoserverlogfile' appender is defined, but isn't a RollingFileAppender.  GeoServer won't control the file-based logging.");
+    }
+ else {
+      LoggingInitializer.LOGGER.warning("'log4j.appender.geoserverlogfile' appender isn't defined.  GeoServer won't control the file-based logging.");
+    }
+  }
+  if (suppressStdOutLogging) {
+    LoggingInitializer.LOGGER.warning("Suppressing StdOut logging.  If you want to see GeoServer logs, be sure to look in '" + logFileName + "'");
+    Enumeration allAppenders=org.apache.log4j.Logger.getRootLogger().getAllAppenders();
+    Appender curApp;
+    while (allAppenders.hasMoreElements()) {
+      curApp=(Appender)allAppenders.nextElement();
+      if (curApp instanceof org.apache.log4j.ConsoleAppender) {
+        org.apache.log4j.Logger.getRootLogger().removeAppender(curApp);
+      }
+    }
+  }
+  for (  Appender appender : appenders) {
+    LogManager.getRootLogger().addAppender(appender);
+  }
+  LoggingInitializer.LOGGER.fine("FINISHED CONFIGURING GEOSERVER LOGGING -------------------------");
+}

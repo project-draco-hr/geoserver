@@ -1,0 +1,33 @@
+{
+  List children=elem.getChildren();
+  if (children.size() == 0) {
+    if (elem.getContent().size() == 0) {
+      return null;
+    }
+ else {
+      return elem.getText();
+    }
+  }
+ else   if (children.get(0) instanceof Element) {
+    Element child=(Element)children.get(0);
+    if (child.getName().equals("entry")) {
+      List l=new ArrayList();
+      Iterator it=elem.getChildren("entry").iterator();
+      while (it.hasNext()) {
+        Element curr=(Element)it.next();
+        l.add(convert(curr));
+      }
+      return l;
+    }
+ else {
+      Map m=new HashMap();
+      Iterator it=children.iterator();
+      while (it.hasNext()) {
+        Element curr=(Element)it.next();
+        m.put(curr.getName(),convert(curr));
+      }
+      return m;
+    }
+  }
+  throw new RuntimeException("Unable to parse XML");
+}

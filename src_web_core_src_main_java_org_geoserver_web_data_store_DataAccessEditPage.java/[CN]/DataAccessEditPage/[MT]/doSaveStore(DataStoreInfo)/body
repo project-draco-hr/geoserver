@@ -1,0 +1,21 @@
+{
+  try {
+    final Catalog catalog=getCatalog();
+    NamespaceInfo namespace=catalog.getNamespaceByPrefix(info.getWorkspace().getName());
+    List<FeatureTypeInfo> configuredResources=catalog.getResourcesByStore(info,FeatureTypeInfo.class);
+    for (    FeatureTypeInfo alreadyConfigured : configuredResources) {
+      alreadyConfigured.setNamespace(namespace);
+    }
+    ResourcePool resourcePool=catalog.getResourcePool();
+    resourcePool.clear(info);
+    catalog.save(info);
+    for (    FeatureTypeInfo alreadyConfigured : configuredResources) {
+      catalog.save(alreadyConfigured);
+    }
+    LOGGER.finer("Saved store " + info.getName());
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error saving data store to catalog",e);
+    throw new IllegalArgumentException("Error saving data store:" + e.getMessage());
+  }
+}

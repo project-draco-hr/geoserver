@@ -1,0 +1,40 @@
+{
+  if (!wfs.isEnabled()) {
+  }
+  start("FeatureTypeList");
+  start("Operations");
+  if ((wfs.getServiceLevel().contains(WFSInfo.ServiceLevel.BASIC))) {
+    element("Query",null);
+  }
+  if ((wfs.getServiceLevel().getOps().contains(WFSInfo.Operation.TRANSACTION_INSERT))) {
+    element("Insert",null);
+  }
+  if ((wfs.getServiceLevel().getOps().contains(WFSInfo.Operation.TRANSACTION_UPDATE))) {
+    element("Update",null);
+  }
+  if ((wfs.getServiceLevel().getOps().contains(WFSInfo.Operation.TRANSACTION_DELETE))) {
+    element("Delete",null);
+  }
+  if ((wfs.getServiceLevel().getOps().contains(WFSInfo.Operation.LOCKFEATURE))) {
+    element("Lock",null);
+  }
+  end("Operations");
+  List featureTypes=new ArrayList(catalog.getFeatureTypes());
+  for (Iterator it=featureTypes.iterator(); it.hasNext(); ) {
+    FeatureTypeInfo ft=(FeatureTypeInfo)it.next();
+    if (!ft.enabled())     it.remove();
+  }
+  if (request.getNamespace() != null) {
+    String namespace=request.getNamespace();
+    for (Iterator it=featureTypes.iterator(); it.hasNext(); ) {
+      FeatureTypeInfo ft=(FeatureTypeInfo)it.next();
+      if (!namespace.equals(ft.getNamespace().getPrefix()))       it.remove();
+    }
+  }
+  Collections.sort(featureTypes,new FeatureTypeInfoTitleComparator());
+  for (Iterator it=featureTypes.iterator(); it.hasNext(); ) {
+    FeatureTypeInfo ftype=(FeatureTypeInfo)it.next();
+    handleFeatureType(ftype);
+  }
+  end("FeatureTypeList");
+}

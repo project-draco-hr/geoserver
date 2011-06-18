@@ -1,0 +1,21 @@
+{
+  List types=collection.getSchema().getAttributeDescriptors();
+  SimpleFeatureIterator fi=collection.features();
+  try {
+    while (fi.hasNext()) {
+      SimpleFeature f=fi.next();
+      for (int i=0; i < types.size(); i++) {
+        if (types.get(i) instanceof GeometryDescriptor) {
+          GeometryDescriptor gat=(GeometryDescriptor)types.get(i);
+          if (gat.getCoordinateReferenceSystem() != null) {
+            Geometry geom=(Geometry)f.getAttribute(i);
+            if (geom != null)             JTS.checkCoordinatesRange(geom,gat.getCoordinateReferenceSystem());
+          }
+        }
+      }
+    }
+  }
+  finally {
+    fi.close();
+  }
+}

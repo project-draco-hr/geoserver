@@ -1,0 +1,29 @@
+{
+  GeoServer gs=getGeoServer();
+  try {
+    GeoServerInfo info=gs.getGlobal();
+    info.setProxyBaseUrl("http://myhost:9999/gs");
+    gs.save(info);
+    MapLayer mapLayer=createMapLayer(MockData.POINTS,"Bridge");
+    FeatureSource<SimpleFeatureType,SimpleFeature> featureSource;
+    featureSource=(FeatureSource<SimpleFeatureType,SimpleFeature>)mapLayer.getFeatureSource();
+    int nfeatures=featureSource.getFeatures().size();
+    WMSMapContext mapContext=new WMSMapContext(createGetMapRequest(MockData.POINTS));
+    Document document;
+    try {
+      mapContext.addLayer(mapLayer);
+      KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContext,mapLayer);
+      transformer.setIndentation(2);
+      document=WMSTestSupport.transform(featureSource.getFeatures(),transformer);
+    }
+  finally {
+      mapContext.dispose();
+    }
+    XMLAssert.assertXpathEvaluatesTo("http://myhost:9999/gs/styles/bridge.png","//Style/IconStyle/Icon/href",document);
+  }
+  finally {
+    GeoServerInfo info=gs.getGlobal();
+    info.setProxyBaseUrl(null);
+    gs.save(info);
+  }
+}

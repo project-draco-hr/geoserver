@@ -1,0 +1,38 @@
+{
+  try {
+    int tries=0;
+    while (tries < 15) {
+      try {
+        connect();
+        break;
+      }
+ catch (      IOException ioe) {
+        System.out.println("IOException: " + ioe.getMessage() + ", try: "+ tries);
+        sleep(5);
+        tries++;
+      }
+    }
+    t2=new Date();
+    InputStream input=hc.getInputStream();
+    BufferedReader br=new BufferedReader(new InputStreamReader(input));
+    if (concurrent) {
+      yield();
+    }
+    while (br.read() != -1)     ;
+    result=hc.getResponseCode();
+    t3=new Date();
+    yield();
+    hc.disconnect();
+    ThreadedBatchTester.threadDone();
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    try {
+      result=hc.getResponseCode();
+    }
+ catch (    IOException ioe) {
+      result=0;
+    }
+    ThreadedBatchTester.threadDone();
+  }
+}

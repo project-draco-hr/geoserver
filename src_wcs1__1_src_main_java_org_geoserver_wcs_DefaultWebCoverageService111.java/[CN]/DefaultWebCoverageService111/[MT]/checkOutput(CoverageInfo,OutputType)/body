@@ -1,0 +1,67 @@
+{
+  if (output == null)   return;
+  String format=output.getFormat();
+  String declaredFormat=getDeclaredFormat(meta.getSupportedFormats(),format);
+  if (declaredFormat == null)   throw new WcsException("format " + format + " is not supported for this coverage",InvalidParameterValue,"format");
+  final GridCrsType gridCRS=output.getGridCRS();
+  if (gridCRS != null) {
+    String gridBaseCrs=gridCRS.getGridBaseCRS();
+    if (gridBaseCrs != null) {
+      String actualCRS=null;
+      final String gridBaseCrsCode=extractCode(gridBaseCrs);
+      for (Iterator it=meta.getResponseSRS().iterator(); it.hasNext(); ) {
+        final String responseCRS=(String)it.next();
+        final String code=extractCode(responseCRS);
+        if (code.equalsIgnoreCase(gridBaseCrsCode)) {
+          actualCRS=responseCRS;
+        }
+      }
+      if (actualCRS == null)       throw new WcsException("CRS " + gridBaseCrs + " is not among the supported ones for coverage "+ meta.getName(),WcsExceptionCode.InvalidParameterValue,"GridBaseCrs");
+      gridCRS.setGridBaseCRS(gridBaseCrs);
+    }
+ else {
+      String code=GML2EncodingUtils.epsgCode(meta.getCRS());
+      gridCRS.setGridBaseCRS("urn:x-ogc:def:crs:EPSG:" + code);
+    }
+    String gridTypeValue=gridCRS.getGridType();
+    GridType type=GridType.GT2dGridIn2dCrs;
+    if (gridTypeValue != null) {
+      type=null;
+      for (      GridType gt : GridType.values()) {
+        if (gt.getXmlConstant().equalsIgnoreCase(gridTypeValue))         type=gt;
+      }
+      if (type == null)       throw new WcsException("Unknown grid type " + gridTypeValue,InvalidParameterValue,"GridType");
+ else       if (type == GridType.GT2dGridIn3dCrs)       throw new WcsException("Unsupported grid type " + gridTypeValue,InvalidParameterValue,"GridType");
+    }
+    gridCRS.setGridType(type.getXmlConstant());
+    String gridCS=gridCRS.getGridCS();
+    if (gridCS != null) {
+      if (!gridCS.equalsIgnoreCase(GridCS.GCSGrid2dSquare.getXmlConstant()))       throw new WcsException("Unsupported grid cs " + gridCS,InvalidParameterValue,"GridCS");
+    }
+    gridCRS.setGridCS(GridCS.GCSGrid2dSquare.getXmlConstant());
+    CoordinateReferenceSystem crs=null;
+    try {
+      crs=CRS.decode(gridCRS.getGridBaseCRS());
+    }
+ catch (    Exception e) {
+      throw new WcsException("Could not understand crs " + gridCRS.getGridBaseCRS(),WcsExceptionCode.InvalidParameterValue,"GridBaseCRS");
+    }
+    if (!gridCRS.isSetGridOrigin() || gridCRS.getGridOrigin() == null) {
+      Double[] origin=new Double[type.getOriginArrayLength()];
+      Arrays.fill(origin,0.0);
+      gridCRS.setGridOrigin(origin);
+    }
+ else {
+      Double[] gridOrigin=(Double[])gridCRS.getGridOrigin();
+      if (gridOrigin.length != type.getOriginArrayLength())       throw new WcsException("Grid origin size (" + gridOrigin.length + ") inconsistent with grid type "+ type.getXmlConstant()+ " that requires ("+ type.getOriginArrayLength()+ ")",WcsExceptionCode.InvalidParameterValue,"GridOrigin");
+      gridCRS.setGridOrigin(gridOrigin);
+    }
+    Double[] gridOffsets=(Double[])gridCRS.getGridOffsets();
+    if (gridOffsets != null) {
+      if (type.getOffsetArrayLength() != gridOffsets.length)       throw new WcsException("Invalid offsets lenght, grid type " + type.getXmlConstant() + " requires "+ type.getOffsetArrayLength(),InvalidParameterValue,"GridOffsets");
+    }
+ else {
+      gridCRS.setGridOffsets(null);
+    }
+  }
+}

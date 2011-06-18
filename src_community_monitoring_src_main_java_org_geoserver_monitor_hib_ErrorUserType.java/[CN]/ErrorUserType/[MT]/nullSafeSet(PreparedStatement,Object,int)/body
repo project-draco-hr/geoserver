@@ -1,0 +1,23 @@
+{
+  if (value != null) {
+    try {
+      ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+      ObjectOutputStream out=new ObjectOutputStream(bytes);
+      out.writeObject(value);
+      out.flush();
+      if (useHibernateBlob()) {
+        st.setBlob(index,new BlobImpl(bytes.toByteArray()));
+      }
+ else {
+        st.setBytes(index,bytes.toByteArray());
+      }
+      out.close();
+    }
+ catch (    IOException e) {
+      throw new HibernateException(e);
+    }
+  }
+ else {
+    st.setNull(index,Types.BLOB);
+  }
+}

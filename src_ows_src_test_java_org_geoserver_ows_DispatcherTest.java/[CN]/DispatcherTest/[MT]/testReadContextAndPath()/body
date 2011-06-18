@@ -1,0 +1,20 @@
+{
+  Dispatcher dispatcher=new Dispatcher();
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  request.setContextPath("/geoserver");
+  request.setRequestURI("/geoserver/hello");
+  request.setMethod("get");
+  Request req=new Request();
+  req.httpRequest=request;
+  dispatcher.init(req);
+  assertNull(req.context);
+  assertEquals("hello",req.path);
+  request.setRequestURI("/geoserver/foo/hello");
+  dispatcher.init(req);
+  assertEquals("foo",req.context);
+  assertEquals("hello",req.path);
+  request.setRequestURI("/geoserver/foo/baz/hello/");
+  dispatcher.init(req);
+  assertEquals("foo/baz",req.context);
+  assertEquals("hello",req.path);
+}

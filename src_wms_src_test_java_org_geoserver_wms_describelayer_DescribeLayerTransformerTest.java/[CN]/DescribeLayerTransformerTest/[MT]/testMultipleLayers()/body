@@ -1,0 +1,13 @@
+{
+  request.addLayer(new MapLayerInfo(vectorLayerInfo));
+  request.addLayer(new MapLayerInfo(coverageLayerInfo));
+  final String serverBaseUrl="http://geoserver.org";
+  transformer=new DescribeLayerTransformer(serverBaseUrl);
+  final Document dom=WMSTestSupport.transform(request,transformer);
+  final String layerDescPath1="/WMS_DescribeLayerResponse/LayerDescription[1]";
+  final String layerDescPath2="/WMS_DescribeLayerResponse/LayerDescription[2]";
+  assertXpathExists(layerDescPath1,dom);
+  assertXpathExists(layerDescPath2,dom);
+  assertXpathEvaluatesTo("geos:states",layerDescPath1 + "/@name",dom);
+  assertXpathEvaluatesTo("geos:fakeCoverage",layerDescPath2 + "/@name",dom);
+}

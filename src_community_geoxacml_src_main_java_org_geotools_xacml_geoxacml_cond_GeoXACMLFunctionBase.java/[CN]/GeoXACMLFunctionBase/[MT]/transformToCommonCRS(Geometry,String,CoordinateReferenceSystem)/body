@@ -1,0 +1,16 @@
+{
+  try {
+    if (COMMON_CRS == null) {
+synchronized (COMMON_CRS_NAME) {
+        COMMON_CRS=CRS.decode(COMMON_CRS_NAME,true);
+      }
+    }
+    if (COMMON_CRS_NAME.equalsIgnoreCase(srsName))     return g;
+    if (CRS.equalsIgnoreMetadata(sourceCRS,COMMON_CRS))     return g;
+    MathTransform transform=CRS.findMathTransform(sourceCRS,COMMON_CRS);
+    return JTS.transform(g,transform);
+  }
+ catch (  Exception e) {
+    throw new GeoXACMLException(e);
+  }
+}

@@ -1,0 +1,30 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult evalResult=evalArgs(inputs,context,argValues);
+  if (evalResult != null)   return evalResult;
+  BagAttribute[] bags=new BagAttribute[2];
+  bags[0]=(BagAttribute)(argValues[0]);
+  bags[1]=(BagAttribute)(argValues[1]);
+  AttributeValue result=null;
+switch (getFunctionId()) {
+case ID_BASE_AT_LEAST_ONE_MEMBER_OF:
+    result=BooleanAttribute.getFalseInstance();
+  Iterator<AttributeValue> it=bags[0].iterator();
+while (it.hasNext()) {
+  if (bags[1].contains((AttributeValue)(it.next()))) {
+    result=BooleanAttribute.getTrueInstance();
+    break;
+  }
+}
+break;
+case ID_BASE_SUBSET:
+boolean subset=bags[1].containsAll(bags[0]);
+result=BooleanAttribute.getInstance(subset);
+break;
+case ID_BASE_SET_EQUALS:
+boolean equals=(bags[1].containsAll(bags[0]) && bags[0].containsAll(bags[1]));
+result=BooleanAttribute.getInstance(equals);
+break;
+}
+return new EvaluationResult(result);
+}

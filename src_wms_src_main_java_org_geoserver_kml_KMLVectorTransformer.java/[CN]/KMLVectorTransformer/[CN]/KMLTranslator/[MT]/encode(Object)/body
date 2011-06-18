@@ -1,0 +1,50 @@
+{
+  SimpleFeatureCollection features=(SimpleFeatureCollection)o;
+  SimpleFeatureType featureType=features.getSchema();
+  if (isStandAlone()) {
+    start("kml");
+  }
+  start("Document",KMLUtils.attributes(new String[]{"xmlns:atom","http://purl.org/atom/ns#"}));
+  element("name",mapLayer.getTitle());
+  if (lookAtOpts != null) {
+    ReferencedEnvelope bounds=features.getBounds();
+    if (bounds != null) {
+      KMLLookAtTransformer tx;
+      tx=new KMLLookAtTransformer(bounds,getIndentation(),getEncoding());
+      Translator translator=tx.createTranslator(contentHandler);
+      translator.encode(lookAtOpts);
+    }
+  }
+  String relLinks=(String)mapContext.getRequest().getFormatOptions().get("relLinks");
+  if (mapContext.getRequest().getMaxFeatures() != null && relLinks != null && relLinks.equalsIgnoreCase("true")) {
+    String linkbase="";
+    try {
+      linkbase=getFeatureTypeURL();
+      linkbase+=".kml";
+    }
+ catch (    IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
+    int maxFeatures=mapContext.getRequest().getMaxFeatures();
+    int startIndex=(mapContext.getRequest().getStartIndex() == null) ? 0 : mapContext.getRequest().getStartIndex().intValue();
+    int prevStart=startIndex - maxFeatures;
+    int nextStart=startIndex + maxFeatures;
+    if (prevStart >= 0) {
+      String prevLink=linkbase + "?startindex=" + prevStart+ "&maxfeatures="+ maxFeatures;
+      element("atom:link",null,KMLUtils.attributes(new String[]{"rel","prev","href",prevLink}));
+      encodeSequentialNetworkLink(linkbase,prevStart,maxFeatures,"prev","Previous page");
+    }
+    if (features.size() >= maxFeatures) {
+      String nextLink=linkbase + "?startindex=" + nextStart+ "&maxfeatures="+ maxFeatures;
+      element("atom:link",null,KMLUtils.attributes(new String[]{"rel","next","href",nextLink}));
+      encodeSequentialNetworkLink(linkbase,nextStart,maxFeatures,"next","Next page");
+    }
+  }
+  FeatureTypeStyle[] featureTypeStyles=KMLUtils.filterFeatureTypeStyles(mapLayer.getStyle(),featureType);
+  encodeSchemas(features);
+  encode(features,featureTypeStyles);
+  end("Document");
+  if (isStandAlone()) {
+    end("kml");
+  }
+}

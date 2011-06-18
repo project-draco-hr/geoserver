@@ -1,0 +1,17 @@
+{
+  Query q=new Query();
+  q.properties("startTime").between(range[0],range[1]);
+  DataGatherer gatherer=new DataGatherer();
+  monitor.query(q,gatherer);
+  HashMap<RegularTimePeriod,Integer> data=gatherer.getData();
+  Class timeUnitClass=getTimePeriod(range[0]).getClass();
+  TimeSeries series=new TimeSeries("foo",timeUnitClass);
+  for (  Map.Entry<RegularTimePeriod,Integer> d : data.entrySet()) {
+    series.add(new TimeSeriesDataItem(d.getKey(),d.getValue()));
+  }
+  TimeSeriesCollection dataset=new TimeSeriesCollection(series);
+  final JFreeChart chart=createTimeSeriesChart(getChartTitle(range),"Time (" + timeUnitClass.getSimpleName() + ")","Requests",dataset);
+  BufferedDynamicImageResource resource=new BufferedDynamicImageResource();
+  resource.setImage(chart.createBufferedImage(700,500));
+  return resource;
+}

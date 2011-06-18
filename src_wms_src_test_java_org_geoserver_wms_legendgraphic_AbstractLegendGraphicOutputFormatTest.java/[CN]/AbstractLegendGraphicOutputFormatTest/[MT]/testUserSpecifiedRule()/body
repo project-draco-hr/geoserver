@@ -1,0 +1,20 @@
+{
+  Style multipleRulesStyle=getCatalog().getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle();
+  assertNotNull(multipleRulesStyle);
+  Rule rule=multipleRulesStyle.getFeatureTypeStyles()[0].getRules()[0];
+  LOGGER.info("testing single rule " + rule.getName() + " from style "+ multipleRulesStyle.getName());
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(MockData.ROAD_SEGMENTS.getNamespaceURI(),MockData.ROAD_SEGMENTS.getLocalPart());
+  req.setLayer(ftInfo.getFeatureType());
+  req.setStyle(multipleRulesStyle);
+  req.setRule(rule);
+  req.setLegendOptions(new HashMap());
+  final int HEIGHT_HINT=30;
+  req.setHeight(HEIGHT_HINT);
+  this.legendProducer.buildLegendGraphic(req);
+  BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+  assertNotBlank("testUserSpecifiedRule",image,LegendUtils.DEFAULT_BG_COLOR);
+  String errMsg="expected just one legend of height " + HEIGHT_HINT + ", for the rule "+ rule.getName();
+  int resultLegendCount=image.getHeight() / HEIGHT_HINT;
+  assertEquals(errMsg,1,resultLegendCount);
+}

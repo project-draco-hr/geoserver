@@ -1,0 +1,17 @@
+{
+  GetMapOutputFormat mockProducer1=createMock(GetMapOutputFormat.class);
+  GetMapOutputFormat mockProducer2=createMock(GetMapOutputFormat.class);
+  ApplicationContext mockContext=EasyMock.createMock(ApplicationContext.class);
+  expect(mockContext.getBeanNamesForType(ExtensionFilter.class)).andReturn(new String[0]);
+  expect(mockContext.getBeanNamesForType(GetMapOutputFormat.class)).andReturn(new String[]{"producer1","producer2"});
+  expect(mockContext.getBeanNamesForType(ExtensionProvider.class)).andReturn(new String[0]);
+  expect(mockContext.getBeanNamesForType(ExtensionFilter.class)).andReturn(new String[0]);
+  expect(mockContext.getBean("producer1")).andReturn(mockProducer1);
+  expect(mockContext.getBean("producer2")).andReturn(mockProducer2);
+  replay(mockContext);
+  List<GetMapOutputFormat> mapProducers=WMSExtensions.findMapProducers(mockContext);
+  assertNotNull(mapProducers);
+  assertEquals(2,mapProducers.size());
+  assertTrue(mapProducers.contains(mockProducer1));
+  assertTrue(mapProducers.contains(mockProducer2));
+}

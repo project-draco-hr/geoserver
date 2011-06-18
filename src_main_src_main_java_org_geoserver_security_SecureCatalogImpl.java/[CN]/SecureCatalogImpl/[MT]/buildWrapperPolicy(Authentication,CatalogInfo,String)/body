@@ -1,0 +1,58 @@
+{
+  boolean canRead=true;
+  boolean canWrite=true;
+  AccessLimits limits;
+  if (info instanceof WorkspaceInfo) {
+    limits=accessManager.getAccessLimits(user,(WorkspaceInfo)info);
+    WorkspaceAccessLimits wl=(WorkspaceAccessLimits)limits;
+    if (wl != null) {
+      canRead=wl.isReadable();
+      canWrite=wl.isWritable();
+    }
+  }
+ else   if (info instanceof LayerInfo || info instanceof ResourceInfo) {
+    DataAccessLimits dl;
+    if (info instanceof LayerInfo) {
+      dl=accessManager.getAccessLimits(user,(LayerInfo)info);
+    }
+ else {
+      dl=accessManager.getAccessLimits(user,(ResourceInfo)info);
+    }
+    if (dl != null) {
+      canRead=dl.getReadFilter() != Filter.EXCLUDE;
+      if (dl instanceof VectorAccessLimits) {
+        canWrite=((VectorAccessLimits)dl).getWriteFilter() != Filter.EXCLUDE;
+      }
+ else {
+        canWrite=false;
+      }
+    }
+    limits=dl;
+  }
+ else {
+    throw new IllegalArgumentException("Can't build the wrapper policy for objects " + "other than workspace, layer or resource: " + info);
+  }
+  final CatalogMode mode=limits != null ? limits.getMode() : CatalogMode.HIDE;
+  if (!canRead) {
+    if (mode == CatalogMode.HIDE) {
+      return WrapperPolicy.hide(limits);
+    }
+ else     if (mode == CatalogMode.MIXED) {
+      Request request=Dispatcher.REQUEST.get();
+      if (request != null && "GetCapabilities".equalsIgnoreCase(request.getRequest()))       return WrapperPolicy.hide(limits);
+ else       throw unauthorizedAccess(resourceName);
+    }
+ else {
+      return WrapperPolicy.metadata(limits);
+    }
+  }
+ else   if (!canWrite) {
+    if (mode == CatalogMode.HIDE) {
+      return WrapperPolicy.readOnlyHide(limits);
+    }
+ else {
+      return WrapperPolicy.readOnlyChallenge(limits);
+    }
+  }
+  return WrapperPolicy.readWrite(limits);
+}

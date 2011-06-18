@@ -1,0 +1,17 @@
+{
+  setupESRIPropertyFile();
+  ShapeZipOutputFormat zip=new ShapeZipOutputFormat(getGeoServer(),getCatalog(),getResourceLoader());
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  FeatureCollectionType fct=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  fct.getFeature().add(getFeatureSource(ALL_TYPES).getFeatures());
+  Map options=new HashMap();
+  options.put("PRJFILEFORMAT","ESRI");
+  gft.setFormatOptions(options);
+  zip.write(fct,bos,op);
+  byte[] byteArrayZip=bos.toByteArray();
+  final String[] expectedTypes=new String[]{"AllTypesPoint","AllTypesMPoint","AllTypesPolygon","AllTypesLine"};
+  checkShapefileIntegrity(expectedTypes,new ByteArrayInputStream(byteArrayZip));
+  for (  String fileName : expectedTypes) {
+    checkFileContent(fileName + ".prj",new ByteArrayInputStream(byteArrayZip),get4326_ESRI_WKTContent());
+  }
+}

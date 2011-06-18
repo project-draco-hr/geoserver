@@ -1,0 +1,17 @@
+{
+  VersioningFeatureStore restricted=(VersioningFeatureStore)synchStore.getFeatureSource("restricted");
+  restricted.removeFeatures(ff.id(singleton(ff.featureId("restricted.be7cafea-d0b7-4257-9b9c-1ed3de3f7ef4"))));
+  assertEquals(3,restricted.getCount(Query.ALL));
+  MockHttpServletResponse response=postAsServletResponse(root(true),loadTextResource("PostDiffInitial.xml"));
+  checkPostDiffSuccessResponse(response);
+  checkPostDiffInitialChanges(restricted);
+  FeatureCollection<SimpleFeatureType,SimpleFeature> activeConflicts=gss.getActiveConflicts("restricted");
+  assertEquals(1,activeConflicts.size());
+  FeatureIterator<SimpleFeature> fi=activeConflicts.features();
+  SimpleFeature f=fi.next();
+  fi.close();
+  assertEquals("restricted",f.getAttribute("table_name"));
+  assertEquals("be7cafea-d0b7-4257-9b9c-1ed3de3f7ef4",f.getAttribute("feature_id"));
+  assertEquals("c",f.getAttribute("state"));
+  assertNull(f.getAttribute("local_feature"));
+}

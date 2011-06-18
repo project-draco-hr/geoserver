@@ -1,0 +1,15 @@
+{
+  final Query queryAll=new Query(RENAMED);
+  SimpleFeatureStore store;
+  store=(SimpleFeatureStore)rts.getFeatureSource(RENAMED);
+  SimpleFeature original=store.getFeatures(fidFilter).features().next();
+  String newDescription=((String)original.getAttribute("description")) + " xxx";
+  store.modifyFeatures(original.getFeatureType().getDescriptor("description"),newDescription,fidFilter);
+  SimpleFeature modified=store.getFeatures(fidFilter).features().next();
+  assertEquals(newDescription,modified.getAttribute("description"));
+  MultiPoint mpo=(MultiPoint)original.getAttribute("pointProperty");
+  MultiPoint mpm=mpo.getFactory().createMultiPoint(new Coordinate[]{new Coordinate(10,12)});
+  store.modifyFeatures(original.getFeatureType().getDescriptor("pointProperty"),mpm,fidFilter);
+  modified=store.getFeatures(fidFilter).features().next();
+  assertTrue(mpm.equalsExact((Geometry)modified.getAttribute("pointProperty")));
+}

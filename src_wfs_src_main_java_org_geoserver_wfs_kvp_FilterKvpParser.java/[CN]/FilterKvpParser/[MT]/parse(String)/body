@@ -1,0 +1,32 @@
+{
+  final Configuration configuration=getParserConfiguration();
+  final Parser parser=new Parser(configuration);
+  List unparsed=KvpUtils.readFlat(value,KvpUtils.OUTER_DELIMETER);
+  List filters=new ArrayList();
+  Iterator i=unparsed.listIterator();
+  while (i.hasNext()) {
+    String string=(String)i.next();
+    if ("".equals(string.trim())) {
+      filters.add(Filter.INCLUDE);
+    }
+ else {
+      InputStream input=new ByteArrayInputStream(string.getBytes());
+      try {
+        Filter filter=(Filter)parser.parse(input);
+        if (filter == null) {
+          throw new NullPointerException();
+        }
+        filters.add(filter);
+      }
+ catch (      Exception e) {
+        String msg="Unable to parse filter: " + string;
+        LOGGER.log(Level.WARNING,msg,e);
+        Filter filter=parseXMLFilterWithOldParser(new StringReader(string));
+        if (filter != null) {
+          filters.add(filter);
+        }
+      }
+    }
+  }
+  return filters;
+}

@@ -1,0 +1,31 @@
+{
+  data=File.createTempFile("retype","data",new File("./target"));
+  data.delete();
+  data.mkdir();
+  final String fileName=MockData.PRIMITIVEGEOFEATURE.getLocalPart() + ".properties";
+  URL properties=MockData.class.getResource(fileName);
+  IOUtils.copy(properties.openStream(),new File(data,fileName));
+  SimpleFeatureTypeBuilder ftb=new SimpleFeatureTypeBuilder();
+  ftb.add("description",String.class);
+  ftb.add("pointProperty",MultiPoint.class);
+  ftb.add("intProperty",Long.class);
+  ftb.add("dateTimeProperty",Date.class);
+  ftb.add("newProperty",String.class);
+  ftb.setName(RENAMED);
+  primitive=ftb.buildFeatureType();
+  PropertyDataStore pds=new PropertyDataStore(data);
+  rts=new RetypingDataStore(pds){
+    @Override protected SimpleFeatureType transformFeatureType(    SimpleFeatureType original) throws IOException {
+      if (original.getTypeName().equals(MockData.PRIMITIVEGEOFEATURE.getLocalPart()))       return primitive;
+ else       return super.transformFeatureType(original);
+    }
+    @Override protected String transformFeatureTypeName(    String originalName){
+      if (originalName.equals(MockData.PRIMITIVEGEOFEATURE.getLocalPart()))       return primitive.getTypeName();
+ else       return super.transformFeatureTypeName(originalName);
+    }
+  }
+;
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  fid=RENAMED + ".f001";
+  fidFilter=ff.id(Collections.singleton(ff.featureId(fid)));
+}

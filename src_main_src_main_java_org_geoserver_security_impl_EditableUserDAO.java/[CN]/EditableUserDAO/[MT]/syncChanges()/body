@@ -1,0 +1,16 @@
+{
+  Properties prop=new Properties();
+  for (  UserDetails details : myDetailStorage.values()) {
+    String key=details.getUsername();
+    String value=details.getPassword();
+    for (    GrantedAuthority auth : details.getAuthorities()) {
+      value+="," + auth.getAuthority();
+    }
+    if (!details.isEnabled()) {
+      value+=",disabled";
+    }
+    prop.setProperty(key,value);
+  }
+  OutputStream os=new BufferedOutputStream(new FileOutputStream(getUserFile()));
+  prop.store(os,"Geoserver user data. Format is username=password,role1,role2,...[enabled|disabled]");
+}

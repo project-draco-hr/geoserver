@@ -1,0 +1,13 @@
+{
+  Document dom=getAsDOM("wfs?request=getfeature&typename=sf:pdsa");
+  assertEquals("ows:ExceptionReport",dom.getDocumentElement().getNodeName());
+  addPropertyDataStore(false);
+  String xml="<featureType>" + "<name>pdsa</name>" + "<nativeName>pdsa</nativeName>"+ "<srs>EPSG:4326</srs>"+ "<nativeCRS>EPSG:4326</nativeCRS>"+ "<nativeBoundingBox>"+ "<minx>0.0</minx>"+ "<maxx>1.0</maxx>"+ "<miny>0.0</miny>"+ "<maxy>1.0</maxy>"+ "<crs>EPSG:4326</crs>"+ "</nativeBoundingBox>"+ "<store>pds</store>"+ "</featureType>";
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/gs/datastores/pds/featuretypes/",xml,"text/xml");
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(response.getHeader("Location"));
+  assertTrue(response.getHeader("Location").endsWith("/workspaces/gs/datastores/pds/featuretypes/pdsa"));
+  dom=getAsDOM("wfs?request=getfeature&typename=gs:pdsa");
+  assertEquals("wfs:FeatureCollection",dom.getDocumentElement().getNodeName());
+  assertEquals(2,dom.getElementsByTagName("gs:pdsa").getLength());
+}

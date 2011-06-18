@@ -1,0 +1,31 @@
+{
+  if (obs1.size() != obs2.size())   return false;
+  Iterator<Obligation> it1=obs1.iterator();
+  HashSet<Obligation> set2=new HashSet<Obligation>(obs2);
+  while (it1.hasNext()) {
+    Obligation o1=it1.next();
+    Iterator<Obligation> it2=set2.iterator();
+    boolean matched=false;
+    while (it2.hasNext() && (!matched)) {
+      Obligation o2=(Obligation)(it2.next());
+      if ((o1.getId().equals(o2.getId())) && (o1.getFulfillOn() == o2.getFulfillOn())) {
+        List<Attribute> assignments1=o1.getAssignments();
+        List<Attribute> assignments2=o2.getAssignments();
+        if (assignments1.size() == assignments2.size()) {
+          Iterator<Attribute> ait1=assignments1.iterator();
+          Iterator<Attribute> ait2=assignments2.iterator();
+          boolean assignmentsMatch=true;
+          while (ait1.hasNext() && assignmentsMatch) {
+            Attribute attr1=ait1.next();
+            Attribute attr2=ait2.next();
+            if ((!attr1.getId().equals(attr2.getId())) || (!attr1.getType().equals(attr2.getType())) || (!attr1.getValue().equals(attr2.getValue())))             assignmentsMatch=false;
+          }
+          matched=assignmentsMatch;
+        }
+      }
+    }
+    if (matched)     it2.remove();
+ else     return false;
+  }
+  return true;
+}

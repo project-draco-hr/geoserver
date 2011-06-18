@@ -1,0 +1,15 @@
+{
+  String x=form.getFirstValue("lon");
+  String y=form.getFirstValue("lat");
+  if (x == null && y == null) {
+    return Filter.INCLUDE;
+  }
+  if (x == null || y == null) {
+    throw new RestletException("Incomplete x/y specification, must provide both values",Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+  double ordx=parseDouble(x,"x");
+  double ordy=parseDouble(y,"y");
+  final Point centerPoint=new GeometryFactory().createPoint(new Coordinate(ordx,ordy));
+  final double tolerance=getTolerance(form);
+  return geometryFilter(schema,centerPoint,tolerance);
+}

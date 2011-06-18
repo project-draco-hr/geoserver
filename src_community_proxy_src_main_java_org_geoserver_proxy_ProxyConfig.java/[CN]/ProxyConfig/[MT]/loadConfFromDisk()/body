@@ -1,0 +1,16 @@
+{
+  ProxyConfig retval;
+  try {
+    File proxyConfFile=getConfigFile();
+    InputStream proxyConfStream=new FileInputStream(proxyConfFile);
+    XStream xs=new XStream();
+    configReadLock.lock();
+    retval=(ProxyConfig)(xs.fromXML(proxyConfStream));
+    configReadLock.unlock();
+  }
+ catch (  Exception e) {
+    LOG.warning("Failed to open configuration for Proxy module. Using default. Exception:" + e.toString());
+    retval=DEFAULT;
+  }
+  return retval;
+}

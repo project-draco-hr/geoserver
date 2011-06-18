@@ -1,0 +1,36 @@
+{
+  Catalog catalog=new CatalogImpl();
+  CatalogFactory cFactory=catalog.getFactory();
+  WorkspaceInfo ws=cFactory.createWorkspace();
+  ws.setName("foo");
+  catalog.add(ws);
+  NamespaceInfo ns=cFactory.createNamespace();
+  ns.setPrefix("acme");
+  ns.setURI("http://acme.org");
+  catalog.add(ns);
+  DataStoreInfo ds=cFactory.createDataStore();
+  ds.setWorkspace(ws);
+  ds.setName("foo");
+  catalog.add(ds);
+  VirtualTable vt=new VirtualTable("riverReduced","select a, b, c * %mulparam% \n from table \n where x > 1 %andparam%");
+  vt.addGeometryMetadatata("geom",LineString.class,4326);
+  vt.setPrimaryKeyColumns(Arrays.asList("a","b"));
+  vt.addParameter(new VirtualTableParameter("mulparam","1",new RegexpValidator("\\d+")));
+  vt.addParameter(new VirtualTableParameter("andparam",null));
+  FeatureTypeInfo ft=cFactory.createFeatureType();
+  ft.setStore(ds);
+  ft.setNamespace(ns);
+  ft.setName("ft");
+  ft.setAbstract("abstract");
+  ft.setSRS("EPSG:4326");
+  ft.setNativeCRS(CRS.decode("EPSG:4326"));
+  ft.getMetadata().put(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,vt);
+  catalog.add(ft);
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  persister.save(ft,out);
+  persister.setCatalog(catalog);
+  ft=persister.load(in(out),FeatureTypeInfo.class);
+  VirtualTable vt2=(VirtualTable)ft.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE);
+  assertNotNull(vt2);
+  assertEquals(vt,vt2);
+}

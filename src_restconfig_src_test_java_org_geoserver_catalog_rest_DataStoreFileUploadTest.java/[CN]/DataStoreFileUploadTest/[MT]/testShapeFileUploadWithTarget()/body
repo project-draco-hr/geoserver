@@ -1,0 +1,11 @@
+{
+  Catalog cat=getCatalog();
+  assertNull(cat.getDataStoreByName("gs","pds"));
+  byte[] bytes=shpZipAsBytes();
+  put("/rest/workspaces/gs/datastores/pds/file.shp?target=h2",bytes,"application/zip");
+  DataStoreInfo ds=cat.getDataStoreByName("gs","pds");
+  assertNotNull(ds);
+  assertFalse(cat.getFeatureTypesByDataStore(ds).isEmpty());
+  Document dom=getAsDOM("wfs?request=getfeature&typename=gs:pds");
+  assertFeatures(dom);
+}

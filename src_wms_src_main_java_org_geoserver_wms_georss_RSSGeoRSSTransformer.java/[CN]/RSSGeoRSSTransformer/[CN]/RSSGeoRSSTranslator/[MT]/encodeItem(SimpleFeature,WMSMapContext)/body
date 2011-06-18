@@ -1,0 +1,37 @@
+{
+  start("item");
+  String title=feature.getID();
+  String link=null;
+  String description="[Error while loading description]";
+  try {
+    title=AtomUtils.getFeatureTitle(feature);
+    link=AtomUtils.getEntryURL(wms,feature,map);
+    description=AtomUtils.getFeatureDescription(feature);
+  }
+ catch (  Exception e) {
+    String msg="Error occured executing title template for: " + feature.getID();
+    LOGGER.log(Level.WARNING,msg,e);
+  }
+  element("title",title);
+  start("link");
+  cdata(link);
+  end("link");
+  start("guid");
+  cdata(link);
+  end("guid");
+  start("description");
+  cdata(AtomUtils.getFeatureDescription(feature));
+  end("description");
+  GeometryCollection col=feature.getDefaultGeometry() instanceof GeometryCollection ? (GeometryCollection)feature.getDefaultGeometry() : null;
+  if (geometryEncoding == GeometryEncoding.LATLONG || (col == null && feature.getDefaultGeometry() != null)) {
+    geometryEncoding.encode((Geometry)feature.getDefaultGeometry(),this);
+    end("item");
+  }
+ else {
+    geometryEncoding.encode(col.getGeometryN(0),this);
+    end("item");
+    for (int i=1; i < col.getNumGeometries(); i++) {
+      encodeRelatedGeometryItem(col.getGeometryN(i),title,link,i);
+    }
+  }
+}

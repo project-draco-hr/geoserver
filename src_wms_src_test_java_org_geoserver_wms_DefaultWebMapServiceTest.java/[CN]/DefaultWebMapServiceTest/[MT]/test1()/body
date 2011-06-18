@@ -1,0 +1,21 @@
+{
+  GetMapRequest mockGMR=createGetMapRequest(MockData.BASIC_POLYGONS);
+  GetMapRequest request=new GetMapRequest();
+  DefaultWebMapService reflector=new DefaultWebMapService(getWMS());
+  request.setLayers(mockGMR.getLayers());
+  request.setFormat(DefaultWebMapService.FORMAT);
+  reflector.autoSetBoundsAndSize(request);
+  CoordinateReferenceSystem crs=request.getCrs();
+  String srs=request.getSRS();
+  Envelope bbox=request.getBbox();
+  String format=request.getFormat();
+  int width=request.getWidth();
+  int height=request.getHeight();
+  String crsString=crs.getName().toString();
+  assertTrue("EPSG:WGS 84".equalsIgnoreCase(crsString));
+  assertTrue("EPSG:4326".equalsIgnoreCase(srs));
+  assertTrue(bbox.getMinX() == -180.0 && bbox.getMaxX() == 180.0 && bbox.getMinY() == -90.0 && bbox.getMaxY() == 90.0);
+  assertEquals("image/png",format);
+  assertEquals(width,512);
+  assertEquals(height,256);
+}

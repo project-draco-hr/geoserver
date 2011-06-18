@@ -1,0 +1,37 @@
+{
+  if (cv.isEnabled()) {
+    start("wcs:CoverageOfferingBrief");
+    String tmp;
+    for (    MetadataLinkInfo mdl : cv.getMetadataLinks())     handleMetadataLink(mdl);
+    tmp=cv.getDescription();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:description",tmp);
+    }
+    tmp=cv.getPrefixedName();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:name",tmp);
+    }
+    tmp=cv.getTitle();
+    if ((tmp != null) && (tmp != "")) {
+      element("wcs:label",tmp);
+    }
+    String timeMetadata=null;
+    CoverageStoreInfo csinfo=cv.getStore();
+    if (csinfo == null)     throw new WcsException("Unable to acquire coverage store resource for coverage: " + cv.getName());
+    AbstractGridCoverage2DReader reader=null;
+    try {
+      reader=(AbstractGridCoverage2DReader)catalog.getResourcePool().getGridCoverageReader(csinfo,GeoTools.getDefaultHints());
+    }
+ catch (    IOException e) {
+      LOGGER.severe("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+    }
+    if (reader == null)     throw new WcsException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+    final String[] metadataNames=reader.getMetadataNames();
+    if (metadataNames != null && metadataNames.length > 0) {
+      timeMetadata=reader.getMetadataValue("TIME_DOMAIN");
+    }
+    handleEnvelope(cv.getLatLonBoundingBox(),timeMetadata);
+    handleKeywords(cv.getKeywords());
+    end("wcs:CoverageOfferingBrief");
+  }
+}

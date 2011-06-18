@@ -1,0 +1,133 @@
+{
+  storeId=getCatalog().getStoreByName(workspaceName,storeName,DataStoreInfo.class).getId();
+  Form form=new Form("form",new CompoundPropertyModel(this));
+  add(form);
+  final TextField nameField=new TextField("name");
+  nameField.setRequired(true);
+  nameField.add(new ViewNameValidator());
+  form.add(nameField);
+  sqlEditor=new TextArea("sql");
+  form.add(sqlEditor);
+  attProvider=new SQLViewAttributeProvider();
+  paramProvider=new SQLViewParamProvider();
+  if (typeName != null) {
+    newView=false;
+    DataStoreInfo store=getCatalog().getStore(storeId,DataStoreInfo.class);
+    FeatureTypeInfo fti=getCatalog().getResourceByStore(store,typeName,FeatureTypeInfo.class);
+    if (fti != null) {
+      typeInfoId=fti.getId();
+    }
+    if (virtualTable == null) {
+      throw new IllegalArgumentException("The specified feature type does not have a sql view attached to it");
+    }
+    DataAccess da=store.getDataStore(null);
+    if (!(da instanceof JDBCDataStore)) {
+      error("Cannot create a SQL view if the store is not database based");
+      setResponsePage(StorePage.class);
+      return;
+    }
+    name=virtualTable.getName();
+    sql=virtualTable.getSql();
+    paramProvider.init(virtualTable);
+    try {
+      SimpleFeatureType ft=testViewDefinition(virtualTable,false);
+      attProvider.setFeatureType(ft,virtualTable);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Failed to build feature type for the sql view",e);
+    }
+  }
+ else {
+    newView=true;
+  }
+  form.add(new GeoServerAjaxFormLink("guessParams"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      sqlEditor.processInput();
+      parameters.processInputs();
+      if (sql != null && !"".equals(sql.trim())) {
+        paramProvider.refreshFromSql(sql);
+        target.addComponent(parameters);
+      }
+    }
+  }
+);
+  form.add(new GeoServerAjaxFormLink("addNewParam"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      paramProvider.addParameter();
+      target.addComponent(parameters);
+    }
+  }
+);
+  form.add(new GeoServerAjaxFormLink("removeParam"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      paramProvider.removeAll(parameters.getSelection());
+      parameters.clearSelection();
+      target.addComponent(parameters);
+    }
+  }
+);
+  parameters=new GeoServerTablePanel<Parameter>("parameters",paramProvider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<Parameter> property){
+      Fragment f=new Fragment(id,"text",SQLViewAbstractPage.this);
+      TextField text=new TextField("text",property.getModel(itemModel));
+      text.setLabel(new ParamResourceModel("th." + property.getName(),SQLViewAbstractPage.this));
+      if (property == SQLViewParamProvider.NAME) {
+        text.setRequired(true);
+      }
+ else       if (property == SQLViewParamProvider.REGEXP) {
+        text.add(new RegexpValidator());
+      }
+      f.add(text);
+      return f;
+    }
+  }
+;
+  parameters.setFilterVisible(false);
+  parameters.setSortable(false);
+  parameters.getTopPager().setVisible(false);
+  parameters.getBottomPager().setVisible(false);
+  parameters.setOutputMarkupId(true);
+  form.add(parameters);
+  form.add(refreshLink());
+  form.add(guessCheckbox=new CheckBox("guessGeometrySrid",new PropertyModel(this,"guessGeometrySrid")));
+  attributes=new GeoServerTablePanel<SQLViewAttribute>("attributes",attProvider){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<SQLViewAttribute> property){
+      SQLViewAttribute att=(SQLViewAttribute)itemModel.getObject();
+      boolean isGeometry=att.getType() != null && Geometry.class.isAssignableFrom(att.getType());
+      if (property == SQLViewAttributeProvider.PK) {
+        Fragment f=new Fragment(id,"checkbox",SQLViewAbstractPage.this);
+        f.add(new CheckBox("identifier",new PropertyModel(itemModel,"pk")));
+        return f;
+      }
+ else       if (property == SQLViewAttributeProvider.TYPE && isGeometry) {
+        Fragment f=new Fragment(id,"geometry",SQLViewAbstractPage.this);
+        f.add(new DropDownChoice("geometry",new PropertyModel(itemModel,"type"),GEOMETRY_TYPES,new GeometryTypeRenderer()));
+        return f;
+      }
+ else       if (property == SQLViewAttributeProvider.SRID && isGeometry) {
+        Fragment f=new Fragment(id,"text",SQLViewAbstractPage.this);
+        f.add(new TextField("text",new PropertyModel(itemModel,"srid")));
+        return f;
+      }
+      return null;
+    }
+  }
+;
+  attributes.setFilterVisible(false);
+  attributes.setSortable(false);
+  attributes.setPageable(false);
+  attributes.setOutputMarkupId(true);
+  form.add(attributes);
+  form.add(new SubmitLink("save"){
+    @Override public void onSubmit(){
+      onSave();
+    }
+  }
+);
+  form.add(new Link("cancel"){
+    @Override public void onClick(){
+      onCancel();
+    }
+  }
+);
+}

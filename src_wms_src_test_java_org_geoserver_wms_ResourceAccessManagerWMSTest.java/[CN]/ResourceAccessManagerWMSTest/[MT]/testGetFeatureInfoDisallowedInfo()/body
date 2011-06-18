@@ -1,0 +1,11 @@
+{
+  if (!RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    LOGGER.log(Level.WARNING,"Skipping testNoRestrictions");
+    return;
+  }
+  authenticate("cite_noinfo","cite");
+  MockHttpServletResponse response=getAsServletResponse(GET_FEATURE_INFO_TEXAS);
+  assertEquals("application/vnd.ogc.se_xml",response.getContentType());
+  Document dom=dom(getBinaryInputStream(response));
+  assertXpathEvaluatesTo("OperationNotSupported","//ServiceException/@code",dom);
+}

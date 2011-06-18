@@ -1,0 +1,19 @@
+{
+  int i=token.indexOf(':');
+  if (i != -1) {
+    String prefix=token.substring(0,i);
+    String local=token.substring(i + 1);
+    String uri=null;
+    if (prefix != null && !"".equals(prefix)) {
+      final NamespaceInfo namespace=catalog.getNamespaceByPrefix(prefix);
+      if (strict && namespace == null) {
+        throw new WFSException("Unknown namespace [" + prefix + "]");
+      }
+      uri=namespace == null ? null : namespace.getURI();
+    }
+    return new QName(uri,local,prefix);
+  }
+ else {
+    return new QName(token);
+  }
+}

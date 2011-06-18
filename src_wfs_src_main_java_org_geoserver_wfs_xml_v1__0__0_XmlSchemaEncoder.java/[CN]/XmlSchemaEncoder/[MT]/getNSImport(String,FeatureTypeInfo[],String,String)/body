@@ -1,0 +1,24 @@
+{
+  LOGGER.finer("prefix is " + prefix);
+  StringBuffer retBuffer=new StringBuffer("\n  <xs:import namespace=\"");
+  String namespace=catalog.getNamespaceByPrefix(prefix).getURI();
+  retBuffer.append(namespace + "\"");
+  Map<String,String> params=new HashMap<String,String>();
+  params.put("request","DescribeFeatureType");
+  params.put("service","wfs");
+  params.put("version","1.0.0");
+  StringBuilder typeNames=new StringBuilder();
+  for (int i=0; i < infos.length; i++) {
+    FeatureTypeInfo info=infos[i];
+    String typeName=info.getPrefixedName();
+    if (typeName.startsWith(prefix + ":")) {
+      typeNames.append(typeName).append(",");
+    }
+  }
+  typeNames.deleteCharAt(retBuffer.length() - 1);
+  params.put("typeName",typeNames.toString());
+  String ftLocation=buildURL(baseUrl,service,params,URLType.SERVICE);
+  retBuffer.append("\n        schemaLocation=\"" + ResponseUtils.encodeXML(ftLocation));
+  retBuffer.append("\"/>");
+  return retBuffer;
+}

@@ -1,0 +1,36 @@
+{
+  MapLayerInfo layer;
+  final List layers=req.getLayers();
+  AttributesImpl queryAtts=new AttributesImpl();
+  queryAtts.addAttribute("","typeName","typeName","","");
+  for (Iterator it=layers.iterator(); it.hasNext(); ) {
+    layer=(MapLayerInfo)it.next();
+    AttributesImpl layerAtts=new AttributesImpl();
+    layerAtts.addAttribute("","name","name","","");
+    String owsUrl;
+    String owsType;
+    if (MapLayerInfo.TYPE_VECTOR == layer.getType()) {
+      owsUrl=buildURL(baseURL,"wfs/WfsDispatcher",null,URLType.SERVICE);
+      owsUrl=appendQueryString(owsUrl,"");
+      owsType="WFS";
+      layerAtts.addAttribute("","wfs","wfs","",owsUrl);
+    }
+ else     if (MapLayerInfo.TYPE_RASTER == layer.getType()) {
+      owsUrl=buildURL(baseURL,"wcs",null,URLType.SERVICE);
+      owsUrl=appendQueryString(owsUrl,"");
+      owsType="WCS";
+    }
+ else {
+      owsUrl=owsType=null;
+    }
+    if (owsType != null && owsUrl != null) {
+      layerAtts.addAttribute("","owsURL","owsURL","",owsUrl);
+      layerAtts.addAttribute("","owsType","owsType","",owsType);
+    }
+    layerAtts.setAttribute(0,"","name","name","",layer.getName());
+    start("LayerDescription",layerAtts);
+    queryAtts.setAttribute(0,"","typeName","typeName","",layer.getName());
+    element("Query",null,queryAtts);
+    end("LayerDescription");
+  }
+}

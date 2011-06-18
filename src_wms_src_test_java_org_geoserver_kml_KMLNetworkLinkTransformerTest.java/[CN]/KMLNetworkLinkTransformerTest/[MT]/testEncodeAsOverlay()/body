@@ -1,0 +1,29 @@
+{
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  WMS wms=mockData.getWMS();
+  KMLNetworkLinkTransformer transformer=new KMLNetworkLinkTransformer(wms);
+  transformer.setEncodeAsRegion(false);
+  transformer.setIndentation(2);
+  request.setBbox(new Envelope(-1,1,-10,10));
+  Document dom=WMSTestSupport.transform(mapContext,transformer);
+  assertXpathEvaluatesTo("1","count(//kml/Folder)",dom);
+  assertXpathEvaluatesTo("1","count(//kml/Folder/NetworkLink)",dom);
+  assertXpathEvaluatesTo("1","count(//kml/Folder/LookAt)",dom);
+  assertXpathEvaluatesTo("geos:TestPoints","//kml/Folder/NetworkLink/name",dom);
+  assertXpathEvaluatesTo("1","//kml/Folder/NetworkLink/open",dom);
+  assertXpathEvaluatesTo("1","//kml/Folder/NetworkLink/visibility",dom);
+  final Map<String,String> expectedKvp=KMLReflectorTest.toKvp("http://geoserver.org:8181/geoserver/wms?format_options=relLinks%3Atrue%3B&service=wms&srs=EPSG%3A4326&width=512&styles=Default+Style&height=256&transparent=false&request=GetMap&layers=geos%3ATestPoints&format=application/vnd.google-earth.kmz&version=1.1.1");
+  final Map<String,String> actualKvp=KMLReflectorTest.toKvp(xpath.evaluate("//kml/Folder/NetworkLink/Url/href",dom));
+  KMLReflectorTest.assertMapsEqual(expectedKvp,actualKvp);
+  assertXpathEvaluatesTo("onStop","//kml/Folder/NetworkLink/Url/viewRefreshMode",dom);
+  assertXpathEvaluatesTo("1","//kml/Folder/NetworkLink/Url/viewRefreshTime",dom);
+  assertXpathEvaluatesTo("180.0","//kml/Folder/LookAt/longitude",dom);
+  assertXpathEvaluatesTo("0.0","//kml/Folder/LookAt/latitude",dom);
+  assertXpathExists("//kml/Folder/LookAt/altitude",dom);
+  assertXpathEvaluatesTo("0.0","//kml/Folder/LookAt/tilt",dom);
+  assertXpathEvaluatesTo("0.0","//kml/Folder/LookAt/heading",dom);
+  assertXpathEvaluatesTo("clampToGround","//kml/Folder/LookAt/altitudeMode",dom);
+  String value=xpath.evaluate("//kml/Folder/LookAt/altitude",dom);
+  assertEquals(1.5768778343115222E7,Double.parseDouble(value),1E-5);
+  assertXpathExists("//kml/Folder/LookAt/range",dom);
+}

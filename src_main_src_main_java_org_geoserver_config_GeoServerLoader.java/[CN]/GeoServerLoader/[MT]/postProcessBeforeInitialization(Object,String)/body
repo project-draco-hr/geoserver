@@ -1,0 +1,28 @@
+{
+  if (bean instanceof Catalog) {
+    if (bean instanceof Wrapper && ((Wrapper)bean).isWrapperFor(Catalog.class)) {
+      return bean;
+    }
+    try {
+      Catalog catalog=(Catalog)bean;
+      XStreamPersister xp=xpf.createXMLPersister();
+      xp.setCatalog(catalog);
+      loadCatalog(catalog,xp);
+      initializeStyles(catalog,xp);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  if (bean instanceof GeoServer) {
+    geoserver=(GeoServer)bean;
+    try {
+      loadGeoServer(geoserver,xpf.createXMLPersister());
+      loadInitializers(geoserver);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  return bean;
+}

@@ -1,0 +1,17 @@
+{
+  Polygon poly=null;
+  if (geom instanceof Polygon) {
+    poly=(Polygon)geom;
+    if (poly.getNumInteriorRing() > 0) {
+      poly=HolesRemover.removeHoles(poly,1.0 / worldToScreen.getScaleX());
+    }
+    poly=(Polygon)decimate(poly);
+  }
+ else   throw new IOException("Impossible to encode: " + geom);
+  if (poly != null) {
+    LineString shell=poly.getExteriorRing();
+    if (shell != null && shell.getCoordinates() != null)     writePathContent(shell.getCoordinates(),buf);
+ else     throw new IOException("Nothing to encode");
+  }
+ else   throw new IOException("Nothing to encode");
+}

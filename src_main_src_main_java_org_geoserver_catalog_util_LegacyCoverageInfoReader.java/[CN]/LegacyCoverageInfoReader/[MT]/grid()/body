@@ -1,0 +1,46 @@
+{
+  Element gridElement=ReaderUtils.getChildElement(coverage,"grid");
+  if (gridElement == null) {
+    return null;
+  }
+  HashMap<String,Object> grid=new HashMap<String,Object>();
+  grid.put("dimension",Integer.parseInt(ReaderUtils.getAttribute(gridElement,"dimension",true)));
+  Element lowElement=ReaderUtils.getChildElement(gridElement,"low");
+  String[] lows=lowElement.getFirstChild().getTextContent().trim().split(" ");
+  int[] low=new int[lows.length];
+  for (int i=0; i < low.length; i++) {
+    low[i]=Integer.parseInt(lows[i]);
+  }
+  grid.put("low",low);
+  Element highElement=ReaderUtils.getChildElement(gridElement,"high");
+  String[] highs=highElement.getFirstChild().getTextContent().trim().split(" ");
+  int[] high=new int[highs.length];
+  for (int i=0; i < high.length; i++) {
+    high[i]=Integer.parseInt(highs[i]);
+  }
+  grid.put("high",high);
+  Element[] axisNameElements=ReaderUtils.getChildElements(gridElement,"axisName");
+  String[] axisName=new String[axisNameElements.length];
+  for (int i=0; i < axisName.length; i++) {
+    axisName[i]=axisNameElements[i].getFirstChild().getTextContent();
+  }
+  grid.put("axisName",axisName);
+  Element geoTransformElement=ReaderUtils.getChildElement(gridElement,"geoTransform");
+  if (geoTransformElement != null) {
+    Map<String,Double> geoTransform=new HashMap<String,Double>();
+    String scaleX=ReaderUtils.getChildText(geoTransformElement,"scaleX");
+    String scaleY=ReaderUtils.getChildText(geoTransformElement,"scaleY");
+    String shearX=ReaderUtils.getChildText(geoTransformElement,"shearX");
+    String shearY=ReaderUtils.getChildText(geoTransformElement,"shearY");
+    String translateX=ReaderUtils.getChildText(geoTransformElement,"translateX");
+    String translateY=ReaderUtils.getChildText(geoTransformElement,"translateY");
+    geoTransform.put("scaleX",scaleX != null ? new Double(scaleX) : null);
+    geoTransform.put("scaleY",scaleY != null ? new Double(scaleY) : null);
+    geoTransform.put("shearX",shearX != null ? new Double(shearX) : null);
+    geoTransform.put("shearY",shearY != null ? new Double(shearY) : null);
+    geoTransform.put("translateX",translateX != null ? new Double(translateX) : null);
+    geoTransform.put("translateY",translateY != null ? new Double(translateY) : null);
+    grid.put("geoTransform",geoTransform);
+  }
+  return grid;
+}

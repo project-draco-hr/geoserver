@@ -1,0 +1,11 @@
+{
+  String delete="<wfs:Transaction service=\"WFS\" version=\"1.0.0\" " + "xmlns:cgf=\"http://www.opengis.net/cite/geometry\" " + "xmlns:ogc=\"http://www.opengis.net/ogc\" "+ "xmlns:wfs=\"http://www.opengis.net/wfs\"> "+ "<wfs:Delete typeName=\"cgf:Points\"> "+ "<ogc:Filter> "+ "<ogc:PropertyIsEqualTo> "+ "<ogc:PropertyName>cgf:id</ogc:PropertyName> "+ "<ogc:Literal>t0000</ogc:Literal> "+ "</ogc:PropertyIsEqualTo> "+ "</ogc:Filter> "+ "</wfs:Delete> "+ "</wfs:Transaction>";
+  postAsDOM("wfs",delete);
+  assertEquals(1,listener.events.size());
+  TransactionEvent event=(TransactionEvent)listener.events.get(0);
+  assertEquals(TransactionEventType.PRE_DELETE,event.getType());
+  assertEquals(MockData.POINTS,event.getLayerName());
+  assertEquals(1,listener.features.size());
+  Feature deleted=(Feature)listener.features.get(0);
+  assertEquals("t0000",deleted.getProperty("id").getValue());
+}

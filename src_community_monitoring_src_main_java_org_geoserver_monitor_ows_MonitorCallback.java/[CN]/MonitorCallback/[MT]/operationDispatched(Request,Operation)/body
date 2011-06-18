@@ -1,0 +1,21 @@
+{
+  RequestData data=monitor.current();
+  if (data == null) {
+    return operation;
+  }
+  data.setCategory(Category.OWS);
+  data.setService(operation.getService().getId().toUpperCase());
+  data.setOperation(normalizedOpId(operation));
+  data.setOwsVersion(operation.getService().getVersion().toString());
+  if (operation.getParameters().length > 0) {
+    Object reqObj=operation.getParameters()[0];
+    for (    RequestObjectHandler h : HANDLERS) {
+      if (h.canHandle(reqObj)) {
+        h.handle(reqObj,data);
+        break;
+      }
+    }
+  }
+  monitor.update();
+  return operation;
+}

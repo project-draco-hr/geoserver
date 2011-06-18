@@ -1,0 +1,19 @@
+def vector_format(name, mime):
+    '\n  Decorator for a vector format.\n  '
+
+    def wrap(func):
+
+        def wrapper(features, output):
+
+            def f(fc1, fc2):
+                fc2.next = fc1
+                return fc2
+            list = [_FeatureCollection(f) for f in features]
+            list.reverse()
+            data = reduce(f, list)
+            return func(data, output)
+        wrapper.__vector_format__ = None
+        wrapper.name = name
+        wrapper.mime = mime
+        return wrapper
+    return wrap

@@ -1,0 +1,49 @@
+{
+synchronized (proxyObject) {
+    for (    Map.Entry<String,Object> e : properties().entrySet()) {
+      String p=e.getKey();
+      Object v=e.getValue();
+      try {
+        Method g=getter(p);
+        if (Collection.class.isAssignableFrom(g.getReturnType())) {
+          Collection c=(Collection)g.invoke(proxyObject,null);
+          c.clear();
+          c.addAll((Collection)v);
+        }
+ else         if (Map.class.isAssignableFrom(g.getReturnType())) {
+          Map m=(Map)g.invoke(proxyObject,null);
+          m.clear();
+          m.putAll((Map)v);
+        }
+ else {
+          Method s=setter(p,g.getReturnType());
+          if (Info.class.isAssignableFrom(g.getReturnType())) {
+            Info original=(Info)g.invoke(proxyObject,null);
+            Info modified=(Info)unwrap(v);
+            if (original == modified) {
+              if (v instanceof Proxy) {
+                ModificationProxy h=handler(v);
+                if (h != null && h.isDirty()) {
+                  h.commit();
+                }
+              }
+            }
+ else             if (s != null) {
+              s.invoke(proxyObject,v);
+            }
+ else {
+              throw new IllegalStateException("New info object set, but no setter for it.");
+            }
+          }
+ else {
+            s.invoke(proxyObject,v);
+          }
+        }
+      }
+ catch (      Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+    properties=null;
+  }
+}

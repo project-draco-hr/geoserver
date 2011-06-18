@@ -1,0 +1,29 @@
+{
+  Query writeQuery=getWriteQuery(policy);
+  if (writeQuery == Query.ALL) {
+    ((SimpleFeatureStore)storeDelegate).modifyFeatures(names,values,filter);
+  }
+ else   if (writeQuery.getFilter() == Filter.EXCLUDE || writeQuery.getPropertyNames() == Query.NO_NAMES) {
+    throw unsupportedOperation();
+  }
+  final Query local=new Query(null,filter);
+  Query mixed=DataUtilities.mixQueries(local,writeQuery,null);
+  if (writeQuery.getPropertyNames() == Query.ALL_NAMES) {
+    ((SimpleFeatureStore)storeDelegate).modifyFeatures(names,values,mixed.getFilter());
+  }
+ else {
+    Set<String> queryNames=new HashSet<String>(Arrays.asList(writeQuery.getPropertyNames()));
+    for (int i=0; i < names.length; i++) {
+      if (!queryNames.contains(names[i])) {
+        String typeName=getSchema().getName().getLocalPart();
+        if (policy.getResponse() == Response.CHALLENGE) {
+          throw SecureCatalogImpl.unauthorizedAccess(typeName);
+        }
+ else {
+          throw new UnsupportedOperationException("Trying to write on the write protected attribute " + names[i]);
+        }
+      }
+    }
+    ((SimpleFeatureStore)storeDelegate).modifyFeatures(names,values,mixed.getFilter());
+  }
+}

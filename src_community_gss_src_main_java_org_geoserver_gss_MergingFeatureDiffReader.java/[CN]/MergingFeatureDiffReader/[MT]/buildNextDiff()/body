@@ -1,0 +1,45 @@
+{
+  String fid=sortedFids.first();
+  sortedFids.remove(fid);
+  FeatureDiff[] history=diffHistory.remove(fid);
+  SimpleFeature from=null;
+  SimpleFeature to=null;
+  boolean removed=false;
+  for (int i=0; i < history.length; i++) {
+    FeatureDiff diff=history[i];
+    if (diff != null) {
+      if (diff.getState() == FeatureDiff.INSERTED) {
+        if (removed == true) {
+          from=null;
+          to=null;
+        }
+ else {
+          from=null;
+          to=diff.getFeature();
+        }
+        removed=false;
+      }
+ else       if (diff.getState() == FeatureDiff.DELETED) {
+        if (from == null) {
+          from=diff.getOldFeature();
+        }
+        to=null;
+        removed=true;
+      }
+ else {
+        if (removed) {
+          removed=false;
+          from=diff.getOldFeature();
+        }
+        if (from == null) {
+          from=diff.getOldFeature();
+        }
+        to=diff.getFeature();
+      }
+    }
+  }
+  if (from == null && to == null) {
+    return null;
+  }
+  return new FeatureDiffImpl(from,to);
+}

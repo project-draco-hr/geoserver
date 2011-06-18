@@ -1,0 +1,29 @@
+{
+  SimpleFeatureType type=DataUtilities.createType("trees","the_geom:Point,FID:String,NAME:String");
+  SimpleFeatureStore fs=createMock(SimpleFeatureStore.class);
+  expect(fs.addFeatures(isA(FeatureCollection.class))).andReturn(Collections.singletonList((FeatureId)(new FeatureIdImpl("trees.105"))));
+  replay(fs);
+  DataStore ds=createMock(DataStore.class);
+  expect(ds.getTypeNames()).andReturn(new String[]{"trees"}).anyTimes();
+  expect(ds.getSchema("trees")).andReturn(type).anyTimes();
+  expect(ds.getFeatureSource("trees")).andReturn(fs);
+  replay(ds);
+  RetypingDataStore rts=new RetypingDataStore(ds){
+    @Override protected String transformFeatureTypeName(    String originalName){
+      return "oaks";
+    }
+  }
+;
+  SimpleFeatureBuilder sfb=new SimpleFeatureBuilder(type);
+  WKTReader reader=new WKTReader();
+  sfb.set("the_geom",reader.read("POINT (0.002 0.0008)"));
+  sfb.set("FID","023");
+  sfb.set("NAME","Old oak");
+  SimpleFeature feature=sfb.buildFeature(null);
+  SimpleFeatureCollection fc=DataUtilities.collection(feature);
+  SimpleFeatureStore store=(SimpleFeatureStore)rts.getFeatureSource("oaks");
+  List<FeatureId> ids=store.addFeatures(fc);
+  assertEquals(1,ids.size());
+  String id=((FeatureId)ids.iterator().next()).getID();
+  assertTrue("Id does not start with " + "oaks" + " it's "+ id,id.startsWith("oaks"));
+}

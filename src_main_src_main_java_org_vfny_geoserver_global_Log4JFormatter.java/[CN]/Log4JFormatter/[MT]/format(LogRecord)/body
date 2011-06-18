@@ -1,0 +1,36 @@
+{
+  String logger=record.getLoggerName();
+  final String recordLevel=record.getLevel().getLocalizedName();
+  try {
+    buffer.setLength(1);
+    final Long millis=new Long(record.getMillis() - startMillis);
+    writer.write(millis.toString());
+    writer.write(" ");
+    writer.write(PREFIX);
+    writer.write(recordLevel);
+    writer.write(SUFFIX);
+    if (record.getSourceClassName() != null) {
+      writer.write(record.getSourceClassName());
+    }
+    writer.write(" - ");
+    writer.setLineSeparator(bodyLineSeparator);
+    if (record.getMessage() == null) {
+      record.setMessage("null");
+    }
+    writer.write(formatMessage(record));
+    writer.setLineSeparator(lineSeparator);
+    writer.write('\n');
+    if (record.getThrown() != null) {
+      try {
+        writer.write(getStackTrace(record.getThrown()));
+      }
+ catch (      Exception e) {
+      }
+    }
+    writer.flush();
+  }
+ catch (  IOException exception) {
+    throw new AssertionError(exception);
+  }
+  return buffer.toString();
+}

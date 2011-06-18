@@ -1,0 +1,29 @@
+{
+  QuickTileCache.MetaTileKey key=tileCache.getMetaTileKey(request);
+synchronized (key) {
+    RenderedImage tile=tileCache.getTile(key,request);
+    List<GridCoverage2D> renderedCoverages=null;
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("Looked for meta tile " + key.metaTileCoords.x + ", "+ key.metaTileCoords.y+ "in cache: "+ ((tile != null) ? "hit!" : "miss"));
+    }
+    if (tile == null) {
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Building meta tile " + key.metaTileCoords.x + ", "+ key.metaTileCoords.y);
+      }
+      ReferencedEnvelope origEnv=mapContext.getAreaOfInterest();
+      mapContext.setAreaOfInterest(new ReferencedEnvelope(key.getMetaTileEnvelope(),origEnv.getCoordinateReferenceSystem()));
+      mapContext.setMapWidth(key.getTileSize() * key.getMetaFactor());
+      mapContext.setMapHeight(key.getTileSize() * key.getMetaFactor());
+      mapContext.setTileSize(key.getTileSize());
+      RenderedImageMap metaTileMap=delegate.produceMap(mapContext);
+      RenderedImage metaTile=metaTileMap.getImage();
+      RenderedImage[] tiles=split(key,metaTile,mapContext);
+      tileCache.storeTiles(key,tiles);
+      tile=tileCache.getTile(key,request,tiles);
+      renderedCoverages=metaTileMap.getRenderedCoverages();
+    }
+    RenderedImageMap tileMap=new RenderedImageMap(mapContext,tile,getMimeType());
+    tileMap.setRenderedCoverages(renderedCoverages);
+    return tileMap;
+  }
+}

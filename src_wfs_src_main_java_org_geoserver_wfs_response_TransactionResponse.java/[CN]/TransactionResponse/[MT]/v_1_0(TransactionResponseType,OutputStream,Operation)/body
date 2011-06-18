@@ -1,0 +1,81 @@
+{
+  TransactionResultsType result=response.getTransactionResults();
+  Charset charset=Charset.forName(getInfo().getGeoServer().getGlobal().getCharset());
+  Writer writer=new OutputStreamWriter(output,charset);
+  writer=new BufferedWriter(writer);
+  String encoding=charset.name();
+  String xmlHeader="<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>";
+  writer.write(xmlHeader);
+  if (verbose) {
+    writer.write("\n");
+  }
+  writer.write("<wfs:WFS_TransactionResponse");
+  writer.write(indent + "version=\"1.0.0\"");
+  writer.write(indent + "xmlns:wfs=\"http://www.opengis.net/wfs\"");
+  writer.write(indent + "xmlns:ogc=\"http://www.opengis.net/ogc\"");
+  writer.write(indent + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+  writer.write(indent);
+  writer.write("xsi:schemaLocation=\"http://www.opengis.net/wfs ");
+  TransactionType req=(TransactionType)operation.getParameters()[0];
+  String baseUrl=buildSchemaURL(req.getBaseUrl(),"wfs/1.0.0/WFS-transaction.xsd");
+  writer.write(baseUrl);
+  writer.write("\">");
+  InsertResultsType insertResults=response.getInsertResults();
+  String lastHandle=null;
+  boolean first=true;
+  if (insertResults != null) {
+    for (Iterator i=insertResults.getFeature().iterator(); i.hasNext(); ) {
+      InsertedFeatureType insertedFeature=(InsertedFeatureType)i.next();
+      String handle=insertedFeature.getHandle();
+      if (first || ((lastHandle == null) && (handle != null)) || ((lastHandle != null) && (handle != null) && handle.equals(lastHandle))) {
+        if (!first) {
+          writer.write("</wfs:InsertResult>");
+        }
+        writer.write("<wfs:InsertResult");
+        if (insertedFeature.getHandle() != null) {
+          writer.write(" handle=\"" + insertedFeature.getHandle() + "\"");
+        }
+        writer.write(">");
+      }
+      for (Iterator id=insertedFeature.getFeatureId().iterator(); id.hasNext(); ) {
+        FeatureId featureId=(FeatureId)id.next();
+        writer.write("<ogc:FeatureId fid=\"" + featureId.toString() + "\"/>");
+      }
+      first=false;
+      lastHandle=handle;
+    }
+    writer.write("</wfs:InsertResult>");
+  }
+  writer.write(indent + "<wfs:TransactionResult");
+  if (result.getHandle() != null) {
+    writer.write(" handle=\"" + result.getHandle() + "\"");
+  }
+  writer.write(">");
+  writer.write(indent + offset + "<wfs:Status>");
+  writer.write(indent + offset + offset);
+  if (!result.getAction().isEmpty()) {
+    writer.write("<wfs:FAILED/>");
+  }
+ else {
+    writer.write("<wfs:SUCCESS/>");
+  }
+  writer.write(indent + offset + "</wfs:Status>");
+  if (!result.getAction().isEmpty()) {
+    ActionType action=(ActionType)result.getAction().get(0);
+    if (action.getLocator() != null) {
+      writer.write(indent + offset + "<wfs:Locator>");
+      writer.write(action.getLocator() + "</wfs:Locator>");
+    }
+    if (action.getMessage() != null) {
+      writer.write(indent + offset + "<wfs:Message>");
+      ResponseUtils.writeEscapedString(writer,action.getMessage());
+      writer.write("</wfs:Message>");
+    }
+  }
+  writer.write(indent + "</wfs:TransactionResult>");
+  if (verbose) {
+    writer.write("\n");
+  }
+  writer.write("</wfs:WFS_TransactionResponse>");
+  writer.flush();
+}

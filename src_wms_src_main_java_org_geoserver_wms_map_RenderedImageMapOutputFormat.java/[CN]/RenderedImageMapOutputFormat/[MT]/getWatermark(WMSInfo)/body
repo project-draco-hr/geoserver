@@ -1,0 +1,50 @@
+{
+  WatermarkInfo watermark=(wms == null ? null : wms.getWatermark());
+  if (watermark != null && watermark.isEnabled()) {
+    Map<String,String> options=new HashMap<String,String>();
+    options.put("url",watermark.getURL());
+    options.put("opacity",Float.toString((255f - watermark.getTransparency()) / 2.55f));
+    MapDecoration d=new WatermarkDecoration();
+    try {
+      d.loadOptions(options);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Couldn't construct watermark from configuration",e);
+      throw new ServiceException(e);
+    }
+    MapDecorationLayout.Block.Position p=null;
+switch (watermark.getPosition()) {
+case TOP_LEFT:
+      p=MapDecorationLayout.Block.Position.UL;
+    break;
+case TOP_CENTER:
+  p=MapDecorationLayout.Block.Position.UC;
+break;
+case TOP_RIGHT:
+p=MapDecorationLayout.Block.Position.UR;
+break;
+case MID_LEFT:
+p=MapDecorationLayout.Block.Position.CL;
+break;
+case MID_CENTER:
+p=MapDecorationLayout.Block.Position.CC;
+break;
+case MID_RIGHT:
+p=MapDecorationLayout.Block.Position.CR;
+break;
+case BOT_LEFT:
+p=MapDecorationLayout.Block.Position.LL;
+break;
+case BOT_CENTER:
+p=MapDecorationLayout.Block.Position.LC;
+break;
+case BOT_RIGHT:
+p=MapDecorationLayout.Block.Position.LR;
+break;
+default :
+throw new ServiceException("Unknown WatermarkInfo.Position value.  Something is seriously wrong.");
+}
+return new MapDecorationLayout.Block(d,p,null,new Point(0,0));
+}
+return null;
+}

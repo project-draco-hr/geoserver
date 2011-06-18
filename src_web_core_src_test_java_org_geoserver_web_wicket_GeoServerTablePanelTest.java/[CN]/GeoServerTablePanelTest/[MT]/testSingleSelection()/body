@@ -1,0 +1,18 @@
+{
+  tester.startPage(new FormTestPage(new ComponentBuilder(){
+    public Component buildComponent(    String id){
+      return new IntegerTable(id,true);
+    }
+  }
+));
+  tester.assertComponent("form:panel",IntegerTable.class);
+  IntegerTable table=(IntegerTable)tester.getComponentFromLastRenderedPage("form:panel");
+  assertEquals(0,table.getSelection().size());
+  FormTester ft=tester.newFormTester("form");
+  ft.setValue("panel:listContainer:items:1:selectItemContainer:selectItem","true");
+  ft.setValue("panel:listContainer:items:7:selectItemContainer:selectItem","true");
+  ft.submit();
+  assertEquals(2,table.getSelection().size());
+  assertEquals(new Integer(0),table.getSelection().get(0));
+  assertEquals(new Integer(6),table.getSelection().get(1));
+}

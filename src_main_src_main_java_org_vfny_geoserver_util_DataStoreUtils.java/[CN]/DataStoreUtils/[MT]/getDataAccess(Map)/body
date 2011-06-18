@@ -1,0 +1,17 @@
+{
+  DataAccessFactory factory=aquireFactory(params);
+  if (factory == null) {
+    return null;
+  }
+  DataAccess<? extends FeatureType,? extends Feature> store=factory.createDataStore(params);
+  if (store == null) {
+    return null;
+  }
+  if (store instanceof DataStore) {
+    String[] names=((DataStore)store).getTypeNames();
+    for (int i=0; i < names.length; i++) {
+      if (names[i].indexOf(":") >= 0)       return new RetypingDataStore((DataStore)store);
+    }
+  }
+  return store;
+}

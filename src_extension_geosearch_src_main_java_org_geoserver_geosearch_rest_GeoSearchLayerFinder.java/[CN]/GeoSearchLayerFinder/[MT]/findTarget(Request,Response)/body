@@ -1,0 +1,29 @@
+{
+  if (!Method.GET.equals(request.getMethod())) {
+    response.setStatus(Status.CLIENT_ERROR_METHOD_NOT_ALLOWED);
+    return null;
+  }
+  final String name=RESTUtils.getAttribute(request,"layer");
+  if (name == null) {
+    throw new RestletException("No layer name specified",Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+  final Catalog catalog=geoserver.getCatalog();
+  CatalogInfo layer=catalog.getLayerByName(name);
+  MetadataMap mdmap;
+  if (layer == null) {
+    layer=catalog.getLayerGroupByName(name);
+    if (layer == null) {
+      throw new RestletException("Layer " + name + " not found",Status.CLIENT_ERROR_NOT_FOUND);
+    }
+    mdmap=((LayerGroupInfo)layer).getMetadata();
+  }
+ else {
+    mdmap=((LayerInfo)layer).getMetadata();
+  }
+  Boolean enabled=mdmap.get(Properties.INDEXING_ENABLED,Boolean.class);
+  if (enabled == null || !enabled.booleanValue()) {
+    throw new RestletException("Layer " + name + " not found",Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  final Context context=getContext();
+  return new GeoSearchLayer(context,request,response,layer,geoserver);
+}

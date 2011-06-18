@@ -1,0 +1,21 @@
+{
+  IModel model=new Model(store);
+  add(dialog=new GeoServerDialog("dialog"));
+  form=new Form("form",model);
+  add(form);
+  PropertyModel nameModel=new PropertyModel(model,"name");
+  final TextParamPanel namePanel=new TextParamPanel("namePanel",nameModel,new ResourceModel("dataSrcName","Data Source Name"),true);
+  form.add(namePanel);
+  form.add(new TextParamPanel("descriptionPanel",new PropertyModel(model,"description"),new ResourceModel("description","Description"),false));
+  form.add(new CheckBoxParamPanel("enabledPanel",new PropertyModel(model,"enabled"),new ResourceModel("enabled","Enabled")));
+  workspacePanel=new WorkspacePanel("workspacePanel",new PropertyModel(model,"workspace"),new ResourceModel("workspace","Workspace"),true);
+  form.add(workspacePanel);
+  capabilitiesURL=new TextParamPanel("capabilitiesURL",new PropertyModel(form.getModelObject(),"capabilitiesURL"),new ParamResourceModel("capabilitiesURL",AbstractWMSStorePage.this),true);
+  form.add(capabilitiesURL);
+  form.add(new BookmarkablePageLink("cancel",StorePage.class));
+  form.add(saveLink());
+  form.setDefaultButton(saveLink());
+  form.add(new FeedbackPanel("feedback"));
+  StoreNameValidator storeNameValidator=new StoreNameValidator(workspacePanel.getFormComponent(),namePanel.getFormComponent(),store.getId());
+  form.add(storeNameValidator);
+}

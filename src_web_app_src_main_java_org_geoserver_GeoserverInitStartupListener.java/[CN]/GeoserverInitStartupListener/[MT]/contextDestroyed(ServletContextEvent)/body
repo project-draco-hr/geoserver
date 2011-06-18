@@ -1,0 +1,146 @@
+{
+  try {
+    LOGGER.info("Beginning GeoServer cleanup sequence");
+    ClassLoader webappClassLoader=getClass().getClassLoader();
+    Enumeration<Driver> drivers=DriverManager.getDrivers();
+    Set<Driver> driversToUnload=new HashSet<Driver>();
+    while (drivers.hasMoreElements()) {
+      Driver driver=drivers.nextElement();
+      try {
+        ClassLoader driverClassLoader=driver.getClass().getClassLoader();
+        if (driverClassLoader != null && webappClassLoader.equals(driverClassLoader)) {
+          driversToUnload.add(driver);
+        }
+      }
+ catch (      Throwable t) {
+        t.printStackTrace();
+      }
+    }
+    for (    Driver driver : driversToUnload) {
+      try {
+        DriverManager.deregisterDriver(driver);
+        LOGGER.info("Unregistered JDBC driver " + driver);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"Could now unload driver " + driver.getClass(),e);
+      }
+    }
+    drivers=DriverManager.getDrivers();
+    while (drivers.hasMoreElements()) {
+      Driver driver=drivers.nextElement();
+    }
+    org.h2.Driver.unload();
+    try {
+      disposeAuthorityFactories(ReferencingFactoryFinder.getCoordinateOperationAuthorityFactories(null));
+    }
+ catch (    Throwable e) {
+      LOGGER.log(Level.WARNING,"Error occurred trying to dispose authority factories",e);
+    }
+    try {
+      disposeAuthorityFactories(ReferencingFactoryFinder.getCRSAuthorityFactories(null));
+    }
+ catch (    Throwable e) {
+      LOGGER.log(Level.WARNING,"Error occurred trying to dispose authority factories",e);
+    }
+    try {
+      disposeAuthorityFactories(ReferencingFactoryFinder.getCSAuthorityFactories(null));
+    }
+ catch (    Throwable e) {
+      LOGGER.log(Level.WARNING,"Error occurred trying to dispose authority factories",e);
+    }
+    WeakCollectionCleaner.DEFAULT.exit();
+    DeferredAuthorityFactory.exit();
+    CRS.reset("all");
+    LOGGER.info("Shut down GT referencing threads ");
+    ReferencingFactoryFinder.reset();
+    CommonFactoryFinder.reset();
+    DataStoreFinder.reset();
+    DataAccessFinder.reset();
+    LOGGER.info("Shut down GT  SPI ");
+    LOGGER.info("Shut down coverage thread pool ");
+    Object o=Hints.getSystemDefault(Hints.EXECUTOR_SERVICE);
+    if (o != null && o instanceof ExecutorService) {
+      final ThreadPoolExecutor executor=(ThreadPoolExecutor)o;
+      try {
+        executor.shutdown();
+      }
+  finally {
+        try {
+          executor.shutdownNow();
+        }
+  finally {
+        }
+      }
+    }
+    final IIORegistry ioRegistry=IIORegistry.getDefaultInstance();
+    Set<IIOServiceProvider> providersToUnload=new HashSet();
+    for (Iterator<Class<?>> cats=ioRegistry.getCategories(); cats.hasNext(); ) {
+      Class<?> category=cats.next();
+      for (Iterator it=ioRegistry.getServiceProviders(category,false); it.hasNext(); ) {
+        final IIOServiceProvider provider=(IIOServiceProvider)it.next();
+        if (webappClassLoader.equals(provider.getClass().getClassLoader())) {
+          providersToUnload.add(provider);
+        }
+      }
+    }
+    for (    IIOServiceProvider provider : providersToUnload) {
+      ioRegistry.deregisterServiceProvider(provider);
+      LOGGER.info("Unregistering Image I/O provider " + provider);
+    }
+    final OperationRegistry opRegistry=JAI.getDefaultInstance().getOperationRegistry();
+    for (    String mode : RegistryMode.getModeNames()) {
+      for (Iterator descriptors=opRegistry.getDescriptors(mode).iterator(); descriptors != null && descriptors.hasNext(); ) {
+        RegistryElementDescriptor red=(RegistryElementDescriptor)descriptors.next();
+        int factoryCount=0;
+        int unregisteredCount=0;
+        for (Iterator factories=opRegistry.getFactoryIterator(mode,red.getName()); factories != null && factories.hasNext(); ) {
+          Object factory=factories.next();
+          if (factory == null) {
+            continue;
+          }
+          factoryCount++;
+          if (webappClassLoader.equals(factory.getClass().getClassLoader())) {
+            boolean unregistered=false;
+            Vector orderedProductList=opRegistry.getOrderedProductList(mode,red.getName());
+            if (orderedProductList != null) {
+              for (Iterator products=orderedProductList.iterator(); products != null && products.hasNext(); ) {
+                String product=(String)products.next();
+                try {
+                  opRegistry.unregisterFactory(mode,red.getName(),product,factory);
+                  LOGGER.info("Unregistering JAI factory " + factory.getClass());
+                }
+ catch (                Throwable t) {
+                }
+              }
+            }
+            if (unregistered) {
+              unregisteredCount++;
+            }
+          }
+        }
+        if (factoryCount > 0 && unregisteredCount == factoryCount) {
+          opRegistry.unregisterDescriptor(red);
+        }
+      }
+    }
+    Introspector.flushCaches();
+    LOGGER.info("Cleaned up javabean caches");
+    if (!relinquishLoggingControl)     LogManager.shutdown();
+    LogFactory.release(Thread.currentThread().getContextClassLoader());
+    try {
+      System.gc();
+      System.runFinalization();
+      System.gc();
+      System.runFinalization();
+      System.gc();
+      System.runFinalization();
+    }
+ catch (    Throwable t) {
+      System.out.println("Failed to perform closing up finalization");
+      t.printStackTrace();
+    }
+  }
+ catch (  Throwable t) {
+    t.printStackTrace();
+  }
+}

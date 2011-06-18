@@ -1,0 +1,22 @@
+{
+  ByteArrayOutputStream out=null;
+  StringBuffer testText=new StringBuffer();
+  try {
+    out=new ByteArrayOutputStream();
+    this.response.write(imageMap,out,null);
+    out.flush();
+    out.close();
+    File testFile=TestData.file(this,"results/" + testName + ".txt");
+    BufferedReader reader=new BufferedReader(new FileReader(testFile));
+    String s=null;
+    while ((s=reader.readLine()) != null)     testText.append(s + "\n");
+    reader.close();
+  }
+  finally {
+    imageMap.dispose();
+  }
+  assertNotNull(out);
+  assertTrue(out.size() > 0);
+  String s=new String(out.toByteArray());
+  assertEquals(testText.toString(),s);
+}

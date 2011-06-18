@@ -1,0 +1,15 @@
+{
+  VersionedDescribeResults results=(VersionedDescribeResults)value;
+  if (!results.isVersioned()) {
+    delegate.write(results.getFeatureTypeInfo(),output,operation);
+  }
+ else {
+    ByteArrayOutputStream bos=new ByteArrayOutputStream();
+    delegate.write(results.getFeatureTypeInfo(),bos,operation);
+    String describe=bos.toString();
+    for (int i=0; i < REPLACEMENTS.length; i++) {
+      describe=describe.replaceAll(REPLACEMENTS[i][0],REPLACEMENTS[i][1]);
+    }
+    output.write(describe.getBytes());
+  }
+}

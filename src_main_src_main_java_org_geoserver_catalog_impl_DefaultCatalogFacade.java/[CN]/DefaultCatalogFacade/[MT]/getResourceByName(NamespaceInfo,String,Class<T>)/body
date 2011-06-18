@@ -1,0 +1,27 @@
+{
+  List l=lookup(clazz,resources);
+  if (namespace == ANY_NAMESPACE) {
+    List matches=new ArrayList();
+    for (Iterator i=l.iterator(); i.hasNext(); ) {
+      ResourceInfo resource=(ResourceInfo)i.next();
+      if (name.equals(resource.getName())) {
+        matches.add(resource);
+      }
+    }
+    if (matches.size() == 1) {
+      return ModificationProxy.create((T)matches.get(0),clazz);
+    }
+  }
+ else {
+    for (Iterator i=l.iterator(); i.hasNext(); ) {
+      ResourceInfo resource=(ResourceInfo)i.next();
+      if (name.equals(resource.getName())) {
+        NamespaceInfo namespace1=resource.getNamespace();
+        if (namespace1 != null && namespace1.equals(namespace)) {
+          return ModificationProxy.create((T)resource,clazz);
+        }
+      }
+    }
+  }
+  return null;
+}

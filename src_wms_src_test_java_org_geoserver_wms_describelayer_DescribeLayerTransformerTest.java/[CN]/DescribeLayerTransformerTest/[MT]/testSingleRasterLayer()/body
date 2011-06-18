@@ -1,0 +1,18 @@
+{
+  MapLayerInfo mapLayerInfo=new MapLayerInfo(coverageLayerInfo);
+  request.addLayer(mapLayerInfo);
+  final String serverBaseUrl="http://geoserver.org";
+  transformer=new DescribeLayerTransformer(serverBaseUrl);
+  final Document dom=WMSTestSupport.transform(request,transformer);
+  final String layerDescPath="/WMS_DescribeLayerResponse/LayerDescription";
+  assertXpathExists(layerDescPath,dom);
+  assertXpathEvaluatesTo("geos:fakeCoverage",layerDescPath + "/@name",dom);
+  assertXpathEvaluatesTo("",layerDescPath + "/@wfs",dom);
+  assertXpathExists(layerDescPath + "/@owsURL",dom);
+  final String expectedOWSURLAtt=serverBaseUrl + "/wcs?";
+  assertXpathEvaluatesTo(expectedOWSURLAtt,layerDescPath + "/@owsURL",dom);
+  assertXpathExists(layerDescPath + "/@owsType",dom);
+  assertXpathEvaluatesTo("WCS",layerDescPath + "/@owsType",dom);
+  assertXpathExists(layerDescPath + "/Query",dom);
+  assertXpathEvaluatesTo("geos:fakeCoverage",layerDescPath + "/Query/@typeName",dom);
+}

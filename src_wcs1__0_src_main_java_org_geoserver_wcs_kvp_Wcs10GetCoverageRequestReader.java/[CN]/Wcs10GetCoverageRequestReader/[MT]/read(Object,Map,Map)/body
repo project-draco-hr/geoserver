@@ -1,0 +1,24 @@
+{
+  GetCoverageType getCoverage=(GetCoverageType)super.read(request,kvp,rawKvp);
+  if (getCoverage.getSourceCoverage() == null) {
+    if (kvp.get("coverage") == null)     throw new WcsException("source coverage parameter is mandatory",MissingParameterValue,"source coverage");
+ else     getCoverage.setSourceCoverage((String)((List)kvp.get("coverage")).get(0));
+  }
+  if (!getCoverage.isSetVersion())   throw new WcsException("Version has not been specified",WcsExceptionCode.MissingParameterValue,"version");
+  List<String> provided=new ArrayList<String>();
+  provided.add(Wcs10GetCoverageRequestReader.VERSION);
+  List<String> accepted=null;
+  if (getCoverage.getVersion() != null) {
+    accepted=new ArrayList<String>();
+    accepted.add(getCoverage.getVersion());
+  }
+  String version=RequestUtils.getVersionPreOws(provided,accepted);
+  if (!Wcs10GetCoverageRequestReader.VERSION.equals(version)) {
+    throw new WcsException("An invalid version number has been specified",WcsExceptionCode.InvalidParameterValue,"version");
+  }
+  getCoverage.setVersion(Wcs10GetCoverageRequestReader.VERSION);
+  getCoverage.setDomainSubset(parseDomainSubset(kvp));
+  getCoverage.setRangeSubset(parseRangeSubset(kvp,getCoverage.getSourceCoverage()));
+  getCoverage.setOutput(parseOutputElement(kvp));
+  return getCoverage;
+}

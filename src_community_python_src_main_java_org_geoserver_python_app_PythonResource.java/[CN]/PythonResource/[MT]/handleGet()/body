@@ -1,0 +1,22 @@
+{
+  try {
+    final ByteArrayOutputStream out=new ByteArrayOutputStream();
+    PythonInterpreter pi=jython.interpreter();
+    Form query=getRequest().getResourceRef().getQueryAsForm();
+    for (    String name : query.getNames()) {
+      pi.set(name,query.getFirstValue(name));
+    }
+    pi.setOut(out);
+    pi.execfile(new FileInputStream(script));
+    getResponse().setEntity(new OutputRepresentation(MediaType.TEXT_PLAIN){
+      @Override public void write(      OutputStream output) throws IOException {
+        output.write(out.toByteArray());
+      }
+    }
+);
+    getResponse().setStatus(Status.SUCCESS_OK);
+  }
+ catch (  Exception e) {
+    throw new RestletException("Error executing script " + script.getName(),Status.SERVER_ERROR_INTERNAL,e);
+  }
+}

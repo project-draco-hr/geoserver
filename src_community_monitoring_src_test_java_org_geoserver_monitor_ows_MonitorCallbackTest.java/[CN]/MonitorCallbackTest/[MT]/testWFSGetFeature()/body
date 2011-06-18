@@ -1,0 +1,13 @@
+{
+  GetFeatureType gf=WfsFactory.eINSTANCE.createGetFeatureType();
+  QueryType q=WfsFactory.eINSTANCE.createQueryType();
+  q.setTypeName(Arrays.asList(new QName("http://acme.org","foo","acme")));
+  gf.getQuery().add(q);
+  q=WfsFactory.eINSTANCE.createQueryType();
+  q.setTypeName(Arrays.asList(new QName("http://acme.org","bar","acme")));
+  gf.getQuery().add(q);
+  Operation op=op("GetFeature","WFS","1.0.0",gf);
+  callback.operationDispatched(new Request(),op);
+  assertEquals("acme:foo",data.getResources().get(0));
+  assertEquals("acme:bar",data.getResources().get(1));
+}

@@ -1,0 +1,75 @@
+{
+  super(id);
+  this.serverComponent=server;
+  this.portComponent=port;
+  this.instanceComponent=instance;
+  this.userComponent=user;
+  this.passwordComponent=password;
+  final MapModel tableNameModel=new MapModel(paramsModel,TABLE_NAME);
+  List<String> choices=new ArrayList<String>();
+  if (tableNameModel.getObject() != null) {
+    Object currentTableName=tableNameModel.getObject();
+    choices.add(String.valueOf(currentTableName));
+  }
+  choice=new DropDownChoice("rasterTable",tableNameModel,choices);
+  choice.setChoiceRenderer(new IChoiceRenderer(){
+    private static final long serialVersionUID=1L;
+    public String getIdValue(    Object tableName,    int index){
+      return tableName.toString();
+    }
+    public Object getDisplayValue(    Object tableName){
+      return tableName;
+    }
+  }
+);
+  choice.setOutputMarkupId(true);
+  choice.setNullValid(false);
+  choice.setRequired(true);
+  final FormComponentFeedbackBorder feedback=new FormComponentFeedbackBorder("border");
+  feedback.add(choice);
+  add(feedback);
+{
+    final String titleKey=RESOURCE_KEY_PREFIX + ".tableNameChoice.title";
+    ResourceModel titleModel=new ResourceModel(titleKey);
+    String title=String.valueOf(titleModel.getObject());
+    choice.add(new SimpleAttributeModifier("title",title));
+  }
+  final AjaxSubmitLink refreshTablesLink=new AjaxSubmitLink("refresh",storeEditForm){
+    private static final long serialVersionUID=1L;
+    /** 
+ * We're not doing any validation here, just want to perform the same attempt to get to
+ * the list of connection parameters than at {@link #onSumbit}
+ */
+    @Override protected void onError(    AjaxRequestTarget target,    Form form){
+      onSubmit(target,form);
+    }
+    @Override protected void onSubmit(    final AjaxRequestTarget target,    final Form form){
+      final String server=serverComponent.getValue();
+      final String port=portComponent.getValue();
+      final String instance=instanceComponent.getValue();
+      final String user=userComponent.getValue();
+      final String password=passwordComponent.getValue();
+      final ISessionPoolFactory sessionFac=getSessionFactory();
+      List<String> rasterColumns;
+      try {
+        rasterColumns=getRasterColumns(server,port,instance,user,password,sessionFac);
+      }
+ catch (      IllegalArgumentException e) {
+        rasterColumns=Collections.emptyList();
+        String message="Refreshing raster tables list: " + e.getMessage();
+        storeEditForm.error(message);
+        target.addComponent(storeEditForm);
+      }
+      choice.setChoices(rasterColumns);
+      target.addComponent(choice);
+    }
+  }
+;
+  add(refreshTablesLink);
+{
+    final String titleKey=RESOURCE_KEY_PREFIX + ".refresh.title";
+    ResourceModel titleModel=new ResourceModel(titleKey);
+    String title=String.valueOf(titleModel.getObject());
+    refreshTablesLink.add(new SimpleAttributeModifier("title",title));
+  }
+}

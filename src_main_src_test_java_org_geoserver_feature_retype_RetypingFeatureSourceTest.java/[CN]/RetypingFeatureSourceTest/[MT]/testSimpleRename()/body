@@ -1,0 +1,16 @@
+{
+  SimpleFeatureSource fs=store.getFeatureSource(BUILDINGS.getLocalPart());
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.init(fs.getSchema());
+  tb.setName("houses");
+  SimpleFeatureType target=tb.buildFeatureType();
+  SimpleFeatureSource retyped=RetypingFeatureSource.getRetypingSource(fs,target);
+  assertTrue(retyped instanceof SimpleFeatureLocking);
+  assertEquals(target,retyped.getSchema());
+  assertEquals(target,((DataStore)retyped.getDataStore()).getSchema("houses"));
+  assertEquals(target,retyped.getFeatures().getSchema());
+  SimpleFeatureIterator it=retyped.getFeatures().features();
+  SimpleFeature f=it.next();
+  it.close();
+  assertEquals(target,f.getType());
+}

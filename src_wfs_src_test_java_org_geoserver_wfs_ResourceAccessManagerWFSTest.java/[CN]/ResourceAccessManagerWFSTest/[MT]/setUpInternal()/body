@@ -1,0 +1,16 @@
+{
+  super.setUpInternal();
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  TestResourceAccessManager tam=(TestResourceAccessManager)applicationContext.getBean("testResourceAccessManager");
+  Catalog catalog=getCatalog();
+  FeatureTypeInfo buildings=catalog.getFeatureTypeByName(getLayerId(MockData.BUILDINGS));
+  Filter fid113=ff.equal(ff.property("FID"),ff.literal("113"),false);
+  tam.putLimits("cite_readfilter",buildings,new VectorAccessLimits(CatalogMode.HIDE,null,fid113,null,null));
+  List<PropertyName> readAtts=Arrays.asList(ff.property("the_geom"),ff.property("FID"));
+  tam.putLimits("cite_readatts",buildings,new VectorAccessLimits(CatalogMode.HIDE,readAtts,fid113,null,null));
+  Filter restrictedStreet=ff.not(ff.like(ff.property("ADDRESS"),"*Restricted Street*","*","?","\\"));
+  tam.putLimits("cite_insertfilter",buildings,new VectorAccessLimits(CatalogMode.HIDE,null,null,null,restrictedStreet));
+  tam.putLimits("cite_writefilter",buildings,new VectorAccessLimits(CatalogMode.HIDE,null,null,null,fid113));
+  List<PropertyName> writeAtts=Arrays.asList(ff.property("the_geom"),ff.property("FID"));
+  tam.putLimits("cite_writeatts",buildings,new VectorAccessLimits(CatalogMode.HIDE,null,null,writeAtts,null));
+}

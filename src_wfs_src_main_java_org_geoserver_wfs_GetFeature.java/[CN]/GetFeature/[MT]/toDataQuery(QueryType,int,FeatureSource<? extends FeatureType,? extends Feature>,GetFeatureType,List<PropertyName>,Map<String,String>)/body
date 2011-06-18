@@ -1,0 +1,66 @@
+{
+  String wfsVersion=request.getVersion();
+  if (maxFeatures <= 0) {
+    maxFeatures=Query.DEFAULT_MAX;
+  }
+  Filter filter=(Filter)query.getFilter();
+  if (filter == null) {
+    filter=Filter.INCLUDE;
+  }
+ else {
+    SimplifyingFilterVisitor visitor=new SimplifyingFilterVisitor();
+    filter=(Filter)filter.accept(visitor,null);
+  }
+  CoordinateReferenceSystem crs=source.getSchema().getCoordinateReferenceSystem();
+  CoordinateReferenceSystem declaredCRS=WFSReprojectionUtil.getDeclaredCrs(crs,wfsVersion);
+  Filter transformedFilter=filter;
+  if (declaredCRS != null)   transformedFilter=WFSReprojectionUtil.normalizeFilterCRS(filter,source.getSchema(),declaredCRS);
+  QName typeName=(QName)query.getTypeName().get(0);
+  Query dataQuery=new Query(typeName.getLocalPart(),transformedFilter,maxFeatures,props,query.getHandle());
+  CoordinateReferenceSystem target;
+  if (query.getSrsName() != null) {
+    try {
+      target=CRS.decode(query.getSrsName().toString());
+    }
+ catch (    Exception e) {
+      String msg="Unable to support srsName: " + query.getSrsName();
+      throw new WFSException(msg,e);
+    }
+  }
+ else {
+    target=declaredCRS;
+  }
+  if (target != null && declaredCRS != null && !CRS.equalsIgnoreMetadata(crs,target)) {
+    dataQuery.setCoordinateSystemReproject(target);
+  }
+  if (query.getSortBy() != null) {
+    List sortBy=query.getSortBy();
+    dataQuery.setSortBy((SortBy[])sortBy.toArray(new SortBy[sortBy.size()]));
+  }
+  if (query.getFeatureVersion() != null) {
+    dataQuery.setVersion(query.getFeatureVersion());
+  }
+  final Hints hints=new Hints();
+  if (request.getTraverseXlinkDepth() != null) {
+    Integer traverseXlinkDepth=traverseXlinkDepth(request.getTraverseXlinkDepth());
+    hints.put(Hints.ASSOCIATION_TRAVERSAL_DEPTH,traverseXlinkDepth);
+  }
+  if (!query.getXlinkPropertyName().isEmpty()) {
+    for (Iterator x=query.getXlinkPropertyName().iterator(); x.hasNext(); ) {
+      XlinkPropertyNameType xlinkProperty=(XlinkPropertyNameType)x.next();
+      Integer traverseXlinkDepth=traverseXlinkDepth(xlinkProperty.getTraverseXlinkDepth());
+      hints.put(Hints.ASSOCIATION_TRAVERSAL_DEPTH,traverseXlinkDepth);
+      PropertyName xlinkPropertyName=filterFactory.property(xlinkProperty.getValue());
+      hints.put(Hints.ASSOCIATION_PROPERTY,xlinkPropertyName);
+      dataQuery.setHints(hints);
+      break;
+    }
+  }
+  hints.put(Hints.JTS_COORDINATE_SEQUENCE_FACTORY,new LiteCoordinateSequenceFactory());
+  if (viewParams != null) {
+    hints.put(Hints.VIRTUAL_TABLE_PARAMETERS,viewParams);
+  }
+  hints.put(Query.INCLUDE_MANDATORY_PROPS,true);
+  dataQuery.setHints(hints);
+  return dataQuery;
+}

@@ -1,0 +1,30 @@
+{
+  return new AjaxSubmitLink("copy"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      styles.processInput();
+      StyleInfo style=(StyleInfo)styles.getConvertedInput();
+      if (style != null) {
+        try {
+          editor.reset();
+          setRawSLD(readFile(style));
+        }
+ catch (        Exception e) {
+          error("Errors occurred loading the '" + style.getName() + "' style");
+        }
+        target.addComponent(styleForm);
+      }
+    }
+    @Override protected IAjaxCallDecorator getAjaxCallDecorator(){
+      return new AjaxPreprocessingCallDecorator(super.getAjaxCallDecorator()){
+        @Override public CharSequence preDecorateScript(        CharSequence script){
+          return "if(event.view.document.gsEditors." + editor.getTextAreaMarkupId() + ".getCode() != '' &&"+ "!confirm('"+ new ParamResourceModel("confirmOverwrite",AbstractStylePage.this).getString()+ "')) return false;"+ script;
+        }
+      }
+;
+    }
+    @Override public boolean getDefaultFormProcessing(){
+      return false;
+    }
+  }
+;
+}

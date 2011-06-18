@@ -1,0 +1,10 @@
+{
+  Document dom=getAsDOM("/rest/workspaces/sf/datastores/sf.xml");
+  assertXpathEvaluatesTo("true","/dataStore/enabled",dom);
+  String xml="<dataStore>" + "<name>sf</name>" + "<enabled>false</enabled>"+ "</dataStore>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/sf/datastores/sf",xml,"text/xml");
+  assertEquals(200,response.getStatusCode());
+  dom=getAsDOM("/rest/workspaces/sf/datastores/sf.xml");
+  assertXpathEvaluatesTo("false","/dataStore/enabled",dom);
+  assertFalse(catalog.getDataStoreByName("sf","sf").isEnabled());
+}

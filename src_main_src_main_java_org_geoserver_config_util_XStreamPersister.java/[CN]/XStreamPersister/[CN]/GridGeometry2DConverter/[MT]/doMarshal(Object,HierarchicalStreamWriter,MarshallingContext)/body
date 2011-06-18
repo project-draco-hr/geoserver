@@ -1,0 +1,47 @@
+{
+  GridGeometry2D g=(GridGeometry2D)source;
+  MathTransform tx=g.getGridToCRS();
+  writer.addAttribute("dimension",String.valueOf(g.getGridRange().getDimension()));
+  StringBuffer low=new StringBuffer();
+  StringBuffer high=new StringBuffer();
+  for (int r=0; r < g.getGridRange().getDimension(); r++) {
+    low.append(g.getGridRange().getLow(r)).append(" ");
+    high.append(g.getGridRange().getHigh(r) + 1).append(" ");
+  }
+  low.setLength(low.length() - 1);
+  high.setLength(high.length() - 1);
+  writer.startNode("range");
+  writer.startNode("low");
+  writer.setValue(low.toString());
+  writer.endNode();
+  writer.startNode("high");
+  writer.setValue(high.toString());
+  writer.endNode();
+  writer.endNode();
+  if (tx instanceof AffineTransform) {
+    AffineTransform atx=(AffineTransform)tx;
+    writer.startNode("transform");
+    writer.startNode("scaleX");
+    writer.setValue(Double.toString(atx.getScaleX()));
+    writer.endNode();
+    writer.startNode("scaleY");
+    writer.setValue(Double.toString(atx.getScaleY()));
+    writer.endNode();
+    writer.startNode("shearX");
+    writer.setValue(Double.toString(atx.getShearX()));
+    writer.endNode();
+    writer.startNode("shearY");
+    writer.setValue(Double.toString(atx.getShearY()));
+    writer.endNode();
+    writer.startNode("translateX");
+    writer.setValue(Double.toString(atx.getTranslateX()));
+    writer.endNode();
+    writer.startNode("translateY");
+    writer.setValue(Double.toString(atx.getTranslateY()));
+    writer.endNode();
+    writer.endNode();
+  }
+  writer.startNode("crs");
+  context.convertAnother(g.getCoordinateReferenceSystem(),new SingleValueConverterWrapper(new SRSConverter()));
+  writer.endNode();
+}

@@ -1,0 +1,50 @@
+{
+  final TileLayer layer=getTileLayerByName(layerName);
+  final Set<String> styleNames;
+  final Set<String> gridSetIds;
+  final List<MimeType> mimeTypes;
+  if (styleName == null) {
+    styleNames=getCachedStyles(layerName);
+    if (styleNames.size() == 0) {
+      styleNames.add("");
+    }
+  }
+ else {
+    styleNames=Collections.singleton(styleName);
+  }
+  if (gridSetName == null) {
+    gridSetIds=layer.getGridSubsets().keySet();
+  }
+ else {
+    gridSetIds=Collections.singleton(gridSetName);
+  }
+  if (format == null) {
+    mimeTypes=layer.getMimeTypes();
+  }
+ else {
+    try {
+      mimeTypes=Collections.singletonList(MimeType.createFromFormat(format));
+    }
+ catch (    MimeException e) {
+      throw new RuntimeException();
+    }
+  }
+  final String defaultStyle=layer.getStyles();
+  for (  String gridSetId : gridSetIds) {
+    final GridSubset gridSubset=layer.getGridSubset(gridSetId);
+    for (    String style : styleNames) {
+      Map<String,String> parameters;
+      if (style.equals(defaultStyle)) {
+        log.finer("'" + style + "' is the layer's default style, "+ "not adding a parameter filter");
+        parameters=null;
+      }
+ else {
+        parameters=Collections.singletonMap("STYLES",style);
+      }
+      for (      MimeType mime : mimeTypes) {
+        String formatName=mime.getFormat();
+        truncate(layer,bounds,gridSubset,formatName,parameters);
+      }
+    }
+  }
+}

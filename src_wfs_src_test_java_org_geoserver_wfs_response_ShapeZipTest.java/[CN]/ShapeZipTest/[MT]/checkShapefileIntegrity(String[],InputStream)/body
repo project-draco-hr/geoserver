@@ -1,0 +1,18 @@
+{
+  ZipInputStream zis=new ZipInputStream(in);
+  ZipEntry entry=null;
+  final String[] extensions=new String[]{".shp",".shx",".dbf",".prj",".cst"};
+  Set names=new HashSet();
+  for (  String name : typeNames) {
+    for (    String extension : extensions) {
+      names.add(name + extension);
+    }
+  }
+  while ((entry=zis.getNextEntry()) != null) {
+    final String name=entry.getName();
+    assertTrue("Missing " + name,names.contains(name));
+    names.remove(name);
+    zis.closeEntry();
+  }
+  zis.close();
+}

@@ -1,0 +1,23 @@
+{
+  try {
+    Catalog catalog=getCatalog();
+    final String prefix=info.getWorkspace().getName();
+    final NamespaceInfo namespace=catalog.getNamespaceByPrefix(prefix);
+    List<CoverageInfo> alreadyConfigured;
+    alreadyConfigured=catalog.getResourcesByStore(info,CoverageInfo.class);
+    for (    CoverageInfo coverage : alreadyConfigured) {
+      coverage.setNamespace(namespace);
+    }
+    ResourcePool resourcePool=catalog.getResourcePool();
+    resourcePool.clear(info);
+    catalog.save(info);
+    for (    CoverageInfo coverage : alreadyConfigured) {
+      catalog.save(coverage);
+    }
+    LOGGER.finer("Saved store " + info.getName());
+  }
+ catch (  RuntimeException e) {
+    LOGGER.log(Level.WARNING,"Saving the store for " + info.getURL(),e);
+    throw new IllegalArgumentException("Unable to save the store: " + e.getMessage());
+  }
+}

@@ -1,0 +1,20 @@
+{
+  Set<String> cachedGridSetIds=info.getCachedGridSetIds();
+  if (cachedGridSetIds.size() == 0) {
+    throw new IllegalStateException("TileLayer " + getName() + " has no gridsets configured");
+  }
+  Map<String,GridSubset> grids=new HashMap<String,GridSubset>(2);
+  for (  String gridSetId : cachedGridSetIds) {
+    GridSet gridSet=gridSetBroker.get(gridSetId);
+    if (gridSet == null) {
+      throw new ConfigurationException("No GWC GridSet named '" + gridSetId + "' exists.");
+    }
+    BoundingBox extent=getBoundsFromWGS84Bounds(latLonBbox,gridSet.getSRS());
+    Integer zoomStart=0;
+    Integer zoomStop=gridSet.getGrids().length - 1;
+    GridSubset gridSubSet;
+    gridSubSet=GridSubsetFactory.createGridSubSet(gridSet,extent,zoomStart,zoomStop);
+    grids.put(gridSetId,gridSubSet);
+  }
+  return grids;
+}

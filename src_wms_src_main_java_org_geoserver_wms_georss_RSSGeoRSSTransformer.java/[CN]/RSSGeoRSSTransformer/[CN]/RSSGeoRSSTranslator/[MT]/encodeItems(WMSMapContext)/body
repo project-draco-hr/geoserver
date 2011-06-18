@@ -1,0 +1,25 @@
+{
+  List featureCollections=loadFeatureCollections(map);
+  for (Iterator f=featureCollections.iterator(); f.hasNext(); ) {
+    SimpleFeatureCollection features=(SimpleFeatureCollection)f.next();
+    FeatureIterator<SimpleFeature> iterator=null;
+    try {
+      iterator=features.features();
+      while (iterator.hasNext()) {
+        SimpleFeature feature=iterator.next();
+        try {
+          encodeItem(feature,map);
+        }
+ catch (        Exception e) {
+          LOGGER.warning("Encoding failed for feature: " + feature.getID());
+          LOGGER.log(Level.FINE,"",e);
+        }
+      }
+    }
+  finally {
+      if (iterator != null) {
+        features.close(iterator);
+      }
+    }
+  }
+}

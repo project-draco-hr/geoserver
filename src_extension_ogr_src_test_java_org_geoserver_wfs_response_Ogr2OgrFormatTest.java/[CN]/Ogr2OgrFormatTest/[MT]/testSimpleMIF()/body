@@ -1,0 +1,15 @@
+{
+  FeatureCollection fc=dataStore.getFeatureSource("Buildings").getFeatures();
+  fct.getFeature().add(fc);
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  gft.setOutputFormat("OGR-MIF");
+  ogr.write(fct,bos,op);
+  ZipInputStream zis=new ZipInputStream(new ByteArrayInputStream(bos.toByteArray()));
+  Set<String> fileNames=new HashSet<String>();
+  ZipEntry entry=null;
+  while ((entry=zis.getNextEntry()) != null) {
+    fileNames.add(entry.getName());
+  }
+  assertTrue(fileNames.contains("Buildings.mif"));
+  assertTrue(fileNames.contains("Buildings.mid"));
+}

@@ -1,0 +1,25 @@
+{
+  if (geom instanceof LineString) {
+    LineString l=(LineString)geom;
+    try {
+      double bufferMultiplier=worldToScreen.createInverse().getScaleX();
+      Geometry buffered=l.buffer(buffer * bufferMultiplier);
+      if (buffered instanceof Polygon) {
+        Polygon poly=(Polygon)decimate(buffered);
+        if (poly != null) {
+          LineString shell=poly.getExteriorRing();
+          if (shell != null && shell.getCoordinates() != null)           writePathContent(shell.getCoordinates(),buf);
+ else           throw new IOException("Nothing to encode");
+        }
+ else         throw new IOException("Nothing to encode");
+      }
+ else {
+        throw new IOException("Impossible to encode: " + buffered);
+      }
+    }
+ catch (    NoninvertibleTransformException e) {
+      throw new IOException(e.getMessage());
+    }
+  }
+ else   throw new IOException("Wrong geometry: it should be a LineString");
+}

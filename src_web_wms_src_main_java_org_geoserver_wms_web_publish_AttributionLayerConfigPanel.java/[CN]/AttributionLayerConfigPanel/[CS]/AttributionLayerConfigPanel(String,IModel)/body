@@ -1,0 +1,48 @@
+{
+  super(id,model);
+  LayerInfo layer=(LayerInfo)model.getObject();
+  if (layer.getAttribution() == null) {
+    layer.setAttribution(GeoServerApplication.get().getCatalog().getFactory().createAttribution());
+  }
+  AttributionInfo attr=layer.getAttribution();
+  add(new TextField("wms.attribution.title",new PropertyModel(model,"attribution.title")));
+  final TextField href=new TextField("wms.attribution.href",new PropertyModel(model,"attribution.href"));
+  href.add(new UrlValidator());
+  href.setOutputMarkupId(true);
+  add(href);
+  final TextField logo=new TextField("wms.attribution.logo",new PropertyModel(model,"attribution.logoURL"));
+  logo.add(new UrlValidator());
+  logo.setOutputMarkupId(true);
+  add(logo);
+  final TextField type=new TextField("wms.attribution.type",new PropertyModel(model,"attribution.logoType"));
+  type.setOutputMarkupId(true);
+  add(type);
+  final TextField height=new TextField("wms.attribution.height",new PropertyModel(model,"attribution.logoHeight"),Integer.class);
+  height.add(NumberValidator.minimum(0));
+  height.setOutputMarkupId(true);
+  add(height);
+  final TextField width=new TextField("wms.attribution.width",new PropertyModel(model,"attribution.logoWidth"),Integer.class);
+  width.add(NumberValidator.minimum(0));
+  width.setOutputMarkupId(true);
+  add(width);
+  add(new AjaxSubmitLink("verifyImage"){
+    protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      if (logo.getDefaultModelObjectAsString() != null) {
+        try {
+          URL url=new URL(logo.getDefaultModelObjectAsString());
+          URLConnection conn=url.openConnection();
+          type.getModel().setObject(conn.getContentType());
+          BufferedImage image=ImageIO.read(conn.getInputStream());
+          height.setModelValue("" + image.getHeight());
+          width.setModelValue("" + image.getWidth());
+        }
+ catch (        Exception e) {
+        }
+      }
+      target.addComponent(type);
+      target.addComponent(height);
+      target.addComponent(width);
+    }
+  }
+);
+}

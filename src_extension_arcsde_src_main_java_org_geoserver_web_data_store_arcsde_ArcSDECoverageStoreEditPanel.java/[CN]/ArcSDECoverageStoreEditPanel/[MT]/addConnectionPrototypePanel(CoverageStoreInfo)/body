@@ -1,0 +1,36 @@
+{
+  final String resourceKey=RESOURCE_KEY_PREFIX + ".prototype";
+  Label label=new Label("prototypeLabel",new ResourceModel(resourceKey));
+  final String title=String.valueOf(new ResourceModel(resourceKey + ".title").getObject());
+  final SimpleAttributeModifier titleSetter=new SimpleAttributeModifier("title",title);
+  label.add(titleSetter);
+  add(label);
+  final DropDownChoice existingArcSDECoverages;
+  existingArcSDECoverages=new DropDownChoice("connectionPrototype",new Model(),new ArcSDEStoreListModel(),new ArcSDEStoreListChoiceRenderer());
+  existingArcSDECoverages.add(titleSetter);
+  add(existingArcSDECoverages);
+  existingArcSDECoverages.add(new OnChangeAjaxBehavior(){
+    private static final long serialVersionUID=1L;
+    @SuppressWarnings("unchecked") @Override protected void onUpdate(    AjaxRequestTarget target){
+      final String storeId=existingArcSDECoverages.getValue();
+      final List<StoreInfo> choices=existingArcSDECoverages.getChoices();
+      for (      StoreInfo store : choices) {
+        if (store.getId().equals(storeId)) {
+          Map<String,String> connParams=parseConnectionParameters(store);
+          server.setModelObject(connParams.get(SERVER_NAME_PARAM_NAME));
+          port.setModelObject(connParams.get(PORT_NUMBER_PARAM_NAME));
+          instance.setModelObject(connParams.get(INSTANCE_NAME_PARAM_NAME));
+          user.setModelObject(connParams.get(USER_NAME_PARAM_NAME));
+          password.setModelObject(connParams.get(PASSWORD_PARAM_NAME));
+          target.addComponent(server);
+          target.addComponent(port);
+          target.addComponent(instance);
+          target.addComponent(user);
+          target.addComponent(password);
+          break;
+        }
+      }
+    }
+  }
+);
+}

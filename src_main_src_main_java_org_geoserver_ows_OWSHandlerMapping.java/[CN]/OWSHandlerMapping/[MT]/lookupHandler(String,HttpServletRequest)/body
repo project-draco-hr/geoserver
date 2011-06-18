@@ -1,0 +1,22 @@
+{
+  Object h=super.lookupHandler(urlPath,request);
+  if (h == null) {
+    int i=urlPath.startsWith("/") ? 1 : 0;
+    int j=urlPath.indexOf("/",i);
+    if (j > i) {
+      String first=urlPath.substring(i,j);
+      String last=urlPath.substring(j);
+      if (catalog.getWorkspaceByName(first) != null) {
+        j=last.indexOf("/",1);
+        if (j != -1) {
+          first=last.substring(1,j);
+          if (catalog.getLayerByName(first) != null) {
+            last=last.substring(j);
+          }
+        }
+        h=super.lookupHandler(last,request);
+      }
+    }
+  }
+  return h;
+}

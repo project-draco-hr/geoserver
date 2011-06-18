@@ -1,0 +1,58 @@
+{
+  if (currLayer == null) {
+    return;
+  }
+  Style[] layerStyles=null;
+  FeatureTypeConstraint[] ftcs=null;
+  if (layer instanceof NamedLayer) {
+    ftcs=((NamedLayer)layer).getLayerFeatureConstraints();
+    layerStyles=((NamedLayer)layer).getStyles();
+  }
+ else   if (layer instanceof UserLayer) {
+    ftcs=((UserLayer)layer).getLayerFeatureConstraints();
+    layerStyles=((UserLayer)layer).getUserStyles();
+  }
+  if (ftcs != null) {
+    FeatureTypeConstraint ftc;
+    final int length=ftcs.length;
+    for (int t=0; t < length; t++) {
+      ftc=ftcs[t];
+      if (ftc.getFeatureTypeName() != null) {
+        String ftc_name=ftc.getFeatureTypeName();
+        boolean matches;
+        try {
+          final FeatureType currSchema=currLayer.getFeature().getFeatureType();
+          matches=currSchema.getName().getLocalPart().equalsIgnoreCase(ftc_name) || FeatureTypes.isDecendedFrom(currSchema,null,ftc_name);
+        }
+ catch (        Exception e) {
+          matches=false;
+        }
+        if (!matches) {
+          continue;
+        }
+      }
+    }
+  }
+  if ((layerStyles == null) || (layerStyles.length == 0)) {
+    layers.add(currLayer);
+    styles.add(currLayer.getDefaultStyle());
+    return;
+  }
+  final int length=layerStyles.length;
+  Style s;
+  for (int t=0; t < length; t++) {
+    if (layerStyles[t] instanceof NamedStyle) {
+      layers.add(currLayer);
+      String styleName=((NamedStyle)layerStyles[t]).getName();
+      s=wms.getStyleByName(styleName);
+      if (s == null) {
+        throw new ServiceException("couldnt find style named '" + styleName + "'");
+      }
+      styles.add(s);
+    }
+ else {
+      layers.add(currLayer);
+      styles.add(layerStyles[t]);
+    }
+  }
+}

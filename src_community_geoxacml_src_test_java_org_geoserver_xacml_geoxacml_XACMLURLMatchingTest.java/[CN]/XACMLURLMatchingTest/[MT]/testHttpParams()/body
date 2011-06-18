@@ -1,0 +1,18 @@
+{
+  Map<String,Object> paramMap=new HashMap<String,Object>();
+  paramMap.put("param1","value1");
+  paramMap.put("param2",new String[]{"value2"});
+  RequestCtx request=GeoXACMLConfig.getRequestCtxBuilderFactory().getURLMatchRequestCtxBuilder((XACMLRole)anonymous.getAuthorities()[0],"/rest/","GET",paramMap,"127.0.0.1","localhost").createRequestCtx();
+  int count=0;
+  for (  Attribute attr : request.getResource()) {
+    if (attr.getId().toString().equals(XACMLConstants.URLParamPrefix + "param1")) {
+      assertTrue(((StringAttribute)attr.getValue()).getValue().equals("value1"));
+      count++;
+    }
+    if (attr.getId().toString().equals(XACMLConstants.URLParamPrefix + "param2")) {
+      assertTrue(((StringAttribute)attr.getValue()).getValue().equals("value2"));
+      count++;
+    }
+  }
+  assertTrue(count == 2);
+}

@@ -1,0 +1,32 @@
+{
+  if ("BLANK".equals(exceptionFormat) && bgcolor == null && Boolean.TRUE.equals(transparent)) {
+    bgcolor=new Color(0,0,0,0);
+  }
+  if (bgcolor == null) {
+    bgcolor=Color.WHITE;
+  }
+  BufferedImage img=new BufferedImage(width,height,BufferedImage.TYPE_4BYTE_ABGR);
+  Graphics2D g=(Graphics2D)img.getGraphics();
+  g.setColor(bgcolor);
+  g.fillRect(0,0,img.getWidth(),img.getHeight());
+  if (!"BLANK".equals(exceptionFormat)) {
+    g.setColor(Color.BLACK);
+    paintLines(g,buildImageExceptionText(exception),width - 2,35,5);
+  }
+  g.dispose();
+  try {
+    final HttpServletResponse response=request.getHttpResponse();
+    if ("image/png8".equals(format)) {
+      response.setContentType("image/png");
+    }
+ else {
+      response.setContentType(format);
+    }
+    final ServletOutputStream os=response.getOutputStream();
+    ImageIO.write(img,IMAGEIO_FORMATS.get(format),os);
+    os.flush();
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.INFO,"Problem writing exception information back to calling client:",e);
+  }
+}

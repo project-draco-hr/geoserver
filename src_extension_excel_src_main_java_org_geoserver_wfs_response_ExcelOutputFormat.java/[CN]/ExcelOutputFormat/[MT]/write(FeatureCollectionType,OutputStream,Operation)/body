@@ -1,0 +1,70 @@
+{
+  Workbook wb=getNewWorkbook();
+  CreationHelper helper=wb.getCreationHelper();
+  ExcelCellStyles styles=new ExcelCellStyles(wb);
+  for (Iterator it=featureCollection.getFeature().iterator(); it.hasNext(); ) {
+    SimpleFeatureCollection fc=(SimpleFeatureCollection)it.next();
+    Sheet sheet=wb.createSheet(fc.getSchema().getTypeName());
+    Row header=sheet.createRow(0);
+    SimpleFeatureType ft=fc.getSchema();
+    Cell cell;
+    cell=header.createCell(0);
+    cell.setCellValue(helper.createRichTextString("FID"));
+    for (int i=0; i < ft.getAttributeCount() && i < colLimit; i++) {
+      AttributeDescriptor ad=ft.getDescriptor(i);
+      cell=header.createCell(i + 1);
+      cell.setCellValue(helper.createRichTextString(ad.getLocalName()));
+      cell.setCellStyle(styles.getHeaderStyle());
+    }
+    SimpleFeatureIterator i=fc.features();
+    int r=0;
+    try {
+      Row row;
+      while (i.hasNext()) {
+        r++;
+        row=sheet.createRow(r);
+        cell=row.createCell(0);
+        if (r == (rowLimit - 1) && i.hasNext()) {
+          RichTextString rowWarning=helper.createRichTextString(TRUNCATE_WARNING + ": ROWS " + r+ " - "+ fc.size()+ " NOT SHOWN");
+          cell.setCellValue(rowWarning);
+          cell.setCellStyle(styles.getWarningStyle());
+          break;
+        }
+        SimpleFeature f=i.next();
+        cell.setCellValue(helper.createRichTextString(f.getID()));
+        for (int j=0; j < f.getAttributeCount() && j < colLimit; j++) {
+          Object att=f.getAttribute(j);
+          if (att != null) {
+            cell=row.createCell(j + 1);
+            if (att instanceof Number) {
+              cell.setCellValue(((Number)att).doubleValue());
+            }
+ else             if (att instanceof Date) {
+              cell.setCellValue((Date)att);
+              cell.setCellStyle(styles.getDateStyle());
+            }
+ else             if (att instanceof Calendar) {
+              cell.setCellValue((Calendar)att);
+              cell.setCellStyle(styles.getDateStyle());
+            }
+ else             if (att instanceof Boolean) {
+              cell.setCellValue((Boolean)att);
+            }
+ else {
+              String stringVal=att.toString();
+              if (stringVal.length() > CELL_CHAR_LIMIT) {
+                stringVal=TRUNCATE_WARNING + " " + stringVal.substring(0,CELL_CHAR_LIMIT - TRUNCATE_WARNING.length() - 1);
+                cell.setCellStyle(styles.getWarningStyle());
+              }
+              cell.setCellValue(helper.createRichTextString(stringVal));
+            }
+          }
+        }
+      }
+    }
+  finally {
+      fc.close(i);
+    }
+  }
+  wb.write(output);
+}

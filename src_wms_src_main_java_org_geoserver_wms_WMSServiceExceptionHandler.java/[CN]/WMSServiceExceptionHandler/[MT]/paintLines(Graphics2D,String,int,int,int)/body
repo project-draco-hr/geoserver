@@ -1,0 +1,24 @@
+{
+  String[] lines=text.split("\\n");
+  Point cursor=new Point(startX,startY);
+  final FontMetrics metrics=g.getFontMetrics();
+  int lineHeight=metrics.getAscent() + metrics.getDescent() + metrics.getLeading();
+  FontRenderContext frc=g.getFontRenderContext();
+  for (int i=0; i < lines.length; i++) {
+    final String line=lines[i];
+    if ("".equals(line)) {
+      cursor.y+=lineHeight;
+    }
+ else {
+      AttributedString styledText=new AttributedString(line);
+      LineBreakMeasurer measurer=new LineBreakMeasurer(styledText.getIterator(),frc);
+      while (measurer.getPosition() < line.length()) {
+        TextLayout layout=measurer.nextLayout(lineWidth - startX);
+        cursor.y+=(layout.getAscent());
+        float dx=layout.isLeftToRight() ? 0 : (lineWidth - layout.getAdvance());
+        layout.draw(g,cursor.x + dx,cursor.y);
+        cursor.y+=layout.getDescent() + layout.getLeading();
+      }
+    }
+  }
+}

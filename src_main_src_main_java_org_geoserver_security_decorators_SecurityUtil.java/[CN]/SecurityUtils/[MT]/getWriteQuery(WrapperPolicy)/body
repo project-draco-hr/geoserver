@@ -1,0 +1,15 @@
+{
+  if (policy.getAccessLevel() != AccessLevel.READ_WRITE) {
+    return new Query(null,Filter.EXCLUDE);
+  }
+ else   if (policy.getLimits() == null) {
+    return Query.ALL;
+  }
+ else   if (policy.getLimits() instanceof VectorAccessLimits) {
+    VectorAccessLimits val=(VectorAccessLimits)policy.getLimits();
+    return val.getWriteQuery();
+  }
+ else {
+    throw new IllegalArgumentException("SecureFeatureStore has been fed " + "with unexpected AccessLimits class " + policy.getLimits().getClass());
+  }
+}

@@ -1,0 +1,33 @@
+{
+  try {
+    start=new Date().getTime();
+    Thread[] threads=new Thread[runs];
+    if (isPost) {
+      url=new URL(postUrl);
+      for (int i=0; i < runs; i++)       threads[i]=new TestPostThread(url,req);
+    }
+ else {
+      if (url == null) {
+        url=new URL(req);
+      }
+      for (int i=0; i < runs; i++)       threads[i]=new TestGetThread(url);
+    }
+    for (int i=0; i < runs; i++) {
+      threads[i].start();
+      sleep(wait);
+    }
+    while (finished < runs) {
+      sleep(1);
+    }
+    PrintStream os=System.out;
+    if ((log != null) && (log.getAbsoluteFile() != null)) {
+      log=log.getAbsoluteFile();
+      os=new PrintStream(new FileOutputStream(log));
+    }
+    generateOutput(threads,os);
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    usage();
+  }
+}

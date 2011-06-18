@@ -1,0 +1,13 @@
+{
+  if (matchGroups.isEmpty())   return new MatchResult(MatchResult.MATCH);
+  Status firstIndeterminateStatus=null;
+  for (  TargetMatchGroup group : matchGroups) {
+    MatchResult result=group.match(context);
+    if (result.getResult() == MatchResult.MATCH)     return result;
+    if (result.getResult() == MatchResult.INDETERMINATE) {
+      if (firstIndeterminateStatus == null)       firstIndeterminateStatus=result.getStatus();
+    }
+  }
+  if (firstIndeterminateStatus == null)   return new MatchResult(MatchResult.NO_MATCH);
+ else   return new MatchResult(MatchResult.INDETERMINATE,firstIndeterminateStatus);
+}

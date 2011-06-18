@@ -1,0 +1,16 @@
+{
+  SecureTreeNode root=buildTree("lockedDown.properties");
+  assertEquals(0,root.children.size());
+  final Set<String> readRoles=root.getAuthorizedRoles(AccessMode.READ);
+  assertEquals(1,readRoles.size());
+  assertTrue(readRoles.contains("WRITER"));
+  final Set<String> writeRoles=root.getAuthorizedRoles(AccessMode.WRITE);
+  assertEquals(1,writeRoles.size());
+  assertTrue(writeRoles.contains("WRITER"));
+  assertFalse(root.canAccess(anonymous,AccessMode.READ));
+  assertFalse(root.canAccess(anonymous,AccessMode.WRITE));
+  assertFalse(root.canAccess(roUser,AccessMode.READ));
+  assertFalse(root.canAccess(roUser,AccessMode.WRITE));
+  assertTrue(root.canAccess(rwUser,AccessMode.READ));
+  assertTrue(root.canAccess(rwUser,AccessMode.WRITE));
+}

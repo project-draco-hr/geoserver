@@ -1,0 +1,10 @@
+{
+  String xml="<wmsStore>" + "<name>newWMSStore</name>" + "<capabilitiesURL>http://somehost/wms?</capabilitiesURL>"+ "<workspace>sf</workspace>"+ "</wmsStore>";
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/sf/wmsstores",xml,"text/xml");
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(response.getHeader("Location"));
+  assertTrue(response.getHeader("Location").endsWith("/workspaces/sf/wmsstores/newWMSStore"));
+  WMSStoreInfo newStore=catalog.getStoreByName("newWMSStore",WMSStoreInfo.class);
+  assertNotNull(newStore);
+  assertEquals("http://somehost/wms?",newStore.getCapabilitiesURL());
+}

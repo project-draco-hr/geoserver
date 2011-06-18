@@ -1,0 +1,30 @@
+{
+  final Set<String> capabilitiesCrsIdentifiers;
+  if (epsgCodes.isEmpty()) {
+    comment("All supported EPSG projections:");
+    capabilitiesCrsIdentifiers=new LinkedHashSet<String>();
+    for (    String code : CRS.getSupportedCodes("AUTO")) {
+      if ("WGS84(DD)".equals(code))       continue;
+      capabilitiesCrsIdentifiers.add("AUTO:" + code);
+    }
+    capabilitiesCrsIdentifiers.addAll(CRS.getSupportedCodes("EPSG"));
+  }
+ else {
+    comment("Limited list of EPSG projections:");
+    capabilitiesCrsIdentifiers=new TreeSet<String>(epsgCodes);
+  }
+  try {
+    Iterator<String> it=capabilitiesCrsIdentifiers.iterator();
+    String currentSRS;
+    while (it.hasNext()) {
+      currentSRS=it.next();
+      if (currentSRS.indexOf(':') == -1) {
+        currentSRS=EPSG + currentSRS;
+      }
+      element("SRS",currentSRS);
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+  }
+}

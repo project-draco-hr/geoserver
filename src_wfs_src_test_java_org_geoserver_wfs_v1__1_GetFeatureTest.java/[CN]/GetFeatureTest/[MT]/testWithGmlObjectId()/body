@@ -1,0 +1,12 @@
+{
+  String xml="<wfs:GetFeature xmlns:cdf=\"http://www.opengis.net/cite/data\" xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.1.0\" service=\"WFS\">" + "<wfs:Query  typeName=\"cdf:Seven\" srsName=\"urn:x-ogc:def:crs:EPSG:6.11.2:4326\">" + "</wfs:Query>"+ "</wfs:GetFeature>";
+  Document dom=postAsDOM("wfs",xml);
+  assertEquals("wfs:FeatureCollection",dom.getDocumentElement().getNodeName());
+  assertEquals(7,dom.getElementsByTagName("cdf:Seven").getLength());
+  NodeList others=dom.getElementsByTagName("cdf:Seven");
+  String id=((Element)others.item(0)).getAttributeNS(GML.NAMESPACE,"id");
+  assertNotNull(id);
+  xml="<wfs:GetFeature xmlns:cdf=\"http://www.opengis.net/cite/data\" xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.1.0\" service=\"WFS\">" + "<wfs:Query  typeName=\"cdf:Seven\" srsName=\"urn:x-ogc:def:crs:EPSG:6.11.2:4326\">" + "<ogc:Filter>"+ "<ogc:GmlObjectId gml:id=\"" + id + "\"/>"+ "</ogc:Filter>"+ "</wfs:Query>"+ "</wfs:GetFeature>";
+  dom=postAsDOM("wfs",xml);
+  assertEquals(1,dom.getElementsByTagName("cdf:Seven").getLength());
+}

@@ -1,0 +1,40 @@
+{
+  File template=null;
+  String baseDirName;
+  try {
+    final String dirName;
+    if (featureType != null) {
+      baseDirName="featureTypes";
+      dirName=GeoserverDataDirectory.findFeatureTypeDirName(featureType);
+    }
+ else     if (coverageName != null) {
+      baseDirName="coverages";
+      dirName=GeoserverDataDirectory.findCoverageDirName(coverageName);
+    }
+ else {
+      baseDirName="featureTypes";
+      dirName="";
+    }
+    template=(File)fileTemplateLoader.findTemplateSource(baseDirName + File.separator + dirName+ File.separator+ path);
+    if (template != null) {
+      return template;
+    }
+    if (featureType != null) {
+      NamespaceInfo nsInfo=null;
+      if (featureType.getName().getNamespaceURI() != null) {
+        nsInfo=catalog.getNamespaceByURI(featureType.getName().getNamespaceURI());
+      }
+      if (nsInfo != null) {
+        template=(File)fileTemplateLoader.findTemplateSource("templates" + File.separator + nsInfo.getPrefix()+ File.separator+ path);
+      }
+    }
+    if (template != null)     return template;
+    template=(File)fileTemplateLoader.findTemplateSource(baseDirName + File.separator + path);
+    if (template != null) {
+      return template;
+    }
+  }
+ catch (  NoSuchElementException e) {
+  }
+  return null;
+}

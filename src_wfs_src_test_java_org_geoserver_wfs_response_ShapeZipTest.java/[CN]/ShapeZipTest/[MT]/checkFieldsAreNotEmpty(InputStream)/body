@@ -1,0 +1,37 @@
+{
+  ZipInputStream zis=new ZipInputStream(in);
+  ZipEntry entry=null;
+  File tempFolder=createTempFolder("shp_");
+  String shapeFileName="";
+  while ((entry=zis.getNextEntry()) != null) {
+    final String name=entry.getName();
+    String outName=tempFolder.getAbsolutePath() + File.separatorChar + name;
+    if (name.toLowerCase().endsWith("shp"))     shapeFileName=outName;
+    FileOutputStream outFile=new FileOutputStream(outName);
+    copyStream(zis,outFile);
+    outFile.close();
+    zis.closeEntry();
+  }
+  zis.close();
+  File shapeFile=new File(shapeFileName);
+  ShapefileDataStore ds=new ShapefileDataStore(shapeFile.toURL());
+  SimpleFeatureSource fs=ds.getFeatureSource();
+  SimpleFeatureCollection fc=fs.getFeatures();
+  SimpleFeatureType schema=fc.getSchema();
+  Iterator<SimpleFeature> iter=fc.iterator();
+  try {
+    while (iter.hasNext()) {
+      SimpleFeature f=iter.next();
+      for (      Object attrValue : f.getAttributes()) {
+        assertNotNull(attrValue);
+        if (Geometry.class.isAssignableFrom(attrValue.getClass()))         assertFalse("Empty geometry",((Geometry)attrValue).isEmpty());
+ else         assertFalse("Empty value for attribute",attrValue.toString().trim().equals(""));
+      }
+    }
+  }
+  finally {
+    fc.close(iter);
+    tempFolder.delete();
+  }
+  return schema;
+}

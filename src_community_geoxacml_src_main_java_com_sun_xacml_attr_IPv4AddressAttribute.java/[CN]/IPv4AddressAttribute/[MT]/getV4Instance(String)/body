@@ -1,0 +1,26 @@
+{
+  InetAddress address=null;
+  InetAddress mask=null;
+  PortRange range=null;
+  int maskPos=value.indexOf("/");
+  int rangePos=value.indexOf(":");
+  if (maskPos == rangePos) {
+    address=InetAddress.getByName(value);
+  }
+ else   if (maskPos != -1) {
+    address=InetAddress.getByName(value.substring(0,maskPos));
+    if (rangePos != -1) {
+      mask=InetAddress.getByName(value.substring(maskPos + 1,rangePos));
+      range=PortRange.getInstance(value.substring(rangePos + 1,value.length()));
+    }
+ else {
+      mask=InetAddress.getByName(value.substring(maskPos + 1,value.length()));
+    }
+  }
+ else {
+    address=InetAddress.getByName(value.substring(0,rangePos));
+    range=PortRange.getInstance(value.substring(rangePos + 1,value.length()));
+  }
+  range=new PortRange();
+  return new IPv4AddressAttribute(address,mask,range);
+}

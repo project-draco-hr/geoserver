@@ -1,0 +1,49 @@
+{
+  super(wfs);
+  this.catalog=geoServer.getCatalog();
+  this.schemaBuilder=schemaBuilder;
+  catalog.addListener(new CatalogListener(){
+    public void handleAddEvent(    CatalogAddEvent event){
+      if (event.getSource() instanceof FeatureTypeInfo) {
+        reloaded();
+      }
+    }
+    public void handleModifyEvent(    CatalogModifyEvent event){
+      if (event.getSource() instanceof DataStoreInfo || event.getSource() instanceof FeatureTypeInfo || event.getSource() instanceof NamespaceInfo) {
+        reloaded();
+      }
+    }
+    public void handlePostModifyEvent(    CatalogPostModifyEvent event){
+    }
+    public void handleRemoveEvent(    CatalogRemoveEvent event){
+    }
+    public void reloaded(){
+      wfs.dispose();
+    }
+  }
+);
+  catalog.getResourcePool().addListener(new ResourcePool.Listener(){
+    public void disposed(    FeatureTypeInfo featureType,    FeatureType ft){
+    }
+    public void disposed(    CoverageStoreInfo coverageStore,    GridCoverageReader gcr){
+    }
+    public void disposed(    DataStoreInfo dataStore,    DataAccess da){
+      wfs.dispose();
+    }
+  }
+);
+  geoServer.addListener(new ConfigurationListenerAdapter(){
+    public void reloaded(){
+      wfs.dispose();
+    }
+    public void handleServiceChange(    ServiceInfo service,    List<String> propertyNames,    List<Object> oldValues,    List<Object> newValues){
+      if (service instanceof WFSInfo) {
+        reloaded();
+      }
+    }
+  }
+);
+  addDependency(new OGCConfiguration());
+  addDependency(new GMLConfiguration());
+  addDependency(new OWSConfiguration());
+}

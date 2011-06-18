@@ -1,0 +1,21 @@
+{
+  String url=geoserver.getGlobal().getProxyBaseUrl();
+  if ((geoserver != null) && (url != null)) {
+    url=appendContextPath(url,httpServletRequest.getRequestURI());
+  }
+  if ((url == null) || (url.trim().length() == 0)) {
+    if (httpServletRequest != null) {
+      url=httpServletRequest.getSession().getServletContext().getInitParameter(PROXY_PARAM);
+    }
+    if ((url == null) || (url.trim().length() == 0)) {
+      url=httpServletRequest.getScheme() + "://" + httpServletRequest.getServerName()+ ":"+ httpServletRequest.getServerPort()+ httpServletRequest.getRequestURI()+ "/";
+    }
+ else {
+      url=appendContextPath(url,httpServletRequest.getRequestURI());
+    }
+  }
+  if (url.endsWith("/")) {
+    url=url.substring(0,url.length() - 1);
+  }
+  return url;
+}

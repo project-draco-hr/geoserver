@@ -1,0 +1,23 @@
+{
+  final Catalog catalog=getCatalog();
+  ResourcePool pool=new ResourcePool(catalog);
+  FeatureTypeInfo oldInfo=catalog.getFeatureTypeByName(MockData.LAKES.getNamespaceURI(),MockData.LAKES.getLocalPart());
+  List<LayerInfo> layers=catalog.getLayers(oldInfo);
+  for (  LayerInfo layerInfo : layers) {
+    catalog.remove(layerInfo);
+  }
+  catalog.remove(oldInfo);
+  CatalogBuilder builder=new CatalogBuilder(catalog);
+  builder.setStore(catalog.getStoreByName(MockData.CITE_PREFIX,MockData.CITE_PREFIX,DataStoreInfo.class));
+  FeatureTypeInfo info=builder.buildFeatureType(new NameImpl(MockData.LAKES.getNamespaceURI(),MockData.LAKES.getLocalPart()));
+  List<AttributeTypeInfo> att1=pool.getAttributes(info);
+  List<AttributeTypeInfo> att2=pool.getAttributes(info);
+  assertNotSame(att1,att2);
+  assertEquals(att1,att2);
+  catalog.add(info);
+  List<AttributeTypeInfo> att3=pool.getAttributes(info);
+  List<AttributeTypeInfo> att4=pool.getAttributes(info);
+  assertSame(att3,att4);
+  assertNotSame(att1,att3);
+  assertEquals(att1,att3);
+}

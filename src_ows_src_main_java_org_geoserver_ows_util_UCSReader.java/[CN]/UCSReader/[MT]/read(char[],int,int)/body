@@ -1,0 +1,106 @@
+{
+  if ((0 > offset) || (offset > ch.length) || (0 > length)|| ((offset + length) > ch.length)|| (0 > (offset + length))) {
+    throw new IndexOutOfBoundsException();
+  }
+ else   if (0 == length) {
+    return 0;
+  }
+  if (fEncoding < 4) {
+    return readUCS2(ch,offset,length);
+  }
+  int charsRead=0;
+  while (charsRead <= length) {
+    if (0 != fCharCount) {
+      ch[offset + charsRead]=fCharBuf[--fCharCount];
+      charsRead++;
+    }
+ else {
+      break;
+    }
+  }
+  if (0 != (length - charsRead)) {
+    int byteLength=(length - charsRead) << 2;
+    if (byteLength > fBuffer.length) {
+      byteLength=fBuffer.length;
+    }
+    int count=fInputStream.read(fBuffer,0,byteLength);
+    if (-1 == count) {
+      return (0 == charsRead) ? (-1) : charsRead;
+    }
+ else {
+      int numToRead=((4 - (count & 3)) & 3);
+      for (int i=0; i < numToRead; i++) {
+        int charRead=fInputStream.read();
+        if (charRead == -1) {
+          for (int j=i; j < numToRead; j++)           fBuffer[count + j]=0;
+          break;
+        }
+ else {
+          fBuffer[count + i]=(byte)charRead;
+        }
+      }
+      count+=numToRead;
+      int numChars=count >> 2;
+      int curPos=0;
+      int charsCount=charsRead;
+      int i;
+      for (i=0; (i < numChars) && (length >= charsCount); i++) {
+        int b0=fBuffer[curPos++] & 0xff;
+        int b1=fBuffer[curPos++] & 0xff;
+        int b2=fBuffer[curPos++] & 0xff;
+        int b3=fBuffer[curPos++] & 0xff;
+        int codepoint;
+        if (UCS4BE == fEncoding) {
+          codepoint=((b0 << 24) + (b1 << 16) + (b2 << 8)+ b3);
+        }
+ else {
+          codepoint=((b3 << 24) + (b2 << 16) + (b1 << 8)+ b0);
+        }
+        if (!isSupplementaryCodePoint(codepoint)) {
+          ch[offset + charsCount]=(char)codepoint;
+          charsCount++;
+        }
+ else {
+          if (2 <= (length - charsCount)) {
+            int cp1=(codepoint - 0x10000) & 0xFFFFF;
+            ch[offset + charsCount]=(char)(0xD800 + (cp1 >>> 10));
+            ch[offset + charsCount + 1]=(char)(0xDC00 + (cp1 & 0x3FF));
+            charsCount+=2;
+          }
+ else {
+            break;
+          }
+        }
+      }
+      curPos=(numChars << 2) - 1;
+      for (int k=numChars; k > i; k--) {
+        int b3=fBuffer[curPos--] & 0xff;
+        int b2=fBuffer[curPos--] & 0xff;
+        int b1=fBuffer[curPos--] & 0xff;
+        int b0=fBuffer[curPos--] & 0xff;
+        int codepoint;
+        if (UCS4BE == fEncoding) {
+          codepoint=((b0 << 24) + (b1 << 16) + (b2 << 8)+ b3);
+        }
+ else {
+          codepoint=((b3 << 24) + (b2 << 16) + (b1 << 8)+ b0);
+        }
+        if (2 > (fCharBuf.length - k)) {
+          char[] newBuf=new char[fCharBuf.length << 1];
+          System.arraycopy(fCharBuf,0,newBuf,0,fCharBuf.length);
+          fCharBuf=newBuf;
+        }
+        if (!isSupplementaryCodePoint(codepoint)) {
+          fCharBuf[fCharCount++]=(char)codepoint;
+        }
+ else {
+          int cp1=(codepoint - 0x10000) & 0xFFFFF;
+          fCharBuf[fCharCount++]=(char)(0xDC00 + ((char)cp1 & 0x3FF));
+          fCharBuf[fCharCount++]=(char)(0xD800 + (cp1 >>> 10));
+        }
+      }
+      return charsCount;
+    }
+  }
+  return charsRead;
+}

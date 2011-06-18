@@ -1,0 +1,26 @@
+{
+  final SimpleFeatureType originalSchema=curCollection.getSchema();
+  if (curCollection.isEmpty()) {
+    if (isShapefileCompatible(originalSchema)) {
+      return writeShapefile(tempDir,curCollection);
+    }
+ else {
+      SimpleFeatureType simplifiedShema=buildShapefileCompatible(originalSchema);
+      return writeShapefile(tempDir,new EmptyFeatureCollection(simplifiedShema));
+    }
+  }
+  File outFile=new File(tempDir,originalSchema.getTypeName() + ".gml");
+  OutputStream os=null;
+  try {
+    os=new FileOutputStream(outFile);
+    FeatureTransformer ft=new FeatureTransformer();
+    ft.setNumDecimals(16);
+    ft.setNamespaceDeclarationEnabled(false);
+    ft.getFeatureNamespaces().declarePrefix("topp",originalSchema.getName().getNamespaceURI());
+    ft.transform(curCollection,os);
+  }
+  finally {
+    os.close();
+  }
+  return outFile;
+}

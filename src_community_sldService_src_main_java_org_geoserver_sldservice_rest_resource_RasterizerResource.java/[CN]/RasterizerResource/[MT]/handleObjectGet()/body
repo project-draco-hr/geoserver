@@ -1,0 +1,32 @@
+{
+  Request req=getRequest();
+  Form parameters=req.getResourceRef().getQueryAsForm();
+  String layer=getAttribute("layer");
+  if (layer == null) {
+    return new ArrayList();
+  }
+  double min=parameters.getFirstValue("min") != null ? Double.parseDouble(parameters.getFirstValue("min")) : DEFAULT_MIN;
+  double max=parameters.getFirstValue("max") != null ? Double.parseDouble(parameters.getFirstValue("max")) : DEFAULT_MAX;
+  int classes=parameters.getFirstValue("classes") != null ? Integer.parseInt(parameters.getFirstValue("classes")) : DEFAULT_CLASSES;
+  COLORRAMP_TYPE ramp=parameters.getFirstValue("ramp") != null ? COLORRAMP_TYPE.valueOf(parameters.getFirstValue("ramp").toUpperCase()) : COLORRAMP_TYPE.RED;
+  LayerInfo layerInfo=catalog.getLayerByName(layer);
+  if (layerInfo != null) {
+    ResourceInfo obj=layerInfo.getResource();
+    if (obj instanceof CoverageInfo) {
+      CoverageInfo cvInfo;
+      cvInfo=(CoverageInfo)obj;
+      StyleInfo defaultStyle=layerInfo.getDefaultStyle();
+      RasterSymbolizer rasterSymbolizer=getRasterSymbolizer(defaultStyle);
+      if (rasterSymbolizer == null) {
+        throw new RestletException("RasterSymbolizer SLD expected!",Status.CLIENT_ERROR_EXPECTATION_FAILED);
+      }
+      Style rasterized=remapStyle(defaultStyle,rasterSymbolizer,min,max,classes,ramp,layer);
+      DataFormat format=getFormatGet();
+      if (format instanceof SLDFormat) {
+        return rasterized;
+      }
+      return defaultStyle;
+    }
+  }
+  return new ArrayList();
+}

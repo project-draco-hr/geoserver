@@ -1,0 +1,33 @@
+{
+  if (System.getProperty("org.geotools.referencing.forceXY") == null || !"http".equals(Hints.getSystemDefault(Hints.FORCE_AXIS_ORDER_HONORING))) {
+    System.setProperty("org.geotools.referencing.forceXY","true");
+    Hints.putSystemDefault(Hints.FORCE_AXIS_ORDER_HONORING,"http");
+    CRS.reset("all");
+  }
+  testData=buildTestData();
+  testData.setUp();
+  try {
+    Logging.ALL.setLoggerFactory(Log4JLoggerFactory.getInstance());
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Could not configure log4j logging redirection",e);
+  }
+  System.setProperty(LoggingUtils.RELINQUISH_LOG4J_CONTROL,"true");
+  GeoServerResourceLoader loader=new GeoServerResourceLoader(testData.getDataDirectoryRoot());
+  LoggingUtils.configureGeoServerLogging(loader,getClass().getResourceAsStream(getLogConfiguration()),false,true,null);
+  GeoServerLoader.setLegacy(useLegacyDataDirectory());
+  if (testData.isTestDataAvailable()) {
+    MockServletContext servletContext=new MockServletContext();
+    servletContext.setInitParameter("GEOSERVER_DATA_DIR",testData.getDataDirectoryRoot().getPath());
+    servletContext.setInitParameter("serviceStrategy","PARTIAL-BUFFER2");
+    if (testData.getDataDirectoryRoot().canWrite()) {
+      File webinf=new File(testData.getDataDirectoryRoot(),"WEB-INF");
+      webinf.mkdir();
+      servletContext.setRealPath("WEB-INF",webinf.getAbsolutePath());
+    }
+    applicationContext=new GeoServerTestApplicationContext(getSpringContextLocations(),servletContext);
+    applicationContext.setUseLegacyGeoServerLoader(useLegacyDataDirectory());
+    applicationContext.refresh();
+    servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE,applicationContext);
+  }
+}

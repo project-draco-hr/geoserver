@@ -1,0 +1,14 @@
+{
+  FeatureSource<? extends FeatureType,? extends Feature> fs;
+  fs=getFeatureSource(MockData.BASIC_POLYGONS);
+  ShapeZipOutputFormat zip=new ShapeZipOutputFormat();
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  FeatureCollectionType fct=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  fct.getFeature().add(fs.getFeatures());
+  Map options=new HashMap();
+  options.put("CHARSET",Charset.forName("ISO-8859-15"));
+  gft.setFormatOptions(options);
+  zip.write(fct,bos,op);
+  checkShapefileIntegrity(new String[]{"BasicPolygons"},new ByteArrayInputStream(bos.toByteArray()));
+  assertEquals("ISO-8859-15",getCharset(new ByteArrayInputStream(bos.toByteArray())));
+}

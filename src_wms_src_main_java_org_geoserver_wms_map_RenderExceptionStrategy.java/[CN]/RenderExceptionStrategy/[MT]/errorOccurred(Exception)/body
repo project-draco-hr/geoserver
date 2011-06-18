@@ -1,0 +1,15 @@
+{
+  Throwable cause=renderException;
+  while (cause != null) {
+    if (cause instanceof TransformException || cause instanceof IllegalAttributeException || cause instanceof FactoryException|| cause instanceof NoninvertibleTransformException) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Ignoring renderer error",renderException);
+      }
+      return;
+    }
+    cause=cause.getCause();
+  }
+  LOGGER.log(Level.FINE,"Got an unexpected render exception.",renderException);
+  this.renderException=renderException;
+  renderer.stopRendering();
+}

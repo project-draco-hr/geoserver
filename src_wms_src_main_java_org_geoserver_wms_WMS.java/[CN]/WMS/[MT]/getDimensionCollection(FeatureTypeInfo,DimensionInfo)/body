@@ -1,0 +1,18 @@
+{
+  FeatureSource source=null;
+  try {
+    source=typeInfo.getFeatureSource(null,GeoTools.getDefaultHints());
+  }
+ catch (  IOException e) {
+    throw new ServiceException("Could not get the feauture source to list time info for layer " + typeInfo.getPrefixedName(),e);
+  }
+  final Query dimQuery=new Query(source.getSchema().getName().getLocalPart());
+  final SortBy[] sortBy=new SortBy[]{new SortByImpl(FeatureUtilities.DEFAULT_FILTER_FACTORY.property(time.getAttribute()),SortOrder.ASCENDING)};
+  final QueryCapabilities queryCapabilities=source.getQueryCapabilities();
+  if (queryCapabilities.supportsSorting(sortBy)) {
+    dimQuery.setSortBy(sortBy);
+  }
+  dimQuery.setPropertyNames(Arrays.asList(time.getAttribute()));
+  FeatureCollection collection=(SimpleFeatureCollection)source.getFeatures(dimQuery);
+  return collection;
+}

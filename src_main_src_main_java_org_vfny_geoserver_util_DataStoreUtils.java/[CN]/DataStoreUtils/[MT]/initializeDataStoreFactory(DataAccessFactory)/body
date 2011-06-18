@@ -1,0 +1,16 @@
+{
+  List initializers=GeoServerExtensions.extensions(DataStoreFactoryInitializer.class);
+  for (Iterator i=initializers.iterator(); i.hasNext(); ) {
+    DataStoreFactoryInitializer initer=(DataStoreFactoryInitializer)i.next();
+    if (initer.getFactoryClass().isAssignableFrom(factory.getClass())) {
+      try {
+        initer.initialize(factory);
+      }
+ catch (      Throwable t) {
+        String msg="Error occured processing extension: " + initer.getClass().getName();
+        GeoServerExtensions.LOGGER.log(Level.WARNING,msg,t);
+      }
+    }
+  }
+  return factory;
+}

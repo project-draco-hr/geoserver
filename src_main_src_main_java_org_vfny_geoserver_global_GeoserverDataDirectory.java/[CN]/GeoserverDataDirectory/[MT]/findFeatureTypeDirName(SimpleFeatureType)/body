@@ -1,0 +1,17 @@
+{
+  String name=featureType.getTypeName();
+  String namespace=featureType.getName().getNamespaceURI();
+  FeatureTypeInfo ftInfo=null;
+  Catalog data=getCatalog();
+  if (namespace != null) {
+    NamespaceInfo nsInfo=data.getNamespaceByURI(namespace);
+    if (nsInfo != null)     ftInfo=data.getFeatureTypeByName(nsInfo.getPrefix(),name);
+  }
+  if (ftInfo == null)   ftInfo=data.getFeatureTypeByName(name);
+  if (ftInfo == null)   return null;
+  String dirName=ftInfo.getMetadata().get("dirName",String.class);
+  if (dirName == null) {
+    dirName=ftInfo.getNamespace().getPrefix() + "_" + ftInfo.getName();
+  }
+  return dirName;
+}

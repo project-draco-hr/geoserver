@@ -1,0 +1,21 @@
+{
+  TestListener l=new TestListener();
+  catalog.addListener(l);
+  assertTrue(l.added.isEmpty());
+  catalog.add(s);
+  assertEquals(1,l.added.size());
+  assertEquals(s,l.added.get(0).getSource());
+  StyleInfo s2=catalog.getStyleByName(s.getName());
+  s2.setFilename("changed");
+  assertTrue(l.modified.isEmpty());
+  catalog.save(s2);
+  assertEquals(1,l.modified.size());
+  assertEquals(s2,l.modified.get(0).getSource());
+  assertTrue(l.modified.get(0).getPropertyNames().contains("filename"));
+  assertTrue(l.modified.get(0).getOldValues().contains("styleFilename"));
+  assertTrue(l.modified.get(0).getNewValues().contains("changed"));
+  assertTrue(l.removed.isEmpty());
+  catalog.remove(s2);
+  assertEquals(1,l.removed.size());
+  assertEquals(s2,l.removed.get(0).getSource());
+}

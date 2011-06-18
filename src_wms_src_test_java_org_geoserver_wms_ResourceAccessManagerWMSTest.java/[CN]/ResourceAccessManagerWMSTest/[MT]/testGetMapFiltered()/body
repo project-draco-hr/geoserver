@@ -1,0 +1,21 @@
+{
+  if (!RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    LOGGER.log(Level.WARNING,"Skipping testGetMapFiltered");
+    return;
+  }
+  authenticate("cite_texas","cite");
+  MockHttpServletResponse response=getAsServletResponse(GET_MAP);
+  assertEquals("image/png",response.getContentType());
+  BufferedImage image=ImageIO.read(getBinaryInputStream(response));
+  assertNotNull(image);
+  assertNotBlank("testGetMapFiltered",image);
+  int[] pixel=new int[4];
+  image.getData().getPixel(368,227,pixel);
+  assertEquals(77,pixel[0]);
+  assertEquals(77,pixel[1]);
+  assertEquals(255,pixel[2]);
+  image.getData().getPixel(191,178,pixel);
+  assertEquals(255,pixel[0]);
+  assertEquals(255,pixel[1]);
+  assertEquals(255,pixel[2]);
+}

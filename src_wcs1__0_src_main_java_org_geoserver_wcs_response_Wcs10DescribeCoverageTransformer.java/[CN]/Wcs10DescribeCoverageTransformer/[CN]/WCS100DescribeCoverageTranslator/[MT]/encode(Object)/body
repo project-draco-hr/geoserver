@@ -1,0 +1,34 @@
+{
+  if (!(o instanceof DescribeCoverageType)) {
+    throw new IllegalArgumentException(new StringBuilder("Not a GetCapabilitiesType: ").append(o).toString());
+  }
+  this.request=(DescribeCoverageType)o;
+  final AttributesImpl attributes=new AttributesImpl();
+  attributes.addAttribute("","xmlns:wcs","xmlns:wcs","",WCS_URI);
+  attributes.addAttribute("","xmlns:xlink","xmlns:xlink","","http://www.w3.org/1999/xlink");
+  attributes.addAttribute("","xmlns:ogc","xmlns:ogc","","http://www.opengis.net/ogc");
+  attributes.addAttribute("","xmlns:ows","xmlns:ows","","http://www.opengis.net/ows/1.1");
+  attributes.addAttribute("","xmlns:gml","xmlns:gml","","http://www.opengis.net/gml");
+  final String prefixDef=new StringBuilder("xmlns:").append(XSI_PREFIX).toString();
+  attributes.addAttribute("",prefixDef,prefixDef,"",XSI_URI);
+  final String locationAtt=new StringBuilder(XSI_PREFIX).append(":schemaLocation").toString();
+  final String locationDef=WCS_URI + " " + buildURL(request.getBaseUrl(),appendPath(SCHEMAS,"wcs/1.0.0/describeCoverage.xsd"),null,URLType.RESOURCE);
+  attributes.addAttribute("",locationAtt,locationAtt,"",locationDef);
+  attributes.addAttribute("","version","version","","1.0.0");
+  start("wcs:CoverageDescription",attributes);
+  for (Iterator it=request.getCoverage().iterator(); it.hasNext(); ) {
+    String coverageId=(String)it.next();
+    LayerInfo layer=catalog.getLayerByName(coverageId);
+    if (layer == null || layer.getType() != LayerInfo.Type.RASTER) {
+      throw new WcsException("Could not find the specified coverage: " + coverageId,WcsExceptionCode.InvalidParameterValue,"coverage");
+    }
+    CoverageInfo ci=catalog.getCoverageByName(coverageId);
+    try {
+      handleCoverageOffering(ci);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException("Unexpected error occurred during describe coverage xml encoding",e);
+    }
+  }
+  end("wcs:CoverageDescription");
+}

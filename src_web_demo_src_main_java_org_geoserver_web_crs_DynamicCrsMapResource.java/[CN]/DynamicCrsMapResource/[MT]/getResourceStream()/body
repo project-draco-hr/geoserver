@@ -1,0 +1,22 @@
+{
+  ValueMap parameters=getParameters();
+  int width=parameters.getInt("WIDTH",400);
+  int height=parameters.getInt("HEIGHT",200);
+  String bboxStr=parameters.getString("BBOX");
+  ByteArrayOutputStream output=null;
+  if (bboxStr != null) {
+    try {
+      CRSAreaOfValidityMapBuilder builder=new CRSAreaOfValidityMapBuilder(width,height);
+      Envelope envelope=parseEnvelope(bboxStr);
+      RenderedImage image=builder.createMapFor(crs,envelope);
+      output=new ByteArrayOutputStream();
+      ImageIO.write(image,"PNG",output);
+    }
+ catch (    Exception e) {
+      output=null;
+      e.printStackTrace();
+    }
+  }
+  final byte[] byteArray=output == null ? null : output.toByteArray();
+  return new ByteArrayResourceStream(byteArray);
+}

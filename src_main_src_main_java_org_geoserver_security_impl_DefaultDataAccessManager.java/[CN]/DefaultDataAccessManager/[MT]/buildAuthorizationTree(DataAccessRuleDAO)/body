@@ -1,0 +1,31 @@
+{
+  SecureTreeNode root=new SecureTreeNode();
+  for (  DataAccessRule rule : dao.getRules()) {
+    String workspace=rule.getWorkspace();
+    String layer=rule.getLayer();
+    AccessMode accessMode=rule.getAccessMode();
+    SecureTreeNode node;
+    if (ANY.equals(workspace)) {
+      node=root;
+    }
+ else {
+      SecureTreeNode ws=root.getChild(workspace);
+      if (ws == null) {
+        ws=root.addChild(workspace);
+      }
+      if ("*".equals(layer)) {
+        node=ws;
+      }
+ else {
+        SecureTreeNode layerNode=ws.getChild(layer);
+        if (layerNode == null)         layerNode=ws.addChild(layer);
+        node=layerNode;
+      }
+    }
+    if (node.getAuthorizedRoles(accessMode) != null && node.getAuthorizedRoles(accessMode).size() > 0 && node != root) {
+      LOGGER.warning("Rule " + rule + " is overriding another rule targetting the same resource");
+    }
+    node.setAuthorizedRoles(accessMode,rule.getRoles());
+  }
+  return root;
+}

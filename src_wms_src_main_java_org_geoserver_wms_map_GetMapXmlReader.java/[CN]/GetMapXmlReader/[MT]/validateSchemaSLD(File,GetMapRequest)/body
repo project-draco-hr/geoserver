@@ -1,0 +1,27 @@
+{
+  SLDValidator validator=new SLDValidator();
+  List errors=null;
+  try {
+    FileInputStream in=null;
+    try {
+      in=new FileInputStream(f);
+      errors=validator.validateSLD(in,getMapRequest.getBaseUrl());
+    }
+  finally {
+      if (in != null) {
+        in.close();
+      }
+    }
+    if (errors.size() != 0) {
+      in=new FileInputStream(f);
+      throw new ServiceException(SLDValidator.getErrorMessage(in,errors));
+    }
+  }
+ catch (  IOException e) {
+    String msg=new StringBuffer("Creating remote SLD url: ").append(e.getMessage()).toString();
+    if (LOGGER.isLoggable(Level.WARNING)) {
+      LOGGER.log(Level.WARNING,msg,e);
+    }
+    throw new ServiceException(e,msg,"parseSldParam");
+  }
+}

@@ -1,0 +1,28 @@
+{
+  Map map=(Map)source;
+  for (Iterator iterator=map.entrySet().iterator(); iterator.hasNext(); ) {
+    Map.Entry entry=(Map.Entry)iterator.next();
+    if (entry.getValue() == null) {
+      continue;
+    }
+    writer.startNode("entry");
+    writer.addAttribute("key",entry.getKey().toString());
+    if (entry.getValue() != null) {
+      Object value=entry.getValue();
+      String complexTypeId=getComplexTypeId(value.getClass());
+      if (complexTypeId == null) {
+        String str=Converters.convert(value,String.class);
+        if (str == null) {
+          str=value.toString();
+        }
+        writer.setValue(str);
+      }
+ else {
+        writer.startNode(complexTypeId);
+        context.convertAnother(value);
+        writer.endNode();
+      }
+    }
+    writer.endNode();
+  }
+}

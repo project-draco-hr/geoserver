@@ -1,0 +1,25 @@
+{
+  SimpleHash map=new SimpleHash();
+  Map attributeMap=new FeatureAttributesMap(att);
+  map.putAll(attributeMap);
+  Catalog cat=getCatalog();
+  FeatureTypeInfo info=null;
+  if (cat != null) {
+    info=cat.getResourceByName(att.getType().getName().getNamespaceURI(),att.getType().getName().getLocalPart(),FeatureTypeInfo.class);
+    if (info != null) {
+      map.put("type",info);
+    }
+  }
+  if (info == null) {
+    map.put("type",buildDummyFeatureTypeInfo(att));
+  }
+  if (att.getIdentifier() != null) {
+    map.put("fid",att.getIdentifier().getID());
+  }
+ else {
+    map.put("fid","");
+  }
+  map.put("typeName",att.getType().getName().getLocalPart());
+  map.put("attributes",new SequenceMapModel(attributeMap,this));
+  return map;
+}

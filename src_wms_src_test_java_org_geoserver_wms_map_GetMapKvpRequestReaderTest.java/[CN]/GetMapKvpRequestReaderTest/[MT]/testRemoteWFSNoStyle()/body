@@ -1,0 +1,20 @@
+{
+  if (!RemoteOWSTestSupport.isRemoteWFSStatesAvailable(LOGGER))   return;
+  HashMap raw=new HashMap();
+  raw.put("layers","topp:states");
+  raw.put("format","image/png");
+  raw.put("srs","epsg:4326");
+  raw.put("bbox","-100,20,-60,50");
+  raw.put("height","300");
+  raw.put("width","300");
+  raw.put("remote_ows_type","WFS");
+  raw.put("remote_ows_url",RemoteOWSTestSupport.WFS_SERVER_URL);
+  GetMapRequest request=(GetMapRequest)reader.createRequest();
+  try {
+    request=(GetMapRequest)reader.read(request,parseKvp(raw),caseInsensitiveKvp(raw));
+    fail("This should have thrown an exception because of the missing style");
+  }
+ catch (  ServiceException e) {
+    assertEquals("NoDefaultStyle",e.getCode());
+  }
+}

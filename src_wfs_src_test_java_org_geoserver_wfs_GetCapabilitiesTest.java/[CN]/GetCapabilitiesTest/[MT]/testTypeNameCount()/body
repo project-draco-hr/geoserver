@@ -1,0 +1,15 @@
+{
+  Document doc=getAsDOM("wfs?service=WFS&version=1.0.0&request=getCapabilities");
+  Element e=doc.getDocumentElement();
+  assertEquals("WFS_Capabilities",e.getLocalName());
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  final List<FeatureTypeInfo> enabledTypes=getCatalog().getFeatureTypes();
+  for (Iterator<FeatureTypeInfo> it=enabledTypes.iterator(); it.hasNext(); ) {
+    FeatureTypeInfo ft=it.next();
+    if (!ft.isEnabled()) {
+      it.remove();
+    }
+  }
+  final int enabledCount=enabledTypes.size();
+  assertEquals(enabledCount,xpath.getMatchingNodes("/wfs:WFS_Capabilities/wfs:FeatureTypeList/wfs:FeatureType",doc).getLength());
+}

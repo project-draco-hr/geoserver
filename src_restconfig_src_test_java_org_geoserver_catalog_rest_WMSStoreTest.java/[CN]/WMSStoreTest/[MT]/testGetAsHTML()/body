@@ -1,0 +1,12 @@
+{
+  Document dom=getAsDOM("/rest/workspaces/sf/wmsstores/demo.html");
+  WMSStoreInfo wms=catalog.getStoreByName("demo",WMSStoreInfo.class);
+  List<WMSLayerInfo> wmsLayers=catalog.getResourcesByStore(wms,WMSLayerInfo.class);
+  NodeList links=xp.getMatchingNodes("//html:a",dom);
+  assertEquals(wmsLayers.size(),links.getLength());
+  for (int i=0; i < wmsLayers.size(); i++) {
+    WMSLayerInfo wl=wmsLayers.get(i);
+    Element link=(Element)links.item(i);
+    assertTrue(link.getAttribute("href").endsWith(wl.getName() + ".html"));
+  }
+}

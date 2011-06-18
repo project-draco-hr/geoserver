@@ -1,0 +1,26 @@
+{
+  return new Form("uploadForm"){
+    @Override protected void onSubmit(){
+      FileUpload upload=fileUploadField.getFileUpload();
+      if (upload == null) {
+        warn("No file selected.");
+        return;
+      }
+      ByteArrayOutputStream bout=new ByteArrayOutputStream();
+      try {
+        IOUtils.copy(upload.getInputStream(),bout);
+        setRawSLD(new InputStreamReader(new ByteArrayInputStream(bout.toByteArray()),"UTF-8"));
+        editor.setModelObject(rawSLD);
+      }
+ catch (      IOException e) {
+        throw new WicketRuntimeException(e);
+      }
+      StyleInfo s=(StyleInfo)form.getModelObject();
+      if (s.getName() == null || "".equals(s.getName().trim())) {
+        nameTextField.setModelValue(ResponseUtils.stripExtension(upload.getClientFileName()));
+        nameTextField.modelChanged();
+      }
+    }
+  }
+;
+}

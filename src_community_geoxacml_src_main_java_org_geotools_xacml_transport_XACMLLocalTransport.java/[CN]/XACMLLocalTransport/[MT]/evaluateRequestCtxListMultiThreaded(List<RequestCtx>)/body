@@ -1,0 +1,25 @@
+{
+  List<ResponseCtx> resultList=new ArrayList<ResponseCtx>(requests.size());
+  List<LocalThread> threadList=new ArrayList<LocalThread>(requests.size());
+  if (requests.size() == 1) {
+    resultList.add(evaluateRequestCtx(requests.get(0)));
+    return resultList;
+  }
+  for (  RequestCtx request : requests) {
+    LocalThread t=new LocalThread(request);
+    t.start();
+    threadList.add(t);
+  }
+  for (  LocalThread t : threadList) {
+    try {
+      t.join();
+    }
+ catch (    InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    log(t.getRequestCtx());
+    log(t.getResponseCtx());
+    resultList.add(t.getResponseCtx());
+  }
+  return resultList;
+}

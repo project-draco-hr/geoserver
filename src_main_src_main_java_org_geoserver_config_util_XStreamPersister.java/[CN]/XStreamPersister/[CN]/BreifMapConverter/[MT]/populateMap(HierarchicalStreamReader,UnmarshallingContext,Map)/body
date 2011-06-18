@@ -1,0 +1,42 @@
+{
+  while (reader.hasMoreChildren()) {
+    reader.moveDown();
+    String key=reader.getNodeName();
+    Object value=null;
+    if ("entry".equals(key)) {
+      if (reader.getAttribute("key") != null) {
+        key=reader.getAttribute("key");
+        if (reader.hasMoreChildren()) {
+          reader.moveDown();
+          String typeId=reader.getNodeName();
+          value=context.convertAnother(null,getComplexTypeClass(typeId));
+          reader.moveUp();
+        }
+ else {
+          value=reader.getValue();
+        }
+      }
+ else       if (reader.hasMoreChildren()) {
+        reader.moveDown();
+        key=reader.getValue();
+        reader.moveUp();
+        reader.moveDown();
+        value=reader.getValue();
+        reader.moveUp();
+      }
+    }
+ else {
+      boolean old=false;
+      if (reader.hasMoreChildren()) {
+        old=true;
+        reader.moveDown();
+      }
+      value=readItem(reader,context,map);
+      if (old) {
+        reader.moveUp();
+      }
+    }
+    map.put(key,value);
+    reader.moveUp();
+  }
+}

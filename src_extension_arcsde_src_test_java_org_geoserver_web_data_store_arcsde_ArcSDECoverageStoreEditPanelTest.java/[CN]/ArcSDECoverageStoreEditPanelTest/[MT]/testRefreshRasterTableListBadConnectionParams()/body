@@ -1,0 +1,20 @@
+{
+  startPanelForNewStore();
+  final FormTester formTester=tester.newFormTester("rasterStoreForm");
+  final String base="rasterStoreForm:parametersPanel:";
+  RasterTableSelectionPanel tableChooserPanel=(RasterTableSelectionPanel)tester.getComponentFromLastRenderedPage(base + "tableNamePanel");
+  tableChooserPanel.setSessionFactory(new ISessionPoolFactory(){
+    public ISessionPool createPool(    final ArcSDEConnectionConfig config) throws IOException {
+      throw new IOException("can't connect for some reason");
+    }
+  }
+);
+  String submitLink=base + "tableNamePanel:refresh";
+  tester.executeAjaxEvent(submitLink,"onclick");
+  FeedbackMessage feedbackMessage=formTester.getForm().getFeedbackMessage();
+  assertNotNull(feedbackMessage);
+  Serializable message=feedbackMessage.getMessage();
+  assertNotNull(message);
+  String expectedMessage="Refreshing raster tables list: can't connect for some reason";
+  assertEquals(expectedMessage,message.toString());
+}

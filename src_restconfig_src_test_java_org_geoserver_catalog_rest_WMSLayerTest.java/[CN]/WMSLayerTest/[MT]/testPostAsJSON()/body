@@ -1,0 +1,14 @@
+{
+  if (!RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    LOGGER.warning("Skipping layer posting test as remote server is not available");
+    return;
+  }
+  assertNull(catalog.getResourceByName("sf","bugsites",WMSLayerInfo.class));
+  String json="{" + "'wmsLayer':{" + "'name':'bugsites',"+ "'nativeName':'og:bugsites',"+ "'srs':'EPSG:4326',"+ "'nativeCRS':'EPSG:4326',"+ "'store':'demo'"+ "}"+ "}";
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/sf/wmsstores/demo/wmslayers/",json,"text/json");
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(response.getHeader("Location"));
+  assertTrue(response.getHeader("Location").endsWith("/workspaces/sf/wmsstores/demo/wmslayers/bugsites"));
+  WMSLayerInfo layer=catalog.getResourceByName("sf","bugsites",WMSLayerInfo.class);
+  assertNotNull(layer.getNativeBoundingBox());
+}

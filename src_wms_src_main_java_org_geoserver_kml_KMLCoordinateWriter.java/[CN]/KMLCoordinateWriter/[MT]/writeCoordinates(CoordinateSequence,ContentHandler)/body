@@ -1,0 +1,27 @@
+{
+  output.startElement("","coordinates","coordinates",atts);
+  final int coordCount=c.size();
+  final int coordSeqDimension=c.getDimension();
+  double x, y, z;
+  for (int i=0, n=coordCount; i < n; i++) {
+    x=c.getOrdinate(i,0);
+    y=c.getOrdinate(i,1);
+    coordBuff.setLength(0);
+    formatDecimal(x,coordBuff);
+    coordBuff.append(coordinateDelimiter);
+    formatDecimal(y,coordBuff);
+    if (coordSeqDimension > 2 && !Double.isNaN(c.getOrdinate(i,2))) {
+      coordBuff.append(coordinateDelimiter);
+      formatDecimal(c.getOrdinate(i,2),coordBuff);
+    }
+    if (i + 1 < coordCount) {
+      coordBuff.append(tupleDelimiter);
+    }
+    if (coordBuff.length() > buff.length) {
+      buff=new char[coordBuff.length()];
+    }
+    coordBuff.getChars(0,coordBuff.length(),buff,0);
+    output.characters(buff,0,coordBuff.length());
+  }
+  output.endElement(null,"coordinates","coordinates");
+}

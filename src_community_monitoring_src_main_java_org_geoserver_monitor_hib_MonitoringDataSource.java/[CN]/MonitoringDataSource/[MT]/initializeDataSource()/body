@@ -1,0 +1,33 @@
+{
+  File monitoringDir=dataDirectory.findOrCreateDataDir("monitoring");
+  File dbprops=new File(monitoringDir,"db.properties");
+  if (dbprops.exists()) {
+    try {
+      configureDataSource(dbprops,monitoringDir);
+    }
+ catch (    SQLException e) {
+      dbprops=new File(monitoringDir,"db1.properties");
+      if (dbprops.exists()) {
+        try {
+          configureDataSource(dbprops,monitoringDir);
+          return;
+        }
+ catch (        SQLException e1) {
+          dbprops=new File(monitoringDir,"db2.properties");
+          if (dbprops.exists()) {
+            try {
+              configureDataSource(dbprops,monitoringDir);
+              return;
+            }
+ catch (            SQLException e2) {
+            }
+          }
+        }
+      }
+      throw e;
+    }
+  }
+ else {
+    configureDataSource(null,monitoringDir);
+  }
+}

@@ -1,0 +1,33 @@
+{
+  start("entry");
+  element("title",feature.getID());
+  start("author");
+  element("name",wms.getGeoServer().getGlobal().getContact().getContactPerson());
+  end("author");
+  element("id",AtomUtils.getEntryURI(wms,feature,map));
+  String link=AtomUtils.getEntryURL(wms,feature,map);
+  AttributesImpl atts=new AttributesImpl();
+  atts.addAttribute(null,"href","href",null,link);
+  atts.addAttribute(null,"rel","rel",null,"self");
+  element("link",null,atts);
+  element("updated",AtomUtils.dateToRFC3339(new Date()));
+  atts=new AttributesImpl();
+  atts.addAttribute(null,"type","type",null,"html");
+  element("content",AtomUtils.getFeatureDescription(feature),atts);
+  if (geometryEncoding == GeometryEncoding.LATLONG || !(feature.getDefaultGeometry() instanceof GeometryCollection)) {
+    start("georss:where");
+    geometryEncoding.encode((Geometry)feature.getDefaultGeometry(),this);
+    end("georss:where");
+    end("entry");
+  }
+ else {
+    GeometryCollection col=(GeometryCollection)feature.getDefaultGeometry();
+    start("georss:where");
+    geometryEncoding.encode(col.getGeometryN(0),this);
+    end("georss:where");
+    end("entry");
+    for (int i=1; i < col.getNumGeometries(); i++) {
+      encodeRelatedGeometryEntry(col.getGeometryN(i),feature.getID(),link,link + "#" + i);
+    }
+  }
+}

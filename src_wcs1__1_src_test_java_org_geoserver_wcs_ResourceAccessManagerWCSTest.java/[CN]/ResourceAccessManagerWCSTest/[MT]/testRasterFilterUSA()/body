@@ -1,0 +1,22 @@
+{
+  Map<String,Object> raw=getWorld();
+  authenticate("cite_usa","cite");
+  GridCoverage[] coverages=executeGetCoverageKvp(raw);
+  assertEquals(1,coverages.length);
+  GridCoverage2D coverage=(GridCoverage2D)coverages[0];
+  final CoordinateReferenceSystem wgs84Flipped=CRS.decode("urn:ogc:def:crs:EPSG:6.6:4326");
+  assertEquals(wgs84Flipped,coverage.getEnvelope().getCoordinateReferenceSystem());
+  assertEquals(-90.0,coverage.getEnvelope().getMinimum(0));
+  assertEquals(-180.0,coverage.getEnvelope().getMinimum(1));
+  assertEquals(90.0,coverage.getEnvelope().getMaximum(0));
+  assertEquals(180.0,coverage.getEnvelope().getMaximum(1));
+  int[] value=new int[3];
+  coverage.evaluate((DirectPosition)new DirectPosition2D(wgs84Flipped,40,-90),value);
+  assertTrue(value[0] > 0);
+  assertTrue(value[1] > 0);
+  assertTrue(value[2] > 0);
+  coverage.evaluate((DirectPosition)new DirectPosition2D(wgs84Flipped,45,12),value);
+  assertEquals(0,value[0]);
+  assertEquals(0,value[1]);
+  assertEquals(0,value[2]);
+}

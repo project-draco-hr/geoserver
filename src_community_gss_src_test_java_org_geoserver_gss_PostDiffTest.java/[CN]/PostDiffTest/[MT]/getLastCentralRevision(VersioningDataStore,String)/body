@@ -1,0 +1,18 @@
+{
+  FeatureIterator<SimpleFeature> fi=null;
+  try {
+    FeatureSource<SimpleFeatureType,SimpleFeature> fs=synch.getFeatureSource(SYNCH_HISTORY);
+    PropertyIsEqualTo tableFilter=ff.equals(ff.property("table_name"),ff.literal(tableName));
+    DefaultQuery q=new DefaultQuery(SYNCH_HISTORY,tableFilter);
+    q.setSortBy(new SortBy[]{ff.sort("local_revision",SortOrder.DESCENDING),ff.sort("central_revision",SortOrder.DESCENDING)});
+    q.setMaxFeatures(1);
+    fi=fs.getFeatures(q).features();
+    SimpleFeature f=(SimpleFeature)fi.next();
+    return (Long)f.getAttribute("central_revision");
+  }
+  finally {
+    if (fi != null) {
+      fi.close();
+    }
+  }
+}

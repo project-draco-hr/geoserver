@@ -1,0 +1,42 @@
+{
+  String message="";
+  String body=null;
+  String path="";
+  if (enabled) {
+    if (req instanceof HttpServletRequest) {
+      HttpServletRequest hreq=(HttpServletRequest)req;
+      path=hreq.getRemoteHost() + " \"" + hreq.getMethod()+ " "+ hreq.getRequestURI();
+      if (hreq.getQueryString() != null) {
+        path+="?" + hreq.getQueryString();
+      }
+      path+="\"";
+      message="" + path;
+      message+=" \"" + noNull(hreq.getHeader("User-Agent"));
+      message+="\" \"" + noNull(hreq.getHeader("Referer")) + "\" ";
+      if (logBodies && (hreq.getMethod().equals("PUT") || hreq.getMethod().equals("POST"))) {
+        message+=" request-size: " + hreq.getContentLength();
+        message+=" body: ";
+        StringBuffer buff=new StringBuffer();
+        BufferedReader reader=hreq.getReader();
+        char[] readIn=new char[256];
+        int amountRead=0;
+        while ((amountRead=reader.read(readIn,0,256)) != -1) {
+          buff.append(readIn,0,amountRead);
+        }
+        body=buff.toString();
+        req=new BufferedRequestWrapper(hreq,buff.toString());
+      }
+    }
+ else {
+      message="" + req.getRemoteHost() + " made a non-HTTP request";
+    }
+    logger.info(message + (body == null ? "" : "\n" + body + "\n"));
+    long startTime=System.currentTimeMillis();
+    chain.doFilter(req,res);
+    long requestTime=System.currentTimeMillis() - startTime;
+    logger.info(path + " took " + requestTime+ "ms");
+  }
+ else {
+    chain.doFilter(req,res);
+  }
+}

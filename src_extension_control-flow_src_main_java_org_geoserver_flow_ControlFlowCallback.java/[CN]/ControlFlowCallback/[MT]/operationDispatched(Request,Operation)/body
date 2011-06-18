@@ -1,0 +1,21 @@
+{
+  if (configurator.isStale())   reloadConfiguration();
+  SENTINEL.start();
+  if (SENTINEL.isOutermostRequest()) {
+    List<FlowController> controllers=this.controllers;
+    if (controllers.size() > 0) {
+      REQUEST_CONTROLLERS.set(controllers);
+      long maxTime=timeout > 0 ? System.currentTimeMillis() + timeout : -1;
+      for (      FlowController flowController : controllers) {
+        if (timeout > 0) {
+          long maxWait=maxTime - System.currentTimeMillis();
+          if (!flowController.requestIncoming(request,maxWait))           throw new HttpErrorCodeException(503,"Requested timeout out while waiting to be executed");
+        }
+ else {
+          flowController.requestIncoming(request,-1);
+        }
+      }
+    }
+  }
+  return operation;
+}

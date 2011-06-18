@@ -1,0 +1,61 @@
+{
+  String className=root.getAttributes().getNamedItem("class").getNodeValue();
+  if (logger.isLoggable(Level.CONFIG))   logger.config("Loading [ " + prefix + ": "+ className+ " ]");
+  Class<?> c=null;
+  try {
+    c=loader.loadClass(className);
+  }
+ catch (  ClassNotFoundException cnfe) {
+    throw new ParsingException("couldn't load class " + className,cnfe);
+  }
+  Object instance=null;
+  if (!root.hasChildNodes()) {
+    try {
+      instance=c.newInstance();
+    }
+ catch (    InstantiationException ie) {
+      throw new ParsingException("couldn't instantiate " + className + " with empty constructor",ie);
+    }
+catch (    IllegalAccessException iae) {
+      throw new ParsingException("couldn't get access to instance " + "of " + className,iae);
+    }
+  }
+ else {
+    List<Object> args=null;
+    try {
+      args=getArgs(root);
+    }
+ catch (    IllegalArgumentException iae) {
+      throw new ParsingException("illegal class arguments",iae);
+    }
+    int argLength=args.size();
+    Constructor<?>[] cons=c.getConstructors();
+    Constructor<?> constructor=null;
+    for (int i=0; i < cons.length; i++) {
+      Class<?>[] params=cons[i].getParameterTypes();
+      if (params.length == argLength) {
+        int j=0;
+        for (        Object obj : args) {
+          if (!params[j].isAssignableFrom(obj.getClass()))           break;
+          j++;
+        }
+        if (j == argLength)         constructor=cons[i];
+      }
+      if (constructor != null)       break;
+    }
+    if (constructor == null)     throw new ParsingException("couldn't find a matching " + "constructor");
+    try {
+      instance=constructor.newInstance(args.toArray());
+    }
+ catch (    InstantiationException ie) {
+      throw new ParsingException("couldn't instantiate " + className,ie);
+    }
+catch (    IllegalAccessException iae) {
+      throw new ParsingException("couldn't get access to instance " + "of " + className,iae);
+    }
+catch (    InvocationTargetException ite) {
+      throw new ParsingException("couldn't create " + className,ite);
+    }
+  }
+  return instance;
+}

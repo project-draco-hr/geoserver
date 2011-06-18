@@ -1,0 +1,43 @@
+{
+  if (entrySet == null) {
+    entrySet=new LinkedHashSet<MapEntry>();
+    final ComplexType featureType=feature.getType();
+    PropertyDescriptor attributeDescr=featureType.getDescriptor(attributeName);
+    Property property=feature.getProperty(attributeName);
+    if (property == null) {
+      @SuppressWarnings("unchecked") List<AttributeDescriptor> substitutionGroup=(List<AttributeDescriptor>)attributeDescr.getUserData().get("substitutionGroup");
+      if (substitutionGroup != null) {
+        Iterator<AttributeDescriptor> it=substitutionGroup.iterator();
+        while (property == null && it.hasNext()) {
+          property=feature.getProperty(it.next().getName());
+        }
+        if (property != null) {
+          attributeDescr=property.getDescriptor();
+        }
+      }
+    }
+    entrySet.add(new MapEntry<Object,Object>("isComplex",property instanceof ComplexAttribute));
+    Object value=null;
+    if (property instanceof ComplexAttribute) {
+      value=buildComplex((ComplexAttribute)property);
+    }
+ else     if (property != null) {
+      value=property.getValue();
+    }
+    entrySet.add(new DeferredValueEntry("value",value));
+    entrySet.add(new MapEntry<Object,Object>("name",attributeName.getLocalPart()));
+    entrySet.add(new MapEntry<Object,Object>("namespace",getNamespace(attributeName)));
+    entrySet.add(new MapEntry<Object,Object>("prefix",getPrefix(attributeName)));
+    if (attributeDescr.getType() instanceof ComplexType) {
+      entrySet.add(new MapEntry<Object,Object>("type",buildType((ComplexType)attributeDescr.getType())));
+    }
+ else {
+      entrySet.add(new MapEntry<Object,Object>("type",attributeDescr.getType().getBinding().getName()));
+    }
+    Object rawValue=value == null ? "" : value;
+    boolean isGeometry=Geometry.class.isAssignableFrom(attributeDescr.getType().getBinding());
+    entrySet.add(new MapEntry<Object,Object>("isGeometry",Boolean.valueOf(isGeometry)));
+    entrySet.add(new MapEntry<Object,Object>("rawValue",rawValue));
+  }
+  return entrySet;
+}

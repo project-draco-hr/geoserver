@@ -1,0 +1,16 @@
+{
+  if ((request.getHandle() == null) || request.getHandle().equals("")) {
+    request.setHandle("GeoServer");
+  }
+  if (request.getExpiry() == null) {
+    request.setExpiry(BigInteger.valueOf(0));
+  }
+  int lockExpiry=request.getExpiry().intValue();
+  if (lockExpiry < 0) {
+    return FeatureLockFactory.generate(request.getHandle(),lockExpiry);
+  }
+  if (lockExpiry == 0) {
+    return FeatureLockFactory.generate(request.getHandle(),0);
+  }
+  return FeatureLockFactory.generate(request.getHandle(),lockExpiry * 60 * 1000);
+}

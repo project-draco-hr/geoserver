@@ -1,0 +1,21 @@
+{
+  params=new HashMap();
+  for (  Object o : properties.keySet()) {
+    params.put(o.toString(),properties.get(o));
+  }
+  DataStoreFactorySpi factory=null;
+  for (Iterator<DataStoreFactorySpi> i=DataStoreFinder.getAvailableDataStores(); i.hasNext(); ) {
+    DataStoreFactorySpi f=i.next();
+    if (f.canProcess(params)) {
+      factory=f;
+      break;
+    }
+  }
+  if (factory == null) {
+    throw new IllegalStateException("Could not aquire datastore.");
+  }
+  dataStore=factory.createDataStore(params);
+  if (dataStore == null) {
+    throw new IllegalStateException("Could not create datastore from specified parameters.");
+  }
+}

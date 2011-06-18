@@ -1,0 +1,36 @@
+{
+  final IModel globalInfoModel=getGlobalInfoModel();
+  final IModel loggingInfoModel=getLoggingInfoModel();
+  Form form=new Form("form",new CompoundPropertyModel(globalInfoModel));
+  add(form);
+  form.add(new CheckBox("verbose"));
+  form.add(new CheckBox("verboseExceptions"));
+  form.add(new CheckBox("globalServices"));
+  form.add(new TextField<Integer>("numDecimals").add(new MinimumValidator<Integer>(0)));
+  form.add(new DropDownChoice("charset",AVAILABLE_CHARSETS));
+  form.add(new TextField("proxyBaseUrl").add(new UrlValidator()));
+  logLevelsAppend(form,loggingInfoModel);
+  form.add(new CheckBox("stdOutLogging",new PropertyModel(loggingInfoModel,"stdOutLogging")));
+  form.add(new TextField("loggingLocation",new PropertyModel(loggingInfoModel,"location")));
+  TextField xmlPostRequestLogBufferSize=new TextField("xmlPostRequestLogBufferSize",new PropertyModel(globalInfoModel,"xmlPostRequestLogBufferSize"));
+  xmlPostRequestLogBufferSize.add(new MinimumValidator<Integer>(0));
+  form.add(xmlPostRequestLogBufferSize);
+  form.add(new TextField<Integer>("featureTypeCacheSize").add(new MinimumValidator<Integer>(0)));
+  Button submit=new Button("submit",new StringResourceModel("submit",this,null)){
+    @Override public void onSubmit(){
+      GeoServer gs=getGeoServer();
+      gs.save((GeoServerInfo)globalInfoModel.getObject());
+      gs.save((LoggingInfo)loggingInfoModel.getObject());
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+;
+  form.add(submit);
+  Button cancel=new Button("cancel"){
+    @Override public void onSubmit(){
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+;
+  form.add(cancel);
+}

@@ -1,0 +1,37 @@
+{
+  try {
+    File dbprops=new File(dataDirectory.root(),file);
+    Properties db=new Properties();
+    if (!dbprops.exists()) {
+      if (dbprops.getParentFile().exists()) {
+        dbprops.getParentFile().mkdirs();
+      }
+      FileOutputStream fout=new FileOutputStream(dbprops);
+      try {
+        defaultParameters.store(fout,null);
+      }
+  finally {
+        fout.close();
+      }
+      db.putAll(defaultParameters);
+    }
+ else {
+      FileInputStream in=new FileInputStream(dbprops);
+      db.load(in);
+      in.close();
+    }
+    setDriverClassName(db.getProperty("driver"));
+    setUrl(getURL(db));
+    if (db.containsKey("username")) {
+      setUsername(db.getProperty("username"));
+    }
+    if (db.containsKey("password")) {
+      setPassword(db.getProperty("password"));
+    }
+    setMinIdle(1);
+    setMaxActive(4);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Unexpected error setting up the datas source",e);
+  }
+}

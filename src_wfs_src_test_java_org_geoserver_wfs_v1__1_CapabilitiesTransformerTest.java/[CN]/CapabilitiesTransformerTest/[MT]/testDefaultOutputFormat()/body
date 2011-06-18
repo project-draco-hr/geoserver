@@ -1,0 +1,15 @@
+{
+  CapabilitiesTransformer tx=new CapabilitiesTransformer.WFS1_1(getWFS(),getCatalog());
+  ByteArrayOutputStream output=new ByteArrayOutputStream();
+  tx.transform(request(),output);
+  Document dom=super.dom(new ByteArrayInputStream(output.toByteArray()));
+  final String expected="text/xml; subtype=gml/3.1.1";
+  String xpathExpr="//wfs:WFS_Capabilities/ows:OperationsMetadata/ows:Operation[@name='DescribeFeatureType']" + "/ows:Parameter[@name='outputFormat']/ows:Value";
+  assertXpathEvaluatesTo(expected,xpathExpr,dom);
+  xpathExpr="//wfs:WFS_Capabilities/ows:OperationsMetadata/ows:Operation[@name='GetFeature']" + "/ows:Parameter[@name='outputFormat']/ows:Value";
+  assertXpathEvaluatesTo(expected,xpathExpr,dom);
+  xpathExpr="//wfs:WFS_Capabilities/ows:OperationsMetadata/ows:Operation[@name='GetFeatureWithLock']" + "/ows:Parameter[@name='outputFormat']/ows:Value";
+  assertXpathEvaluatesTo(expected,xpathExpr,dom);
+  xpathExpr="//wfs:WFS_Capabilities/ows:OperationsMetadata/ows:Operation[@name='Transaction']" + "/ows:Parameter[@name='inputFormat']/ows:Value";
+  assertXpathEvaluatesTo(expected,xpathExpr,dom);
+}

@@ -1,0 +1,16 @@
+{
+  final String renamedResouceName=RESOURCE_NAME + "_Renamed";
+  final String renamedPrefixedResouceName=PREFIXED_RESOURCE_NAME + "_Renamed";
+  when(mockResourceInfo.getName()).thenReturn(renamedResouceName);
+  when(mockResourceInfo.getPrefixedName()).thenReturn(renamedPrefixedResouceName);
+  CatalogModifyEvent modifyEvent=mock(CatalogModifyEvent.class);
+  when(modifyEvent.getSource()).thenReturn(mockResourceInfo);
+  when(modifyEvent.getPropertyNames()).thenReturn(Arrays.asList("name"));
+  when(modifyEvent.getOldValues()).thenReturn(Arrays.asList((Object)RESOURCE_NAME));
+  when(modifyEvent.getNewValues()).thenReturn(Arrays.asList((Object)renamedResouceName));
+  listener.handleModifyEvent(modifyEvent);
+  CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
+  when(postModifyEvent.getSource()).thenReturn(mockResourceInfo);
+  listener.handlePostModifyEvent(postModifyEvent);
+  verify(mockConfiguration).renameTileLayer(eq(PREFIXED_RESOURCE_NAME),eq(renamedPrefixedResouceName));
+}

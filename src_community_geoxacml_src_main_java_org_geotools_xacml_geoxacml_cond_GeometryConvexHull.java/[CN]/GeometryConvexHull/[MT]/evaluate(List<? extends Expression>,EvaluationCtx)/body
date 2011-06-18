@@ -1,0 +1,20 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult result=evalArgs(inputs,context,argValues);
+  if (result != null)   return result;
+  GeometryAttribute geomAttr=(GeometryAttribute)(argValues[0]);
+  Geometry resultGeom=null;
+  try {
+    resultGeom=geomAttr.getGeometry().convexHull();
+  }
+ catch (  Throwable t) {
+    return exceptionError(t);
+  }
+  GeometryAttribute resultAttr=null;
+  try {
+    resultAttr=new GeometryAttribute(resultGeom,geomAttr.getSrsName(),null,null,null);
+  }
+ catch (  URISyntaxException e) {
+  }
+  return new EvaluationResult(resultAttr);
+}

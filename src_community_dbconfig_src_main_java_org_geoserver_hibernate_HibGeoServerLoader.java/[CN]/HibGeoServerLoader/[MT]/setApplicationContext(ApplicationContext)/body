@@ -1,0 +1,15 @@
+{
+  super.setApplicationContext(applicationContext);
+  final SessionFactory sessionFactory=(SessionFactory)applicationContext.getBean("hibSessionFactory");
+  HibUtil.setUpSession(sessionFactory);
+  if (applicationContext instanceof ConfigurableApplicationContext) {
+    ((ConfigurableApplicationContext)applicationContext).addApplicationListener(new ApplicationListener(){
+      public void onApplicationEvent(      ApplicationEvent event){
+        if (event instanceof ContextLoadedEvent) {
+          HibUtil.tearDownSession(sessionFactory,null);
+        }
+      }
+    }
+);
+  }
+}

@@ -1,0 +1,22 @@
+{
+  String[] parts=ltype.split("!");
+  String name=parts[0];
+  String description=name;
+  List<LineTypeItem> items=new ArrayList<LineTypeItem>();
+  double baseLen=0.125;
+  if (parts.length > 1) {
+    description=StringUtils.repeat(parts[1].replace('_',' '),5);
+    if (parts.length > 2)     baseLen=Double.parseDouble(parts[2]);
+    Pattern p=Pattern.compile("[-]+|[*]+|[_]+");
+    Matcher m=p.matcher(parts[1]);
+    while (m.find()) {
+      String piece=m.group(0);
+      int type=piece.startsWith("-") ? LineTypeItem.DASH : (piece.startsWith("*") ? LineTypeItem.DOT : LineTypeItem.EMPTY);
+      LineTypeItem item=new LineTypeItem(type,piece.length() * baseLen);
+      items.add(item);
+    }
+  }
+  LineType result=new LineType(name,description);
+  result.setItems(items.toArray(new LineTypeItem[]{}));
+  return result;
+}

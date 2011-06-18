@@ -1,0 +1,30 @@
+{
+  boolean dirty=false;
+  for (Iterator i=properties().entrySet().iterator(); i.hasNext() && !dirty; ) {
+    Map.Entry e=(Map.Entry)i.next();
+    if (e.getValue() instanceof Proxy) {
+      ModificationProxy h=handler(e.getValue());
+      if (h != null && !h.isDirty()) {
+        continue;
+      }
+    }
+ else {
+      try {
+        Object orig=unwrap(getter((String)e.getKey()).invoke(proxyObject,null));
+        if (orig == null) {
+          if (e.getValue() == null) {
+            continue;
+          }
+        }
+ else         if (e.getValue() != null && orig.equals(e.getValue())) {
+          continue;
+        }
+      }
+ catch (      Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+    dirty=true;
+  }
+  return dirty;
+}

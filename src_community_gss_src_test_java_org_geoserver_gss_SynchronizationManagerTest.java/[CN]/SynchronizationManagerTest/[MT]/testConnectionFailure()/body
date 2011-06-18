@@ -1,0 +1,18 @@
+{
+  GSSClient client=createMock(GSSClient.class);
+  expect(client.getCentralRevision((QName)anyObject())).andThrow(new IOException("Host unreachable"));
+  replay(client);
+  GSSClientFactory factory=createMock(GSSClientFactory.class);
+  expect(factory.createClient(new URL("http://localhost:8081/geoserver/ows"),null,null)).andReturn(client);
+  replay(factory);
+  synch.clientFactory=factory;
+  Date start=new Date();
+  synch.synchronizeOustandlingLayers();
+  Date end=new Date();
+  SimpleFeature f=getSingleFeature(fsUnitTables,ff.equal(ff.property("table_id"),ff.literal(1),false));
+  Date lastFailure=(Date)f.getAttribute("last_failure");
+  assertNotNull(lastFailure);
+  assertTrue(lastFailure.compareTo(start) >= 0 && lastFailure.compareTo(end) <= 0);
+  f=getSingleFeature(fsUnits,ff.equal(ff.property("unit_name"),ff.literal("unit1"),false));
+  assertTrue((Boolean)f.getAttribute("errors"));
+}

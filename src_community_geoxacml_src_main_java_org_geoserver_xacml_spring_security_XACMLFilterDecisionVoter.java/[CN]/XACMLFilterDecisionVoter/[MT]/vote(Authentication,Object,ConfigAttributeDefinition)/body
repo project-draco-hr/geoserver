@@ -1,0 +1,13 @@
+{
+  HttpServletRequest httpRequest=((FilterInvocation)request).getHttpRequest();
+  String urlPath=httpRequest.getServletPath().toLowerCase();
+  String method=httpRequest.getMethod();
+  Map<String,Object> httpParams=httpRequest.getParameterMap();
+  String remoteIP=httpRequest.getRemoteAddr();
+  String remoteHost=httpRequest.getRemoteHost();
+  List<RequestCtx> requestCtxts=buildRequestCtxListFromRoles(auth,urlPath,method,httpParams,remoteIP,remoteHost);
+  if (requestCtxts.isEmpty())   return XACMLDecisionMapper.Exact.getSpringSecurityDecisionFor(Result.DECISION_DENY);
+  List<ResponseCtx> responseCtxts=GeoXACMLConfig.getXACMLTransport().evaluateRequestCtxList(requestCtxts);
+  int xacmlDecision=XACMLUtil.getDecisionFromRoleResponses(responseCtxts);
+  return XACMLDecisionMapper.Exact.getSpringSecurityDecisionFor(xacmlDecision);
+}

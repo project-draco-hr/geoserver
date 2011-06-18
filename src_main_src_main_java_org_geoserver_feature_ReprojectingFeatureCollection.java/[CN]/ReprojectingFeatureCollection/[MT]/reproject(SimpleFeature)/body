@@ -1,0 +1,49 @@
+{
+  Object[] attributes=new Object[schema.getAttributeCount()];
+  for (int i=0; i < attributes.length; i++) {
+    AttributeDescriptor type=schema.getDescriptor(i);
+    Object object=feature.getAttribute(type.getName());
+    if (object instanceof Geometry) {
+      Geometry geometry=(Geometry)object;
+      CoordinateReferenceSystem crs=(CoordinateReferenceSystem)geometry.getUserData();
+      if (crs == null) {
+        if (defaultSource != null) {
+          crs=defaultSource;
+        }
+      }
+      if (crs != null) {
+        if (!crs.equals(target)) {
+          GeometryCoordinateSequenceTransformer transformer=(GeometryCoordinateSequenceTransformer)transformers.get(crs);
+          if (transformer == null) {
+            transformer=new GeometryCoordinateSequenceTransformer();
+            MathTransform2D tx;
+            try {
+              tx=(MathTransform2D)ReferencingFactoryFinder.getCoordinateOperationFactory(hints).createOperation(crs,target).getMathTransform();
+            }
+ catch (            Exception e) {
+              String msg="Could not transform for crs: " + crs;
+              throw (IOException)new IOException(msg).initCause(e);
+            }
+            transformer.setMathTransform(tx);
+            transformers.put(crs,transformer);
+          }
+          try {
+            object=transformer.transform(geometry);
+          }
+ catch (          TransformException e) {
+            String msg="Error occured transforming " + geometry.toString();
+            throw (IOException)new IOException(msg).initCause(e);
+          }
+        }
+      }
+    }
+    attributes[i]=object;
+  }
+  try {
+    return SimpleFeatureBuilder.build(schema,attributes,feature.getID());
+  }
+ catch (  IllegalAttributeException e) {
+    String msg="Error creating reprojeced feature";
+    throw (IOException)new IOException(msg).initCause(e);
+  }
+}

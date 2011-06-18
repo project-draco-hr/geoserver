@@ -1,0 +1,9 @@
+{
+  String xml="<wfs:GetFeature" + "  service=\"WFS\"" + "  version=\"1.0.0\""+ "  outputFormat=\"GML2\""+ "  xmlns:cdf=\"http://www.opengis.net/cite/data\""+ "  xmlns:ogc=\"http://www.opengis.net/ogc\""+ "  xmlns:wfs=\"http://www.opengis.net/wfs\""+ ">"+ "  <wfs:Query typeName=\"Locks\" />"+ "</wfs:GetFeature>";
+  Document dom=postAsDOM("cdf/wfs",xml);
+  assertEquals("wfs:FeatureCollection",dom.getDocumentElement().getNodeName());
+  String fid=((Element)dom.getElementsByTagName("cdf:Locks").item(0)).getAttribute("fid");
+  xml="<wfs:LockFeature" + "  service=\"WFS\"" + "  version=\"1.0.0\""+ "  expiry=\"10\""+ "  xmlns:cdf=\"http://www.opengis.net/cite/data\""+ "  xmlns:ogc=\"http://www.opengis.net/ogc\""+ "  xmlns:wfs=\"http://www.opengis.net/wfs\""+ ">"+ "  <wfs:Lock typeName=\"Locks\">"+ "    <ogc:Filter>"+ "      <ogc:FeatureId fid=\"" + fid + "\"/>"+ "    </ogc:Filter>"+ "  </wfs:Lock>"+ "</wfs:LockFeature>";
+  dom=postAsDOM("cdf/wfs",xml);
+  assertEquals("WFS_LockFeatureResponse",dom.getDocumentElement().getNodeName());
+}

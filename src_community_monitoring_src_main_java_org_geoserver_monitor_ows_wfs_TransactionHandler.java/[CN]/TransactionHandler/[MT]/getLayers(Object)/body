@@ -1,0 +1,33 @@
+{
+  FeatureMap elements=(FeatureMap)EMFUtils.get((EObject)request,"group");
+  if (elements == null) {
+    return null;
+  }
+  List<String> layers=new ArrayList();
+  ListIterator i=elements.valueListIterator();
+  while (i.hasNext()) {
+    Object e=i.next();
+    if (EMFUtils.has((EObject)e,"typeName")) {
+      Object typeName=EMFUtils.get((EObject)e,"typeName");
+      if (typeName != null) {
+        layers.add(toString(typeName));
+      }
+    }
+ else {
+      if (e.getClass().getSimpleName().startsWith("InsertElementType")) {
+        List<Feature> features=(List)EMFUtils.get((EObject)e,"feature");
+        Set<String> set=new LinkedHashSet();
+        for (        Feature f : features) {
+          if (f instanceof SimpleFeature) {
+            set.add(((SimpleFeature)f).getType().getTypeName());
+          }
+ else {
+            set.add(f.getType().getName().toString());
+          }
+        }
+        layers.addAll(set);
+      }
+    }
+  }
+  return layers;
+}

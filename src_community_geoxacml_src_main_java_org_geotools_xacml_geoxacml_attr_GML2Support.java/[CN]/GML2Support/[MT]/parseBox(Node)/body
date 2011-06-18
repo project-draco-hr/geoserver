@@ -1,0 +1,22 @@
+{
+  List<Node> coordinates=getChildren(node,"coord");
+  if (!coordinates.isEmpty() && (coordinates.size() == 2)) {
+    Node n1=(Node)coordinates.get(0);
+    Node n2=(Node)coordinates.get(1);
+    Coordinate c1=parseCoordGML2(n1);
+    Coordinate c2=parseCoordGML2(n2);
+    return toGeometry(new Envelope(c1.x,c2.x,c1.y,c2.y));
+  }
+  if (!coordinates.isEmpty()) {
+    throw new GMLException("Envelope can have only two coordinates");
+  }
+  Node coords=getChild(node,"coordinates");
+  if (coords != null) {
+    CoordinateSequence cs=parseCoordinatesGML2(coords);
+    if (cs.size() != 2) {
+      throw new GMLException("Envelope can have only two coordinates");
+    }
+    return toGeometry(new Envelope(cs.getX(0),cs.getX(1),cs.getY(0),cs.getY(1)));
+  }
+  throw new GMLException("Could not find coordinates for envelope");
+}

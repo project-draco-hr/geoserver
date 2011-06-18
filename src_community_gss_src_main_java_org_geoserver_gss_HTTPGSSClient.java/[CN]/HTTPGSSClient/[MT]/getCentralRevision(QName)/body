@@ -1,0 +1,19 @@
+{
+  GetMethod method=new GetMethod(address + "?service=GSS&version=1.0.0&request=GetCentralRevision&typeName=" + prefixedName(layerName));
+  Object response=executeMethod(method);
+  if (response instanceof CentralRevisionsType) {
+    CentralRevisionsType cr=(CentralRevisionsType)response;
+    for (    LayerRevision lr : cr.getLayerRevisions()) {
+      if (layerName.equals(lr.getTypeName())) {
+        return lr.getCentralRevision();
+      }
+    }
+    throw new IOException("Response to GetCentralRevision received, but it " + "did not contain a central revision for " + layerName);
+  }
+ else {
+    if (response == null) {
+      throw new IOException("The response was parsed to a null object");
+    }
+    throw new IOException("The response was parsed to an unrecognized object type: " + response.getClass());
+  }
+}

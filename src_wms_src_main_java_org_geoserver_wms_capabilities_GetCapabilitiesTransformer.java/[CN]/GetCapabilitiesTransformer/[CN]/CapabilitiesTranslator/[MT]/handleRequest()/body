@@ -1,0 +1,42 @@
+{
+  start("Request");
+  start("GetCapabilities");
+  element("Format",WMS_CAPS_MIME);
+  String serviceUrl=buildURL(request.getBaseUrl(),"wms",params("SERVICE","WMS"),URLType.SERVICE);
+  serviceUrl=appendQueryString(serviceUrl,"");
+  handleDcpType(serviceUrl,serviceUrl);
+  end("GetCapabilities");
+  start("GetMap");
+  List<String> sortedFormats=new ArrayList<String>(getMapFormats);
+  Collections.sort(sortedFormats);
+  if (sortedFormats.contains("image/png")) {
+    sortedFormats.remove("image/png");
+    sortedFormats.add(0,"image/png");
+  }
+  for (Iterator<String> it=sortedFormats.iterator(); it.hasNext(); ) {
+    element("Format",String.valueOf(it.next()));
+  }
+  handleDcpType(serviceUrl,null);
+  end("GetMap");
+  start("GetFeatureInfo");
+  for (  String format : wmsConfig.getAvailableFeatureInfoFormats()) {
+    element("Format",format);
+  }
+  handleDcpType(serviceUrl,serviceUrl);
+  end("GetFeatureInfo");
+  start("DescribeLayer");
+  element("Format",DescribeLayerResponse.DESCLAYER_MIME_TYPE);
+  handleDcpType(serviceUrl,null);
+  end("DescribeLayer");
+  start("GetLegendGraphic");
+  for (  String format : getLegendGraphicFormats) {
+    element("Format",format);
+  }
+  handleDcpType(serviceUrl,null);
+  end("GetLegendGraphic");
+  start("GetStyles");
+  element("Format",GetStylesResponse.SLD_MIME_TYPE);
+  handleDcpType(serviceUrl,null);
+  end("GetStyles");
+  end("Request");
+}

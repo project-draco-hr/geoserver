@@ -1,0 +1,29 @@
+{
+  List unparsed=KvpUtils.readFlat(value,KvpUtils.INNER_DELIMETER);
+  final int size=unparsed.size();
+  if (unparsed.size() != 4) {
+    throw new WcsException("Requested bounding box contains wrong" + "number of coordinates: " + unparsed.size(),InvalidParameterValue,"bbox");
+  }
+  final double[] bbox=new double[size];
+  for (int i=0; i < size; i++) {
+    try {
+      bbox[i]=Double.parseDouble((String)unparsed.get(i));
+    }
+ catch (    NumberFormatException e) {
+      throw new WcsException("Bounding box coordinate " + i + " is not parsable:"+ unparsed.get(i),InvalidParameterValue,"bbox");
+    }
+  }
+  double minx=bbox[0];
+  double miny=bbox[1];
+  double maxx=bbox[2];
+  double maxy=bbox[3];
+  if (minx > maxx) {
+    throw new WcsException("illegal bbox, minX: " + minx + " is "+ "greater than maxX: "+ maxx,InvalidParameterValue,"bbox");
+  }
+  if (miny > maxy) {
+    throw new WcsException("illegal bbox, minY: " + miny + " is "+ "greater than maxY: "+ maxy,InvalidParameterValue,"bbox");
+  }
+  final GeneralEnvelope envelope=new GeneralEnvelope(size / 2);
+  envelope.setEnvelope(minx,miny,maxx,maxy);
+  return envelope;
+}

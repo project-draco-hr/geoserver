@@ -1,0 +1,42 @@
+{
+  if (encodedValue != null)   return encodedValue;
+  StringBuffer buf=new StringBuffer(27);
+  int millis=(int)timeGMT;
+  if (timeZone == TZ_UNSPECIFIED)   millis+=(defaultedTimeZone * DateAttribute.MILLIS_PER_MINUTE);
+ else   millis+=(timeZone * DateAttribute.MILLIS_PER_MINUTE);
+  if (millis < 0) {
+    millis+=DateAttribute.MILLIS_PER_DAY;
+  }
+ else   if (millis >= DateAttribute.MILLIS_PER_DAY) {
+    millis-=DateAttribute.MILLIS_PER_DAY;
+  }
+  int hour=millis / DateAttribute.MILLIS_PER_HOUR;
+  millis=millis % DateAttribute.MILLIS_PER_HOUR;
+  buf.append(DateAttribute.zeroPadInt(hour,2));
+  buf.append(':');
+  int minute=millis / DateAttribute.MILLIS_PER_MINUTE;
+  millis=millis % DateAttribute.MILLIS_PER_MINUTE;
+  buf.append(DateAttribute.zeroPadInt(minute,2));
+  buf.append(':');
+  int second=millis / DateAttribute.MILLIS_PER_SECOND;
+  buf.append(DateAttribute.zeroPadInt(second,2));
+  if (nanoseconds != 0) {
+    buf.append('.');
+    buf.append(DateAttribute.zeroPadInt(nanoseconds,9));
+  }
+  if (timeZone != TZ_UNSPECIFIED) {
+    int tzNoSign=timeZone;
+    if (timeZone < 0) {
+      tzNoSign=-tzNoSign;
+      buf.append('-');
+    }
+ else     buf.append('+');
+    int tzHours=tzNoSign / 60;
+    buf.append(DateAttribute.zeroPadInt(tzHours,2));
+    buf.append(':');
+    int tzMinutes=tzNoSign % 60;
+    buf.append(DateAttribute.zeroPadInt(tzMinutes,2));
+  }
+  encodedValue=buf.toString();
+  return encodedValue;
+}

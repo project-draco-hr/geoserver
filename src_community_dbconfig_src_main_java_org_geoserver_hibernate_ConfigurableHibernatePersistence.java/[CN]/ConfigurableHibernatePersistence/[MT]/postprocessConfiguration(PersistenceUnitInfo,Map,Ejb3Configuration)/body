@@ -1,0 +1,16 @@
+{
+  if (this.interceptor != null) {
+    if (configured.getInterceptor() == null || EmptyInterceptor.class.equals(configured.getInterceptor().getClass())) {
+      configured.setInterceptor(this.interceptor);
+    }
+ else {
+      throw new IllegalStateException("Hibernate interceptor already set in persistence.xml (" + configured.getInterceptor() + ")");
+    }
+  }
+  if (this.postLoadEventListeners != null) {
+    EventListeners el=configured.getEventListeners();
+    List<PostLoadEventListener> listeners=new LinkedList(Arrays.asList(el.getPostLoadEventListeners()));
+    listeners.addAll(this.postLoadEventListeners);
+    el.setPostLoadEventListeners(listeners.toArray(new PostLoadEventListener[listeners.size()]));
+  }
+}

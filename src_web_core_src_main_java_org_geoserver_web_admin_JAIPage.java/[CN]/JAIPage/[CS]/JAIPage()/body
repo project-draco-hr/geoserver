@@ -1,0 +1,40 @@
+{
+  final IModel geoServerModel=getGeoServerModel();
+  final IModel jaiModel=getJAIModel();
+  Form form=new Form("form",new CompoundPropertyModel(jaiModel));
+  add(form);
+  NumberValidator percentageValidator=NumberValidator.range(0,1);
+  TextField memoryCapacity=new TextField("memoryCapacity");
+  memoryCapacity.add(percentageValidator);
+  form.add(memoryCapacity);
+  TextField memoryThreshold=new TextField("memoryThreshold");
+  memoryThreshold.add(percentageValidator);
+  form.add(memoryThreshold);
+  TextField tileThreads=new TextField("tileThreads");
+  tileThreads.add(NumberValidator.POSITIVE);
+  form.add(tileThreads);
+  TextField tilePriority=new TextField("tilePriority");
+  tilePriority.add(NumberValidator.POSITIVE);
+  form.add(tilePriority);
+  form.add(new CheckBox("recycling"));
+  form.add(new CheckBox("jpegAcceleration"));
+  form.add(new CheckBox("pngAcceleration"));
+  form.add(new CheckBox("allowNativeMosaic"));
+  Button submit=new Button("submit",new StringResourceModel("submit",this,null)){
+    @Override public void onSubmit(){
+      GeoServer gs=(GeoServer)geoServerModel.getObject();
+      gs.getGlobal().setJAI((JAIInfo)jaiModel.getObject());
+      gs.save(gs.getGlobal());
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+;
+  form.add(submit);
+  Button cancel=new Button("cancel"){
+    @Override public void onSubmit(){
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+;
+  form.add(cancel);
+}

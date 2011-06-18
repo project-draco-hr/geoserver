@@ -1,0 +1,69 @@
+{
+  if (myRouter == null) {
+    myRouter=new Router(){
+      @Override protected synchronized void init(      Request request,      Response response){
+        super.init(request,response);
+        String baseURL=request.getRootRef().getParentRef().toString();
+        String rootPath=request.getRootRef().toString().substring(baseURL.length());
+        String pagePath=request.getResourceRef().toString().substring(baseURL.length());
+        String basePath=null;
+        if (request.getResourceRef().getBaseRef() != null) {
+          basePath=request.getResourceRef().getBaseRef().toString().substring(baseURL.length());
+        }
+        String extension=ResponseUtils.getExtension(pagePath);
+        if (extension != null) {
+          pagePath=pagePath.substring(0,pagePath.length() - extension.length() - 1);
+        }
+        if (pagePath.endsWith("/")) {
+          pagePath=pagePath.substring(0,pagePath.length() - 1);
+        }
+        PageInfo pageInfo=new PageInfo();
+        pageInfo.setBaseURL(baseURL);
+        pageInfo.setRootPath(rootPath);
+        pageInfo.setBasePath(basePath);
+        pageInfo.setPagePath(pagePath);
+        pageInfo.setExtension(extension);
+        request.getAttributes().put(PageInfo.KEY,pageInfo);
+        for (        DispatcherCallback callback : callbacks) {
+          callback.init(request,response);
+        }
+      }
+      @Override public Restlet getNext(      Request request,      Response response){
+        Restlet next=super.getNext(request,response);
+        if (next != null) {
+          for (          DispatcherCallback callback : callbacks) {
+            callback.dispatched(request,response,next);
+          }
+        }
+        return next;
+      }
+      @Override public void handle(      Request request,      Response response){
+        try {
+          super.handle(request,response);
+        }
+ catch (        Exception e) {
+          for (          DispatcherCallback callback : callbacks) {
+            callback.exception(request,response,e);
+          }
+          if (e instanceof RuntimeException) {
+            throw (RuntimeException)e;
+          }
+          throw new RuntimeException(e);
+        }
+ finally {
+          for (          DispatcherCallback callback : callbacks) {
+            callback.finished(request,response);
+          }
+        }
+      }
+    }
+;
+    Iterator i=GeoServerExtensions.extensions(RESTMapping.class).iterator();
+    while (i.hasNext()) {
+      RESTMapping rm=(RESTMapping)i.next();
+      addRoutes(rm.getRoutes(),myRouter);
+    }
+    myRouter.attach("",new IndexRestlet(myRouter));
+  }
+  return myRouter;
+}

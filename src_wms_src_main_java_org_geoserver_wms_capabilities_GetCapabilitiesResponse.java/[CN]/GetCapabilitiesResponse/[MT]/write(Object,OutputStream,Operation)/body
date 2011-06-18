@@ -1,0 +1,47 @@
+{
+  final GetCapabilitiesTransformer transformer=(GetCapabilitiesTransformer)value;
+  final GetCapabilitiesRequest request=(GetCapabilitiesRequest)operation.getParameters()[0];
+  final String internalDTDDeclaration=getInternalDTDDeclaration(request);
+  if (internalDTDDeclaration == null) {
+    try {
+      transformer.transform(request,output);
+    }
+ catch (    TransformerException e) {
+      throw new ServiceException(e);
+    }
+  }
+ else {
+    byte[] rawCapabilities;
+    Transformer dtdIncludeTransformer;
+{
+      ByteArrayOutputStream target=new ByteArrayOutputStream();
+      try {
+        transformer.transform(request,target);
+      }
+ catch (      TransformerException e) {
+        throw new ServiceException(e);
+      }
+      rawCapabilities=target.toByteArray();
+    }
+{
+      TransformerFactory tFactory=TransformerFactory.newInstance();
+      String xsltSystemId=getClass().getResource("getcaps_111_internalDTD.xsl").toExternalForm();
+      Source tsource=new StreamSource(xsltSystemId);
+      try {
+        dtdIncludeTransformer=tFactory.newTransformer(tsource);
+      }
+ catch (      TransformerConfigurationException e) {
+        throw new ServiceException(e);
+      }
+    }
+    dtdIncludeTransformer.setParameter("DTDDeclaration",internalDTDDeclaration.toString());
+    Source source=new StreamSource(new ByteArrayInputStream(rawCapabilities));
+    Result result=new StreamResult(output);
+    try {
+      dtdIncludeTransformer.transform(source,result);
+    }
+ catch (    TransformerException e) {
+      throw new ServiceException(e);
+    }
+  }
+}

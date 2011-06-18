@@ -1,0 +1,24 @@
+{
+  EvaluationResult result=context.getAttribute(contextPath,policyRoot,type,xpathVersion);
+  if (!result.indeterminate()) {
+    BagAttribute bag=(BagAttribute)(result.getAttributeValue());
+    if (bag.isEmpty()) {
+      if (mustBePresent) {
+        if (logger.isLoggable(Level.INFO))         logger.info("AttributeSelector failed to resolve a " + "value for a required attribute: " + contextPath);
+        ArrayList<String> code=new ArrayList<String>();
+        code.add(Status.STATUS_MISSING_ATTRIBUTE);
+        String message="couldn't resolve XPath expression " + contextPath + " for type "+ type.toString();
+        return new EvaluationResult(new Status(code,message));
+      }
+ else {
+        return result;
+      }
+    }
+ else {
+      return result;
+    }
+  }
+ else {
+    return result;
+  }
+}

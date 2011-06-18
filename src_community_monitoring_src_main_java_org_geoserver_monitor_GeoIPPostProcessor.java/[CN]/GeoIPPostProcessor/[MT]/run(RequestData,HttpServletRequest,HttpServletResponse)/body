@@ -1,0 +1,25 @@
+{
+  if (data.getRemoteAddr() == null) {
+    LOGGER.info("Request data did not contain ip address. Unable to perform GeoIP lookup.");
+    return;
+  }
+  if (geoIPLookup == null) {
+synchronized (this) {
+      if (geoIPLookup == null) {
+        geoIPLookup=lookupGeoIPDatabase();
+      }
+    }
+  }
+  if (geoIPLookup == null) {
+    return;
+  }
+  Location loc=geoIPLookup.getLocation(data.getRemoteAddr());
+  if (loc == null) {
+    LOGGER.fine("Unable to obtain location for " + data.getRemoteAddr());
+    return;
+  }
+  data.setRemoteCountry(loc.countryName);
+  data.setRemoteCity(loc.city);
+  data.setRemoteLat(loc.latitude);
+  data.setRemoteLon(loc.longitude);
+}

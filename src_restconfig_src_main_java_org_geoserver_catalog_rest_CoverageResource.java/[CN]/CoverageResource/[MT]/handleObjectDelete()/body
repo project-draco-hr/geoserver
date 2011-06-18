@@ -1,0 +1,23 @@
+{
+  String workspace=getAttribute("workspace");
+  String coveragestore=getAttribute("coveragestore");
+  String coverage=getAttribute("coverage");
+  boolean recurse=getQueryStringValue("recurse",Boolean.class,false);
+  CoverageStoreInfo ds=catalog.getCoverageStoreByName(workspace,coveragestore);
+  CoverageInfo c=catalog.getCoverageByCoverageStore(ds,coverage);
+  List<LayerInfo> layers=catalog.getLayers(c);
+  if (recurse) {
+    for (    LayerInfo l : layers) {
+      catalog.remove(l);
+      LOGGER.info("DELETE layer " + l.getName());
+    }
+  }
+ else {
+    if (!layers.isEmpty()) {
+      throw new RestletException("coverage referenced by layer(s)",Status.CLIENT_ERROR_FORBIDDEN);
+    }
+  }
+  catalog.remove(c);
+  clear(c);
+  LOGGER.info("DELETE coverage " + coveragestore + ","+ coverage);
+}

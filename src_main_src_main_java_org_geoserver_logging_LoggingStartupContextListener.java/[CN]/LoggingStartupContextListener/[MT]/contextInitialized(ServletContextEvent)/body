@@ -1,0 +1,55 @@
+{
+  final ServletContext context=event.getServletContext();
+  GeoToolsLoggingRedirection logging=GeoToolsLoggingRedirection.findValue(GeoServerExtensions.getProperty(LoggingUtils.GT2_LOGGING_REDIRECTION,context));
+  try {
+    if (logging == GeoToolsLoggingRedirection.JavaLogging) {
+    }
+ else     if (logging == GeoToolsLoggingRedirection.CommonsLogging) {
+      Logging.ALL.setLoggerFactory(CommonsLoggerFactory.getInstance());
+    }
+ else {
+      Logging.ALL.setLoggerFactory(Log4JLoggerFactory.getInstance());
+    }
+  }
+ catch (  Exception e) {
+    getLogger().log(Level.SEVERE,"Could not configure log4j logging redirection",e);
+  }
+  String relinquishLoggingControl=GeoServerExtensions.getProperty(LoggingUtils.RELINQUISH_LOG4J_CONTROL,context);
+  if (Boolean.valueOf(relinquishLoggingControl)) {
+    getLogger().info("RELINQUISH_LOG4J_CONTROL on, won't attempt to reconfigure LOG4J loggers");
+  }
+ else {
+    try {
+      File baseDir=new File(GeoserverDataDirectory.findGeoServerDataDir(context));
+      GeoServerResourceLoader loader=new GeoServerResourceLoader(baseDir);
+      File f=loader.find("logging.xml");
+      if (f != null) {
+        XStreamPersister xp=new XStreamPersisterFactory().createXMLPersister();
+        BufferedInputStream in=new BufferedInputStream(new FileInputStream(f));
+        try {
+          LoggingInfo loginfo=xp.load(in,LoggingInfo.class);
+          final String location=getLogFileLocation(loginfo.getLocation());
+          LoggingUtils.initLogging(loader,loginfo.getLevel(),!loginfo.isStdOutLogging(),location);
+        }
+  finally {
+          in.close();
+        }
+      }
+ else {
+        f=loader.find("services.xml");
+        if (f != null) {
+          LegacyLoggingImporter loggingImporter=new LegacyLoggingImporter();
+          loggingImporter.imprt(baseDir);
+          final String location=getLogFileLocation(loggingImporter.getLogFile());
+          LoggingUtils.initLogging(loader,loggingImporter.getConfigFileName(),loggingImporter.getSuppressStdOutLogging(),location);
+        }
+ else {
+          getLogger().log(Level.WARNING,"Could not find configuration file for logging");
+        }
+      }
+    }
+ catch (    Exception e) {
+      getLogger().log(Level.SEVERE,"Could not configure log4j overrides",e);
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  MapLayer mapLayer=(MapLayer)o;
+  ReferencedEnvelope extent=mapContext.getAreaOfInterest();
+  Envelope top=KMLUtils.expandToTile(extent);
+  int zoomLevel=KMLUtils.findZoomLevel(extent);
+  LOGGER.fine("request = " + extent);
+  LOGGER.fine("top level = " + top);
+  if (isStandAlone()) {
+    start("kml");
+  }
+  start("Document");
+  if ("cached".equals(KMLUtils.getSuperoverlayMode(mapContext.getRequest(),wms))) {
+    if (KMLUtils.isRequestGWCCompatible(mapContext,mapLayer,wms)) {
+      encodeGWCLink(mapLayer);
+    }
+ else {
+      LOGGER.log(Level.INFO,"Could not use cached mode for this request as the KML " + "parameters do not match the server defaults. Falling back to 'auto' mode");
+      mapContext.getRequest().getFormatOptions().put("overlayMode","auto");
+      encodeNetworkLinks(mapLayer,top,zoomLevel);
+    }
+  }
+ else {
+    encodeNetworkLinks(mapLayer,top,zoomLevel);
+  }
+  end("Document");
+  if (isStandAlone()) {
+    end("kml");
+  }
+}

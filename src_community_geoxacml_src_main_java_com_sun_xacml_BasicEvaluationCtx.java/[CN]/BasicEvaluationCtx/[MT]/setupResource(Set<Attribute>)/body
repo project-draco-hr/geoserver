@@ -1,0 +1,44 @@
+{
+  mapAttributes(resource,resourceMap);
+  if (!resourceMap.containsKey(RESOURCE_ID)) {
+    System.err.println("Resource must contain resource-id attr");
+    throw new ParsingException("resource missing resource-id");
+  }
+ else {
+    Set<Attribute> set=resourceMap.get(RESOURCE_ID);
+    if (set.size() > 1) {
+      System.err.println("Resource may contain only one " + "resource-id Attribute");
+      throw new ParsingException("too many resource-id attrs");
+    }
+ else {
+      resourceId=((Attribute)(set.iterator().next())).getValue();
+    }
+  }
+  if (resourceMap.containsKey(RESOURCE_SCOPE)) {
+    Set<Attribute> set=resourceMap.get(RESOURCE_SCOPE);
+    if (set.size() > 1) {
+      System.err.println("Resource may contain only one " + "resource-scope Attribute");
+      throw new ParsingException("too many resource-scope attrs");
+    }
+    Attribute attr=(Attribute)(set.iterator().next());
+    AttributeValue attrValue=attr.getValue();
+    if (!attrValue.getType().toString().equals(StringAttribute.identifier))     throw new ParsingException("scope attr must be a string");
+    String value=((StringAttribute)attrValue).getValue();
+    if (value.equals("Immediate")) {
+      scope=SCOPE_IMMEDIATE;
+    }
+ else     if (value.equals("Children")) {
+      scope=SCOPE_CHILDREN;
+    }
+ else     if (value.equals("Descendants")) {
+      scope=SCOPE_DESCENDANTS;
+    }
+ else {
+      System.err.println("Unknown scope type: " + value);
+      throw new ParsingException("invalid scope type: " + value);
+    }
+  }
+ else {
+    scope=SCOPE_IMMEDIATE;
+  }
+}

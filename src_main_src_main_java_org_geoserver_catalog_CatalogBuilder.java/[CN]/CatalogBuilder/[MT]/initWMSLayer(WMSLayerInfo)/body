@@ -1,0 +1,27 @@
+{
+  wmsLayer.setCatalog(catalog);
+  if (wmsLayer.getNativeName() == null && wmsLayer.getName() != null) {
+    wmsLayer.setNativeName(wmsLayer.getName());
+  }
+  if (wmsLayer.getNativeName() != null && wmsLayer.getName() == null) {
+    wmsLayer.setName(wmsLayer.getNativeName());
+  }
+  WMSLayerInfo full=buildWMSLayer(wmsLayer.getNativeName());
+  if (wmsLayer.getSRS() == null) {
+    wmsLayer.setSRS(full.getSRS());
+  }
+  if (wmsLayer.getProjectionPolicy() == null) {
+    wmsLayer.setProjectionPolicy(full.getProjectionPolicy());
+  }
+  if (wmsLayer.getLatLonBoundingBox() == null && wmsLayer.getNativeBoundingBox() == null) {
+    wmsLayer.setLatLonBoundingBox(full.getLatLonBoundingBox());
+    wmsLayer.setNativeBoundingBox(full.getNativeBoundingBox());
+  }
+ else   if (wmsLayer.getLatLonBoundingBox() == null) {
+    setupBounds(wmsLayer);
+  }
+ else   if (wmsLayer.getNativeBoundingBox() == null && wmsLayer.getNativeCRS() != null) {
+    ReferencedEnvelope boundsLatLon=wmsLayer.getLatLonBoundingBox();
+    wmsLayer.setNativeBoundingBox(boundsLatLon.transform(wmsLayer.getNativeCRS(),true));
+  }
+}

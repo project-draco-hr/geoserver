@@ -1,0 +1,36 @@
+{
+  BoundingBoxType bbox=domainSubset.getBoundingBox();
+  if ("urn:ogc:def:crs:OGC:1.3:CRS84".equals(bbox.getCrs()))   bbox.setCrs("EPSG:4326");
+  CoordinateReferenceSystem bboxCRs=CRS.decode(bbox.getCrs());
+  Envelope gridEnvelope=meta.getGridCoverage(null,WCSUtils.getReaderHints(wcs)).getEnvelope();
+  GeneralEnvelope gridEnvelopeBboxCRS=null;
+  if (bboxCRs instanceof GeographicCRS) {
+    try {
+      CoordinateOperationFactory cof=CRS.getCoordinateOperationFactory(true);
+      final CoordinateOperation operation=cof.createOperation(gridEnvelope.getCoordinateReferenceSystem(),bboxCRs);
+      gridEnvelopeBboxCRS=CRS.transform(operation,gridEnvelope);
+    }
+ catch (    Exception e) {
+    }
+  }
+  List<Double> lower=bbox.getLowerCorner();
+  List<Double> upper=bbox.getUpperCorner();
+  for (int i=0; i < lower.size(); i++) {
+    if (lower.get(i) > upper.get(i)) {
+      final CoordinateSystemAxis axis=bboxCRs.getCoordinateSystem().getAxis(i);
+      if (bboxCRs instanceof GeographicCRS && axis.getDirection() == AxisDirection.EAST) {
+        if (gridEnvelopeBboxCRS != null) {
+          final double envMax=gridEnvelopeBboxCRS.getMaximum(i);
+          if (envMax >= lower.get(i))           upper.set(i,upper.get(i) + (axis.getMaximumValue() - axis.getMinimumValue()));
+ else           lower.set(i,lower.get(i) - (axis.getMaximumValue() - axis.getMinimumValue()));
+        }
+ else {
+          upper.set(i,upper.get(i) + (axis.getMaximumValue() - axis.getMinimumValue()));
+        }
+      }
+      if (lower.get(i) > upper.get(i)) {
+        throw new WcsException("illegal bbox, min of dimension " + (i + 1) + ": "+ lower.get(i)+ " is "+ "greater than max of same dimension: "+ upper.get(i),WcsExceptionCode.InvalidParameterValue,"BoundingBox");
+      }
+    }
+  }
+}

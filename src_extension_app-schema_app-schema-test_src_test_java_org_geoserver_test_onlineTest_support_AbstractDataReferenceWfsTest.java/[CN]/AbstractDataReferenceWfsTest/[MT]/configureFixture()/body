@@ -1,0 +1,42 @@
+{
+  if (fixture == null) {
+    String fixtureId=getFixtureId();
+    if (fixtureId == null) {
+      return;
+    }
+    try {
+      File base=GSFixtureUtilitiesDelegate.getFixtureDirectory();
+      String profile=System.getProperty(ONLINE_TEST_PROFILE);
+      if (profile != null && !"".equals(profile)) {
+        base=new File(base,profile);
+      }
+      File fixtureFile=GSFixtureUtilitiesDelegate.getFixtureFile(base,fixtureId);
+      Boolean exists=found.get(fixtureFile.getCanonicalPath());
+      if (exists == null || exists.booleanValue()) {
+        if (fixtureFile.exists()) {
+          fixture=GSFixtureUtilitiesDelegate.loadProperties(fixtureFile);
+          found.put(fixtureFile.getCanonicalPath(),true);
+          System.setProperty("app-schema.properties",fixtureFile.getPath());
+        }
+ else {
+          if (profile == null) {
+            Properties exampleFixture=createExampleFixture();
+            if (exampleFixture != null) {
+              File exFixtureFile=new File(fixtureFile.getAbsolutePath() + ".example");
+              if (!exFixtureFile.exists()) {
+                createExampleFixture(exFixtureFile,exampleFixture);
+              }
+            }
+          }
+          found.put(fixtureFile.getCanonicalPath(),false);
+        }
+      }
+      if (fixture == null && exists == null) {
+        GSFixtureUtilitiesDelegate.printSkipNotice(fixtureId,fixtureFile);
+      }
+    }
+ catch (    Exception e) {
+      e.printStackTrace();
+    }
+  }
+}

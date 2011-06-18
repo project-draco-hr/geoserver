@@ -1,0 +1,35 @@
+{
+  List<Object> layersOrGroups=new ArrayList<Object>();
+  DataStore remoteWFS=null;
+  final List<String> remoteTypeNames=new ArrayList<String>();
+  if ("WFS".equals(remoteOwsType) && remoteOwsUrl != null) {
+    remoteWFS=connectRemoteWFS(remoteOwsUrl);
+    remoteTypeNames.addAll(Arrays.asList(remoteWFS.getTypeNames()));
+    Collections.sort(remoteTypeNames);
+  }
+  for (  String layerName : requestedLayerNames) {
+    if (remoteTypeNames.contains(layerName)) {
+      SimpleFeatureSource remoteSource;
+      remoteSource=remoteWFS.getFeatureSource(layerName);
+      if (remoteSource != null) {
+        layersOrGroups.add(new MapLayerInfo(remoteSource));
+        continue;
+      }
+    }
+    LayerInfo layerInfo=wms.getLayerByName(layerName);
+    if (layerInfo != null) {
+      layersOrGroups.add(layerInfo);
+    }
+ else {
+      LayerGroupInfo layerGroup=wms.getLayerGroupByName(layerName);
+      if (layerGroup == null) {
+        throw new ServiceException("Could not find layer " + layerName,"LayerNotDefined");
+      }
+      layersOrGroups.add(layerGroup);
+    }
+  }
+  if (layersOrGroups.size() == 0) {
+    throw new ServiceException("No LAYERS has been requested",getClass().getName());
+  }
+  return layersOrGroups;
+}

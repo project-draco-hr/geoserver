@@ -1,0 +1,33 @@
+{
+  if (p.type.isEnum()) {
+    return new LiteralPPIO(p.type);
+  }
+  List<ProcessParameterIO> all=findAll(p,context);
+  if (all.isEmpty()) {
+    return null;
+  }
+  if (mime != null) {
+    for (    ProcessParameterIO ppio : all) {
+      if (ppio instanceof ComplexPPIO && ((ComplexPPIO)ppio).getMimeType().equals(mime)) {
+        return ppio;
+      }
+    }
+  }
+  if (all.size() > 0) {
+    Collections.sort(all,new Comparator<ProcessParameterIO>(){
+      public int compare(      ProcessParameterIO o1,      ProcessParameterIO o2){
+        Class c1=o1.getType();
+        Class c2=o2.getType();
+        if (c1.equals(c2)) {
+          return 0;
+        }
+        if (c1.isAssignableFrom(c2)) {
+          return 1;
+        }
+        return -1;
+      }
+    }
+);
+  }
+  return all.get(0);
+}

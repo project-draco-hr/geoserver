@@ -1,0 +1,33 @@
+{
+  MimeType mime=tile.getMimeType();
+  final List<MimeType> formats=getMimeTypes();
+  if (mime == null) {
+    mime=formats.get(0);
+  }
+ else {
+    if (!formats.contains(mime)) {
+      throw new IllegalArgumentException(mime.getFormat() + " is not a supported format for " + getName());
+    }
+  }
+  final String tileGridSetId=tile.getGridSetId();
+  final GridSubset gridSubset=getGridSubset(tileGridSetId);
+  if (gridSubset == null) {
+    throw new IllegalArgumentException("Requested gridset not found: " + tileGridSetId);
+  }
+  final long[] gridLoc=tile.getTileIndex();
+  Assert.notNull(gridLoc);
+  gridSubset.checkCoverage(gridLoc);
+  ConveyorTile returnTile;
+  int metaX;
+  int metaY;
+  if (mime.supportsTiling()) {
+    metaX=info.getMetaTilingX();
+    metaY=info.getMetaTilingY();
+  }
+ else {
+    metaX=metaY=1;
+  }
+  returnTile=getMetatilingReponse(tile,true,metaX,metaY);
+  sendTileRequestedEvent(returnTile);
+  return returnTile;
+}

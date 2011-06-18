@@ -1,0 +1,36 @@
+{
+  if (remoteWFSStatesAvailable == null) {
+    String value=System.getProperty("remoteOwsTests");
+    if (value == null || !"TRUE".equalsIgnoreCase(value)) {
+      logger.log(Level.WARNING,"Skipping remote WFS test because they were not enabled via -DremoteOwsTests=true");
+      remoteWFSStatesAvailable=Boolean.FALSE;
+    }
+ else {
+      try {
+        WFSDataStoreFactory factory=new WFSDataStoreFactory();
+        Map<String,Serializable> params=new HashMap(factory.getImplementationHints());
+        URL url=new URL(WFS_SERVER_URL + "service=WFS&request=GetCapabilities");
+        params.put(WFSDataStoreFactory.URL.key,url);
+        params.put(WFSDataStoreFactory.TRY_GZIP.key,Boolean.TRUE);
+        params.put(WFSDataStoreFactory.TIMEOUT.key,Integer.valueOf(5000));
+        DataStore remoteStore=factory.createDataStore(params);
+        FeatureSource fs=remoteStore.getFeatureSource(TOPP_STATES);
+        remoteWFSStatesAvailable=Boolean.TRUE;
+        Query dq=new Query(TOPP_STATES);
+        FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+        dq.setFilter(ff.greater(ff.property("PERSONS"),ff.literal(20000000)));
+        FeatureCollection fc=fs.getFeatures(dq);
+        if (fc.size() != 1) {
+          logger.log(Level.WARNING,"Remote database status invalid, there should be one and only one " + "feature with more than 20M persons in topp:states");
+          remoteWFSStatesAvailable=Boolean.FALSE;
+        }
+        logger.log(Level.WARNING,"Remote WFS tests are enabled, remote server appears to be up");
+      }
+ catch (      IOException e) {
+        logger.log(Level.WARNING,"Skipping remote wms test, either demo  " + "is down or the topp:states layer is not there",e);
+        remoteWFSStatesAvailable=Boolean.FALSE;
+      }
+    }
+  }
+  return remoteWFSStatesAvailable.booleanValue();
+}

@@ -1,0 +1,28 @@
+{
+synchronized (modeLock) {
+    if (mode != null)     return mode;
+    RequestCtx requestCtx=GeoXACMLConfig.getRequestCtxBuilderFactory().getCatalogRequestCtxBuilder().createRequestCtx();
+    ResponseCtx responseCtx=GeoXACMLConfig.getXACMLTransport().evaluateRequestCtx(requestCtx);
+    Result result=responseCtx.getResults().iterator().next();
+    if (result == null || result.getDecision() != Result.DECISION_PERMIT) {
+      Log.severe("Geserver cannot access its catalog !!!");
+      Log.severe(XACMLUtil.asXMLString(requestCtx));
+      return useDefaultMode();
+    }
+    Obligation obligation=result.getObligations().iterator().next();
+    if (obligation == null || XACMLConstants.CatalogModeObligationId.equals(obligation.getId().toASCIIString()) == false) {
+      Log.severe("No obligation with id: " + XACMLConstants.CatalogModeObligationId);
+      Log.severe(XACMLUtil.asXMLString(requestCtx));
+      return useDefaultMode();
+    }
+    Attribute catalogModeAssignment=obligation.getAssignments().iterator().next();
+    if (catalogModeAssignment == null || CatalogModeMap.containsKey(((StringAttribute)catalogModeAssignment.getValue()).getValue()) == false) {
+      Log.severe("No valid catalog mode ");
+      Log.severe(XACMLUtil.asXMLString(requestCtx));
+      return useDefaultMode();
+    }
+    String catalogModeKey=((StringAttribute)catalogModeAssignment.getValue()).getValue();
+    mode=CatalogModeMap.get(catalogModeKey);
+    return mode;
+  }
+}

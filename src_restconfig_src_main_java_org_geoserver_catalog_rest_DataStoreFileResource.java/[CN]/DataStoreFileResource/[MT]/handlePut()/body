@@ -1,0 +1,188 @@
+{
+  String workspace=getAttribute("workspace");
+  String datastore=getAttribute("datastore");
+  String format=getAttribute("format");
+  String method=getUploadMethod(getRequest());
+  getResponse().setStatus(Status.SUCCESS_ACCEPTED);
+  Form form=getRequest().getResourceRef().getQueryAsForm();
+  File uploadedFile=doFileUpload(method,workspace,datastore,format);
+  String sourceDataStoreFormat=dataStoreFormat;
+  String targetDataStoreFormat=RESTUtils.getQueryStringValue(getRequest(),"target");
+  if (targetDataStoreFormat == null) {
+    targetDataStoreFormat=sourceDataStoreFormat;
+  }
+  sourceDataStoreFormat=sourceDataStoreFormat.toLowerCase();
+  targetDataStoreFormat=targetDataStoreFormat.toLowerCase();
+  CatalogBuilder builder=new CatalogBuilder(catalog);
+  builder.setWorkspace(catalog.getWorkspaceByName(workspace));
+  DataStoreInfo info=catalog.getDataStoreByName(workspace,datastore);
+  NamespaceInfo namespace=catalog.getNamespaceByPrefix(workspace);
+  boolean add=false;
+  boolean save=false;
+  boolean canRemoveFiles=false;
+  String charset=form.getFirstValue("charset");
+  if (info == null) {
+    LOGGER.info("Auto-configuring datastore: " + datastore);
+    info=builder.buildDataStore(datastore);
+    add=true;
+    if (charset != null && charset.length() > 0) {
+      info.getConnectionParameters().put("charset",charset);
+    }
+    DataStoreFactorySpi targetFactory=factory;
+    if (!targetDataStoreFormat.equals(sourceDataStoreFormat)) {
+      targetFactory=lookupDataStoreFactory(targetDataStoreFormat);
+      if (targetFactory == null) {
+        throw new RestletException("Unable to create data store of type " + targetDataStoreFormat,Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+      autoCreateParameters(info,namespace,targetFactory);
+      canRemoveFiles=true;
+    }
+ else {
+      updateParameters(info,namespace,targetFactory,uploadedFile);
+    }
+    info.setType(targetFactory.getDisplayName());
+  }
+ else {
+    LOGGER.info("Using existing datastore: " + datastore);
+    targetDataStoreFormat=lookupDataStoreFactoryFormat(info.getType());
+    if (targetDataStoreFormat == null) {
+      throw new RuntimeException("Unable to locate data store factory of type " + info.getType());
+    }
+    if (targetDataStoreFormat.equals(sourceDataStoreFormat)) {
+      save=true;
+      updateParameters(info,namespace,factory,uploadedFile);
+    }
+ else {
+      canRemoveFiles=true;
+    }
+  }
+  builder.setStore(info);
+  if (add) {
+    catalog.add(info);
+  }
+ else {
+    if (save) {
+      catalog.save(info);
+    }
+  }
+  HashMap params=new HashMap();
+  if (charset != null && charset.length() > 0) {
+    params.put("charset",charset);
+  }
+  updateParameters(params,factory,uploadedFile);
+  DataStore source;
+  try {
+    source=factory.createDataStore(params);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException("Unable to create source data store",e);
+  }
+  try {
+    DataStore ds=(DataStore)info.getDataStore(null);
+    if (!targetDataStoreFormat.equals(sourceDataStoreFormat)) {
+      for (      String featureTypeName : source.getTypeNames()) {
+        SimpleFeatureType featureType=null;
+        try {
+          featureType=ds.getSchema(featureTypeName);
+        }
+ catch (        Exception e) {
+          LOGGER.info(featureTypeName + " does not exist in data store " + datastore+ ". Attempting to create it");
+          ds.createSchema(source.getSchema(featureTypeName));
+          featureType=source.getSchema(featureTypeName);
+        }
+        FeatureSource featureSource=ds.getFeatureSource(featureTypeName);
+        if (!(featureSource instanceof FeatureStore)) {
+          LOGGER.warning(featureTypeName + " is not writable, skipping");
+          continue;
+        }
+        Transaction tx=new DefaultTransaction();
+        FeatureStore featureStore=(FeatureStore)featureSource;
+        featureStore.setTransaction(tx);
+        try {
+          String update=form.getFirstValue("update");
+          if ("overwrite".equalsIgnoreCase(update)) {
+            LOGGER.fine("Removing existing features from " + featureTypeName);
+            featureStore.removeFeatures(Filter.INCLUDE);
+          }
+          LOGGER.fine("Adding features to " + featureTypeName);
+          FeatureCollection features=source.getFeatureSource(featureTypeName).getFeatures();
+          featureStore.addFeatures(features);
+          tx.commit();
+        }
+ catch (        Exception e) {
+          tx.rollback();
+        }
+ finally {
+          tx.close();
+        }
+      }
+    }
+    String configure=form.getFirstValue("configure");
+    if ("none".equalsIgnoreCase(configure)) {
+      getResponse().setStatus(Status.SUCCESS_CREATED);
+      return;
+    }
+    String[] featureTypeNames=source.getTypeNames();
+    for (int i=0; i < featureTypeNames.length; i++) {
+      if (!"all".equalsIgnoreCase(configure) && i > 0) {
+        break;
+      }
+      FeatureSource fs=ds.getFeatureSource(featureTypeNames[i]);
+      FeatureTypeInfo ftinfo=catalog.getFeatureTypeByDataStore(info,featureTypeNames[i]);
+      if (ftinfo == null) {
+        ftinfo=builder.buildFeatureType(fs);
+        builder.lookupSRS(ftinfo,true);
+        builder.setupBounds(ftinfo);
+      }
+      ReferencedEnvelope bounds=fs.getBounds();
+      ftinfo.setNativeBoundingBox(bounds);
+      if (ftinfo.getId() == null) {
+        if (catalog.getFeatureTypeByName(namespace,ftinfo.getName()) != null) {
+          LOGGER.warning(String.format("Feature type %s already exists in namespace %s, " + "attempting to rename",ftinfo.getName(),namespace.getPrefix()));
+          int x=1;
+          String originalName=ftinfo.getName();
+          do {
+            ftinfo.setName(originalName + i);
+            i++;
+          }
+ while (i < 10 && catalog.getFeatureTypeByName(namespace,ftinfo.getName()) != null);
+        }
+        catalog.add(ftinfo);
+        LayerInfo layer=builder.buildLayer(ftinfo);
+        boolean valid=true;
+        try {
+          if (!catalog.validate(layer,true).isEmpty()) {
+            valid=false;
+          }
+        }
+ catch (        Exception e) {
+          valid=false;
+        }
+        layer.setEnabled(valid);
+        catalog.add(layer);
+        LOGGER.info("Added feature type " + ftinfo.getName());
+      }
+ else {
+        LOGGER.info("Updated feature type " + ftinfo.getName());
+        catalog.save(ftinfo);
+      }
+      getResponse().setStatus(Status.SUCCESS_CREATED);
+    }
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  source.dispose();
+  if (isInlineUpload(method) && canRemoveFiles) {
+    if (uploadedFile.isFile())     uploadedFile=uploadedFile.getParentFile();
+    try {
+      FileUtils.deleteDirectory(uploadedFile);
+    }
+ catch (    IOException e) {
+      LOGGER.info("Unable to delete " + uploadedFile.getAbsolutePath());
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"",e);
+      }
+    }
+  }
+}

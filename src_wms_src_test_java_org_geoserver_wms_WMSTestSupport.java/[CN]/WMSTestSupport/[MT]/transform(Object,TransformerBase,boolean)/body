@@ -1,0 +1,24 @@
+{
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  tr.transform(req,out);
+  DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+  dbf.setNamespaceAware(namespaceAware);
+  DocumentBuilder db=dbf.newDocumentBuilder();
+  /** 
+ * Resolves everything to an empty xml document, useful for skipping errors due to missing
+ * dtds and the like
+ * @author Andrea Aime - TOPP
+ */
+class EmptyResolver implements org.xml.sax.EntityResolver {
+    public InputSource resolveEntity(    String publicId,    String systemId) throws org.xml.sax.SAXException, IOException {
+      StringReader reader=new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+      InputSource source=new InputSource(reader);
+      source.setPublicId(publicId);
+      source.setSystemId(systemId);
+      return source;
+    }
+  }
+  db.setEntityResolver(new EmptyResolver());
+  Document doc=db.parse(new ByteArrayInputStream(out.toByteArray()));
+  return doc;
+}

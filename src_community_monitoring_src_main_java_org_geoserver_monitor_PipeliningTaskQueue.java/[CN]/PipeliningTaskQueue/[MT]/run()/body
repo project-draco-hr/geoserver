@@ -1,0 +1,23 @@
+{
+  for (  Queue<Pipelineable<K>> pipeline : pipelines.values()) {
+    Pipelineable<K> job=pipeline.peek();
+    if (job != null) {
+      if (!job.lock.tryLock())       continue;
+      if (job.future != null) {
+        if (job.future.isDone()) {
+          if (LOGGER.isLoggable(Level.FINEST)) {
+            LOGGER.finest("Removing task from queue " + job.key);
+          }
+          pipeline.remove();
+        }
+      }
+ else {
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.finest("Executing task in queue " + job.key);
+        }
+        job.future=tasks.submit(job.task);
+      }
+      job.lock.unlock();
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  HttpServletRequest httpRequest=request.getHttpRequest();
+  request.setGet("GET".equalsIgnoreCase(httpRequest.getMethod()) || "application/x-www-form-urlencoded".equals(httpRequest.getContentType()));
+  parseKVP(request);
+  if (!request.isGet()) {
+    request.setInput(reader(httpRequest));
+    char[] req=new char[xmlPostRequestLogBufferSize];
+    int read=request.getInput().read(req,0,xmlPostRequestLogBufferSize);
+    if (logger.isLoggable(Level.FINE)) {
+      if (read == -1) {
+        request.setInput(null);
+      }
+ else       if (read < xmlPostRequestLogBufferSize) {
+        logger.fine("Raw XML request: " + new String(req));
+      }
+ else       if (xmlPostRequestLogBufferSize == 0) {
+      }
+ else {
+        logger.fine("Raw XML request starts with: " + new String(req) + "...");
+      }
+    }
+    if (read == -1)     request.setInput(null);
+ else     request.getInput().reset();
+  }
+  String ctxPath=request.httpRequest.getContextPath();
+  String reqPath=request.httpRequest.getRequestURI();
+  reqPath=reqPath.substring(ctxPath.length());
+  if (reqPath.startsWith("/")) {
+    reqPath=reqPath.substring(1,reqPath.length());
+  }
+  if (reqPath.endsWith("/")) {
+    reqPath=reqPath.substring(0,reqPath.length() - 1);
+  }
+  String context=reqPath;
+  String path=null;
+  int index=context.lastIndexOf('/');
+  if (index != -1) {
+    path=context.substring(index + 1);
+    context=context.substring(0,index);
+  }
+ else {
+    path=reqPath;
+    context=null;
+  }
+  request.setContext(context);
+  request.setPath(path);
+  return fireInitCallback(request);
+}

@@ -1,0 +1,19 @@
+{
+  if (srsName == null)   return null;
+  CoordinateReferenceSystem crs=crsCache.get(srsName);
+  if (crs == null) {
+synchronized (crsCache) {
+      crs=crsCache.get(srsName);
+      if (crs == null) {
+        try {
+          crs=CRS.decode(srsName);
+          crsCache.put(srsName,crs);
+        }
+ catch (        Exception e) {
+          throw (IOException)new IOException().initCause(e);
+        }
+      }
+    }
+  }
+  return crs;
+}

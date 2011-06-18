@@ -1,0 +1,54 @@
+{
+  MapLayer[] layers=mapContext.getLayers();
+  int nLayers=layers.length;
+  int defMaxDecimals=writer.getMaximunFractionDigits();
+  FilterFactory fFac=FilterFactoryFinder.createFilterFactory();
+  for (int i=0; i < nLayers; i++) {
+    MapLayer layer=layers[i];
+    SimpleFeatureIterator featureReader=null;
+    SimpleFeatureSource fSource;
+    fSource=(SimpleFeatureSource)layer.getFeatureSource();
+    SimpleFeatureType schema=fSource.getSchema();
+    try {
+      Expression bboxExpression=fFac.createBBoxExpression(mapContext.getAreaOfInterest());
+      GeometryFilter bboxFilter=fFac.createGeometryFilter(FilterType.GEOMETRY_INTERSECTS);
+      bboxFilter.addLeftGeometry(fFac.createAttributeExpression(schema,schema.getGeometryDescriptor().getName().getLocalPart()));
+      bboxFilter.addRightGeometry(bboxExpression);
+      Query bboxQuery=new Query(schema.getTypeName(),bboxFilter);
+      Query definitionQuery=layer.getQuery();
+      Query finalQuery=new Query(DataUtilities.mixQueries(definitionQuery,bboxQuery,"svgEncoder"));
+      finalQuery.setHints(definitionQuery.getHints());
+      finalQuery.setSortBy(definitionQuery.getSortBy());
+      finalQuery.setStartIndex(definitionQuery.getStartIndex());
+      LOGGER.fine("obtaining FeatureReader for " + schema.getTypeName());
+      featureReader=fSource.getFeatures(finalQuery).features();
+      LOGGER.fine("got FeatureReader, now writing");
+      String groupId=null;
+      String styleName=null;
+      groupId=schema.getTypeName();
+      styleName=layer.getStyle().getName();
+      writer.write("<g id=\"" + groupId + "\"");
+      if (!styleName.startsWith("#")) {
+        writer.write(" class=\"" + styleName + "\"");
+      }
+      writer.write(">\n");
+      writeDefs(schema);
+      writer.writeFeatures(fSource.getSchema(),featureReader,styleName);
+      writer.write("</g>\n");
+    }
+ catch (    IOException ex) {
+      throw ex;
+    }
+catch (    Throwable t) {
+      LOGGER.warning("UNCAUGHT exception: " + t.getMessage());
+      IOException ioe=new IOException("UNCAUGHT exception: " + t.getMessage());
+      ioe.setStackTrace(t.getStackTrace());
+      throw ioe;
+    }
+ finally {
+      if (featureReader != null) {
+        featureReader.close();
+      }
+    }
+  }
+}

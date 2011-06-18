@@ -1,0 +1,13 @@
+{
+  for (  AttributeFinderModule module : selectorModules) {
+    EvaluationResult result=module.findAttribute(contextPath,namespaceNode,attributeType,context,xpathVersion);
+    if (result.indeterminate()) {
+      if (logger.isLoggable(Level.INFO))       logger.info("Error while trying to resolve values: " + result.getStatus().getMessage());
+      return result;
+    }
+    BagAttribute bag=(BagAttribute)(result.getAttributeValue());
+    if (!bag.isEmpty())     return result;
+  }
+  if (logger.isLoggable(Level.FINE))   logger.fine("Failed to resolve any values for " + contextPath);
+  return new EvaluationResult(BagAttribute.createEmptyBag(attributeType));
+}

@@ -1,0 +1,43 @@
+{
+  final Catalog catalog=getCatalog();
+  DataAccess<? extends FeatureType,? extends Feature> dataStore;
+  try {
+    dataStore=info.getDataStore(new NullProgressListener());
+    dataStore.dispose();
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Error obtaining new data store",e);
+    String message=e.getMessage();
+    if (message == null && e.getCause() != null) {
+      message=e.getCause().getMessage();
+    }
+    throw new IllegalArgumentException("Error creating data store, check the parameters. Error message: " + message);
+  }
+  DataStoreInfo savedStore=catalog.getFactory().createDataStore();
+  clone(info,savedStore);
+  try {
+    catalog.add(savedStore);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error adding data store to catalog",e);
+    String message=e.getMessage();
+    if (message == null && e.getCause() != null) {
+      message=e.getCause().getMessage();
+    }
+    throw new IllegalArgumentException("Error creating data store with the provided parameters: " + message);
+  }
+  final NewLayerPage newLayerPage;
+  try {
+    newLayerPage=new NewLayerPage(savedStore.getId());
+  }
+ catch (  RuntimeException e) {
+    try {
+      catalog.remove(savedStore);
+    }
+ catch (    Exception removeEx) {
+      LOGGER.log(Level.WARNING,"Error removing just added datastore!",e);
+    }
+    throw new IllegalArgumentException(e.getMessage(),e);
+  }
+  setResponsePage(newLayerPage);
+}

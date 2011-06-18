@@ -1,0 +1,22 @@
+{
+  String tileCacheBaseUrl=(String)geoServer.getGlobal().getMetadata().get("tileCache");
+  if (tileCacheBaseUrl != null) {
+    try {
+      new URL(tileCacheBaseUrl);
+      return tileCacheBaseUrl;
+    }
+ catch (    MalformedURLException e1) {
+      try {
+        String baseUrl=req.getBaseUrl();
+        URL base=new URL(baseUrl);
+        baseUrl=base.getProtocol() + ":" + base.getPort()+ "//"+ base.getHost();
+        String url=Requests.appendContextPath(baseUrl,tileCacheBaseUrl);
+        new URL(url);
+        return url;
+      }
+ catch (      MalformedURLException e2) {
+      }
+    }
+  }
+  return null;
+}

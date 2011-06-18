@@ -1,0 +1,30 @@
+{
+  final String rule=ruleKey + "=" + ruleValue;
+  String[] elements=parseElements(ruleKey);
+  if (elements.length != 3) {
+    LOGGER.warning("Invalid rule " + rule + ", the expected format is workspace.layer.mode=role1,role2,...");
+    return null;
+  }
+  String workspace=elements[0];
+  String layerName=elements[1];
+  String modeAlias=elements[2];
+  Set<String> roles=parseRoles(ruleValue);
+  if (elements.length != 3) {
+    LOGGER.warning("Invalid rule '" + rule + "', the standard form is [namespace].[layer].[mode]=[role]+ "+ "Rule has been ignored");
+    return null;
+  }
+  if (!ANY.equals(workspace) && rawCatalog.getWorkspaceByName(workspace) == null)   LOGGER.warning("Namespace/Workspace " + workspace + " is unknown in rule "+ rule);
+  if (!ANY.equals(layerName) && rawCatalog.getLayerByName(layerName) == null)   LOGGER.warning("Layer " + workspace + " is unknown in rule + "+ rule);
+  AccessMode mode=AccessMode.getByAlias(modeAlias);
+  if (mode == null) {
+    LOGGER.warning("Unknown access mode " + modeAlias + " in "+ ruleKey+ ", skipping rule "+ rule);
+    return null;
+  }
+  if (ANY.equals(workspace)) {
+    if (!ANY.equals(layerName)) {
+      LOGGER.warning("Invalid rule " + rule + ", when namespace "+ "is * then also layer must be *. Skipping rule "+ rule);
+      return null;
+    }
+  }
+  return new DataAccessRule(workspace,layerName,mode,roles);
+}

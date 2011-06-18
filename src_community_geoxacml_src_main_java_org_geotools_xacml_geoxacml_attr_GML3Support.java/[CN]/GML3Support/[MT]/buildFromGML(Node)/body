@@ -1,0 +1,58 @@
+{
+  NamedNodeMap attrMap=gmlNode.getAttributes();
+  Node n=attrMap.getNamedItem("gid");
+  String gid=n == null ? null : n.getTextContent();
+  n=attrMap.getNamedItem("srsName");
+  String srsName=n == null ? null : n.getTextContent();
+  n=attrMap.getNamedItem("srsDimension");
+  int srsDimension=n == null ? 2 : Integer.valueOf(n.getTextContent());
+  if ("Point".equals(gmlNode.getLocalName())) {
+    Point p=parsePoint(gmlNode,srsDimension);
+    GeometryAttribute attr=new GeometryAttribute(p,srsName,gid,GMLVersion.Version3,GML_POINT);
+    attr.setSrsDimension(srsDimension);
+    return attr;
+  }
+  if ("LineString".equals(gmlNode.getLocalName())) {
+    LineString ls=parseLineString(gmlNode,srsDimension);
+    GeometryAttribute attr=new GeometryAttribute(ls,srsName,gid,GMLVersion.Version3,GML_LINESTRING);
+    attr.setSrsDimension(srsDimension);
+    return attr;
+  }
+  if ("LinearRing".equals(gmlNode.getLocalName())) {
+    LinearRing lr=parseLinearRing(gmlNode,srsDimension);
+    GeometryAttribute attr=new GeometryAttribute(lr,srsName,gid,GMLVersion.Version3,GML_LINEARRING);
+    attr.setSrsDimension(srsDimension);
+    return attr;
+  }
+  if ("Polygon".equals(gmlNode.getLocalName())) {
+    Polygon poly=parsePolygon(gmlNode,srsDimension);
+    GeometryAttribute attr=new GeometryAttribute(poly,srsName,gid,GMLVersion.Version3,GML_POLYGON);
+    attr.setSrsDimension(srsDimension);
+    return attr;
+  }
+  if ("Envelope".equals(gmlNode.getLocalName())) {
+    Polygon poly=parseEnvelope(gmlNode,srsDimension);
+    GeometryAttribute attr=new GeometryAttribute(poly,srsName,gid,GMLVersion.Version3,GML_ENVELOPE);
+    attr.setSrsDimension(srsDimension);
+    return attr;
+  }
+  if ("MultiPoint".equals(gmlNode.getLocalName())) {
+    MultiPoint mp=parseMultiPoint(gmlNode,srsDimension);
+    GeometryAttribute attr=new GeometryAttribute(mp,srsName,gid,GMLVersion.Version3,GML_MULTIPOINT);
+    attr.setSrsDimension(srsDimension);
+    return attr;
+  }
+  if ("MultiCurve".equals(gmlNode.getLocalName())) {
+    MultiLineString mp=parseMultiCurve(gmlNode,srsDimension);
+    GeometryAttribute attr=new GeometryAttribute(mp,srsName,gid,GMLVersion.Version3,GML_MULTICURVE);
+    attr.setSrsDimension(srsDimension);
+    return attr;
+  }
+  if ("MultiSurface".equals(gmlNode.getLocalName())) {
+    MultiPolygon mp=parseMultiSurface(gmlNode,srsDimension);
+    GeometryAttribute attr=new GeometryAttribute(mp,srsName,gid,GMLVersion.Version3,GML_MULTISURFACE);
+    attr.setSrsDimension(srsDimension);
+    return attr;
+  }
+  return null;
+}

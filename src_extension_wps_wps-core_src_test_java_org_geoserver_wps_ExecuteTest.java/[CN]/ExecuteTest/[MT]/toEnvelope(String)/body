@@ -1,0 +1,16 @@
+{
+  Parser p=new Parser(new OWSConfiguration());
+  Object parsed=p.parse(new ByteArrayInputStream(xml.getBytes()));
+  assertTrue(parsed instanceof BoundingBoxType);
+  BoundingBoxType box=(BoundingBoxType)parsed;
+  ReferencedEnvelope re;
+  if (box.getCrs() != null) {
+    re=new ReferencedEnvelope(CRS.decode(box.getCrs()));
+  }
+ else {
+    re=new ReferencedEnvelope();
+  }
+  re.expandToInclude((Double)box.getLowerCorner().get(0),(Double)box.getLowerCorner().get(1));
+  re.expandToInclude((Double)box.getUpperCorner().get(0),(Double)box.getUpperCorner().get(1));
+  return re;
+}

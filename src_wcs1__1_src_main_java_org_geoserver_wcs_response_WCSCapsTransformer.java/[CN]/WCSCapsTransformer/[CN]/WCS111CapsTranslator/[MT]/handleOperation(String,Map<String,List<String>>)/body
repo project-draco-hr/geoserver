@@ -1,0 +1,34 @@
+{
+  AttributesImpl attributes=new AttributesImpl();
+  attributes.addAttribute(null,"name","name",null,capabilityName);
+  start("ows:Operation",attributes);
+  final String url=appendQueryString(buildURL(request.getBaseUrl(),"wcs",null,URLType.SERVICE),"");
+  start("ows:DCP");
+  start("ows:HTTP");
+  attributes=new AttributesImpl();
+  attributes.addAttribute("","xlink:href","xlink:href","",url);
+  element("ows:Get",null,attributes);
+  end("ows:HTTP");
+  end("ows:DCP");
+  attributes=new AttributesImpl();
+  attributes.addAttribute("","xlink:href","xlink:href","",url);
+  start("ows:DCP");
+  start("ows:HTTP");
+  element("ows:Post",null,attributes);
+  end("ows:HTTP");
+  end("ows:DCP");
+  if (parameters != null && !parameters.isEmpty()) {
+    for (    Map.Entry<String,List<String>> param : parameters.entrySet()) {
+      attributes=new AttributesImpl();
+      attributes.addAttribute("","name","name","",param.getKey());
+      start("ows:Parameter",attributes);
+      start("ows:AllowedValues");
+      for (      String value : param.getValue()) {
+        element("ows:Value",value);
+      }
+      end("ows:AllowedValues");
+      end("ows:Parameter");
+    }
+  }
+  end("ows:Operation");
+}

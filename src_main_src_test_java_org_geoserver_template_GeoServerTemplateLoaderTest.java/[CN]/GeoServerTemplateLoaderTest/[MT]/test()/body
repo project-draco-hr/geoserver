@@ -1,0 +1,24 @@
+{
+  File data=getTestData().getDataDirectoryRoot();
+  File templates=new File(data,"templates");
+  File featureTypes=new File(data,"featureTypes");
+  File featureType1=new File(featureTypes,"ft1");
+  featureType1.mkdir();
+  File featureType2=new File(featureTypes,"ft2");
+  featureType2.mkdir();
+  GeoServerTemplateLoader templateLoader=new GeoServerTemplateLoader(getClass());
+  File expected=new File(templates,"1.ftl");
+  expected.createNewFile();
+  File actual=(File)templateLoader.findTemplateSource("1.ftl");
+  assertEquals(expected.getCanonicalPath(),actual.getCanonicalPath());
+  expected=new File(featureType1,"2.ftl");
+  expected.createNewFile();
+  actual=(File)templateLoader.findTemplateSource("ft1/2.ftl");
+  assertEquals(expected.getCanonicalPath(),actual.getCanonicalPath());
+  actual=(File)templateLoader.findTemplateSource("2.ftl");
+  assertNull(actual);
+  Object source=templateLoader.findTemplateSource("FeatureSimple.ftl");
+  assertNotNull(source);
+  assertFalse(source instanceof File);
+  templateLoader.getReader(source,"UTF-8");
+}

@@ -1,0 +1,78 @@
+{
+  String[] names;
+  if (GeoServerExtensions.context == context) {
+    names=extensionsCache.get(extensionPoint);
+  }
+ else {
+    names=null;
+  }
+  if (names == null) {
+    checkContext(context);
+    if (context != null) {
+      try {
+        names=context.getBeanNamesForType(extensionPoint);
+        if (GeoServerExtensions.context == context) {
+          extensionsCache.put(extensionPoint,names);
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"bean lookup error",e);
+        return Collections.EMPTY_LIST;
+      }
+    }
+ else {
+      return Collections.EMPTY_LIST;
+    }
+  }
+  List<ExtensionFilter> filters;
+  if (ExtensionFilter.class.isAssignableFrom(extensionPoint)) {
+    filters=Collections.emptyList();
+  }
+ else {
+    filters=extensions(ExtensionFilter.class,context);
+  }
+  List result=new ArrayList(names.length);
+  for (  String name : names) {
+    Object bean=context.getBean(name);
+    if (!excludeBean(name,bean,filters))     result.add(bean);
+  }
+  if (!ExtensionProvider.class.isAssignableFrom(extensionPoint) && !ExtensionFilter.class.isAssignableFrom(extensionPoint)) {
+    List secondary=new ArrayList();
+    for (    ExtensionProvider xp : extensions(ExtensionProvider.class,context)) {
+      try {
+        if (extensionPoint.isAssignableFrom(xp.getExtensionPoint())) {
+          secondary.addAll(xp.getExtensions(extensionPoint));
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Extension provider threw exception",e);
+      }
+    }
+    filter(secondary,filters,result);
+  }
+  List<Object> spiExtensions=spiCache.get(extensionPoint);
+  if (spiExtensions == null) {
+    spiExtensions=new ArrayList<Object>();
+    Iterator i=FactoryRegistry.lookupProviders(extensionPoint);
+    while (i.hasNext()) {
+      spiExtensions.add(i.next());
+    }
+    spiCache.put(extensionPoint,spiExtensions);
+  }
+  filter(spiExtensions,filters,result);
+  Collections.sort(result,new Comparator(){
+    public int compare(    Object o1,    Object o2){
+      int p1=ExtensionPriority.LOWEST;
+      if (o1 instanceof ExtensionPriority) {
+        p1=((ExtensionPriority)o1).getPriority();
+      }
+      int p2=ExtensionPriority.LOWEST;
+      if (o2 instanceof ExtensionPriority) {
+        p2=((ExtensionPriority)o2).getPriority();
+      }
+      return p1 - p2;
+    }
+  }
+);
+  return result;
+}

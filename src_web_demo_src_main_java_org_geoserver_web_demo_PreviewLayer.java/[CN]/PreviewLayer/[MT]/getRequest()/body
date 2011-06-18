@@ -1,0 +1,23 @@
+{
+  if (request == null) {
+    GeoServerApplication app=GeoServerApplication.get();
+    request=new GetMapRequest();
+    Catalog catalog=app.getCatalog();
+    List<MapLayerInfo> layers=expandLayers(catalog);
+    request.setLayers(layers);
+    request.setFormat("application/openlayers");
+    if (groupInfo != null) {
+      ReferencedEnvelope bounds=groupInfo.getBounds();
+      request.setBbox(bounds);
+      String epsgCode=GML2EncodingUtils.epsgCode(bounds.getCoordinateReferenceSystem());
+      if (epsgCode != null)       request.setSRS("EPSG:" + epsgCode);
+    }
+    try {
+      DefaultWebMapService.autoSetBoundsAndSize(request);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.INFO,"Could not set figure out automatically a good preview link for " + getName(),e);
+    }
+  }
+  return request;
+}

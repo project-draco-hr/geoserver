@@ -1,0 +1,24 @@
+{
+  this.py=py;
+  this.fw=new FileWatcher<Map<String,PyObject>>(module){
+    @Override protected Map<String,PyObject> parseFileContents(    InputStream in) throws IOException {
+      PythonInterpreter pi=PythonFilterFunctionAdapter.this.py.interpreter();
+      pi.execfile(in);
+      Map<String,PyObject> functions=new LinkedHashMap();
+      PyStringMap locals=(PyStringMap)pi.getLocals();
+      for (      Object o : locals.keys()) {
+        String key=(String)o;
+        PyObject obj=locals.__getitem__(key);
+        try {
+          if (obj.__getattr__("__filter_function__") != null) {
+            functions.put(key,obj);
+          }
+        }
+ catch (        PyException e) {
+        }
+      }
+      return functions;
+    }
+  }
+;
+}

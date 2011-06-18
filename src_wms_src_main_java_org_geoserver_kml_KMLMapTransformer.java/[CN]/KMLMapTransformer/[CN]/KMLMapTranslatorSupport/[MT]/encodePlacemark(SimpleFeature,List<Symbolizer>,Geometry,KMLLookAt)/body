@@ -1,0 +1,70 @@
+{
+  final Geometry geometry=featureGeometry(feature);
+  final Coordinate centroid=geometryCentroid(geometry);
+  final Envelope bounds=geometry.getEnvelopeInternal();
+  start("Placemark",KMLUtils.attributes(new String[]{"id",feature.getID()}));
+  if (vectorNameDescription) {
+    try {
+      encodePlacemarkName(feature,symbolizers);
+    }
+ catch (    Exception e) {
+      String msg="Error occured processing 'title' template.";
+      LOGGER.log(Level.WARNING,msg,e);
+    }
+    try {
+      encodePlacemarkSnippet(feature,symbolizers);
+    }
+ catch (    Exception e) {
+      String msg="Error occured processing 'description' template.";
+      LOGGER.log(Level.WARNING,msg,e);
+    }
+    try {
+      encodePlacemarkDescription(feature,symbolizers);
+    }
+ catch (    Exception e) {
+      String msg="Error occured processing 'description' template.";
+      LOGGER.log(Level.WARNING,msg,e);
+    }
+  }
+  String selfLinks=(String)mapContext.getRequest().getFormatOptions().get("selfLinks");
+  if (selfLinks != null && selfLinks.equalsIgnoreCase("true")) {
+    GetMapRequest request=mapContext.getRequest();
+    String link="";
+    try {
+      link=getFeatureTypeURL();
+    }
+ catch (    IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
+    String[] id=feature.getID().split("\\.");
+    link=link + "/" + id[1]+ ".kml";
+    element("atom:link",null,KMLUtils.attributes(new String[]{"rel","self","href",link}));
+  }
+  encodePlacemarkLookAt(bounds,lookAtOps);
+  try {
+    encodePlacemarkTime(feature,symbolizers);
+  }
+ catch (  Exception e) {
+    String msg="Error occured processing 'time' template: " + e.getMessage();
+    LOGGER.log(Level.WARNING,msg);
+    LOGGER.log(Level.FINE,"",e);
+  }
+  encodeStyle(feature,symbolizers);
+  encodeExtendedData(feature);
+  if (markGeometry == null) {
+    Coordinate labelPoint=vectorNameDescription ? centroid : null;
+    encodePlacemarkGeometry(geometry,labelPoint,symbolizers);
+  }
+ else {
+    Coordinate markCentroid=markGeometry.getCoordinate();
+    start("Point");
+    if (!Double.isNaN(markCentroid.z)) {
+      element("coordinates",markCentroid.x + "," + markCentroid.y+ ","+ markCentroid.z);
+    }
+ else {
+      element("coordinates",markCentroid.x + "," + markCentroid.y);
+    }
+    end("Point");
+  }
+  end("Placemark");
+}

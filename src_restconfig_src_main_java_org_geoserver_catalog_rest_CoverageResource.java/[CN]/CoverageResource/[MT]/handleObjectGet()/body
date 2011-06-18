@@ -1,0 +1,16 @@
+{
+  String workspace=getAttribute("workspace");
+  String coveragestore=getAttribute("coveragestore");
+  String coverage=getAttribute("coverage");
+  if (coveragestore == null) {
+    LOGGER.fine("GET coverage " + workspace + ","+ coverage);
+    NamespaceInfo ns=catalog.getNamespaceByPrefix(workspace);
+    if (ns != null) {
+      return catalog.getCoverageByName(ns,coverage);
+    }
+    throw new RestletException("",Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  LOGGER.fine("GET coverage " + coveragestore + ","+ coverage);
+  CoverageStoreInfo cs=catalog.getCoverageStoreByName(workspace,coveragestore);
+  return catalog.getCoverageByCoverageStore(cs,coverage);
+}

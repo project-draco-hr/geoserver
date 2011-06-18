@@ -1,0 +1,27 @@
+{
+  String layer=getAttribute("layer");
+  if (layer == null) {
+    return new ArrayList();
+  }
+  LayerInfo layerInfo=catalog.getLayerByName(layer);
+  if (layerInfo != null) {
+    ResourceInfo obj=layerInfo.getResource();
+    Collection<PropertyDescriptor> attributes=null;
+    if (obj instanceof FeatureTypeInfo) {
+      FeatureTypeInfo fTpInfo;
+      fTpInfo=(FeatureTypeInfo)obj;
+      LayerAttributesList out=new LayerAttributesList(layer);
+      try {
+        attributes=fTpInfo.getFeatureType().getDescriptors();
+        for (        PropertyDescriptor attr : attributes) {
+          out.addAttribute(attr.getName().getLocalPart(),attr.getType().getBinding().getSimpleName());
+        }
+      }
+ catch (      IOException e) {
+        throw new RestletException("Error generating Attributes List!",Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+      return out;
+    }
+  }
+  return new ArrayList();
+}

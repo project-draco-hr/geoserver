@@ -1,0 +1,99 @@
+{
+  String ws=featureTypeMeta.getStore().getWorkspace().getName();
+  String ds=featureTypeMeta.getStore().getName();
+  String name=featureTypeMeta.getName();
+  File schemaFile=null;
+  try {
+    schemaFile=resourceLoader.find("workspaces/" + ws + "/"+ ds+ "/"+ name+ "/schema.xsd");
+  }
+ catch (  IOException e1) {
+  }
+  if (schemaFile != null) {
+    if (logger.isLoggable(Level.FINE)) {
+      logger.fine("Found customized schema.xsd: " + schemaFile.getAbsolutePath());
+    }
+    List resolvers=Schemas.findSchemaLocationResolvers(xmlConfiguration);
+    List locators=new ArrayList();
+    locators.add(new XSDSchemaLocator(){
+      public XSDSchema locateSchema(      XSDSchema schema,      String namespaceURI,      String rawSchemaLocationURI,      String resolvedSchemaLocationURI){
+        if (gmlNamespace.equals(namespaceURI)) {
+          return gmlSchema();
+        }
+        return null;
+      }
+    }
+);
+    XSDSchema ftSchema=null;
+    try {
+      ftSchema=Schemas.parse(schemaFile.getAbsolutePath(),locators,resolvers);
+    }
+ catch (    IOException e) {
+      logger.log(Level.WARNING,"Unable to parse schema: " + schemaFile.getAbsolutePath(),e);
+    }
+    if (ftSchema != null) {
+      if (ftSchema.getSchemaForSchemaQNamePrefix() != null) {
+        schema.setSchemaForSchemaQNamePrefix(ftSchema.getSchemaForSchemaQNamePrefix());
+      }
+      List contents=ftSchema.getContents();
+      boolean hasElement=false;
+      for (Iterator i=contents.iterator(); i.hasNext(); ) {
+        XSDSchemaContent content=(XSDSchemaContent)i.next();
+        content.setElement(null);
+        if (content instanceof XSDImport) {
+          XSDImport imprt=(XSDImport)content;
+          if (gmlNamespace.equals(imprt.getNamespace())) {
+            i.remove();
+          }
+        }
+        if (content instanceof XSDElementDeclaration) {
+          if (contains((XSDNamedComponent)content,schema.getElementDeclarations())) {
+            i.remove();
+          }
+        }
+ else         if (content instanceof XSDTypeDefinition) {
+          if (contains((XSDNamedComponent)content,schema.getTypeDefinitions())) {
+            i.remove();
+          }
+        }
+        if (!hasElement && content instanceof XSDElementDeclaration) {
+          XSDElementDeclaration element=(XSDElementDeclaration)content;
+          if (name.equals(element.getName()) && featureTypeMeta.getNamespace().getURI().equals(element.getTargetNamespace())) {
+            hasElement=true;
+          }
+        }
+      }
+      if (!hasElement) {
+        XSDElementDeclaration element=factory.createXSDElementDeclaration();
+        element.setName(featureTypeMeta.getName());
+        element.setTargetNamespace(featureTypeMeta.getNamespace().getURI());
+        element.setSubstitutionGroupAffiliation(schema.resolveElementDeclaration(gmlNamespace,substitutionGroup));
+        List<XSDComplexTypeDefinition> candidates=new ArrayList<XSDComplexTypeDefinition>();
+        for (Iterator t=ftSchema.getTypeDefinitions().iterator(); t.hasNext(); ) {
+          XSDTypeDefinition type=(XSDTypeDefinition)t.next();
+          if (type instanceof XSDComplexTypeDefinition) {
+            XSDTypeDefinition base=type.getBaseType();
+            while (base != null) {
+              if (baseType.equals(base.getName()) && gmlNamespace.equals(base.getTargetNamespace())) {
+                candidates.add((XSDComplexTypeDefinition)type);
+                break;
+              }
+              if (base.equals(base.getBaseType())) {
+                break;
+              }
+              base=base.getBaseType();
+            }
+          }
+        }
+        if (candidates.size() != 1) {
+          throw new IllegalStateException("Could not determine feature type for " + "generated element. Must specify explicitly in schema.xsd.");
+        }
+        element.setTypeDefinition(candidates.get(0));
+        schema.getContents().add(element);
+      }
+      schema.getContents().addAll(contents);
+      schema.updateElement();
+      return true;
+    }
+  }
+  return false;
+}

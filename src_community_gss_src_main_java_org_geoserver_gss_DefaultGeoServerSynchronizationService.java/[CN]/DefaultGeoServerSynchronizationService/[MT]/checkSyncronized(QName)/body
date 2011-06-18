@@ -1,0 +1,20 @@
+{
+  NamespaceInfo ns=catalog.getNamespaceByURI(typeName.getNamespaceURI());
+  if (ns == null) {
+    ns=catalog.getNamespaceByPrefix(typeName.getPrefix());
+  }
+  if (ns == null) {
+    throw new GSSException("Could not locate typeName: " + typeName,GSSExceptionCode.InvalidParameterValue,TYPE_NAME);
+  }
+  FeatureTypeInfo fti=catalog.getFeatureTypeByName(ns,typeName.getLocalPart());
+  if (fti == null) {
+    throw new GSSException("Could not locate typeName: " + typeName,GSSExceptionCode.InvalidParameterValue,TYPE_NAME);
+  }
+  VersioningDataStore ds=core.getVersioningStore();
+  DefaultQuery q=new DefaultQuery();
+  q.setFilter(ff.equal(ff.property("table_name"),ff.literal(fti.getName()),true));
+  int count=ds.getFeatureSource(SYNCH_TABLES).getCount(q);
+  if (count == 0) {
+    throw new GSSException(fti.getName() + " is not a synchronized layer",GSSExceptionCode.InvalidParameterValue,TYPE_NAME);
+  }
+}

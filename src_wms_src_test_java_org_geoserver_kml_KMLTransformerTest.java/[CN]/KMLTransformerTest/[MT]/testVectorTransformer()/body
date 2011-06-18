@@ -1,0 +1,11 @@
+{
+  KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContext,mapLayer);
+  transformer.setIndentation(2);
+  SimpleFeatureSource featureSource=DataUtilities.simple((FeatureSource)mapLayer.getFeatureSource());
+  int nfeatures=featureSource.getFeatures().size();
+  Document document=WMSTestSupport.transform(featureSource.getFeatures(),transformer);
+  Element element=document.getDocumentElement();
+  assertEquals("kml",element.getNodeName());
+  assertEquals(nfeatures,element.getElementsByTagName("Style").getLength());
+  assertEquals(nfeatures,element.getElementsByTagName("Placemark").getLength());
+}

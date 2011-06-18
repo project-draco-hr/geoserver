@@ -1,0 +1,39 @@
+{
+  final List<String> wmsOutputFormats=getAvailableWMSFormats();
+  final List<String> wfsOutputFormats=getAvailableWFSFormats();
+  table=new GeoServerTablePanel<PreviewLayer>("table",provider){
+    @Override protected Component getComponentForProperty(    String id,    final IModel itemModel,    Property<PreviewLayer> property){
+      PreviewLayer layer=(PreviewLayer)itemModel.getObject();
+      if (property == TYPE) {
+        Fragment f=new Fragment(id,"iconFragment",MapPreviewPage.this);
+        f.add(new Image("layerIcon",layer.getIcon()));
+        return f;
+      }
+ else       if (property == NAME) {
+        return new Label(id,property.getModel(itemModel));
+      }
+ else       if (property == TITLE) {
+        return new Label(id,property.getModel(itemModel));
+      }
+ else       if (property == COMMON) {
+        Fragment f=new Fragment(id,"commonLinks",MapPreviewPage.this);
+        final String olUrl=layer.getWmsLink() + "&format=application/openlayers";
+        f.add(new ExternalLink("ol",olUrl,"OpenLayers"));
+        final String kmlUrl=layer.getBaseUrl("wms") + "/kml?layers=" + layer.getName();
+        f.add(new ExternalLink("kml",kmlUrl,"KML"));
+        final String gmlUrl=layer.getBaseUrl("ows") + "?service=WFS&version=1.0.0&request=GetFeature&typeName=" + layer.getName()+ "&maxFeatures=50";
+        Component gmlLink=new ExternalLink("gml",gmlUrl,"GML");
+        f.add(gmlLink);
+        gmlLink.setVisible(layer.getType() == PreviewLayerType.Vector);
+        return f;
+      }
+ else       if (property == ALL) {
+        return buildJSWMSSelect(id,wmsOutputFormats,wfsOutputFormats,layer);
+      }
+      throw new IllegalArgumentException("Don't know a property named " + property.getName());
+    }
+  }
+;
+  table.setOutputMarkupId(true);
+  add(table);
+}

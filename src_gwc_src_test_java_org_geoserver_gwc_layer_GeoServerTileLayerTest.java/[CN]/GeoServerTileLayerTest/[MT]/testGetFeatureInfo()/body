@@ -1,0 +1,38 @@
+{
+  layerInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerInfo);
+  ConveyorTile convTile=new ConveyorTile(null,null,null,null);
+  convTile.setTileLayer(layerInfoTileLayer);
+  convTile.setMimeType(MimeType.createFromFormat("image/png"));
+  convTile.setGridSetId("EPSG:4326");
+  BoundingBox bbox=new BoundingBox(0,0,10,10);
+  Resource mockResult=mock(Resource.class);
+  ArgumentCaptor<Map> argument=ArgumentCaptor.forClass(Map.class);
+  Mockito.when(catalogConfig.dispatchOwsRequest(argument.capture(),(Cookie[])anyObject())).thenReturn(mockResult);
+  Resource result=layerInfoTileLayer.getFeatureInfo(convTile,bbox,100,100,50,50);
+  assertSame(mockResult,result);
+  final Map<String,String> capturedParams=argument.getValue();
+  assertEquals("image/png",capturedParams.get("INFO_FORMAT"));
+  assertEquals("0.0,0.0,10.0,10.0",capturedParams.get("BBOX"));
+  assertEquals("test:MockLayerInfoName",capturedParams.get("QUERY_LAYERS"));
+  assertEquals("WMS",capturedParams.get("SERVICE"));
+  assertEquals("100",capturedParams.get("HEIGHT"));
+  assertEquals("100",capturedParams.get("WIDTH"));
+  assertEquals("GetFeatureInfo",capturedParams.get("REQUEST"));
+  assertEquals("default_style",capturedParams.get("STYLES"));
+  assertEquals("SE_XML",capturedParams.get("EXCEPTIONS"));
+  assertEquals("1.1.1",capturedParams.get("VERSION"));
+  assertEquals("image/png",capturedParams.get("FORMAT"));
+  assertEquals("test:MockLayerInfoName",capturedParams.get("LAYERS"));
+  assertEquals("EPSG:4326",capturedParams.get("SRS"));
+  assertEquals("50",capturedParams.get("X"));
+  assertEquals("50",capturedParams.get("Y"));
+  verify(catalogConfig,times(1)).dispatchOwsRequest((Map)anyObject(),(Cookie[])anyObject());
+  when(catalogConfig.dispatchOwsRequest((Map)anyObject(),(Cookie[])anyObject())).thenThrow(new RuntimeException("mock exception"));
+  try {
+    layerInfoTileLayer.getFeatureInfo(convTile,bbox,100,100,50,50);
+    fail("Expected GeoWebCacheException");
+  }
+ catch (  GeoWebCacheException e) {
+    assertTrue(true);
+  }
+}

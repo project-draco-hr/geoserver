@@ -1,0 +1,30 @@
+{
+  if (context.getScope() != EvaluationCtx.SCOPE_IMMEDIATE) {
+    AttributeValue parent=context.getResourceId();
+    ResourceFinderResult resourceResult=null;
+    if (context.getScope() == EvaluationCtx.SCOPE_CHILDREN)     resourceResult=resourceFinder.findChildResources(parent,context);
+ else     resourceResult=resourceFinder.findDescendantResources(parent,context);
+    if (resourceResult.isEmpty()) {
+      ArrayList<String> code=new ArrayList<String>();
+      code.add(Status.STATUS_PROCESSING_ERROR);
+      String msg="Couldn't find any resources to work on.";
+      return new ResponseCtx(new Result(Result.DECISION_INDETERMINATE,new Status(code,msg),context.getResourceId().encode()));
+    }
+    HashSet<Result> results=new HashSet<Result>();
+    for (    AttributeValue resource : resourceResult.getResources()) {
+      context.setResourceId(resource);
+      Result result=evaluateContext(context);
+      result.setResource(resource.encode());
+      results.add(result);
+    }
+    Map<AttributeValue,Status> failureMap=resourceResult.getFailures();
+    for (    AttributeValue resource : failureMap.keySet()) {
+      Status status=(failureMap.get(resource));
+      results.add(new Result(Result.DECISION_INDETERMINATE,status,resource.encode()));
+    }
+    return new ResponseCtx(results);
+  }
+ else {
+    return new ResponseCtx(evaluateContext(context));
+  }
+}

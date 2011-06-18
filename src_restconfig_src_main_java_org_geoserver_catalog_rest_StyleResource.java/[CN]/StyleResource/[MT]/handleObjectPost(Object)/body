@@ -1,0 +1,68 @@
+{
+  String layer=getAttribute("layer");
+  if (object instanceof StyleInfo) {
+    StyleInfo style=(StyleInfo)object;
+    if (layer != null) {
+      StyleInfo existing=catalog.getStyleByName(style.getName());
+      if (existing == null) {
+        throw new RestletException("No such style: " + style.getName(),Status.CLIENT_ERROR_NOT_FOUND);
+      }
+      LayerInfo l=catalog.getLayerByName(layer);
+      l.getStyles().add(existing);
+      String def=getRequest().getResourceRef().getQueryAsForm().getFirstValue("default");
+      if ("true".equals(def)) {
+        l.setDefaultStyle(existing);
+      }
+      catalog.save(l);
+      LOGGER.info("POST style " + style.getName() + " to layer "+ layer);
+    }
+ else {
+      catalog.add(style);
+      LOGGER.info("POST style " + style.getName());
+    }
+    return style.getName();
+  }
+ else   if (object instanceof Style) {
+    Style style=(Style)object;
+    String name=getRequest().getResourceRef().getQueryAsForm().getFirstValue("name");
+    if (name == null) {
+      name=style.getName();
+    }
+    if (name == null) {
+      throw new RestletException("Style must have a name.",Status.CLIENT_ERROR_BAD_REQUEST);
+    }
+    if (catalog.getStyleByName(name) != null) {
+      throw new RestletException("Style " + name + " already exists.",Status.CLIENT_ERROR_FORBIDDEN);
+    }
+    GeoServerResourceLoader loader=catalog.getResourceLoader();
+    File f;
+    try {
+      f=loader.find("styles/" + name + ".sld");
+    }
+ catch (    IOException e) {
+      throw new RestletException("Error looking up file",Status.SERVER_ERROR_INTERNAL,e);
+    }
+    if (f != null) {
+      String msg="SLD file " + name + ".sld already exists.";
+      throw new RestletException(msg,Status.CLIENT_ERROR_FORBIDDEN);
+    }
+    try {
+      f=loader.createFile("styles/" + name + ".sld");
+      BufferedOutputStream out=new BufferedOutputStream(new FileOutputStream(f));
+      SLDFormat format=new SLDFormat(true);
+      format.toRepresentation(style).write(out);
+      out.flush();
+      out.close();
+    }
+ catch (    IOException e) {
+      throw new RestletException("Error creating file",Status.SERVER_ERROR_INTERNAL,e);
+    }
+    StyleInfo sinfo=catalog.getFactory().createStyle();
+    sinfo.setName(name);
+    sinfo.setFilename(f.getName());
+    catalog.add(sinfo);
+    LOGGER.info("POST SLD " + name);
+    return name;
+  }
+  return null;
+}

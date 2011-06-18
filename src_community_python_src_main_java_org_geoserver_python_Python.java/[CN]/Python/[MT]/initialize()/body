@@ -1,0 +1,24 @@
+{
+  try {
+    initLibs();
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  ArrayList<String> pythonPath=new ArrayList();
+  try {
+    pythonPath.add(getLibRoot().getCanonicalPath());
+    pythonPath.add(getDataStoreRoot().getCanonicalPath());
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Unable to access Jython lib directory",e);
+  }
+  StringBuffer path=new StringBuffer();
+  for (  String loc : pythonPath) {
+    path.append(loc).append(File.pathSeparator);
+  }
+  path.setLength(path.length() - 1);
+  Properties props=new Properties();
+  props.put("python.path",path.toString());
+  PythonInterpreter.initialize(null,props,null);
+}

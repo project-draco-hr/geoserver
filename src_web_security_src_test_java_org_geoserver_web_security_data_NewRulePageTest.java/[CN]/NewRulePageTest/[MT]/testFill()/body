@@ -1,0 +1,18 @@
+{
+  Locale.setDefault(Locale.ENGLISH);
+  tester.assertComponent("ruleForm:roles:roles:recorder",Recorder.class);
+  FormTester form=tester.newFormTester("ruleForm");
+  form.select("workspace",page.getWorkspaceNames().indexOf(MockData.CITE_PREFIX));
+  form.select("accessMode",1);
+  form.setValue("roles:roles:recorder","*");
+  tester.assertRenderedPage(NewDataAccessRulePage.class);
+  form.submit("save");
+  tester.assertErrorMessages(new String[0]);
+  tester.assertRenderedPage(DataAccessRulePage.class);
+  dao.reload();
+  assertEquals(1,dao.getRules().size());
+  DataAccessRule rule=dao.getRules().get(0);
+  assertEquals("cite",rule.getWorkspace());
+  assertEquals("*",rule.getLayer());
+  assertEquals(AccessMode.WRITE,rule.getAccessMode());
+}

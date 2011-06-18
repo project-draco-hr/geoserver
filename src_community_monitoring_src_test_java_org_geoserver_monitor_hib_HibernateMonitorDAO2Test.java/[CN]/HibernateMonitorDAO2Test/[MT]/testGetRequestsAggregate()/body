@@ -1,0 +1,26 @@
+{
+  final List<RequestData> datas=new ArrayList();
+  final List<Object> aggs=new ArrayList();
+  RequestDataVisitor v=new RequestDataVisitor(){
+    public void visit(    RequestData data,    Object... aggregates){
+      datas.add(data);
+      aggs.addAll(Arrays.asList(aggregates));
+    }
+  }
+;
+  dao.getRequests(new Query().properties("path").filter("path","/foo",Comparison.EQ).aggregate("count()").group("path"),v);
+  assertEquals(1,datas.size());
+  assertEquals("/foo",datas.get(0).getPath());
+  assertEquals(4,((Number)aggs.get(0)).intValue());
+  datas.clear();
+  aggs.clear();
+  dao.getRequests(new Query().properties("service","operation").filter("service",null,Comparison.NEQ).aggregate("count()").group("service","operation").sort("count()",SortOrder.DESC),v);
+  RequestData r=datas.get(0);
+  assertEquals("foo",r.getService());
+  assertEquals("x",r.getOperation());
+  assertEquals(4,((Number)aggs.get(0)).intValue());
+  r=datas.get(1);
+  assertEquals("bam",r.getService());
+  assertEquals("y",r.getOperation());
+  assertEquals(2,((Number)aggs.get(1)).intValue());
+}

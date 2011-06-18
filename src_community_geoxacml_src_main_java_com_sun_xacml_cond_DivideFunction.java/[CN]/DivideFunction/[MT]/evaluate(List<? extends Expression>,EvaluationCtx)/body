@@ -1,0 +1,32 @@
+{
+  AttributeValue[] argValues=new AttributeValue[inputs.size()];
+  EvaluationResult result=evalArgs(inputs,context,argValues);
+  if (result != null)   return result;
+switch (getFunctionId()) {
+case ID_INTEGER_DIVIDE:
+{
+      long dividend=((IntegerAttribute)argValues[0]).getValue();
+      long divisor=((IntegerAttribute)argValues[1]).getValue();
+      if (divisor == 0) {
+        result=makeProcessingError("divide by zero");
+        break;
+      }
+      long quotient=dividend / divisor;
+      result=new EvaluationResult(new IntegerAttribute(quotient));
+      break;
+    }
+case ID_DOUBLE_DIVIDE:
+{
+    double dividend=((DoubleAttribute)argValues[0]).getValue();
+    double divisor=((DoubleAttribute)argValues[1]).getValue();
+    if (divisor == 0) {
+      result=makeProcessingError("divide by zero");
+      break;
+    }
+    double quotient=dividend / divisor;
+    result=new EvaluationResult(new DoubleAttribute(quotient));
+    break;
+  }
+}
+return result;
+}

@@ -1,0 +1,21 @@
+{
+  ApplicationContext appContext=createMock(ApplicationContext.class);
+  ApplicationContext customAppContext=createMock(ApplicationContext.class);
+  GeoServerExtensions gse=new GeoServerExtensions();
+  gse.setApplicationContext(appContext);
+  assertEquals(0,GeoServerExtensions.extensionsCache.size());
+  expect(customAppContext.getBeanNamesForType(ExtensionFilter.class)).andReturn(new String[0]);
+  expect(customAppContext.getBeanNamesForType(GeoServerExtensionsTest.class)).andReturn(new String[]{"itDoesntMatterForThePurpose"});
+  expect(customAppContext.getBeanNamesForType(ExtensionProvider.class)).andReturn(new String[0]);
+  expect(customAppContext.getBeanNamesForType(ExtensionFilter.class)).andReturn(new String[0]);
+  expect(customAppContext.getBean("itDoesntMatterForThePurpose")).andReturn(this);
+  replay(customAppContext);
+  replay(appContext);
+  List<GeoServerExtensionsTest> extensions=GeoServerExtensions.extensions(GeoServerExtensionsTest.class,customAppContext);
+  assertNotNull(extensions);
+  assertEquals(1,extensions.size());
+  assertSame(this,extensions.get(0));
+  assertEquals(0,GeoServerExtensions.extensionsCache.size());
+  verify(appContext);
+  verify(customAppContext);
+}

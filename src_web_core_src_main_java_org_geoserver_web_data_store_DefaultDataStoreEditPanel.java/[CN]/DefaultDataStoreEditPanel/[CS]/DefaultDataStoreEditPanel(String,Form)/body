@@ -1,0 +1,45 @@
+{
+  super(componentId,storeEditForm);
+  final IModel model=storeEditForm.getModel();
+  final DataStoreInfo info=(DataStoreInfo)model.getObject();
+  final Catalog catalog=getCatalog();
+  final ResourcePool resourcePool=catalog.getResourcePool();
+  DataAccessFactory dsFactory;
+  try {
+    dsFactory=resourcePool.getDataStoreFactory(info);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  final Map<String,ParamInfo> paramsMetadata=new LinkedHashMap<String,ParamInfo>();
+{
+    final boolean isNew=null == info.getId();
+    final Param[] dsParams=dsFactory.getParametersInfo();
+    for (    Param p : dsParams) {
+      ParamInfo paramInfo=new ParamInfo(p);
+      paramsMetadata.put(p.key,paramInfo);
+      if (isNew) {
+        applyParamDefault(paramInfo,info);
+      }
+    }
+  }
+  final List<String> keys=new ArrayList<String>(paramsMetadata.keySet());
+  final IModel paramsModel=new PropertyModel(model,"connectionParameters");
+  ListView paramsList=new ListView("parameters",keys){
+    private static final long serialVersionUID=1L;
+    @Override protected void populateItem(    ListItem item){
+      String paramName=item.getDefaultModelObjectAsString();
+      ParamInfo paramMetadata=paramsMetadata.get(paramName);
+      Component inputComponent;
+      inputComponent=getInputComponent("parameterPanel",paramsModel,paramMetadata);
+      String description=paramMetadata.getTitle();
+      if (description != null) {
+        inputComponent.add(new SimpleAttributeModifier("title",description));
+      }
+      item.add(inputComponent);
+    }
+  }
+;
+  paramsList.setReuseItems(true);
+  add(paramsList);
+}

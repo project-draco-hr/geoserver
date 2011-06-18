@@ -1,0 +1,24 @@
+{
+  start("wcs:GridCRS");
+  element("wcs:GridBaseCRS",urnIdentifier(ci.getCRS()));
+  element("wcs:GridType",GridType.GT2dGridIn2dCrs.getXmlConstant());
+  final LinearTransform tx=(LinearTransform)ci.getGrid().getGridToCRS();
+  final Matrix matrix=tx.getMatrix();
+  StringBuffer origins=new StringBuffer();
+  for (int i=0; i < matrix.getNumRow() - 1; i++) {
+    origins.append(matrix.getElement(i,matrix.getNumCol() - 1));
+    if (i < matrix.getNumRow() - 2)     origins.append(" ");
+  }
+  element("wcs:GridOrigin",origins.toString());
+  StringBuffer offsets=new StringBuffer();
+  for (int i=0; i < matrix.getNumRow() - 1; i++) {
+    for (int j=0; j < matrix.getNumCol() - 1; j++) {
+      offsets.append(matrix.getElement(i,j));
+      if (j < matrix.getNumCol() - 2)       offsets.append(" ");
+    }
+    if (i < matrix.getNumRow() - 2)     offsets.append(" ");
+  }
+  element("wcs:GridOffsets",offsets.toString());
+  element("wcs:GridCS","urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS");
+  end("wcs:GridCRS");
+}

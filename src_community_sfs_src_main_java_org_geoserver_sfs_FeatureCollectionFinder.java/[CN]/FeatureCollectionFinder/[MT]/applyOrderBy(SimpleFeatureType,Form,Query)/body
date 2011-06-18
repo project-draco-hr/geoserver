@@ -1,0 +1,33 @@
+{
+  String orderBy=form.getFirstValue("order_by");
+  if (orderBy != null) {
+    String[] orderByAtts=orderBy.split("\\s*,\\s*");
+    String dir=form.getFirstValue("dir");
+    String[] directions=null;
+    if (dir != null) {
+      directions=dir.split("\\s*,\\s*");
+    }
+    if (directions != null && directions.length != orderByAtts.length) {
+      if (directions.length < orderByAtts.length) {
+        throw new RestletException("dir list has less entries than order_by",Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+ else {
+        throw new RestletException("dir list has more entries than order_by",Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+    }
+    SortBy[] sortBy=new SortBy[orderByAtts.length];
+    for (int i=0; i < orderByAtts.length; i++) {
+      String name=orderByAtts[i];
+      SortOrder order=getSortOrder(directions,i);
+      AttributeDescriptor descriptor=schema.getDescriptor(name);
+      if (descriptor == null) {
+        throw new RestletException("Uknown order_by attribute " + name,Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+ else       if (descriptor instanceof GeometryDescriptor) {
+        throw new RestletException("order_by attribute " + name + " is a geometry, "+ "cannot sort on it",Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+      sortBy[i]=FF.sort(name,order);
+    }
+    query.setSortBy(sortBy);
+  }
+}

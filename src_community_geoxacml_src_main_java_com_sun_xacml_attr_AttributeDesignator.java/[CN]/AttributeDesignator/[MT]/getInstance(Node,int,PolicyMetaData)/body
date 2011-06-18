@@ -1,0 +1,37 @@
+{
+  URI type=null;
+  URI id=null;
+  URI issuer=null;
+  boolean mustBePresent=false;
+  URI subjectCategory=null;
+  NamedNodeMap attrs=root.getAttributes();
+  try {
+    id=new URI(attrs.getNamedItem("AttributeId").getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Required AttributeId missing in " + "AttributeDesignator",e);
+  }
+  try {
+    type=new URI(attrs.getNamedItem("DataType").getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Required DataType missing in " + "AttributeDesignator",e);
+  }
+  try {
+    Node node=attrs.getNamedItem("Issuer");
+    if (node != null)     issuer=new URI(node.getNodeValue());
+    if (target == SUBJECT_TARGET) {
+      Node scnode=attrs.getNamedItem("SubjectCategory");
+      if (scnode != null)       subjectCategory=new URI(scnode.getNodeValue());
+ else       subjectCategory=new URI(SUBJECT_CATEGORY_DEFAULT);
+    }
+    node=attrs.getNamedItem("MustBePresent");
+    if (node != null)     if (node.getNodeValue().equals("true"))     mustBePresent=true;
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing AttributeDesignator " + "optional attributes",e);
+  }
+  AttributeDesignator ad=new AttributeDesignator(target,type,id,mustBePresent,issuer);
+  ad.setSubjectCategory(subjectCategory);
+  return ad;
+}

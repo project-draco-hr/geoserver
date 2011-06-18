@@ -1,0 +1,70 @@
+{
+  super(id);
+  this.dataProvider=dataProvider;
+  selection=new boolean[DEFAULT_ITEMS_PER_PAGE];
+  listContainer=new WebMarkupContainer("listContainer");
+  filterForm=new Form("filterForm");
+  add(filterForm);
+  filterForm.add(filter=new TextField("filter",new Model()));
+  filter.add(new SimpleAttributeModifier("title",String.valueOf(new ResourceModel("GeoServerTablePanel.search","Search").getObject())));
+  filterForm.add(hiddenSubmit=hiddenSubmit());
+  filterForm.setDefaultButton(hiddenSubmit);
+  listContainer.setOutputMarkupId(true);
+  add(listContainer);
+  dataView=new DataView("items",dataProvider){
+    @Override protected void populateItem(    Item item){
+      final IModel itemModel=item.getModel();
+      item.add(new SimpleAttributeModifier("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
+      WebMarkupContainer cnt=new WebMarkupContainer("selectItemContainer");
+      cnt.add(selectOneCheckbox(item));
+      cnt.setVisible(selectable);
+      item.add(cnt);
+      ListView items=new ListView("itemProperties",dataProvider.getVisibleProperties()){
+        @Override protected void populateItem(        ListItem item){
+          Property<T> property=(Property<T>)item.getModelObject();
+          Component component=getComponentForProperty("component",itemModel,property);
+          if (component == null) {
+            component=new Label("component",property.getModel(itemModel));
+          }
+ else           if (!"component".equals(component.getId())) {
+            throw new IllegalArgumentException("getComponentForProperty asked " + "to build a component " + "with id = 'component' "+ "for property '" + property.getName() + "', but got '"+ component.getId()+ "' instead");
+          }
+          item.add(component);
+        }
+      }
+;
+      items.setReuseItems(true);
+      item.add(items);
+    }
+  }
+;
+  dataView.setItemReuseStrategy(ReuseIfModelsEqualStrategy.getInstance());
+  listContainer.add(dataView);
+  WebMarkupContainer cnt=new WebMarkupContainer("selectAllContainer");
+  cnt.add(selectAll=selectAllCheckbox());
+  cnt.setVisible(selectable);
+  listContainer.add(cnt);
+  listContainer.add(new ListView("sortableLinks",dataProvider.getVisibleProperties()){
+    @Override protected void populateItem(    ListItem item){
+      Property<T> property=(Property<T>)item.getModelObject();
+      IModel titleModel=getPropertyTitle(property);
+      if (sortable && property.getComparator() != null) {
+        Fragment f=new Fragment("header","sortableHeader",item);
+        AjaxLink link=sortLink(dataProvider,item);
+        link.add(new Label("label",titleModel));
+        f.add(link);
+        item.add(f);
+      }
+ else {
+        item.add(new Label("header",titleModel));
+      }
+    }
+  }
+);
+  dataView.setItemsPerPage(DEFAULT_ITEMS_PER_PAGE);
+  pagerDelegate=new PagerDelegate();
+  filterForm.add(navigatorTop=new Pager("navigatorTop"));
+  navigatorTop.setOutputMarkupId(true);
+  add(navigatorBottom=new Pager("navigatorBottom"));
+  navigatorBottom.setOutputMarkupId(true);
+}

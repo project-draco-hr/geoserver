@@ -1,0 +1,28 @@
+{
+  Document doc=getAsDOM("wms?service=WMS&request=getCapabilities&version=1.1.1",true);
+  assertXpathEvaluatesTo("0","count(//Attribution)",doc);
+  LayerInfo points=getCatalog().getLayerByName(MockData.POINTS.getLocalPart());
+  AttributionInfo attr=points.getAttribution();
+  attr.setTitle("Point Provider");
+  getCatalog().save(points);
+  doc=getAsDOM("wms?service=WMS&request=getCapabilities&version=1.1.1",true);
+  assertXpathEvaluatesTo("1","count(//Attribution)",doc);
+  assertXpathEvaluatesTo("1","count(//Attribution/Title)",doc);
+  attr=points.getAttribution();
+  attr.setHref("http://example.com/points/provider");
+  getCatalog().save(points);
+  doc=getAsDOM("wms?service=WMS&request=getCapabilities&version=1.1.1",true);
+  assertXpathEvaluatesTo("1","count(//Attribution)",doc);
+  assertXpathEvaluatesTo("1","count(//Attribution/Title)",doc);
+  assertXpathEvaluatesTo("1","count(//Attribution/OnlineResource)",doc);
+  attr=points.getAttribution();
+  attr.setLogoURL("http://example.com/points/logo");
+  attr.setLogoType("image/logo");
+  attr.setLogoHeight(50);
+  attr.setLogoWidth(50);
+  getCatalog().save(points);
+  doc=getAsDOM("wms?service=WMS&request=getCapabilities&version=1.1.1",true);
+  assertXpathEvaluatesTo("1","count(//Attribution)",doc);
+  assertXpathEvaluatesTo("1","count(//Attribution/Title)",doc);
+  assertXpathEvaluatesTo("1","count(//Attribution/LogoURL)",doc);
+}

@@ -1,0 +1,28 @@
+{
+  EvaluationResult result=eval.evaluate(context);
+  if (result.indeterminate()) {
+    return new MatchResult(MatchResult.INDETERMINATE,result.getStatus());
+  }
+  BagAttribute bag=(BagAttribute)(result.getAttributeValue());
+  if (!bag.isEmpty()) {
+    Iterator<AttributeValue> it=bag.iterator();
+    boolean atLeastOneError=false;
+    Status firstIndeterminateStatus=null;
+    while (it.hasNext()) {
+      ArrayList<AttributeValue> inputs=new ArrayList<AttributeValue>();
+      inputs.add(attrValue);
+      inputs.add(it.next());
+      MatchResult match=evaluateMatch(inputs,context);
+      if (match.getResult() == MatchResult.MATCH)       return match;
+      if (match.getResult() == MatchResult.INDETERMINATE) {
+        atLeastOneError=true;
+        if (firstIndeterminateStatus == null)         firstIndeterminateStatus=match.getStatus();
+      }
+    }
+    if (atLeastOneError)     return new MatchResult(MatchResult.INDETERMINATE,firstIndeterminateStatus);
+ else     return new MatchResult(MatchResult.NO_MATCH);
+  }
+ else {
+    return new MatchResult(MatchResult.NO_MATCH);
+  }
+}

@@ -1,0 +1,57 @@
+{
+  NamedNodeMap attrs=root.getAttributes();
+  try {
+    idAttr=new URI(attrs.getNamedItem(policyPrefix + "Id").getNodeValue());
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing required attribute " + policyPrefix + "Id",e);
+  }
+  Node versionNode=attrs.getNamedItem("Version");
+  if (versionNode != null) {
+    version=versionNode.getNodeValue();
+  }
+ else {
+    version="1.0";
+  }
+  try {
+    URI algId=new URI(attrs.getNamedItem(combiningName).getNodeValue());
+    CombiningAlgFactory factory=CombiningAlgFactory.getInstance();
+    combiningAlg=factory.createAlgorithm(algId);
+  }
+ catch (  Exception e) {
+    throw new ParsingException("Error parsing combining algorithm" + " in " + policyPrefix,e);
+  }
+  if (policyPrefix.equals("Policy")) {
+    if (!(combiningAlg instanceof RuleCombiningAlgorithm))     throw new ParsingException("Policy must use a Rule " + "Combining Algorithm");
+  }
+ else {
+    if (!(combiningAlg instanceof PolicyCombiningAlgorithm))     throw new ParsingException("PolicySet must use a Policy " + "Combining Algorithm");
+  }
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    if (child.getNodeName().equals(policyPrefix + "Defaults"))     handleDefaults(child);
+  }
+  metaData=new PolicyMetaData(root.getNamespaceURI(),defaultVersion);
+  obligations=new HashSet<Obligation>();
+  parameters=new ArrayList<CombinerParameter>();
+  children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String cname=child.getNodeName();
+    if (cname.equals("Description")) {
+      if (child.hasChildNodes())       description=child.getFirstChild().getNodeValue();
+    }
+ else     if (cname.equals("Target")) {
+      target=Target.getInstance(child,metaData);
+    }
+ else     if (cname.equals("Obligations")) {
+      parseObligations(child);
+    }
+ else     if (cname.equals("CombinerParameters")) {
+      handleParameters(child);
+    }
+  }
+  obligations=Collections.unmodifiableSet(obligations);
+  parameters=Collections.unmodifiableList(parameters);
+}

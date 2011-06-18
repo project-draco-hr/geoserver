@@ -1,0 +1,51 @@
+{
+  Function function;
+  Evaluatable eval=null;
+  AttributeValue attrValue=null;
+  AttributeFactory attrFactory=AttributeFactory.getInstance();
+  String funcName=root.getAttributes().getNamedItem("MatchId").getNodeValue();
+  FunctionFactory factory=FunctionFactory.getTargetInstance();
+  try {
+    URI funcId=new URI(funcName);
+    function=factory.createFunction(funcId);
+  }
+ catch (  URISyntaxException use) {
+    throw new ParsingException("Error parsing TargetMatch",use);
+  }
+catch (  UnknownIdentifierException uie) {
+    throw new ParsingException("Unknown MatchId",uie);
+  }
+catch (  FunctionTypeException fte) {
+    try {
+      URI funcId=new URI(funcName);
+      function=factory.createAbstractFunction(funcId,root);
+    }
+ catch (    Exception e) {
+      throw new ParsingException("invalid abstract function",e);
+    }
+  }
+  NodeList nodes=root.getChildNodes();
+  for (int i=0; i < nodes.getLength(); i++) {
+    Node node=nodes.item(i);
+    String name=node.getNodeName();
+    if (name.equals(NAMES[matchType] + "AttributeDesignator")) {
+      eval=AttributeDesignator.getInstance(node,matchType,metaData);
+    }
+ else     if (name.equals("AttributeSelector")) {
+      eval=AttributeSelector.getInstance(node,metaData);
+    }
+ else     if (name.equals("AttributeValue")) {
+      try {
+        attrValue=attrFactory.createValue(node);
+      }
+ catch (      UnknownIdentifierException uie) {
+        throw new ParsingException("Unknown Attribute Type",uie);
+      }
+    }
+  }
+  List<Evaluatable> inputs=new ArrayList<Evaluatable>();
+  inputs.add(attrValue);
+  inputs.add(eval);
+  function.checkInputsNoBag(inputs);
+  return new TargetMatch(matchType,function,eval,attrValue);
+}

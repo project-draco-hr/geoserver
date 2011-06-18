@@ -1,0 +1,62 @@
+{
+  add(new Label("resourcename",getResourceInfo().getPrefixedName()));
+  Form theForm=new Form("resource",myResourceModel);
+  add(theForm);
+  List<ITab> tabs=new ArrayList<ITab>();
+  tabs.add(new AbstractTab(new org.apache.wicket.model.ResourceModel("ResourceConfigurationPage.Data")){
+    public Panel getPanel(    String panelID){
+      return new DataLayerEditTabPanel(panelID,myLayerModel);
+    }
+  }
+);
+  tabs.add(new AbstractTab(new org.apache.wicket.model.ResourceModel("ResourceConfigurationPage.Publishing")){
+    public Panel getPanel(    String panelID){
+      return new PublishingLayerEditTabPanel(panelID,myLayerModel);
+    }
+  }
+);
+  List<LayerEditTabPanelInfo> tabPanels=getGeoServerApplication().getBeansOfType(LayerEditTabPanelInfo.class);
+  Collections.sort(tabPanels,new Comparator<LayerEditTabPanelInfo>(){
+    public int compare(    LayerEditTabPanelInfo o1,    LayerEditTabPanelInfo o2){
+      Integer order1=o1.getOrder() >= 0 ? o1.getOrder() : Integer.MAX_VALUE;
+      Integer order2=o2.getOrder() >= 0 ? o2.getOrder() : Integer.MAX_VALUE;
+      return order1.compareTo(order2);
+    }
+  }
+);
+  for (  LayerEditTabPanelInfo tabPanel : tabPanels) {
+    String titleKey=tabPanel.getTitleKey();
+    IModel titleModel=null;
+    if (titleKey != null) {
+      titleModel=new org.apache.wicket.model.ResourceModel(titleKey);
+    }
+ else {
+      titleModel=new Model(tabPanel.getComponentClass().getSimpleName());
+    }
+    final Class<LayerEditTabPanel> panelClass=tabPanel.getComponentClass();
+    tabs.add(new AbstractTab(titleModel){
+      @Override public Panel getPanel(      String panelId){
+        try {
+          return panelClass.getConstructor(String.class,IModel.class).newInstance(panelId,myLayerModel);
+        }
+ catch (        Exception e) {
+          throw new WicketRuntimeException(e);
+        }
+      }
+    }
+);
+  }
+  theForm.add(new TabbedPanel("tabs",tabs){
+    @Override protected WebMarkupContainer newLink(    String linkId,    final int index){
+      return new SubmitLink(linkId){
+        @Override public void onSubmit(){
+          setSelectedTab(index);
+        }
+      }
+;
+    }
+  }
+);
+  theForm.add(saveLink());
+  theForm.add(cancelLink());
+}

@@ -1,0 +1,32 @@
+{
+  if (metadataURLs == null) {
+    return;
+  }
+  for (  MetadataLinkInfo link : metadataURLs) {
+    AttributesImpl lnkAtts=new AttributesImpl();
+    lnkAtts.addAttribute("","type","type","",link.getMetadataType());
+    start("MetadataURL",lnkAtts);
+    element("Format",link.getType());
+    String content=link.getContent();
+    try {
+      URL url=new URL(content);
+      try {
+        if ("localhost".equals(url.getHost())) {
+          Map<String,String> kvp=null;
+          if (url.getQuery() != null && !"".equals(url.getQuery())) {
+            kvp=KvpUtils.parseQueryString(url.getQuery());
+          }
+          content=buildURL(request.getBaseUrl(),url.getPath(),kvp,URLType.RESOURCE);
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Unable to create proper back referece for metadata url: " + content,e);
+      }
+    }
+ catch (    MalformedURLException e) {
+    }
+    AttributesImpl orAtts=attributes("xlink:type","simple","xlink:href",content);
+    element("OnlineResource",null,orAtts);
+    end("MetadataURL");
+  }
+}

@@ -1,0 +1,64 @@
+{
+  List<String> properties=event.getPropertyNames();
+  if (event.getSource() instanceof NamespaceInfo && !editing && properties.contains("prefix")) {
+    int prefixIdx=properties.indexOf("prefix");
+    String oldPrefix=(String)event.getOldValues().get(prefixIdx);
+    String newPrefix=(String)event.getNewValues().get(prefixIdx);
+    WorkspaceInfo ws=catalog.getWorkspaceByName(oldPrefix);
+    if (ws != null) {
+      try {
+        editing=true;
+        ws.setName(newPrefix);
+        catalog.save(ws);
+      }
+  finally {
+        editing=false;
+      }
+    }
+  }
+ else   if (event.getSource() instanceof Catalog && properties.contains("defaultNamespace") && !editing) {
+    NamespaceInfo newDefault=(NamespaceInfo)event.getNewValues().get(properties.indexOf("defaultNamespace"));
+    WorkspaceInfo ws=catalog.getWorkspaceByName(newDefault.getPrefix());
+    if (ws != null && !catalog.getDefaultWorkspace().equals(ws)) {
+      try {
+        editing=true;
+        catalog.setDefaultWorkspace(ws);
+      }
+  finally {
+        editing=false;
+      }
+    }
+  }
+ else   if (event.getSource() instanceof WorkspaceInfo && !editing && properties.contains("name")) {
+    WorkspaceInfo ws=(WorkspaceInfo)event.getSource();
+    int nameIdx=properties.indexOf("name");
+    String oldName=(String)event.getOldValues().get(nameIdx);
+    String newName=(String)event.getNewValues().get(nameIdx);
+    NamespaceInfo ns=catalog.getNamespaceByPrefix(oldName);
+    if (ns != null) {
+      try {
+        editing=true;
+        ns.setPrefix(newName);
+        catalog.save(ns);
+      }
+  finally {
+        editing=false;
+      }
+    }
+  }
+ else   if (event.getSource() instanceof Catalog && properties.contains("defaultWorkspace") && !editing) {
+    WorkspaceInfo newDefault=(WorkspaceInfo)event.getNewValues().get(properties.indexOf("defaultWorkspace"));
+    if (newDefault != null) {
+      NamespaceInfo ns=catalog.getNamespaceByPrefix(newDefault.getName());
+      if (ns != null && !catalog.getDefaultNamespace().equals(ns)) {
+        try {
+          editing=true;
+          catalog.setDefaultNamespace(ns);
+        }
+  finally {
+          editing=false;
+        }
+      }
+    }
+  }
+}

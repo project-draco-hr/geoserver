@@ -1,0 +1,20 @@
+{
+  final GridCoverage2D croppedGridCoverage;
+  final GeneralEnvelope intersectionEnvelope=new GeneralEnvelope(destinationEnvelopeInSourceCRS);
+  intersectionEnvelope.setCoordinateReferenceSystem(sourceCRS);
+  intersectionEnvelope.intersect((GeneralEnvelope)sourceEnvelope);
+  if (intersectionEnvelope.isEmpty()) {
+    throw new WcsException("The Intersection is null. Check the requested BBOX!");
+  }
+  if (!intersectionEnvelope.equals((GeneralEnvelope)sourceEnvelope)) {
+    final ParameterValueGroup param=(ParameterValueGroup)cropParams.clone();
+    param.parameter("Source").setValue(coverage);
+    param.parameter("Envelope").setValue(intersectionEnvelope);
+    croppedGridCoverage=(GridCoverage2D)cropFactory.doOperation(param,hints);
+  }
+ else {
+    croppedGridCoverage=(GridCoverage2D)coverage;
+  }
+  croppedGridCoverage.prefetch(intersectionEnvelope.toRectangle2D());
+  return croppedGridCoverage;
+}

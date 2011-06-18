@@ -1,0 +1,62 @@
+{
+  GSSInfo info=getServiceInfo();
+  if (info == null) {
+    throw new GSSException("The service is not properly configured, gssInfo not found");
+  }
+  if (info.getMode() == null) {
+    throw new GSSException("The gss mode has not been configured");
+  }
+  if (info.getVersioningDataStore() == null || !info.getVersioningDataStore().isEnabled()) {
+    throw new GSSException("The service is disabled as the " + "versioning datastore is not available/disabled");
+  }
+  FeatureIterator<SimpleFeature> fi=null;
+  try {
+    DataAccess ds=info.getVersioningDataStore().getDataStore(null);
+    if (!(ds instanceof VersionedPostgisDataStore)) {
+      throw new GSSException("The store attached to the gss module is not a PostGIS versioning one");
+    }
+    VersionedPostgisDataStore dataStore=(VersionedPostgisDataStore)ds;
+    Set<String> typeNames=new HashSet<String>(Arrays.asList(dataStore.getTypeNames()));
+    if (!typeNames.contains(SYNCH_TABLES)) {
+      runStatement(dataStore,SYNC_TABLES_CREATION);
+    }
+    dataStore.setVersioned(SYNCH_TABLES,false,null,null);
+    fi=dataStore.getFeatureSource(SYNCH_TABLES).getFeatures().features();
+    while (fi.hasNext()) {
+      String tableName=(String)fi.next().getAttribute("table_name");
+      dataStore.setVersioned(tableName,true,null,null);
+    }
+    fi.close();
+    if (info.getMode() == GSSMode.Unit) {
+      if (!typeNames.contains(SYNCH_HISTORY)) {
+        runStatement(dataStore,SYNCH_HISTORY_CREATION);
+      }
+      dataStore.setVersioned(SYNCH_HISTORY,false,null,null);
+      if (!typeNames.contains(SYNCH_CONFLICTS)) {
+        runStatement(dataStore,SYNCH_CONFLICTS_CREATION);
+      }
+      dataStore.setVersioned(SYNCH_CONFLICTS,true,null,null);
+    }
+ else {
+      if (!typeNames.contains(SYNCH_UNITS)) {
+        runStatement(dataStore,SYNCH_UNITS_CREATION);
+      }
+      dataStore.setVersioned(SYNCH_UNITS,false,null,null);
+      if (!typeNames.contains(SYNCH_UNIT_TABLES)) {
+        runStatement(dataStore,SYNCH_UNIT_TABLES_CREATION);
+      }
+      dataStore.setVersioned(SYNCH_UNITS,false,null,null);
+      if (!typeNames.contains(SYNCH_OUTSTANDING)) {
+        runStatement(dataStore,SYNCH_OUTSTANDING_CREATION);
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new GSSException("A problem occurred while checking the versioning store",e);
+  }
+ finally {
+    if (fi != null) {
+      fi.close();
+    }
+  }
+}

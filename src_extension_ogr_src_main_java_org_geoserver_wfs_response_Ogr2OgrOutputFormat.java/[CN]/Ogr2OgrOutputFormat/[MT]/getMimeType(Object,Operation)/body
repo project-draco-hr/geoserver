@@ -1,0 +1,18 @@
+{
+  GetFeatureType request=(GetFeatureType)OwsUtils.parameter(operation.getParameters(),GetFeatureType.class);
+  OgrFormat format=formats.get(request.getOutputFormat());
+  if (format == null) {
+    throw new WFSException("Unknown output format " + request.getOutputFormat());
+  }
+ else   if (format.singleFile && request.getQuery().size() <= 1) {
+    if (format.mimeType != null) {
+      return format.mimeType;
+    }
+ else {
+      return "application/octet-stream";
+    }
+  }
+ else {
+    return "application/zip";
+  }
+}

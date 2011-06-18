@@ -1,0 +1,11 @@
+{
+  if (!RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    LOGGER.log(Level.WARNING,"Skipping testGetMapDisallowed");
+    return;
+  }
+  authenticate("cite_nostates","cite");
+  MockHttpServletResponse response=getAsServletResponse(GET_MAP);
+  assertEquals("application/vnd.ogc.se_xml",response.getContentType());
+  Document dom=dom(getBinaryInputStream(response));
+  assertXpathEvaluatesTo("LayerNotDefined","//ServiceException/@code",dom);
+}

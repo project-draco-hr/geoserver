@@ -1,0 +1,27 @@
+{
+  List<String> layers=data.getResources();
+  for (int i=0; i < layers.size(); i++) {
+    String layer=layers.get(i);
+    int colon=layer.lastIndexOf(':');
+    if (colon == -1) {
+      LayerInfo l=cat.getLayerByName(layer);
+      if (l != null) {
+        layers.set(i,l.getResource().getPrefixedName());
+      }
+    }
+ else {
+      String prefix=layer.substring(0,colon);
+      String local=layer.substring(colon + 1);
+      NamespaceInfo ns=cat.getNamespaceByPrefix(prefix);
+      if (ns == null) {
+        ns=cat.getNamespaceByURI(prefix);
+        if (ns != null) {
+          prefix=ns.getPrefix();
+        }
+        layers.set(i,prefix + ":" + local);
+      }
+ else {
+      }
+    }
+  }
+}

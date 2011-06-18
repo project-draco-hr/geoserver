@@ -1,0 +1,35 @@
+{
+  final WMSMapContext context=(WMSMapContext)o;
+  final GetMapRequest request=context.getRequest();
+  if (NetworkLinkMapOutputFormat.KML_MIME_TYPE.equals(request.getFormat())) {
+    request.setFormat(KMLMapOutputFormat.MIME_TYPE);
+  }
+ else {
+    request.setFormat(KMZMapOutputFormat.MIME_TYPE);
+  }
+  if (standalone) {
+    start("kml");
+  }
+  if (!inline) {
+    start("Folder");
+  }
+  final List<MapLayerInfo> layers=request.getLayers();
+  final KMLLookAt lookAt=parseLookAtOptions(request);
+  ReferencedEnvelope aggregatedBounds;
+  List<ReferencedEnvelope> layerBounds;
+  layerBounds=new ArrayList<ReferencedEnvelope>(layers.size());
+  aggregatedBounds=computePerLayerQueryBounds(context,layerBounds,lookAt);
+  if (encodeAsRegion) {
+    encodeAsSuperOverlay(request,lookAt,layerBounds);
+  }
+ else {
+    encodeAsOverlay(request,lookAt,layerBounds);
+  }
+  encodeLookAt(aggregatedBounds,lookAt);
+  if (!inline) {
+    end("Folder");
+  }
+  if (standalone) {
+    end("kml");
+  }
+}

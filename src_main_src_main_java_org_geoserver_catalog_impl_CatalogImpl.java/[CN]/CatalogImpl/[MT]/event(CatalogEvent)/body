@@ -1,0 +1,31 @@
+{
+  CatalogException toThrow=null;
+  for (Iterator l=listeners.iterator(); l.hasNext(); ) {
+    try {
+      CatalogListener listener=(CatalogListener)l.next();
+      if (event instanceof CatalogAddEvent) {
+        listener.handleAddEvent((CatalogAddEvent)event);
+      }
+ else       if (event instanceof CatalogRemoveEvent) {
+        listener.handleRemoveEvent((CatalogRemoveEvent)event);
+      }
+ else       if (event instanceof CatalogModifyEvent) {
+        listener.handleModifyEvent((CatalogModifyEvent)event);
+      }
+ else       if (event instanceof CatalogPostModifyEvent) {
+        listener.handlePostModifyEvent((CatalogPostModifyEvent)event);
+      }
+    }
+ catch (    Throwable t) {
+      if (t instanceof CatalogException && toThrow == null) {
+        toThrow=(CatalogException)t;
+      }
+ else {
+        LOGGER.log(Level.WARNING,"Catalog listener threw exception handling event.",t);
+      }
+    }
+  }
+  if (toThrow != null) {
+    throw toThrow;
+  }
+}

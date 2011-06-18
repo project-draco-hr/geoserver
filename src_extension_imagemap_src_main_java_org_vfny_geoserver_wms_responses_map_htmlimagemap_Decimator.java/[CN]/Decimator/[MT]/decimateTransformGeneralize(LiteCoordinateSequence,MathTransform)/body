@@ -1,0 +1,64 @@
+{
+  int ncoords=seq.size();
+  double originalOrds[]=seq.getXYArray();
+  if (ncoords < 2) {
+    if (ncoords == 1) {
+      double[] newCoordsXformed2=new double[2];
+      transform.transform(originalOrds,0,newCoordsXformed2,0,1);
+      seq.setArray(newCoordsXformed2);
+      return;
+    }
+ else     return;
+  }
+  double[] allCoords=new double[ncoords * 2];
+  allCoords[0]=originalOrds[0];
+  allCoords[1]=originalOrds[1];
+  int actualCoords=1;
+  double lastX=allCoords[0];
+  double lastY=allCoords[1];
+  for (int t=1; t < (ncoords - 1); t++) {
+    double x=originalOrds[t * 2];
+    double y=originalOrds[t * 2 + 1];
+    if ((Math.abs(x - lastX) > spanx) || (Math.abs(y - lastY)) > spany) {
+      allCoords[actualCoords * 2]=x;
+      allCoords[actualCoords * 2 + 1]=y;
+      lastX=x;
+      lastY=y;
+      actualCoords++;
+    }
+  }
+  allCoords[actualCoords * 2]=originalOrds[(ncoords - 1) * 2];
+  allCoords[actualCoords * 2 + 1]=originalOrds[(ncoords - 1) * 2 + 1];
+  actualCoords++;
+  double[] newCoordsXformed;
+  if ((transform == null) || (transform.isIdentity())) {
+    newCoordsXformed=allCoords;
+  }
+ else {
+    newCoordsXformed=new double[actualCoords * 2];
+    transform.transform(allCoords,0,newCoordsXformed,0,actualCoords);
+  }
+  double[] finalCoords=new double[ncoords * 2];
+  finalCoords[0]=newCoordsXformed[0];
+  finalCoords[1]=newCoordsXformed[1];
+  int actualCoordsGen=1;
+  lastX=newCoordsXformed[0];
+  lastY=newCoordsXformed[1];
+  for (int t=1; t < (actualCoords - 1); t++) {
+    double x=newCoordsXformed[t * 2];
+    double y=newCoordsXformed[t * 2 + 1];
+    if ((Math.abs(x - lastX) > 0.75) || (Math.abs(y - lastY)) > 0.75) {
+      finalCoords[actualCoordsGen * 2]=x;
+      finalCoords[actualCoordsGen * 2 + 1]=y;
+      lastX=x;
+      lastY=y;
+      actualCoordsGen++;
+    }
+  }
+  finalCoords[actualCoordsGen * 2]=newCoordsXformed[(actualCoords - 1) * 2];
+  finalCoords[actualCoordsGen * 2 + 1]=newCoordsXformed[(actualCoords - 1) * 2 + 1];
+  actualCoordsGen++;
+  double[] seqDouble=new double[2 * actualCoordsGen];
+  System.arraycopy(finalCoords,0,seqDouble,0,actualCoordsGen * 2);
+  seq.setArray(seqDouble);
+}

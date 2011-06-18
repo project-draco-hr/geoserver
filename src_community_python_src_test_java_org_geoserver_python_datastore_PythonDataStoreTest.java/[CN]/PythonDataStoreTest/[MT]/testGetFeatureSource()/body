@@ -1,0 +1,36 @@
+{
+  SimpleFeatureSource source=dataStore.getFeatureSource("bar");
+  assertNotNull(source);
+  SimpleFeatureType schema=source.getSchema();
+  assertNotNull(schema);
+  assertEquals(2,schema.getAttributeCount());
+  assertEquals("geom",schema.getDescriptor(0).getLocalName());
+  assertTrue(Geometry.class.isAssignableFrom(schema.getDescriptor(0).getType().getBinding()));
+  assertEquals("baz",schema.getDescriptor(1).getLocalName());
+  assertTrue(String.class.isAssignableFrom(schema.getDescriptor(1).getType().getBinding()));
+  assertEquals(2,source.getCount(Query.ALL));
+  assertEquals(1,source.getCount(new Query("bar",CQL.toFilter("baz = 'ten'"))));
+  ReferencedEnvelope box=source.getBounds();
+  assertNotNull(box);
+  assertTrue(box.contains(new Coordinate(10,10)));
+  assertTrue(box.contains(new Coordinate(20,20)));
+  box=source.getBounds(new Query("bar",CQL.toFilter("baz = 'ten'")));
+  assertNotNull(box);
+  assertTrue(box.contains(new Coordinate(10,10)));
+  assertFalse(box.contains(new Coordinate(20,20)));
+  SimpleFeatureReader r=(SimpleFeatureReader)dataStore.getFeatureReader(new Query("bar"),Transaction.AUTO_COMMIT);
+  assertNotNull(r);
+  assertTrue(r.hasNext());
+  SimpleFeature f=r.next();
+  assertNotNull(f);
+  assertTrue(f.getDefaultGeometry() instanceof Point);
+  assertTrue(new Coordinate(10,10).equals2D(((Point)f.getDefaultGeometry()).getCoordinate()));
+  assertEquals("ten",f.getAttribute("baz"));
+  assertTrue(r.hasNext());
+  f=r.next();
+  assertNotNull(f);
+  assertTrue(f.getDefaultGeometry() instanceof Point);
+  assertTrue(new Coordinate(20,20).equals2D(((Point)f.getDefaultGeometry()).getCoordinate()));
+  assertEquals("twenty",f.getAttribute("baz"));
+  r.close();
+}

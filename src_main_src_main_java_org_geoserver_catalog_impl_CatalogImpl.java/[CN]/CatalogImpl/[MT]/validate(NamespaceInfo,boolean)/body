@@ -1,0 +1,26 @@
+{
+  if (isNull(namespace.getPrefix())) {
+    throw new NullPointerException("Namespace prefix must not be null");
+  }
+  if (namespace.getPrefix().equals(DEFAULT)) {
+    throw new IllegalArgumentException(DEFAULT + " is a reserved keyword, can't be used as the namespace prefix");
+  }
+  NamespaceInfo existing=getNamespaceByPrefix(namespace.getPrefix());
+  if (existing != null && !existing.getId().equals(namespace.getId())) {
+    throw new IllegalArgumentException("Namespace with prefix '" + namespace.getPrefix() + "' already exists.");
+  }
+  existing=getNamespaceByURI(namespace.getURI());
+  if (existing != null && !existing.getId().equals(namespace.getId())) {
+    throw new IllegalArgumentException("Namespace with URI '" + namespace.getURI() + "' already exists.");
+  }
+  if (isNull(namespace.getURI())) {
+    throw new NullPointerException("Namespace uri must not be null");
+  }
+  try {
+    new URI(namespace.getURI());
+  }
+ catch (  Exception e) {
+    throw new IllegalArgumentException("Invalid URI syntax for '" + namespace.getURI() + "' in namespace '"+ namespace.getPrefix()+ "'");
+  }
+  return postValidate(namespace,isNew);
+}

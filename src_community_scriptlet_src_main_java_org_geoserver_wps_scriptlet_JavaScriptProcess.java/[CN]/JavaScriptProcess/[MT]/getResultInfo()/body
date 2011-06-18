@@ -1,0 +1,17 @@
+{
+  Object metadataObj=scope.get("metadata",scope);
+  Map<String,Object> jsParams=null;
+  if (metadataObj instanceof Scriptable) {
+    Scriptable metadata=(Scriptable)metadataObj;
+    Object nativeParamsObj=metadata.get("outputs",metadata);
+    if (nativeParamsObj instanceof Scriptable)     jsParams=jsObjectToMap((Scriptable)nativeParamsObj);
+  }
+  if (jsParams == null) {
+    return new HashMap<String,Parameter<?>>();
+  }
+  Map<String,Parameter<?>> gtParams=new HashMap<String,Parameter<?>>();
+  for (  Map.Entry<String,Object> entry : jsParams.entrySet()) {
+    gtParams.put(entry.getKey(),new Parameter(entry.getKey(),(Class)entry.getValue(),Text.text(entry.getKey()),Text.text(entry.getKey())));
+  }
+  return gtParams;
+}

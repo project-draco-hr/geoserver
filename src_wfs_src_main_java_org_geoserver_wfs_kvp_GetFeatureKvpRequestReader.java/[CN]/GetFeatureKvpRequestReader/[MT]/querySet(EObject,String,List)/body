@@ -1,0 +1,31 @@
+{
+  if (values == null) {
+    return;
+  }
+  List query=(List)EMFUtils.get(request,"query");
+  int m=values.size();
+  int n=query.size();
+  if ((m == 1) && (n > 1)) {
+    EMFUtils.set(query,property,values.get(0));
+    return;
+  }
+  if (m > n) {
+    if (n == 0) {
+      for (int i=0; i < m; i++) {
+        query.add(getWfsFactory().createQueryType());
+      }
+    }
+ else     if (n == 1) {
+      EObject q=(EObject)query.get(0);
+      for (int i=1; i < m; i++) {
+        query.add(EMFUtils.clone(q,getWfsFactory()));
+      }
+      return;
+    }
+ else {
+      String msg="Specified " + m + " "+ property+ " for "+ n+ " queries.";
+      throw new WFSException(msg);
+    }
+  }
+  EMFUtils.set(query,property,values);
+}

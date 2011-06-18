@@ -1,0 +1,21 @@
+{
+  if (0 >= request.getWidth() || 0 >= request.getHeight()) {
+    throw new ServiceException("Missing or invalid requested map size. Parameters" + " WIDTH and HEIGHT shall be present and be integers > 0. Got " + "WIDTH=" + request.getWidth() + ", HEIGHT="+ request.getHeight(),"MissingOrInvalidParameter");
+  }
+  if (request.getLayers().size() == 0) {
+    throw new ServiceException("No layers have been requested","LayerNotDefined");
+  }
+  if (request.getStyles().size() == 0) {
+    throw new ServiceException("No styles have been requested","StyleNotDefined");
+  }
+  if (request.getFormat() == null) {
+    throw new ServiceException("No output map format requested","InvalidFormat");
+  }
+  final Envelope env=request.getBbox();
+  if (env == null) {
+    throw new ServiceException("GetMap requests must include a BBOX parameter.","MissingBBox");
+  }
+  if (env.isNull() || (env.getWidth() <= 0) || (env.getHeight() <= 0)) {
+    throw new ServiceException(new StringBuffer("The request bounding box has zero area: ").append(env).toString(),"InvalidBBox");
+  }
+}

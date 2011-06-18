@@ -1,0 +1,23 @@
+{
+  GetMapRequest request=new GetMapRequest();
+  request.setBaseUrl("http://localhost:8080/geoserver");
+  List<MapLayerInfo> layers=new ArrayList<MapLayerInfo>(layerNames.length);
+  List styles=new ArrayList();
+  for (int i=0; i < layerNames.length; i++) {
+    LayerInfo layerInfo=getCatalog().getLayerByName(layerNames[i].getLocalPart());
+    try {
+      styles.add(layerInfo.getDefaultStyle().getStyle());
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+    layers.add(new MapLayerInfo(layerInfo));
+  }
+  request.setLayers(layers);
+  request.setStyles(styles);
+  request.setBbox(new Envelope(-180,-90,180,90));
+  request.setCrs(DefaultGeographicCRS.WGS84);
+  request.setSRS("EPSG:4326");
+  request.setRawKvp(new HashMap());
+  return request;
+}

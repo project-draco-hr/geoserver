@@ -1,0 +1,61 @@
+{
+  Throwable current=t;
+  while (current != null && !(current instanceof ClientStreamAbortedException) && !(isSecurityException(current))) {
+    if (current instanceof SAXException)     current=((SAXException)current).getException();
+ else     current=current.getCause();
+  }
+  if (current instanceof ClientStreamAbortedException) {
+    logger.log(Level.FINER,"Client has closed stream",t);
+    return;
+  }
+  if (isSecurityException(current))   throw (RuntimeException)current;
+  Throwable cause=t;
+  while (cause != null) {
+    if (cause instanceof ServiceException) {
+      break;
+    }
+    if (cause instanceof HttpErrorCodeException) {
+      break;
+    }
+    if (isSecurityException(cause)) {
+      break;
+    }
+    cause=cause.getCause();
+  }
+  if (cause == null) {
+    cause=new ServiceException(t);
+  }
+  if (!(cause instanceof HttpErrorCodeException)) {
+    logger.log(Level.SEVERE,"",t);
+  }
+ else {
+    int errorCode=((HttpErrorCodeException)cause).getErrorCode();
+    if (errorCode < 199 || errorCode > 299) {
+      logger.log(Level.FINE,"",t);
+    }
+ else {
+      logger.log(Level.FINER,"",t);
+    }
+  }
+  if (cause instanceof ServiceException) {
+    ServiceException se=(ServiceException)cause;
+    if (cause != t) {
+      se=new ServiceException(se.getMessage(),t,se.getCode(),se.getLocator());
+    }
+    handleServiceException(se,service,request);
+  }
+ else   if (cause instanceof HttpErrorCodeException) {
+    HttpErrorCodeException ece=(HttpErrorCodeException)cause;
+    try {
+      if (ece.getMessage() != null) {
+        request.getHttpResponse().sendError(ece.getErrorCode(),ece.getMessage());
+      }
+ else {
+        request.getHttpResponse().sendError(ece.getErrorCode());
+      }
+    }
+ catch (    IOException e) {
+    }
+  }
+  request.error=t;
+}

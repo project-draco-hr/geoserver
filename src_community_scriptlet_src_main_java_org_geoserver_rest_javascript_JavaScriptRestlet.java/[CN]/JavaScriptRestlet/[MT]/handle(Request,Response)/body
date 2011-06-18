@@ -1,0 +1,51 @@
+{
+  String scriptName=(String)request.getAttributes().get("script");
+  if (scriptName == null) {
+    File scriptDirectory=null;
+    try {
+      scriptDirectory=resourceLoader.find(scriptPath);
+    }
+ catch (    IOException ioe) {
+    }
+    if (scriptDirectory == null)     throw new RestletException("No script directory",Status.CLIENT_ERROR_NOT_FOUND);
+    StringBuilder out=new StringBuilder();
+    for (    String script : scriptDirectory.list(new FilenameFilter(){
+      public boolean accept(      File f,      String name){
+        return name.endsWith(".js");
+      }
+    }
+)) {
+      out.append(script.substring(0,script.length() - 3)).append(", ");
+    }
+    response.setEntity(new StringRepresentation(out.toString()));
+  }
+ else {
+    File script;
+    try {
+      script=resourceLoader.find(scriptPath,scriptName + ".js");
+    }
+ catch (    IOException ioe) {
+      throw new RestletException("Requested script [" + scriptName + "] does not exist",Status.CLIENT_ERROR_NOT_FOUND);
+    }
+    Context cx=Context.enter();
+    try {
+      Scriptable scope=cx.initStandardObjects();
+      FileReader reader=new FileReader(script);
+      Object wrappedRequest=Context.javaToJS(request,scope);
+      Object wrappedResponse=Context.javaToJS(response,scope);
+      Object wrappedCatalog=Context.javaToJS(catalog,scope);
+      Object wrappedLoader=Context.javaToJS(resourceLoader,scope);
+      ScriptableObject.putProperty(scope,"request",wrappedRequest);
+      ScriptableObject.putProperty(scope,"response",wrappedResponse);
+      ScriptableObject.putProperty(scope,"loader",wrappedLoader);
+      ScriptableObject.putProperty(scope,"catalog",wrappedCatalog);
+      cx.evaluateReader(scope,reader,script.getName(),1,null);
+    }
+ catch (    IOException e) {
+      throw new RestletException("I/O error while loading script...",Status.SERVER_ERROR_INTERNAL);
+    }
+ finally {
+      Context.exit();
+    }
+  }
+}

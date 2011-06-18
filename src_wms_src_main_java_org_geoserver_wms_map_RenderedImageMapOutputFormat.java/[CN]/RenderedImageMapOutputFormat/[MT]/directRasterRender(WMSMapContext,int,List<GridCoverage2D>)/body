@@ -1,0 +1,220 @@
+{
+  List<RasterSymbolizer> symbolizers=getRasterSymbolizers(mapContext,0);
+  if (symbolizers.size() != 1)   return null;
+  RasterSymbolizer symbolizer=symbolizers.get(0);
+  final Feature feature=mapContext.getLayer(0).getFeatureSource().getFeatures().features().next();
+  final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)feature.getProperty("grid").getValue();
+  final Object params=feature.getProperty("params").getValue();
+  final int tileSizeX;
+  final int tileSizeY;
+  if (mapContext.getTileSize() != -1) {
+    tileSizeX=tileSizeY=mapContext.getTileSize();
+  }
+ else {
+    tileSizeX=mapContext.getMapWidth();
+    tileSizeY=mapContext.getMapHeight();
+  }
+  final int mapWidth=mapContext.getMapWidth();
+  final int mapHeight=mapContext.getMapHeight();
+  final ReferencedEnvelope mapEnvelope=mapContext.getAreaOfInterest();
+  final CoordinateReferenceSystem mapCRS=mapContext.getCoordinateReferenceSystem();
+  final Rectangle mapRasterArea=new Rectangle(0,0,mapWidth,mapHeight);
+  final AffineTransform worldToScreen=RendererUtilities.worldToScreenTransform(mapEnvelope,mapRasterArea);
+  final boolean transparent=mapContext.isTransparent() && isTransparencySupported();
+  Color bgColor=mapContext.getBgColor();
+  if (transparent) {
+    bgColor=new Color(bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),0);
+  }
+ else {
+    bgColor=new Color(bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),255);
+  }
+  Interpolation interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+  if (wms != null) {
+    if (WMSInterpolation.Nearest.equals(wms.getInterpolation())) {
+      interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+    }
+ else     if (WMSInterpolation.Bilinear.equals(wms.getInterpolation())) {
+      interpolation=Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
+    }
+ else     if (WMSInterpolation.Bicubic.equals(wms.getInterpolation())) {
+      interpolation=Interpolation.getInstance(Interpolation.INTERP_BICUBIC);
+    }
+  }
+  final CoordinateReferenceSystem coverageCRS=reader.getCrs();
+  final GridGeometry2D readGG;
+  final ReferencedEnvelope bufferedEnvelope;
+  final Rectangle bufferedTargetArea;
+  final boolean equalsMetadata=CRS.equalsIgnoreMetadata(mapCRS,coverageCRS);
+  boolean sameCRS;
+  try {
+    sameCRS=equalsMetadata ? true : CRS.findMathTransform(mapCRS,coverageCRS,true).isIdentity();
+  }
+ catch (  FactoryException e1) {
+    final IOException ioe=new IOException();
+    ioe.initCause(e1);
+    throw ioe;
+  }
+  if (sameCRS) {
+    readGG=new GridGeometry2D(new GridEnvelope2D(mapRasterArea),mapEnvelope);
+    bufferedTargetArea=null;
+    bufferedEnvelope=null;
+  }
+ else {
+    bufferedTargetArea=(Rectangle)mapRasterArea.clone();
+    bufferedTargetArea.add(mapRasterArea.x + mapRasterArea.width + 10,mapRasterArea.y + mapRasterArea.height + 10);
+    bufferedTargetArea.add(mapRasterArea.x - 10,mapRasterArea.y - 10);
+    final GridToEnvelopeMapper ge=new GridToEnvelopeMapper(new GridEnvelope2D(mapRasterArea),mapEnvelope);
+    readGG=new GridGeometry2D(new GridEnvelope2D(bufferedTargetArea),PixelInCell.CELL_CORNER,ge.createTransform(),mapCRS,null);
+    bufferedEnvelope=new ReferencedEnvelope(readGG.getEnvelope2D());
+  }
+  RenderedImage image=null;
+  try {
+    final GridCoverage2D coverage;
+    final Color readerBgColor=transparent ? null : bgColor;
+    if (sameCRS) {
+      coverage=readBestCoverage(reader,params,mapEnvelope,mapRasterArea,interpolation,readerBgColor);
+    }
+ else {
+      coverage=readBestCoverage(reader,params,bufferedEnvelope,bufferedTargetArea,interpolation,readerBgColor);
+    }
+    try {
+      if (coverage == null) {
+        image=createBkgImage((float)mapWidth,(float)mapHeight,bgColor,null);
+      }
+ else {
+        final GridCoverageRenderer gcr;
+        if (sameCRS) {
+          gcr=new GridCoverageRenderer(mapCRS,mapEnvelope,mapRasterArea,worldToScreen,new RenderingHints(JAI.KEY_INTERPOLATION,interpolation));
+        }
+ else {
+          gcr=new GridCoverageRenderer(mapCRS,bufferedEnvelope,bufferedTargetArea,worldToScreen,new RenderingHints(JAI.KEY_INTERPOLATION,interpolation));
+        }
+        image=gcr.renderImage(coverage,symbolizer,interpolation,mapContext.getBgColor(),tileSizeX,tileSizeY);
+      }
+    }
+  finally {
+      if (coverage != null)       renderedCoverages.add(coverage);
+    }
+  }
+ catch (  Throwable e) {
+    throw new ServiceException(e);
+  }
+  if (image == null) {
+    return null;
+  }
+  final Rectangle imageBounds=PlanarImage.wrapRenderedImage(image).getBounds();
+  final ImageLayout layout=new ImageLayout();
+  layout.setMinX(0);
+  layout.setMinY(0);
+  layout.setWidth(mapWidth);
+  layout.setHeight(mapHeight);
+  layout.setTileGridXOffset(0);
+  layout.setTileGridYOffset(0);
+  layout.setTileWidth(tileSizeX);
+  layout.setTileHeight(tileSizeY);
+  ColorModel cm=image.getColorModel();
+  double[] bgValues=null;
+  PlanarImage[] alphaChannels=null;
+  final ImageWorker worker=new ImageWorker(image);
+  final int transparencyType=cm.getTransparency();
+  if (cm instanceof IndexColorModel) {
+    final IndexColorModel icm=(IndexColorModel)cm;
+    final int bgColorIndex;
+    if (transparent) {
+      bgColorIndex=icm.getTransparentPixel();
+    }
+ else {
+      bgColorIndex=ColorUtilities.findColorIndex(bgColor,icm);
+    }
+    if (bgColorIndex == -1) {
+      image=worker.forceComponentColorModel().getRenderedImage();
+      if (transparent) {
+        image=addAlphaChannel(image);
+        worker.setImage(image);
+      }
+      bgValues=new double[]{bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),transparent ? 0 : 255};
+      cm=image.getColorModel();
+    }
+ else {
+      bgValues=new double[]{bgColorIndex};
+    }
+    if (cm.hasAlpha()) {
+      worker.forceComponentColorModel();
+      final RenderedImage alpha=worker.retainLastBand().getRenderedImage();
+      alphaChannels=new PlanarImage[]{PlanarImage.wrapRenderedImage(alpha)};
+    }
+  }
+  if (cm instanceof ComponentColorModel) {
+    ComponentColorModel ccm=(ComponentColorModel)cm;
+    boolean hasAlpha=cm.hasAlpha();
+    if (ccm.getNumColorComponents() == 1) {
+      if ((!isLevelOfGray(bgColor) && !transparent) || (ccm.getTransferType() == DataBuffer.TYPE_DOUBLE || ccm.getTransferType() == DataBuffer.TYPE_FLOAT || ccm.getTransferType() == DataBuffer.TYPE_UNDEFINED)) {
+        final ImageWorker iw=new ImageWorker(image);
+        if (hasAlpha) {
+          final RenderedImage alpha=iw.retainLastBand().getRenderedImage();
+          final RenderedImage gray=new ImageWorker(image).retainFirstBand().getRenderedImage();
+          image=new ImageWorker(gray).bandMerge(3).addBand(alpha,false).forceComponentColorModel().forceColorSpaceRGB().getRenderedImage();
+        }
+ else {
+          image=iw.bandMerge(3).forceComponentColorModel().forceColorSpaceRGB().getRenderedImage();
+        }
+      }
+ else       if (!hasAlpha) {
+        if (transparent) {
+          image=addAlphaChannel(image);
+          bgValues=new double[]{mapToGrayColor(bgColor,ccm),0};
+        }
+ else {
+          bgValues=new double[]{mapToGrayColor(bgColor,ccm)};
+        }
+      }
+ else {
+        final ImageWorker iw=new ImageWorker(image);
+        final RenderedImage alpha=iw.retainLastBand().getRenderedImage();
+        alphaChannels=new PlanarImage[]{PlanarImage.wrapRenderedImage(alpha)};
+        if (transparent) {
+          bgValues=new double[]{mapToGrayColor(bgColor,ccm),0};
+        }
+ else {
+          bgValues=new double[]{mapToGrayColor(bgColor,ccm),255};
+        }
+      }
+      cm=image.getColorModel();
+      ccm=(ComponentColorModel)cm;
+      hasAlpha=cm.hasAlpha();
+    }
+    if (bgValues == null) {
+      if (hasAlpha) {
+        final ImageWorker iw=new ImageWorker(image);
+        final RenderedImage alpha=iw.retainLastBand().getRenderedImage();
+        alphaChannels=new PlanarImage[]{PlanarImage.wrapRenderedImage(alpha)};
+        if (transparent) {
+          bgValues=new double[]{bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),0};
+        }
+ else {
+          bgValues=new double[]{bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),255};
+        }
+      }
+ else {
+        if (transparent) {
+          image=addAlphaChannel(image);
+          bgValues=new double[]{0,0,0,0};
+        }
+ else {
+          bgValues=new double[]{bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue()};
+        }
+      }
+    }
+  }
+  if (!(imageBounds.contains(mapRasterArea) || imageBounds.equals(mapRasterArea)) || transparencyType != Transparency.OPAQUE) {
+    ROI[] rois=new ROI[]{new ROIShape(imageBounds)};
+    double[][] thresholds=new double[][]{{ColorUtilities.getThreshold(image.getSampleModel().getDataType())}};
+    image=MosaicDescriptor.create(new RenderedImage[]{image},alphaChannels != null && transparencyType == Transparency.TRANSLUCENT ? MosaicDescriptor.MOSAIC_TYPE_BLEND : MosaicDescriptor.MOSAIC_TYPE_OVERLAY,alphaChannels,rois,thresholds,bgValues,new RenderingHints(JAI.KEY_IMAGE_LAYOUT,layout));
+  }
+ else {
+    if (imageBounds.contains(mapRasterArea) && !imageBounds.equals(mapRasterArea)) {
+      image=CropDescriptor.create(image,(float)0,(float)0,(float)mapWidth,(float)mapHeight,null);
+    }
+  }
+  return image;
+}

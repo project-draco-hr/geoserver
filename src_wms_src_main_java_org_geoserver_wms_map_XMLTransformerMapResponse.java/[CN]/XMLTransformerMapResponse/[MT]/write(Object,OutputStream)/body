@@ -1,0 +1,19 @@
+{
+  Assert.isInstanceOf(XMLTransformerMap.class,value);
+  XMLTransformerMap map=(XMLTransformerMap)value;
+  TransformerBase transformer=map.getTransformer();
+  Object transformerSubject=map.getTransformerSubject();
+  try {
+    transformer.transform(transformerSubject,output);
+  }
+ catch (  TransformerException e) {
+    Throwable cause=e.getCause() != null ? e.getCause() : e.getException();
+    if (cause instanceof RuntimeException) {
+      throw (RuntimeException)cause;
+    }
+    throw new ServiceException("getmap operation failed.",cause != null ? cause : e);
+  }
+ finally {
+    map.dispose();
+  }
+}

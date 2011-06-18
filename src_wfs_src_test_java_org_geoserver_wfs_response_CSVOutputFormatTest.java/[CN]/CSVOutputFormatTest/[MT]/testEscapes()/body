@@ -1,0 +1,28 @@
+{
+  SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+  builder.add("geom",Point.class);
+  builder.add("label",String.class);
+  builder.setName("funnyLabels");
+  SimpleFeatureType type=builder.buildFeatureType();
+  GeometryFactory gf=new GeometryFactory();
+  SimpleFeature f1=SimpleFeatureBuilder.build(type,new Object[]{gf.createPoint(new Coordinate(5,8)),"A label with \"quotes\""},null);
+  SimpleFeature f2=SimpleFeatureBuilder.build(type,new Object[]{gf.createPoint(new Coordinate(5,4)),"A long label\nwith newlines"},null);
+  MemoryDataStore data=new MemoryDataStore();
+  data.addFeature(f1);
+  data.addFeature(f2);
+  SimpleFeatureSource fs=data.getFeatureSource("funnyLabels");
+  GetFeatureType gft=WfsFactory.eINSTANCE.createGetFeatureType();
+  Operation op=new Operation("GetFeature",getServiceDescriptor10(),null,new Object[]{gft});
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  FeatureCollectionType fct=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  fct.getFeature().add(fs.getFeatures());
+  CSVOutputFormat format=new CSVOutputFormat(getGeoServer());
+  format.write(fct,bos,op);
+  List<String[]> lines=readLines(bos.toString());
+  assertEquals(fs.getCount(Query.ALL) + 1,lines.size());
+  for (  String[] line : lines) {
+    assertEquals(fs.getSchema().getAttributeCount() + 1,line.length);
+  }
+  assertEquals(f1.getAttribute("label"),lines.get(1)[2]);
+  assertEquals(f2.getAttribute("label"),lines.get(2)[2]);
+}

@@ -1,0 +1,71 @@
+{
+  Form form=new Form("form");
+  add(form);
+  String location=GeoServerExtensions.getProperty(LoggingUtils.GEOSERVER_LOG_LOCATION);
+  if (location == null) {
+    location=getGeoServerApplication().getGeoServer().getLogging().getLocation();
+  }
+  logFile=new File(location);
+  if (!logFile.isAbsolute()) {
+    GeoServerDataDirectory dd=getGeoServerApplication().getBeanOfType(GeoServerDataDirectory.class);
+    logFile=new File(dd.root(),logFile.getPath());
+  }
+  if (!logFile.exists()) {
+    error("Could not find the GeoServer log file: " + logFile.getAbsolutePath());
+  }
+  try {
+    if (params.getKey(LINES) != null) {
+      if (params.getInt(LINES) > 0) {
+        lines=params.getInt(LINES);
+      }
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error parsing the lines parameter: ",params.getKey(LINES));
+  }
+  form.add(new SubmitLink("refresh"){
+    @Override public void onSubmit(){
+      setResponsePage(LogPage.class,new PageParameters(LINES + "=" + String.valueOf(lines)));
+    }
+  }
+);
+  TextField lines=new TextField("lines",new PropertyModel(this,"lines"));
+  lines.add(new MinimumValidator(1));
+  form.add(lines);
+  TextArea logs=new TextArea("logs",new GSLogsModel());
+  logs.setOutputMarkupId(true);
+  logs.setMarkupId("logs");
+  add(logs);
+  add(new Link("download"){
+    @Override public void onClick(){
+      RequestCycle.get().setRequestTarget(new IRequestTarget(){
+        public void detach(        RequestCycle requestCycle){
+        }
+        public void respond(        RequestCycle requestCycle){
+          InputStream is=null;
+          try {
+            is=new FileInputStream(logFile);
+            WebResponse r=(WebResponse)requestCycle.getResponse();
+            r.setAttachmentHeader("geoserver.log");
+            r.setContentType("text/plain");
+            Streams.copy(is,r.getOutputStream());
+          }
+ catch (          IOException e) {
+            throw new RuntimeException(e);
+          }
+ finally {
+            if (is != null) {
+              try {
+                is.close();
+              }
+ catch (              IOException e) {
+              }
+            }
+          }
+        }
+      }
+);
+    }
+  }
+);
+}

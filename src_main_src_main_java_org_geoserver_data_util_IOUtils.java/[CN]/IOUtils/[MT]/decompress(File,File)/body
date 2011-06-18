@@ -1,0 +1,31 @@
+{
+  ZipFile zipFile=new ZipFile(inputFile);
+  Enumeration<? extends ZipEntry> entries=zipFile.entries();
+  while (entries.hasMoreElements()) {
+    ZipEntry entry=(ZipEntry)entries.nextElement();
+    InputStream stream=zipFile.getInputStream(entry);
+    if (entry.isDirectory()) {
+      (new File(destDir,entry.getName())).mkdir();
+      continue;
+    }
+    File newFile=new File(destDir,entry.getName());
+    FileOutputStream fos=new FileOutputStream(newFile);
+    try {
+      byte[] buf=new byte[1024];
+      int len;
+      while ((len=stream.read(buf)) >= 0)       saveCompressedStream(buf,fos,len);
+    }
+ catch (    IOException e) {
+      zipFile.close();
+      IOException ioe=new IOException("Not valid COAMPS archive file type.");
+      ioe.initCause(e);
+      throw ioe;
+    }
+ finally {
+      fos.flush();
+      fos.close();
+      stream.close();
+    }
+  }
+  zipFile.close();
+}

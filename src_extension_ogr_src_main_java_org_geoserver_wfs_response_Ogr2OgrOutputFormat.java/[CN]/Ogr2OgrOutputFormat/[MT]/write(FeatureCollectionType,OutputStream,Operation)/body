@@ -1,0 +1,44 @@
+{
+  GetFeatureType gft=(GetFeatureType)getFeature.getParameters()[0];
+  OgrFormat format=formats.get(gft.getOutputFormat());
+  if (format == null)   throw new WFSException("Unknown output format " + gft.getOutputFormat());
+  File tempGS=org.geoserver.data.util.IOUtils.createTempDirectory("ogrtmpin");
+  File tempOGR=org.geoserver.data.util.IOUtils.createTempDirectory("ogrtmpout");
+  OGRWrapper wrapper=new OGRWrapper(ogrExecutable,gdalData);
+  try {
+    Iterator outputFeatureCollections=featureCollection.getFeature().iterator();
+    SimpleFeatureCollection curCollection;
+    File outputFile=null;
+    while (outputFeatureCollections.hasNext()) {
+      curCollection=(SimpleFeatureCollection)outputFeatureCollections.next();
+      File intermediate=writeToDisk(tempGS,curCollection);
+      String epsgCode=null;
+      final SimpleFeatureType schema=curCollection.getSchema();
+      final CoordinateReferenceSystem crs=schema.getCoordinateReferenceSystem();
+      outputFile=wrapper.convert(intermediate,tempOGR,schema.getTypeName(),format,crs);
+      IOUtils.emptyDirectory(tempGS);
+    }
+    if (format.singleFile && featureCollection.getFeature().size() == 1) {
+      FileInputStream fis=null;
+      try {
+        fis=new FileInputStream(outputFile);
+        org.apache.commons.io.IOUtils.copy(fis,output);
+      }
+  finally {
+        if (fis != null) {
+          fis.close();
+        }
+      }
+    }
+ else {
+      ZipOutputStream zipOut=new ZipOutputStream(output);
+      IOUtils.zipDirectory(tempOGR,zipOut,null);
+      zipOut.finish();
+    }
+    IOUtils.delete(tempGS);
+    IOUtils.delete(tempOGR);
+  }
+ catch (  Exception e) {
+    throw new ServiceException("Exception occurred during output generation",e);
+  }
+}

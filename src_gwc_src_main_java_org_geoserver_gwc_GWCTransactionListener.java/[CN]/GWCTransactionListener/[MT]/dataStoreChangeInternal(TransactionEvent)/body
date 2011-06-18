@@ -1,0 +1,29 @@
+{
+  final Object source=event.getSource();
+  Assert.isTrue(source instanceof InsertElementType || source instanceof UpdateElementType || source instanceof DeleteElementType);
+  final EObject originatingTransactionRequest=(EObject)source;
+  Assert.notNull(originatingTransactionRequest);
+  final TransactionEventType type=event.getType();
+  final SimpleFeatureCollection affectedFeatures=event.getAffectedFeatures();
+  if (isIgnorablePostEvent(originatingTransactionRequest,type)) {
+    return;
+  }
+  final Set<String> affectedLayers=findAffectedCachedLayers(event);
+  if (affectedLayers.isEmpty()) {
+    return;
+  }
+  if (PRE_INSERT == type || PRE_UPDATE == type || PRE_DELETE == type) {
+    ReferencedEnvelope preBounds=affectedFeatures.getBounds();
+    this.affectedLayers.put(originatingTransactionRequest,affectedLayers);
+    this.affectedBounds.put(originatingTransactionRequest,preBounds);
+  }
+ else   if (POST_UPDATE == type && affectedFeatures != null) {
+    final ReferencedEnvelope bounds=affectedBounds.get(originatingTransactionRequest);
+    ReferencedEnvelope postBounds=affectedFeatures.getBounds();
+    Assert.isTrue(bounds.getCoordinateReferenceSystem().equals(postBounds.getCoordinateReferenceSystem()));
+    bounds.expandToInclude(postBounds);
+  }
+ else {
+    throw new IllegalArgumentException("Unrecognized transaction event type: " + type);
+  }
+}

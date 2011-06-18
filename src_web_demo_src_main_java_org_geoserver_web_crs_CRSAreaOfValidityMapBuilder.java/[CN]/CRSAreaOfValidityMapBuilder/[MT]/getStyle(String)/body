@@ -1,0 +1,18 @@
+{
+  Style style=STYLES.get(styleName);
+  if (style == null) {
+    StyleFactory styleFactory=CommonFactoryFinder.getStyleFactory(GeoTools.getDefaultHints());
+    SLDParser parser=new SLDParser(styleFactory);
+    try {
+      parser.setInput(getClass().getResource(styleName));
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+    StyledLayerDescriptor sld=parser.parseSLD();
+    UserLayer layer=(UserLayer)sld.getStyledLayers()[0];
+    style=layer.getUserStyles()[0];
+    STYLES.put(styleName,style);
+  }
+  return style;
+}

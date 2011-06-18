@@ -1,0 +1,89 @@
+{
+  ResourceReference faviconReference=null;
+  List<HeaderContribution> cssContribs=getGeoServerApplication().getBeansOfType(HeaderContribution.class);
+  for (  HeaderContribution csscontrib : cssContribs) {
+    try {
+      if (csscontrib.appliesTo(this)) {
+        ResourceReference ref=csscontrib.getCSS();
+        if (ref != null) {
+          add(HeaderContributor.forCss(ref));
+        }
+        ref=csscontrib.getJavaScript();
+        if (ref != null) {
+          add(HeaderContributor.forJavaScript(ref));
+        }
+        ref=csscontrib.getFavicon();
+        if (ref != null) {
+          faviconReference=ref;
+        }
+      }
+    }
+ catch (    Throwable t) {
+      LOGGER.log(Level.WARNING,"Problem adding header contribution",t);
+    }
+  }
+  if (faviconReference == null) {
+    faviconReference=new ResourceReference(GeoServerBasePage.class,"favicon.ico");
+  }
+  String faviconUrl=RequestCycle.get().urlFor(faviconReference).toString();
+  add(new ExternalLink("faviconLink",faviconUrl,null));
+  add(new Label("pageTitle",getPageTitle()));
+  WebMarkupContainer loginForm=new WebMarkupContainer("loginform");
+  add(loginForm);
+  final Authentication user=GeoServerSession.get().getAuthentication();
+  final boolean anonymous=user == null || user instanceof AnonymousAuthenticationToken;
+  loginForm.setVisible(anonymous);
+  WebMarkupContainer logoutForm=new WebMarkupContainer("logoutform");
+  logoutForm.setVisible(!anonymous);
+  add(logoutForm);
+  logoutForm.add(new Label("username",anonymous ? "Nobody" : user.getName()));
+  add(new BookmarkablePageLink("home",GeoServerHomePage.class).add(new Label("label",new StringResourceModel("home",(Component)null,null))));
+  DeveloperToolbar devToolbar=new DeveloperToolbar("devButtons");
+  add(devToolbar);
+  devToolbar.setVisible(Application.DEVELOPMENT.equalsIgnoreCase(getApplication().getConfigurationType()));
+  final Map<Category,List<MenuPageInfo>> links=splitByCategory(filterByAuth(getGeoServerApplication().getBeansOfType(MenuPageInfo.class)));
+  List<MenuPageInfo> standalone=links.containsKey(null) ? links.get(null) : new ArrayList<MenuPageInfo>();
+  links.remove(null);
+  List<Category> categories=new ArrayList(links.keySet());
+  Collections.sort(categories);
+  add(new ListView("category",categories){
+    public void populateItem(    ListItem item){
+      Category category=(Category)item.getModelObject();
+      item.add(new Label("category.header",new StringResourceModel(category.getNameKey(),(Component)null,null)));
+      item.add(new ListView("category.links",links.get(category)){
+        public void populateItem(        ListItem item){
+          MenuPageInfo info=(MenuPageInfo)item.getModelObject();
+          BookmarkablePageLink link=new BookmarkablePageLink("link",info.getComponentClass());
+          link.add(new AttributeModifier("title",true,new StringResourceModel(info.getDescriptionKey(),(Component)null,null)));
+          link.add(new Label("link.label",new StringResourceModel(info.getTitleKey(),(Component)null,null)));
+          Image image;
+          if (info.getIcon() != null) {
+            image=new Image("link.icon",new ResourceReference(info.getComponentClass(),info.getIcon()));
+          }
+ else {
+            image=new Image("link.icon",new ResourceReference(GeoServerBasePage.class,"img/icons/silk/wrench.png"));
+          }
+          image.add(new AttributeModifier("alt",true,new ParamResourceModel(info.getTitleKey(),null)));
+          link.add(image);
+          item.add(link);
+        }
+      }
+);
+    }
+  }
+);
+  add(new ListView("standalone",standalone){
+    public void populateItem(    ListItem item){
+      MenuPageInfo info=(MenuPageInfo)item.getModelObject();
+      BookmarkablePageLink link=new BookmarkablePageLink("link",info.getComponentClass());
+      link.add(new AttributeModifier("title",true,new StringResourceModel(info.getDescriptionKey(),(Component)null,null)));
+      link.add(new Label("link.label",new StringResourceModel(info.getTitleKey(),(Component)null,null)));
+      item.add(link);
+    }
+  }
+);
+  add(feedbackPanel=new FeedbackPanel("feedback"));
+  feedbackPanel.setOutputMarkupId(true);
+  add(new Image("ajaxFeedbackImage",new ResourceReference(GeoServerBasePage.class,"img/ajax-loader.gif")));
+  add(new WebMarkupContainer(HEADER_PANEL));
+}

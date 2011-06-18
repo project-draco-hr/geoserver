@@ -1,0 +1,84 @@
+{
+  CoordinateReferenceSystem dataCRS=layer.getCoordinateReferenceSystem();
+  double radius;
+  if (buffer <= 0) {
+    Integer layerBuffer=null;
+    final LayerInfo layerInfo=layer.getLayerInfo();
+    if (layerInfo != null) {
+      layerBuffer=layerInfo.getMetadata().get(LayerInfo.BUFFER,Integer.class);
+    }
+    if (layerBuffer != null && layerBuffer > 0) {
+      radius=layerBuffer / 2.0;
+    }
+ else {
+      MetaBufferEstimator estimator=new MetaBufferEstimator();
+      for (      Rule rule : rules) {
+        rule.accept(estimator);
+      }
+      if (estimator.getBuffer() < 6.0 || !estimator.isEstimateAccurate()) {
+        radius=3.0;
+      }
+ else {
+        radius=estimator.getBuffer() / 2.0;
+      }
+    }
+  }
+ else {
+    radius=buffer;
+  }
+  int maxRadius=wms.getMaxBuffer();
+  if (maxRadius > 0 && radius > maxRadius)   radius=maxRadius;
+  Polygon pixelRect=getEnvelopeFilter(x,y,width,height,bbox,radius);
+  if ((requestedCRS != null) && !CRS.equalsIgnoreMetadata(dataCRS,requestedCRS)) {
+    try {
+      MathTransform transform=CRS.findMathTransform(requestedCRS,dataCRS,true);
+      pixelRect=(Polygon)JTS.transform(pixelRect,transform);
+    }
+ catch (    MismatchedDimensionException e) {
+      LOGGER.severe(e.getLocalizedMessage());
+    }
+catch (    TransformException e) {
+      LOGGER.severe(e.getLocalizedMessage());
+    }
+catch (    FactoryException e) {
+      LOGGER.severe(e.getLocalizedMessage());
+    }
+  }
+  final FeatureSource<? extends FeatureType,? extends Feature> featureSource;
+  featureSource=layer.getFeatureSource(false);
+  FeatureType schema=featureSource.getSchema();
+  Filter getFInfoFilter=null;
+  try {
+    GeometryDescriptor geometryDescriptor=schema.getGeometryDescriptor();
+    String localName=geometryDescriptor.getLocalName();
+    getFInfoFilter=ff.intersects(ff.property(localName),ff.literal(pixelRect));
+  }
+ catch (  IllegalFilterException e) {
+    e.printStackTrace();
+    throw new ServiceException("Internal error : " + e.getMessage(),e);
+  }
+  if (filters[i] != null) {
+    getFInfoFilter=ff.and(getFInfoFilter,filters[i]);
+  }
+  Filter postFilter=Filter.INCLUDE;
+  Filter rulesFilters=buildRulesFilter(ff,rules);
+  if (!(rulesFilters instanceof Or) || (rulesFilters instanceof Or && ((Or)rulesFilters).getChildren().size() <= 20)) {
+    getFInfoFilter=ff.and(getFInfoFilter,rulesFilters);
+  }
+ else {
+    postFilter=rulesFilters;
+  }
+  Filter timeElevationFilter=wms.getTimeElevationToFilter(times,elevations,layer.getFeature());
+  getFInfoFilter=Filters.and(ff,getFInfoFilter,timeElevationFilter);
+  String typeName=schema.getName().getLocalPart();
+  Query q=new Query(typeName,null,getFInfoFilter,maxFeatures,Query.ALL_NAMES,null);
+  if (viewParams != null && viewParams.size() > 0) {
+    q.setHints(new Hints(Hints.VIRTUAL_TABLE_PARAMETERS,viewParams));
+  }
+  FeatureCollection<? extends FeatureType,? extends Feature> match;
+  match=featureSource.getFeatures(q);
+  if (!Filter.INCLUDE.equals(postFilter)) {
+    match=DataUtilities.simple(new FilteringFeatureCollection(match,postFilter));
+  }
+  return match;
+}

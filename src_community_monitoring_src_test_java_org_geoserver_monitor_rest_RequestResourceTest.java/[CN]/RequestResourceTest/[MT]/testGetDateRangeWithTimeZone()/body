@@ -1,0 +1,16 @@
+{
+  Calendar c=Calendar.getInstance();
+  c.setTime(toDate("2010-07-23T15:56:44"));
+  long off=c.get(Calendar.ZONE_OFFSET) + c.get(Calendar.DST_OFFSET);
+  off=off / 1000 / 60/ 60;
+  String z=Math.abs(off) < 10 ? "0" + Math.abs(off) : "" + Math.abs(off);
+  z+="00";
+  z=off < 0 ? "-" + z : z;
+  Request req=new Request();
+  setKVP(req,"from","2010-07-23T15:56:44+0000","to","2010-07-23T16:16:44+0000");
+  Response res=new Response(req);
+  resource.init(null,req,res);
+  Query q=(Query)resource.handleObjectGet();
+  List<RequestData> datas=(List<RequestData>)monitor.getDAO().getRequests(q);
+  assertCoveredInOrder(datas,6,5,4);
+}

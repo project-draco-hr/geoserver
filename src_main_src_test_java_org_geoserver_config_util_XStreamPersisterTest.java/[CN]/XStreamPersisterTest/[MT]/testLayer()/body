@@ -1,0 +1,38 @@
+{
+  Catalog catalog=new CatalogImpl();
+  CatalogFactory cFactory=catalog.getFactory();
+  WorkspaceInfo ws=cFactory.createWorkspace();
+  ws.setName("foo");
+  catalog.add(ws);
+  NamespaceInfo ns=cFactory.createNamespace();
+  ns.setPrefix("acme");
+  ns.setURI("http://acme.org");
+  catalog.add(ns);
+  DataStoreInfo ds=cFactory.createDataStore();
+  ds.setWorkspace(ws);
+  ds.setName("foo");
+  catalog.add(ds);
+  FeatureTypeInfo ft=cFactory.createFeatureType();
+  ft.setStore(ds);
+  ft.setNamespace(ns);
+  ft.setName("ft");
+  ft.setAbstract("abstract");
+  ft.setSRS("EPSG:4326");
+  ft.setNativeCRS(CRS.decode("EPSG:4326"));
+  catalog.add(ft);
+  StyleInfo s=cFactory.createStyle();
+  s.setName("style");
+  s.setFilename("style.sld");
+  catalog.add(s);
+  LayerInfo l=cFactory.createLayer();
+  l.setResource(ft);
+  l.setDefaultStyle(s);
+  catalog.add(l);
+  ByteArrayOutputStream out=out();
+  persister.save(l,out);
+  persister.setCatalog(catalog);
+  l=persister.load(in(out),LayerInfo.class);
+  assertEquals(l.getResource().getName(),l.getName());
+  assertEquals(ft,l.getResource());
+  assertEquals(s,l.getDefaultStyle());
+}

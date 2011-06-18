@@ -1,0 +1,19 @@
+{
+  PolicyReader reader=new PolicyReader(finder,logger,schemaFile);
+  for (  String str : policyList) {
+    AbstractPolicy policy=null;
+    try {
+      try {
+        URL url=new URL(str);
+        policy=reader.readPolicy(url);
+      }
+ catch (      MalformedURLException murle) {
+        policy=reader.readPolicy(new File(str));
+      }
+      if (!policies.addPolicy(policy))       if (logger.isLoggable(Level.WARNING))       logger.log(Level.WARNING,"tried to load the same " + "policy multiple times: " + str);
+    }
+ catch (    ParsingException pe) {
+      if (logger.isLoggable(Level.WARNING))       logger.log(Level.WARNING,"Error reading policy: " + str,pe);
+    }
+  }
+}

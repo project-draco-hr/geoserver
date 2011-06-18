@@ -1,0 +1,15 @@
+{
+  Document dom=dom(get("cite/wms?request=getCapabilities&version=1.1.1"),true);
+  Element e=dom.getDocumentElement();
+  assertEquals("WMT_MS_Capabilities",e.getLocalName());
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  assertTrue(xpath.getMatchingNodes("//Layer/Name[starts-with(., cite)]",dom).getLength() > 0);
+  assertEquals(0,xpath.getMatchingNodes("//Layer/Name[not(starts-with(., cite))]",dom).getLength());
+  NodeList nodes=xpath.getMatchingNodes("//Layer//OnlineResource",dom);
+  assertTrue(nodes.getLength() > 0);
+  for (int i=0; i < nodes.getLength(); i++) {
+    e=(Element)nodes.item(i);
+    String attribute=e.getAttribute("xlink:href");
+    assertTrue(attribute.contains("geoserver/cite/wms"));
+  }
+}

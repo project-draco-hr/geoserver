@@ -1,0 +1,30 @@
+{
+  if (getFeatureSource() instanceof FeatureStore) {
+    Geometry geom;
+    GeometryFactory gf=new GeometryFactory();
+    if (g instanceof Polygon) {
+      geom=gf.createMultiPolygon(new Polygon[]{(Polygon)g});
+    }
+ else     if (g instanceof LineString) {
+      geom=gf.createMultiLineString(new LineString[]{(LineString)g});
+    }
+ else {
+      geom=g;
+    }
+    try {
+      FeatureStore<SimpleFeatureType,SimpleFeature> store=((FeatureStore<SimpleFeatureType,SimpleFeature>)getFeatureSource());
+      List<Object> attributes=new ArrayList<Object>();
+      attributes.add(geom);
+      attributes.addAll(Arrays.asList(values));
+      SimpleFeatureType ft=store.getSchema();
+      FeatureCollection<SimpleFeatureType,SimpleFeature> collection=FeatureCollections.newCollection();
+      SimpleFeature feature=SimpleFeatureBuilder.build(ft,attributes,SimpleFeatureBuilder.createDefaultFeatureId());
+      collection.add(feature);
+      store.addFeatures(collection);
+      m_iCount++;
+    }
+ catch (    Exception e) {
+      e.printStackTrace();
+    }
+  }
+}

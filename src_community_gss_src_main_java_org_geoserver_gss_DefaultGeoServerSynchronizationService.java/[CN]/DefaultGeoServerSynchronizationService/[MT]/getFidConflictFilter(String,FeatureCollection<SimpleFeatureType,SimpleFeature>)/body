@@ -1,0 +1,17 @@
+{
+  FeatureIterator<SimpleFeature> fi=null;
+  try {
+    fi=conflicts.features();
+    Set<FeatureId> conflictIds=new HashSet<FeatureId>();
+    while (fi.hasNext()) {
+      conflictIds.add(ff.featureId(tableName + "." + fi.next().getAttribute("feature_id")));
+    }
+    fi.close();
+    return conflictIds.size() > 0 ? ff.not(ff.id(conflictIds)) : Filter.INCLUDE;
+  }
+  finally {
+    if (fi != null) {
+      fi.close();
+    }
+  }
+}

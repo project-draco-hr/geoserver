@@ -1,0 +1,37 @@
+{
+  GeometryAttribute[] array=new GeometryAttribute[2];
+  AbstractPolicy p1=TestSupport.policyFromFile(TestSupport.getGeoXACMLFNFor("gml2","MultiPolygonPolicy.xml"));
+  array[0]=TestSupport.getGeometryAttribute(p1);
+  AbstractPolicy p2=policyFromAttributeEncoding(array[0],xmlTemplate);
+  array[1]=TestSupport.getGeometryAttribute(p2);
+  for (  GeometryAttribute attr : array) {
+    assertTrue(attr.getSrsName().equals("EPSG:4326"));
+    assertTrue(attr.getGid().equals("MultiPolygon"));
+    assertTrue(attr.getGmlVersion() == GMLVersion.Version2);
+    MultiPolygon mpoly=(MultiPolygon)attr.getGeometry();
+    Polygon poly=(Polygon)mpoly.getGeometryN(0);
+    Coordinate[] coords=poly.getExteriorRing().getCoordinates();
+    assertTrue(coords[0].x == 0);
+    assertTrue(coords[0].y == 0);
+    assertTrue(coords[1].x == 0);
+    assertTrue(coords[1].y == 100);
+    assertTrue(coords[2].x == 100);
+    assertTrue(coords[2].y == 100);
+    assertTrue(coords[3].x == 100);
+    assertTrue(coords[3].y == 0);
+    assertTrue(coords[4].x == 0);
+    assertTrue(coords[4].y == 0);
+    poly=(Polygon)mpoly.getGeometryN(1);
+    coords=poly.getExteriorRing().getCoordinates();
+    assertTrue(coords[0].x == 0);
+    assertTrue(coords[0].y == 0);
+    assertTrue(coords[1].x == 0);
+    assertTrue(coords[1].y == -100);
+    assertTrue(coords[2].x == -100);
+    assertTrue(coords[2].y == -100);
+    assertTrue(coords[3].x == -100);
+    assertTrue(coords[3].y == 0);
+    assertTrue(coords[4].x == 0);
+    assertTrue(coords[4].y == 0);
+  }
+}

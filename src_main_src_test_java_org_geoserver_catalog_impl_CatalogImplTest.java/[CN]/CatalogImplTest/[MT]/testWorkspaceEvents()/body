@@ -1,0 +1,24 @@
+{
+  TestListener l=new TestListener();
+  catalog.addListener(l);
+  WorkspaceInfo ws=catalog.getFactory().createWorkspace();
+  ws.setName("ws2");
+  assertTrue(l.added.isEmpty());
+  assertTrue(l.modified.isEmpty());
+  catalog.add(ws);
+  assertEquals(1,l.added.size());
+  assertEquals(ws,l.added.get(0).getSource());
+  assertEquals(catalog,l.modified.get(0).getSource());
+  assertEquals("defaultWorkspace",l.modified.get(0).getPropertyNames().get(0));
+  ws=catalog.getWorkspaceByName("ws2");
+  ws.setName("changed");
+  catalog.save(ws);
+  assertEquals(2,l.modified.size());
+  assertTrue(l.modified.get(1).getPropertyNames().contains("name"));
+  assertTrue(l.modified.get(1).getOldValues().contains("ws2"));
+  assertTrue(l.modified.get(1).getNewValues().contains("changed"));
+  assertTrue(l.removed.isEmpty());
+  catalog.remove(ws);
+  assertEquals(1,l.removed.size());
+  assertEquals(ws,l.removed.get(0).getSource());
+}

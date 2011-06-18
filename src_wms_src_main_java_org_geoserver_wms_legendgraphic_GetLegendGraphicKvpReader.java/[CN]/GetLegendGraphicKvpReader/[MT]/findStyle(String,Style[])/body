@@ -1,0 +1,25 @@
+{
+  if ((styles == null) || (styles.length == 0)) {
+    throw new NoSuchElementException("No styles have been provided to search for " + styleName);
+  }
+  if (styleName == null) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("styleName is null, request in literal mode, returning first style");
+    }
+    return styles[0];
+  }
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer(new StringBuffer("request in library mode, looking for style ").append(styleName).toString());
+  }
+  StringBuffer noMatchNames=new StringBuffer();
+  for (int i=0; i < styles.length; i++) {
+    if ((styles[i] != null) && styleName.equals(styles[i].getName())) {
+      return styles[i];
+    }
+    noMatchNames.append(styles[i].getName());
+    if (i < styles.length) {
+      noMatchNames.append(", ");
+    }
+  }
+  throw new NoSuchElementException(styleName + " not found. Provided style names: " + noMatchNames);
+}

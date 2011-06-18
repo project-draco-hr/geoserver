@@ -1,0 +1,56 @@
+{
+  super(id);
+  add(new IndicatingAjaxLink("clearCache"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      GeoServerApplication.get().clearWicketCaches();
+    }
+  }
+);
+  add(new IndicatingAjaxLink("reload"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      try {
+        GeoServerLoader loader=(GeoServerLoader)GeoServerApplication.get().getBean("geoServerLoader");
+synchronized (org.geoserver.config.GeoServer.CONFIGURATION_LOCK) {
+          loader.reload();
+        }
+        info("Catalog and configuration reloaded");
+      }
+ catch (      Exception e) {
+        error(e);
+      }
+    }
+  }
+);
+  IModel gsApp=new GeoServerApplicationModel();
+  final AjaxCheckBox wicketPaths=new AjaxCheckBox("wicketPaths",new PropertyModel(gsApp,"debugSettings.outputComponentPath")){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+    }
+  }
+;
+  wicketPaths.setOutputMarkupId(true);
+  add(wicketPaths);
+  xhtml=new AjaxCheckBox("xhtml",new XHTMLModel()){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      wicketIds.setModelObject(Boolean.TRUE);
+      wicketPaths.setModelObject(Boolean.FALSE);
+      target.addComponent(wicketIds);
+      target.addComponent(wicketPaths);
+    }
+  }
+;
+  add(xhtml);
+  wicketIds=new AjaxCheckBox("wicketIds",new PropertyModel(gsApp,"markupSettings.stripWicketTags")){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      wicketPaths.setModelObject(Boolean.FALSE);
+      target.addComponent(wicketPaths);
+    }
+  }
+;
+  wicketIds.setOutputMarkupId(true);
+  add(wicketIds);
+  add(new AjaxCheckBox("ajaxDebug",new PropertyModel(gsApp,"debugSettings.ajaxDebugModeEnabled")){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+    }
+  }
+);
+}

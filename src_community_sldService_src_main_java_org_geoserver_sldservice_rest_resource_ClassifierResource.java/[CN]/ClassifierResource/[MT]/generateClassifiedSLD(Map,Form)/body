@@ -1,0 +1,69 @@
+{
+  if (attributes.containsKey("layer")) {
+    final String layerName=(String)attributes.get("layer");
+    final String property=form.getFirstValue("attribute");
+    final String method=form.getFirstValue("method","equalInterval");
+    final String intervals=form.getFirstValue("intervals","2");
+    final String open=form.getFirstValue("open","false");
+    final String colorRamp=form.getFirstValue("ramp");
+    if (property != null && property.length() > 0) {
+      try {
+        LayerInfo layerInfo=catalog.getLayerByName(layerName);
+        if (layerInfo != null) {
+          ResourceInfo obj=layerInfo.getResource();
+          if (obj instanceof FeatureTypeInfo) {
+            FeatureType ftType=((FeatureTypeInfo)obj).getFeatureType();
+            FeatureCollection ftCollection=((FeatureTypeInfo)obj).getFeatureSource(new NullProgressListener(),null).getFeatures();
+            List<Rule> rules=null;
+            if ("equalInterval".equals(method)) {
+              rules=builder.equalIntervalClassification(ftCollection,property,Integer.parseInt(intervals),Boolean.parseBoolean(open));
+            }
+ else             if ("uniqueInterval".equals(method)) {
+              rules=builder.uniqueIntervalClassification(ftCollection,property);
+            }
+ else             if ("quantile".equals(method)) {
+              rules=builder.quantileClassification(ftCollection,property,Integer.parseInt(intervals),Boolean.parseBoolean(open));
+            }
+            if (colorRamp != null && colorRamp.length() > 0) {
+              ColorRamp ramp=null;
+              if (colorRamp.equalsIgnoreCase("random"))               ramp=(ColorRamp)new RandomColorRamp();
+ else               if (colorRamp.equalsIgnoreCase("red"))               ramp=(ColorRamp)new RedColorRamp();
+ else               if (colorRamp.equalsIgnoreCase("blue"))               ramp=(ColorRamp)new BlueColorRamp();
+ else               if (colorRamp.equalsIgnoreCase("custom")) {
+                Color startColor=Color.decode(form.getFirst("startColor").getValue());
+                Color endColor=Color.decode(form.getFirst("endColor").getValue());
+                Color midColor=(form.contains("midColor") ? Color.decode(form.getFirst("midColor").getValue()) : null);
+                if (startColor != null && endColor != null) {
+                  CustomColorRamp tramp=new CustomColorRamp();
+                  tramp.setStartColor(startColor);
+                  tramp.setEndColor(endColor);
+                  if (midColor != null)                   tramp.setMid(midColor);
+                  ramp=(ColorRamp)tramp;
+                }
+              }
+              Class geomT=ftType.getGeometryDescriptor().getType().getBinding();
+              if (geomT == LineString.class || geomT == MultiLineString.class) {
+                builder.lineStyle(rules,ramp);
+              }
+ else               if (geomT == MultiPolygon.class || geomT == Polygon.class || geomT == Point.class || geomT == MultiPoint.class) {
+                builder.polygonStyle(rules,ramp);
+              }
+            }
+            return rules;
+          }
+        }
+      }
+ catch (      NoSuchElementException e) {
+        e.printStackTrace();
+        return null;
+      }
+catch (      IOException e) {
+        e.printStackTrace();
+        return null;
+      }
+    }
+ else     return null;
+  }
+ else   return null;
+  return null;
+}

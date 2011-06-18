@@ -1,0 +1,15 @@
+{
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  request.setContextPath("/geoserver");
+  request.setRequestURI("/geoserver/hello");
+  request.setMethod("post");
+  String body="<Hello service=\"hello\"/>";
+  MockServletInputStream input=new MockServletInputStream(body.getBytes());
+  Dispatcher dispatcher=new Dispatcher();
+  BufferedReader buffered=new BufferedReader(new InputStreamReader(input));
+  buffered.mark(2048);
+  Map map=dispatcher.readOpPost(buffered);
+  assertNotNull(map);
+  assertEquals("Hello",map.get("request"));
+  assertEquals("hello",map.get("service"));
+}

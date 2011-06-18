@@ -1,0 +1,20 @@
+{
+  try {
+    if (layer.getResource() instanceof WMSLayerInfo) {
+      WMSLayerInfo info=(WMSLayerInfo)layer.getResource();
+      Layer wl=info.getWMSLayer(null);
+      if (!wl.isQueryable()) {
+        return false;
+      }
+      WMSCapabilities caps=info.getStore().getWebMapServer(null).getCapabilities();
+      if (!caps.getRequest().getGetFeatureInfo().getFormats().contains("application/vnd.ogc.gml")) {
+        return false;
+      }
+    }
+    return layer.isQueryable();
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.INFO,"Failed to determin if the layer is queryable, assuming it's not",e);
+    return false;
+  }
+}

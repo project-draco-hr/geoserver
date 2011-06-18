@@ -1,0 +1,12 @@
+{
+  final VersioningFeatureSource versioningSource=((VersioningFeatureSource)source);
+  Query newQuery=adaptQuery(query,versioningSource.getVersionedFeatures().getSchema());
+  CoordinateReferenceSystem targetCRS=query.getCoordinateSystemReproject();
+  try {
+    SimpleFeatureCollection fc=versioningSource.getVersionedFeatures(newQuery);
+    return DataUtilities.simple(applyProjectionPolicies(targetCRS,fc));
+  }
+ catch (  Exception e) {
+    throw new DataSourceException(e);
+  }
+}

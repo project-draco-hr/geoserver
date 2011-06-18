@@ -1,0 +1,45 @@
+{
+  if (null == b) {
+    throw new NullPointerException("Destination byte array is null.");
+  }
+ else   if (0 == len) {
+    return 0;
+  }
+ else   if ((b.length < off) || (b.length < (off + len)) || (0 > off)|| (0 > len)) {
+    throw new IndexOutOfBoundsException();
+  }
+  int bytesLeft=fLength - fOffset;
+  if (bytesLeft == 0) {
+    if (fOffset == fEndOffset) {
+      return -1;
+    }
+    if (fMayReadChunks) {
+      return fInputStream.read(b,off,len);
+    }
+    int returnedVal=read();
+    if (returnedVal == -1) {
+      fEndOffset=fOffset;
+      return -1;
+    }
+    b[off]=(byte)returnedVal;
+    return 1;
+  }
+  if (fMayReadChunks) {
+    int readFromBuffer=(len < bytesLeft) ? len : bytesLeft;
+    System.arraycopy(fData,fOffset,b,off,readFromBuffer);
+    int readFromStream=0;
+    if (len > bytesLeft) {
+      readFromStream=fInputStream.read(b,off + bytesLeft,len - bytesLeft);
+    }
+    fOffset+=readFromBuffer;
+    return readFromBuffer + ((-1 == readFromStream) ? 0 : readFromStream);
+  }
+ else {
+    if (len > bytesLeft) {
+      len=bytesLeft;
+    }
+    System.arraycopy(fData,fOffset,b,off,len);
+    fOffset+=len;
+    return len;
+  }
+}

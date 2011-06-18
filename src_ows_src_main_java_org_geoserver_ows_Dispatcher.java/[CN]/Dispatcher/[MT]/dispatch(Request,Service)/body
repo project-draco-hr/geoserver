@@ -1,0 +1,101 @@
+{
+  if (req.getRequest() == null) {
+    String msg="Could not determine geoserver request from http request " + req.getHttpRequest();
+    throw new ServiceException(msg,"MissingParameterValue","request");
+  }
+  boolean exists=false;
+  for (  String op : serviceDescriptor.getOperations()) {
+    if (op.equalsIgnoreCase(req.getRequest())) {
+      exists=true;
+      break;
+    }
+  }
+  Object serviceBean=serviceDescriptor.getService();
+  Method operation=OwsUtils.method(serviceBean.getClass(),req.getRequest());
+  if (operation == null || !exists) {
+    String msg="No such operation " + req;
+    throw new ServiceException(msg,"OperationNotSupported",req.getRequest());
+  }
+  Object[] parameters=new Object[operation.getParameterTypes().length];
+  for (int i=0; i < parameters.length; i++) {
+    Class parameterType=operation.getParameterTypes()[i];
+    if (parameterType.isAssignableFrom(HttpServletRequest.class)) {
+      parameters[i]=req.getHttpRequest();
+    }
+ else     if (parameterType.isAssignableFrom(HttpServletResponse.class)) {
+      parameters[i]=req.getHttpResponse();
+    }
+ else     if (parameterType.isAssignableFrom(InputStream.class)) {
+      parameters[i]=req.getHttpRequest().getInputStream();
+    }
+ else     if (parameterType.isAssignableFrom(OutputStream.class)) {
+      parameters[i]=req.getHttpResponse().getOutputStream();
+    }
+ else {
+      Object requestBean=null;
+      Throwable t=null;
+      if (req.getKvp() != null && req.getKvp().size() > 0) {
+        try {
+          requestBean=parseRequestKVP(parameterType,req);
+        }
+ catch (        Exception e) {
+          t=e;
+        }
+      }
+      if (req.getInput() != null) {
+        requestBean=parseRequestXML(requestBean,req.getInput(),req);
+      }
+      if (requestBean == null) {
+        if (t != null) {
+          throw t;
+        }
+        throw new ServiceException("Could not find request reader (either kvp or xml) for: " + parameterType.getName());
+      }
+      Method setBaseUrl=OwsUtils.setter(requestBean.getClass(),"baseUrl",String.class);
+      if (setBaseUrl != null) {
+        setBaseUrl.invoke(requestBean,new String[]{RequestUtils.baseURL(req.getHttpRequest())});
+      }
+      if (requestBean != null) {
+        if (req.getService() == null) {
+          req.setService(lookupRequestBeanProperty(requestBean,"service",false));
+        }
+        if (req.getVersion() == null) {
+          req.setVersion(lookupRequestBeanProperty(requestBean,"version",false));
+        }
+        if (req.getOutputFormat() == null) {
+          req.setOutputFormat(lookupRequestBeanProperty(requestBean,"outputFormat",true));
+        }
+        parameters[i]=requestBean;
+      }
+    }
+  }
+  if (citeCompliant) {
+    if (!"GetCapabilities".equalsIgnoreCase(req.getRequest())) {
+      if (req.getVersion() == null) {
+        throw new ServiceException("Could not determine version","MissingParameterValue","version");
+      }
+ else {
+        if (!req.getVersion().matches("[0-99].[0-99].[0-99]")) {
+          throw new ServiceException("Invalid version: " + req.getVersion(),"InvalidParameterValue","version");
+        }
+        boolean found=false;
+        Version version=new Version(req.getVersion());
+        for (Iterator s=loadServices().iterator(); s.hasNext(); ) {
+          Service service=(Service)s.next();
+          if (version.equals(service.getVersion())) {
+            found=true;
+            break;
+          }
+        }
+        if (!found) {
+          throw new ServiceException("Invalid version: " + req.getVersion(),"InvalidParameterValue","version");
+        }
+      }
+      if (req.getService() == null) {
+        throw new ServiceException("Could not determine service","MissingParameterValue","service");
+      }
+    }
+  }
+  Operation op=new Operation(req.getRequest(),serviceDescriptor,operation,parameters);
+  return fireOperationDispatchedCallback(req,op);
+}

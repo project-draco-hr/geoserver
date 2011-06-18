@@ -1,0 +1,20 @@
+{
+  String request="wfs?request=GetFeature&typename=" + getLayerId(MockData.BUILDINGS) + ","+ getLayerId(MockData.BRIDGES)+ "&version=1.0.0&service=wfs&outputFormat=OGR-KML";
+  MockHttpServletResponse resp=getAsServletResponse(request);
+  assertEquals("application/zip",resp.getContentType());
+  assertEquals("attachment; filename=Buildings.zip",resp.getHeader("Content-Disposition"));
+  ZipInputStream zis=new ZipInputStream(getBinaryInputStream(resp));
+  ZipEntry entry=null;
+  entry=zis.getNextEntry();
+  while (entry != null) {
+    if (entry.getName().equals("Buildings.kml")) {
+      break;
+    }
+    entry=zis.getNextEntry();
+  }
+  assertNotNull(entry);
+  assertEquals("Buildings.kml",entry.getName());
+  Document dom=dom(zis);
+  assertEquals("kml",dom.getDocumentElement().getTagName());
+  assertEquals(2,dom.getElementsByTagName("Placemark").getLength());
+}

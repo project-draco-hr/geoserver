@@ -1,0 +1,28 @@
+{
+  final RequestData data=monitor.start();
+  DispatcherCallback callback=new DispatcherCallback(){
+    public Service serviceDispatched(    Request request,    Service service) throws ServiceException {
+      return null;
+    }
+    public Response responseDispatched(    Request request,    Operation operation,    Object result,    Response response){
+      return null;
+    }
+    public Object operationExecuted(    Request request,    Operation operation,    Object result){
+      return null;
+    }
+    public Operation operationDispatched(    Request request,    Operation operation){
+      assertEquals(Status.WAITING,data.getStatus());
+      return operation;
+    }
+    public Request init(    Request request){
+      return null;
+    }
+    public void finished(    Request request){
+    }
+  }
+;
+  ControlFlowCallbackProxy proxy=new ControlFlowCallbackProxy(monitor,callback);
+  callback=(DispatcherCallback)Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{DispatcherCallback.class},proxy);
+  callback.operationDispatched(new Request(),new Operation("foo",new Service("bar",null,null,null),null,null));
+  assertEquals(Status.RUNNING,data.getStatus());
+}

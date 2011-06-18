@@ -1,0 +1,38 @@
+{
+  HostnameProvider hostnameProvider=new HostnameProvider();
+  MimetypeProvider mimetypeProvider=new MimetypeProvider();
+  hostnameFilterTable=new GeoServerTablePanel<String>("hostnameTable",hostnameProvider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<String> property){
+      return new Label(id,property.getModel(itemModel));
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      hostRemoval.setEnabled(hostnameFilterTable.getSelection().size() > 0);
+      target.addComponent(hostRemoval);
+    }
+  }
+;
+  hostnameFilterTable.setOutputMarkupId(true);
+  add(hostnameFilterTable);
+  add(new BookmarkablePageLink("addNewHost",HostnameNewPage.class));
+  hostRemoval=new HostRemovalLink("removeSelectedHost",hostnameFilterTable);
+  add(hostRemoval);
+  hostRemoval.setOutputMarkupId(true);
+  hostRemoval.setEnabled(false);
+  mimetypeFilterTable=new GeoServerTablePanel<String>("mimetypeTable",mimetypeProvider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<String> property){
+      return new Label(id,property.getModel(itemModel));
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      mimetypeRemoval.setEnabled(mimetypeFilterTable.getSelection().size() > 0);
+      target.addComponent(mimetypeRemoval);
+    }
+  }
+;
+  mimetypeFilterTable.setOutputMarkupId(true);
+  add(mimetypeFilterTable);
+  add(new BookmarkablePageLink("addNewMimetype",MimetypeNewPage.class));
+  mimetypeRemoval=new MimetypeRemovalLink("removeSelectedMimetype",mimetypeFilterTable);
+  add(mimetypeRemoval);
+  mimetypeRemoval.setOutputMarkupId(true);
+  mimetypeRemoval.setEnabled(false);
+}

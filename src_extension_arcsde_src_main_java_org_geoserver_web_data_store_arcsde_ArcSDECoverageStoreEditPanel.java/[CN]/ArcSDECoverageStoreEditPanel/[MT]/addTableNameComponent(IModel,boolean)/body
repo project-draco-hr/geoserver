@@ -1,0 +1,27 @@
+{
+  final FormComponent tableNameComponent;
+  final String panelId="tableNamePanel";
+  if (isNew) {
+    RasterTableSelectionPanel selectionPanel;
+    selectionPanel=new RasterTableSelectionPanel(panelId,paramsModel,storeEditForm,server,port,instance,user,password);
+    add(selectionPanel);
+    DropDownChoice tableDropDown=selectionPanel.getFormComponent();
+    tableNameComponent=tableDropDown;
+  }
+ else {
+    final IModel paramValue=new MapModel(paramsModel,TABLE_NAME);
+    final String resourceKey=RESOURCE_KEY_PREFIX + "." + TABLE_NAME;
+    final IModel paramLabelModel=new ResourceModel(resourceKey,TABLE_NAME);
+    final boolean required=true;
+    TextParamPanel tableNamePanel;
+    tableNamePanel=new TextParamPanel(panelId,paramValue,paramLabelModel,required);
+    add(tableNamePanel);
+    tableNameComponent=tableNamePanel.getFormComponent();
+    tableNameComponent.setEnabled(false);
+    final String titleKey=resourceKey + ".title";
+    ResourceModel titleModel=new ResourceModel(titleKey);
+    String title=String.valueOf(titleModel.getObject());
+    tableNamePanel.add(new SimpleAttributeModifier("title",title));
+  }
+  return tableNameComponent;
+}

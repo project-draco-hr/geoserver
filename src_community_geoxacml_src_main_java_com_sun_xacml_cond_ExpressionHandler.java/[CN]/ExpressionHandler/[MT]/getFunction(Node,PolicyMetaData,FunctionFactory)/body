@@ -1,0 +1,19 @@
+{
+  Node functionNode=root.getAttributes().getNamedItem("FunctionId");
+  String functionName=functionNode.getNodeValue();
+  try {
+    return factory.createFunction(functionName);
+  }
+ catch (  UnknownIdentifierException uie) {
+    throw new ParsingException("Unknown FunctionId",uie);
+  }
+catch (  FunctionTypeException fte) {
+    try {
+      FunctionFactory ff=FunctionFactory.getGeneralInstance();
+      return ff.createAbstractFunction(functionName,root,metaData.getXPathIdentifier());
+    }
+ catch (    Exception e) {
+      throw new ParsingException("failed to create abstract function" + " " + functionName,e);
+    }
+  }
+}

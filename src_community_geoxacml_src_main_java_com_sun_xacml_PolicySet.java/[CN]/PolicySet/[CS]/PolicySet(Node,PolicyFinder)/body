@@ -1,0 +1,50 @@
+{
+  super(root,"PolicySet","PolicyCombiningAlgId");
+  List<AbstractPolicy> policies=new ArrayList<AbstractPolicy>();
+  HashMap<String,List<CombinerParameter>> policyParameters=new HashMap<String,List<CombinerParameter>>();
+  HashMap<String,List<CombinerParameter>> policySetParameters=new HashMap<String,List<CombinerParameter>>();
+  PolicyMetaData metaData=getMetaData();
+  NodeList children=root.getChildNodes();
+  for (int i=0; i < children.getLength(); i++) {
+    Node child=children.item(i);
+    String name=child.getNodeName();
+    if (name.equals("PolicySet")) {
+      policies.add(PolicySet.getInstance(child,finder));
+    }
+ else     if (name.equals("Policy")) {
+      policies.add(Policy.getInstance(child));
+    }
+ else     if (name.equals("PolicySetIdReference")) {
+      policies.add(PolicyReference.getInstance(child,finder,metaData));
+    }
+ else     if (name.equals("PolicyIdReference")) {
+      policies.add(PolicyReference.getInstance(child,finder,metaData));
+    }
+ else     if (name.equals("PolicyCombinerParameters")) {
+      paramaterHelper(policyParameters,child,"Policy");
+    }
+ else     if (name.equals("PolicySetCombinerParameters")) {
+      paramaterHelper(policySetParameters,child,"PolicySet");
+    }
+  }
+  List<CombinerElement> elements=new ArrayList<CombinerElement>();
+  for (  AbstractPolicy policy : policies) {
+    List<CombinerParameter> list=null;
+    if (policy instanceof Policy) {
+      list=policyParameters.remove(policy.getId().toString());
+    }
+ else     if (policy instanceof PolicySet) {
+      list=policySetParameters.remove(policy.getId().toString());
+    }
+ else {
+      PolicyReference ref=(PolicyReference)policy;
+      String id=ref.getReference().toString();
+      if (ref.getReferenceType() == PolicyReference.POLICY_REFERENCE)       list=policyParameters.remove(id);
+ else       list=policySetParameters.remove(id);
+    }
+    elements.add(new PolicyCombinerElement(policy,list));
+  }
+  if (!policyParameters.isEmpty())   throw new ParsingException("Unmatched parameters in Policy");
+  if (!policySetParameters.isEmpty())   throw new ParsingException("Unmatched parameters in PolicySet");
+  setChildren(elements);
+}

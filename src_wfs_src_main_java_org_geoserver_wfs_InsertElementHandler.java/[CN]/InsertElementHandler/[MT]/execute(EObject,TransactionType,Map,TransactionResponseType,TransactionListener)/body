@@ -1,0 +1,69 @@
+{
+  LOGGER.finer("Transasction Insert:" + element);
+  InsertElementType insert=(InsertElementType)element;
+  long inserted=response.getTransactionSummary().getTotalInserted().longValue();
+  try {
+    HashMap schema2features=new HashMap();
+    for (Iterator f=insert.getFeature().iterator(); f.hasNext(); ) {
+      SimpleFeature feature=(SimpleFeature)f.next();
+      SimpleFeatureType schema=feature.getFeatureType();
+      SimpleFeatureCollection collection;
+      collection=(SimpleFeatureCollection)schema2features.get(schema);
+      if (collection == null) {
+        collection=new DefaultFeatureCollection(null,schema);
+        schema2features.put(schema,collection);
+      }
+      collection.add(feature);
+    }
+    HashMap schema2fids=new HashMap();
+    for (Iterator c=schema2features.values().iterator(); c.hasNext(); ) {
+      SimpleFeatureCollection collection=(SimpleFeatureCollection)c.next();
+      SimpleFeatureType schema=collection.getSchema();
+      final QName elementName=new QName(schema.getName().getNamespaceURI(),schema.getTypeName());
+      SimpleFeatureStore store;
+      store=DataUtilities.simple((FeatureStore)featureStores.get(elementName));
+      if (store == null) {
+        throw new WFSException("Could not locate FeatureStore for '" + elementName + "'");
+      }
+      if (collection != null) {
+        if (getInfo().isCiteCompliant()) {
+          checkFeatureCoordinatesRange(collection);
+        }
+        final GeometryDescriptor defaultGeometry=store.getSchema().getGeometryDescriptor();
+        if (defaultGeometry != null) {
+          CoordinateReferenceSystem target=defaultGeometry.getCoordinateReferenceSystem();
+          if (target != null) {
+            collection=new ReprojectingFeatureCollection(collection,target);
+          }
+        }
+        LOGGER.finer("Use featureValidation to check contents of insert");
+        List fids=(List)schema2fids.get(schema.getTypeName());
+        if (fids == null) {
+          fids=new LinkedList();
+          schema2fids.put(schema.getTypeName(),fids);
+        }
+        TransactionEvent event=new TransactionEvent(TransactionEventType.PRE_INSERT,elementName,collection);
+        event.setSource(insert);
+        listener.dataStoreChange(event);
+        fids.addAll(store.addFeatures(collection));
+      }
+    }
+    InsertedFeatureType insertedFeature=null;
+    for (Iterator f=insert.getFeature().iterator(); f.hasNext(); ) {
+      SimpleFeature feature=(SimpleFeature)f.next();
+      SimpleFeatureType schema=feature.getFeatureType();
+      LinkedList fids=(LinkedList)schema2fids.get(schema.getTypeName());
+      String fid=((FeatureId)fids.removeFirst()).getID();
+      insertedFeature=WfsFactory.eINSTANCE.createInsertedFeatureType();
+      insertedFeature.setHandle(insert.getHandle());
+      insertedFeature.getFeatureId().add(filterFactory.featureId(fid));
+      response.getInsertResults().getFeature().add(insertedFeature);
+    }
+    inserted+=insert.getFeature().size();
+  }
+ catch (  Exception e) {
+    String msg="Error performing insert: " + e.getMessage();
+    throw new WFSTransactionException(msg,e,insert.getHandle());
+  }
+  response.getTransactionSummary().setTotalInserted(BigInteger.valueOf(inserted));
+}

@@ -1,0 +1,50 @@
+{
+  ResourceInfo resourceInfo=layerInfo.getResource();
+  MetadataMap metadataMap=layerInfo.getMetadata();
+  GeoServerTileLayerInfo info=create(metadataMap,defaults);
+  if (metadataMap.containsKey(CONFIG_KEY_FORMATS)) {
+    String mimeFormatsStr=metadataMap.get(CONFIG_KEY_FORMATS,String.class);
+    Set<String> mimeFormats=unmarshalSet(mimeFormatsStr);
+    info.setMimeFormats(mimeFormats);
+  }
+ else   if (resourceInfo instanceof FeatureTypeInfo) {
+    info.setMimeFormats(defaults.getDefaultVectorCacheFormats());
+    info.setDirty(true);
+  }
+ else   if (resourceInfo instanceof CoverageInfo) {
+    info.setMimeFormats(defaults.getDefaultCoverageCacheFormats());
+    info.setDirty(true);
+  }
+ else {
+    info.setMimeFormats(defaults.getDefaultOtherCacheFormats());
+    info.setDirty(true);
+  }
+  boolean autoCacheStyles=defaults.isCacheNonDefaultStyles();
+  if (metadataMap.containsKey(CONFIG_KEY_AUTO_CACHE_STYLES)) {
+    autoCacheStyles=metadataMap.get(CONFIG_KEY_AUTO_CACHE_STYLES,Boolean.class).booleanValue();
+  }
+ else {
+    info.setDirty(true);
+  }
+  info.setAutoCacheStyles(autoCacheStyles);
+  info.setCachedStyles(Collections.EMPTY_SET);
+  if (metadataMap.containsKey(CONFIG_KEY_CACHED_STYLES)) {
+    String cachedStylesStr=metadataMap.get(CONFIG_KEY_CACHED_STYLES,String.class);
+    Set<String> cachedStyles=unmarshalSet(cachedStylesStr);
+    info.setCachedStyles(cachedStyles);
+  }
+ else {
+    if (autoCacheStyles) {
+      Set<StyleInfo> alternateStyles=layerInfo.getStyles();
+      if (alternateStyles != null && alternateStyles.size() > 0) {
+        Set<String> cachedStyles=new HashSet<String>();
+        for (        StyleInfo si : alternateStyles) {
+          cachedStyles.add(si.getName());
+        }
+        info.setCachedStyles(cachedStyles);
+        info.setDirty(true);
+      }
+    }
+  }
+  return info;
+}

@@ -1,0 +1,32 @@
+{
+  defaultWs=ws.getId().equals(getCatalog().getDefaultWorkspace().getId());
+  wsModel=new WorkspaceDetachableModel(ws);
+  NamespaceInfo ns=getCatalog().getNamespaceByPrefix(ws.getName());
+  nsModel=new NamespaceDetachableModel(ns);
+  Form form=new Form("form",new CompoundPropertyModel(nsModel)){
+    protected void onSubmit(){
+      try {
+        saveWorkspace();
+      }
+ catch (      RuntimeException e) {
+        error(e.getMessage());
+      }
+    }
+  }
+;
+  add(form);
+  TextField name=new TextField("name",new PropertyModel(wsModel,"name"));
+  name.setRequired(true);
+  name.add(new XMLNameValidator());
+  form.add(name);
+  TextField uri=new TextField("uri",new PropertyModel(nsModel,"uRI"),String.class);
+  uri.setRequired(true);
+  uri.add(new URIValidator());
+  form.add(uri);
+  CheckBox defaultChk=new CheckBox("default",new PropertyModel(this,"defaultWs"));
+  form.add(defaultChk);
+  SubmitLink submit=new SubmitLink("save");
+  form.add(submit);
+  form.setDefaultButton(submit);
+  form.add(new BookmarkablePageLink("cancel",WorkspacePage.class));
+}

@@ -1,0 +1,41 @@
+{
+  boolean negative=false;
+  long days=0;
+  long hours=0;
+  long minutes=0;
+  long seconds=0;
+  int nanoseconds=0;
+  if (pattern == null) {
+    try {
+      pattern=Pattern.compile(patternString);
+    }
+ catch (    PatternSyntaxException e) {
+      throw new ParsingException("unexpected pattern match error");
+    }
+  }
+  Matcher matcher=pattern.matcher(value);
+  boolean matches=matcher.matches();
+  if (!matches) {
+    throw new ParsingException("Syntax error in dayTimeDuration");
+  }
+  if (matcher.start(GROUP_SIGN) != -1)   negative=true;
+  try {
+    days=parseGroup(matcher,GROUP_DAYS);
+    hours=parseGroup(matcher,GROUP_HOURS);
+    minutes=parseGroup(matcher,GROUP_MINUTES);
+    seconds=parseGroup(matcher,GROUP_SECONDS);
+    if (matcher.start(GROUP_NANOSECONDS) != -1) {
+      String nanosecondString=matcher.group(GROUP_NANOSECONDS);
+      while (nanosecondString.length() < 9)       nanosecondString+="0";
+      if (nanosecondString.length() > 9) {
+        nanosecondString=nanosecondString.substring(0,9);
+      }
+      nanoseconds=Integer.parseInt(nanosecondString);
+    }
+  }
+ catch (  NumberFormatException e) {
+    throw e;
+  }
+  if (value.charAt(value.length() - 1) == 'T')   throw new ParsingException("'T' must be absent if all" + "time items are absent");
+  return new DayTimeDurationAttribute(negative,days,hours,minutes,seconds,nanoseconds);
+}

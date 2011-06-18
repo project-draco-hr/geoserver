@@ -1,0 +1,9 @@
+{
+  authenticate("cite_writeatts","cite");
+  Document dom=postAsDOM("wfs",INSERT_RESTRICTED_STREET);
+  assertXpathEvaluatesTo("1","count(//wfs:WFS_TransactionResponse)",dom);
+  assertXpathEvaluatesTo("1","count(//wfs:Status/wfs:FAILED)",dom);
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  String message=xpath.evaluate("//wfs:Message",dom);
+  assertTrue(message.matches(".*write protected.*ADDRESS.*"));
+}

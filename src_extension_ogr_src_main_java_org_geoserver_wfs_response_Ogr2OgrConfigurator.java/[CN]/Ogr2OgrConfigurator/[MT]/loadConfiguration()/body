@@ -1,0 +1,28 @@
+{
+  OgrConfiguration configuration=OgrConfiguration.DEFAULT;
+  try {
+    if (configFile.exists()) {
+      XStream xstream=buildXStream();
+      configuration=(OgrConfiguration)xstream.fromXML(new FileInputStream(configFile));
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Error reading the ogr2ogr.xml configuration file",e);
+  }
+  if (configuration == null) {
+    LOGGER.log(Level.INFO,"Could not find/load the ogr2ogr.xml configuration file, using internal defaults");
+  }
+  OGRWrapper wrapper=new OGRWrapper(configuration.ogr2ogrLocation,configuration.gdalData);
+  Set<String> supported=wrapper.getSupportedFormats();
+  of.setOgrExecutable(configuration.ogr2ogrLocation);
+  of.setGdalData(configuration.gdalData);
+  of.clearFormats();
+  for (  OgrFormat format : configuration.formats) {
+    if (supported.contains(format.ogrFormat)) {
+      of.addFormat(format);
+    }
+ else {
+      LOGGER.severe("Skipping '" + format.formatName + "' as its OGR format '"+ format.ogrFormat+ "' is not among the ones supported by "+ configuration.ogr2ogrLocation);
+    }
+  }
+}

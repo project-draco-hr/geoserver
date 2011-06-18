@@ -1,0 +1,14 @@
+{
+  for (  WorkspaceInfo ws : getCatalog().getWorkspaces()) {
+    CascadeDeleteVisitor visitor=new CascadeDeleteVisitor(getCatalog());
+    for (    StoreInfo store : getCatalog().getStoresByWorkspace(ws,StoreInfo.class)) {
+      store.accept(visitor);
+    }
+    String resource="/rest/workspaces/" + ws.getName();
+    System.out.println(resource);
+    assertEquals(200,deleteAsServletResponse(resource).getStatusCode());
+    assertEquals(404,getAsServletResponse(resource).getStatusCode());
+  }
+  Document dom=getAsDOM("/rest/workspaces.xml");
+  assertEquals(0,dom.getElementsByTagName("workspace").getLength());
+}

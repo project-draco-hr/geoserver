@@ -1,0 +1,44 @@
+{
+  final StyledLayer[] styledLayers=sld.getStyledLayers();
+  final int slCount=styledLayers.length;
+  if (slCount == 0) {
+    throw new ServiceException("SLD document contains no layers");
+  }
+  final List<MapLayerInfo> layers=new ArrayList<MapLayerInfo>();
+  final List<Style> styles=new ArrayList<Style>();
+  MapLayerInfo currLayer;
+  StyledLayer sl=null;
+  for (int i=0; i < slCount; i++) {
+    sl=styledLayers[i];
+    String layerName=sl.getName();
+    if (null == layerName) {
+      throw new ServiceException("A UserLayer without layer name was passed");
+    }
+    boolean isBaseMap=false;
+    if ((sl instanceof UserLayer) && ((((UserLayer)sl)).getInlineFeatureDatastore() != null)) {
+      UserLayer ul=((UserLayer)sl);
+      CoordinateReferenceSystem crs=(getMapRequest.getCrs() == null) ? DefaultGeographicCRS.WGS84 : getMapRequest.getCrs();
+      currLayer=initializeInlineFeatureLayer(ul,crs);
+      addStyles(wms,getMapRequest,currLayer,styledLayers[i],layers,styles);
+    }
+ else {
+      LayerGroupInfo layerGroup=getWMS().getLayerGroupByName(layerName);
+      if (layerGroup != null) {
+        for (        LayerInfo layer : layerGroup.getLayers()) {
+          currLayer=new MapLayerInfo(layer);
+          addStyles(wms,getMapRequest,currLayer,styledLayers[i],layers,styles);
+        }
+      }
+ else {
+        LayerInfo layerInfo=getWMS().getLayerByName(layerName);
+        if (layerInfo == null) {
+          throw new ServiceException("Layer not found: " + layerName);
+        }
+        currLayer=new MapLayerInfo(layerInfo);
+        addStyles(wms,getMapRequest,currLayer,styledLayers[i],layers,styles);
+      }
+    }
+  }
+  getMapRequest.setLayers(layers);
+  getMapRequest.setStyles(styles);
+}

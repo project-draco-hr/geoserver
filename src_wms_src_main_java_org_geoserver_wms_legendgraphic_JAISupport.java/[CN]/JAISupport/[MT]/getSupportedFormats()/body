@@ -1,0 +1,40 @@
+{
+  if (supportedFormats == null) {
+    String[] mimeTypes=null;
+    try {
+      mimeTypes=ImageIO.getWriterMIMETypes();
+    }
+ catch (    NoClassDefFoundError ncdfe) {
+      supportedFormats=Collections.EMPTY_SET;
+      LOGGER.warning("could not find jai: " + ncdfe);
+    }
+    if (mimeTypes == null) {
+      LOGGER.info("Jai not found? Should be always there");
+      supportedFormats=Collections.EMPTY_SET;
+    }
+ else {
+      supportedFormats=new HashSet();
+      List formatsList=Arrays.asList(mimeTypes);
+      for (Iterator it=formatsList.iterator(); it.hasNext(); ) {
+        String curFormat=it.next().toString();
+        if (!curFormat.equals("")) {
+          if (testedFormats.contains(curFormat)) {
+            supportedFormats.add(curFormat);
+          }
+        }
+      }
+      if (LOGGER.isLoggable(Level.CONFIG)) {
+        StringBuffer sb=new StringBuffer("Supported JAIMapResponse's MIME Types: [");
+        for (Iterator it=supportedFormats.iterator(); it.hasNext(); ) {
+          sb.append(it.next());
+          if (it.hasNext()) {
+            sb.append(", ");
+          }
+        }
+        sb.append("]");
+        LOGGER.config(sb.toString());
+      }
+    }
+  }
+  return supportedFormats;
+}

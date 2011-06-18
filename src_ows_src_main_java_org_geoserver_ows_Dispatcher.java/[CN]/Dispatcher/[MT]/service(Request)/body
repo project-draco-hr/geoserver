@@ -1,0 +1,57 @@
+{
+  if (req.getKvp() != null) {
+    req.setService(normalize((String)req.getKvp().get("service")));
+    req.setVersion(normalize((String)req.getKvp().get("version")));
+    req.setRequest(normalize((String)req.getKvp().get("request")));
+    req.setOutputFormat(normalize((String)req.getKvp().get("outputFormat")));
+  }
+  if (req.getInput() != null) {
+    Map xml=readOpPost(req.getInput());
+    if (req.getService() == null) {
+      req.setService(normalize((String)xml.get("service")));
+    }
+    if (req.getVersion() == null) {
+      req.setVersion(normalize((String)xml.get("version")));
+    }
+    if (req.getRequest() == null) {
+      req.setRequest(normalize((String)xml.get("request")));
+    }
+    if (req.getOutputFormat() == null) {
+      req.setOutputFormat(normalize((String)xml.get("outputFormat")));
+    }
+  }
+  String service=req.getService();
+  if ((service == null) || (req.getRequest() == null)) {
+    Map map=readOpContext(req);
+    if (service == null) {
+      service=normalize((String)map.get("service"));
+      if ((service != null) && !citeCompliant) {
+        req.setService(service);
+      }
+    }
+    if (req.getRequest() == null) {
+      req.setRequest(normalize((String)map.get("request")));
+    }
+  }
+  if (service == null) {
+    throw new ServiceException("Could not determine service","MissingParameterValue","service");
+  }
+  Service serviceDescriptor=findService(service,req.getVersion());
+  if (serviceDescriptor == null) {
+    if (req.getContext() != null) {
+      serviceDescriptor=findService(req.getContext(),req.getVersion());
+      if (serviceDescriptor != null) {
+        if (req.getRequest() == null) {
+          req.setRequest(req.getService());
+        }
+        req.setService(req.getContext());
+        req.setContext(null);
+      }
+    }
+    if (serviceDescriptor == null) {
+      String msg="No service: ( " + service + " )";
+      throw new ServiceException(msg,"InvalidParameterValue","service");
+    }
+  }
+  return fireServiceDispatchedCallback(req,serviceDescriptor);
+}

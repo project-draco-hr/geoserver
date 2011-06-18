@@ -1,0 +1,33 @@
+{
+  HashMap<String,Object> service=new HashMap<String,Object>();
+  service.put("enabled",ReaderUtils.getBooleanAttribute(serviceElement,"enabled",false,true));
+  text("name",serviceElement,service,String.class);
+  text("title",serviceElement,service,String.class);
+  text("abstract",serviceElement,service,String.class);
+  Element mlElement=ReaderUtils.getChildElement(serviceElement,"metadataLink");
+  if (mlElement != null) {
+    HashMap metadataLink=new HashMap();
+    metadataLink.put("about",ReaderUtils.getAttribute(mlElement,"about",false));
+    metadataLink.put("type",ReaderUtils.getAttribute(mlElement,"type",false));
+    metadataLink.put("metadataType",ReaderUtils.getAttribute(mlElement,"metadataType",false));
+    service.put("metadataLink",metadataLink);
+  }
+  Element keywordsElement=ReaderUtils.getChildElement(serviceElement,"keywords");
+  Element[] keywordElements=ReaderUtils.getChildElements(keywordsElement,"keyword");
+  ArrayList keywords=new ArrayList();
+  if (keywordElements != null) {
+    for (int i=0; i < keywordElements.length; i++) {
+      keywords.add(keywordElements[i].getFirstChild().getTextContent());
+    }
+  }
+  service.put("keywords",keywords);
+  text("onlineResource",serviceElement,service,String.class);
+  text("fees",serviceElement,service,String.class);
+  text("accessConstraints",serviceElement,service,String.class);
+  text("SchemaBaseUrl",serviceElement,service,String.class,false,"http://schemas.opengis.net");
+  value("srsXmlStyle",serviceElement,service,Boolean.class);
+  value("serviceLevel",serviceElement,service,Integer.class);
+  text("citeConformanceHacks",serviceElement,service,Boolean.class,false,Boolean.FALSE);
+  text("maintainer",serviceElement,service,String.class);
+  return service;
+}

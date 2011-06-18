@@ -1,0 +1,37 @@
+{
+  if (request.getSldVer() != null && "".equals(request.getSldVer()) && !"1.0.0".equals(request.getSldVer()))   throw new ServiceException("SLD version " + request.getSldVer() + " not supported");
+  try {
+    StyleFactory factory=CommonFactoryFinder.getStyleFactory(null);
+    List<StyledLayer> layers=new ArrayList<StyledLayer>();
+    for (    String layerName : request.getLayers()) {
+      NamedLayer namedLayer=factory.createNamedLayer();
+      layers.add(namedLayer);
+      namedLayer.setName(layerName);
+      LayerGroupInfo group=wms.getLayerGroupByName(layerName);
+      LayerInfo layer=wms.getLayerByName(layerName);
+      if (group != null) {
+      }
+ else       if (layer != null) {
+        Style style=layer.getDefaultStyle().getStyle();
+        style=cloneStyle(style);
+        style.setDefault(true);
+        style.setName(layer.getDefaultStyle().getName());
+        namedLayer.styles().add(style);
+        for (        StyleInfo si : layer.getStyles()) {
+          style=cloneStyle(si.getStyle());
+          style.setName(si.getName());
+          namedLayer.styles().add(style);
+        }
+      }
+ else {
+        throw new ServiceException("Unknown layer " + layerName);
+      }
+    }
+    StyledLayerDescriptor sld=factory.createStyledLayerDescriptor();
+    sld.setStyledLayers((StyledLayer[])layers.toArray(new StyledLayer[layers.size()]));
+    return sld;
+  }
+ catch (  IOException e) {
+    throw new ServiceException(e);
+  }
+}

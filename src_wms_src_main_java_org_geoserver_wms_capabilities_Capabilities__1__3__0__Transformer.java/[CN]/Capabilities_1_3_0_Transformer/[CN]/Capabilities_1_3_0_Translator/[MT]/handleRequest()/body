@@ -1,0 +1,39 @@
+{
+  start("Request");
+  start("GetCapabilities");
+  element("Format",WMS_CAPS_MIME);
+  String serviceUrl=buildURL(request.getBaseUrl(),"ows",params("SERVICE","WMS"),URLType.SERVICE);
+  serviceUrl=appendQueryString(serviceUrl,"");
+  handleDcpType(serviceUrl,serviceUrl);
+  end("GetCapabilities");
+  start("GetMap");
+  Set<String> formats=new LinkedHashSet();
+  for (  GetMapOutputFormat format : getMapFormats) {
+    if (format.getOutputFormatNames().contains(format.getMimeType())) {
+      formats.add(format.getMimeType());
+    }
+ else {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.warning("Map output format " + format.getMimeType() + " does "+ "not include mime type in output format names. Will be excluded from"+ " capabilities document.");
+      }
+    }
+  }
+  List<String> sortedFormats=new ArrayList(formats);
+  Collections.sort(sortedFormats);
+  if (sortedFormats.contains("image/png")) {
+    sortedFormats.remove("image/png");
+    sortedFormats.add(0,"image/png");
+  }
+  for (  String format : sortedFormats) {
+    element("Format",format);
+  }
+  handleDcpType(serviceUrl,null);
+  end("GetMap");
+  start("GetFeatureInfo");
+  for (  String format : wmsConfig.getAvailableFeatureInfoFormats()) {
+    element("Format",format);
+  }
+  handleDcpType(serviceUrl,null);
+  end("GetFeatureInfo");
+  end("Request");
+}

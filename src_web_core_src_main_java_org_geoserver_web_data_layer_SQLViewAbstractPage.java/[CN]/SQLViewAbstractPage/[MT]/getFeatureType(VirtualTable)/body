@@ -1,0 +1,17 @@
+{
+  JDBCDataStore ds=(JDBCDataStore)getCatalog().getDataStore(storeId).getDataStore(null);
+  String vtName=null;
+  try {
+    do {
+      vtName=UUID.randomUUID().toString();
+    }
+ while (Arrays.asList(ds.getTypeNames()).contains(vtName));
+    ds.addVirtualTable(new VirtualTable(vtName,vt));
+    return ds.getSchema(vtName);
+  }
+  finally {
+    if (vtName != null) {
+      ds.removeVirtualTable(vtName);
+    }
+  }
+}

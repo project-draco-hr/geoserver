@@ -1,0 +1,253 @@
+{
+  Catalog catalog=new CatalogImpl();
+  catalog.setResourceLoader(resourceLoader);
+  xp.setCatalog(catalog);
+  CatalogFactory factory=catalog.getFactory();
+  File styles=resourceLoader.find("styles");
+  for (  File sf : list(styles,new SuffixFileFilter(".xml"))) {
+    try {
+      if (new File(styles,sf.getName() + ".xml").exists()) {
+        continue;
+      }
+      StyleInfo s=depersist(xp,sf,StyleInfo.class);
+      catalog.add(s);
+      LOGGER.info("Loaded style '" + s.getName() + "'");
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"Failed to load style from file '" + sf.getName() + "'",e);
+    }
+  }
+  File workspaces=resourceLoader.find("workspaces");
+  if (workspaces != null) {
+    File dws=new File(workspaces,"default.xml");
+    WorkspaceInfo defaultWorkspace=null;
+    if (dws.exists()) {
+      try {
+        defaultWorkspace=depersist(xp,dws,WorkspaceInfo.class);
+        LOGGER.info("Loaded default workspace " + defaultWorkspace.getName());
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Failed to load default workspace",e);
+      }
+    }
+ else {
+      LOGGER.warning("No default workspace was found.");
+    }
+    for (    File wsd : list(workspaces,DirectoryFileFilter.INSTANCE)) {
+      File f=new File(wsd,"workspace.xml");
+      if (!f.exists()) {
+        continue;
+      }
+      WorkspaceInfo ws=null;
+      try {
+        ws=depersist(xp,f,WorkspaceInfo.class);
+        catalog.add(ws);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Failed to load workspace '" + wsd.getName() + "'",e);
+        continue;
+      }
+      LOGGER.info("Loaded workspace '" + ws.getName() + "'");
+      File nsf=new File(wsd,"namespace.xml");
+      NamespaceInfo ns=null;
+      if (nsf.exists()) {
+        try {
+          ns=depersist(xp,nsf,NamespaceInfo.class);
+          catalog.add(ns);
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.WARNING,"Failed to load namespace for '" + wsd.getName() + "'",e);
+        }
+      }
+      if (defaultWorkspace != null) {
+        if (ws.getName().equals(defaultWorkspace.getName())) {
+          catalog.setDefaultWorkspace(ws);
+          if (ns != null) {
+            catalog.setDefaultNamespace(ns);
+          }
+        }
+      }
+ else {
+        defaultWorkspace=catalog.getDefaultWorkspace();
+        if (defaultWorkspace != null) {
+          try {
+            persist(xp,defaultWorkspace,dws);
+          }
+ catch (          Exception e) {
+            LOGGER.log(Level.WARNING,"Failed to persist default workspace '" + wsd.getName() + "'",e);
+          }
+        }
+      }
+    }
+    for (    File wsd : list(workspaces,DirectoryFileFilter.INSTANCE)) {
+      for (      File sd : list(wsd,DirectoryFileFilter.INSTANCE)) {
+        File f=new File(sd,"datastore.xml");
+        if (f.exists()) {
+          DataStoreInfo ds=null;
+          try {
+            ds=depersist(xp,f,DataStoreInfo.class);
+            catalog.add(ds);
+            LOGGER.info("Loaded data store '" + ds.getName() + "'");
+            if (ds.isEnabled()) {
+              try {
+                ds.getDataStore(null);
+              }
+ catch (              Throwable t) {
+                LOGGER.warning("Error connecting to '" + ds.getName() + "'. Disabling.");
+                LOGGER.log(Level.INFO,"",t);
+                ds.setError(t);
+                ds.setEnabled(false);
+              }
+            }
+          }
+ catch (          Exception e) {
+            LOGGER.log(Level.WARNING,"Failed to load data store '" + sd.getName() + "'",e);
+            continue;
+          }
+          for (          File ftd : list(sd,DirectoryFileFilter.INSTANCE)) {
+            f=new File(ftd,"featuretype.xml");
+            if (f.exists()) {
+              FeatureTypeInfo ft=null;
+              try {
+                ft=depersist(xp,f,FeatureTypeInfo.class);
+              }
+ catch (              Exception e) {
+                LOGGER.log(Level.WARNING,"Failed to load feature type '" + ftd.getName() + "'",e);
+                continue;
+              }
+              catalog.add(ft);
+              LOGGER.info("Loaded feature type '" + ds.getName() + "'");
+              f=new File(ftd,"layer.xml");
+              if (f.exists()) {
+                try {
+                  LayerInfo l=depersist(xp,f,LayerInfo.class);
+                  catalog.add(l);
+                  LOGGER.info("Loaded layer '" + l.getName() + "'");
+                }
+ catch (                Exception e) {
+                  LOGGER.log(Level.WARNING,"Failed to load layer for feature type '" + ft.getName() + "'",e);
+                }
+              }
+            }
+ else {
+              LOGGER.warning("Ignoring feature type directory " + ftd.getAbsolutePath());
+            }
+          }
+        }
+ else {
+          f=new File(sd,"coveragestore.xml");
+          if (f.exists()) {
+            CoverageStoreInfo cs=null;
+            try {
+              cs=depersist(xp,f,CoverageStoreInfo.class);
+              catalog.add(cs);
+              LOGGER.info("Loaded coverage store '" + cs.getName() + "'");
+            }
+ catch (            Exception e) {
+              LOGGER.log(Level.WARNING,"Failed to load coverage store '" + sd.getName() + "'",e);
+              continue;
+            }
+            for (            File cd : list(sd,DirectoryFileFilter.INSTANCE)) {
+              f=new File(cd,"coverage.xml");
+              if (f.exists()) {
+                CoverageInfo c=null;
+                try {
+                  c=depersist(xp,f,CoverageInfo.class);
+                  catalog.add(c);
+                  LOGGER.info("Loaded coverage '" + cs.getName() + "'");
+                }
+ catch (                Exception e) {
+                  LOGGER.log(Level.WARNING,"Failed to load coverage '" + cd.getName() + "'",e);
+                  continue;
+                }
+                f=new File(cd,"layer.xml");
+                if (f.exists()) {
+                  try {
+                    LayerInfo l=depersist(xp,f,LayerInfo.class);
+                    catalog.add(l);
+                    LOGGER.info("Loaded layer '" + l.getName() + "'");
+                  }
+ catch (                  Exception e) {
+                    LOGGER.log(Level.WARNING,"Failed to load layer coverage '" + c.getName() + "'",e);
+                  }
+                }
+              }
+ else {
+                LOGGER.warning("Ignoring coverage directory " + cd.getAbsolutePath());
+              }
+            }
+          }
+ else {
+            f=new File(sd,"wmsstore.xml");
+            if (f.exists()) {
+              WMSStoreInfo wms=null;
+              try {
+                wms=depersist(xp,f,WMSStoreInfo.class);
+                catalog.add(wms);
+                LOGGER.info("Loaded wmsstore '" + wms.getName() + "'");
+              }
+ catch (              Exception e) {
+                LOGGER.log(Level.WARNING,"Failed to load wms store '" + sd.getName() + "'",e);
+                continue;
+              }
+              for (              File cd : list(sd,DirectoryFileFilter.INSTANCE)) {
+                f=new File(cd,"wmslayer.xml");
+                if (f.exists()) {
+                  WMSLayerInfo wl=null;
+                  try {
+                    wl=depersist(xp,f,WMSLayerInfo.class);
+                    catalog.add(wl);
+                    LOGGER.info("Loaded wms layer'" + wl.getName() + "'");
+                  }
+ catch (                  Exception e) {
+                    LOGGER.log(Level.WARNING,"Failed to load wms layer '" + cd.getName() + "'",e);
+                    continue;
+                  }
+                  f=new File(cd,"layer.xml");
+                  if (f.exists()) {
+                    try {
+                      LayerInfo l=depersist(xp,f,LayerInfo.class);
+                      catalog.add(l);
+                      LOGGER.info("Loaded layer '" + l.getName() + "'");
+                    }
+ catch (                    Exception e) {
+                      LOGGER.log(Level.WARNING,"Failed to load cascaded wms layer '" + wl.getName() + "'",e);
+                    }
+                  }
+                }
+ else {
+                  LOGGER.warning("Ignoring coverage directory " + cd.getAbsolutePath());
+                }
+              }
+            }
+ else {
+              LOGGER.warning("Ignoring store directory '" + sd.getName() + "'");
+              continue;
+            }
+          }
+        }
+      }
+    }
+  }
+ else {
+    LOGGER.warning("No 'workspaces' directory found, unable to load any stores.");
+  }
+  File layergroups=resourceLoader.find("layergroups");
+  if (layergroups != null) {
+    for (    File lgf : list(layergroups,new SuffixFileFilter(".xml"))) {
+      try {
+        LayerGroupInfo lg=depersist(xp,lgf,LayerGroupInfo.class);
+        if (lg.getLayers() == null || lg.getLayers().size() == 0) {
+          LOGGER.warning("Skipping empty layer group '" + lg.getName() + "', it is invalid");
+          continue;
+        }
+        catalog.add(lg);
+        LOGGER.info("Loaded layer group '" + lg.getName() + "'");
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Failed to load layer group '" + lgf.getName() + "'",e);
+      }
+    }
+  }
+  return catalog;
+}

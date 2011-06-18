@@ -1,0 +1,17 @@
+{
+  if (request instanceof HttpServletRequest) {
+    HttpServletRequest req=(HttpServletRequest)request;
+    if (req.getRemoteUser() != null) {
+      QueryBand.local().put(QueryBand.CLIENT_USER,req.getRemoteUser());
+    }
+    if (req.getRemoteHost() != null) {
+      QueryBand.local().put(QueryBand.CLIENT_HOST,req.getRemoteHost());
+    }
+  }
+  try {
+    chain.doFilter(request,response);
+  }
+  finally {
+    QueryBand.remove();
+  }
+}

@@ -1,0 +1,35 @@
+{
+  start("NetworkLink");
+  element("name",layer.getName());
+  element("open","1");
+  element("visibility","1");
+  if (bounds != null) {
+    encodeLookAt(bounds,lookAt);
+  }
+  start("Region");
+  Envelope bbox=request.getBbox();
+  start("LatLonAltBox");
+  element("north","" + bbox.getMaxY());
+  element("south","" + bbox.getMinY());
+  element("east","" + bbox.getMaxX());
+  element("west","" + bbox.getMinX());
+  end("LatLonAltBox");
+  start("Lod");
+  element("minLodPixels","128");
+  element("maxLodPixels","-1");
+  end("Lod");
+  end("Region");
+  start("Link");
+  String href=WMSRequests.getGetMapUrl(request,layer.getName(),layerIndex,styleName,null,null);
+  try {
+    href=URLDecoder.decode(href,"UTF-8");
+  }
+ catch (  UnsupportedEncodingException e) {
+    throw new RuntimeException(e);
+  }
+  start("href");
+  cdata(href);
+  end("href");
+  end("Link");
+  end("NetworkLink");
+}

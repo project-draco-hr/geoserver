@@ -1,0 +1,49 @@
+{
+  XSDComplexTypeDefinition xsdComplexType=factory.createXSDComplexTypeDefinition();
+  xsdComplexType.setName(complexType.getName().getLocalPart() + "Type");
+  xsdComplexType.setDerivationMethod(XSDDerivationMethod.EXTENSION_LITERAL);
+  xsdComplexType.setBaseTypeDefinition(resolveTypeInSchema(schema,new NameImpl(gmlNamespace,baseType)));
+  XSDModelGroup group=factory.createXSDModelGroup();
+  group.setCompositor(XSDCompositor.SEQUENCE_LITERAL);
+  for (  PropertyDescriptor pd : complexType.getDescriptors()) {
+    if (pd instanceof AttributeDescriptor) {
+      AttributeDescriptor attribute=(AttributeDescriptor)pd;
+      if (filterAttributeType(attribute)) {
+        GMLInfo gml=getGMLConfig(wfs);
+        if (gml == null || !gml.getOverrideGMLAttributes()) {
+          continue;
+        }
+      }
+      XSDElementDeclaration element=factory.createXSDElementDeclaration();
+      element.setName(attribute.getLocalName());
+      element.setNillable(attribute.isNillable());
+      Name typeName=attribute.getType().getName();
+      if (!(typeName.getLocalPart().equals(XS.ANYTYPE.getLocalPart()) && typeName.getNamespaceURI().equals(XS.NAMESPACE))) {
+        if (attribute.getType() instanceof ComplexType) {
+          if (schema.resolveTypeDefinition(typeName.getNamespaceURI(),typeName.getLocalPart()) == null) {
+            buildComplexSchemaContent((ComplexType)attribute.getType(),schema,factory);
+          }
+        }
+ else {
+          Class binding=attribute.getType().getBinding();
+          typeName=findTypeName(binding);
+          if (typeName == null) {
+            throw new NullPointerException("Could not find a type for property: " + attribute.getName() + " of type: "+ binding.getName());
+          }
+        }
+      }
+      XSDTypeDefinition type=resolveTypeInSchema(schema,typeName);
+      element.setTypeDefinition(type);
+      XSDParticle particle=factory.createXSDParticle();
+      particle.setMinOccurs(attribute.getMinOccurs());
+      particle.setMaxOccurs(attribute.getMaxOccurs());
+      particle.setContent(element);
+      group.getContents().add(particle);
+    }
+  }
+  XSDParticle particle=factory.createXSDParticle();
+  particle.setContent(group);
+  xsdComplexType.setContent(particle);
+  schema.getContents().add(xsdComplexType);
+  return xsdComplexType;
+}

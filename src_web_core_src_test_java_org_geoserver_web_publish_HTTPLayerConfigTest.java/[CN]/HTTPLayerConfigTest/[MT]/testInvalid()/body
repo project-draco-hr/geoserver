@@ -1,0 +1,16 @@
+{
+  final LayerInfo polygons=getCatalog().getLayerByName(MockData.BASIC_POLYGONS.getLocalPart());
+  FormTestPage page=new FormTestPage(new ComponentBuilder(){
+    public Component buildComponent(    String id){
+      return new HTTPLayerConfig(id,new Model(polygons));
+    }
+  }
+);
+  tester.startPage(page);
+  tester.assertComponent("form:panel:cacheAgeMax",TextField.class);
+  tester.assertRenderedPage(FormTestPage.class);
+  FormTester ft=tester.newFormTester("form");
+  ft.setValue("panel:cacheAgeMax","-20");
+  ft.submit();
+  assertEquals(1,page.getSession().getFeedbackMessages().messages(new ErrorLevelFeedbackMessageFilter(FeedbackMessage.ERROR)).size());
+}

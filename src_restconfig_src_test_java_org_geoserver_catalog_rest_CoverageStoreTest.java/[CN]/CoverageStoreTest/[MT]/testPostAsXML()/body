@@ -1,0 +1,11 @@
+{
+  File f=setupNewCoverageStore();
+  String xml="<coverageStore>" + "<name>newCoverageStore</name>" + "<type>WorldImage</type>"+ "<url>file://" + f.getAbsolutePath() + "</url>"+ "<workspace>wcs</workspace>"+ "</coverageStore>";
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/wcs/coveragestores",xml,"text/xml");
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(response.getHeader("Location"));
+  assertTrue(response.getHeader("Location").endsWith("/workspaces/wcs/coveragestores/newCoverageStore"));
+  CoverageStoreInfo newCoverageStore=catalog.getCoverageStoreByName("newCoverageStore");
+  assertNotNull(newCoverageStore);
+  assertNotNull(newCoverageStore.getFormat());
+}

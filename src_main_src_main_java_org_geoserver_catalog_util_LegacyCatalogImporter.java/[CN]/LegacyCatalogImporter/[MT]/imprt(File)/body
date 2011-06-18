@@ -1,0 +1,122 @@
+{
+  CatalogFactory factory=catalog.getFactory();
+  File catalogFile=new File(dir,"catalog.xml");
+  if (!catalogFile.exists()) {
+    throw new FileNotFoundException("Could not find catalog.xml under:" + dir.getAbsolutePath());
+  }
+  importCatalog(catalogFile);
+  File featureTypes=new File(dir,"featureTypes");
+  if (!featureTypes.exists())   featureTypes.mkdir();
+  File[] featureTypeDirectories=featureTypes.listFiles();
+  for (int i=0; i < featureTypeDirectories.length; i++) {
+    File featureTypeDirectory=featureTypeDirectories[i];
+    if (!featureTypeDirectory.isDirectory() || featureTypeDirectory.isHidden())     continue;
+    File ftInfoFile=new File(featureTypeDirectory,"info.xml");
+    if (!ftInfoFile.exists()) {
+      LOGGER.fine("No info.xml found in directory: '" + featureTypeDirectory.getName() + "', ignoring");
+      continue;
+    }
+    LegacyFeatureTypeInfoReader ftInfoReader=new LegacyFeatureTypeInfoReader();
+    try {
+      ftInfoReader.read(ftInfoFile);
+      FeatureTypeInfo featureType=readFeatureType(ftInfoReader,featureTypeDirectory);
+      if (featureType == null) {
+        continue;
+      }
+      catalog.add(featureType);
+      LOGGER.info("Loaded feature type '" + featureType.getPrefixedName() + "'");
+      LayerInfo layer=factory.createLayer();
+      layer.setResource(featureType);
+      layer.setName(featureType.getName());
+      layer.setPath(ftInfoReader.wmsPath());
+      if (layer.getPath() == null) {
+        layer.setPath("/");
+      }
+      layer.setType(LayerInfo.Type.VECTOR);
+      String defaultStyleName=ftInfoReader.defaultStyle();
+      if (defaultStyleName != null) {
+        StyleInfo style=catalog.getStyleByName(defaultStyleName);
+        if (style != null) {
+          layer.setDefaultStyle(style);
+        }
+      }
+      List<String> styles=ftInfoReader.styles();
+      if (styles != null) {
+        for (        String styleName : styles) {
+          StyleInfo style=catalog.getStyleByName(styleName);
+          if (style != null) {
+            layer.getStyles().add(style);
+          }
+        }
+      }
+      Map legendURL=ftInfoReader.legendURL();
+      if (legendURL != null) {
+        LegendInfo legend=factory.createLegend();
+        legend.setHeight((Integer)legendURL.get("height"));
+        legend.setWidth((Integer)legendURL.get("width"));
+        legend.setFormat((String)legendURL.get("format"));
+        legend.setOnlineResource((String)legendURL.get("onlineResource"));
+        layer.setLegend(legend);
+      }
+      layer.setEnabled(featureType.isEnabled());
+      catalog.add(layer);
+    }
+ catch (    Exception e) {
+      LOGGER.warning("Error loadin '" + featureTypeDirectory.getName() + "/info.xml', ignoring");
+      LOGGER.log(Level.INFO,"",e);
+      continue;
+    }
+  }
+  File coverages=new File(dir,"coverages");
+  if (!coverages.exists())   coverages.mkdir();
+  File[] coverageDirectories=coverages.listFiles();
+  for (int i=0; i < coverageDirectories.length; i++) {
+    File coverageDirectory=coverageDirectories[i];
+    if (!coverageDirectory.isDirectory() || coverageDirectory.isHidden())     continue;
+    File cInfoFile=new File(coverageDirectory,"info.xml");
+    if (!cInfoFile.exists()) {
+      LOGGER.fine("No info.xml found in directory: '" + coverageDirectory.getName() + "', ignoring");
+      continue;
+    }
+    LegacyCoverageInfoReader cInfoReader=new LegacyCoverageInfoReader();
+    try {
+      cInfoReader.read(cInfoFile);
+      CoverageInfo coverage=readCoverage(cInfoReader);
+      if (coverage == null) {
+        continue;
+      }
+      catalog.add(coverage);
+      LayerInfo layer=factory.createLayer();
+      layer.setResource(coverage);
+      layer.setName(coverage.getName());
+      layer.setPath(cInfoReader.wmsPath());
+      if (layer.getPath() == null) {
+        layer.setPath("/");
+      }
+      layer.setType(LayerInfo.Type.RASTER);
+      String defaultStyleName=cInfoReader.defaultStyle();
+      if (defaultStyleName != null) {
+        StyleInfo style=catalog.getStyleByName(defaultStyleName);
+        if (style != null) {
+          layer.setDefaultStyle(style);
+        }
+      }
+      List<String> styles=cInfoReader.styles();
+      if (styles != null) {
+        for (        String styleName : styles) {
+          StyleInfo style=catalog.getStyleByName(styleName);
+          if (style != null) {
+            layer.getStyles().add(style);
+          }
+        }
+      }
+      layer.setEnabled(coverage.isEnabled());
+      catalog.add(layer);
+    }
+ catch (    Exception e) {
+      LOGGER.warning("Error loading '" + coverageDirectory.getName() + "/info.xml', ignoring");
+      LOGGER.log(Level.INFO,"",e);
+      continue;
+    }
+  }
+}

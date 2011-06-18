@@ -1,0 +1,19 @@
+{
+  JDBCDataStore ds=(JDBCDataStore)getCatalog().getDataStore(storeId).getDataStore(null);
+  String vtName=null;
+  try {
+    do {
+      vtName=UUID.randomUUID().toString();
+    }
+ while (Arrays.asList(ds.getTypeNames()).contains(vtName));
+    VirtualTable vt=new VirtualTable(vtName,sql);
+    paramProvider.updateVirtualTable(vt);
+    ds.addVirtualTable(vt);
+    return guessFeatureType(ds,vt.getName(),guessGeometrySrid);
+  }
+  finally {
+    if (vtName != null) {
+      ds.removeVirtualTable(vtName);
+    }
+  }
+}

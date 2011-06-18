@@ -1,0 +1,25 @@
+{
+  UserListProvider provider=new UserListProvider();
+  add(users=new GeoServerTablePanel<User>("table",provider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<User> property){
+      if (property == UserListProvider.USERNAME) {
+        return editUserLink(id,itemModel,property);
+      }
+ else       if (property == UserListProvider.ROLES) {
+        return new Label(id,property.getModel(itemModel));
+      }
+ else       if (property == UserListProvider.ADMIN) {
+        return new Label(id,property.getModel(itemModel));
+      }
+      throw new RuntimeException("Uknown property " + property);
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      removal.setEnabled(users.getSelection().size() > 0);
+      target.addComponent(removal);
+    }
+  }
+);
+  users.setOutputMarkupId(true);
+  add(dialog=new GeoServerDialog("dialog"));
+  setHeaderPanel(headerPanel());
+}

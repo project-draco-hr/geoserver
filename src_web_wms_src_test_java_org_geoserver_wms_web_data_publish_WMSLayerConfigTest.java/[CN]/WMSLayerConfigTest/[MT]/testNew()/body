@@ -1,0 +1,22 @@
+{
+  final LayerInfo layer=getCatalog().getFactory().createLayer();
+  layer.setResource(getCatalog().getFactory().createFeatureType());
+  FormTestPage page=new FormTestPage(new ComponentBuilder(){
+    public Component buildComponent(    String id){
+      return new WMSLayerConfig(id,new Model(layer));
+    }
+  }
+);
+  Component layerConfig=page.get("form:panel:styles:defaultStyle");
+  tester.startPage(page);
+  tester.assertRenderedPage(FormTestPage.class);
+  tester.assertComponent("form",Form.class);
+  tester.assertComponent("form:panel:styles:defaultStyle",DropDownChoice.class);
+  tester.submitForm("form");
+  assertTrue(page.getSession().getFeedbackMessages().hasErrorMessageFor(layerConfig));
+  page.getSession().getFeedbackMessages().clear();
+  FormTester ft=tester.newFormTester("form");
+  ft.select("panel:styles:defaultStyle",0);
+  ft.submit();
+  assertFalse(page.getSession().getFeedbackMessages().hasErrorMessageFor(layerConfig));
+}

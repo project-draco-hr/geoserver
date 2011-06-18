@@ -1,0 +1,72 @@
+{
+  super(id,model);
+  final CoverageInfo coverage=(CoverageInfo)getLayerInfo().getResource();
+  add(new ListMultipleChoice("requestSRS",new PropertyModel(this,"selectedRequestSRSs"),coverage.getRequestSRS()));
+  add(new TextField("newRequestSRS",new PropertyModel(this,"newRequestSRS")));
+  add(new Button("deleteSelectedRequestSRSs"){
+    public void onSubmit(){
+      coverage.getRequestSRS().removeAll(selectedRequestSRSs);
+      selectedRequestSRSs.clear();
+    }
+  }
+);
+  add(new Button("addNewRequestSRS"){
+    public void onSubmit(){
+      coverage.getRequestSRS().add(newRequestSRS);
+      newRequestSRS="";
+    }
+  }
+);
+  add(new ListMultipleChoice("responseSRS",new PropertyModel(this,"selectedResponseSRSs"),coverage.getResponseSRS()));
+  add(new TextField("newResponseSRS",new PropertyModel(this,"newResponseSRS")));
+  add(new Button("deleteSelectedResponseSRSs"){
+    public void onSubmit(){
+      coverage.getResponseSRS().removeAll(selectedResponseSRSs);
+      selectedResponseSRSs.clear();
+    }
+  }
+);
+  add(new Button("addNewResponseSRS"){
+    public void onSubmit(){
+      coverage.getResponseSRS().add(newResponseSRS);
+      newResponseSRS="";
+    }
+  }
+);
+  add(new DropDownChoice("defaultInterpolationMethod",new PropertyModel(coverage,"defaultInterpolationMethod"),new WCSInterpolationModel()));
+  Palette interpolationMethods=new Palette("interpolationMethods",LiveCollectionModel.list(new PropertyModel(coverage,"interpolationMethods")),new WCSInterpolationModel(),new SimpleChoiceRenderer(),7,false){
+    /** 
+ * Override otherwise the header is not i18n'ized
+ */
+    @Override public Component newSelectedHeader(    final String componentId){
+      return new Label(componentId,new ResourceModel("InterpolationMethodsPalette.selectedHeader"));
+    }
+    /** 
+ * Override otherwise the header is not i18n'ized
+ */
+    @Override public Component newAvailableHeader(    final String componentId){
+      return new Label(componentId,new ResourceModel("InterpolationMethodsPalette.availableHeader"));
+    }
+  }
+;
+  add(interpolationMethods);
+  TextField nativeFormat=new TextField("nativeFormat",new PropertyModel(coverage,"nativeFormat"));
+  nativeFormat.setEnabled(false);
+  add(nativeFormat);
+  Palette formatPalette=new Palette("formatPalette",LiveCollectionModel.list(new PropertyModel(coverage,"supportedFormats")),new WCSFormatsModel(),new SimpleChoiceRenderer(),10,false){
+    /** 
+ * Override otherwise the header is not i18n'ized
+ */
+    @Override public Component newSelectedHeader(    final String componentId){
+      return new Label(componentId,new ResourceModel("FormatsPalette.selectedHeader"));
+    }
+    /** 
+ * Override otherwise the header is not i18n'ized
+ */
+    @Override public Component newAvailableHeader(    final String componentId){
+      return new Label(componentId,new ResourceModel("FormatsPalette.availableHeader"));
+    }
+  }
+;
+  add(formatPalette);
+}

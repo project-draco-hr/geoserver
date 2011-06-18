@@ -1,0 +1,17 @@
+{
+  final Catalog catalog=getCatalog();
+  final List<DataStoreInfo> storesInitial=catalog.getStoresByWorkspace(citeWorkspace,DataStoreInfo.class);
+  final NamespaceInfo citeNamespace=catalog.getNamespaceByPrefix(citeWorkspace.getName());
+  for (  DataStoreInfo store : storesInitial) {
+    assertEquals(citeNamespace.getURI(),store.getConnectionParameters().get("namespace"));
+  }
+  FormTester form=tester.newFormTester("form");
+  final String newNsURI="http://www.geoserver.org/changed";
+  form.setValue("uri",newNsURI);
+  form.submit();
+  tester.assertNoErrorMessage();
+  List<DataStoreInfo> storesChanged=catalog.getStoresByWorkspace(citeWorkspace,DataStoreInfo.class);
+  for (  DataStoreInfo store : storesChanged) {
+    assertEquals(newNsURI,store.getConnectionParameters().get("namespace"));
+  }
+}

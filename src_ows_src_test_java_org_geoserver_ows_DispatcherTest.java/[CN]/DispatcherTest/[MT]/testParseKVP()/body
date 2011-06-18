@@ -1,0 +1,16 @@
+{
+  URL url=getClass().getResource("applicationContext.xml");
+  FileSystemXmlApplicationContext context=new FileSystemXmlApplicationContext(url.toString());
+  Dispatcher dispatcher=(Dispatcher)context.getBean("dispatcher");
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  request.setContextPath("/geoserver");
+  request.setupAddParameter("service","hello");
+  request.setupAddParameter("request","Hello");
+  request.setupAddParameter("message","Hello world!");
+  request.setQueryString("service=hello&request=hello&message=Hello World!");
+  Request req=new Request();
+  req.setHttpRequest(request);
+  dispatcher.parseKVP(req);
+  Message message=(Message)dispatcher.parseRequestKVP(Message.class,req);
+  assertEquals(new Message("Hello world!"),message);
+}

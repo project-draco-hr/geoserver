@@ -1,0 +1,12 @@
+{
+  Catalog cat=getCatalog();
+  FeatureTypeInfo fti=cat.getFeatureTypeByName(getLayerId(MockData.POINTS));
+  assertEquals(Point.class,fti.getFeatureType().getGeometryDescriptor().getType().getBinding());
+  assertEquals(1,fti.getFeatureSource(null,null).getCount(Query.ALL));
+  CatalogBuilder cb=new CatalogBuilder(cat);
+  cb.setStore(cat.getStoreByName(MockData.CGF_PREFIX,DataStoreInfo.class));
+  FeatureTypeInfo built=cb.buildFeatureType(fti.getQualifiedName());
+  cb.setupBounds(built);
+  assertTrue(built.getNativeBoundingBox().getWidth() > 0);
+  assertTrue(built.getNativeBoundingBox().getHeight() > 0);
+}

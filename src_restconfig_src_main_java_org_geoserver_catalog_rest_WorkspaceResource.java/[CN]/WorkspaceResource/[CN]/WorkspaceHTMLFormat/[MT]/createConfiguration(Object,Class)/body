@@ -1,0 +1,16 @@
+{
+  Configuration cfg=super.createConfiguration(data,clazz);
+  cfg.setObjectWrapper(new ObjectToMapWrapper<WorkspaceInfo>(WorkspaceInfo.class){
+    @Override protected void wrapInternal(    Map properties,    SimpleHash model,    WorkspaceInfo object){
+      List<DataStoreInfo> dataStores=catalog.getStoresByWorkspace(object,DataStoreInfo.class);
+      properties.put("dataStores",new CollectionModel(dataStores,new ObjectToMapWrapper(DataStoreInfo.class)));
+      List<CoverageStoreInfo> coverageStores=catalog.getStoresByWorkspace(object,CoverageStoreInfo.class);
+      properties.put("coverageStores",new CollectionModel(coverageStores,new ObjectToMapWrapper(CoverageStoreInfo.class)));
+      List<WMSStoreInfo> wmsStores=catalog.getStoresByWorkspace(object,WMSStoreInfo.class);
+      properties.put("wmsStores",new CollectionModel(wmsStores,new ObjectToMapWrapper(WMSStoreInfo.class)));
+      properties.put("isDefault",object.equals(catalog.getDefaultWorkspace()));
+    }
+  }
+);
+  return cfg;
+}

@@ -1,0 +1,37 @@
+{
+  if (layerGroups == null || layerGroups.size() == 0) {
+    return;
+  }
+  Collections.sort(layerGroups,new Comparator<LayerGroupInfo>(){
+    public int compare(    LayerGroupInfo o1,    LayerGroupInfo o2){
+      return o1.getName().compareTo(o2.getName());
+    }
+  }
+);
+  for (  LayerGroupInfo layerGroup : layerGroups) {
+    String layerName=layerGroup.getName();
+    AttributesImpl qatts=new AttributesImpl();
+    boolean queryable=wmsConfig.isQueryable(layerGroup);
+    qatts.addAttribute("","queryable","queryable","",queryable ? "1" : "0");
+    start("Layer",qatts);
+    element("Name",layerName);
+    element("Title",layerName);
+    element("Abstract","Layer-Group type layer: " + layerName);
+    final ReferencedEnvelope layerGroupBounds=layerGroup.getBounds();
+    final ReferencedEnvelope latLonBounds=layerGroupBounds.transform(DefaultGeographicCRS.WGS84,true);
+    String authority=layerGroupBounds.getCoordinateReferenceSystem().getIdentifiers().toArray()[0].toString();
+    element("CRS",authority);
+    handleGeographicBoundingBox(latLonBounds);
+    handleBBox(layerGroupBounds,authority);
+    List<LayerInfo> layers=layerGroup.getLayers();
+    Set<MetadataLinkInfo> aggregatedLinks=new HashSet<MetadataLinkInfo>();
+    for (    LayerInfo layer : layers) {
+      List<MetadataLinkInfo> metadataLinks=layer.getResource().getMetadataLinks();
+      if (metadataLinks != null) {
+        aggregatedLinks.addAll(metadataLinks);
+      }
+    }
+    handleMetadataList(aggregatedLinks);
+    end("Layer");
+  }
+}

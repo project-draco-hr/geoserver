@@ -1,0 +1,14 @@
+{
+  String ws=getAttribute(request,"workspace");
+  String ds=getAttribute(request,"datastore");
+  if (ws != null && catalog.getWorkspaceByName(ws) == null) {
+    throw new RestletException("No such workspace: " + ws,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (ds != null && catalog.getDataStoreByName(ws,ds) == null && !"default".equals(ds)) {
+    throw new RestletException("No such datastore: " + ws + ","+ ds,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (ds == null && request.getMethod() == Method.GET) {
+    return new DataStoreListResource(getContext(),request,response,catalog);
+  }
+  return new DataStoreResource(null,request,response,catalog);
+}

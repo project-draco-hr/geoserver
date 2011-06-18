@@ -1,0 +1,27 @@
+{
+  String bbox=form.getFirstValue("bbox");
+  if (bbox == null) {
+    return Filter.INCLUDE;
+  }
+ else {
+    try {
+      JSONArray ordinates=JSONArray.fromObject("[" + bbox + "]");
+      String defaultGeomName=schema.getGeometryDescriptor().getLocalName();
+      final double tolerance=getTolerance(form);
+      double minx=ordinates.getDouble(0);
+      double miny=ordinates.getDouble(1);
+      double maxx=ordinates.getDouble(2);
+      double maxy=ordinates.getDouble(3);
+      if (tolerance > 0) {
+        minx-=tolerance;
+        miny-=tolerance;
+        maxx+=tolerance;
+        maxy+=tolerance;
+      }
+      return FF.bbox(defaultGeomName,minx,miny,maxx,maxy,null);
+    }
+ catch (    Exception e) {
+      throw new RestletException("Could not parse the bbox: " + e.getMessage(),Status.CLIENT_ERROR_BAD_REQUEST);
+    }
+  }
+}

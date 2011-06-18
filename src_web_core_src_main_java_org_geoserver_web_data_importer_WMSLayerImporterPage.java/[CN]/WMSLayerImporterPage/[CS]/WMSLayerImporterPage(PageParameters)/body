@@ -1,0 +1,43 @@
+{
+  storeId=params.getString("storeId");
+  WMSStoreInfo store=getCatalog().getStore(storeId,WMSStoreInfo.class);
+  provider=new WMSLayerProvider();
+  provider.setStoreId(storeId);
+  if (provider.size() <= 0) {
+    error(new ParamResourceModel("storeEmpty",this,store.getName(),store.getWorkspace().getName()).getString());
+  }
+  form=new Form("form",new CompoundPropertyModel(this));
+  form.setOutputMarkupId(true);
+  add(form);
+  layers=new GeoServerTablePanel<LayerResource>("layerChooser",provider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<LayerResource> property){
+      if (property == WMSLayerProvider.NAME) {
+        return new Label(id,property.getModel(itemModel));
+      }
+ else       if (property == WMSLayerProvider.STATUS) {
+        Fragment f=new Fragment(id,"labelIcon",WMSLayerImporterPage.this);
+        f.add(new Image("icon",new IconModel(itemModel)));
+        f.add(new Label("label",new StatusModel(itemModel)));
+        return f;
+      }
+ else       if (property == WMSLayerProvider.ACTION) {
+        final LayerResource resource=(LayerResource)itemModel.getObject();
+        final LayerStatus status=resource.getStatus();
+        if (status == LayerStatus.PUBLISHED || status == LayerStatus.NEWLY_PUBLISHED || status == LayerStatus.UPDATED) {
+          return resourceChooserLink(id,itemModel,new ParamResourceModel("NewLayerPage.publishAgain",this));
+        }
+ else {
+          return resourceChooserLink(id,itemModel,new ParamResourceModel("NewLayerPage.publish",this));
+        }
+      }
+      return null;
+    }
+  }
+;
+  layers.setItemReuseStrategy(DefaultItemReuseStrategy.getInstance());
+  layers.setFilterable(true);
+  form.add(layers);
+  AjaxSubmitLink submitLink=submitLink();
+  form.add(submitLink);
+  form.add(importAllLink());
+}

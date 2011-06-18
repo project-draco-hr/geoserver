@@ -1,0 +1,26 @@
+{
+  TransactionType transaction=wfsfactory.createTransactionType();
+  if (node.hasChild("LockId")) {
+    transaction.setLockId((String)node.getChildValue("LockId"));
+  }
+  for (Iterator itr=node.getChildren().iterator(); itr.hasNext(); ) {
+    Node child=(Node)itr.next();
+    Object cv=child.getValue();
+    if (cv instanceof InsertElementType) {
+      transaction.getInsert().add(cv);
+    }
+ else     if (cv instanceof UpdateElementType) {
+      transaction.getUpdate().add(cv);
+    }
+ else     if (cv instanceof DeleteElementType) {
+      transaction.getDelete().add(cv);
+    }
+ else     if (cv instanceof NativeType) {
+      transaction.getNative().add(cv);
+    }
+  }
+  if (node.hasAttribute(AllSomeType.class)) {
+    transaction.setReleaseAction((AllSomeType)node.getAttributeValue(AllSomeType.class));
+  }
+  return transaction;
+}

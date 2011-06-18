@@ -1,0 +1,40 @@
+{
+  final int nLayers=layers.size();
+  if (requestFilters == null || requestFilters.size() == 0) {
+    requestFilters=Collections.nCopies(layers.size(),(Filter)Filter.INCLUDE);
+  }
+ else   if (requestFilters.size() != nLayers) {
+    throw new IllegalArgumentException("requested filters and number of layers do not match");
+  }
+  Filter[] combinedList=new Filter[nLayers];
+  Filter layerDefinitionFilter;
+  Filter userRequestedFilter;
+  Filter combined;
+  MapLayerInfo layer;
+  for (int i=0; i < nLayers; i++) {
+    layer=layers.get(i);
+    userRequestedFilter=requestFilters.get(i);
+    if (layer.getType() == MapLayerInfo.TYPE_REMOTE_VECTOR || layer.getType() == MapLayerInfo.TYPE_RASTER) {
+      combinedList[i]=userRequestedFilter;
+    }
+ else     if (layer.getType() == MapLayerInfo.TYPE_VECTOR) {
+      layerDefinitionFilter=layer.getFeature().getFilter();
+      if (layerDefinitionFilter == null) {
+        layerDefinitionFilter=Filter.INCLUDE;
+      }
+      combined=ff.and(layerDefinitionFilter,userRequestedFilter);
+      FeatureTypeConstraint[] featureTypeConstraints=layer.getLayerFeatureConstraints();
+      if (featureTypeConstraints != null) {
+        List<Filter> filters=new ArrayList<Filter>();
+        for (int j=0; j < featureTypeConstraints.length; j++) {
+          FeatureTypeConstraint featureTypeConstraint=featureTypeConstraints[j];
+          filters.add(featureTypeConstraint.getFilter());
+        }
+        ;
+        combined=ff.and(combined,ff.and(filters));
+      }
+      combinedList[i]=combined;
+    }
+  }
+  return combinedList;
+}

@@ -1,0 +1,16 @@
+{
+  String layer=getLayerId(SQUARES);
+  String base="wms?version=1.3.0&&format=png&info_format=text/html&request=GetFeatureInfo&layers=" + layer + "&query_layers="+ layer+ "&styles=squares&bbox=0,0,10000,10000&feature_count=10";
+  int w=(int)(100.0 / 0.28 * 1000);
+  Document dom=getAsDOM(base + "&width=" + w+ "&height="+ w+ "&i=20&j="+ (w - 20));
+  assertXpathEvaluatesTo("0","count(/html/body/table/tr)",dom);
+  w=(int)(200.0 / 0.28 * 1000);
+  dom=getAsDOM(base + "&width=" + w+ "&height="+ w+ "&i=20&j="+ (w - 20));
+  assertXpathEvaluatesTo("1","count(/html/body/table/tr/td[starts-with(.,'squares.')])",dom);
+  assertXpathEvaluatesTo("1","count(/html/body/table/tr/td[. = 'squares.1'])",dom);
+  w=(int)(1000.0 / 0.28 * 1000);
+  dom=getAsDOM(base + "&width=" + w+ "&height="+ w+ "&i=20&j="+ (w - 20));
+  assertXpathEvaluatesTo("2","count(/html/body/table/tr/td[starts-with(.,'squares.')])",dom);
+  assertXpathEvaluatesTo("1","count(/html/body/table/tr/td[. = 'squares.1'])",dom);
+  assertXpathEvaluatesTo("1","count(/html/body/table/tr/td[. = 'squares.2'])",dom);
+}

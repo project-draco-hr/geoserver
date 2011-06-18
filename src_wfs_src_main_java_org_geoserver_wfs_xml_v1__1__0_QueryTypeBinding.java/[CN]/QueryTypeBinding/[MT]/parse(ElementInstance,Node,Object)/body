@@ -1,0 +1,36 @@
+{
+  QueryType query=wfsfactory.createQueryType();
+  if (node.hasChild("PropertyName")) {
+    for (Iterator p=node.getChildValues("PropertyName").iterator(); p.hasNext(); ) {
+      Object property=p.next();
+      String propertyName;
+      if (property instanceof String)       propertyName=(String)property;
+ else       propertyName=(String)((PropertyName)property).getPropertyName();
+      query.getPropertyName().add(propertyName);
+    }
+  }
+  if (node.hasChild("Function")) {
+    query.getFunction().add(node.getChildValues("Function"));
+  }
+  if (node.hasChild(Filter.class)) {
+    query.setFilter((Filter)node.getChildValue(Filter.class));
+  }
+  if (node.hasChild(SortBy[].class)) {
+    SortBy[] sortBy=(SortBy[])node.getChildValue(SortBy[].class);
+    for (int i=0; i < sortBy.length; i++)     query.getSortBy().add(sortBy[i]);
+  }
+  if (node.hasAttribute("handle")) {
+    query.setHandle((String)node.getAttributeValue("handle"));
+  }
+  query.setTypeName((List)node.getAttributeValue("typeName"));
+  if (node.hasAttribute("featureVersion")) {
+    query.setFeatureVersion((String)node.getAttributeValue("featureVersion"));
+  }
+  if (node.hasAttribute("srsName")) {
+    query.setSrsName((URI)node.getAttributeValue("srsName"));
+  }
+  if (node.hasChild("XlinkPropertyName")) {
+    query.getXlinkPropertyName().addAll(node.getChildValues("XlinkPropertyName"));
+  }
+  return query;
+}

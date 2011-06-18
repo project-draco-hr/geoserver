@@ -1,0 +1,19 @@
+{
+  VariableState state=(VariableState)(idMap.get(variableId));
+  if (state == null)   throw new ProcessingException("variable is unsupported: " + variableId);
+  if (state.definition != null)   return state.definition;
+  Node node=state.rootNode;
+  if (node != null) {
+    if (state.handled)     throw new ProcessingException("processing in progress");
+    state.handled=true;
+    discoverApplyType(node,state);
+    try {
+      state.definition=VariableDefinition.getInstance(state.rootNode,metaData,this);
+      return state.definition;
+    }
+ catch (    ParsingException pe) {
+      throw new ProcessingException("failed to parse the definition",pe);
+    }
+  }
+  throw new ProcessingException("couldn't retrieve definition: " + variableId);
+}

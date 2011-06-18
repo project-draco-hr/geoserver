@@ -1,0 +1,19 @@
+{
+  this.gs=geoServer;
+  final GeoServerInfo geoserverInfo=geoServer.getGlobal();
+  CoverageAccessInfo coverageAccess=geoserverInfo.getCoverageAccess();
+  if (coverageAccess == null) {
+    coverageAccess=new CoverageAccessInfoImpl();
+    geoserverInfo.setCoverageAccess(coverageAccess);
+  }
+  initCoverage(coverageAccess);
+  geoServer.addListener(new ConfigurationListenerAdapter(){
+    public void handleGlobalChange(    GeoServerInfo global,    List<String> propertyNames,    List<Object> oldValues,    List<Object> newValues){
+      initCoverage(global.getCoverageAccess());
+    }
+    @Override public void handlePostGlobalChange(    GeoServerInfo global){
+      initCoverage(global.getCoverageAccess());
+    }
+  }
+);
+}

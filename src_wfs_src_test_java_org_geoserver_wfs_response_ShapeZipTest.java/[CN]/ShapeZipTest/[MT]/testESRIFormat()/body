@@ -1,0 +1,16 @@
+{
+  setupESRIPropertyFile();
+  FeatureSource<? extends FeatureType,? extends Feature> fs;
+  fs=getFeatureSource(MockData.BASIC_POLYGONS);
+  ShapeZipOutputFormat zip=new ShapeZipOutputFormat(getGeoServer(),getCatalog(),getResourceLoader());
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  FeatureCollectionType fct=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  fct.getFeature().add(fs.getFeatures());
+  Map options=new HashMap();
+  options.put("PRJFILEFORMAT","ESRI");
+  gft.setFormatOptions(options);
+  zip.write(fct,bos,op);
+  byte[] byteArrayZip=bos.toByteArray();
+  checkShapefileIntegrity(new String[]{"BasicPolygons"},new ByteArrayInputStream(byteArrayZip));
+  checkFileContent("BasicPolygons.prj",new ByteArrayInputStream(byteArrayZip),get4326_ESRI_WKTContent());
+}

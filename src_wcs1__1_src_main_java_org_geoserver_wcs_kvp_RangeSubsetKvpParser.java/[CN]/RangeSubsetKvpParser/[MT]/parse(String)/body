@@ -1,0 +1,18 @@
+{
+  RangeSubsetParser parser=new RangeSubsetParser(new StringReader(value));
+  SimpleNode root=parser.RangeSubset();
+  RangeSubsetType result=(RangeSubsetType)root.jjtAccept(new RangeSubsetKvpParserVisitor(),null);
+  for (Iterator it=result.getFieldSubset().iterator(); it.hasNext(); ) {
+    FieldSubsetType type=(FieldSubsetType)it.next();
+    String interpolationType=type.getInterpolationType();
+    if (interpolationType != null) {
+      try {
+        InterpolationMethod method=InterpolationMethod.valueOf(interpolationType);
+      }
+ catch (      IllegalArgumentException e) {
+        throw new WcsException("Unknown interpolation method " + interpolationType,InvalidParameterValue,"RangeSubset");
+      }
+    }
+  }
+  return result;
+}

@@ -1,0 +1,22 @@
+{
+  Catalog catalog=getCatalog();
+  StoreInfo cite=catalog.getStoreByName(MockData.CITE_PREFIX,StoreInfo.class);
+  List<FeatureTypeInfo> resources=catalog.getResourcesByStore(cite,FeatureTypeInfo.class);
+  assertTrue(resources.size() > 0);
+  final int numberOfPublishedResources=resources.size();
+  NewLayerPageProvider provider=new NewLayerPageProvider();
+  provider.setStoreId(cite.getId());
+  provider.setShowPublished(false);
+  assertEquals(0,provider.size());
+  provider.setShowPublished(true);
+  assertEquals(numberOfPublishedResources,provider.size());
+  FeatureTypeInfo typeInfo=resources.get(0);
+  typeInfo.setName("notTheNativeName");
+  catalog.save(typeInfo);
+  provider=new NewLayerPageProvider();
+  provider.setStoreId(cite.getId());
+  provider.setShowPublished(true);
+  assertEquals(numberOfPublishedResources,provider.size());
+  provider.setShowPublished(false);
+  assertEquals(0,provider.size());
+}

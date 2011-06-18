@@ -1,0 +1,30 @@
+{
+  final FormTester formTester=tester.newFormTester("dataStoreForm");
+  print(tester.getLastRenderedPage(),true,true);
+  final String wsDropdownPath="dataStoreForm:workspacePanel:border:paramValue";
+  final String namespaceParamPath="dataStoreForm:parametersPanel:parameters:1:parameterPanel:paramValue";
+  final String directoryParamPath="dataStoreForm:parametersPanel:parameters:0:parameterPanel:border:paramValue";
+  final Catalog catalog=getCatalog();
+  tester.assertModelValue(wsDropdownPath,catalog.getWorkspaceByName(MockData.CITE_PREFIX));
+  tester.assertModelValue(namespaceParamPath,catalog.getNamespaceByPrefix(MockData.CITE_PREFIX).getURI());
+  Serializable directory=store.getConnectionParameters().get("directory");
+  tester.assertModelValue(directoryParamPath,directory);
+  WorkspaceInfo expectedWorkspace=catalog.getWorkspaceByName(MockData.CDF_PREFIX);
+  NamespaceInfo expectedNamespace=catalog.getNamespaceByPrefix(MockData.CDF_PREFIX);
+  formTester.select("workspacePanel:border:paramValue",4);
+  Component wsDropDown=tester.getComponentFromLastRenderedPage(wsDropdownPath);
+  tester.executeAjaxEvent(wsDropDown,"onchange");
+  tester.assertModelValue(wsDropdownPath,expectedWorkspace);
+  tester.assertModelValue(namespaceParamPath,expectedNamespace.getURI());
+  tester.assertModelValue(directoryParamPath,directory);
+  final boolean isAjax=true;
+  tester.clickLink("dataStoreForm:save",isAjax);
+  tester.assertRenderedPage(StorePage.class);
+  DataStoreInfo dataStore=catalog.getDataStore(store.getId());
+  Serializable namespace=dataStore.getConnectionParameters().get("namespace");
+  assertEquals(expectedNamespace.getURI(),namespace);
+  List<FeatureTypeInfo> resourcesByStore=catalog.getResourcesByStore(dataStore,FeatureTypeInfo.class);
+  for (  FeatureTypeInfo ft : resourcesByStore) {
+    assertEquals("Namespace for " + ft.getName() + " was not updated",expectedNamespace,ft.getNamespace());
+  }
+}

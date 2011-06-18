@@ -1,0 +1,104 @@
+{
+  HashMap<String,String> params=new HashMap<String,String>();
+  params.put("service","wms");
+  params.put("request","GetMap");
+  params.put("version","1.1.1");
+  params.put("format",req.getFormat());
+  StringBuffer layers=new StringBuffer();
+  StringBuffer styles=new StringBuffer();
+  boolean useLayerIndex=true;
+  int count=0;
+  for (int i=0; i < req.getLayers().size(); i++) {
+    if (layer != null && layer.equals(req.getLayers().get(i).getName())) {
+      ++count;
+    }
+  }
+  if (count == 1) {
+    useLayerIndex=false;
+  }
+  if (layer != null) {
+    layers.append(layer);
+    if (style != null) {
+      styles.append(style);
+    }
+ else {
+      if (useLayerIndex) {
+        styles.append(req.getLayers().get(layerIndex).getDefaultStyle().getName());
+      }
+ else {
+        for (int i=0; i < req.getLayers().size(); i++) {
+          if (layer.equals(req.getLayers().get(i).getName())) {
+            styles.append(req.getLayers().get(i).getDefaultStyle().getName());
+          }
+        }
+      }
+    }
+  }
+ else {
+    for (int i=0; i < req.getLayers().size(); i++) {
+      MapLayerInfo mapLayer=req.getLayers().get(i);
+      Style s=(Style)req.getStyles().get(0);
+      layers.append(mapLayer.getName()).append(",");
+      styles.append(s.getName()).append(",");
+    }
+    layers.setLength(layers.length() - 1);
+    styles.setLength(styles.length() - 1);
+  }
+  params.put("layers",layers.toString());
+  params.put("styles",styles.toString());
+  if (layer != null) {
+    int index=0;
+    if (useLayerIndex) {
+      index=layerIndex;
+    }
+ else {
+      for (; index < req.getLayers().size(); index++) {
+        if (req.getLayers().get(index).getName().equals(layer)) {
+          break;
+        }
+      }
+    }
+    if (req.getRawKvp().get("filter") != null) {
+      List filters=KvpUtils.readFlat((String)req.getRawKvp().get("filter"),KvpUtils.OUTER_DELIMETER);
+      params.put("filter",(String)filters.get(index));
+    }
+ else     if (req.getRawKvp().get("cql_filter") != null) {
+      List filters=KvpUtils.readFlat((String)req.getRawKvp().get("cql_filter"),KvpUtils.CQL_DELIMITER);
+      params.put("cql_filter",(String)filters.get(index));
+    }
+ else     if (req.getRawKvp().get("featureid") != null) {
+      params.put("featureid",req.getRawKvp().get("featureid"));
+    }
+  }
+ else {
+    if (req.getRawKvp().get("filter") != null) {
+      params.put("filter",req.getRawKvp().get("filter"));
+    }
+ else     if (req.getRawKvp().get("cql_filter") != null) {
+      params.put("cql_filter",req.getRawKvp().get("cql_filter"));
+    }
+ else     if (req.getRawKvp().get("featureid") != null) {
+      params.put("featureid",req.getRawKvp().get("featureid"));
+    }
+  }
+  params.put("height",String.valueOf(req.getHeight()));
+  params.put("width",String.valueOf(req.getWidth()));
+  params.put("transparent","" + req.isTransparent());
+  if (bbox == null) {
+    bbox=req.getBbox();
+  }
+  if (bbox != null) {
+    params.put("bbox",encode(bbox));
+  }
+  params.put("srs",req.getSRS());
+  if (req.getFormatOptions() != null && !req.getFormatOptions().isEmpty()) {
+    params.put("format_options",encodeFormatOptions(req.getFormatOptions()));
+  }
+  if (req.getViewParams() != null && !req.getViewParams().isEmpty()) {
+    params.put("viewParams",encodeFormatOptions(req.getViewParams()));
+  }
+  for (int i=0; (kvp != null) && (i < kvp.length); i+=2) {
+    params.put(kvp[i],kvp[i + 1]);
+  }
+  return params;
+}

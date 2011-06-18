@@ -1,0 +1,36 @@
+{
+  for (  Param p : factory.getParametersInfo()) {
+    if (File.class == p.type || URL.class == p.type) {
+      File f=uploadedFile;
+      if ("directory".equals(p.key)) {
+        f=f.getParentFile();
+      }
+      Object converted=null;
+      if (URI.class.equals(p.type)) {
+        converted=f.toURI();
+      }
+ else       if (URL.class.equals(p.type)) {
+        try {
+          converted=f.toURL();
+        }
+ catch (        MalformedURLException e) {
+        }
+      }
+      if (converted != null) {
+        connectionParameters.put(p.key,converted);
+      }
+ else {
+        connectionParameters.put(p.key,f);
+      }
+      continue;
+    }
+    if (p.required) {
+      try {
+        p.lookUp(connectionParameters);
+      }
+ catch (      Exception e) {
+        connectionParameters.put(p.key,p.sample);
+      }
+    }
+  }
+}

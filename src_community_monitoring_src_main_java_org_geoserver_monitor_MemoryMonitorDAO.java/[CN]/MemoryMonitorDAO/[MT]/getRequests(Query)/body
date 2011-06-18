@@ -1,0 +1,37 @@
+{
+  List<RequestData> requests=getRequests();
+  List<Predicate> predicates=new ArrayList();
+  if (q.getFilter() != null) {
+    Filter f=q.getFilter();
+    predicates.add(new PropertyCompare(f.getLeft(),f.getType(),f.getRight()));
+  }
+  if (q.getFromDate() != null || q.getToDate() != null) {
+    predicates.add(new DateRange(q.getFromDate(),q.getToDate()));
+  }
+  int i=1, count=0;
+  O:   for (Iterator<RequestData> it=requests.iterator(); it.hasNext(); ) {
+    RequestData r=it.next();
+    for (    Predicate p : predicates) {
+      if (!p.matches(r)) {
+        it.remove();
+        continue O;
+      }
+    }
+    if (q.getOffset() != null && q.getOffset() >= i++) {
+      it.remove();
+      continue;
+    }
+    if (q.getCount() != null && q.getCount() <= count) {
+      it.remove();
+      continue;
+    }
+    count++;
+  }
+  if (q.getSortBy() != null) {
+    Collections.sort(requests,new Sorter(q.getSortBy(),q.getSortOrder()));
+  }
+ else   if (q.getFromDate() != null || q.getToDate() != null) {
+    Collections.sort(requests,new Sorter("startTime",SortOrder.DESC));
+  }
+  return requests;
+}

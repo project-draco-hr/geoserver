@@ -1,0 +1,22 @@
+{
+  GetFeatureType getFeature=wfsfactory.createGetFeatureType();
+  WFSBindingUtils.service(getFeature,node);
+  WFSBindingUtils.version(getFeature,node);
+  WFSBindingUtils.outputFormat(getFeature,node,"GML2");
+  if (node.getAttributeValue("handle") != null) {
+    getFeature.setHandle((String)node.getAttributeValue("handle"));
+  }
+  BigInteger maxFeatures=null;
+  Number number=(Number)node.getAttributeValue("maxFeatures");
+  if (number != null) {
+    if (number instanceof BigInteger) {
+      maxFeatures=(BigInteger)number;
+    }
+ else {
+      maxFeatures=BigInteger.valueOf(number.longValue());
+    }
+    getFeature.setMaxFeatures(maxFeatures);
+  }
+  getFeature.getQuery().addAll(node.getChildValues(QueryType.class));
+  return getFeature;
+}

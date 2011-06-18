@@ -1,0 +1,44 @@
+{
+  ArrayList assignable=new ArrayList();
+  for (Iterator p=profiles.iterator(); p.hasNext(); ) {
+    ProfileImpl profile=(ProfileImpl)p.next();
+    for (Iterator i=profile.values().iterator(); i.hasNext(); ) {
+      AttributeType type=(AttributeType)i.next();
+      if (type.getBinding().isAssignableFrom(clazz)) {
+        assignable.add(type);
+      }
+      if (clazz.equals(type.getBinding())) {
+        return type;
+      }
+    }
+  }
+  if (assignable.isEmpty()) {
+    return null;
+  }
+  if (assignable.size() == 1) {
+    return (AttributeType)assignable.get(0);
+  }
+ else {
+    Comparator comparator=new Comparator(){
+      public int compare(      Object o1,      Object o2){
+        AttributeType a1=(AttributeType)o1;
+        AttributeType a2=(AttributeType)o2;
+        Class c1=a1.getBinding();
+        Class c2=a2.getBinding();
+        if (c1.equals(c2)) {
+          return 0;
+        }
+        if (c1.isAssignableFrom(c2)) {
+          return 1;
+        }
+        return -1;
+      }
+    }
+;
+    Collections.sort(assignable,comparator);
+    if (!assignable.get(0).equals(assignable.get(1))) {
+      return (AttributeType)assignable.get(0);
+    }
+  }
+  return null;
+}

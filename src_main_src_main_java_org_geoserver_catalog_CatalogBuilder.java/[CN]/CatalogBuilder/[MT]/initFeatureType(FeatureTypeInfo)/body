@@ -1,0 +1,28 @@
+{
+  if (featureType.getCatalog() == null) {
+    featureType.setCatalog(catalog);
+  }
+  if (featureType.getNativeName() == null && featureType.getName() != null) {
+    featureType.setNativeName(featureType.getName());
+  }
+  if (featureType.getNativeName() != null && featureType.getName() == null) {
+    featureType.setName(featureType.getNativeName());
+  }
+  if (featureType.getSRS() == null) {
+    lookupSRS(featureType,true);
+  }
+  if (featureType.getProjectionPolicy() == null) {
+    setupProjectionPolicy(featureType);
+  }
+  CoordinateReferenceSystem crs=featureType.getCRS();
+  if (featureType.getLatLonBoundingBox() == null && featureType.getNativeBoundingBox() == null) {
+    setupBounds(featureType);
+  }
+ else   if (featureType.getLatLonBoundingBox() == null) {
+    setupBounds(featureType);
+  }
+ else   if (featureType.getNativeBoundingBox() == null && crs != null) {
+    ReferencedEnvelope boundsLatLon=featureType.getLatLonBoundingBox();
+    featureType.setNativeBoundingBox(boundsLatLon.transform(crs,true));
+  }
+}

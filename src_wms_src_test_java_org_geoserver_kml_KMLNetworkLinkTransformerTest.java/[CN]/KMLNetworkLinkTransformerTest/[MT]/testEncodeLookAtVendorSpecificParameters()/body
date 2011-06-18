@@ -1,0 +1,24 @@
+{
+  WMS wms=mockData.getWMS();
+  KMLNetworkLinkTransformer transformer=new KMLNetworkLinkTransformer(wms);
+  transformer.setEncodeAsRegion(false);
+  transformer.setIndentation(2);
+  request.setBbox(new Envelope(-1,1,-10,10));
+  Map<String,Object> formatOptions=new HashMap<String,Object>();
+  formatOptions.put("LOOKATGEOM","POINT(1 1)");
+  formatOptions.put("ALTITUDE","500");
+  formatOptions.put("HEADING","45");
+  formatOptions.put("TILT","30");
+  formatOptions.put("RANGE","2000");
+  formatOptions.put("ALTITUDEMODE","absolute");
+  request.setFormatOptions(formatOptions);
+  Document dom=WMSTestSupport.transform(mapContext,transformer);
+  assertXpathEvaluatesTo("1","count(//kml/Folder/LookAt)",dom);
+  assertXpathEvaluatesTo("1.0","//kml/Folder/LookAt/longitude",dom);
+  assertXpathEvaluatesTo("1.0","//kml/Folder/LookAt/latitude",dom);
+  assertXpathEvaluatesTo("500.0","//kml/Folder/LookAt/altitude",dom);
+  assertXpathEvaluatesTo("45.0","//kml/Folder/LookAt/heading",dom);
+  assertXpathEvaluatesTo("30.0","//kml/Folder/LookAt/tilt",dom);
+  assertXpathEvaluatesTo("2000.0","//kml/Folder/LookAt/range",dom);
+  assertXpathEvaluatesTo("absolute","//kml/Folder/LookAt/altitudeMode",dom);
+}

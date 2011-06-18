@@ -1,0 +1,16 @@
+{
+  String workspace=getAttribute("workspace");
+  String wmsstore=getAttribute("wmsstore");
+  String wmslayer=getAttribute("wmslayer");
+  if (wmsstore == null) {
+    LOGGER.fine("GET feature type" + workspace + ","+ wmslayer);
+    NamespaceInfo ns=catalog.getNamespaceByPrefix(workspace);
+    if (ns != null) {
+      return catalog.getResourceByName(ns,wmslayer,WMSLayerInfo.class);
+    }
+    throw new RestletException("",Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  LOGGER.fine("GET wms layer " + wmsstore + ","+ wmslayer);
+  WMSStoreInfo wms=catalog.getStoreByName(workspace,wmsstore,WMSStoreInfo.class);
+  return catalog.getResourceByStore(wms,wmslayer,WMSLayerInfo.class);
+}

@@ -1,0 +1,43 @@
+{
+  int binaryValueLen=binaryValue.length;
+  int maxChars=(binaryValueLen * 7) / 5;
+  StringBuffer sb=new StringBuffer(maxChars);
+  int groupsToEOL=MAX_GROUPS_PER_LINE;
+  for (int binaryValueNdx=0; binaryValueNdx < binaryValueLen; binaryValueNdx+=3) {
+    int group1=(binaryValue[binaryValueNdx] >> 2) & 0x3F;
+    sb.append(BASE64EncodingString.charAt(group1));
+    int group2=(binaryValue[binaryValueNdx] << 4) & 0x030;
+    if ((binaryValueNdx + 1) < binaryValueLen) {
+      group2=group2 | ((binaryValue[binaryValueNdx + 1] >> 4) & 0xF);
+    }
+    sb.append(BASE64EncodingString.charAt(group2));
+    int group3;
+    if ((binaryValueNdx + 1) < binaryValueLen) {
+      group3=(binaryValue[binaryValueNdx + 1] << 2) & 0x03C;
+      if ((binaryValueNdx + 2) < binaryValueLen) {
+        group3=group3 | ((binaryValue[binaryValueNdx + 2] >> 6) & 0x3);
+      }
+    }
+ else {
+      group3=PAD_INDEX;
+    }
+    sb.append(BASE64EncodingString.charAt(group3));
+    int group4;
+    if ((binaryValueNdx + 2) < binaryValueLen) {
+      group4=binaryValue[binaryValueNdx + 2] & 0x3F;
+    }
+ else {
+      group4=PAD_INDEX;
+    }
+    sb.append(BASE64EncodingString.charAt(group4));
+    groupsToEOL=groupsToEOL - 1;
+    if (groupsToEOL == 0) {
+      groupsToEOL=MAX_GROUPS_PER_LINE;
+      if ((binaryValueNdx + 3) <= binaryValueLen) {
+        sb.append(CR);
+        sb.append(LF);
+      }
+    }
+  }
+  return sb.toString();
+}

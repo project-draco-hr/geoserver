@@ -1,0 +1,27 @@
+{
+  request=(GetCapabilitiesType)object;
+  AttributesImpl attributes=new AttributesImpl();
+  attributes.addAttribute("","version","version","","1.0.0");
+  attributes.addAttribute("","xmlns","xmlns","",WFS_URI);
+  List<NamespaceInfo> namespaces=catalog.getNamespaces();
+  for (  NamespaceInfo namespace : namespaces) {
+    String prefix=namespace.getPrefix();
+    String uri=namespace.getURI();
+    if ("xml".equals(prefix)) {
+      continue;
+    }
+    String prefixDef="xmlns:" + prefix;
+    attributes.addAttribute("",prefixDef,prefixDef,"",uri);
+  }
+  attributes.addAttribute("","xmlns:" + OGC_PREFIX,"xmlns:" + OGC_PREFIX,"",OGC_URI);
+  attributes.addAttribute("","xmlns:" + XSI_PREFIX,"xmlns:" + XSI_PREFIX,"",XSI_URI);
+  String locationAtt=XSI_PREFIX + ":schemaLocation";
+  String locationDef=WFS_URI + " " + (wfs.isCanonicalSchemaLocation() ? org.geoserver.wfs.xml.v1_0_0.WFS.CANONICAL_SCHEMA_LOCATION_CAPABILITIES : buildSchemaURL(request.getBaseUrl(),"wfs/1.0.0/WFS-capabilities.xsd"));
+  attributes.addAttribute("",locationAtt,locationAtt,"",locationDef);
+  start("WFS_Capabilities",attributes);
+  handleService();
+  handleCapability();
+  handleFeatureTypes();
+  handleFilterCapabilities();
+  end("WFS_Capabilities");
+}

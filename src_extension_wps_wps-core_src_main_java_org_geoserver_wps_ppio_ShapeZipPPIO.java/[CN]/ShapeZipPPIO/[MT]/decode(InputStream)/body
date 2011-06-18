@@ -1,0 +1,51 @@
+{
+  File tempDir=IOUtils.createTempDirectory("shpziptemp");
+  ZipInputStream zis=null;
+  File shapeFile=null;
+  try {
+    zis=new ZipInputStream(input);
+    ZipEntry entry=null;
+    while ((entry=zis.getNextEntry()) != null) {
+      String name=entry.getName();
+      File file=new File(tempDir,entry.getName());
+      if (entry.isDirectory()) {
+        file.mkdir();
+      }
+ else {
+        if (file.getName().toLowerCase().endsWith(".shp")) {
+          shapeFile=file;
+        }
+        int count;
+        byte data[]=new byte[4096];
+        FileOutputStream fos=null;
+        try {
+          fos=new FileOutputStream(file);
+          while ((count=zis.read(data)) != -1) {
+            fos.write(data,0,count);
+          }
+          fos.flush();
+        }
+  finally {
+          if (fos != null) {
+            fos.close();
+          }
+        }
+      }
+      zis.closeEntry();
+    }
+  }
+  finally {
+    if (zis != null) {
+      zis.close();
+    }
+  }
+  if (shapeFile == null) {
+    FileUtils.deleteDirectory(tempDir);
+    throw new IOException("Could not find any file with .shp extension in the zip file");
+  }
+ else {
+    ShapefileDataStore store=new ShapefileDataStore(DataUtilities.fileToURL(shapeFile));
+    resources.addResource(new ShapefileResource(store,tempDir));
+    return store.getFeatureSource().getFeatures();
+  }
+}

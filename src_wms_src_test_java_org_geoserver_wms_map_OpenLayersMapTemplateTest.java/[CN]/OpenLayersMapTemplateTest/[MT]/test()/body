@@ -1,0 +1,43 @@
+{
+  Configuration cfg=new Configuration();
+  cfg.setClassForTemplateLoading(OpenLayersMapOutputFormat.class,"");
+  cfg.setObjectWrapper(new BeansWrapper());
+  Template template=cfg.getTemplate("OpenLayersMapTemplate.ftl");
+  assertNotNull(template);
+  GetMapRequest request=createGetMapRequest(MockData.BASIC_POLYGONS);
+  WMSMapContext mapContext=new WMSMapContext();
+  mapContext.addLayer(createMapLayer(MockData.BASIC_POLYGONS));
+  mapContext.setRequest(request);
+  mapContext.setMapWidth(256);
+  mapContext.setMapHeight(256);
+  ByteArrayOutputStream output=new ByteArrayOutputStream();
+  HashMap map=new HashMap();
+  map.put("context",mapContext);
+  map.put("request",mapContext.getRequest());
+  map.put("maxResolution",new Double(0.0005));
+  map.put("baseUrl","http://localhost:8080/geoserver/wms");
+  map.put("parameters",new ArrayList());
+  map.put("layerName","layer");
+  map.put("units","degrees");
+  map.put("pureCoverage","false");
+  map.put("styles",new ArrayList());
+  map.put("servicePath","wms");
+  template.process(map,new OutputStreamWriter(output));
+  DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+  dbf.setValidating(false);
+  dbf.setExpandEntityReferences(false);
+  DocumentBuilder docBuilder=dbf.newDocumentBuilder();
+  docBuilder.setEntityResolver(new EntityResolver(){
+    public InputSource resolveEntity(    String publicId,    String systemId) throws SAXException, IOException {
+      StringReader reader=new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+      InputSource source=new InputSource(reader);
+      source.setPublicId(publicId);
+      source.setSystemId(systemId);
+      return source;
+    }
+  }
+);
+  Document document=docBuilder.parse(new ByteArrayInputStream(output.toByteArray()));
+  assertNotNull(document);
+  assertEquals("html",document.getDocumentElement().getNodeName());
+}

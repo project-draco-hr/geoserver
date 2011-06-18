@@ -1,0 +1,19 @@
+{
+  Encoder encoder=new Encoder(configuration,configuration.getXSD().getSchema());
+  QName layerName=getDiff.getTypeName();
+  encoder.getNamespaces().declarePrefix(layerName.getPrefix(),layerName.getNamespaceURI());
+  encoder.setEncoding(Charset.forName("UTF-8"));
+  PostMethod method=new PostMethod(address.toExternalForm());
+  method.setContentChunked(true);
+  method.setRequestEntity(new XMLEntity(getDiff,GSS.GetDiff,encoder));
+  Object response=executeMethod(method);
+  if (response instanceof GetDiffResponseType) {
+    return (GetDiffResponseType)response;
+  }
+ else {
+    if (response == null) {
+      throw new IOException("The response was parsed to a null object");
+    }
+    throw new IOException("The response was parsed to an unrecognized object type: " + response.getClass());
+  }
+}

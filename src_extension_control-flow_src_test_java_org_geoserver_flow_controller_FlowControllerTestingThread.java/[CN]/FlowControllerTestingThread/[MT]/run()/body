@@ -1,0 +1,29 @@
+{
+  state=ThreadState.STARTED;
+  try {
+    System.out.println(this + " calling requestIncoming");
+    if (!controller.requestIncoming(request,timeout)) {
+      state=ThreadState.TIMED_OUT;
+      return;
+    }
+  }
+ catch (  Throwable t) {
+    this.error=t;
+  }
+  state=ThreadState.PROCESSING;
+  try {
+    System.out.println(this + " waiting");
+    if (processingDelay > 0)     sleep(processingDelay);
+  }
+ catch (  InterruptedException e) {
+  }
+  try {
+    System.out.println(this + " calling requestComplete");
+    controller.requestComplete(request);
+  }
+ catch (  Throwable t) {
+    this.error=t;
+  }
+  state=ThreadState.COMPLETE;
+  System.out.println(this + " done");
+}

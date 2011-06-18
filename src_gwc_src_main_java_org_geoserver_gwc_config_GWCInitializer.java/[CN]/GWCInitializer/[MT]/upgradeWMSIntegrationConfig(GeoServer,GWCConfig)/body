@@ -1,0 +1,17 @@
+{
+  WMSInfo service=geoServer.getService(WMSInfo.class);
+  if (service != null) {
+    MetadataMap metadata=service.getMetadata();
+    if (service != null && metadata != null) {
+      String WMS_INTEGRATION_ENABLED_KEY="GWC_WMS_Integration";
+      Boolean storedValue=metadata.get(WMS_INTEGRATION_ENABLED_KEY,Boolean.class);
+      if (storedValue != null) {
+        boolean enabled=storedValue.booleanValue();
+        gwcConfig.setDirectWMSIntegrationEnabled(enabled);
+        metadata.remove(WMS_INTEGRATION_ENABLED_KEY);
+        geoServer.save(service);
+        configPersister.save(gwcConfig);
+      }
+    }
+  }
+}

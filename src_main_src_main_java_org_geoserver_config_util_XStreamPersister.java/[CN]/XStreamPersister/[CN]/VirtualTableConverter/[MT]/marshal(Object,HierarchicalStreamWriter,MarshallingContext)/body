@@ -1,0 +1,56 @@
+{
+  VirtualTable vt=(VirtualTable)source;
+  writer.startNode("name");
+  writer.setValue(vt.getName());
+  writer.endNode();
+  writer.startNode("sql");
+  writer.setValue(vt.getSql());
+  writer.endNode();
+  if (vt.getPrimaryKeyColumns() != null) {
+    for (    String pk : vt.getPrimaryKeyColumns()) {
+      writer.startNode("keyColumn");
+      writer.setValue(pk);
+      writer.endNode();
+    }
+  }
+  if (vt.getGeometries() != null) {
+    for (    String geom : vt.getGeometries()) {
+      writer.startNode("geometry");
+      writer.startNode("name");
+      writer.setValue(geom);
+      writer.endNode();
+      writer.startNode("type");
+      writer.setValue(Geometries.getForBinding(vt.getGeometryType(geom)).getName());
+      writer.endNode();
+      writer.startNode("srid");
+      writer.setValue(String.valueOf(vt.getNativeSrid(geom)));
+      writer.endNode();
+      writer.endNode();
+    }
+  }
+  if (vt.getParameterNames().size() > 0) {
+    for (    String name : vt.getParameterNames()) {
+      VirtualTableParameter param=vt.getParameter(name);
+      writer.startNode("parameter");
+      writer.startNode("name");
+      writer.setValue(name);
+      writer.endNode();
+      if (param.getDefaultValue() != null) {
+        writer.startNode("defaultValue");
+        writer.setValue(param.getDefaultValue());
+        writer.endNode();
+      }
+      if (param.getValidator() != null) {
+        if (param.getValidator() instanceof RegexpValidator) {
+          writer.startNode("regexpValidator");
+          writer.setValue(((RegexpValidator)param.getValidator()).getPattern().pattern());
+          writer.endNode();
+        }
+ else {
+          throw new RuntimeException("Cannot handle this type of validator," + " please extend the VirtualTableConverter " + param.getValidator().getClass());
+        }
+      }
+      writer.endNode();
+    }
+  }
+}

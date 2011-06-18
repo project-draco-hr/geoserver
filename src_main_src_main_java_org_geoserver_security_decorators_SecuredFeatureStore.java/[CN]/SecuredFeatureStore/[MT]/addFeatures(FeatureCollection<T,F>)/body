@@ -1,0 +1,38 @@
+{
+  Query writeQuery=getWriteQuery(policy);
+  if (writeQuery.getFilter() == Filter.EXCLUDE || writeQuery.getPropertyNames() == Query.NO_NAMES) {
+    throw unsupportedOperation();
+  }
+ else   if (writeQuery == Query.ALL) {
+    return storeDelegate.addFeatures(collection);
+  }
+ else {
+    if (writeQuery.getFilter() != null && writeQuery.getFilter() != Filter.INCLUDE) {
+      final FilteringFeatureCollection<T,F> filtered=new FilteringFeatureCollection<T,F>(collection,writeQuery.getFilter());
+      if (filtered.size() < collection.size()) {
+        String typeName=getSchema().getName().getLocalPart();
+        if (policy.response == Response.CHALLENGE) {
+          throw SecureCatalogImpl.unauthorizedAccess(typeName);
+        }
+ else {
+          throw new UnsupportedOperationException("At least one of the features inserted does not satisfy your write restrictions");
+        }
+      }
+    }
+    if (writeQuery.getPropertyNames() == Query.ALL_NAMES) {
+      return storeDelegate.addFeatures(collection);
+    }
+ else {
+      if (collection.getSchema() instanceof SimpleFeatureType && storeDelegate instanceof SimpleFeatureStore) {
+        final SimpleFeatureCollection simpleCollection=(SimpleFeatureCollection)collection;
+        List<String> writableAttributes=Arrays.asList(writeQuery.getPropertyNames());
+        CheckAttributesFeatureCollection checker=new CheckAttributesFeatureCollection(simpleCollection,writableAttributes,policy.getResponse());
+        return ((SimpleFeatureStore)storeDelegate).addFeatures(checker);
+      }
+ else {
+        LOGGER.log(Level.SEVERE,"Unfinished implementation, we need to shave off " + "the attributes one cannot write off complex features. " + "However at this time there is no writable complex feature!");
+        return storeDelegate.addFeatures(collection);
+      }
+    }
+  }
+}

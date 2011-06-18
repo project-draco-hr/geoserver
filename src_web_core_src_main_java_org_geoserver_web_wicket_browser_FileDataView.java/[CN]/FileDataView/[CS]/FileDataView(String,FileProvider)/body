@@ -1,0 +1,52 @@
+{
+  super(id);
+  this.provider=fileProvider;
+  final WebMarkupContainer table=new WebMarkupContainer("fileTable");
+  table.setOutputMarkupId(true);
+  add(table);
+  DataView fileTable=new DataView("files",fileProvider){
+    @Override protected void populateItem(    final Item item){
+      File file=(File)item.getModelObject();
+      item.add(new SimpleAttributeModifier("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
+      AjaxFallbackLink link=new IndicatingAjaxFallbackLink("nameLink"){
+        @Override public void onClick(        AjaxRequestTarget target){
+          linkNameClicked((File)item.getModelObject(),target);
+        }
+      }
+;
+      link.add(new Label("name",item.getModel()){
+        @Override public IConverter getConverter(        Class type){
+          return FILE_NAME_CONVERTER;
+        }
+      }
+);
+      item.add(link);
+      item.add(new Label("lastModified",item.getModel()){
+        @Override public IConverter getConverter(        Class type){
+          return FILE_LASTMODIFIED_CONVERTER;
+        }
+      }
+);
+      item.add(new Label("size",item.getModel()){
+        @Override public IConverter getConverter(        Class type){
+          return FILE_SIZE_CONVERTER;
+        }
+      }
+);
+    }
+  }
+;
+  fileContent=new WebMarkupContainer("fileContent"){
+    @Override protected void onComponentTag(    ComponentTag tag){
+      if (tableHeight != null) {
+        tag.getAttributes().put("style","overflow:auto; height:" + tableHeight);
+      }
+    }
+  }
+;
+  fileContent.add(fileTable);
+  table.add(fileContent);
+  table.add(new OrderByBorder("nameHeader",FileProvider.NAME,fileProvider));
+  table.add(new OrderByBorder("lastModifiedHeader",FileProvider.LAST_MODIFIED,fileProvider));
+  table.add(new OrderByBorder("sizeHeader",FileProvider.SIZE,fileProvider));
+}

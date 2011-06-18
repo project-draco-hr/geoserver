@@ -1,0 +1,20 @@
+{
+  if ((query == Query.ALL) || query.equals(Query.ALL)) {
+    return query;
+  }
+  try {
+    String[] propNames=extractAllowedAttributes(query,schema);
+    Filter filter=query.getFilter();
+    filter=makeDefinitionFilter(filter);
+    Query defQuery=new Query(query);
+    defQuery.setFilter(filter);
+    defQuery.setPropertyNames(propNames);
+    if (query.getSortBy() != null) {
+      defQuery.setSortBy(query.getSortBy());
+    }
+    return defQuery;
+  }
+ catch (  Exception ex) {
+    throw new DataSourceException("Could not restrict the query to the definition criteria: " + ex.getMessage(),ex);
+  }
+}

@@ -1,0 +1,13 @@
+{
+  CapabilitiesTransformer tx=new CapabilitiesTransformer.WFS1_1(getWFS(),getCatalog());
+  ByteArrayOutputStream output=new ByteArrayOutputStream();
+  tx.transform(request(),output);
+  InputStreamReader reader=new InputStreamReader(new ByteArrayInputStream(output.toByteArray()));
+  File f=new File("../web/src/main/webapp/schemas/wfs/1.1.0/wfs.xsd");
+  if (!f.exists()) {
+    return;
+  }
+  ErrorHandler handler=new ErrorHandler(logger,Level.WARNING);
+  ReaderUtils.validate(reader,handler,WFS.NAMESPACE,"../web/src/main/webapp/schemas/wfs/1.1.0/wfs.xsd");
+  assertTrue(handler.errors.isEmpty());
+}

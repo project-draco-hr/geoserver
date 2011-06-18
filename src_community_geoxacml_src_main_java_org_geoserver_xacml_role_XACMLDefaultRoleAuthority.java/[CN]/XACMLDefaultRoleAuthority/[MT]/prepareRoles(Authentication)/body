@@ -1,0 +1,31 @@
+{
+  if (AlreadyPrepared.get() == null) {
+    AlreadyPrepared.set(new HashSet<Authentication>());
+  }
+  if (AlreadyPrepared.get().contains(auth)) {
+    return;
+  }
+  List<RequestCtx> requests=new ArrayList<RequestCtx>(auth.getAuthorities().length);
+  String userName=null;
+  if (auth.getPrincipal() instanceof UserDetails)   userName=((UserDetails)auth.getPrincipal()).getUsername();
+  if (auth.getPrincipal() instanceof String) {
+    userName=auth.getPrincipal().toString();
+  }
+  for (  GrantedAuthority ga : auth.getAuthorities()) {
+    requests.add(GeoXACMLConfig.getRequestCtxBuilderFactory().getXACMLRoleRequestCtxBuilder((XACMLRole)ga,userName).createRequestCtx());
+  }
+  List<ResponseCtx> responses=GeoXACMLConfig.getXACMLTransport().evaluateRequestCtxList(requests);
+  outer:   for (int i=0; i < responses.size(); i++) {
+    ResponseCtx response=responses.get(i);
+    XACMLRole role=(XACMLRole)auth.getAuthorities()[i];
+    for (    Result result : response.getResults()) {
+      if (result.getDecision() != Result.DECISION_PERMIT) {
+        role.setEnabled(false);
+        continue outer;
+      }
+      role.setEnabled(true);
+      setUserProperties(auth,result,role);
+    }
+  }
+  AlreadyPrepared.get().add(auth);
+}

@@ -1,0 +1,37 @@
+{
+  final IModel geoServerModel=getGeoServerModel();
+  final IModel coverageModel=getCoverageAccessModel();
+  Form form=new Form("form",new CompoundPropertyModel(coverageModel));
+  add(form);
+  TextField corePoolSize=new TextField("corePoolSize");
+  corePoolSize.add(new MinimumValidator(1));
+  form.add(corePoolSize);
+  TextField maxPoolSize=new TextField("maxPoolSize");
+  maxPoolSize.add(new MinimumValidator(1));
+  form.add(maxPoolSize);
+  TextField keepAliveTime=new TextField("keepAliveTime");
+  keepAliveTime.add(new MinimumValidator(1));
+  form.add(keepAliveTime);
+  final DropDownChoice queueType=new DropDownChoice("queueType",Arrays.asList(CoverageAccessInfo.QueueType.values()),new QueueTypeRenderer());
+  form.add(queueType);
+  TextField imageIOCacheThreshold=new TextField("imageIOCacheThreshold");
+  imageIOCacheThreshold.add(new MinimumValidator(0l));
+  form.add(imageIOCacheThreshold);
+  Button submit=new Button("submit",new StringResourceModel("submit",this,null)){
+    @Override public void onSubmit(){
+      GeoServer gs=(GeoServer)geoServerModel.getObject();
+      gs.getGlobal().setCoverageAccess((CoverageAccessInfo)coverageModel.getObject());
+      gs.save(gs.getGlobal());
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+;
+  form.add(submit);
+  Button cancel=new Button("cancel"){
+    @Override public void onSubmit(){
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+;
+  form.add(cancel);
+}

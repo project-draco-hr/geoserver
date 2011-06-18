@@ -1,0 +1,16 @@
+{
+  WorkspaceInfo workspace=(WorkspaceInfo)object;
+  String ws=getAttribute("workspace");
+  if ("default".equals(ws)) {
+    catalog.setDefaultWorkspace(workspace);
+  }
+ else {
+    WorkspaceInfo original=catalog.getWorkspaceByName(ws);
+    if (workspace.getName() != null && !workspace.getName().equals(original.getName())) {
+      throw new RestletException("Can't change the name of a workspace.",Status.CLIENT_ERROR_FORBIDDEN);
+    }
+    new CatalogBuilder(catalog).updateWorkspace(original,workspace);
+    catalog.save(original);
+  }
+  LOGGER.info("PUT workspace " + ws);
+}

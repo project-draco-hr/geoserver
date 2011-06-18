@@ -1,0 +1,19 @@
+{
+  final ResourceInfo resource=layerInfo.getResource();
+  try {
+    LinkedHashMap json=new LinkedHashMap();
+    json.put("name",resource.getPrefixedName());
+    try {
+      json.put("bbox",toJSON(resource.boundingBox()));
+    }
+ catch (    Exception e) {
+      throw ((IOException)new IOException("Failed to get the resource bounding box of:" + resource.getPrefixedName()).initCause(e));
+    }
+    json.put("crs","urn:ogc:def:crs:EPSG:" + CRS.lookupEpsgCode(resource.getCRS(),false));
+    json.put("axisorder","xy");
+    return json;
+  }
+ catch (  FactoryException e) {
+    throw ((IOException)new IOException("Failed to lookup the EPSG code").initCause(e));
+  }
+}

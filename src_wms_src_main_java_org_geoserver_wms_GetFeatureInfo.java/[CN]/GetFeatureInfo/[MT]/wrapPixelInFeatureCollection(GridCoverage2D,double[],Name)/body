@@ -1,0 +1,18 @@
+{
+  GridSampleDimension[] sampleDimensions=coverage.getSampleDimensions();
+  SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+  builder.setName(coverageName);
+  final Set<String> bandNames=new HashSet<String>();
+  for (int i=0; i < sampleDimensions.length; i++) {
+    String name=sampleDimensions[i].getDescription().toString();
+    if (bandNames.contains(name))     name=new StringBuilder(name).append("_Band").append(i).toString();
+    bandNames.add(name);
+    builder.add(name,Double.class);
+  }
+  SimpleFeatureType gridType=builder.buildFeatureType();
+  Double[] values=new Double[pixelValues.length];
+  for (int i=0; i < values.length; i++) {
+    values[i]=new Double(pixelValues[i]);
+  }
+  return DataUtilities.collection(SimpleFeatureBuilder.build(gridType,values,""));
+}

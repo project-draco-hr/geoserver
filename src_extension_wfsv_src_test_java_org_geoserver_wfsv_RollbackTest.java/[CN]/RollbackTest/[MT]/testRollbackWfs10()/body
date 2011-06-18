@@ -1,0 +1,7 @@
+{
+  String rollback="<wfs:Transaction service=\"WFSV\" version=\"1.0.0\"\r\n" + "  xmlns:topp=\"http://www.openplans.org/topp\"\r\n" + "  xmlns:ogc=\"http://www.opengis.net/ogc\"\r\n"+ "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n"+ "  xmlns:gml=\"http://www.opengis.net/gml\"\r\n"+ "  xmlns:wfsv=\"http://www.opengis.net/wfsv\"\r\n"+ "  xmlns:wfs=\"http://www.opengis.net/wfs\"\r\n"+ "  handle=\"Rolling back previous changes\">\r\n"+ "  <wfsv:Rollback safeToIgnore=\"false\" vendorId=\"TOPP\" typeName=\"topp:archsites\" toFeatureVersion=\"1\"/>\r\n"+ "</wfs:Transaction>\r\n";
+  Document doc=postAsDOM(root(),rollback);
+  assertXpathEvaluatesTo("1","count(/wfs:WFS_TransactionResponse)",doc);
+  assertXpathEvaluatesTo("1","count(//wfs:WFS_TransactionResponse/wfs:TransactionResult/wfs:Status/wfs:SUCCESS)",doc);
+  assertXpathEvaluatesTo("archsites.2","/wfs:WFS_TransactionResponse/wfs:InsertResult/ogc:FeatureId/@fid",doc);
+}

@@ -1,0 +1,46 @@
+{
+  String charset=encInfo.getEncoding();
+  Boolean isBigEndian=encInfo.isBigEndian();
+  if (null == charset) {
+    String s="Name of the charset must not be NULL!";
+    throw new IllegalArgumentException(s);
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Trying to create reader basing on existing charset " + "information: `" + encInfo + "`.");
+  }
+  Reader reader=null;
+  if ("ISO-10646-UCS-4".equals(charset)) {
+    if (null != isBigEndian) {
+      boolean isBE=isBigEndian.booleanValue();
+      if (isBE) {
+        reader=new UCSReader(istream,UCSReader.UCS4BE);
+      }
+ else {
+        reader=new UCSReader(istream,UCSReader.UCS4LE);
+      }
+    }
+ else {
+      String s="Unsupported byte order for ISO-10646-UCS-4 encoding.";
+      throw new UnsupportedEncodingException(s);
+    }
+  }
+ else   if ("ISO-10646-UCS-2".equals(charset)) {
+    if (null != isBigEndian) {
+      boolean isBE=isBigEndian.booleanValue();
+      if (isBE) {
+        reader=new UCSReader(istream,UCSReader.UCS4BE);
+      }
+ else {
+        reader=new UCSReader(istream,UCSReader.UCS4LE);
+      }
+    }
+ else {
+      String s="Byte order must be specified for ISO-10646-UCS-2.";
+      throw new UnsupportedEncodingException(s);
+    }
+  }
+ else {
+    reader=new InputStreamReader(istream,charset);
+  }
+  return reader;
+}

@@ -1,0 +1,17 @@
+{
+  MockHttpServletResponse response=getAsServletResponse(baseFeatureInfo + "&info_format=application/vnd.ogc.gml&x=" + x+ "&y="+ y);
+  assertEquals("application/vnd.ogc.gml",response.getContentType());
+  Document doc=dom(new ByteArrayInputStream(response.getOutputStreamContent().getBytes()));
+  String sCount=xpath.evaluate("count(//sf:watertemp)",doc);
+  int count=Integer.valueOf(sCount);
+  if (count == 0) {
+    return null;
+  }
+ else   if (count == 1) {
+    return Double.valueOf(xpath.evaluate("//sf:watertemp/sf:GRAY_INDEX",doc));
+  }
+ else {
+    fail("Found more than one feature: " + count);
+    return null;
+  }
+}

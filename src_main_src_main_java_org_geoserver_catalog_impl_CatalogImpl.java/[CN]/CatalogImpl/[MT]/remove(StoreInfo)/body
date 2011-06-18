@@ -1,0 +1,18 @@
+{
+  if (!getResourcesByStore(store,ResourceInfo.class).isEmpty()) {
+    throw new IllegalArgumentException("Unable to delete non-empty store.");
+  }
+synchronized (facade) {
+    facade.remove(store);
+    WorkspaceInfo workspace=store.getWorkspace();
+    DataStoreInfo defaultStore=getDefaultDataStore(workspace);
+    if (store.equals(defaultStore)) {
+      setDefaultDataStore(workspace,null);
+      List dstores=getStoresByWorkspace(workspace,DataStoreInfo.class);
+      if (!dstores.isEmpty()) {
+        setDefaultDataStore(workspace,(DataStoreInfo)dstores.get(0));
+      }
+    }
+  }
+  removed(store);
+}

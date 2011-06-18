@@ -1,0 +1,40 @@
+{
+  final IModel infoModel=new LoadableDetachableModel(){
+    public Object load(){
+      return getGeoServer().getService(getServiceClass());
+    }
+  }
+;
+  Form form=new Form("form",new CompoundPropertyModel(infoModel));
+  add(form);
+  form.add(new Label("service.enabled",new StringResourceModel("service.enabled",this,null,new Object[]{getServiceName()})));
+  form.add(new TextField("maintainer"));
+  TextField onlineResource=new TextField("onlineResource");
+  onlineResource.add(new UrlValidator());
+  form.add(onlineResource);
+  form.add(new CheckBox("enabled"));
+  form.add(new CheckBox("citeCompliant"));
+  form.add(new TextField("title"));
+  form.add(new TextArea("abstract"));
+  form.add(new KeywordsEditor("keywords",LiveCollectionModel.list(new PropertyModel(infoModel,"keywords"))));
+  form.add(new TextField("fees"));
+  form.add(new TextField("accessConstraints"));
+  build(infoModel,form);
+  ListView extensionPanels=createExtensionPanelList("extensions",infoModel);
+  form.add(extensionPanels);
+  SubmitLink submit=new SubmitLink("submit",new StringResourceModel("save",(Component)null,null)){
+    @Override public void onSubmit(){
+      handleSubmit((T)infoModel.getObject());
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+;
+  form.add(submit);
+  Button cancel=new Button("cancel",new StringResourceModel("cancel",(Component)null,null)){
+    public void onSubmit(){
+      setResponsePage(GeoServerHomePage.class);
+    }
+  }
+;
+  form.add(cancel);
+}

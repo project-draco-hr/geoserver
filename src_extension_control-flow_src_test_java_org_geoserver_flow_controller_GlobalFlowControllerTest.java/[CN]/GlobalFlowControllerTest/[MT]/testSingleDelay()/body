@@ -1,0 +1,33 @@
+{
+  GlobalFlowController controller=new GlobalFlowController(1);
+  FlowControllerTestingThread t1=new FlowControllerTestingThread(controller,new Request(),0,Long.MAX_VALUE);
+  FlowControllerTestingThread t2=new FlowControllerTestingThread(controller,new Request(),0,Long.MAX_VALUE);
+  FlowControllerTestingThread t3=new FlowControllerTestingThread(controller,new Request(),0,Long.MAX_VALUE);
+  try {
+    t1.start();
+    waitBlocked(t1,MAX_WAIT);
+    t2.start();
+    waitBlocked(t2,MAX_WAIT);
+    t3.start();
+    waitBlocked(t3,MAX_WAIT);
+    assertEquals(ThreadState.PROCESSING,t1.state);
+    assertEquals(ThreadState.STARTED,t2.state);
+    assertEquals(ThreadState.STARTED,t3.state);
+    t1.interrupt();
+    waitTerminated(t1,MAX_WAIT);
+    assertEquals(ThreadState.COMPLETE,t1.state);
+    assertEquals(ThreadState.PROCESSING,t2.state);
+    assertEquals(ThreadState.STARTED,t3.state);
+    t2.interrupt();
+    waitTerminated(t2,MAX_WAIT);
+    assertEquals(ThreadState.COMPLETE,t1.state);
+    assertEquals(ThreadState.COMPLETE,t2.state);
+    assertEquals(ThreadState.PROCESSING,t3.state);
+    t3.interrupt();
+  }
+  finally {
+    waitAndKill(t1,MAX_WAIT);
+    waitAndKill(t2,MAX_WAIT);
+    waitAndKill(t3,MAX_WAIT);
+  }
+}

@@ -1,0 +1,11 @@
+{
+  List<StoreInfo> stores=catalog.getStoresByWorkspace("sf",StoreInfo.class);
+  assertFalse(stores.isEmpty());
+  MockHttpServletResponse response=deleteAsServletResponse("/rest/workspaces/sf?recurse=true");
+  assertEquals(200,response.getStatusCode());
+  assertNull(catalog.getWorkspaceByName("sf"));
+  assertNull(catalog.getNamespaceByPrefix("sf"));
+  for (  StoreInfo s : stores) {
+    assertNull(catalog.getStoreByName(s.getName(),StoreInfo.class));
+  }
+}

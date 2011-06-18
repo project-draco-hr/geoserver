@@ -1,0 +1,84 @@
+{
+  final DomainSubsetType domainSubset=Wcs10Factory.eINSTANCE.createDomainSubsetType();
+  final SpatialSubsetType spatialSubset=Wcs10Factory.eINSTANCE.createSpatialSubsetType();
+  String crsName=(String)kvp.get("crs");
+  if (crsName == null)   throw new WcsException("CRS parameter is mandatory",MissingParameterValue,"crs");
+  final CoordinateReferenceSystem crs=decodeCRS100(crsName);
+  if (crs == null)   throw new WcsException("CRS parameter is invalid:" + crsName,InvalidParameterValue,"crs");
+  final GeneralEnvelope bbox=(GeneralEnvelope)kvp.get("BBOX");
+  if (bbox == null)   throw new WcsException("bbox parameter is mandatory",MissingParameterValue,"bbox");
+  if (bbox.getDimension() != 2)   throw new WcsException("Requested bounding box is not 2-dimensional: " + bbox.getDimension(),InvalidParameterValue,"bbox");
+  final GeneralEnvelope envelope=new GeneralEnvelope(bbox.getDimension() == 3 ? DefaultGeographicCRS.WGS84_3D : crs);
+  if (bbox.getDimension() == 2)   envelope.setEnvelope(bbox.getLowerCorner().getOrdinate(0),bbox.getLowerCorner().getOrdinate(1),bbox.getUpperCorner().getOrdinate(0),bbox.getUpperCorner().getOrdinate(1));
+ else   throw new WcsException("bbox not compliant with the specified CRS",InvalidParameterValue,"bbox");
+  TimeSequenceType timeSequence=null;
+  Object time=kvp.get("TIME");
+  if (time != null && time instanceof TimeSequenceType) {
+    timeSequence=(TimeSequenceType)time;
+  }
+ else   if (time != null && time instanceof List) {
+    timeSequence=Wcs10Factory.eINSTANCE.createTimeSequenceType();
+    for (    Date tPos : (List<Date>)time) {
+      final TimePositionType timePosition=Gml4wcsFactory.eINSTANCE.createTimePositionType();
+      timePosition.setValue(tPos);
+      timeSequence.getTimePosition().add(timePosition);
+    }
+  }
+  if (timeSequence == null && bbox == null)   throw new WcsException("Bounding box cannot be null, TIME has not been specified",WcsExceptionCode.MissingParameterValue,"BBOX");
+  final RectifiedGridType grid=Gml4wcsFactory.eINSTANCE.createRectifiedGridType();
+  final Object w=kvp.get("width");
+  final Object h=kvp.get("height");
+  if (w != null && h != null) {
+    int width=w instanceof Integer ? ((Integer)w) : Integer.parseInt((String)w);
+    int height=w instanceof Integer ? ((Integer)h) : Integer.parseInt((String)h);
+    grid.getAxisName().add("x");
+    grid.getAxisName().add("y");
+    final Object d=kvp.get("depth");
+    if (d != null) {
+      throw new WcsException("3D grids are not supported.",InvalidParameterValue,"depth");
+    }
+ else {
+      grid.setDimension(BigInteger.valueOf(2));
+      grid.setLimits(new GridEnvelope2D(0,0,width,height));
+    }
+  }
+ else {
+    final Object rx=kvp.get("resx");
+    final Object ry=kvp.get("resy");
+    if (rx != null && ry != null) {
+      final CoordinateSystem cs=crs.getCoordinateSystem();
+      final AxisDirection northingDirection=cs.getAxis(1).getDirection();
+      final int yAxisCorrection=AxisDirection.NORTH.equals(northingDirection) ? -1 : 1;
+      final AxisDirection eastingDirection=cs.getAxis(0).getDirection();
+      final int xAxisCorrection=AxisDirection.EAST.equals(eastingDirection) ? 1 : -1;
+      final double resX=Double.parseDouble((String)rx) * xAxisCorrection;
+      final double resY=Double.parseDouble((String)ry) * yAxisCorrection;
+      final double origX=envelope.getLowerCorner().getOrdinate(0) + resX / 2;
+      final double origY=envelope.getUpperCorner().getOrdinate(1) + resY / 2;
+      final PointType origin=Gml4wcsFactory.eINSTANCE.createPointType();
+      final DirectPositionType dp=Gml4wcsFactory.eINSTANCE.createDirectPositionType();
+      origin.setPos(dp);
+      origin.setSrsName(crsName);
+      final VectorType resolutionVector=Gml4wcsFactory.eINSTANCE.createVectorType();
+      final Object rz=kvp.get("resz");
+      if (rz != null) {
+        throw new WcsException("3D grids are not supported.",InvalidParameterValue,"resz");
+      }
+ else {
+        grid.setDimension(BigInteger.valueOf(2));
+        dp.setDimension(grid.getDimension());
+        dp.setValue(Arrays.asList(origX,origY));
+        grid.setOrigin(origin);
+        resolutionVector.setDimension(grid.getDimension());
+        resolutionVector.setValue(Arrays.asList(resX,resY));
+        grid.getOffsetVector().add(resolutionVector);
+      }
+    }
+ else     throw new WcsException("Could not recognize grid resolution",InvalidParameterValue,"");
+  }
+  spatialSubset.getEnvelope().add(envelope);
+  spatialSubset.getGrid().add(grid);
+  domainSubset.setSpatialSubset(spatialSubset);
+  domainSubset.setTemporalSubset(timeSequence);
+  return domainSubset;
+}

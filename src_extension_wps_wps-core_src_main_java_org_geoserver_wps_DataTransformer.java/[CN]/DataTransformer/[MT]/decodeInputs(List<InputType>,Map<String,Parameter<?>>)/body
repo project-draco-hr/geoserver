@@ -1,0 +1,29 @@
+{
+  Map<String,Object> inputMap=new HashMap<String,Object>();
+  this.inputParameters=parameters;
+  for (  InputType input : inputs) {
+    String identifier=input.getIdentifier().getValue();
+    Object decoded=null;
+    if (null != input.getData()) {
+      decoded=this.decodeInputData(input);
+    }
+    if (null != input.getReference()) {
+      decoded=this.decodeReferenceData(identifier,input.getReference());
+    }
+    if (inputMap.containsKey(identifier)) {
+      if (inputMap.get(identifier) instanceof List) {
+        List<Object> list=(List<Object>)inputMap.get(identifier);
+        list.add(decoded);
+      }
+ else {
+        List<Object> list=new ArrayList<Object>();
+        list.add(inputMap.get(identifier));
+        inputMap.put(identifier,list);
+      }
+    }
+ else {
+      inputMap.put(identifier,decoded);
+    }
+  }
+  return inputMap;
+}

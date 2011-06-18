@@ -1,0 +1,28 @@
+{
+  ResourceAccessManager manager=buildManager("lockedDown.properties");
+  SecureCatalogImpl sc=new SecureCatalogImpl(catalog,manager);
+  SecurityContextHolder.getContext().setAuthentication(roUser);
+  assertNull(sc.getFeatureTypeByName("topp:states"));
+  assertNull(sc.getCoverageByName("nurc:arcgrid"));
+  assertNull(sc.getResourceByName("topp:states",FeatureTypeInfo.class));
+  assertNull(sc.getResourceByName("nurc:arcgrid",CoverageInfo.class));
+  assertEquals(0,sc.getFeatureTypes().size());
+  assertEquals(0,sc.getCoverages().size());
+  assertEquals(0,sc.getWorkspaces().size());
+  assertNull(sc.getWorkspaceByName("topp"));
+  assertNull(sc.getDataStoreByName("states"));
+  assertNull(sc.getDataStoreByName("roads"));
+  assertNull(sc.getCoverageStoreByName("arcGrid"));
+  SecurityContextHolder.getContext().setAuthentication(rwUser);
+  assertSame(states,sc.getFeatureTypeByName("topp:states"));
+  assertSame(arcGrid,sc.getCoverageByName("nurc:arcgrid"));
+  assertSame(states,sc.getResourceByName("topp:states",FeatureTypeInfo.class));
+  assertSame(arcGrid,sc.getResourceByName("nurc:arcgrid",CoverageInfo.class));
+  assertEquals(featureTypes,sc.getFeatureTypes());
+  assertEquals(coverages,sc.getCoverages());
+  assertEquals(workspaces,sc.getWorkspaces());
+  assertEquals(toppWs,sc.getWorkspaceByName("topp"));
+  assertSame(statesStore,sc.getDataStoreByName("states"));
+  assertSame(roadsStore,sc.getDataStoreByName("roads"));
+  assertSame(arcGridStore,sc.getCoverageStoreByName("arcGrid"));
+}

@@ -1,0 +1,26 @@
+{
+  if (layer instanceof WMSLayer) {
+    return WMS;
+  }
+ else   if (layer instanceof GeoServerTileLayer) {
+    GeoServerTileLayer gtl=(GeoServerTileLayer)layer;
+    LayerInfo li;
+    if (null != (li=gtl.getLayerInfo())) {
+      ResourceInfo resource=li.getResource();
+      if (resource instanceof FeatureTypeInfo) {
+        return VECTOR;
+      }
+ else       if (resource instanceof CoverageInfo) {
+        return RASTER;
+      }
+ else       if (resource instanceof WMSLayerInfo) {
+        return WMS;
+      }
+    }
+ else     if (null != gtl.getLayerGroupInfo()) {
+      return LAYERGROUP;
+    }
+  }
+  LOGGER.info("Unknown TileLayer type, returning OTHER: " + layer.getClass().getName());
+  return OTHER;
+}

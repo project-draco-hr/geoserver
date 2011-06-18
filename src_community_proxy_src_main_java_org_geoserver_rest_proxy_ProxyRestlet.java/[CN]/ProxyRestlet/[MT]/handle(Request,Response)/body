@@ -1,0 +1,39 @@
+{
+  if (watcherWorks && configWatcher.isStale()) {
+    config=ProxyConfig.loadConfFromDisk();
+  }
+  Form f=request.getResourceRef().getQueryAsForm();
+  String url=f.getFirstValue("url");
+  try {
+    URL resolved=new URL(url);
+    final HttpURLConnection connection=(HttpURLConnection)resolved.openConnection();
+    ;
+    if (request.getMethod().equals(Method.PUT) || request.getMethod().equals(Method.POST)) {
+      connection.setDoOutput(true);
+    }
+    connection.setRequestMethod(request.getMethod().toString());
+    if (checkPermission(resolved,connection.getContentType()) != true) {
+      throw new RestletException("Request for nonpermitted content type or hostname",Status.CLIENT_ERROR_BAD_REQUEST);
+    }
+    if (request.getMethod().equals(Method.PUT) || request.getMethod().equals(Method.POST)) {
+      copyStream(request.getEntity().getStream(),connection.getOutputStream());
+    }
+    response.setEntity(new StreamRepresentation(new MediaType(connection.getContentType())){
+      @Override public void write(      OutputStream out) throws IOException {
+        copyStream(connection.getInputStream(),out);
+      }
+      @Override public InputStream getStream() throws IOException {
+        throw new UnsupportedOperationException();
+      }
+    }
+);
+  }
+ catch (  MalformedURLException e) {
+    LOGGER.log(Level.WARNING,"Invalid proxy request. ",e);
+    throw new RestletException("Invalid proxy request",Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Couldn't connect to proxied service",e);
+    throw new RestletException("Couldn't connect to proxied service",Status.SERVER_ERROR_BAD_GATEWAY);
+  }
+}

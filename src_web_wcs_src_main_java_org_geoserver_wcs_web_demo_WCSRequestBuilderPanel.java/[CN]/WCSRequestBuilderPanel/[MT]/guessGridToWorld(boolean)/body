@@ -1,0 +1,23 @@
+{
+  try {
+    String coverageName=coverage.getModelObject();
+    Catalog catalog=GeoServerApplication.get().getCatalog();
+    CoverageInfo ci=catalog.getCoverageByName(coverageName);
+    ReferencedEnvelope nativeBounds=getCoverage.bounds.transform(ci.getCRS(),true);
+    ReferencedEnvelope targetBounds=nativeBounds.transform(getCoverage.targetCRS,true);
+    GridEnvelope2D gridLimits=guessGridLimits();
+    GridGeometry2D gg=new GridGeometry2D(gridLimits,targetBounds);
+    AffineTransform at=(AffineTransform)gg.getGridToCRS(PixelInCell.CELL_CORNER);
+    if (resolutionMode) {
+      return AffineTransform.getScaleInstance(at.getScaleX(),at.getScaleY());
+    }
+ else {
+      return at;
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to guess target affine transform",e);
+    error("Failed to guess native grid: " + e.getMessage());
+    return null;
+  }
+}

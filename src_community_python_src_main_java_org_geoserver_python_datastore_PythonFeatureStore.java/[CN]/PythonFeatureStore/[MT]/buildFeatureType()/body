@@ -1,0 +1,13 @@
+{
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.setName(((PyString)schema.__findattr__("name")).asString());
+  PyList fields=(PyList)schema.__findattr__("fields");
+  for (  Object o : fields.toArray()) {
+    PyObject field=(PyObject)o;
+    String name=((PyString)field.__findattr__("name")).asString();
+    PyType type=(PyType)field.__findattr__("typ");
+    Class clazz=(Class)type.__tojava__(Object.class);
+    tb.add(name,unwrapClass(clazz));
+  }
+  return tb.buildFeatureType();
+}

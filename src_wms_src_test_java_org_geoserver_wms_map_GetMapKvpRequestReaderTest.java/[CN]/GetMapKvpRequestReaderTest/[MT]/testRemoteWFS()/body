@@ -1,0 +1,20 @@
+{
+  if (!RemoteOWSTestSupport.isRemoteWFSStatesAvailable(LOGGER))   return;
+  HashMap raw=new HashMap();
+  raw.put("layers","topp:states");
+  raw.put("styles",MockData.BASIC_POLYGONS.getLocalPart());
+  raw.put("format","image/png");
+  raw.put("srs","epsg:4326");
+  raw.put("bbox","-100,20,-60,50");
+  raw.put("height","300");
+  raw.put("width","300");
+  raw.put("remote_ows_type","WFS");
+  raw.put("remote_ows_url",RemoteOWSTestSupport.WFS_SERVER_URL);
+  GetMapRequest request=(GetMapRequest)reader.createRequest();
+  request=(GetMapRequest)reader.read(request,parseKvp(raw),caseInsensitiveKvp(raw));
+  assertEquals("WFS",request.getRemoteOwsType());
+  assertEquals(new URL(RemoteOWSTestSupport.WFS_SERVER_URL),request.getRemoteOwsURL());
+  assertEquals(1,request.getLayers().size());
+  assertEquals(LayerInfo.Type.REMOTE.getCode().intValue(),request.getLayers().get(0).getType());
+  assertEquals("topp:states",request.getLayers().get(0).getName());
+}

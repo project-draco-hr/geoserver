@@ -1,0 +1,22 @@
+{
+  CoordinateReferenceSystem declaredCRS=getCRS();
+  CoordinateReferenceSystem nativeCRS=getNativeCRS();
+  ProjectionPolicy php=getProjectionPolicy();
+  ReferencedEnvelope nativeBox=this.nativeBoundingBox;
+  if (nativeBox == null) {
+    try {
+      nativeBox=getLatLonBoundingBox().transform(declaredCRS,true);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"Failed to derive native bbox from declared one",e);
+      return null;
+    }
+  }
+  if (!CRS.equalsIgnoreMetadata(declaredCRS,nativeCRS) && php == ProjectionPolicy.REPROJECT_TO_DECLARED) {
+    return nativeBox.transform(declaredCRS,true);
+  }
+ else   if (php == ProjectionPolicy.FORCE_DECLARED) {
+    return new ReferencedEnvelope(nativeBox,declaredCRS);
+  }
+  return nativeBox;
+}

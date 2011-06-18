@@ -1,0 +1,12 @@
+{
+  GeoServerLoader loader=GeoServerExtensions.bean(GeoServerLoader.class);
+  getCatalog().getResourcePool().dispose();
+  loader.reload();
+  GSSInfo info=getGeoServer().getService(GSSInfo.class);
+  assertNotNull(info);
+  assertEquals("GSS",info.getName());
+  assertEquals(GSSMode.Unit,info.getMode());
+  DataAccess storeCatalog=getCatalog().getStore("synchStore",DataStoreInfo.class).getDataStore(null);
+  DataAccess storeService=info.getVersioningDataStore().getDataStore(null);
+  assertSame(storeCatalog,storeService);
+}

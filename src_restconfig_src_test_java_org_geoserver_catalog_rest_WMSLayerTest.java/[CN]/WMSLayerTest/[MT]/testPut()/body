@@ -1,0 +1,9 @@
+{
+  String xml="<wmsLayer>" + "<title>Lots of states here</title>" + "</wmsLayer>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/sf/wmsstores/demo/wmslayers/states",xml,"text/xml");
+  assertEquals(200,response.getStatusCode());
+  Document dom=getAsDOM("/rest/workspaces/sf/wmsstores/demo/wmslayers/states.xml");
+  assertXpathEvaluatesTo("Lots of states here","/wmsLayer/title",dom);
+  WMSLayerInfo wli=catalog.getResourceByName("sf","states",WMSLayerInfo.class);
+  assertEquals("Lots of states here",wli.getTitle());
+}

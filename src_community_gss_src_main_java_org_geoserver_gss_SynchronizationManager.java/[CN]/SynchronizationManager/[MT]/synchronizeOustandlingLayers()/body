@@ -1,0 +1,124 @@
+{
+  core.ensureEnabled();
+  if (core.getMode() != GSSMode.Central) {
+    return;
+  }
+  FeatureIterator<SimpleFeature> fi=null;
+  FeatureIterator<SimpleFeature> li=null;
+  try {
+    VersioningDataStore ds=core.getVersioningStore();
+    FeatureSource<SimpleFeatureType,SimpleFeature> outstanding=ds.getFeatureSource(SYNCH_OUTSTANDING);
+    DefaultQuery q=new DefaultQuery(SYNCH_OUTSTANDING);
+    q.setSortBy(new SortBy[]{ff.sort("last_synchronization",SortOrder.ASCENDING)});
+    LOGGER.info("Performing scheduled synchronisation");
+    fi=outstanding.getFeatures(q).features();
+    Set<Integer> unitBlacklist=new HashSet<Integer>();
+    while (fi.hasNext()) {
+      SimpleFeature layer=fi.next();
+      int unitId=(Integer)layer.getAttribute("unit_id");
+      int tableId=(Integer)layer.getAttribute("table_id");
+      String unitName=(String)layer.getAttribute("unit_name");
+      String tableName=(String)layer.getAttribute("table_name");
+      String address=(String)layer.getAttribute("unit_address");
+      String user=(String)layer.getAttribute("synch_user");
+      String password=(String)layer.getAttribute("synch_password");
+      Long getDiffCentralRevision=(Long)layer.getAttribute("getdiff_central_revision");
+      Long lastUnitRevision=(Long)layer.getAttribute("last_unit_revision");
+      if (unitBlacklist.contains(unitId)) {
+        LOGGER.log(Level.INFO,"Unit " + unitName + " is blacklisted "+ "for this run, skipping "+ tableName);
+        continue;
+      }
+      Transaction transaction=null;
+      try {
+        transaction=new DefaultTransaction();
+        GSSClient client=getClient(address,user,password);
+        QName layerName=getLayerName(tableName);
+        long clientCentralRevision=client.getCentralRevision(layerName);
+        VersioningFeatureStore fs=(VersioningFeatureStore)ds.getFeatureSource(tableName);
+        fs.setTransaction(transaction);
+        String fromRevision=clientCentralRevision == -1 ? "FIRST" : String.valueOf(clientCentralRevision);
+        TransactionType centralChanges;
+        LOGGER.log(Level.INFO,"About to compute PostDiff changes. Last central revision known to client " + clientCentralRevision + ", last GetDiff central revision "+ getDiffCentralRevision);
+        if (getDiffCentralRevision == null || clientCentralRevision >= getDiffCentralRevision) {
+          LOGGER.log(Level.INFO,"First PostDiff or clientRevion same as the last central one, computing diff from " + fromRevision + " to LAST");
+          FeatureDiffReader fdr=fs.getDifferences(fromRevision,"LAST",null,null);
+          centralChanges=new VersioningTransactionConverter().convert(fdr,TransactionType.class);
+        }
+ else {
+          String before=String.valueOf(getDiffCentralRevision - 1);
+          String after=String.valueOf(getDiffCentralRevision);
+          LOGGER.log(Level.INFO,"Client revision lower than the server one, computing diff from " + fromRevision + " to "+ before+ " and merging with diffs from "+ after+ " to LAST");
+          FeatureDiffReader fdr1=fs.getDifferences(fromRevision,before,null,null);
+          FeatureDiffReader fdr2=fs.getDifferences(after,"LAST",null,null);
+          FeatureDiffReader[] fdr=new FeatureDiffReader[]{fdr1,fdr2};
+          centralChanges=new VersioningTransactionConverter().convert(fdr,TransactionType.class);
+        }
+        long lastCentralRevision=clientCentralRevision;
+        li=fs.getLog("LAST",fromRevision,null,null,1).features();
+        if (li.hasNext()) {
+          lastCentralRevision=(Long)li.next().getAttribute("revision");
+        }
+        li.close();
+        PostDiffType postDiff=new PostDiffType();
+        postDiff.setTypeName(layerName);
+        postDiff.setFromVersion(clientCentralRevision);
+        postDiff.setToVersion(lastCentralRevision);
+        postDiff.setTransaction(centralChanges);
+        client.postDiff(postDiff);
+        GetDiffType getDiff=new GetDiffType();
+        getDiff.setFromVersion(lastUnitRevision == null ? -1 : lastUnitRevision);
+        getDiff.setTypeName(layerName);
+        GetDiffResponseType gdr=client.getDiff(getDiff);
+        TransactionType unitChanges=gdr.getTransaction();
+        core.applyChanges(unitChanges,fs);
+        FeatureStore<SimpleFeatureType,SimpleFeature> tuMetadata=(FeatureStore<SimpleFeatureType,SimpleFeature>)ds.getFeatureSource(SYNCH_UNIT_TABLES);
+        tuMetadata.setTransaction(transaction);
+        SimpleFeatureType tuSchema=tuMetadata.getSchema();
+        int unitChangeCount=core.countChanges(unitChanges);
+        int centralChangeCount=core.countChanges(centralChanges);
+        if (unitChangeCount == 0 && centralChangeCount == 0) {
+          AttributeDescriptor[] atts=new AttributeDescriptor[]{tuSchema.getDescriptor("last_synchronization")};
+          Object[] values=new Object[]{new Date()};
+          Filter filter=ff.and(ff.equals(ff.property("table_id"),ff.literal(tableId)),ff.equals(ff.property("unit_id"),ff.literal(unitId)));
+          tuMetadata.modifyFeatures(atts,values,filter);
+        }
+ else {
+          AttributeDescriptor[] atts=new AttributeDescriptor[]{tuSchema.getDescriptor("last_synchronization"),tuSchema.getDescriptor("getdiff_central_revision"),tuSchema.getDescriptor("last_unit_revision")};
+          Object[] values=new Object[]{new Date(),Long.parseLong(fs.getVersion()),gdr.getToVersion()};
+          Filter filter=ff.and(ff.equals(ff.property("table_id"),ff.literal(tableId)),ff.equals(ff.property("unit_id"),ff.literal(unitId)));
+          tuMetadata.modifyFeatures(atts,values,filter);
+        }
+        updateUnitStatus(ds,transaction,unitId,false);
+        transaction.putProperty(VersioningDataStore.AUTHOR,"gss");
+        transaction.putProperty(VersioningDataStore.MESSAGE,"Synchronizing with Unit '" + unitName + "' on table '"+ tableName+ "': "+ centralChangeCount+ " changes sent and "+ unitChangeCount+ " changes received");
+        transaction.commit();
+        LOGGER.log(Level.INFO,"Successfull synchronisation of table " + tableName + " for unit "+ unitName+ "("+ centralChangeCount+ " changes sent to the Unit, "+ unitChangeCount+ " change incoming from the Unit)");
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"Synchronisation of table " + tableName + " for unit "+ unitName+ " failed",e);
+        transaction.rollback();
+        FeatureStore<SimpleFeatureType,SimpleFeature> tuMetadata=(FeatureStore<SimpleFeatureType,SimpleFeature>)ds.getFeatureSource(SYNCH_UNIT_TABLES);
+        SimpleFeatureType tuSchema=tuMetadata.getSchema();
+        AttributeDescriptor[] atts=new AttributeDescriptor[]{tuSchema.getDescriptor("last_failure")};
+        Object[] values=new Object[]{new Date()};
+        Filter filter=ff.and(ff.equals(ff.property("table_id"),ff.literal(tableId)),ff.equals(ff.property("unit_id"),ff.literal(unitId)));
+        tuMetadata.modifyFeatures(atts,values,filter);
+        updateUnitStatus(ds,Transaction.AUTO_COMMIT,unitId,true);
+        unitBlacklist.add(unitId);
+      }
+ finally {
+        if (transaction != null) {
+          transaction.close();
+        }
+      }
+    }
+  }
+  finally {
+    if (fi != null) {
+      fi.close();
+    }
+    if (li != null) {
+      li.close();
+    }
+  }
+}

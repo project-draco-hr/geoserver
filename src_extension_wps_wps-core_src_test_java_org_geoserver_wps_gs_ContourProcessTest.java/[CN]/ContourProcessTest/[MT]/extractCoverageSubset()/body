@@ -1,0 +1,13 @@
+{
+  CoverageInfo dem=getCatalog().getCoverageByName(DEM.getLocalPart());
+  GridCoverage2D gc=(GridCoverage2D)dem.getGridCoverage(null,GeoTools.getDefaultHints());
+  Envelope fullEnvelope=gc.getEnvelope();
+  GeneralEnvelope subset=new GeneralEnvelope(fullEnvelope.getCoordinateReferenceSystem());
+  double minX=fullEnvelope.getMinimum(0);
+  double minY=fullEnvelope.getMinimum(1);
+  double offsetX=fullEnvelope.getSpan(0) / 5;
+  double offsetY=fullEnvelope.getSpan(1) / 5;
+  subset.setEnvelope(minX + offsetX,minY + offsetY,minX + offsetX * 2,minY + offsetY * 2);
+  gc=(GridCoverage2D)new Operations(null).crop(gc,subset);
+  return gc;
+}

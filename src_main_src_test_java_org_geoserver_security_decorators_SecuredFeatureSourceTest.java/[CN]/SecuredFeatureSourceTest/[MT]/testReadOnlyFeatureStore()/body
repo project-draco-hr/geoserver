@@ -1,0 +1,16 @@
+{
+  SimpleFeatureType schema=createNiceMock(SimpleFeatureType.class);
+  expect(schema.getName()).andReturn(new NameImpl("testFT"));
+  replay(schema);
+  FeatureStore fs=createNiceMock(FeatureStore.class);
+  expect(fs.getSchema()).andReturn(schema);
+  replay(fs);
+  SecuredFeatureStore ro=new SecuredFeatureStore(fs,WrapperPolicy.readOnlyChallenge(null));
+  try {
+    ro.addFeatures(createNiceMock(FeatureCollection.class));
+    fail("This should have thrown a security exception");
+  }
+ catch (  Exception e) {
+    if (ReadOnlyDataStoreTest.isSpringSecurityException(e) == false)     fail("Should have failed with a security exception");
+  }
+}

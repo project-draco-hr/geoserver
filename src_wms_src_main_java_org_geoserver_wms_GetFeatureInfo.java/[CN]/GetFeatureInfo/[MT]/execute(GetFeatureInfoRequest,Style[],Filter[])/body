@@ -1,0 +1,80 @@
+{
+  final List<MapLayerInfo> requestedLayers=request.getQueryLayers();
+  final int x=request.getXPixel();
+  final int y=request.getYPixel();
+  final int buffer=request.getGetMapRequest().getBuffer();
+  final List<Map<String,String>> viewParams=request.getGetMapRequest().getViewParams();
+  final GetMapRequest getMapReq=request.getGetMapRequest();
+  final CoordinateReferenceSystem requestedCRS=getMapReq.getCrs();
+  final int width=getMapReq.getWidth();
+  final int height=getMapReq.getHeight();
+  final ReferencedEnvelope bbox=new ReferencedEnvelope(getMapReq.getBbox(),getMapReq.getCrs());
+  final double scaleDenominator=RendererUtilities.calculateOGCScale(bbox,width,null);
+  final List<Object> elevations=request.getGetMapRequest().getElevation();
+  final List<Object> times=request.getGetMapRequest().getTime();
+  final FilterFactory2 ff=CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
+  List<FeatureCollection> results=new ArrayList<FeatureCollection>(requestedLayers.size());
+  int maxFeatures=request.getFeatureCount();
+  for (int i=0; i < requestedLayers.size(); i++) {
+    final MapLayerInfo layer=requestedLayers.get(i);
+    if (layer.getType() == MapLayerInfo.TYPE_WMS) {
+      List<FeatureCollection> cascadedResults;
+      cascadedResults=handleGetFeatureInfoCascade(request,maxFeatures,layer);
+      if (cascadedResults != null) {
+        results.addAll(cascadedResults);
+      }
+      continue;
+    }
+    final Style style=styles[i];
+    final List<Rule> rules=getActiveRules(style,scaleDenominator);
+    if (rules.size() == 0) {
+      continue;
+    }
+    FeatureCollection collection=null;
+    if (layer.getType() == MapLayerInfo.TYPE_VECTOR) {
+      final Map<String,String> viewParam=viewParams != null ? viewParams.get(i) : null;
+      collection=identifyVectorLayer(filters,x,y,buffer,viewParam,requestedCRS,width,height,bbox,ff,results,i,layer,rules,maxFeatures,times,elevations);
+    }
+ else     if (layer.getType() == MapLayerInfo.TYPE_RASTER) {
+      final CoverageInfo cinfo=requestedLayers.get(i).getCoverage();
+      final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)cinfo.getGridCoverageReader(new NullProgressListener(),GeoTools.getDefaultHints());
+      final GridGeometry2D coverageGeometry=(GridGeometry2D)cinfo.getGrid();
+      final Coordinate middle=pixelToWorld(x,y,bbox,width,height);
+      DirectPosition position=new DirectPosition2D(requestedCRS,middle.x,middle.y);
+      if (requestedCRS != null) {
+        final CoordinateReferenceSystem targetCRS=coverageGeometry.getCoordinateReferenceSystem();
+        final TransformedDirectPosition arbitraryToInternal=new TransformedDirectPosition(requestedCRS,targetCRS,new Hints(Hints.LENIENT_DATUM_SHIFT,Boolean.TRUE));
+        try {
+          arbitraryToInternal.transform(position);
+        }
+ catch (        TransformException exception) {
+          throw new CannotEvaluateException("Unable to answer the geatfeatureinfo",exception);
+        }
+        position=arbitraryToInternal;
+      }
+      if (!reader.getOriginalEnvelope().contains(position)) {
+        continue;
+      }
+      GeneralParameterValue[] parameters=wms.getWMSReadParameters(request.getGetMapRequest(),requestedLayers.get(i),filters[i],times,elevations,reader,true);
+      collection=identifyRasterLayer(reader,position,parameters,cinfo,getMapReq);
+    }
+ else {
+      LOGGER.log(Level.SEVERE,"Can't perform feature info " + "requests on " + layer.getName() + ", layer type not supported");
+    }
+    if (collection != null) {
+      if (!(collection instanceof SimpleFeatureCollection)) {
+        Name name=new NameImpl(layer.getFeature().getNamespace().getName(),layer.getFeature().getName());
+        collection=new FeatureCollectionDecorator(name,collection);
+      }
+      int size=collection.size();
+      if (size != 0) {
+        results.add(collection);
+        maxFeatures-=size;
+        if (maxFeatures <= 0) {
+          break;
+        }
+      }
+    }
+  }
+  return results;
+}

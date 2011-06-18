@@ -1,0 +1,19 @@
+{
+  DescribeLayerRequest request=(DescribeLayerRequest)super.read(req,kvp,rawKvp);
+  request.setRawKvp(rawKvp);
+  final String version=request.getVersion();
+  if (null == version) {
+    String code="NoVersionInfo";
+    String simpleName=getClass().getSimpleName();
+    throw new ServiceException("Version parameter not provided for DescribeLayer operation",code,simpleName);
+  }
+  if (!wms.getVersion().equals(version)) {
+    throw new ServiceException("Wrong value for version parameter: " + version + ". This server accetps version "+ wms.getVersion(),"InvalidVersion",getClass().getSimpleName());
+  }
+  List<MapLayerInfo> layers=new MapLayerInfoKvpParser("LAYERS",wms).parse((String)rawKvp.get("LAYERS"));
+  request.setLayers(layers);
+  if (layers == null || layers.size() == 0) {
+    throw new ServiceException("No LAYERS has been requested","NoLayerRequested",getClass().getName());
+  }
+  return request;
+}

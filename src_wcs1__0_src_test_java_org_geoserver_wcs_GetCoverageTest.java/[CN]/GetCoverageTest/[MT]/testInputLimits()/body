@@ -1,0 +1,13 @@
+{
+  try {
+    setInputLimit(1);
+    String queryString="&request=getcoverage&service=wcs&version=1.0.0&format=image/geotiff&bbox=146,-45,147,-42" + "&crs=EPSG:4326&width=150&height=150";
+    Document dom=getAsDOM("wcs/BlueMarble/wcs?sourcecoverage=" + getLayerId(TASMANIA_BM) + queryString);
+    assertEquals("ServiceExceptionReport",dom.getDocumentElement().getNodeName());
+    String error=xpath.evaluate("/ServiceExceptionReport/ServiceException/text()",dom).trim();
+    assertTrue(error.matches(".*read too much data.*"));
+  }
+  finally {
+    setInputLimit(0);
+  }
+}

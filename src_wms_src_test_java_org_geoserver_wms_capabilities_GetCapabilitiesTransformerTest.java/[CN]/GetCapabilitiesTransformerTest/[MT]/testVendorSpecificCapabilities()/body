@@ -1,0 +1,34 @@
+{
+  ExtendedCapabilitiesProvider vendorCapsProvider=new ExtendedCapabilitiesProvider(){
+    public String[] getSchemaLocations(    String schemaBaseURL){
+      throw new UnsupportedOperationException();
+    }
+    public void registerNamespaces(    NamespaceSupport namespaces){
+      throw new UnsupportedOperationException();
+    }
+    public List<String> getVendorSpecificCapabilitiesRoots(    GetCapabilitiesRequest request){
+      return Collections.singletonList("TestElement?");
+    }
+    /** 
+ * @see org.geoserver.wms.ExtendedCapabilitiesProvider#getVendorSpecificCapabilitiesChildDecls()
+ */
+    public List<String> getVendorSpecificCapabilitiesChildDecls(    GetCapabilitiesRequest request){
+      return Collections.singletonList("<!ELEMENT TestSubElement (#PCDATA) >");
+    }
+    public void encode(    Translator tx,    WMSInfo wms,    GetCapabilitiesRequest request) throws IOException {
+      tx.start("TestElement");
+      tx.start("TestSubElement");
+      tx.end("TestSubElement");
+      tx.end("TestElement");
+    }
+  }
+;
+  GetCapabilitiesTransformer tr;
+  tr=new GetCapabilitiesTransformer(wmsConfig,baseUrl,mapFormats,legendFormats,Collections.singletonList(vendorCapsProvider));
+  tr.setIndentation(2);
+  Document dom=WMSTestSupport.transform(req,tr);
+  NodeList list=XPATH.getMatchingNodes("/WMT_MS_Capabilities/Capability/VendorSpecificCapabilities/TestElement",dom);
+  assertEquals(1,list.getLength());
+  list=XPATH.getMatchingNodes("/WMT_MS_Capabilities/Capability/VendorSpecificCapabilities/TestElement/TestSubElement",dom);
+  assertEquals(1,list.getLength());
+}

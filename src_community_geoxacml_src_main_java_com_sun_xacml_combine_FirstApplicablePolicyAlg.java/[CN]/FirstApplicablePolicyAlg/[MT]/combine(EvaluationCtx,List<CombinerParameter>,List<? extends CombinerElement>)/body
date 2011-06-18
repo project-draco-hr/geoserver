@@ -1,0 +1,14 @@
+{
+  Iterator<? extends CombinerElement> it=policyElements.iterator();
+  while (it.hasNext()) {
+    AbstractPolicy policy=((PolicyCombinerElement)(it.next())).getPolicy();
+    MatchResult match=policy.match(context);
+    if (match.getResult() == MatchResult.INDETERMINATE)     return new Result(Result.DECISION_INDETERMINATE,match.getStatus(),context.getResourceId().encode());
+    if (match.getResult() == MatchResult.MATCH) {
+      Result result=policy.evaluate(context);
+      int effect=result.getDecision();
+      if (effect != Result.DECISION_NOT_APPLICABLE)       return result;
+    }
+  }
+  return new Result(Result.DECISION_NOT_APPLICABLE,context.getResourceId().encode());
+}

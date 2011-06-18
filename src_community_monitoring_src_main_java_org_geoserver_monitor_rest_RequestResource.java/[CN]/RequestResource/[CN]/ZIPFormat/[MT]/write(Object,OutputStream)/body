@@ -1,0 +1,30 @@
+{
+  final ZipOutputStream zout=new ZipOutputStream(out);
+  zout.putNextEntry(new ZipEntry("requests.csv"));
+  csv.write(object,zout);
+  final boolean body=fields.contains("Body");
+  final boolean error=fields.contains("Error");
+  if (object instanceof Query) {
+    monitor.query((Query)object,new RequestDataVisitor(){
+      public void visit(      RequestData data,      Object... aggregates){
+        try {
+          writeBodyAndError(data,zout,body,error,true);
+        }
+ catch (        IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+);
+  }
+ else   if (object instanceof List) {
+    for (    RequestData data : (List<RequestData>)object) {
+      writeBodyAndError(data,zout,body,error,true);
+    }
+  }
+ else {
+    writeBodyAndError((RequestData)object,zout,body,error,false);
+  }
+  zout.flush();
+  zout.close();
+}

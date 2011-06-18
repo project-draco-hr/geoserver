@@ -1,0 +1,25 @@
+{
+  String strValue=GeoServerExtensions.getProperty(LoggingUtils.RELINQUISH_LOG4J_CONTROL,sce.getServletContext());
+  relinquishLoggingControl=Boolean.valueOf(strValue);
+  if (System.getProperty("org.geotools.referencing.forceXY") == null) {
+    System.setProperty("org.geotools.referencing.forceXY","true");
+  }
+  if (Boolean.TRUE.equals(Hints.getSystemDefault(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER))) {
+    Hints.putSystemDefault(Hints.FORCE_AXIS_ORDER_HONORING,"http");
+  }
+  Hints.putSystemDefault(Hints.COMPARISON_TOLERANCE,1e-9);
+  System.setProperty("org.geotools.epsg.factory.timeout","-1");
+  System.setProperty("java.util.prefs.syncInterval","5000000");
+  if (System.getProperty("java.version").startsWith("1.4") && (System.getProperty("com.sun.media.imageio.disableCodecLib") == null)) {
+    LOGGER.warning("Disabling mediaLib acceleration since this is a " + "java 1.4 VM.\n If you want to force its enabling, " + "set -Dcom.sun.media.imageio.disableCodecLib=true "+ "in your virtual machine");
+    System.setProperty("com.sun.media.imageio.disableCodecLib","true");
+  }
+ else {
+    ImageIOExt.allowNativeCodec("png",ImageReaderSpi.class,false);
+  }
+  Hints.putSystemDefault(Hints.FILTER_FACTORY,CommonFactoryFinder.getFilterFactory2(null));
+  Hints.putSystemDefault(Hints.STYLE_FACTORY,CommonFactoryFinder.getStyleFactory(null));
+  Hints.putSystemDefault(Hints.FEATURE_FACTORY,CommonFactoryFinder.getFeatureFactory(null));
+  final ThreadPoolExecutor executor=new ThreadPoolExecutor(CoverageAccessInfoImpl.DEFAULT_CorePoolSize,CoverageAccessInfoImpl.DEFAULT_MaxPoolSize,CoverageAccessInfoImpl.DEFAULT_KeepAliveTime,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>());
+  Hints.putSystemDefault(Hints.EXECUTOR_SERVICE,executor);
+}

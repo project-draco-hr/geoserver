@@ -1,0 +1,29 @@
+{
+  List<IOParam> params=parseIOParameters(inputString);
+  List<InputType> result=new ArrayList<InputType>();
+  for (  IOParam ioParam : params) {
+    Wps10Factory factory=Wps10Factory.eINSTANCE;
+    InputType it=factory.createInputType();
+    it.setIdentifier(Ows11Util.code(ioParam.id));
+    it.setData(factory.createDataType());
+    Parameter<?> gtParam=inputParams.get(ioParam.id);
+    if (gtParam == null) {
+      throw new WPSException("Unknown data input named '" + ioParam.id + "'");
+    }
+    ProcessParameterIO ppio=ProcessParameterIO.findAll(gtParam,applicationContext).get(0);
+    if (ppio instanceof LiteralPPIO) {
+      it.getData().setLiteralData(parseLiteral(it,factory,ioParam));
+    }
+ else     if (ppio instanceof BoundingBoxPPIO) {
+      it.getData().setBoundingBoxData(parseBoundingBox(it,factory,ioParam));
+    }
+ else     if (ioParam.isReference()) {
+      it.setReference(parseReferenceType(it,factory,ioParam));
+    }
+ else {
+      it.getData().setComplexData(parseComplex(it,factory,ioParam));
+    }
+    result.add(it);
+  }
+  return result;
+}

@@ -1,0 +1,21 @@
+{
+  RasterLayerConfiguration raster=(RasterLayerConfiguration)value.value;
+  start("wps:Reference",attributes("mimeType",value.mime,"xlink:href","http://geoserver/wcs","method","POST"));
+  start("wps:Body");
+  if (raster != null && raster.getLayerName() != null) {
+    start("wcs:GetCoverage",attributes("service","WCS","version","1.1.1"));
+    element("ows:Identifier",raster.getLayerName());
+    start("wcs:DomainSubset");
+    ReferencedEnvelope bbox=raster.getSpatialDomain();
+    String srsUri=GML2EncodingUtils.toURI(bbox.getCoordinateReferenceSystem());
+    start("gml:BoundingBox",attributes("crs",srsUri));
+    element("ows:LowerCorner",bbox.getMinX() + " " + bbox.getMinY());
+    element("ows:UpperCorner",bbox.getMaxX() + " " + bbox.getMaxY());
+    end("gml:BoundingBox");
+    end("wcs:DomainSubset");
+    element("wcs:Output",null,attributes("format","image/tiff"));
+    end("wcs:GetCoverage");
+  }
+  end("wps:Body");
+  end("wps:Reference");
+}

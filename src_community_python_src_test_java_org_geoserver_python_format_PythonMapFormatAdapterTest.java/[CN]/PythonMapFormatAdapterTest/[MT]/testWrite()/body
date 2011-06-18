@@ -1,0 +1,32 @@
+{
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.setName("feature1");
+  tb.add("geometry",Point.class);
+  tb.add("name",String.class);
+  SimpleFeatureType type1=tb.buildFeatureType();
+  tb.setName("feature2");
+  tb.add("geometry",LineString.class);
+  tb.add("name",String.class);
+  SimpleFeatureType type2=tb.buildFeatureType();
+  WKTReader wkt=new WKTReader();
+  FeatureCollection features1=new DefaultFeatureCollection(null,null);
+  SimpleFeatureBuilder b=new SimpleFeatureBuilder(type1);
+  b.add(wkt.read("POINT(0 0)"));
+  b.add("zero");
+  features1.add(b.buildFeature("fid.0"));
+  FeatureCollection features2=new DefaultFeatureCollection(null,null);
+  b=new SimpleFeatureBuilder(type2);
+  b.add(wkt.read("LINESTRING(0 0, 1 1)"));
+  b.add("one");
+  features2.add(b.buildFeature("fid.1"));
+  WMSMapContext context=new WMSMapContext();
+  context.addLayer(new MapLayer(DataUtilities.source(features1),null));
+  context.addLayer(new MapLayer(DataUtilities.source(features2),null));
+  context.setMapWidth(500);
+  context.setMapHeight(500);
+  context.setAreaOfInterest(new ReferencedEnvelope(-180,180,-90,90,DefaultGeographicCRS.WGS84));
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  adapter.write(context,out);
+  String result="500;500\n" + "(-180.0, -90.0, 180.0, 90.0)\n" + "POINT (0 0)\n"+ "LINESTRING (0 0, 1 1)\n";
+  assertEquals(result,new String(out.toByteArray()));
+}

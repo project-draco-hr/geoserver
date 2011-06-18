@@ -1,0 +1,50 @@
+{
+  InputStream is=null;
+  OutputStream os=null;
+  if ((userMap == null) || userDefinitionsFile == null || userDefinitionsFile.isStale()) {
+    try {
+      if (userDefinitionsFile == null) {
+        securityDir=GeoserverDataDirectory.findCreateConfigDir("security");
+        File propFile=new File(securityDir,"users.properties");
+        if (!propFile.exists()) {
+          Properties p=new Properties();
+          GeoServerInfo global=GeoServerExtensions.bean(GeoServer.class).getGlobal();
+          if ((global != null) && (global.getAdminUsername() != null) && !global.getAdminUsername().trim().equals("")) {
+            p.put(global.getAdminUsername(),global.getAdminPassword() + ",ROLE_ADMINISTRATOR");
+          }
+ else {
+            p.put("admin","geoserver,ROLE_ADMINISTRATOR");
+          }
+          os=new FileOutputStream(propFile);
+          p.store(os,"Format: name=password,ROLE1,...,ROLEN");
+          os.close();
+          File serviceFile=new File(securityDir,"service.properties");
+          os=new FileOutputStream(serviceFile);
+          is=GeoserverUserDao.class.getResourceAsStream("serviceTemplate.properties");
+          byte[] buffer=new byte[1024];
+          int count=0;
+          while ((count=is.read(buffer)) > 0) {
+            os.write(buffer,0,count);
+          }
+        }
+        userDefinitionsFile=new PropertyFileWatcher(propFile);
+      }
+      userMap=loadUsersFromProperties(userDefinitionsFile.getProperties());
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"An error occurred loading user definitions",e);
+    }
+ finally {
+      if (is != null)       try {
+        is.close();
+      }
+ catch (      IOException ei) {
+      }
+      if (os != null)       try {
+        os.close();
+      }
+ catch (      IOException eo) {
+      }
+    }
+  }
+}

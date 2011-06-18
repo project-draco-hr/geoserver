@@ -1,0 +1,32 @@
+{
+  start("Service");
+  final WMSInfo serviceInfo=wmsConfig.getServiceInfo();
+  element("Name","OGC:WMS");
+  element("Title",serviceInfo.getTitle());
+  element("Abstract",serviceInfo.getAbstract());
+  handleKeywordList(serviceInfo.getKeywords());
+  AttributesImpl orAtts=new AttributesImpl();
+  orAtts.addAttribute("","xmlns:xlink","xmlns:xlink","",XLINK_NS);
+  orAtts.addAttribute(XLINK_NS,"xlink:type","xlink:type","","simple");
+  String onlineResource=serviceInfo.getOnlineResource();
+  if (onlineResource == null || onlineResource.trim().length() == 0) {
+    String requestBaseUrl=request.getBaseUrl();
+    onlineResource=buildURL(requestBaseUrl,null,null,URLType.SERVICE);
+  }
+ else {
+    try {
+      new URL(onlineResource);
+    }
+ catch (    MalformedURLException e) {
+      LOGGER.log(Level.WARNING,"WMS online resource seems to be an invalid URL: '" + onlineResource + "'");
+    }
+  }
+  orAtts.addAttribute("","xlink:href","xlink:href","",onlineResource);
+  element("OnlineResource",null,orAtts);
+  GeoServer geoServer=wmsConfig.getGeoServer();
+  ContactInfo contact=geoServer.getGlobal().getContact();
+  handleContactInfo(contact);
+  element("Fees",serviceInfo.getFees());
+  element("AccessConstraints",serviceInfo.getAccessConstraints());
+  end("Service");
+}

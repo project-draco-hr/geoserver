@@ -1,0 +1,41 @@
+{
+  URL url=getClass().getResource("applicationContext.xml");
+  FileSystemXmlApplicationContext context=new FileSystemXmlApplicationContext(url.toString());
+  Dispatcher dispatcher=(Dispatcher)context.getBean("dispatcher");
+  final String body="<Hello service=\"hello\" message=\"Hello world!\" version=\"1.0.0\" />";
+  MockHttpServletRequest request=new MockHttpServletRequest(){
+    String encoding;
+    public int getServerPort(){
+      return 8080;
+    }
+    public String getCharacterEncoding(){
+      return encoding;
+    }
+    public void setCharacterEncoding(    String encoding){
+      this.encoding=encoding;
+    }
+    public ServletInputStream getInputStream() throws IOException {
+      final ServletInputStream stream=super.getInputStream();
+      return new ServletInputStream(){
+        public int read() throws IOException {
+          return stream.read();
+        }
+        public int available(){
+          return body.length();
+        }
+      }
+;
+    }
+  }
+;
+  request.setScheme("http");
+  request.setServerName("localhost");
+  request.setContextPath("/geoserver");
+  request.setMethod("POST");
+  request.setRequestURI("http://localhost/geoserver/ows");
+  request.setContentType("application/xml");
+  request.setBodyContent(body);
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  dispatcher.handleRequest(request,response);
+  assertEquals("Hello world!",response.getOutputStreamContent());
+}
