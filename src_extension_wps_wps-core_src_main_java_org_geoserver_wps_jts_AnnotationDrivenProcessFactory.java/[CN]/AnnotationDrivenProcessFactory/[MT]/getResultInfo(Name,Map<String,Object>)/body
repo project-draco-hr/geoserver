@@ -4,12 +4,13 @@
   for (  Annotation annotation : method.getAnnotations()) {
     if (annotation instanceof DescribeResult) {
       DescribeResult info=(DescribeResult)annotation;
-      Class resultType=info.type();
-      if (Object.class.equals(resultType)) {
-        resultType=method.getReturnType();
+      addResult(method,result,info);
+    }
+ else     if (annotation instanceof DescribeResults) {
+      DescribeResults info=(DescribeResults)annotation;
+      for (      DescribeResult dr : info.value()) {
+        addResult(method,result,dr);
       }
-      Parameter<?> resultParam=new Parameter(info.name(),resultType,info.name(),info.description());
-      result.put(resultParam.key,resultParam);
     }
   }
   if (result.isEmpty()) {

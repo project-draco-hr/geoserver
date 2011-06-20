@@ -55,12 +55,15 @@
       removeFiles.add(warpedFile);
       warpedFile=expandRgba(warpedFile.getAbsolutePath());
     }
-    if (resourceManager != null) {
+    if (resourceManager != null && !Boolean.TRUE.equals(store)) {
       resourceManager.addResource(new WPSFileResource(warpedFile));
     }
     reader=new GeoTiffReader(warpedFile);
     GridCoverage2D cov=addLocationProperty(reader.read(null),warpedFile);
-    return cov;
+    Map<String,Object> result=new HashMap<String,Object>();
+    result.put("result",cov);
+    result.put("path",warpedFile.getAbsolutePath());
+    return result;
   }
   finally {
     if (reader != null) {
