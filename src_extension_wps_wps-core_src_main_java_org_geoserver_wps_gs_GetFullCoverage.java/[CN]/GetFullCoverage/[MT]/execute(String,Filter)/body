@@ -1,0 +1,14 @@
+{
+  CoverageInfo ci=catalog.getCoverageByName(name);
+  if (ci == null) {
+    throw new WPSException("Could not find coverage " + name);
+  }
+  GridCoverageReader reader=ci.getGridCoverageReader(null,null);
+  final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
+  final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
+  GeneralParameterValue[] params=new GeneralParameterValue[0];
+  if (filter != null) {
+    params=CoverageUtils.mergeParameter(parameterDescriptors,params,filter,"FILTER","Filter");
+  }
+  return (GridCoverage2D)reader.read(params);
+}
