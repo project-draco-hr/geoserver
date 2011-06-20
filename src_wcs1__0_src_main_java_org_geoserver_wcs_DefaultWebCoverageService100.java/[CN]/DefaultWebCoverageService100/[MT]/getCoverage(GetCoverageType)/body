@@ -127,6 +127,10 @@
     if (hasTime)     readParametersClone[readParameters.length + addedParams--]=time;
     if (hasElevation)     readParametersClone[readParameters.length + addedParams--]=elevation;
     readParameters=readParametersClone;
+    Filter filter=WCSUtils.getRequestFilter();
+    if (filter != null) {
+      readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,filter,"FILTER","Filter");
+    }
     WCSUtils.checkInputLimits(wcs,meta,reader,requestedGridGeometry);
     coverage=(GridCoverage2D)reader.read(readParameters);
     if ((coverage == null) || !(coverage instanceof GridCoverage2D)) {

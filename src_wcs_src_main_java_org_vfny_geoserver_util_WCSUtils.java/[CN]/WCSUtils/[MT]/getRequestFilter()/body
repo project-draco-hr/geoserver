@@ -1,0 +1,25 @@
+{
+  Request request=Dispatcher.REQUEST.get();
+  if (request == null) {
+    return null;
+  }
+  Object filter=request.getKvp().get("FILTER");
+  if (!(filter instanceof Filter)) {
+    filter=request.getKvp().get("CQL_FILTER");
+    if (filter instanceof List) {
+      List list=(List)filter;
+      if (list.size() > 0) {
+        filter=list.get(0);
+      }
+    }
+  }
+  if (!(filter instanceof Filter)) {
+    filter=request.getKvp().get("FEATURE_ID");
+  }
+  if (filter instanceof Filter) {
+    return (Filter)filter;
+  }
+ else {
+    return null;
+  }
+}

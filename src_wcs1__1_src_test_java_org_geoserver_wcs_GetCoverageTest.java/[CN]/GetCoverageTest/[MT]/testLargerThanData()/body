@@ -1,0 +1,24 @@
+{
+  MockHttpServletResponse response=getAsServletResponse("wcs/BlueMarble/wcs?identifier=" + getLayerId(TASMANIA_BM) + "&request=getcoverage&service=wcs&version=1.1.1&&format=image/geotiff"+ "&BoundingBox=-90,-180,90,180,urn:ogc:def:crs:EPSG:6.6:4326&GridBaseCRS=EPSG:4326");
+  Multipart multipart=getMultipart(response);
+  assertEquals(2,multipart.getCount());
+  BodyPart coveragePart=multipart.getBodyPart(1);
+  assertEquals("image/tiff;subtype=\"geotiff\"",coveragePart.getContentType());
+  assertEquals("<theCoverage>",coveragePart.getHeader("Content-ID")[0]);
+  File tiffFile=File.createTempFile("wcs","",new File("target"));
+  IOUtils.copy(coveragePart.getInputStream(),new FileOutputStream(tiffFile));
+  GeoTiffReader reader=new GeoTiffReader(tiffFile);
+  GridCoverage2D result=reader.read(null);
+  CoverageInfo ci=getCatalog().getCoverageByName(TASMANIA_BM.getLocalPart());
+  GridCoverage2D original=(GridCoverage2D)ci.getGridCoverage(null,null);
+  GridEnvelope originalRange=original.getGridGeometry().getGridRange();
+  GridEnvelope actualRange=result.getGridGeometry().getGridRange();
+  assertEquals(originalRange.getSpan(0),actualRange.getSpan(1));
+  assertEquals(originalRange.getSpan(1),actualRange.getSpan(0));
+  Envelope2D originalEnv=original.getEnvelope2D();
+  Envelope2D actualEnv=result.getEnvelope2D();
+  assertEquals(originalEnv.getMinX(),actualEnv.getMinY(),1e-6);
+  assertEquals(originalEnv.getMinY(),actualEnv.getMinX(),1e-6);
+  assertEquals(originalEnv.getMaxX(),actualEnv.getMaxY(),1e-6);
+  assertEquals(originalEnv.getMaxY(),actualEnv.getMaxX(),1e-6);
+}
