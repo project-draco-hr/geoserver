@@ -1,9 +1,12 @@
 {
-  if (requestedEnvelope == null) {
-    return null;
+  final CoordinateReferenceSystem originalCRS=originalEnvelope.getCoordinateReferenceSystem();
+  final CoordinateReferenceSystem horizontalCRS=CRS.getHorizontalCRS(originalEnvelope.getCoordinateReferenceSystem());
+  if (CRS.equalsIgnoreMetadata(originalCRS,horizontalCRS)) {
+    return originalEnvelope;
   }
-  final CoordinateReferenceSystem nativeCRS=CRS.getHorizontalCRS(requestedEnvelope.getCoordinateReferenceSystem());
-  GeneralEnvelope horizontalRequestedEnvelope=new GeneralEnvelope(nativeCRS);
-  horizontalRequestedEnvelope.setEnvelope(requestedEnvelope.getLowerCorner().getOrdinate(0),requestedEnvelope.getLowerCorner().getOrdinate(1),requestedEnvelope.getUpperCorner().getOrdinate(0),requestedEnvelope.getUpperCorner().getOrdinate(1));
-  return horizontalRequestedEnvelope;
+  final MathTransform transform=CRS.findMathTransform(originalCRS,horizontalCRS);
+  if (transform.isIdentity()) {
+    return originalEnvelope;
+  }
+  return CRS.transform(transform,originalEnvelope);
 }

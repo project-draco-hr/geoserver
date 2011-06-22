@@ -59,41 +59,6 @@
       destinationG2W=new AffineTransform2D(resX,0d,0d,resY,(Double)origin_.getValue().get(0),(Double)origin_.getValue().get(1));
     }
  else     throw new WcsException("Invalid Grid value:" + grid.toString(),InvalidParameterValue,null);
-    double[] elevations=null;
-    List axisSubset=null;
-    if (request.getRangeSubset() != null) {
-      axisSubset=request.getRangeSubset().getAxisSubset();
-      if (axisSubset.size() > 0) {
-        for (int a=0; a < axisSubset.size(); a++) {
-          AxisSubsetType axis=(AxisSubsetType)axisSubset.get(a);
-          String axisName=axis.getName();
-          if (axisName.equalsIgnoreCase(WCSUtils.ELEVATION)) {
-            if (axis.getSingleValue().size() > 0) {
-              elevations=new double[axis.getSingleValue().size()];
-              for (int s=0; s < axis.getSingleValue().size(); s++) {
-                elevations[s]=Double.parseDouble(((TypedLiteralType)axis.getSingleValue().get(s)).getValue());
-              }
-            }
- else             if (axis.getInterval().size() > 0) {
-              IntervalType interval=(IntervalType)axis.getInterval().get(0);
-              int min=Integer.parseInt(interval.getMin().getValue());
-              int max=Integer.parseInt(interval.getMax().getValue());
-              int res=(interval.getRes() != null ? Integer.parseInt(interval.getRes().getValue()) : 1);
-              elevations=new double[(int)(Math.floor(max - min) / res + 1)];
-              for (int b=0; b < elevations.length; b++)               elevations[b]=(min + b * res);
-            }
-          }
-        }
-      }
-    }
-    final List<Date> timeValues=new LinkedList<Date>();
-    if (temporalSubset != null && temporalSubset.getTimePosition() != null && temporalSubset.getTimePosition().size() > 0) {
-      final EList timePositionLists=temporalSubset.getTimePosition();
-      for (Iterator it=timePositionLists.iterator(); it.hasNext(); ) {
-        TimePositionTypeImpl tp=(TimePositionTypeImpl)it.next();
-        timeValues.add((Date)tp.getValue());
-      }
-    }
     final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
     GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,meta.getParameters());
     readParameters=(readParameters != null ? readParameters : new GeneralParameterValue[0]);
@@ -102,31 +67,61 @@
  else     requestedGridGeometry=new GridGeometry2D(PixelInCell.CELL_CENTER,destinationG2W,getHorizontalEnvelope(requestedEnvelope),null);
     final ParameterValue<GeneralGridGeometry> requestedGridGeometryParam=new DefaultParameterDescriptor<GeneralGridGeometry>(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString(),GeneralGridGeometry.class,null,requestedGridGeometry).createValue();
     final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
-    ParameterValue time=null;
-    boolean hasTime=timeValues.size() > 0;
-    ParameterValue elevation=null;
-    boolean hasElevation=elevations != null && !Double.isNaN(elevations[0]);
-    if (hasElevation || hasTime) {
-      for (      GeneralParameterDescriptor pd : parameterDescriptors) {
-        final String code=pd.getName().getCode();
-        if (code.equalsIgnoreCase("TIME")) {
-          time=(ParameterValue)pd.createValue();
-          time.setValue(timeValues);
+    DimensionInfo timeDimension=meta.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+    if (timeDimension != null && timeDimension.isEnabled()) {
+      final List<Object> timeValues=new ArrayList<Object>();
+      if (temporalSubset != null && temporalSubset.getTimePosition() != null) {
+        final EList timePosition=temporalSubset.getTimePosition();
+        for (Iterator it=timePosition.iterator(); it.hasNext(); ) {
+          TimePositionType tp=(TimePositionType)it.next();
+          timeValues.add((Date)tp.getValue());
         }
-        if (code.equalsIgnoreCase(WCSUtils.ELEVATION)) {
-          elevation=(ParameterValue)pd.createValue();
-          elevation.setValue(elevations[0]);
+        final EList timePeriods=temporalSubset.getTimePeriod();
+        for (Iterator it=timePeriods.iterator(); it.hasNext(); ) {
+          TimePeriodType tp=(TimePeriodType)it.next();
+          Date begin=(Date)tp.getBeginPosition().getValue();
+          Date end=(Date)tp.getEndPosition().getValue();
+          timeValues.add(new DateRange(begin,end));
         }
-        if ((hasElevation && elevation != null && hasTime && time != null) || !hasElevation && hasTime && time != null || hasElevation && elevation != null && !hasTime)         break;
+      }
+      if (!timeValues.isEmpty()) {
+        readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,timeValues,"TIME","Time");
       }
     }
-    int addedParams=1 + (hasTime ? 1 : 0) + (hasElevation ? 1 : 0);
-    GeneralParameterValue[] readParametersClone=new GeneralParameterValue[readParameters.length + addedParams--];
-    System.arraycopy(readParameters,0,readParametersClone,0,readParameters.length);
-    readParametersClone[readParameters.length + addedParams--]=requestedGridGeometryParam;
-    if (hasTime)     readParametersClone[readParameters.length + addedParams--]=time;
-    if (hasElevation)     readParametersClone[readParameters.length + addedParams--]=elevation;
-    readParameters=readParametersClone;
+    DimensionInfo elevationDimension=meta.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
+    if (elevationDimension != null && elevationDimension.isEnabled()) {
+      List<Double> elevations=new ArrayList<Double>();
+      List axisSubset=null;
+      if (request.getRangeSubset() != null) {
+        axisSubset=request.getRangeSubset().getAxisSubset();
+        if (axisSubset.size() > 0) {
+          for (int a=0; a < axisSubset.size(); a++) {
+            AxisSubsetType axis=(AxisSubsetType)axisSubset.get(a);
+            String axisName=axis.getName();
+            if (axisName.equalsIgnoreCase(WCSUtils.ELEVATION)) {
+              if (axis.getSingleValue().size() > 0) {
+                for (int s=0; s < axis.getSingleValue().size(); s++) {
+                  elevations.add(Double.parseDouble(((TypedLiteralType)axis.getSingleValue().get(s)).getValue()));
+                }
+              }
+ else               if (axis.getInterval().size() > 0) {
+                IntervalType interval=(IntervalType)axis.getInterval().get(0);
+                int min=Integer.parseInt(interval.getMin().getValue());
+                int max=Integer.parseInt(interval.getMax().getValue());
+                int res=(interval.getRes() != null ? Integer.parseInt(interval.getRes().getValue()) : 1);
+                int count=(int)(Math.floor(max - min) / res + 1);
+                for (int b=0; b < count; b++) {
+                  elevations.add(new Double(min + b * res));
+                }
+              }
+            }
+          }
+        }
+      }
+      if (!elevations.isEmpty()) {
+        readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,elevations,"ELEVATION","Elevation");
+      }
+    }
     Filter filter=WCSUtils.getRequestFilter();
     if (filter != null) {
       readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,filter,"FILTER","Filter");
@@ -141,7 +136,7 @@
     String interpolationType=null;
     if (request.getRangeSubset() != null) {
       interpolationType=request.getInterpolationMethod().getLiteral();
-      axisSubset=request.getRangeSubset().getAxisSubset();
+      EList axisSubset=request.getRangeSubset().getAxisSubset();
       if (axisSubset.size() > 0) {
         for (int a=0; a < axisSubset.size(); a++) {
           AxisSubsetType axis=(AxisSubsetType)axisSubset.get(a);

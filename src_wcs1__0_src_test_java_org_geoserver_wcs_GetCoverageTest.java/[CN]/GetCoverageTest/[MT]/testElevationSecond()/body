@@ -1,0 +1,14 @@
+{
+  setupRasterDimension(ResourceInfo.ELEVATION,DimensionPresentation.LIST,null);
+  String request=getWaterTempElevationRequest("100.0");
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff;subtype=\"geotiff\"",response.getContentType());
+  File tiffFile=File.createTempFile("wcs","",new File("target"));
+  IOUtils.copy(getBinaryInputStream(response),new FileOutputStream(tiffFile));
+  GeoTiffReader reader=new GeoTiffReader(tiffFile);
+  GridCoverage2D result=reader.read(null);
+  double[] pixel=new double[1];
+  result.getRenderedImage().getData().getPixel(10,10,pixel);
+  assertEquals(13.337999683572,pixel[0],1e-6);
+  tiffFile.delete();
+}

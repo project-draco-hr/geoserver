@@ -9,23 +9,18 @@
     LOGGER.severe("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
   }
   if (reader == null)   throw new WcsException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
-  final String[] metadataNames=reader.getMetadataNames();
-  String timeMetadata=null;
-  if (metadataNames != null && metadataNames.length > 0) {
-    timeMetadata=reader.getMetadataValue("TIME_DOMAIN");
-  }
   if (referencedEnvelope != null) {
     AttributesImpl attributes=new AttributesImpl();
     attributes.addAttribute("","srsName","srsName","","urn:ogc:def:crs:OGC:1.3:CRS84");
     start("wcs:lonLatEnvelope",attributes);
-    final StringBuilder minCP=new StringBuilder(Double.toString(referencedEnvelope.getMinX())).append(" ").append(referencedEnvelope.getMinY());
-    final StringBuilder maxCP=new StringBuilder(Double.toString(referencedEnvelope.getMaxX())).append(" ").append(referencedEnvelope.getMaxY());
+    final String minCP=referencedEnvelope.getMinX() + " " + referencedEnvelope.getMinY();
+    final String maxCP=referencedEnvelope.getMaxX() + " " + referencedEnvelope.getMaxY();
     element("gml:pos",minCP.toString());
     element("gml:pos",maxCP.toString());
-    if (timeMetadata != null && timeMetadata.length() > 0) {
-      String[] timePositions=timeMetadata.split(",");
-      element("gml:timePosition",timePositions[0]);
-      element("gml:timePosition",timePositions[timePositions.length - 1]);
+    DimensionInfo timeInfo=ci.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+    if (timeInfo != null && timeInfo.isEnabled()) {
+      element("gml:timePosition",reader.getMetadataValue(AbstractGridCoverage2DReader.TIME_DOMAIN_MINIMUM));
+      element("gml:timePosition",reader.getMetadataValue(AbstractGridCoverage2DReader.TIME_DOMAIN_MAXIMUM));
     }
     end("wcs:lonLatEnvelope");
   }
