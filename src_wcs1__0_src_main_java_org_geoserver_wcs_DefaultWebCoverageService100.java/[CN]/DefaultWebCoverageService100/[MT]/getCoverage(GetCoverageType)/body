@@ -74,7 +74,14 @@
         final EList timePosition=temporalSubset.getTimePosition();
         for (Iterator it=timePosition.iterator(); it.hasNext(); ) {
           TimePositionType tp=(TimePositionType)it.next();
-          timeValues.add((Date)tp.getValue());
+          Date date=(Date)tp.getValue();
+          if (date == null) {
+            final SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            df.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String max=reader.getMetadataValue(AbstractGridCoverage2DReader.TIME_DOMAIN_MAXIMUM);
+            date=df.parse(max);
+          }
+          timeValues.add(date);
         }
         final EList timePeriods=temporalSubset.getTimePeriod();
         for (Iterator it=timePeriods.iterator(); it.hasNext(); ) {
@@ -84,9 +91,14 @@
           timeValues.add(new DateRange(begin,end));
         }
       }
-      if (!timeValues.isEmpty()) {
-        readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,timeValues,"TIME","Time");
+      if (timeValues.isEmpty()) {
+        final SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String max=reader.getMetadataValue(AbstractGridCoverage2DReader.TIME_DOMAIN_MAXIMUM);
+        Date date=df.parse(max);
+        timeValues.add(date);
       }
+      readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,timeValues,"TIME","Time");
     }
     DimensionInfo elevationDimension=meta.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
     if (elevationDimension != null && elevationDimension.isEnabled()) {
@@ -118,9 +130,11 @@
           }
         }
       }
-      if (!elevations.isEmpty()) {
-        readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,elevations,"ELEVATION","Elevation");
+      if (elevations.isEmpty()) {
+        String max=reader.getMetadataValue(AbstractGridCoverage2DReader.ELEVATION_DOMAIN_MINIMUM);
+        elevations.add(Double.parseDouble(max));
       }
+      readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,elevations,"ELEVATION","Elevation");
     }
     Filter filter=WCSUtils.getRequestFilter();
     if (filter != null) {
