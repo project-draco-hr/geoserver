@@ -132,6 +132,10 @@
       org.geotools.data.Query gtQuery=toDataQuery(query,queryMaxFeatures,source,request,allPropNames,viewParam);
       LOGGER.fine("Query is " + query + "\n To gt2: "+ gtQuery);
       FeatureCollection<? extends FeatureType,? extends Feature> features=getFeatures(request,source,gtQuery);
+      if (!(meta.getFeatureType() instanceof SimpleFeatureType)) {
+        features.getSchema().getUserData().put("targetCrs",query.getSrsName());
+        features.getSchema().getUserData().put("targetVersion",request.getVersion());
+      }
       if (("1.0".equals(request.getVersion()) || "1.0.0".equals(request.getVersion())) && (request.getQuery().size() == 1 || maxFeatures == Integer.MAX_VALUE)) {
       }
  else {
