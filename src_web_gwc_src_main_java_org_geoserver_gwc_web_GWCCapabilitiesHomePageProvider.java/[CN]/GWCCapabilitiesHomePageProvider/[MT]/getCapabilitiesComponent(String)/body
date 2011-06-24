@@ -1,21 +1,25 @@
 {
   List<CapsInfo> gwcCaps=new ArrayList<CapsInfo>();
-  GeoServerApplication app=GeoServerApplication.get();
+  final GeoServerApplication app=GeoServerApplication.get();
+  final GWCConfig gwcConfig=gwcFacade.getConfig();
   try {
-    app.getBean("gwcServiceWMS");
-    gwcCaps.add(new CapsInfo("WMS-C",new Version("1.1.1"),"../gwc/service/wms?request=GetCapabilities&version=1.1.1&tiled=true"));
+    if (gwcConfig.isWMSCEnabled() && null != app.getBean("gwcServiceWMS")) {
+      gwcCaps.add(new CapsInfo("WMS-C",new Version("1.1.1"),"../gwc/service/wms?request=GetCapabilities&version=1.1.1&tiled=true"));
+    }
   }
  catch (  NoSuchBeanDefinitionException e) {
   }
   try {
-    app.getBean("gwcServiceWMTS");
-    gwcCaps.add(new CapsInfo("WMTS",new Version("1.0.0"),"../gwc/service/wmts?REQUEST=GetCapabilities"));
+    if (gwcConfig.isWMTSEnabled() && null != app.getBean("gwcServiceWMTS")) {
+      gwcCaps.add(new CapsInfo("WMTS",new Version("1.0.0"),"../gwc/service/wmts?REQUEST=GetCapabilities"));
+    }
   }
  catch (  NoSuchBeanDefinitionException e) {
   }
   try {
-    app.getBean("gwcServiceTMS");
-    gwcCaps.add(new CapsInfo("TMS",new Version("1.0.0"),"../gwc/service/tms/1.0.0"));
+    if (gwcConfig.isTMSEnabled() && null != app.getBean("gwcServiceTMS")) {
+      gwcCaps.add(new CapsInfo("TMS",new Version("1.0.0"),"../gwc/service/tms/1.0.0"));
+    }
   }
  catch (  NoSuchBeanDefinitionException e) {
   }
