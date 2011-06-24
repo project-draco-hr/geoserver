@@ -19,8 +19,10 @@
     element("gml:pos",maxCP.toString());
     DimensionInfo timeInfo=ci.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
     if (timeInfo != null && timeInfo.isEnabled()) {
-      element("gml:timePosition",reader.getMetadataValue(AbstractGridCoverage2DReader.TIME_DOMAIN_MINIMUM));
-      element("gml:timePosition",reader.getMetadataValue(AbstractGridCoverage2DReader.TIME_DOMAIN_MAXIMUM));
+      ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
+      SimpleDateFormat format=dimensions.getTimeFormat();
+      element("gml:timePosition",format.format(dimensions.getMinTime()));
+      element("gml:timePosition",format.format(dimensions.getMaxTime()));
     }
     end("wcs:lonLatEnvelope");
   }

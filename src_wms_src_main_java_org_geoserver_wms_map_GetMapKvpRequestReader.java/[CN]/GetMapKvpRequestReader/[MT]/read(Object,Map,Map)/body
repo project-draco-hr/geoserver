@@ -202,13 +202,14 @@
   boolean hasElevation=false;
   for (  MapLayerInfo layer : getMap.getLayers()) {
     if (layer.getType() == MapLayerInfo.TYPE_VECTOR) {
-      MetadataMap metadata=layer.getFeature().getMetadata();
+      MetadataMap metadata=layer.getResource().getMetadata();
       DimensionInfo elevationInfo=metadata.get(ResourceInfo.ELEVATION,DimensionInfo.class);
       hasElevation|=elevationInfo != null && elevationInfo.isEnabled();
       DimensionInfo timeInfo=metadata.get(ResourceInfo.TIME,DimensionInfo.class);
       hasTime|=timeInfo != null && timeInfo.isEnabled();
     }
  else     if (layer.getType() == MapLayerInfo.TYPE_RASTER) {
+      MetadataMap metadata=layer.getResource().getMetadata();
       AbstractGridCoverage2DReader reader;
       try {
         reader=(AbstractGridCoverage2DReader)layer.getCoverageReader();
@@ -217,14 +218,12 @@
         throw new ServiceException(e);
       }
       if (reader != null) {
-        final String[] metadataNames=reader.getMetadataNames();
-        if (metadataNames != null)         for (        String metadataDomain : metadataNames) {
-          if (metadataDomain.equalsIgnoreCase("ELEVATION_DOMAIN"))           if (reader.getMetadataValue("HAS_ELEVATION_DOMAIN") != null && Boolean.parseBoolean(reader.getMetadataValue("HAS_ELEVATION_DOMAIN")))           hasElevation=true;
-          if (metadataDomain.equalsIgnoreCase("TIME_DOMAIN"))           if (reader.getMetadataValue("HAS_TIME_DOMAIN") != null && Boolean.parseBoolean(reader.getMetadataValue("HAS_TIME_DOMAIN")))           hasTime=true;
-          if (hasTime && hasElevation)           break;
-        }
+        ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
+        DimensionInfo elevationInfo=metadata.get(ResourceInfo.ELEVATION,DimensionInfo.class);
+        hasElevation|=elevationInfo != null && elevationInfo.isEnabled() && dimensions.hasElevation();
+        DimensionInfo timeInfo=metadata.get(ResourceInfo.TIME,DimensionInfo.class);
+        hasTime|=timeInfo != null && timeInfo.isEnabled() && dimensions.hasTime();
       }
-      if (hasTime && hasElevation)       break;
     }
   }
   if (hasTime && (getMap.getTime() == null || getMap.getTime().isEmpty())) {

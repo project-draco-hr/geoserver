@@ -3,13 +3,14 @@
   CoverageInfo coverage=mapLayerInfo.getCoverage();
   MetadataMap metadata=coverage.getMetadata();
   GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,coverage.getParameters(),readGeom);
+  ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
   final DimensionInfo timeInfo=metadata.get(ResourceInfo.TIME,DimensionInfo.class);
   final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
   if (timeInfo != null && timeInfo.isEnabled()) {
     List<Object> fixedTimes=new ArrayList<Object>(times);
     for (int i=0; i < fixedTimes.size(); i++) {
       if (fixedTimes.get(i) == null) {
-        fixedTimes.set(i,getCurrentTime(coverage,reader));
+        fixedTimes.set(i,getCurrentTime(coverage,dimensions));
       }
     }
     readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,fixedTimes,"TIME","Time");
@@ -19,7 +20,7 @@
     List<Object> fixedElevations=new ArrayList<Object>(elevations);
     for (int i=0; i < fixedElevations.size(); i++) {
       if (fixedElevations.get(i) == null) {
-        fixedElevations.set(i,getDefaultElevation(coverage,reader));
+        fixedElevations.set(i,getDefaultElevation(coverage,dimensions));
       }
     }
     readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,fixedElevations,"ELEVATION","Elevation");

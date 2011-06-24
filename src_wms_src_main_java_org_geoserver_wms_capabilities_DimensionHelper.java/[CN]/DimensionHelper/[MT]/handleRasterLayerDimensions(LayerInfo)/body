@@ -19,18 +19,17 @@
  catch (  Throwable t) {
     LOGGER.log(Level.SEVERE,"Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName(),t);
   }
-  if (reader == null)   throw new ServiceException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+  if (reader == null) {
+    throw new ServiceException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+  }
+  ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
   if (mode == Mode.WMS11) {
     declareWMS11Dimensions(hasTime,hasElevation);
   }
-  String hasTimeDomain=reader.getMetadataValue("HAS_TIME_DOMAIN");
-  hasTime=hasTime & "true".equalsIgnoreCase(hasTimeDomain);
-  if (hasTime) {
-    handleTimeDimensionRaster(timeInfo,reader);
+  if (hasTime && dimensions.hasTime()) {
+    handleTimeDimensionRaster(timeInfo,dimensions);
   }
-  String haselevationDomain=reader.getMetadataValue("HAS_ELEVATION_DOMAIN");
-  hasElevation=hasElevation & "true".equalsIgnoreCase(haselevationDomain);
-  if (hasElevation) {
-    handleElevationDimensionRaster(elevInfo,reader);
+  if (hasElevation && dimensions.hasElevation()) {
+    handleElevationDimensionRaster(elevInfo,dimensions);
   }
 }

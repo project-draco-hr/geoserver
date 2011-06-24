@@ -8,15 +8,18 @@
  catch (  IOException e) {
     LOGGER.severe("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
   }
-  if (reader == null)   throw new WcsException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+  if (reader == null) {
+    throw new WcsException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+  }
   DimensionInfo timeInfo=ci.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+  ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
   start("wcs:domainSet");
   start("wcs:spatialDomain");
-  handleBoundingBox(ci.getSRS(),ci.getNativeBoundingBox(),timeInfo,reader);
+  handleBoundingBox(ci.getSRS(),ci.getNativeBoundingBox(),timeInfo,dimensions);
   handleGrid(ci);
   end("wcs:spatialDomain");
   if (timeInfo != null && timeInfo.isEnabled()) {
-    handleTemporalDomain(ci,timeInfo,reader);
+    handleTemporalDomain(ci,timeInfo,dimensions);
   }
   end("wcs:domainSet");
 }

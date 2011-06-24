@@ -30,21 +30,21 @@
  catch (    IOException e) {
       LOGGER.severe("Unable to acquire a reader for this coverage with format: " + ci.getStore().getFormat().getName());
     }
-    if (reader == null)     throw new WcsException("Unable to acquire a reader for this coverage with format: " + ci.getStore().getFormat().getName());
-    final String[] metadataNames=reader.getMetadataNames();
-    String elevationMetadata=null;
-    if (metadataNames != null && metadataNames.length > 0) {
-      elevationMetadata=reader.getMetadataValue(AbstractGridCoverage2DReader.ELEVATION_DOMAIN);
+    if (reader == null) {
+      throw new WcsException("Unable to acquire a reader for this coverage with format: " + ci.getStore().getFormat().getName());
+    }
+    ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
+    if (dimensions.hasElevation()) {
       start("wcs:axisDescription");
       start("wcs:AxisDescription");
       element("wcs:name","ELEVATION");
       element("wcs:label","ELEVATION");
       start("wcs:values");
-      final String[] values=elevationMetadata.split(",");
-      for (      String s : values) {
-        element("wcs:singleValue",s);
+      TreeSet<Double> elevations=dimensions.getElevationDomain();
+      for (      Double elevation : elevations) {
+        element("wcs:singleValue",Double.toString(elevation));
       }
-      element("wcs:default",values[0]);
+      element("wcs:default",Double.toString(elevations.first()));
       end("wcs:values");
       end("wcs:AxisDescription");
       end("wcs:axisDescription");

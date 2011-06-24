@@ -67,8 +67,9 @@
  else     requestedGridGeometry=new GridGeometry2D(PixelInCell.CELL_CENTER,destinationG2W,getHorizontalEnvelope(requestedEnvelope),null);
     final ParameterValue<GeneralGridGeometry> requestedGridGeometryParam=new DefaultParameterDescriptor<GeneralGridGeometry>(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString(),GeneralGridGeometry.class,null,requestedGridGeometry).createValue();
     final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
+    ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
     DimensionInfo timeDimension=meta.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
-    if (timeDimension != null && timeDimension.isEnabled()) {
+    if (timeDimension != null && timeDimension.isEnabled() && dimensions.hasTime()) {
       final List<Object> timeValues=new ArrayList<Object>();
       if (temporalSubset != null && temporalSubset.getTimePosition() != null) {
         final EList timePosition=temporalSubset.getTimePosition();
@@ -76,10 +77,7 @@
           TimePositionType tp=(TimePositionType)it.next();
           Date date=(Date)tp.getValue();
           if (date == null) {
-            final SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-            df.setTimeZone(TimeZone.getTimeZone("UTC"));
-            String max=reader.getMetadataValue(AbstractGridCoverage2DReader.TIME_DOMAIN_MAXIMUM);
-            date=df.parse(max);
+            date=dimensions.getMaxTime();
           }
           timeValues.add(date);
         }
@@ -92,16 +90,13 @@
         }
       }
       if (timeValues.isEmpty()) {
-        final SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String max=reader.getMetadataValue(AbstractGridCoverage2DReader.TIME_DOMAIN_MAXIMUM);
-        Date date=df.parse(max);
+        Date date=dimensions.getMaxTime();
         timeValues.add(date);
       }
       readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,timeValues,"TIME","Time");
     }
     DimensionInfo elevationDimension=meta.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
-    if (elevationDimension != null && elevationDimension.isEnabled()) {
+    if (elevationDimension != null && elevationDimension.isEnabled() && dimensions.hasElevation()) {
       List<Double> elevations=new ArrayList<Double>();
       List axisSubset=null;
       if (request.getRangeSubset() != null) {
@@ -131,8 +126,7 @@
         }
       }
       if (elevations.isEmpty()) {
-        String max=reader.getMetadataValue(AbstractGridCoverage2DReader.ELEVATION_DOMAIN_MINIMUM);
-        elevations.add(Double.parseDouble(max));
+        elevations.add(dimensions.getMinElevation());
       }
       readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,elevations,"ELEVATION","Elevation");
     }
