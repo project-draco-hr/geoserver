@@ -1,0 +1,122 @@
+{
+  Connection conn=null;
+  try {
+    Class.forName(this.driverClassName);
+  }
+ catch (  ClassNotFoundException e) {
+    System.out.println(e);
+  }
+  File tempDir=File.createTempFile("spatialitemp",".sqlite");
+  SQLiteConfig config=new SQLiteConfig();
+  config.enableLoadExtension(true);
+  String JDBCFileUrl=tempDir.getAbsolutePath();
+  try {
+    conn=DriverManager.getConnection("jdbc:sqlite:" + JDBCFileUrl,config.toProperties());
+    Statement stmt=conn.createStatement();
+    stmt.setQueryTimeout(30);
+    String sql=null;
+    conn.setAutoCommit(false);
+    sql="SELECT load_extension('/tmp/libspatialite-2-4.dll');";
+    stmt.execute(sql);
+    sql="SELECT InitSpatialMetaData();";
+    stmt.execute(sql);
+    conn.commit();
+    String column_names=null;
+    for (    SimpleFeatureCollection fc : collections) {
+      SimpleFeatureType ft=fc.getSchema();
+      String the_geom=null;
+      if (ft.getGeometryDescriptor() != null) {
+        the_geom=ft.getGeometryDescriptor().getLocalName();
+      }
+      String tbl_name=ft.getName().getLocalPart();
+      column_names="";
+      int column_cnt=0;
+      sql="CREATE TABLE " + tbl_name;
+      sql+=" ( PK_UID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT";
+      for (int i=0; i < ft.getAttributeCount(); i++) {
+        AttributeDescriptor ad=ft.getDescriptor(i);
+        if (ad.getLocalName() != the_geom) {
+          sql+=", " + prepareColumnHeader(ad);
+          column_names+=ad.getLocalName();
+          column_cnt++;
+          if (i < ft.getAttributeCount() - 1) {
+            column_names+=", ";
+          }
+        }
+      }
+      sql+=");";
+      System.out.println(sql);
+      stmt.execute(sql);
+      conn.commit();
+      int srid=0;
+      if (the_geom != null) {
+        sql="SELECT AddGeometryColumn('" + tbl_name + "', ";
+        sql+="'" + the_geom + "', ";
+        srid=getSpatialSRID(ft.getCoordinateReferenceSystem());
+        sql+=srid + ", ";
+        String geom_type=getSpatialGeometryType(ft);
+        if (geom_type == null) {
+          throw new WFSException("Error while adding the geometry column in table " + tbl_name + ", unrecognized geometry type");
+        }
+        sql+="'" + geom_type + "', ";
+        String dimension="XY";
+        sql+="'" + dimension + "'";
+        sql+=" );";
+      }
+      System.out.println(sql);
+      stmt.execute(sql);
+      conn.commit();
+      SimpleFeatureIterator i=fc.features();
+      try {
+        while (i.hasNext()) {
+          SimpleFeature row=i.next();
+          sql="INSERT INTO " + tbl_name + " ("+ column_names;
+          if (the_geom != null)           if (column_cnt > 0) {
+            sql+=", " + the_geom + " ) ";
+          }
+ else {
+            sql+=the_geom + ") ";
+          }
+ else {
+            sql+=") ";
+          }
+          Object geom_data=row.getDefaultGeometry();
+          sql+="VALUES (";
+          for (int j=0; j < row.getAttributeCount(); j++) {
+            Object rowAtt=row.getAttribute(j);
+            if (!rowAtt.equals(geom_data)) {
+              if (rowAtt != null) {
+                sql+="'" + rowAtt.toString() + "'";
+              }
+              if (j < row.getAttributeCount() - 1) {
+                sql+=", ";
+              }
+            }
+          }
+          if (the_geom != null) {
+            if (column_cnt > 0) {
+              sql+=", ";
+            }
+            sql+="GeomFromText('" + prepareGeom(geom_data.toString()) + "', "+ srid+ ")";
+          }
+          sql+=");";
+          System.out.println(sql);
+          stmt.executeUpdate(sql);
+        }
+        conn.commit();
+      }
+  finally {
+        fc.close(i);
+      }
+    }
+  }
+ catch (  SQLException e) {
+    System.out.println(e);
+  }
+  FileInputStream JDBCIn=new FileInputStream(tempDir);
+  int longitud=JDBCIn.available();
+  byte[] datos=new byte[longitud];
+  JDBCIn.read(datos);
+  output.write(datos);
+  System.out.println(tempDir.getAbsolutePath());
+}
