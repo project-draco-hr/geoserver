@@ -38,16 +38,16 @@
     Filter insertedFilter=filterFactory.id(insertedIds);
     Filter updatedFilter=filterFactory.id(updatedIds);
     Filter deletedFilter=filterFactory.id(deletedIds);
-    listener.dataStoreChange(new TransactionEvent(TransactionEventType.PRE_UPDATE,layerName,vstore.getFeatures(updatedFilter),rollback));
-    listener.dataStoreChange(new TransactionEvent(TransactionEventType.PRE_DELETE,layerName,vstore.getFeatures(deletedFilter),rollback));
+    listener.dataStoreChange(new TransactionEvent(TransactionEventType.PRE_UPDATE,request,layerName,vstore.getFeatures(updatedFilter),rollback));
+    listener.dataStoreChange(new TransactionEvent(TransactionEventType.PRE_DELETE,request,layerName,vstore.getFeatures(deletedFilter),rollback));
     try {
       vstore.rollback(version,(Filter)rollback.getFilter(),users);
     }
  catch (    Exception e) {
       throw new WFSTransactionException("Could not perform the rollback",e,rollback.getHandle());
     }
-    listener.dataStoreChange(new TransactionEvent(TransactionEventType.POST_INSERT,layerName,vstore.getFeatures(insertedFilter)));
-    listener.dataStoreChange(new TransactionEvent(TransactionEventType.POST_UPDATE,layerName,vstore.getFeatures(updatedFilter)));
+    listener.dataStoreChange(new TransactionEvent(TransactionEventType.POST_INSERT,request,layerName,vstore.getFeatures(insertedFilter)));
+    listener.dataStoreChange(new TransactionEvent(TransactionEventType.POST_UPDATE,request,layerName,vstore.getFeatures(updatedFilter)));
     response.getTransactionSummary().setTotalInserted(BigInteger.valueOf(inserted));
     response.getTransactionSummary().setTotalUpdated(BigInteger.valueOf(updated));
     response.getTransactionSummary().setTotalDeleted(BigInteger.valueOf(deleted));
