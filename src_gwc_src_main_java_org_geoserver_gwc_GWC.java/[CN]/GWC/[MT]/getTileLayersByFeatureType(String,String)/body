@@ -1,0 +1,29 @@
+{
+  NamespaceInfo namespace;
+  if (namespaceURI == null || XMLConstants.DEFAULT_NS_PREFIX.equals(namespaceURI)) {
+    namespace=getCatalog().getDefaultNamespace();
+  }
+ else {
+    namespace=getCatalog().getNamespaceByURI(namespaceURI);
+  }
+  final FeatureTypeInfo typeInfo=getCatalog().getFeatureTypeByName(namespace,typeName);
+  final List<LayerInfo> layers=getCatalog().getLayers(typeInfo);
+  Set<String> affectedLayers=new HashSet<String>();
+  for (  LayerInfo layer : layers) {
+    if (tileLayerExists(layer.getResource().getPrefixedName())) {
+      affectedLayers.add(layer.getResource().getPrefixedName());
+    }
+  }
+  for (  LayerGroupInfo lgi : getLayerGroups()) {
+    if (!tileLayerExists(lgi.getName())) {
+      continue;
+    }
+    for (    LayerInfo li : lgi.getLayers()) {
+      ResourceInfo resource=li.getResource();
+      if (typeInfo.equals(resource)) {
+        affectedLayers.add(lgi.getName());
+      }
+    }
+  }
+  return affectedLayers;
+}

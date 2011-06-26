@@ -1,23 +1,26 @@
 {
-  final List<EObject> transactionElements=getTransactionElements(request);
-  ReferencedEnvelope affectedBounds;
-  Set<String> affectedLayers;
-  for (  EObject transactionElement : transactionElements) {
-    affectedBounds=this.affectedBounds.remove(transactionElement);
-    affectedLayers=this.affectedLayers.remove(transactionElement);
-    if (committed && affectedBounds != null) {
-      Assert.notNull(affectedLayers);
-      if (affectedBounds.isEmpty()) {
-        continue;
-      }
-      for (      String layerName : affectedLayers) {
-        try {
-          gwc.truncate(layerName,affectedBounds);
-        }
- catch (        GeoWebCacheException e) {
-          e.printStackTrace();
-        }
-      }
+  final Map<String,List<ReferencedEnvelope>> byLayerDirtyRegions=getByLayerDirtyRegions(transaction);
+  if (byLayerDirtyRegions.isEmpty()) {
+    return;
+  }
+  for (  String tileLayerName : byLayerDirtyRegions.keySet()) {
+    List<ReferencedEnvelope> dirtyList=byLayerDirtyRegions.get(tileLayerName);
+    ReferencedEnvelope dirtyRegion;
+    try {
+      dirtyRegion=merge(tileLayerName,dirtyList);
+    }
+ catch (    Exception e) {
+      log.log(Level.WARNING,e.getMessage(),e);
+      continue;
+    }
+    if (dirtyRegion == null) {
+      continue;
+    }
+    try {
+      gwc.truncate(tileLayerName,dirtyRegion);
+    }
+ catch (    GeoWebCacheException e) {
+      log.warning("Error truncating tile layer " + tileLayerName + " for transaction affected bounds "+ dirtyRegion);
     }
   }
 }
