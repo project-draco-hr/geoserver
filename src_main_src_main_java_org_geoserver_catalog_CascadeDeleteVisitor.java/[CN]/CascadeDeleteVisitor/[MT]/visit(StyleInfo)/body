@@ -1,7 +1,8 @@
 {
   List<LayerInfo> layer=catalog.getLayers();
   for (  LayerInfo li : layer) {
-    if (li.getDefaultStyle().equals(style)) {
+    StyleInfo ds=li.getDefaultStyle();
+    if (ds != null && ds.equals(style)) {
       try {
         li.setDefaultStyle(new CatalogBuilder(catalog).getDefaultStyle(li.getResource()));
         catalog.save(li);
@@ -11,7 +12,9 @@
         li.setDefaultStyle(null);
       }
     }
-    if (li.getStyles().remove(style))     catalog.save(li);
+    if (li.getStyles().remove(style)) {
+      catalog.save(li);
+    }
   }
   List<LayerGroupInfo> groups=catalog.getLayerGroups();
   for (  LayerGroupInfo group : groups) {
