@@ -55,6 +55,26 @@
       removeFiles.add(warpedFile);
       warpedFile=expandRgba(warpedFile.getAbsolutePath());
     }
+    if (Boolean.TRUE.equals(store) && outputPath != null) {
+      File output=new File(outputPath);
+      if (output.exists()) {
+        if (!output.delete()) {
+          throw new WPSException("Output file " + outputPath + " exists but cannot be overwritten");
+        }
+      }
+ else {
+        File parent=output.getParentFile();
+        if (!parent.exists()) {
+          if (!parent.mkdirs()) {
+            throw new WPSException("Output file parent directory " + parent.getAbsolutePath() + " does not exist and cannot be created");
+          }
+        }
+      }
+      if (!warpedFile.renameTo(output)) {
+        throw new WPSException("Could not move " + warpedFile.getAbsolutePath() + " to "+ outputPath+ ", it's likely a permission issue");
+      }
+      warpedFile=output;
+    }
     if (resourceManager != null && !Boolean.TRUE.equals(store)) {
       resourceManager.addResource(new WPSFileResource(warpedFile));
     }
