@@ -1,0 +1,62 @@
+{
+  File mosaic=new File("./target/largeMosaic");
+  try {
+    if (mosaic.exists()) {
+      if (mosaic.isDirectory()) {
+        FileUtils.deleteDirectory(mosaic);
+      }
+ else {
+        mosaic.delete();
+      }
+    }
+    mosaic.mkdir();
+    GridCoverageFactory factory=new GridCoverageFactory();
+    BufferedImage bi=new BufferedImage(10,10,BufferedImage.TYPE_4BYTE_ABGR);
+    ReferencedEnvelope envelope=new ReferencedEnvelope(0,10,0,10,DefaultGeographicCRS.WGS84);
+    GridCoverage2D test=factory.create("test",bi,envelope);
+    ByteArrayOutputStream bos=new ByteArrayOutputStream();
+    GeoTiffWriter writer=new GeoTiffWriter(bos);
+    writer.write(test,null);
+    byte[] bytes=bos.toByteArray();
+    for (int i=0; i < 1025; i++) {
+      String pad="";
+      if (i < 10) {
+        pad="000";
+      }
+ else       if (i < 100) {
+        pad="00";
+      }
+ else       if (i < 1000) {
+        pad="0";
+      }
+      File target=new File(mosaic,"tile_" + pad + i+ ".tiff");
+      FileUtils.writeByteArrayToFile(target,bytes);
+    }
+    Properties p=new Properties();
+    p.put("ElevationAttribute","elevation");
+    p.put("Schema","*the_geom:Polygon,location:String,elevation:Integer");
+    p.put("PropertyCollectors","IntegerFileNameExtractorSPI[elevationregex](elevation)");
+    FileOutputStream fos=new FileOutputStream(new File(mosaic,"indexer.properties"));
+    p.store(fos,null);
+    fos.close();
+    p.clear();
+    p.put("regex","(?<=_)(\\d{4})");
+    fos=new FileOutputStream(new File(mosaic,"elevationregex.properties"));
+    p.store(fos,null);
+    fos.close();
+    Catalog cat=getCatalog();
+    CatalogBuilder cb=new CatalogBuilder(cat);
+    CoverageStoreInfo store=cb.buildCoverageStore("largeMosaic");
+    store.setURL(mosaic.getAbsolutePath());
+    store.setType("ImageMosaic");
+    cat.add(store);
+    cb.setStore(store);
+    CoverageInfo ci=cb.buildCoverage();
+    cat.add(ci);
+  }
+  finally {
+    if (mosaic.exists() && mosaic.isDirectory()) {
+      FileUtils.deleteDirectory(mosaic);
+    }
+  }
+}
