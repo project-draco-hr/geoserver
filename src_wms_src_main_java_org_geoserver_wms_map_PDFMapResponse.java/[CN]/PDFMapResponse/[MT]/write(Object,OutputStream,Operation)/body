@@ -1,8 +1,8 @@
 {
   Assert.isInstanceOf(PDFMap.class,value);
-  WMSMapContext mapContext=((PDFMap)value).getContext();
-  final int width=mapContext.getMapWidth();
-  final int height=mapContext.getMapHeight();
+  WMSMapContent mapContent=((PDFMap)value).getContext();
+  final int width=mapContent.getMapWidth();
+  final int height=mapContent.getMapHeight();
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("setting up " + width + "x"+ height+ " image");
   }
@@ -17,8 +17,8 @@
     PdfContentByte cb=writer.getDirectContent();
     PdfTemplate tp=cb.createTemplate(width,height);
     PdfGraphics2D graphic=(PdfGraphics2D)tp.createGraphics(width,height,mapper);
-    if (!mapContext.isTransparent()) {
-      graphic.setColor(mapContext.getBgColor());
+    if (!mapContent.isTransparent()) {
+      graphic.setColor(mapContent.getBgColor());
       graphic.fillRect(0,0,width,height);
     }
  else {
@@ -27,8 +27,8 @@
       }
       int type=AlphaComposite.SRC;
       graphic.setComposite(AlphaComposite.getInstance(type));
-      Color c=new Color(mapContext.getBgColor().getRed(),mapContext.getBgColor().getGreen(),mapContext.getBgColor().getBlue(),0);
-      graphic.setBackground(mapContext.getBgColor());
+      Color c=new Color(mapContent.getBgColor().getRed(),mapContent.getBgColor().getGreen(),mapContent.getBgColor().getBlue(),0);
+      graphic.setBackground(mapContent.getBgColor());
       graphic.setColor(c);
       graphic.fillRect(0,0,width,height);
       type=AlphaComposite.SRC_OVER;
@@ -36,19 +36,19 @@
     }
     Rectangle paintArea=new Rectangle(width,height);
     StreamingRenderer renderer=new StreamingRenderer();
-    renderer.setContext(mapContext);
+    renderer.setMapContent(mapContent);
     RenderingHints hints=new RenderingHints(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
     renderer.setJava2DHints(hints);
     java.util.Map rendererParams=new HashMap();
     rendererParams.put("optimizedDataLoadingEnabled",new Boolean(true));
-    rendererParams.put("renderingBuffer",new Integer(mapContext.getBuffer()));
+    rendererParams.put("renderingBuffer",new Integer(mapContent.getBuffer()));
     rendererParams.put(StreamingRenderer.OPTIMIZE_FTS_RENDERING_KEY,Boolean.FALSE);
     rendererParams.put(StreamingRenderer.VECTOR_RENDERING_KEY,Boolean.TRUE);
     if (DefaultWebMapService.isLineWidthOptimizationEnabled()) {
       rendererParams.put(StreamingRenderer.LINE_WIDTH_OPTIMIZATION_KEY,true);
     }
     renderer.setRendererHints(rendererParams);
-    Envelope dataArea=mapContext.getAreaOfInterest();
+    Envelope dataArea=mapContent.getRenderingArea();
     int maxErrors=wms.getMaxRenderingErrors();
     MaxErrorEnforcer errorChecker=new MaxErrorEnforcer(renderer,maxErrors);
     final RenderExceptionStrategy nonIgnorableExceptionListener;
@@ -56,11 +56,11 @@
     renderer.addRenderListener(nonIgnorableExceptionListener);
     int maxMemory=wms.getMaxRequestMemory() * KB;
     PDFMaxSizeEnforcer memoryChecker=new PDFMaxSizeEnforcer(renderer,graphic,maxMemory);
-    renderer.paint(graphic,paintArea,mapContext.getRenderingArea(),mapContext.getRenderingTransform());
+    renderer.paint(graphic,paintArea,mapContent.getRenderingArea(),mapContent.getRenderingTransform());
     MapDecorationLayout.Block watermark=RenderedImageMapOutputFormat.getWatermark(wms.getServiceInfo());
     if (watermark != null) {
       MapDecorationLayout layout=new MapDecorationLayout();
-      layout.paint(graphic,paintArea,mapContext);
+      layout.paint(graphic,paintArea,mapContent);
     }
     if (nonIgnorableExceptionListener.exceptionOccurred()) {
       Exception renderError=nonIgnorableExceptionListener.getException();

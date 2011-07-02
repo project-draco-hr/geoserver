@@ -13,10 +13,10 @@
     final Rectangle tileDim=this.tiles[tileIdx];
     final RenderedImage tile=createTile(tileDim.x,tileDim.y,tileDim.width,tileDim.height);
     final String mimeType=webMap.getMimeType();
-    final WMSMapContext tileContext;
+    final WMSMapContent tileContext;
 {
-      final WMSMapContext metaTileContext=((RenderedImageMap)webMap).getMapContext();
-      tileContext=new WMSMapContext();
+      final WMSMapContent metaTileContext=((RenderedImageMap)webMap).getMapContext();
+      tileContext=new WMSMapContent();
       tileContext.setRequest(metaTileContext.getRequest());
       tileContext.setBgColor(metaTileContext.getBgColor());
       tileContext.setMapWidth(tileDim.width);
@@ -27,7 +27,7 @@
       BoundingBox tileBounds=gridSubset.boundsFromIndex(tileIndexes[tileIdx]);
       ReferencedEnvelope tilebbox=new ReferencedEnvelope(metaTileContext.getCoordinateReferenceSystem());
       tilebbox.init(tileBounds.getMinX(),tileBounds.getMaxX(),tileBounds.getMinY(),tileBounds.getMaxY());
-      tileContext.setAreaOfInterest(tilebbox);
+      tileContext.getViewport().setBounds(tilebbox);
     }
     tileMap=new RenderedImageMap(tileContext,tile,mimeType);
   }

@@ -1,0 +1,18 @@
+{
+  KMLNetworkLinkTransformer transformer=new KMLNetworkLinkTransformer(wms);
+  transformer.setIndentation(3);
+  Charset encoding=wms.getCharSet();
+  transformer.setEncoding(encoding);
+  Map fo=mapContent.getRequest().getFormatOptions();
+  Boolean superoverlay=(Boolean)fo.get("superoverlay");
+  if (superoverlay == null) {
+    superoverlay=Boolean.FALSE;
+  }
+  transformer.setEncodeAsRegion(superoverlay);
+  GetMapRequest request=mapContent.getRequest();
+  boolean cachedMode="cached".equals(KMLUtils.getSuperoverlayMode(request,wms));
+  transformer.setCachedMode(cachedMode);
+  String mimeType=request.getFormat();
+  XMLTransformerMap wmsResponse=new XMLTransformerMap(mapContent,transformer,mapContent,mimeType);
+  return wmsResponse;
+}

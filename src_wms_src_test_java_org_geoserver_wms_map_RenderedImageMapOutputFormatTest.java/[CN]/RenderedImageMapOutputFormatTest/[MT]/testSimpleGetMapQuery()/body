@@ -4,8 +4,8 @@
   final Envelope env=fs.getBounds();
   LOGGER.info("about to create map ctx for BasicPolygons with bounds " + env);
   GetMapRequest request=new GetMapRequest();
-  final WMSMapContext map=new WMSMapContext();
-  map.setAreaOfInterest(new ReferencedEnvelope(env,DefaultGeographicCRS.WGS84));
+  final WMSMapContent map=new WMSMapContent();
+  map.getViewport().setBounds(new ReferencedEnvelope(env,DefaultGeographicCRS.WGS84));
   map.setMapWidth(300);
   map.setMapHeight(300);
   map.setBgColor(Color.red);
@@ -13,7 +13,7 @@
   map.setRequest(request);
   StyleInfo styleByName=catalog.getStyleByName("Default");
   Style basicStyle=styleByName.getStyle();
-  map.addLayer(fs,basicStyle);
+  map.addLayer(new FeatureLayer(fs,basicStyle));
   request.setFormat(getMapFormat());
   RenderedImageMap imageMap=this.rasterMapProducer.produceMap(map);
   BufferedImage image=(BufferedImage)imageMap.getImage();

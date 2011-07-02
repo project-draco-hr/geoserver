@@ -1,19 +1,19 @@
 {
-  final WMSMapContext mapContext=(WMSMapContext)o;
-  final GetMapRequest request=mapContext.getRequest();
-  final List<Layer> layers=mapContext.layers();
+  final WMSMapContent mapContent=(WMSMapContent)o;
+  final GetMapRequest request=mapContent.getRequest();
+  final List<Layer> layers=mapContent.layers();
   final KMLLookAt lookAtOpts=new KMLLookAt(request.getFormatOptions());
   start("kml",KMLUtils.attributes(new String[]{"xmlns","http://www.opengis.net/kml/2.2","xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance","xmlns:atom","http://www.w3.org/2005/Atom","xsi:schemaLocation","http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd"}));
   scaleDenominator=1;
   try {
-    scaleDenominator=RendererUtilities.calculateScale(mapContext.getAreaOfInterest(),mapContext.getMapWidth(),mapContext.getMapHeight(),null);
+    scaleDenominator=RendererUtilities.calculateScale(mapContent.getRenderingArea(),mapContent.getMapWidth(),mapContent.getMapHeight(),null);
   }
  catch (  Exception e) {
     LOGGER.log(Level.WARNING,"Error calculating scale denominator",e);
   }
   LOGGER.log(Level.FINE,"scale denominator = " + scaleDenominator);
   start("Document");
-  String title=mapContext.getTitle();
+  String title=mapContent.getTitle();
   element("name",title);
   element("visibility","1");
   element("open","1");
@@ -22,7 +22,7 @@
   AttributesImpl href=new AttributesImpl();
   href.addAttribute("","href","href","",wms.getGeoServer().getGlobal().getOnlineResource());
   element("atom:link",null,href);
-  String abstract1=buildDescription(mapContext);
+  String abstract1=buildDescription(mapContent);
   element("description",abstract1);
   KMLNetworkLinkTransformer networkLinkTransformer=new KMLNetworkLinkTransformer(wms);
   networkLinkTransformer.setStandalone(false);
@@ -30,10 +30,10 @@
   networkLinkTransformer.setIndentation(getIndentation());
   networkLinkTransformer.setOmitXMLDeclaration(true);
   networkLinkTransformer.setEncodeAsRegion(false);
-  networkLinkTransformer.createTranslator(contentHandler).encode(mapContext);
+  networkLinkTransformer.createTranslator(contentHandler).encode(mapContent);
   boolean includeSampleData=false;
   for (int i=0; i < layers.size(); i++) {
-    MapLayerInfo layerInfo=mapContext.getRequest().getLayers().get(i);
+    MapLayerInfo layerInfo=mapContent.getRequest().getLayers().get(i);
     final int type=layerInfo.getType();
     if (MapLayerInfo.TYPE_VECTOR == type || MapLayerInfo.TYPE_REMOTE_VECTOR == type) {
       includeSampleData=true;
@@ -42,12 +42,12 @@
   if (includeSampleData) {
     for (int i=0; i < layers.size(); i++) {
       Layer layer=layers.get(i);
-      MapLayerInfo layerInfo=mapContext.getRequest().getLayers().get(i);
+      MapLayerInfo layerInfo=mapContent.getRequest().getLayers().get(i);
       if (layerInfo.getType() != MapLayerInfo.TYPE_RASTER) {
-        encodeVectorLayer(mapContext,layer,lookAtOpts);
+        encodeVectorLayer(mapContent,layer,lookAtOpts);
       }
  else {
-        encodeRasterLayer(mapContext,layer,lookAtOpts);
+        encodeRasterLayer(mapContent,layer,lookAtOpts);
       }
     }
   }

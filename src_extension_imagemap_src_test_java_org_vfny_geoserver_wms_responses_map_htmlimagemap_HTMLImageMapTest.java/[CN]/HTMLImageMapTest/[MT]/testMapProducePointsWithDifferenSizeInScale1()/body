@@ -2,13 +2,13 @@
   final FeatureSource<SimpleFeatureType,SimpleFeature> fs=testDS.getFeatureSource("BuildingCenters");
   final ReferencedEnvelope env=new ReferencedEnvelope(fs.getBounds(),WGS84);
   LOGGER.info("about to create map ctx for BuildingCenters with bounds " + env);
-  final WMSMapContext map=new WMSMapContext();
-  map.setAreaOfInterest(env);
+  final WMSMapContent map=new WMSMapContent();
+  map.getViewport().setBounds(env);
   map.setMapWidth(mapWidth);
   map.setMapHeight(mapHeight);
   map.setTransparent(false);
   Style basicStyle=getTestStyle("BuildingCenters3.sld");
-  map.addLayer(fs,basicStyle);
+  map.addLayer(new FeatureLayer(fs,basicStyle));
   EncodeHTMLImageMap result=mapProducer.produceMap(map);
   assertTestResult("BuildingCenters3",result);
 }

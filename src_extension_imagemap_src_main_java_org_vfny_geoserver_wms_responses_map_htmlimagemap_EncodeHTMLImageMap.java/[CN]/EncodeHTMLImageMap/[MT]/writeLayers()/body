@@ -1,10 +1,10 @@
 {
-  for (  Layer layer : mapContext.layers()) {
+  for (  Layer layer : mapContent.layers()) {
     SimpleFeatureSource fSource;
     fSource=(SimpleFeatureSource)layer.getFeatureSource();
     SimpleFeatureType schema=fSource.getSchema();
     try {
-      ReferencedEnvelope aoi=mapContext.getAreaOfInterest();
+      ReferencedEnvelope aoi=mapContent.getRenderingArea();
       CoordinateReferenceSystem sourceCrs=schema.getGeometryDescriptor().getCoordinateReferenceSystem();
       boolean reproject=(sourceCrs != null) && !CRS.equalsIgnoreMetadata(aoi.getCoordinateReferenceSystem(),sourceCrs);
       if (reproject) {
@@ -33,7 +33,7 @@
       }
       SimpleFeatureCollection fColl=null;
       if (reproject) {
-        fColl=new ReprojectFeatureResults(fSource.getFeatures(q),mapContext.getCoordinateReferenceSystem());
+        fColl=new ReprojectFeatureResults(fSource.getFeatures(q),mapContent.getCoordinateReferenceSystem());
       }
  else       fColl=fSource.getFeatures(q);
       writer.writeFeatures(fColl,ftsList);

@@ -1,0 +1,18 @@
+{
+  AtomGeoRSSTransformer tx=new AtomGeoRSSTransformer(wms);
+  GetMapRequest request=mapContent.getRequest();
+  String geometryEncoding=(String)request.getFormatOptions().get("encoding");
+  if ("gml".equals(geometryEncoding)) {
+    tx.setGeometryEncoding(GeoRSSTransformerBase.GeometryEncoding.GML);
+  }
+ else   if ("latlong".equals(geometryEncoding)) {
+    tx.setGeometryEncoding(GeoRSSTransformerBase.GeometryEncoding.LATLONG);
+  }
+ else {
+    tx.setGeometryEncoding(GeoRSSTransformerBase.GeometryEncoding.SIMPLE);
+  }
+  Charset encoding=wms.getCharSet();
+  tx.setEncoding(encoding);
+  XMLTransformerMap result=new XMLTransformerMap(mapContent,tx,mapContent,getMimeType());
+  return result;
+}

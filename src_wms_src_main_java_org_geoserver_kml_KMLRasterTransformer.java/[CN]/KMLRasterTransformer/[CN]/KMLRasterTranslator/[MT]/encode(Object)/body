@@ -1,10 +1,10 @@
 {
   Layer layer=(Layer)o;
-  int mapLayerOrder=mapContext.layers().indexOf(layer);
+  int mapLayerOrder=mapContent.layers().indexOf(layer);
   if (isStandAlone()) {
     start("kml");
   }
-  ReferencedEnvelope box=new ReferencedEnvelope(mapContext.getAreaOfInterest());
+  ReferencedEnvelope box=new ReferencedEnvelope(mapContent.getRenderingArea());
   boolean reprojectBBox=(box.getCoordinateReferenceSystem() != null) && !CRS.equalsIgnoreMetadata(box.getCoordinateReferenceSystem(),DefaultGeographicCRS.WGS84);
   if (reprojectBBox) {
     try {
@@ -40,11 +40,11 @@
   element("west",Double.toString(box.getMinX()));
   end("LatLonBox");
   end("GroundOverlay");
-  boolean kmplacemark=KMLUtils.getKmplacemark(mapContext.getRequest(),wms);
+  boolean kmplacemark=KMLUtils.getKmplacemark(mapContent.getRequest(),wms);
   if (kmplacemark) {
     SimpleFeatureCollection features=null;
     try {
-      features=KMLUtils.loadFeatureCollection((SimpleFeatureSource)layer.getFeatureSource(),layer,mapContext,wms,scaleDenominator);
+      features=KMLUtils.loadFeatureCollection((SimpleFeatureSource)layer.getFeatureSource(),layer,mapContent,wms,scaleDenominator);
     }
  catch (    Exception ex) {
       String msg="Error getting features.";
@@ -53,7 +53,7 @@
     if (features != null && features.size() > 0) {
       Geometry geom=null;
       Geometry centroidGeom=null;
-      Envelope aoi=mapContext.getAreaOfInterest();
+      Envelope aoi=mapContent.getRenderingArea();
       GeometryFactory factory=new GeometryFactory();
       Geometry displayGeom=factory.toGeometry(new Envelope(aoi.getMinX(),aoi.getMaxX(),aoi.getMinY(),aoi.getMaxY()));
       SimpleFeatureType featureType=features.getSchema();

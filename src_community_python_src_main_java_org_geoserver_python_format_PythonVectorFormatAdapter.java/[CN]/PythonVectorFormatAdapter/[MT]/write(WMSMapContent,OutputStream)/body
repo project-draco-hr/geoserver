@@ -1,0 +1,15 @@
+{
+  List features=new ArrayList();
+  for (  Layer l : mapContent.layers()) {
+    if (l instanceof FeatureLayer) {
+      FeatureSource source=l.getFeatureSource();
+      features.add(source.getFeatures(l.getQuery()));
+    }
+  }
+  if (features.isEmpty()) {
+    throw new IllegalArgumentException("No feature data in map context");
+  }
+  PyObject obj=pyObject();
+  obj.__call__(Py.javas2pys(features,output));
+  output.flush();
+}

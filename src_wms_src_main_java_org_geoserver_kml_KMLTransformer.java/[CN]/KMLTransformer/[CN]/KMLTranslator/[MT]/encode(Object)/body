@@ -1,12 +1,12 @@
 {
-  final WMSMapContext mapContext=(WMSMapContext)o;
-  final GetMapRequest request=mapContext.getRequest();
-  final List<Layer> layers=mapContext.layers();
+  final WMSMapContent mapContent=(WMSMapContent)o;
+  final GetMapRequest request=mapContent.getRequest();
+  final List<Layer> layers=mapContent.layers();
   final KMLLookAt lookAtOpts=new KMLLookAt(request.getFormatOptions());
   start("kml",KMLUtils.attributes(new String[]{"xmlns","http://www.opengis.net/kml/2.2","xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance","xsi:schemaLocation","http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd"}));
   scaleDenominator=1;
   try {
-    scaleDenominator=RendererUtilities.calculateScale(mapContext.getAreaOfInterest(),mapContext.getMapWidth(),mapContext.getMapHeight(),null);
+    scaleDenominator=RendererUtilities.calculateScale(mapContent.getRenderingArea(),mapContent.getMapWidth(),mapContent.getMapHeight(),null);
   }
  catch (  Exception e) {
     LOGGER.log(Level.WARNING,"Error calculating scale denominator",e);
@@ -24,25 +24,25 @@
   }
   for (int i=0; i < layers.size(); i++) {
     Layer layer=layers.get(i);
-    MapLayerInfo layerInfo=mapContext.getRequest().getLayers().get(i);
-    Boolean superoverlay=(Boolean)mapContext.getRequest().getFormatOptions().get("superoverlay");
+    MapLayerInfo layerInfo=mapContent.getRequest().getLayers().get(i);
+    Boolean superoverlay=(Boolean)mapContent.getRequest().getFormatOptions().get("superoverlay");
     superoverlay=(superoverlay == null ? Boolean.FALSE : superoverlay);
     if (superoverlay) {
-      encodeSuperOverlayLayer(mapContext,layer);
+      encodeSuperOverlayLayer(mapContent,layer);
     }
  else {
       if (layerInfo.getType() != MapLayerInfo.TYPE_RASTER) {
-        encodeVectorLayer(mapContext,layer,lookAtOpts);
+        encodeVectorLayer(mapContent,layer,lookAtOpts);
       }
  else {
-        encodeRasterLayer(mapContext,layer,lookAtOpts);
+        encodeRasterLayer(mapContent,layer,lookAtOpts);
       }
     }
   }
   if (request.getLegend()) {
     for (int i=0; i < layers.size(); i++) {
       Layer layer=layers.get(i);
-      encodeLegend(mapContext,layer);
+      encodeLegend(mapContent,layer);
     }
   }
   if (group) {

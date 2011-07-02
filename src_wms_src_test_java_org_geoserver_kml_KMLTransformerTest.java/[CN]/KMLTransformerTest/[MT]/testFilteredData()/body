@@ -2,16 +2,16 @@
   Layer layer=createMapLayer(MockData.BASIC_POLYGONS,"SingleFeature");
   FeatureSource<SimpleFeatureType,SimpleFeature> featureSource;
   featureSource=(SimpleFeatureSource)layer.getFeatureSource();
-  WMSMapContext mapContext=new WMSMapContext(createGetMapRequest(MockData.BASIC_POLYGONS));
+  WMSMapContent mapContent=new WMSMapContent(createGetMapRequest(MockData.BASIC_POLYGONS));
   Document document;
   try {
-    mapContext.addLayer(layer);
-    KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContext,layer);
+    mapContent.addLayer(layer);
+    KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContent,layer);
     transformer.setIndentation(2);
     document=WMSTestSupport.transform(featureSource.getFeatures(),transformer);
   }
   finally {
-    mapContext.dispose();
+    mapContent.dispose();
   }
   Element element=document.getDocumentElement();
   assertEquals("kml",element.getNodeName());

@@ -3,12 +3,12 @@
   final XMLTransformerMap map=(XMLTransformerMap)value;
   try {
     final KMLTransformer transformer=(KMLTransformer)map.getTransformer();
-    final WMSMapContext mapContext=(WMSMapContext)map.getTransformerSubject();
+    final WMSMapContent mapContent=(WMSMapContent)map.getTransformerSubject();
     ZipOutputStream zip=new ZipOutputStream(output);
     ZipEntry entry=new ZipEntry("wms.kml");
     zip.putNextEntry(entry);
     try {
-      transformer.transform(mapContext,zip);
+      transformer.transform(mapContent,zip);
       zip.closeEntry();
     }
  catch (    TransformerException e) {
@@ -18,19 +18,20 @@
     final PNGMapResponse pngEncoder=new PNGMapResponse(wms);
     ZipEntry images=new ZipEntry("images/");
     zip.putNextEntry(images);
-    for (int i=0; i < mapContext.getLayerCount(); i++) {
-      Layer mapLayer=mapContext.layers().get(i);
-      WMSMapContext subContext=new WMSMapContext();
+    CopyOnWriteArrayList<Layer> layers=mapContent.layers();
+    for (int i=0; i < layers.size(); i++) {
+      Layer mapLayer=layers.get(i);
+      WMSMapContent subContext=new WMSMapContent();
       subContext.addLayer(mapLayer);
-      subContext.setRequest(mapContext.getRequest());
-      subContext.setMapHeight(mapContext.getMapHeight());
-      subContext.setMapWidth(mapContext.getMapWidth());
-      subContext.setAreaOfInterest(mapContext.getAreaOfInterest());
-      subContext.setBgColor(mapContext.getBgColor());
-      subContext.setBuffer(mapContext.getBuffer());
-      subContext.setContactInformation(mapContext.getContactInformation());
-      subContext.setKeywords(mapContext.getKeywords());
-      subContext.setAbstract(mapContext.getAbstract());
+      subContext.setRequest(mapContent.getRequest());
+      subContext.setMapHeight(mapContent.getMapHeight());
+      subContext.setMapWidth(mapContent.getMapWidth());
+      subContext.getViewport().setBounds(mapContent.getRenderingArea());
+      subContext.setBgColor(mapContent.getBgColor());
+      subContext.setBuffer(mapContent.getBuffer());
+      subContext.setContactInformation(mapContent.getContactInformation());
+      subContext.setKeywords(mapContent.getKeywords());
+      subContext.setAbstract(mapContent.getAbstract());
       subContext.setTransparent(true);
       RenderedImageMap imageMap;
       try {

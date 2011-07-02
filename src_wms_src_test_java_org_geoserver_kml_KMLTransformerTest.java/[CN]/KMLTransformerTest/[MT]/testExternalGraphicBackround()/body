@@ -4,15 +4,15 @@
   FeatureSource<SimpleFeatureType,SimpleFeature> featureSource;
   featureSource=(SimpleFeatureSource)Layer.getFeatureSource();
   int nfeatures=featureSource.getFeatures().size();
-  WMSMapContext mapContext=new WMSMapContext(createGetMapRequest(MockData.POINTS));
+  WMSMapContent mapContent=new WMSMapContent(createGetMapRequest(MockData.POINTS));
   try {
-    mapContext.addLayer(Layer);
-    KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContext,Layer);
+    mapContent.addLayer(Layer);
+    KMLVectorTransformer transformer=new KMLVectorTransformer(getWMS(),mapContent,Layer);
     transformer.setIndentation(2);
     document=WMSTestSupport.transform(featureSource.getFeatures(),transformer);
   }
   finally {
-    mapContext.dispose();
+    mapContent.dispose();
   }
   XMLAssert.assertXpathEvaluatesTo("" + nfeatures,"count(//Style/IconStyle/Icon/href)",document);
   XMLAssert.assertXpathEvaluatesTo("0","count(//Style/IconStyle/Icon/color)",document);
