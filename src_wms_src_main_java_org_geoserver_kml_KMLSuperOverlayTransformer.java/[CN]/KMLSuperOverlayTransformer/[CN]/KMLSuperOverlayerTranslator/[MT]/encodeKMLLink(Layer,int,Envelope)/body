@@ -1,0 +1,22 @@
+{
+  CaseInsensitiveMap fo=new CaseInsensitiveMap(new HashMap());
+  fo.putAll(mapContext.getRequest().getFormatOptions());
+  fo.remove("superoverlay");
+  String overlayMode=(String)fo.get("overlayMode");
+  if ("overview".equalsIgnoreCase(overlayMode)) {
+    fo.remove("regionateBy");
+  }
+ else {
+    if (!fo.containsKey("regionateBy")) {
+      fo.put("regionateBy","auto");
+    }
+  }
+  String foEncoded=WMSRequests.encodeFormatOptions(fo);
+  start("NetworkLink");
+  element("visibility","1");
+  start("Link");
+  element("href",KMLUtils.getMapUrl(mapContext,layer,0,box,new String[]{"width","256","height","256","format_options",foEncoded,"superoverlay","false"},true,wms.getGeoServer()));
+  end("Link");
+  encodeRegion(box,128,-1);
+  end("NetworkLink");
+}

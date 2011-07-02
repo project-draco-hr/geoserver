@@ -41,19 +41,20 @@
     }
     final Style layerStyle=styles[i];
     final Filter layerFilter=filters[i];
-    final MapLayer layer;
+    final org.geotools.map.Layer layer;
     int layerType=mapLayerInfo.getType();
     if (layerType == MapLayerInfo.TYPE_REMOTE_VECTOR) {
       final SimpleFeatureSource source=mapLayerInfo.getRemoteFeatureSource();
-      layer=new DefaultMapLayer(source,layerStyle);
-      layer.setTitle(mapLayerInfo.getRemoteFeatureSource().getSchema().getTypeName());
+      FeatureLayer featureLayer=new FeatureLayer(source,layerStyle);
+      featureLayer.setTitle(mapLayerInfo.getRemoteFeatureSource().getSchema().getTypeName());
       final Query definitionQuery=new Query(source.getSchema().getTypeName());
       definitionQuery.setFilter(layerFilter);
       definitionQuery.setVersion(featureVersion);
       int maxFeatures=request.getMaxFeatures() != null ? request.getMaxFeatures() : Integer.MAX_VALUE;
       definitionQuery.setMaxFeatures(maxFeatures);
-      layer.setQuery(definitionQuery);
-      mapContext.addLayer(layer);
+      featureLayer.setQuery(definitionQuery);
+      mapContext.addLayer(featureLayer);
+      layer=featureLayer;
     }
  else     if (layerType == MapLayerInfo.TYPE_VECTOR) {
       FeatureSource<? extends FeatureType,? extends Feature> source;
@@ -66,8 +67,8 @@
         }
         throw new ServiceException("Internal error",exp);
       }
-      layer=new FeatureSourceMapLayer(source,layerStyle);
-      layer.setTitle(mapLayerInfo.getFeature().getPrefixedName());
+      FeatureLayer featureLayer=new FeatureLayer(source,layerStyle);
+      featureLayer.setTitle(mapLayerInfo.getFeature().getPrefixedName());
       Filter dimensionFilter=wms.getTimeElevationToFilter(times,elevations,mapLayerInfo.getFeature());
       Filter filter=Filters.and(ff,layerFilter,dimensionFilter);
       final Query definitionQuery=new Query(source.getSchema().getName().getLocalPart());
@@ -88,8 +89,9 @@
       }
       int maxFeatures=request.getMaxFeatures() != null ? request.getMaxFeatures() : Integer.MAX_VALUE;
       definitionQuery.setMaxFeatures(maxFeatures);
-      layer.setQuery(definitionQuery);
-      mapContext.addLayer(layer);
+      featureLayer.setQuery(definitionQuery);
+      mapContext.addLayer(featureLayer);
+      layer=featureLayer;
     }
  else     if (layerType == MapLayerInfo.TYPE_RASTER) {
       final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)mapLayerInfo.getCoverageReader();
@@ -97,13 +99,12 @@
         GeneralParameterValue[] readParameters=wms.getWMSReadParameters(request,mapLayerInfo,layerFilter,times,elevations,reader,false);
         try {
           try {
-            layer=new DefaultMapLayer(FeatureUtilities.wrapGridCoverageReader(reader,readParameters),layerStyle);
+            layer=new GridReaderLayer(reader,layerStyle,readParameters);
           }
  catch (          Exception e) {
             throw new RuntimeException(e);
           }
           layer.setTitle(mapLayerInfo.getCoverage().getPrefixedName());
-          layer.setQuery(Query.ALL);
           mapContext.addLayer(layer);
         }
  catch (        IllegalArgumentException e) {
@@ -123,9 +124,9 @@
       Layer gt2Layer=wmsLayer.getWMSLayer(null);
       boolean merged=false;
       if (mapContext.getLayerCount() > 0) {
-        MapLayer lastLayer=mapContext.getLayer(mapContext.getLayerCount() - 1);
-        if (lastLayer instanceof WMSMapLayer) {
-          WMSMapLayer lastWMS=(WMSMapLayer)lastLayer;
+        org.geotools.map.Layer lastLayer=mapContext.layers().get(mapContext.getLayerCount() - 1);
+        if (lastLayer instanceof WMSLayer) {
+          WMSLayer lastWMS=(WMSLayer)lastLayer;
           WebMapServer otherWMS=lastWMS.getWebMapServer();
           if (otherWMS.equals(wms)) {
             lastWMS.addLayer(gt2Layer);
@@ -134,9 +135,9 @@
         }
       }
       if (!merged) {
-        WMSMapLayer mapLayer=new WMSMapLayer(wms,gt2Layer);
-        mapLayer.setTitle(wmsLayer.getPrefixedName());
-        mapContext.addLayer(mapLayer);
+        WMSMapLayer Layer=new WMSMapLayer(wms,gt2Layer);
+        Layer.setTitle(wmsLayer.getPrefixedName());
+        mapContext.addLayer(Layer);
       }
     }
  else {

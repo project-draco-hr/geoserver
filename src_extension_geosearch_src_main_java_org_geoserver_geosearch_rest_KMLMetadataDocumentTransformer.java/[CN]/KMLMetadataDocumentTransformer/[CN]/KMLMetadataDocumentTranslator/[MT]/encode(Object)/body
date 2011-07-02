@@ -1,7 +1,7 @@
 {
   final WMSMapContext mapContext=(WMSMapContext)o;
   final GetMapRequest request=mapContext.getRequest();
-  final MapLayer[] layers=mapContext.getLayers();
+  final List<Layer> layers=mapContext.layers();
   final KMLLookAt lookAtOpts=new KMLLookAt(request.getFormatOptions());
   start("kml",KMLUtils.attributes(new String[]{"xmlns","http://www.opengis.net/kml/2.2","xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance","xmlns:atom","http://www.w3.org/2005/Atom","xsi:schemaLocation","http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd"}));
   scaleDenominator=1;
@@ -32,7 +32,7 @@
   networkLinkTransformer.setEncodeAsRegion(false);
   networkLinkTransformer.createTranslator(contentHandler).encode(mapContext);
   boolean includeSampleData=false;
-  for (int i=0; i < layers.length; i++) {
+  for (int i=0; i < layers.size(); i++) {
     MapLayerInfo layerInfo=mapContext.getRequest().getLayers().get(i);
     final int type=layerInfo.getType();
     if (MapLayerInfo.TYPE_VECTOR == type || MapLayerInfo.TYPE_REMOTE_VECTOR == type) {
@@ -40,8 +40,8 @@
     }
   }
   if (includeSampleData) {
-    for (int i=0; i < layers.length; i++) {
-      MapLayer layer=layers[i];
+    for (int i=0; i < layers.size(); i++) {
+      Layer layer=layers.get(i);
       MapLayerInfo layerInfo=mapContext.getRequest().getLayers().get(i);
       if (layerInfo.getType() != MapLayerInfo.TYPE_RASTER) {
         encodeVectorLayer(mapContext,layer,lookAtOpts);

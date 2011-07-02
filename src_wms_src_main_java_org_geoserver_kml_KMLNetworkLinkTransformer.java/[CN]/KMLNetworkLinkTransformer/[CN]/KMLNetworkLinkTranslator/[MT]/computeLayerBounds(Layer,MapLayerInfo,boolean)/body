@@ -1,0 +1,32 @@
+{
+  final Query layerQuery=layer.getQuery();
+  final Filter filter=layerQuery.getFilter();
+  if (layerQuery.getFilter() == null || Filter.INCLUDE.equals(filter)) {
+    computeQueryBounds=false;
+  }
+  if (!computeQueryBounds && !layerQuery.isMaxFeaturesUnlimited()) {
+    computeQueryBounds=true;
+  }
+  ReferencedEnvelope layerLatLongBbox=null;
+  if (computeQueryBounds) {
+    FeatureSource featureSource=layer.getFeatureSource();
+    try {
+      CoordinateReferenceSystem targetCRS=CRS.decode("EPSG:4326");
+      FeatureCollection features=featureSource.getFeatures(layerQuery);
+      layerLatLongBbox=features.getBounds();
+      layerLatLongBbox=layerLatLongBbox.transform(targetCRS,true);
+    }
+ catch (    Exception e) {
+      LOGGER.info("Error computing bounds for " + featureSource.getName() + " with "+ layerQuery);
+    }
+  }
+  if (layerLatLongBbox == null) {
+    try {
+      layerLatLongBbox=layerInfo.getLatLongBoundingBox();
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  return layerLatLongBbox;
+}

@@ -1,6 +1,6 @@
 {
-  MapLayer mapLayer=(MapLayer)o;
-  int mapLayerOrder=mapContext.indexOf(mapLayer);
+  Layer layer=(Layer)o;
+  int mapLayerOrder=mapContext.layers().indexOf(layer);
   if (isStandAlone()) {
     start("kml");
   }
@@ -16,7 +16,7 @@
   }
   start("Folder");
   element("name","layer_" + mapLayerOrder);
-  element("description",mapLayer.getTitle());
+  element("description",layer.getTitle());
   if (lookAtOpts != null) {
     if (box != null) {
       KMLLookAtTransformer tx;
@@ -26,10 +26,10 @@
     }
   }
   start("GroundOverlay");
-  element("name",mapLayer.getTitle());
+  element("name",layer.getTitle());
   element("drawOrder",Integer.toString(mapLayerOrder));
   start("Icon");
-  encodeHref(mapLayer);
+  encodeHref(layer);
   element("viewRefreshMode","never");
   element("viewBoundScale","0.75");
   end("Icon");
@@ -44,7 +44,7 @@
   if (kmplacemark) {
     SimpleFeatureCollection features=null;
     try {
-      features=KMLUtils.loadFeatureCollection((SimpleFeatureSource)mapLayer.getFeatureSource(),mapLayer,mapContext,wms,scaleDenominator);
+      features=KMLUtils.loadFeatureCollection((SimpleFeatureSource)layer.getFeatureSource(),layer,mapContext,wms,scaleDenominator);
     }
  catch (    Exception ex) {
       String msg="Error getting features.";
@@ -57,7 +57,7 @@
       GeometryFactory factory=new GeometryFactory();
       Geometry displayGeom=factory.toGeometry(new Envelope(aoi.getMinX(),aoi.getMaxX(),aoi.getMinY(),aoi.getMaxY()));
       SimpleFeatureType featureType=features.getSchema();
-      FeatureTypeStyle[] fts=KMLUtils.filterFeatureTypeStyles(mapLayer.getStyle(),featureType);
+      FeatureTypeStyle[] fts=KMLUtils.filterFeatureTypeStyles(layer.getStyle(),featureType);
       Iterator<SimpleFeature> iter=features.iterator();
       while (iter.hasNext()) {
         SimpleFeature ftr=iter.next();
