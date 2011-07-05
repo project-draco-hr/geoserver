@@ -1,0 +1,34 @@
+{
+  Query result=DataUtilities.mixQueries(userQuery,securityQuery,userQuery.getHandle());
+  List<PropertyName> securityProperties=securityQuery.getProperties();
+  if (securityProperties != null && securityProperties.size() > 0) {
+    List<PropertyName> userProperties=userQuery.getProperties();
+    if (userProperties == null) {
+      result.setProperties(securityProperties);
+    }
+ else {
+      for (      PropertyName pn : userProperties) {
+        if (!securityProperties.contains(pn)) {
+          throw new SecurityException("Attribute " + pn.getPropertyName() + " is not available");
+        }
+      }
+      result.setProperties(userProperties);
+    }
+  }
+  if (userQuery.getHints() == null) {
+    result.setHints(securityQuery.getHints());
+  }
+ else   if (securityQuery.getHints() == null) {
+    result.setHints(userQuery.getHints());
+  }
+ else {
+    Hints mix=userQuery.getHints();
+    mix.putAll(securityQuery.getHints());
+    result.setHints(mix);
+  }
+  result.setCoordinateSystem(userQuery.getCoordinateSystem());
+  result.setCoordinateSystemReproject(userQuery.getCoordinateSystemReproject());
+  result.setStartIndex(userQuery.getStartIndex());
+  result.setSortBy(userQuery.getSortBy());
+  return result;
+}
