@@ -7,11 +7,17 @@
     return null;
   }
  else {
-    if (fc instanceof SimpleFeatureCollection && limitedAttributeSize > 0 && fc.getSchema().getDescriptors().size() > limitedAttributeSize) {
-      SimpleFeatureCollection sfc=(SimpleFeatureCollection)fc;
-      SimpleFeatureType target=SimpleFeatureTypeBuilder.retype(sfc.getSchema(),mixed.getPropertyNames());
-      ReTypingFeatureCollection retyped=new ReTypingFeatureCollection(sfc,target);
-      return (FeatureCollection)SecuredObjects.secure(retyped,policy);
+    if (limitedAttributeSize > 0 && fc.getSchema().getDescriptors().size() > limitedAttributeSize) {
+      if (fc instanceof SimpleFeatureCollection) {
+        SimpleFeatureCollection sfc=(SimpleFeatureCollection)fc;
+        SimpleFeatureType target=SimpleFeatureTypeBuilder.retype(sfc.getSchema(),mixed.getPropertyNames());
+        ReTypingFeatureCollection retyped=new ReTypingFeatureCollection(sfc,target);
+        return (FeatureCollection)SecuredObjects.secure(retyped,policy);
+      }
+ else {
+        LOGGER.log(Level.SEVERE,"Complex store returned more properties than allowed " + "by security (because they are required by the schema). " + "Either the security setup is broken or you have a security breach");
+        return (FeatureCollection)SecuredObjects.secure(fc,policy);
+      }
     }
  else {
       return (FeatureCollection)SecuredObjects.secure(fc,policy);
