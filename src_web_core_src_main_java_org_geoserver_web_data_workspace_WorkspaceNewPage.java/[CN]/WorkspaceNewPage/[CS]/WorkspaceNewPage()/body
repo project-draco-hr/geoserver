@@ -15,9 +15,17 @@
   }
 ;
   add(form);
-  TextField nameTextField=new TextField("name");
+  TextField<String> nameTextField=new TextField<String>("name");
   nameTextField.setRequired(true);
   nameTextField.add(new XMLNameValidator());
+  nameTextField.add(new StringValidator(){
+    @Override protected void onValidate(    IValidatable<String> validatable){
+      if (CatalogImpl.DEFAULT.equals(validatable.getValue())) {
+        error(validatable,"defaultWsError");
+      }
+    }
+  }
+);
   form.add(nameTextField.setRequired(true));
   nsUriTextField=new TextField("uri",new Model());
   nsUriTextField.setRequired(true);
