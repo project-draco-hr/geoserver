@@ -1,0 +1,35 @@
+{
+  FeatureSource<FeatureType,Feature> featureSource;
+  FilterFactory2 ff=new FilterFactoryImpl(null);
+  try {
+    Name gu=Types.typeName("urn:cgi:xmlns:CGI:GeoSciML:2.0","GeologicUnit");
+    featureSource=this.getFeatureSource(gu);
+  }
+ catch (  IOException ioe) {
+    featureSource=null;
+  }
+  assertNotNull(featureSource);
+  List<Filter> filterList=new ArrayList<Filter>();
+  Expression property=ff.property("gsml:geologicHistory/gsml:GeologicEvent/gsml:eventEnvironment/gsml:CGI_TermValue/gsml:value");
+  Filter filter=ff.like(property,"*mid-crustal*");
+  filterList.add(filter);
+  property=ff.property("gsml:purpose");
+  filter=ff.like(property,"*ypical*");
+  filterList.add(filter);
+  Filter andFilter=ff.and(filterList);
+  FeatureCollection<FeatureType,Feature> filteredResults=featureSource.getFeatures(andFilter);
+  FeatureIterator<Feature> iterator=filteredResults.features();
+  assertTrue(filteredResults instanceof MappingFeatureCollection);
+  MappingFeatureCollection mfc=((MappingFeatureCollection)filteredResults);
+  Filter afterSplit=mfc.getQuery().getFilter();
+  assertTrue(afterSplit instanceof org.geotools.filter.LikeFilterImpl);
+  assertTrue("*ypical*".equals(((org.geotools.filter.LikeFilterImpl)afterSplit).getPattern()));
+  ArrayList<String> ids=new ArrayList<String>();
+  while (iterator.hasNext()) {
+    ids.add(iterator.next().getIdentifier().toString());
+  }
+  assertEquals(3,ids.size());
+  assertTrue(ids.contains("gsml.geologicunit.1677754911513315832"));
+  assertTrue(ids.contains("gsml.geologicunit.16777549126941084"));
+  assertTrue(ids.contains("gsml.geologicunit.16777549126942588"));
+}
