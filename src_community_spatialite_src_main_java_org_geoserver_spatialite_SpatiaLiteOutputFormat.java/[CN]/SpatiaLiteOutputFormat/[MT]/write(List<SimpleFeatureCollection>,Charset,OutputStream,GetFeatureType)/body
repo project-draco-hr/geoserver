@@ -1,44 +1,124 @@
 {
-  File tempDir=IOUtils.createTempDirectory("shpziptemp");
+  Connection conn=null;
   try {
-    boolean shapefileCreated=false;
-    for (    SimpleFeatureCollection curCollection : collections) {
-      if (curCollection.getSchema().getGeometryDescriptor() == null) {
-        throw new WFSException("Cannot write geometryless shapefiles, yet " + curCollection.getSchema() + " has no geometry field");
+    Class.forName(this.driverClassName);
+  }
+ catch (  ClassNotFoundException e) {
+    System.out.println(e);
+  }
+  File tempDir=File.createTempFile("spatialitemp",".sqlite");
+  SQLiteConfig config=new SQLiteConfig();
+  config.enableLoadExtension(true);
+  String JDBCFileUrl=tempDir.getAbsolutePath();
+  try {
+    conn=DriverManager.getConnection("jdbc:sqlite:" + JDBCFileUrl,config.toProperties());
+    Statement stmt=conn.createStatement();
+    stmt.setQueryTimeout(30);
+    String sql=null;
+    conn.setAutoCommit(false);
+    String spatialiteLibraryUrl=MultiLibs.loadExtension();
+    sql="SELECT load_extension('" + spatialiteLibraryUrl + "');";
+    stmt.execute(sql);
+    sql="SELECT InitSpatialMetaData();";
+    stmt.execute(sql);
+    conn.commit();
+    String column_names=null;
+    for (    SimpleFeatureCollection fc : collections) {
+      SimpleFeatureType ft=fc.getSchema();
+      String the_geom=null;
+      if (ft.getGeometryDescriptor() != null) {
+        the_geom=ft.getGeometryDescriptor().getLocalName();
       }
-      Class geomType=curCollection.getSchema().getGeometryDescriptor().getType().getBinding();
-      if (GeometryCollection.class.equals(geomType) || Geometry.class.equals(geomType)) {
-        shapefileCreated|=writeCollectionToShapefiles(curCollection,tempDir,charset,request);
+      String tbl_name=ft.getName().getLocalPart();
+      column_names="";
+      int column_cnt=0;
+      sql="CREATE TABLE " + tbl_name;
+      sql+=" ( PK_UID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT";
+      for (int i=0; i < ft.getAttributeCount(); i++) {
+        AttributeDescriptor ad=ft.getDescriptor(i);
+        if (ad.getLocalName() != the_geom) {
+          sql+=", " + prepareColumnHeader(ad);
+          column_names+=ad.getLocalName();
+          column_cnt++;
+          if (i < ft.getAttributeCount() - 1) {
+            column_names+=", ";
+          }
+        }
       }
+      sql+=");";
+      System.out.println(sql);
+      stmt.execute(sql);
+      conn.commit();
+      int srid=0;
+      if (the_geom != null) {
+        sql="SELECT AddGeometryColumn('" + tbl_name + "', ";
+        sql+="'" + the_geom + "', ";
+        srid=getSpatialSRID(ft.getCoordinateReferenceSystem());
+        sql+=srid + ", ";
+        String geom_type=getSpatialGeometryType(ft);
+        if (geom_type == null) {
+          throw new WFSException("Error while adding the geometry column in table " + tbl_name + ", unrecognized geometry type");
+        }
+        sql+="'" + geom_type + "', ";
+        String dimension="XY";
+        sql+="'" + dimension + "'";
+        sql+=" );";
+      }
+      System.out.println(sql);
+      stmt.execute(sql);
+      conn.commit();
+      SimpleFeatureIterator i=fc.features();
+      try {
+        while (i.hasNext()) {
+          SimpleFeature row=i.next();
+          sql="INSERT INTO " + tbl_name + " ("+ column_names;
+          if (the_geom != null)           if (column_cnt > 0) {
+            sql+=", " + the_geom + " ) ";
+          }
  else {
-        writeCollectionToShapefile(curCollection,tempDir,charset,request);
-        shapefileCreated=true;
+            sql+=the_geom + ") ";
+          }
+ else {
+            sql+=") ";
+          }
+          Object geom_data=row.getDefaultGeometry();
+          sql+="VALUES (";
+          for (int j=0; j < row.getAttributeCount(); j++) {
+            Object rowAtt=row.getAttribute(j);
+            if (!rowAtt.equals(geom_data)) {
+              if (rowAtt != null) {
+                sql+="'" + rowAtt.toString() + "'";
+              }
+              if (j < row.getAttributeCount() - 1) {
+                sql+=", ";
+              }
+            }
+          }
+          if (the_geom != null) {
+            if (column_cnt > 0) {
+              sql+=", ";
+            }
+            sql+="GeomFromText('" + prepareGeom(geom_data.toString()) + "', "+ srid+ ")";
+          }
+          sql+=");";
+          System.out.println(sql);
+          stmt.executeUpdate(sql);
+        }
+        conn.commit();
       }
-    }
-    if (!shapefileCreated) {
-      SimpleFeatureCollection fc;
-      fc=(SimpleFeatureCollection)collections.get(0);
-      fc=remapCollectionSchema(fc,Point.class);
-      writeCollectionToShapefile(fc,tempDir,charset,request);
-      createEmptyZipWarning(tempDir);
-    }
-    createRequestDump(tempDir,request,collections.get(0));
-    final FilenameFilter filter=new FilenameFilter(){
-      public boolean accept(      File dir,      String name){
-        return name.endsWith(".shp") || name.endsWith(".shx") || name.endsWith(".dbf")|| name.endsWith(".prj")|| name.endsWith(".cst")|| name.endsWith(".txt");
-      }
-    }
-;
-    ZipOutputStream zipOut=new ZipOutputStream(output);
-    IOUtils.zipDirectory(tempDir,zipOut,filter);
-    zipOut.finish();
-  }
   finally {
-    try {
-      FileUtils.deleteDirectory(tempDir);
-    }
- catch (    IOException e) {
-      LOGGER.warning("Could not delete temp directory: " + tempDir.getAbsolutePath() + " due to: "+ e.getMessage());
+        fc.close(i);
+      }
     }
   }
+ catch (  SQLException e) {
+    System.out.println(e);
+  }
+  FileInputStream JDBCIn=new FileInputStream(tempDir);
+  int longitud=JDBCIn.available();
+  byte[] datos=new byte[longitud];
+  JDBCIn.read(datos);
+  output.write(datos);
+  File spatialiteLibraryFile=java.oi.File("String con la ruta");
+  spatialiteLibraryFile.delete();
 }
