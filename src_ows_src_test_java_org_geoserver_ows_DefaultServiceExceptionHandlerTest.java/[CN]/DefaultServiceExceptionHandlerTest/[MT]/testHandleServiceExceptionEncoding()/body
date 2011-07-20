@@ -1,0 +1,13 @@
+{
+  String message="foo & <foo> \"foo's\"";
+  ServiceException exception=new ServiceException(message);
+  exception.setLocator("test-locator");
+  handler.handleServiceException(exception,requestInfo);
+  InputStream input=new ByteArrayInputStream(response.getOutputStreamContent().getBytes());
+  DocumentBuilderFactory docBuilderFactory=DocumentBuilderFactory.newInstance();
+  docBuilderFactory.setNamespaceAware(true);
+  Document doc=docBuilderFactory.newDocumentBuilder().parse(input);
+  Node exceptionText=XPathAPI.selectSingleNode(doc,"ows:ExceptionReport/ows:Exception/ows:ExceptionText/text()");
+  assertNotNull(exceptionText);
+  assertEquals("round-tripped through character entities",message,exceptionText.getTextContent());
+}
