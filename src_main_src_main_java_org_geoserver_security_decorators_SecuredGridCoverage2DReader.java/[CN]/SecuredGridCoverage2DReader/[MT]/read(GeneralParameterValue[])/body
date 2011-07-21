@@ -3,6 +3,7 @@
   if (policy.getLimits() instanceof CoverageAccessLimits) {
     CoverageAccessLimits limits=(CoverageAccessLimits)policy.getLimits();
     rasterFilter=limits.getRasterFilter();
+    Filter readFilter=limits.getReadFilter();
     final GeneralParameterValue[] limitParams=limits.getParams();
     if (parameters == null) {
       parameters=limitParams;
@@ -21,6 +22,11 @@
         params.add(lparam);
       }
       parameters=(GeneralParameterValue[])params.toArray(new GeneralParameterValue[params.size()]);
+    }
+    if (readFilter != null && !Filter.INCLUDE.equals(readFilter)) {
+      ParameterValueGroup readParameters=delegate.getFormat().getReadParameters();
+      List<GeneralParameterDescriptor> descriptors=readParameters.getDescriptor().descriptors();
+      parameters=CoverageUtils.mergeParameter(descriptors,parameters,readFilter,"FILTER","Filter");
     }
   }
   GridCoverage2D grid=delegate.read(parameters);
