@@ -1,0 +1,16 @@
+{
+  MockHttpServletResponse resp=getAsServletResponse("wfs?request=GetFeature&typeName=Points&outputFormat=spatialite");
+  ByteArrayInputStream responseInput=getBinaryInputStream(resp);
+  Connection conn=createTempDataBaseConnection(responseInput);
+  Statement stmt=conn.createStatement();
+  boolean SpatialMetaData=true;
+  try {
+    stmt.execute("SELECT count(*) FROM geometry_columns");
+  }
+ catch (  SQLException e) {
+    SpatialMetaData=false;
+  }
+  assertTrue(SpatialMetaData);
+  conn.close();
+  new File(this.TempDataBaseUrl).delete();
+}
