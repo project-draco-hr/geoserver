@@ -8,7 +8,19 @@
   double min=parameters.getFirstValue("min") != null ? Double.parseDouble(parameters.getFirstValue("min")) : DEFAULT_MIN;
   double max=parameters.getFirstValue("max") != null ? Double.parseDouble(parameters.getFirstValue("max")) : DEFAULT_MAX;
   int classes=parameters.getFirstValue("classes") != null ? Integer.parseInt(parameters.getFirstValue("classes")) : DEFAULT_CLASSES;
+  int digits=parameters.getFirstValue("digits") != null ? Integer.parseInt(parameters.getFirstValue("digits")) : DEFAULT_DIGITS;
+  final String type=parameters.getFirstValue("type");
+  int colormapType=DEFAULT_TYPE;
+  if (type != null) {
+    if (type.equalsIgnoreCase(COLORMAP_TYPE.INTERVALS.toString())) {
+      colormapType=ColorMap.TYPE_INTERVALS;
+    }
+ else     if (type.equalsIgnoreCase(COLORMAP_TYPE.VALUES.toString())) {
+      colormapType=ColorMap.TYPE_VALUES;
+    }
+  }
   COLORRAMP_TYPE ramp=parameters.getFirstValue("ramp") != null ? COLORRAMP_TYPE.valueOf(parameters.getFirstValue("ramp").toUpperCase()) : COLORRAMP_TYPE.RED;
+  if (min == max)   min=min - Double.MIN_VALUE;
   LayerInfo layerInfo=catalog.getLayerByName(layer);
   if (layerInfo != null) {
     ResourceInfo obj=layerInfo.getResource();
@@ -20,7 +32,7 @@
       if (rasterSymbolizer == null) {
         throw new RestletException("RasterSymbolizer SLD expected!",Status.CLIENT_ERROR_EXPECTATION_FAILED);
       }
-      Style rasterized=remapStyle(defaultStyle,rasterSymbolizer,min,max,classes,ramp,layer);
+      Style rasterized=remapStyle(defaultStyle,rasterSymbolizer,min,max,classes,ramp,layer,digits,colormapType);
       DataFormat format=getFormatGet();
       if (format instanceof SLDFormat) {
         return rasterized;
