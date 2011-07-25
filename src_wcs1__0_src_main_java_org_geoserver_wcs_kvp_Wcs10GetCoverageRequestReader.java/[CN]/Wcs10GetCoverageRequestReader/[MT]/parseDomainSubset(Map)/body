@@ -16,12 +16,12 @@
   if (time != null && time instanceof TimeSequenceType) {
     timeSequence=(TimeSequenceType)time;
   }
- else   if (time != null && time instanceof List) {
+ else   if (time != null) {
     timeSequence=Wcs10Factory.eINSTANCE.createTimeSequenceType();
-    for (    Date tPos : (List<Date>)time) {
-      final TimePositionType timePosition=Gml4wcsFactory.eINSTANCE.createTimePositionType();
-      timePosition.setValue(tPos);
-      timeSequence.getTimePosition().add(timePosition);
+    if (time instanceof Collection) {
+      for (      Date tPos : (Collection<Date>)time) {
+        addTimePosition(timeSequence,tPos);
+      }
     }
   }
   if (timeSequence == null && bbox == null)   throw new WcsException("Bounding box cannot be null, TIME has not been specified",WcsExceptionCode.MissingParameterValue,"BBOX");
@@ -53,6 +53,7 @@
       final int xAxisCorrection=AxisDirection.EAST.equals(eastingDirection) ? 1 : -1;
       final double resX=Double.parseDouble((String)rx) * xAxisCorrection;
       final double resY=Double.parseDouble((String)ry) * yAxisCorrection;
+      if (Math.abs(envelope.getSpan(0) / Math.abs(resX)) < 2 || Math.abs(envelope.getSpan(1) / Math.abs(resY)) < 2)       throw new IllegalArgumentException(Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$1,"resolutions"));
       final double origX=envelope.getLowerCorner().getOrdinate(0) + resX / 2;
       final double origY=envelope.getUpperCorner().getOrdinate(1) + resY / 2;
       final PointType origin=Gml4wcsFactory.eINSTANCE.createPointType();
