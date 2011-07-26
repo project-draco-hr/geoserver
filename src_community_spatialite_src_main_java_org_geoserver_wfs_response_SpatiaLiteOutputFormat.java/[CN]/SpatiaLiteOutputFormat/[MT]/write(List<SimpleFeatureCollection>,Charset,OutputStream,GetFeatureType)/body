@@ -15,6 +15,9 @@
     Statement stmt=conn.createStatement();
     stmt.setQueryTimeout(30);
     String sql=null;
+    if (MultiLibs.isWindows64()) {
+      System.load(MultiLibs.loadWindows64Dependecys());
+    }
     String spatialiteLibraryUrl=MultiLibs.loadExtension();
     sql="SELECT load_extension('" + spatialiteLibraryUrl + "')";
     stmt.execute(sql);
@@ -46,7 +49,6 @@
       }
       sql+=");";
       if (column_names.endsWith(", "))       column_names=column_names.substring(0,column_names.length() - 2);
-      System.out.println(sql);
       stmt.execute(sql);
       conn.commit();
       int srid=0;
@@ -64,7 +66,6 @@
         sql+="'" + dimension + "'";
         sql+=" );";
       }
-      System.out.println(sql);
       stmt.execute(sql);
       conn.commit();
       SimpleFeatureIterator i=fc.features();
@@ -100,7 +101,6 @@
             sql+="GeomFromText('" + prepareGeom(geom_data.toString()) + "', "+ srid+ ")";
           }
           sql+=");";
-          System.out.println(sql);
           stmt.execute(sql);
         }
         conn.commit();
@@ -110,8 +110,6 @@
       }
     }
     conn.close();
-    File spatialiteLibraryFile=new File(spatialiteLibraryUrl);
-    spatialiteLibraryFile.delete();
   }
  catch (  SQLException e) {
     System.out.println(e);
