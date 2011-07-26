@@ -65,6 +65,23 @@
         req.getHttpResponse().addHeader(headers[i][0],headers[i][1]);
       }
     }
+    String fname=response.getAttachmentFileName(result,opDescriptor);
+    if (fname != null) {
+      String disposition=null;
+      Map rawKvp=req.getRawKvp();
+      if (rawKvp != null) {
+        disposition=(String)rawKvp.get("CONTENT-DISPOSITION");
+        boolean valid=Response.DISPOSITION_ATTACH.equals(disposition) || Response.DISPOSITION_INLINE.equals(disposition);
+        if (!valid) {
+          disposition=null;
+        }
+      }
+      if (disposition == null) {
+        disposition=response.getPreferredDisposition(result,opDescriptor);
+      }
+      String disp=disposition + "; filename=" + fname;
+      req.getHttpResponse().setHeader("Content-Disposition",disp);
+    }
     OutputStream output=outputStrategy.getDestination(req.getHttpResponse());
     response.write(result,output,opDescriptor);
     try {

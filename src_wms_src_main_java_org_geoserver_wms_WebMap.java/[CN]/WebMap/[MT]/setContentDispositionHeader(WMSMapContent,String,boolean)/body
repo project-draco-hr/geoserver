@@ -1,32 +1,4 @@
 {
-  Request request=Dispatcher.REQUEST.get();
-  String filename=null;
-  if (request != null && request.getRawKvp() != null && request.getRawKvp().get("LAYERS") != null) {
-    String layers=((String)request.getRawKvp().get("LAYERS")).trim();
-    if (layers.length() > 0) {
-      filename=layers.replace(",","_");
-    }
-  }
-  if (filename == null) {
-    StringBuffer sb=new StringBuffer();
-    for (    Layer layer : mapContent.layers()) {
-      String title=layer.getTitle();
-      if (title != null && !title.equals("")) {
-        sb.append(title).append("_");
-      }
-    }
-    if (sb.length() > 0) {
-      sb.setLength(sb.length() - 1);
-      filename=sb.toString();
-    }
-  }
-  String value;
-  String type=attachment ? "attachment" : "inline";
-  if (filename != null && filename.length() > 0) {
-    value=type + "; filename=" + filename.replace(":","-")+ extension;
-  }
- else {
-    value=type + "; filename=geoserver" + extension;
-  }
-  setResponseHeader("Content-Disposition",value);
+  this.extension=extension;
+  this.disposition=attachment ? Response.DISPOSITION_ATTACH : Response.DISPOSITION_INLINE;
 }

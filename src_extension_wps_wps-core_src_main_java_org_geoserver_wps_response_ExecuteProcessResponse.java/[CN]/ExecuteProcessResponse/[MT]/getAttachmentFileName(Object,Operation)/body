@@ -1,0 +1,29 @@
+{
+  ExecuteType execute=(ExecuteType)operation.getParameters()[0];
+  String fname;
+  if (execute.getResponseForm().getRawDataOutput() == null) {
+    fname=super.getAttachmentFileName(value,operation);
+  }
+ else {
+    ExecuteResponseType response=(ExecuteResponseType)value;
+    OutputDefinitionType definition=(OutputDefinitionType)response.getOutputDefinitions().getOutput().get(0);
+    fname=definition.getIdentifier().getValue();
+    OutputDataType result=(OutputDataType)response.getProcessOutputs().getOutput().get(0);
+    LiteralDataType literal=result.getData().getLiteralData();
+    String fext;
+    if (literal != null) {
+      fext="txt";
+    }
+ else {
+      String mimeType=definition.getMimeType();
+      if (mimeType == null) {
+        fext="txt";
+      }
+ else {
+        fext=mimeType.split("/")[1].toLowerCase();
+      }
+    }
+    return fname + "." + fext;
+  }
+  return fname;
+}
