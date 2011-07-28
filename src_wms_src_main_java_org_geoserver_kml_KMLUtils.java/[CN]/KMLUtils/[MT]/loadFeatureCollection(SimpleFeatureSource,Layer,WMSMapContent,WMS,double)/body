@@ -43,8 +43,15 @@
     return null;
   }
   q.setFilter(finalFilter);
-  if (sourceCrs != null && !CRS.equalsIgnoreMetadata(WGS84,sourceCrs)) {
-    return new ReprojectFeatureResults(featureSource.getFeatures(q),WGS84);
+  CoordinateReferenceSystem wgs84;
+  try {
+    wgs84=CRS.decode("EPSG:4326");
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Cannot decode EPSG:4326, the CRS subsystem must be badly broken...");
+  }
+  if (sourceCrs != null && !CRS.equalsIgnoreMetadata(wgs84,sourceCrs)) {
+    return new ReprojectFeatureResults(featureSource.getFeatures(q),wgs84);
   }
   return featureSource.getFeatures(q);
 }
