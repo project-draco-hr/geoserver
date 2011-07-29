@@ -4,10 +4,13 @@
     throw new RuntimeException("Unable to auto create parameters for " + factory.getDisplayName());
   }
   HashMap params=new HashMap(defaultParams);
+  String dataDirRoot=catalog.getResourceLoader().getBaseDirectory().getAbsolutePath();
   for (  Object o : params.entrySet()) {
     Map.Entry e=(Map.Entry)o;
     if (e.getValue() instanceof String) {
-      e.setValue(e.getValue().toString().replace("@NAME@",info.getName()));
+      String string=(String)e.getValue();
+      string=string.replace("@NAME@",info.getName()).replace("@DATA_DIR@",dataDirRoot);
+      e.setValue(string);
     }
   }
   params.put("namespace",namespace.getURI());
