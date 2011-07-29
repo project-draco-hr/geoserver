@@ -66,7 +66,9 @@
         XSDElementDeclaration element=factory.createXSDElementDeclaration();
         element.setName(featureTypeMeta.getName());
         element.setTargetNamespace(featureTypeMeta.getNamespace().getURI());
-        element.setSubstitutionGroupAffiliation(schema.resolveElementDeclaration(gmlNamespace,substitutionGroup));
+synchronized (Schemas.class) {
+          element.setSubstitutionGroupAffiliation(getFeatureElement());
+        }
         List<XSDComplexTypeDefinition> candidates=new ArrayList<XSDComplexTypeDefinition>();
         for (Iterator t=ftSchema.getTypeDefinitions().iterator(); t.hasNext(); ) {
           XSDTypeDefinition type=(XSDTypeDefinition)t.next();
@@ -92,6 +94,7 @@
       }
       schema.getContents().addAll(contents);
       schema.updateElement();
+      Schemas.dispose(ftSchema);
       return true;
     }
   }
