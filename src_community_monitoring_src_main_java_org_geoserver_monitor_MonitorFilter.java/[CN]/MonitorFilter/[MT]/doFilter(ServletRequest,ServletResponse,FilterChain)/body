@@ -35,7 +35,7 @@
       data.setRemoteUser(((User)auth.getPrincipal()).getUsername());
     }
   }
-  request=new MonitorServletRequest(req);
+  request=new MonitorServletRequest(req,monitor.getConfig().getMaxBodySize());
   response=new MonitorServletResponse(resp);
   monitor.update();
   Throwable error=null;
@@ -50,6 +50,7 @@
   data.setBodyContentLength(((MonitorServletRequest)request).getBytesRead());
   data.setResponseContentType(response.getContentType());
   data.setResponseLength(((MonitorServletResponse)response).getContentLength());
+  data.setResponseStatus(((MonitorServletResponse)response).getStatus());
   if (error != null) {
     data.setStatus(Status.FAILED);
     data.setErrorMessage(error.getLocalizedMessage());

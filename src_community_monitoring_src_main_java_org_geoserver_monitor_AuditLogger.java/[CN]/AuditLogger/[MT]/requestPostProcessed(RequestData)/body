@@ -1,0 +1,38 @@
+{
+  if (rd == null) {
+    return;
+  }
+  try {
+    if (dumper == null) {
+      initDumper();
+    }
+ else {
+      boolean enabled=getProperty("enabled",Boolean.class,false);
+      if (!enabled) {
+        closeDumper(dumper);
+        dumper=null;
+      }
+ else {
+        int newLimit=getProperty("roll_limit",Integer.class,DEFAULT_ROLLING_LIMIT);
+        String newPath=getProperty("path",String.class,null);
+        String newHeaderTemplate=getProperty("ftl.header",String.class,null);
+        String newContentTemplate=getProperty("ftl.content",String.class,null);
+        String newFooterTemplate=getProperty("ftl.footer",String.class,null);
+        if (newLimit != rollLimit || newPath != path || newHeaderTemplate != headerTemplate || newContentTemplate != contentTemplate || newFooterTemplate != footerTemplate || !dumper.isAlive()) {
+          closeDumper(dumper);
+          dumper=null;
+          initDumper();
+        }
+      }
+    }
+    if (dumper != null) {
+      if (!dumper.queue.offer(rd)) {
+        LOGGER.log(Level.WARNING,"Auditing subsystem overload, the logging queue is full, stopping the world on it");
+        dumper.queue.put(rd);
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Unepected error occurred while trying to " + "store the request data in the logger queue",e);
+  }
+}

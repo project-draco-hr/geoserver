@@ -1,0 +1,23 @@
+{
+  if (getProperty("enabled",Boolean.class,false)) {
+    rollLimit=getProperty("roll_limit",Integer.class,DEFAULT_ROLLING_LIMIT);
+    path=System.getProperty("GEOSERVER_AUDIT_PATH");
+    if (path == null || "".equals(path.trim())) {
+      path=config.getProperty(AUDIT,"path",String.class);
+    }
+    headerTemplate=getProperty("ftl.header",String.class,null);
+    contentTemplate=getProperty("ftl.content",String.class,null);
+    footerTemplate=getProperty("ftl.footer",String.class,null);
+    File loggingDir=new File(path);
+    if (!loggingDir.isAbsolute()) {
+      loggingDir=new File(GeoserverDataDirectory.getGeoserverDataDirectory(),loggingDir.getPath());
+    }
+    if (!loggingDir.exists()) {
+      if (!loggingDir.mkdirs()) {
+        throw new IllegalArgumentException("Could not create the audit files directory");
+      }
+    }
+    path=config.getProperty(AUDIT,"path",String.class);
+    this.dumper=new RequestDumper(loggingDir,rollLimit,headerTemplate,contentTemplate,footerTemplate);
+  }
+}

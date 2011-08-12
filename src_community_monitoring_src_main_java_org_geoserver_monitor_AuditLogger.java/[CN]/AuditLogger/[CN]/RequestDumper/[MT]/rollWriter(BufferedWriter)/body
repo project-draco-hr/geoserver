@@ -1,0 +1,68 @@
+{
+  final GregorianCalendar current=new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+  if (this.lineCounter >= lineRollingLimit || (day > 0 && day != current.get(GregorianCalendar.DAY_OF_YEAR)) || (logFile != null && !logFile.exists())) {
+    try {
+      if (writer != null) {
+        Template template=templateConfig.getTemplate(footerTemplate);
+        template.process(null,writer);
+        writer.flush();
+      }
+    }
+ catch (    Exception e) {
+      if (LOGGER.isLoggable(Level.FINE))       LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+    }
+    try {
+      if (writer != null) {
+        writer.close();
+      }
+    }
+ catch (    Exception e) {
+      if (LOGGER.isLoggable(Level.FINE))       LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+    }
+    this.fileRollCounter++;
+    this.lineCounter=0;
+    writer=null;
+  }
+  if (writer == null) {
+    final SimpleDateFormat dateFormat=new SimpleDateFormat("yyyyMMdd");
+    dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+    final String auditFileName="geoserver_audit_" + dateFormat.format(current.getTime()) + "_";
+    if (fileRollCounter == 0) {
+      final String[] files=path.list(makeFileOnly(andFileFilter(prefixFileFilter("geoserver_audit_"),suffixFileFilter(".log"))));
+      if (files != null && files.length > 0) {
+        Arrays.sort(files,new Comparator<String>(){
+          @Override public int compare(          String o1,          String o2){
+            final String[] o1s=o1.substring(0,o1.length() - 4).split("_");
+            final String[] o2s=o2.substring(0,o2.length() - 4).split("_");
+            int dateCompare;
+            try {
+              dateCompare=dateFormat.parse(o1s[2]).compareTo(dateFormat.parse(o2s[2]));
+            }
+ catch (            ParseException e) {
+              throw new RuntimeException(e);
+            }
+            if (dateCompare == 0) {
+              return Integer.valueOf(o1s[3]).compareTo(Integer.valueOf(o2s[3]));
+            }
+ else             return dateCompare;
+          }
+        }
+);
+        final String target=files[files.length - 1];
+        int start=target.lastIndexOf("_") + 1;
+        int end=target.lastIndexOf(".");
+        fileRollCounter=Integer.parseInt(target.substring(start,end));
+        fileRollCounter++;
+      }
+    }
+    this.logFile=new File(path,auditFileName + fileRollCounter + ".log");
+    if (!logFile.exists() && !this.logFile.createNewFile()) {
+      throw new IllegalStateException("Unable to create monitoring file:" + logFile.getCanonicalPath());
+    }
+    day=new GregorianCalendar(TimeZone.getTimeZone("GMT")).get(GregorianCalendar.DAY_OF_YEAR);
+    writer=new BufferedWriter(new FileWriter(logFile,true));
+    Template template=templateConfig.getTemplate(headerTemplate);
+    template.process(null,writer);
+  }
+  return writer;
+}

@@ -1,7 +1,10 @@
 {
   if (len < 0)   return;
   if (!bufferIsFull()) {
-    int m=Math.min(len,buffer.capacity() - buffer.position());
-    buffer.put(b,off,m);
+    if (maxSize > 0) {
+      long residual=maxSize - buffer.size();
+      len=len < residual ? len : (int)residual;
+    }
+    buffer.write(b,off,len);
   }
 }

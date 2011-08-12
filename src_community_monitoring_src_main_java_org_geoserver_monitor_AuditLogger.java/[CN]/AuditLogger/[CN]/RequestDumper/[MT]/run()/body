@@ -1,0 +1,45 @@
+{
+  BufferedWriter writer=null;
+  try {
+    while (true) {
+      List<RequestData> rds=new ArrayList<RequestData>();
+      if (queue.size() > 0) {
+        queue.drainTo(rds);
+      }
+ else {
+        rds.add(queue.take());
+      }
+      writer=rollWriter(writer);
+      Template template=templateConfig.getTemplate(contentTemplate);
+      for (      RequestData rd : rds) {
+        if (rd == END_MARKER) {
+          return;
+        }
+        template.process(rd,writer);
+        this.lineCounter++;
+      }
+      try {
+        if (writer != null) {
+          writer.flush();
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+      }
+    }
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(Level.WARNING))     LOGGER.log(Level.WARNING,"Request Dumper exiting due to :" + e.getLocalizedMessage(),e);
+  }
+ finally {
+    try {
+      if (writer != null) {
+        writer.close();
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+    }
+  }
+  LOGGER.info("Request Dumper stopped");
+}
