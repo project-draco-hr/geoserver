@@ -1,21 +1,20 @@
 {
-  Assert.notNull(webMap,"webMap is not set");
-  if (!(webMap instanceof RenderedImageMap)) {
-    throw new IllegalArgumentException("Only RenderedImageMaps are supported so far: " + webMap.getClass().getName());
+  Assert.notNull(metaTileMap,"webMap is not set");
+  if (!(metaTileMap instanceof RenderedImageMap)) {
+    throw new IllegalArgumentException("Only RenderedImageMaps are supported so far: " + metaTileMap.getClass().getName());
   }
   final RenderedImageMapResponse mapEncoder;
 {
-    final Response responseEncoder=mediator.getResponseEncoder(responseFormat,webMap);
+    final Response responseEncoder=mediator.getResponseEncoder(responseFormat,metaTileMap);
     mapEncoder=(RenderedImageMapResponse)responseEncoder;
   }
-  RenderedImageMap tileMap=(RenderedImageMap)webMap;
+  RenderedImage tile=metaTileMap.getImage();
+  WMSMapContent tileContext=metaTileMap.getMapContext();
   if (this.tiles.length > 1) {
     final Rectangle tileDim=this.tiles[tileIdx];
-    final RenderedImage tile=createTile(tileDim.x,tileDim.y,tileDim.width,tileDim.height);
-    final String mimeType=webMap.getMimeType();
-    final WMSMapContent tileContext;
+    tile=createTile(tileDim.x,tileDim.y,tileDim.width,tileDim.height);
 {
-      final WMSMapContent metaTileContext=((RenderedImageMap)webMap).getMapContext();
+      final WMSMapContent metaTileContext=metaTileMap.getMapContext();
       tileContext=new WMSMapContent();
       tileContext.setRequest(metaTileContext.getRequest());
       tileContext.setBgColor(metaTileContext.getBgColor());
@@ -29,19 +28,13 @@
       tilebbox.init(tileBounds.getMinX(),tileBounds.getMaxX(),tileBounds.getMinY(),tileBounds.getMaxY());
       tileContext.getViewport().setBounds(tilebbox);
     }
-    tileMap=new RenderedImageMap(tileContext,tile,mimeType);
   }
+  OutputStream outStream=target.getOutputStream();
   try {
-    OutputStream outStream=target.getOutputStream();
-    try {
-      mapEncoder.write(tileMap,outStream,null);
-      return true;
-    }
-  finally {
-      outStream.close();
-    }
+    mapEncoder.formatImageOutputStream(tile,outStream,tileContext);
+    return true;
   }
   finally {
-    tileMap.dispose();
+    outStream.close();
   }
 }
