@@ -1,6 +1,79 @@
 {
-  InverseColorMapOp paletteInverter=mapContent.getPaletteInverter();
-  RenderedImage renderedImage=super.forceIndexed8Bitmask(originalImage,paletteInverter);
-  ImageWorker imageWorker=new ImageWorker(renderedImage);
-  imageWorker.writeGIF(outStream,"LZW",0.75f);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Writing gif image ...");
+  }
+  final String format=mapContent.getRequest().getFormat();
+  boolean animatedGIF=false;
+  if (format.equalsIgnoreCase(IMAGE_GIF_SUBTYPE_ANIMATED)) {
+    animatedGIF=true;
+  }
+  int numfiles=1;
+  final RenderedImageList ril;
+  if (originalImage instanceof RenderedImageList) {
+    ril=(RenderedImageList)originalImage;
+    numfiles=ril.size();
+  }
+ else {
+    ril=new RenderedImageList(Arrays.asList(originalImage));
+  }
+  if (numfiles == 1 || !animatedGIF) {
+    if (LOGGER.isLoggable(Level.FINE))     LOGGER.fine("Preparing to write a gif...");
+    try {
+      InverseColorMapOp paletteInverter=mapContent.getPaletteInverter();
+      new ImageWorker(super.forceIndexed8Bitmask(originalImage,paletteInverter)).writeGIF(outStream,"LZW",0.75f);
+    }
+ catch (    IOException e) {
+      throw new ServiceException(e);
+    }
+    return;
+  }
+  if (numfiles <= 0)   throw new ServiceException("The number of frames for this GIF is less than 1");
+  final GIFImageWriter gifWriter=new GIFImageWriter(ORIGINATING_PROVIDER);
+  final ImageWriteParam param=gifWriter.getDefaultWriteParam();
+  param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+  param.setCompressionType("LZW");
+  param.setCompressionQuality(0.75f);
+  ImageOutputStream otStream=null;
+  try {
+    otStream=ImageIO.createImageOutputStream(outStream);
+    gifWriter.setOutput(otStream);
+    gifWriter.prepareWriteSequence(null);
+    final GetMapRequest request=(GetMapRequest)mapContent.getRequest();
+    final Boolean loopContinuosly=(request.getFormatOptions().get("gif_loop_continuosly") != null ? Boolean.valueOf((String)request.getFormatOptions().get("gif_loop_continuosly")) : wms.getLoopContinuously());
+    final Integer delay=(request.getFormatOptions().get("gif_frames_delay") != null ? Integer.valueOf((String)request.getFormatOptions().get("gif_frames_delay")) : wms.getFramesDelay());
+    if (delay <= 0)     throw new ServiceException("Animate GIF delay invalid: " + delay);
+    for (int i=0; i < numfiles; i++) {
+      if (LOGGER.isLoggable(Level.FINE))       LOGGER.fine("Writing image " + i);
+      RenderedImage ri=(RenderedImage)ril.get(i);
+      InverseColorMapOp paletteInverter=mapContent.getPaletteInverter();
+      ri=super.forceIndexed8Bitmask(ri,paletteInverter);
+      if (ri != null) {
+        final IIOMetadata imageMetadata=gifWriter.getDefaultImageMetadata(new ImageTypeSpecifier(ri),param);
+        prepareMetadata(imageMetadata,loopContinuosly,delay);
+        gifWriter.writeToSequence(new IIOImage(ri,null,imageMetadata),param);
+      }
+    }
+    gifWriter.endWriteSequence();
+  }
+ catch (  IOException e) {
+    throw new ServiceException(e);
+  }
+ finally {
+    try {
+      otStream.flush();
+    }
+ catch (    Exception e) {
+    }
+    try {
+      otStream.close();
+    }
+ catch (    Exception e) {
+    }
+    try {
+      gifWriter.dispose();
+    }
+ catch (    Exception e) {
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINE))   LOGGER.fine("Done writing animated gif");
 }

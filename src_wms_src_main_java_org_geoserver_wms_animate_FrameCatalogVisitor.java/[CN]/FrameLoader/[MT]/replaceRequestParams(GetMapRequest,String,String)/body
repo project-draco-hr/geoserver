@@ -1,0 +1,37 @@
+{
+  GetMapKvpRequestReader kvpRequestReader=(GetMapKvpRequestReader)Dispatcher.findKvpRequestReader(GetMapRequest.class);
+  GetMapRequest request=(GetMapRequest)BeanUtils.cloneBean(theRequest);
+  Map<String,String> rawKvp=new HashMap<String,String>(theRequest.getRawKvp());
+  if (param.contains(":")) {
+    String compositeParamKey=param.split(":")[0].toUpperCase();
+    String simpleParamKey=param.split(":")[1].toUpperCase();
+    List<String> kvps=null;
+    if (rawKvp.get(compositeParamKey) != null) {
+      kvps=KvpUtils.escapedTokens(rawKvp.get(compositeParamKey),';');
+      Iterator<String> it=kvps.iterator();
+      while (it.hasNext()) {
+        String k=it.next().toUpperCase();
+        if (k.toUpperCase().startsWith(simpleParamKey)) {
+          it.remove();
+        }
+      }
+    }
+ else {
+      kvps=new ArrayList<String>();
+    }
+    kvps.add(simpleParamKey + ":" + value);
+    rawKvp.remove(compositeParamKey);
+    rawKvp.put(compositeParamKey,mergeParams(kvps));
+  }
+ else {
+    if (rawKvp.containsKey(param)) {
+      rawKvp.remove(param);
+    }
+    rawKvp.put(param,value);
+  }
+  request.setRawKvp(rawKvp);
+  HashMap<String,String> kvp=new HashMap<String,String>(rawKvp);
+  KvpUtils.parse(kvp);
+  request=kvpRequestReader.read(request,kvp,rawKvp);
+  return request;
+}

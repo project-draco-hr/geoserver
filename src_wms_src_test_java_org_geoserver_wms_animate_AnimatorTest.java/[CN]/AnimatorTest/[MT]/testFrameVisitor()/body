@@ -1,0 +1,17 @@
+{
+  final WebMapService wms=(WebMapService)applicationContext.getBean("wmsService2");
+  final String layerName=MockData.BASIC_POLYGONS.getPrefix() + ":" + MockData.BASIC_POLYGONS.getLocalPart();
+  GetMapRequest getMapRequest=createGetMapRequest(new QName(layerName));
+  FrameCatalog catalog=null;
+  getMapRequest.getRawKvp().put("aparam","fake_param");
+  getMapRequest.getRawKvp().put("avalues","val0,val\\,1,val2\\,\\,,val3");
+  getMapRequest.getRawKvp().put("format",GIF_ANIMATED_FORMAT);
+  catalog=new FrameCatalog(getMapRequest,wms,getWMS());
+  assertNotNull(catalog);
+  FrameCatalogVisitor visitor=new FrameCatalogVisitor();
+  catalog.getFrames(visitor);
+  assertEquals(4,visitor.framesNumber);
+  RenderedImageList frames=visitor.produce(getWMS());
+  assertNotNull(frames);
+  assertEquals(4,frames.size());
+}

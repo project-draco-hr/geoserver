@@ -1,0 +1,21 @@
+{
+  this();
+  this.getMapRequest=request;
+  this.wms=wms;
+  this.wmsConfiguration=wmsConfiguration;
+  Map<String,String> rawKvp=request.getRawKvp();
+  String aparam=KvpUtils.caseInsensitiveParam(rawKvp,"aparam",null);
+  String avalues=KvpUtils.caseInsensitiveParam(rawKvp,"avalues",null);
+  if (aparam != null && !aparam.isEmpty() && avalues != null && !avalues.isEmpty()) {
+    this.parameter=aparam;
+    this.values=avalues.split("(?<!\\\\)(,)");
+  }
+ else {
+    dispose();
+    throw new RuntimeException("Missing \"animator\" mandatory params \"aparam\" and \"avalues\".");
+  }
+  if (this.values.length > this.getWmsConfiguration().getMaxAllowedFrames()) {
+    dispose();
+    throw new RuntimeException("Request too long; reached the maximum allowed number of frames.");
+  }
+}

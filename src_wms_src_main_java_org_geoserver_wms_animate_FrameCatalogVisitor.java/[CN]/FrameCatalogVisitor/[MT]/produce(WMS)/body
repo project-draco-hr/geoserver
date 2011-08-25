@@ -1,0 +1,33 @@
+{
+  List<RenderedImage> images=new ArrayList<RenderedImage>();
+  long gifAnimatedSize=0;
+  for (  Future<RenderedImage> future : tasks) {
+    RenderedImage image=null;
+    try {
+      image=future.get();
+    }
+ catch (    InterruptedException e) {
+      dispose();
+      throw new IOException(e);
+    }
+catch (    ExecutionException e) {
+      dispose();
+      throw new IOException(e);
+    }
+    if (image == null) {
+      continue;
+    }
+    gifAnimatedSize+=getImageSizeInBytes(image);
+    if (wmsConfiguration.getMaxRenderingSize() != null && gifAnimatedSize >= wmsConfiguration.getMaxRenderingSize()) {
+      dispose();
+      throw new IOException("Max rendering size exceed!");
+    }
+    images.add(image);
+  }
+  if (images == null || images.size() == 0) {
+    dispose();
+    throw new IOException("Empty list of frames.");
+  }
+  dispose();
+  return new RenderedImageList(images);
+}

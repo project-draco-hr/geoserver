@@ -1,0 +1,15 @@
+{
+  FrameCatalog frameCatalog=initRequestManager(request,wms,wmsConfiguration);
+  if (frameCatalog == null) {
+    throw new RuntimeException("Animator initialization error!");
+  }
+  FrameCatalogVisitor visitor=new FrameCatalogVisitor();
+  frameCatalog.getFrames(visitor);
+  RenderedImage imageList=visitor.produce(frameCatalog.getWmsConfiguration());
+  request=DefaultWebMapService.autoSetMissingProperties(request);
+  if (request.getFormat() == null) {
+    request.setFormat(GIF_ANIMATED_FORMAT);
+  }
+  WebMap wmsResponse=wms.getMap(request);
+  return new RenderedImageMap(((RenderedImageMap)wmsResponse).getMapContext(),imageList,wmsResponse.getMimeType());
+}

@@ -1,0 +1,20 @@
+{
+  org.geoserver.wms.WebMap wmsResponse;
+  GetMapRequest frameRequest=replaceRequestParams(this.request,this.aparam,this.avalue);
+  frameRequest=DefaultWebMapService.autoSetMissingProperties(frameRequest);
+  String outFormat=frameRequest.getFormat();
+  final Collection<RenderedImageMapResponse> responses=this.wmsConfiguration.getAvailableMapResponses();
+  for (  RenderedImageMapResponse response : responses) {
+    if (response.getOutputFormats().contains(outFormat)) {
+      MapProducerCapabilities cap=response.getCapabilities(outFormat);
+      if (cap != null && cap.getFramesMimeType() != null) {
+        frameRequest.setFormat(cap.getFramesMimeType());
+      }
+ else {
+        frameRequest.setFormat(GIF_FORMAT);
+      }
+    }
+  }
+  wmsResponse=this.wms.getMap(frameRequest);
+  return ((RenderedImageMap)wmsResponse).getImage();
+}

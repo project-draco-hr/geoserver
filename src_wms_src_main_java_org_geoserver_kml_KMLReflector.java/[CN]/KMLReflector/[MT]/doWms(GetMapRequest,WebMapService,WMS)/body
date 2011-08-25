@@ -19,13 +19,13 @@
     filename.append(name + "_");
   }
   Map<String,String> rawKvp=request.getRawKvp();
-  String mode=caseInsensitiveParam(rawKvp,"mode",wmsConfiguration.getKmlReflectorMode());
+  String mode=KvpUtils.caseInsensitiveParam(rawKvp,"mode",wmsConfiguration.getKmlReflectorMode());
   if (!MODES.containsKey(mode)) {
     throw new ServiceException("Unknown KML mode: " + mode);
   }
   Map modeOptions=new HashMap(MODES.get(mode));
   if ("superoverlay".equals(mode)) {
-    String submode=caseInsensitiveParam(request.getRawKvp(),"superoverlay_mode",wmsConfiguration.getKmlSuperoverlayMode());
+    String submode=KvpUtils.caseInsensitiveParam(request.getRawKvp(),"superoverlay_mode",wmsConfiguration.getKmlSuperoverlayMode());
     if ("raster".equalsIgnoreCase(submode)) {
       modeOptions.put("overlaymode","raster");
     }
@@ -54,7 +54,7 @@
   request.setSRS("EPSG:4326");
   request=DefaultWebMapService.autoSetMissingProperties(request);
   Map fo=request.getFormatOptions();
-  merge(fo,modeOptions);
+  KvpUtils.merge(fo,modeOptions);
   if (fo.get("kmattr") == null) {
     fo.put("kmattr",wmsConfiguration.getKmlKmAttr());
   }
