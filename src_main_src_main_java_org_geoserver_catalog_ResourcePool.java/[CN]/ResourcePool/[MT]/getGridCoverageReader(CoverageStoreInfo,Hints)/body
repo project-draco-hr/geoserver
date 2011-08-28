@@ -5,7 +5,7 @@
   }
   GridCoverageReader reader=null;
   Object key;
-  if (hints != null) {
+  if (hints != null && info.getId() != null) {
     final String formatName=gridFormat.getName();
     if (formatName.equalsIgnoreCase(IMAGE_MOSAIC) || formatName.equalsIgnoreCase(IMAGE_PYRAMID)) {
       if (coverageExecutor != null) {
@@ -17,7 +17,7 @@
         }
       }
     }
-    key=new CoverageHintReaderKey(info,hints);
+    key=new CoverageHintReaderKey(info.getId(),hints);
     reader=(GridCoverageReader)hintCoverageReaderCache.get(key);
   }
  else {
@@ -28,11 +28,13 @@
     return reader;
   }
 synchronized (hints != null ? hintCoverageReaderCache : coverageReaderCache) {
-    if (hints != null) {
-      reader=(GridCoverageReader)hintCoverageReaderCache.get(key);
-    }
+    if (key != null) {
+      if (hints != null) {
+        reader=(GridCoverageReader)hintCoverageReaderCache.get(key);
+      }
  else {
-      reader=(GridCoverageReader)coverageReaderCache.get(key);
+        reader=(GridCoverageReader)coverageReaderCache.get(key);
+      }
     }
     if (reader == null) {
       final File obj=GeoserverDataDirectory.findDataFile(info.getURL());
