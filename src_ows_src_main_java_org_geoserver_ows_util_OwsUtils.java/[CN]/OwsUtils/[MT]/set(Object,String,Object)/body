@@ -1,5 +1,18 @@
 {
-  Method s=setter(object.getClass(),property,value != null ? value.getClass() : null);
+  String[] props=property.split("\\.");
+  Method s=null;
+  if (props.length > 1) {
+    for (int i=0; i < props.length - 1 && object != null; i++) {
+      object=get(object,props[i]);
+    }
+    if (object == null) {
+      throw new NullPointerException("Property '" + property + "' is null for object "+ object);
+    }
+    s=setter(object.getClass(),props[props.length - 1],value != null ? value.getClass() : null);
+  }
+ else {
+    s=setter(object.getClass(),property,value != null ? value.getClass() : null);
+  }
   if (s == null) {
     throw new IllegalArgumentException("No such property '" + property + "' for object "+ object);
   }

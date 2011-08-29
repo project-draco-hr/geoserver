@@ -1,12 +1,18 @@
 {
-  Method g=getter(object.getClass(),property,null);
-  if (g == null) {
-    throw new IllegalArgumentException("No such property '" + property + "' for object "+ object);
+  String[] props=property.split("\\.");
+  Object result=object;
+  for (int i=0; i < props.length && result != null; i++) {
+    String prop=props[i];
+    Method g=getter(result.getClass(),props[i],null);
+    if (g == null) {
+      throw new IllegalArgumentException("No such property '" + prop + "' for object "+ result);
+    }
+    try {
+      result=g.invoke(result,null);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
   }
-  try {
-    return g.invoke(object,null);
-  }
- catch (  Exception e) {
-    throw new RuntimeException(e);
-  }
+  return result;
 }
