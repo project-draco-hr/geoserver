@@ -1,0 +1,44 @@
+{
+  try {
+    Catalog catalog=getCatalog();
+    ResourceInfo resourceInfo=getResourceInfo();
+    if (isNew) {
+      if (resourceInfo instanceof CoverageInfo) {
+        CoverageInfo cinfo=(CoverageInfo)resourceInfo;
+        AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)cinfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
+        final ReferencedEnvelope bounds=new ReferencedEnvelope(reader.getOriginalEnvelope());
+        final ProjectionPolicy projectionPolicy=resourceInfo.getProjectionPolicy();
+        if (projectionPolicy != ProjectionPolicy.NONE && bounds != null) {
+          final GridGeometry grid=cinfo.getGrid();
+          cinfo.setGrid(new GridGeometry2D(grid.getGridRange(),grid.getGridToCRS(),resourceInfo.getCRS()));
+        }
+      }
+      catalog.add(resourceInfo);
+      try {
+        catalog.add(getLayerInfo());
+      }
+ catch (      IllegalArgumentException e) {
+        catalog.remove(resourceInfo);
+        throw e;
+      }
+    }
+ else {
+      ResourceInfo oldState=catalog.getResource(resourceInfo.getId(),ResourceInfo.class);
+      catalog.save(resourceInfo);
+      try {
+        LayerInfo layer=getLayerInfo();
+        layer.setResource(resourceInfo);
+        catalog.save(layer);
+      }
+ catch (      IllegalArgumentException e) {
+        catalog.save(oldState);
+        throw e;
+      }
+    }
+    onSuccessfulSave();
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.INFO,"Error saving layer",e);
+    error(e.getMessage());
+  }
+}
