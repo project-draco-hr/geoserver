@@ -1,0 +1,20 @@
+{
+  try {
+    InputStream url=PropertyUtil.getFileFromClasspath(JAI_REGISTRY_FILE);
+    if (url == null) {
+      throw new RuntimeException("Could not find the main registry file");
+    }
+    OperationRegistry registry=new ConcurrentOperationRegistry();
+    if (url != null) {
+      registry.updateFromStream(url);
+    }
+    registry.registerServices(null);
+    return registry;
+  }
+ catch (  IOException ioe) {
+    ImagingListener listener=JAI.getDefaultInstance().getImagingListener();
+    String message="Error occurred while initializing JAI";
+    listener.errorOccurred(message,new ImagingException(message,ioe),OperationRegistry.class,false);
+    return null;
+  }
+}

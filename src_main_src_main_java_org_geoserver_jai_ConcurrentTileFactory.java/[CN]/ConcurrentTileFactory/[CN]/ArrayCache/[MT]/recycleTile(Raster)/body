@@ -1,0 +1,17 @@
+{
+  DataBuffer db=tile.getDataBuffer();
+  Long key=getKey(db.getDataType(),db.getNumBanks(),db.getSize());
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.log(Level.FINER,"Recycling tile hit on type:{1}, banks: {2}, arrayLength: {3}",new Object[]{db.getDataType(),db.getNumBanks(),db.getSize()});
+  }
+  ConcurrentLinkedQueue<SoftReference<?>> arrays=get(key);
+  if (arrays == null) {
+    arrays=new ConcurrentLinkedQueue<SoftReference<?>>();
+    arrays.add(getBankReference(db));
+    put(key,arrays);
+    return;
+  }
+ else {
+    arrays.add(getBankReference(db));
+  }
+}

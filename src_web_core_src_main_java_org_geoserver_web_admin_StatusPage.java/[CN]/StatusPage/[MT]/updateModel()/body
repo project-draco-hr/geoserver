@@ -10,9 +10,14 @@
   JAIInfo jaiInfo=geoServerInfo.getJAI();
   JAI jai=jaiInfo.getJAI();
   CoverageAccessInfo coverageAccess=geoServerInfo.getCoverageAccess();
-  SunTileCache jaiCache=jaiInfo.getTileCache();
+  TileCache jaiCache=jaiInfo.getTileCache();
   values.put(KEY_JAI_MAX_MEM,formatMemory(jaiCache.getMemoryCapacity()));
-  values.put(KEY_JAI_MEM_USAGE,formatMemory(jaiCache.getCacheMemoryUsed()));
+  if (jaiCache instanceof CacheDiagnostics) {
+    values.put(KEY_JAI_MEM_USAGE,formatMemory(((CacheDiagnostics)jaiCache).getCacheMemoryUsed()));
+  }
+ else {
+    values.put(KEY_JAI_MEM_USAGE,"-");
+  }
   values.put(KEY_JAI_MEM_THRESHOLD,Float.toString(100.0f * jaiCache.getMemoryThreshold()));
   values.put(KEY_JAI_TILE_THREADS,Integer.toString(jai.getTileScheduler().getParallelism()));
   values.put(KEY_JAI_TILE_THREAD_PRIORITY,Integer.toString(jai.getTileScheduler().getPriority()));

@@ -1,0 +1,20 @@
+{
+  Long key=getKey(arrayType,numBanks,arrayLength);
+  ConcurrentLinkedQueue<SoftReference<?>> arrays=get(key);
+  if (arrays != null) {
+    SoftReference<?> arrayRef;
+    while ((arrayRef=arrays.poll()) != null) {
+      Object array=arrayRef.get();
+      if (array != null) {
+        if (LOGGER.isLoggable(Level.FINER)) {
+          LOGGER.log(Level.FINER,"Recycling tile hit on type:{1}, banks: {2}, arrayLength: {3}",new Object[]{arrayType,numBanks,arrayLength});
+        }
+        return array;
+      }
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.log(Level.FINER,"Recycling tile miss on type:{1}, banks: {2}, arrayLength: {3}",new Object[]{arrayType,numBanks,arrayLength});
+  }
+  return null;
+}
