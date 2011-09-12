@@ -1,0 +1,27 @@
+{
+  login();
+  tester.startPage(new LayerPage());
+  tester.assertRenderedPage(LayerPage.class);
+  tester.assertNoErrorMessage();
+  GeoServerTablePanel table=(GeoServerTablePanel)tester.getComponentFromLastRenderedPage("table");
+  assertEquals(2,table.getDataProvider().size());
+  List<String> workspaces=getWorkspaces(table);
+  assertTrue(workspaces.contains("cite"));
+  assertTrue(workspaces.contains("gs"));
+  String wsSortPath="table:listContainer:sortableLinks:1:header:link";
+  tester.clickLink(wsSortPath,true);
+  workspaces=getWorkspaces(table);
+  assertEquals("cite",workspaces.get(0));
+  assertEquals("gs",workspaces.get(1));
+  tester.clickLink(wsSortPath,true);
+  workspaces=getWorkspaces(table);
+  assertEquals("gs",workspaces.get(0));
+  assertEquals("cite",workspaces.get(1));
+  String checkBoxPath="table:listContainer:items:6:selectItemContainer:selectItem";
+  CheckBox selector=(CheckBox)tester.getComponentFromLastRenderedPage(checkBoxPath);
+  tester.getServletRequest().setParameter(selector.getInputName(),"true");
+  tester.executeAjaxEvent(selector,"onclick");
+  assertEquals(1,table.getSelection().size());
+  LayerInfo li=(LayerInfo)table.getSelection().get(0);
+  assertEquals("cite",li.getResource().getStore().getWorkspace().getName());
+}
