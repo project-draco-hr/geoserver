@@ -70,6 +70,8 @@ catch (    FactoryException e) {
   }
   Filter timeElevationFilter=wms.getTimeElevationToFilter(times,elevations,layer.getFeature());
   getFInfoFilter=Filters.and(ff,getFInfoFilter,timeElevationFilter);
+  SimplifyingFilterVisitor simplifier=new SimplifyingFilterVisitor();
+  getFInfoFilter=(Filter)getFInfoFilter.accept(simplifier,null);
   String typeName=schema.getName().getLocalPart();
   Query q=new Query(typeName,null,getFInfoFilter,maxFeatures,Query.ALL_NAMES,null);
   if (viewParams != null && viewParams.size() > 0) {
