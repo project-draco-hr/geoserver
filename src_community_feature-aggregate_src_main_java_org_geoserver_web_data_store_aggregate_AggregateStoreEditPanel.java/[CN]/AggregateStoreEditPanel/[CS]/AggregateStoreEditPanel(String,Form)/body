@@ -1,0 +1,37 @@
+{
+  super(componentId,storeEditForm);
+  final IModel model=storeEditForm.getModel();
+  setDefaultModel(model);
+  final IModel paramsModel=new PropertyModel(model,"connectionParameters");
+  new MapModel(paramsModel,CONFIGURATION.key).setObject(null);
+  add(new TextParamPanel("parallelism",new MapModel(paramsModel,PARALLELISM.key),new ParamResourceModel("parallelism",this),true));
+  add(new CheckBoxParamPanel("tolerateErrors",new MapModel(paramsModel,TOLERATE_CONNECTION_FAILURE.key),new ParamResourceModel("tolerateErrors",this)));
+  configModel=new ConfigModel(new MapModel(paramsModel,CONFIGURATION_XML.key));
+  configs=configModel.getObject();
+  if (configs == null) {
+    configs=new ArrayList<AggregateTypeConfiguration>();
+    configModel.setObject(configs);
+  }
+  configTable=new GeoServerTablePanel<AggregateTypeConfiguration>("configTable",new ConfigurationListProvider(configs)){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<AggregateTypeConfiguration> property){
+      if (property == ConfigurationListProvider.NAME) {
+        return editLink(id,itemModel);
+      }
+ else       if (property == ConfigurationListProvider.SOURCES) {
+        return new Label(id,property.getModel(itemModel));
+      }
+ else       if (property == ConfigurationListProvider.REMOVE) {
+        return removeLink(id,itemModel);
+      }
+ else {
+        return null;
+      }
+    }
+  }
+;
+  configTable.setPageable(false);
+  configTable.setFilterable(false);
+  configTable.setOutputMarkupId(true);
+  add(configTable);
+  add(addNewLink());
+}

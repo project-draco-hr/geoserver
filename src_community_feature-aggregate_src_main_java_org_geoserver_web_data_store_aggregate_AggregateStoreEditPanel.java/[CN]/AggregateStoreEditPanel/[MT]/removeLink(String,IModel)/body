@@ -1,0 +1,21 @@
+{
+  final AggregateTypeConfiguration entry=(AggregateTypeConfiguration)itemModel.getObject();
+  ImageAjaxLink link=new ImageAjaxLink(id,new ResourceReference(GeoServerApplication.class,"img/icons/silk/delete.png")){
+    @Override protected void onClick(    AjaxRequestTarget target){
+      configs.remove(entry);
+      target.addComponent(configTable);
+    }
+    @Override protected IAjaxCallDecorator getAjaxCallDecorator(){
+      return new AjaxPreprocessingCallDecorator(null){
+        @Override public CharSequence preDecorateScript(        CharSequence script){
+          String msg=new ParamResourceModel("confirmTypeRemoval",AggregateStoreEditPanel.this,entry.getName()).getString();
+          return "if(!confirm('" + msg + "')) return false;"+ script;
+        }
+      }
+;
+    }
+  }
+;
+  link.getImage().add(new AttributeModifier("alt",true,new ParamResourceModel("AggregateStoreEditPanel.th.remove",link)));
+  return link;
+}

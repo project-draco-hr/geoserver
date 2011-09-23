@@ -1,0 +1,60 @@
+{
+  originalConfig=config;
+  configModel=new Model<AggregateTypeConfiguration>(new AggregateTypeConfiguration(config));
+  form=new Form<AggregateTypeConfiguration>("form",new CompoundPropertyModel(configModel));
+  add(form);
+  name=new TextField("name");
+  name.setOutputMarkupId(true);
+  name.setRequired(true);
+  form.add(name);
+  sources=new WebMarkupContainer("sources");
+  sources.setOutputMarkupId(true);
+  form.add(sources);
+  stores=new DropDownChoice<StoreInfo>("stores",new Model(null),new StoreListModel(),new StoreListChoiceRenderer());
+  stores.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      types.setChoices(new TypeListModel(stores.getModel()));
+      addLink.setEnabled(false);
+      target.addComponent(types);
+      target.addComponent(addLink);
+    }
+  }
+);
+  sources.add(stores);
+  types=new DropDownChoice<String>("types",new Model(null),new TypeListModel(stores.getModel()));
+  types.setOutputMarkupId(true);
+  sources.add(types);
+  types.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      addLink.setEnabled(stores.getModelObject() != null && types.getModelObject() != null);
+      target.addComponent(addLink);
+    }
+  }
+);
+  addLink=addConfigLink();
+  addLink.setOutputMarkupId(true);
+  addLink.setEnabled(false);
+  sources.add(addLink);
+  sourceTypes=new GeoServerTablePanel<SourceType>("sourceTypes",new SourceTypeProvider(configModel)){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<SourceType> property){
+      if (property.getName().equals("default")) {
+        return new Label(id,property.getModel(itemModel));
+      }
+ else       if (property.getName().equals("makeDefault")) {
+        return makeDefaultLink(id,itemModel);
+      }
+ else       if (property.getName().equals("remove")) {
+        return removeLink(id,itemModel);
+      }
+ else {
+        return null;
+      }
+    }
+  }
+;
+  sourceTypes.setPageable(false);
+  sourceTypes.setFilterable(false);
+  sources.add(sourceTypes);
+  form.add(saveLink());
+  form.add(cancelLink());
+}
