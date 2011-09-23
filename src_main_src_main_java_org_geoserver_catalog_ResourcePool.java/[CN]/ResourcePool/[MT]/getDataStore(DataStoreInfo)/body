@@ -9,22 +9,21 @@ synchronized (dataStoreCache) {
         if (dataStore == null) {
           Map<String,Serializable> connectionParameters=info.getConnectionParameters();
           connectionParameters=DataStoreUtils.getParams(connectionParameters,null);
-          if (!connectionParameters.containsKey("namespace")) {
-            DataAccessFactory factory=null;
-            try {
-              factory=getDataStoreFactory(info);
-            }
- catch (            Exception e) {
-            }
+          DataAccessFactory factory=null;
+          try {
+            factory=getDataStoreFactory(info);
+          }
+ catch (          IOException e) {
+            throw new IOException("Failed to find the datastore factory for " + info.getName() + ", did you forget to install the store extension jar?");
+          }
+          Param[] params=factory.getParametersInfo();
+          if (!connectionParameters.containsKey("namespace") && params != null) {
             boolean supportsNamespace=true;
-            if (factory != null) {
-              supportsNamespace=false;
-              Param[] params=factory.getParametersInfo();
-              for (              Param p : params) {
-                if ("namespace".equalsIgnoreCase(p.key)) {
-                  supportsNamespace=true;
-                  break;
-                }
+            supportsNamespace=false;
+            for (            Param p : params) {
+              if ("namespace".equalsIgnoreCase(p.key)) {
+                supportsNamespace=true;
+                break;
               }
             }
             if (supportsNamespace) {
@@ -35,6 +34,13 @@ synchronized (dataStoreCache) {
               }
               if (ns != null) {
                 connectionParameters.put("namespace",ns.getURI());
+              }
+            }
+          }
+          if (params != null) {
+            for (            Param p : params) {
+              if (Repository.class.equals(p.getType())) {
+                connectionParameters.put(p.getName(),repository);
               }
             }
           }
