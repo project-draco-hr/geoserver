@@ -3,6 +3,7 @@
   final String paramLabel=paramMetadata.getName();
   final boolean required=paramMetadata.isRequired();
   final Class<?> binding=paramMetadata.getBinding();
+  final List<Serializable> options=paramMetadata.getOptions();
   Panel parameterPanel;
   if ("dbtype".equals(paramName) || "filetype".equals(paramName)) {
     IModel model=new MapModel(paramsModel,paramName);
@@ -14,6 +15,11 @@
     IModel namespaceModel=new NamespaceParamModel(paramsModel,paramName);
     IModel paramLabelModel=new ResourceModel(paramLabel,paramLabel);
     parameterPanel=new NamespacePanel(componentId,namespaceModel,paramLabelModel,true);
+  }
+ else   if (options != null && options.size() > 0) {
+    IModel<Serializable> valueModel=new MapModel(paramsModel,paramName);
+    IModel<String> labelModel=new ResourceModel(paramLabel,paramLabel);
+    parameterPanel=new DropDownChoiceParamPanel(componentId,valueModel,labelModel,options,required);
   }
  else   if (Boolean.class == binding) {
     parameterPanel=new CheckBoxParamPanel(componentId,new MapModel(paramsModel,paramName),new ResourceModel(paramLabel,paramLabel));
