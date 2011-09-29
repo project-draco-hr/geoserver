@@ -1,0 +1,47 @@
+{
+  ClassProperties properties=OwsUtils.getClassProperties(object.getClass());
+  for (  String property : properties.properties()) {
+    Method g=properties.getter(property,null);
+    if (g == null) {
+      continue;
+    }
+    Class type=g.getReturnType();
+    if (!(Map.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(type))) {
+      continue;
+    }
+    Method s=properties.setter(property,null);
+    if (s == null) {
+      continue;
+    }
+    try {
+      Object value=g.invoke(object,null);
+      if (value == null) {
+        if (!type.isInterface()) {
+          try {
+            value=type.getConstructor().newInstance();
+          }
+ catch (          Exception e) {
+          }
+        }
+        if (value == null) {
+          if (Map.class.isAssignableFrom(type)) {
+            value=new HashMap();
+          }
+ else           if (List.class.isAssignableFrom(type)) {
+            value=new ArrayList();
+          }
+ else           if (Set.class.isAssignableFrom(type)) {
+            value=new HashSet();
+          }
+ else {
+            throw new RuntimeException("Unknown collection type:" + type.getName());
+          }
+        }
+        s.invoke(object,value);
+      }
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+}
