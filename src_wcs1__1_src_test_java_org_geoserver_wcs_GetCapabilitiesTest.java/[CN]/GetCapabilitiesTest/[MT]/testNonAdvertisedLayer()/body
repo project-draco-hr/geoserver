@@ -1,0 +1,16 @@
+{
+  String layerId=getLayerId(MockData.TASMANIA_DEM);
+  LayerInfo layer=getCatalog().getLayerByName(layerId);
+  try {
+    Document dom=getAsDOM("wcs?request=GetCapabilities");
+    assertXpathExists("//wcs:CoverageSummary[ows:Title='DEM']",dom);
+    layer.setAdvertised(false);
+    getCatalog().save(layer);
+    dom=getAsDOM("wcs?request=GetCapabilities");
+    assertXpathNotExists("//wcs:CoverageSummary[ows:Title='DEM']",dom);
+  }
+  finally {
+    layer.setAdvertised(true);
+    getCatalog().save(layer);
+  }
+}

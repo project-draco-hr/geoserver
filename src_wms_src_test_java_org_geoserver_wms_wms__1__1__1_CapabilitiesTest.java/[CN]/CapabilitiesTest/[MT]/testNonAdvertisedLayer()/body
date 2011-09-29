@@ -1,0 +1,16 @@
+{
+  String layerId=getLayerId(MockData.BUILDINGS);
+  LayerInfo layer=getCatalog().getLayerByName(layerId);
+  try {
+    Document dom=dom(get("wms?request=getCapabilities&version=1.1.1"),true);
+    assertXpathExists("//Layer[Name='" + layerId + "']",dom);
+    layer.setAdvertised(false);
+    getCatalog().save(layer);
+    dom=dom(get("wms?request=getCapabilities&version=1.1.1"),true);
+    assertXpathNotExists("//Layer[Name='" + layerId + "']",dom);
+  }
+  finally {
+    layer.setAdvertised(true);
+    getCatalog().save(layer);
+  }
+}
