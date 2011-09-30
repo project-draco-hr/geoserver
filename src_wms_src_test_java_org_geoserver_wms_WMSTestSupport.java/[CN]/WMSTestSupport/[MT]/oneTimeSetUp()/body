@@ -14,4 +14,16 @@
   copySchemaFile("filter/1.0.0/expr.xsd");
   copySchemaFile("filter/1.0.0/filter.xsd");
   copySchemaFile("sld/StyledLayerDescriptor.xsd");
+  Catalog catalog=getCatalog();
+  LayerGroupInfo group=catalog.getFactory().createLayerGroup();
+  LayerInfo lakes=catalog.getLayerByName(getLayerId(MockData.LAKES));
+  LayerInfo forests=catalog.getLayerByName(getLayerId(MockData.FORESTS));
+  if (lakes != null && forests != null) {
+    group.setName(NATURE_GROUP);
+    group.getLayers().add(lakes);
+    group.getLayers().add(forests);
+    CatalogBuilder cb=new CatalogBuilder(catalog);
+    cb.calculateLayerGroupBounds(group);
+    catalog.add(group);
+  }
 }
