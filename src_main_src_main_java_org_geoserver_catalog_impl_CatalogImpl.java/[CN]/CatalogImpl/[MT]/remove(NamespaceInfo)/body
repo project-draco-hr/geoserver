@@ -2,6 +2,23 @@
   if (!getResourcesByNamespace(namespace,ResourceInfo.class).isEmpty()) {
     throw new IllegalArgumentException("Unable to delete non-empty namespace.");
   }
-  facade.remove(namespace);
+synchronized (facade) {
+    facade.remove(namespace);
+    NamespaceInfo defaultNamespace=getDefaultNamespace();
+    if (namespace.equals(defaultNamespace) || defaultNamespace == null) {
+      List<NamespaceInfo> namespaces=facade.getNamespaces();
+      defaultNamespace=null;
+      if (!namespaces.isEmpty()) {
+        defaultNamespace=namespaces.get(0);
+      }
+      setDefaultNamespace(defaultNamespace);
+      if (defaultNamespace != null) {
+        WorkspaceInfo defaultWorkspace=getWorkspaceByName(defaultNamespace.getPrefix());
+        if (defaultWorkspace != null) {
+          setDefaultWorkspace(defaultWorkspace);
+        }
+      }
+    }
+  }
   removed(namespace);
 }
