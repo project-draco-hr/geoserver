@@ -5,6 +5,7 @@
   if (info == null) {
     throw new RestletException("No such datastore: " + datastore,Status.CLIENT_ERROR_NOT_FOUND);
   }
+  boolean skipNoGeom="available_with_geom".equalsIgnoreCase(getQueryStringValue("list"));
   List<String> available=new ArrayList<String>();
   try {
     DataStore ds=(DataStore)info.getDataStore(null);
@@ -12,6 +13,17 @@
     for (    String featureTypeName : featureTypeNames) {
       FeatureTypeInfo ftinfo=catalog.getFeatureTypeByDataStore(info,featureTypeName);
       if (ftinfo == null) {
+        if (skipNoGeom) {
+          try {
+            FeatureType featureType=ds.getSchema(featureTypeName);
+            if (featureType.getGeometryDescriptor() == null) {
+              continue;
+            }
+          }
+ catch (          IOException e) {
+            LOGGER.log(Level.WARNING,"Unable to load schema for feature type " + featureTypeName,e);
+          }
+        }
         available.add(featureTypeName);
       }
     }
