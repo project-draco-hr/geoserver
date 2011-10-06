@@ -1,0 +1,21 @@
+{
+  WMSInfo info=wmsConfig.getServiceInfo();
+  if (info.isBBOXForEachCRS() && !info.getSRS().isEmpty()) {
+    for (    String crs : info.getSRS()) {
+      crs=qualifySRS(crs);
+      if (srs != null && crs.equals(srs)) {
+        continue;
+      }
+      try {
+        ReferencedEnvelope tbbox=bbox.transform(CRS.decode(crs),true);
+        handleBBox(tbbox,crs);
+      }
+ catch (      Exception e) {
+        LOGGER.warning(String.format("Unable to transform bounding box for layer" + " '%s' to %s",layer.getName(),crs));
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+        }
+      }
+    }
+  }
+}

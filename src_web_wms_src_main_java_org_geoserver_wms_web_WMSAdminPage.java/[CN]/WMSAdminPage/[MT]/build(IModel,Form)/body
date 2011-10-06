@@ -8,6 +8,24 @@
   srsList.add(new SRSListValidator());
   srsList.setType(List.class);
   form.add(srsList);
+  form.add(new CheckBox("bBOXForEachCRS"));
+  form.add(bboxPerCRSInfoDialog=new ModalWindow("bboxForEachCRSDialog"));
+  bboxPerCRSInfoDialog.setPageCreator(new ModalWindow.PageCreator(){
+    public Page createPage(){
+      return new BBOXPerCRSInfoDialog(new StringResourceModel("bboxForEachCRSInfo",WMSAdminPage.this,null));
+    }
+  }
+);
+  bboxPerCRSInfoDialog.setTitle(new StringResourceModel("information",(Component)null,null));
+  bboxPerCRSInfoDialog.setInitialHeight(100);
+  bboxPerCRSInfoDialog.setInitialHeight(200);
+  GeoServerAjaxFormLink bboxPerCRSInfoLink=new GeoServerAjaxFormLink("bboxPerCRSInfo"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      bboxPerCRSInfoDialog.show(target);
+    }
+  }
+;
+  form.add(bboxPerCRSInfoLink);
   form.add(new DropDownChoice("interpolation",Arrays.asList(WMSInfo.WMSInterpolation.values()),new InterpolationRenderer()));
   TextField<Integer> maxMemory=new TextField<Integer>("maxRequestMemory");
   maxMemory.add(new MinimumValidator<Integer>(0));
