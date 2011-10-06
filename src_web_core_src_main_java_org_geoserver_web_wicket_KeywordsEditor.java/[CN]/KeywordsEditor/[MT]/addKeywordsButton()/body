@@ -1,12 +1,26 @@
 {
   AjaxButton button=new AjaxButton("addKeyword"){
     @Override public void onSubmit(    AjaxRequestTarget target,    Form form){
+      String value=newKeyword.getInput();
+      String lang=langChoice.getInput();
+      String vocab=vocabTextField.getInput();
+      KeywordInfo keyword=new Keyword(value);
+      if (lang != null && !"".equals(lang.trim())) {
+        keyword.setLanguage(lang);
+      }
+      if (vocab != null && !"".equals(vocab.trim())) {
+        keyword.setVocabulary(vocab);
+      }
       List choiceList=choices.getChoices();
-      choiceList.add(newKeyword.getInput());
+      choiceList.add(keyword);
       choices.setChoices(choiceList);
-      newKeyword.setModelObject(null);
-      newKeyword.modelChanged();
+      langChoice.setModelObject(null);
+      langChoice.modelChanged();
+      vocabTextField.setModelObject(null);
+      vocabTextField.modelChanged();
       target.addComponent(newKeyword);
+      target.addComponent(langChoice);
+      target.addComponent(vocabTextField);
       target.addComponent(choices);
     }
   }
