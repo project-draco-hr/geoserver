@@ -1,0 +1,17 @@
+{
+  Catalog catalog=getCatalog();
+  NamespaceInfo defaultNamespace=catalog.getDefaultNamespace();
+  WorkspaceInfo defaultWs=catalog.getDefaultWorkspace();
+  List<WorkspaceInfo> workspaces=catalog.getWorkspaces();
+  CascadeDeleteVisitor visitor=new CascadeDeleteVisitor(catalog);
+  for (  WorkspaceInfo ws : workspaces) {
+    visitor.visit(ws);
+  }
+  assertEquals(0,catalog.getWorkspaces().size());
+  assertEquals(0,catalog.getNamespaces().size());
+  catalog.add(defaultNamespace);
+  catalog.add(defaultWs);
+  assertEquals(1,catalog.getWorkspaces().size());
+  assertEquals(1,catalog.getNamespaces().size());
+  assertNotNull(catalog.getNamespaceByURI(defaultNamespace.getURI()));
+}
