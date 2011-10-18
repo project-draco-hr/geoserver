@@ -20,20 +20,25 @@
     if (LOGGER.isLoggable(Level.FINE))     LOGGER.fine("Preparing to write a gif...");
     try {
       InverseColorMapOp paletteInverter=mapContent.getPaletteInverter();
-      new ImageWorker(super.forceIndexed8Bitmask(originalImage,paletteInverter)).writeGIF(outStream,"LZW",0.75f);
+      ImageWorker iw=new ImageWorker(super.forceIndexed8Bitmask(originalImage,paletteInverter));
+      iw.writeGIF(outStream,"LZW",0.75f);
+      iw.dispose();
     }
  catch (    IOException e) {
       throw new ServiceException(e);
     }
     return;
   }
-  if (numfiles <= 0)   throw new ServiceException("The number of frames for this GIF is less than 1");
+  if (numfiles <= 0) {
+    throw new ServiceException("The number of frames for this GIF is less than 1");
+  }
   final GIFImageWriter gifWriter=new GIFImageWriter(ORIGINATING_PROVIDER);
   final ImageWriteParam param=gifWriter.getDefaultWriteParam();
   param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
   param.setCompressionType("LZW");
   param.setCompressionQuality(0.75f);
   ImageOutputStream otStream=null;
+  List<RenderedImage> images=new ArrayList<RenderedImage>();
   try {
     otStream=ImageIO.createImageOutputStream(outStream);
     gifWriter.setOutput(otStream);
@@ -51,6 +56,7 @@
         final IIOMetadata imageMetadata=gifWriter.getDefaultImageMetadata(new ImageTypeSpecifier(ri),param);
         prepareMetadata(imageMetadata,loopContinuosly,delay);
         gifWriter.writeToSequence(new IIOImage(ri,null,imageMetadata),param);
+        images.add(ri);
       }
     }
     gifWriter.endWriteSequence();
@@ -73,6 +79,14 @@
       gifWriter.dispose();
     }
  catch (    Exception e) {
+    }
+    for (    RenderedImage image : images) {
+      if (image instanceof PlanarImage) {
+        ImageUtilities.disposePlanarImageChain((PlanarImage)image);
+      }
+ else       if (image instanceof BufferedImage) {
+        ((BufferedImage)image).flush();
+      }
     }
   }
   if (LOGGER.isLoggable(Level.FINE))   LOGGER.fine("Done writing animated gif");
