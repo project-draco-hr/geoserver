@@ -1,0 +1,16 @@
+{
+  super(id);
+  IModel<List<AuthorityURLInfo>> authURLsModel;
+  authURLsModel=LiveCollectionModel.list(new PropertyModel<List<AuthorityURLInfo>>(layerModel,"authorityURLs"));
+  AuthorityURLListEditor authUrlEditor=new AuthorityURLListEditor("authorityurls",authURLsModel);
+  add(authUrlEditor);
+  IModel<List<LayerIdentifierInfo>> identifiersModel;
+  identifiersModel=LiveCollectionModel.list(new PropertyModel<List<LayerIdentifierInfo>>(layerModel,"identifiers"));
+  LayerIdentifierListEditor identifiersEditor=new LayerIdentifierListEditor("layerIdentifiers",identifiersModel,authUrlEditor);
+  if (!isRootLayer) {
+    WMSInfo serviceInfo=WMS.get().getServiceInfo();
+    List<AuthorityURLInfo> rootLayerAuthorities=serviceInfo.getAuthorityURLs();
+    identifiersEditor.setBaseAuthorities(rootLayerAuthorities);
+  }
+  add(identifiersEditor);
+}

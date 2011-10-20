@@ -1,0 +1,61 @@
+{
+  final WebMarkupContainer container=new WebMarkupContainer("container");
+  container.setOutputMarkupId(true);
+  add(container);
+  table=new WebMarkupContainer("table");
+  table.setOutputMarkupId(true);
+  container.add(table);
+  identifiers=new ListView<LayerIdentifierInfo>("identifiers",new ArrayList<LayerIdentifierInfo>(getModelObject())){
+    private static final long serialVersionUID=1L;
+    @Override protected void populateItem(    final ListItem<LayerIdentifierInfo> item){
+      item.add(new SimpleAttributeModifier("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
+      IModel<String> authModel=new PropertyModel<String>(item.getModel(),"authority");
+      IModel<List<String>> authNamesModel=new AuthListModel();
+      DropDownChoice<String> authorities;
+      authorities=new DropDownChoice<String>("authority",authModel,authNamesModel.getObject());
+      authorities.setRequired(true);
+      FormComponentFeedbackBorder authFeedbak=new FormComponentFeedbackBorder("authFeedbak");
+      authFeedbak.add(authorities);
+      item.add(authFeedbak);
+      TextField<String> identifier;
+      identifier=new TextField<String>("identifier",new PropertyModel<String>(item.getModel(),"identifier"));
+      identifier.setRequired(true);
+      FormComponentFeedbackBorder idFeedbak=new FormComponentFeedbackBorder("idFeedbak");
+      idFeedbak.add(identifier);
+      item.add(idFeedbak);
+      AjaxLink<Integer> link=new AjaxLink<Integer>("removeLink",new Model<Integer>(item.getIndex())){
+        private static final long serialVersionUID=1L;
+        @Override public void onClick(        AjaxRequestTarget target){
+          List<LayerIdentifierInfo> list=new ArrayList<LayerIdentifierInfo>(identifiers.getModelObject());
+          int index=getModelObject();
+          list.remove(index);
+          identifiers.setModelObject(list);
+          updateLinksVisibility();
+          target.addComponent(container);
+        }
+      }
+;
+      item.add(link);
+    }
+  }
+;
+  identifiers.setOutputMarkupId(true);
+  identifiers.setReuseItems(true);
+  table.add(identifiers);
+  noMetadata=new Label("noIdentifiers",new ResourceModel("noLayerIdentifiersSoFar"));
+  container.add(noMetadata);
+  updateLinksVisibility();
+  AjaxButton button=new AjaxButton("addIdentifier"){
+    private static final long serialVersionUID=1L;
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      List<LayerIdentifierInfo> list=identifiers.getModelObject();
+      LayerIdentifierInfo newIdentifier=new LayerIdentifier();
+      list.add(newIdentifier);
+      identifiers.setModelObject(list);
+      updateLinksVisibility();
+      target.addComponent(LayerIdentifierListEditor.this);
+    }
+  }
+;
+  add(button);
+}
