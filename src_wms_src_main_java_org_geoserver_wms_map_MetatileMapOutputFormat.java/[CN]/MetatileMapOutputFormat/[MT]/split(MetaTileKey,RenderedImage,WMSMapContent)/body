@@ -17,10 +17,11 @@
 switch (type) {
 case 0:
         RenderedOp cropped=GTCropDescriptor.create(metaTile,Float.valueOf(x),Float.valueOf(y),Float.valueOf(tileSize),Float.valueOf(tileSize),NO_CACHE_HINTS);
-      tile=cropped.getAsBufferedImage();
-    break;
+      RasterCleaner.addImage(cropped);
+    tile=cropped.getAsBufferedImage();
+  break;
 case 1:
-  final PlanarImage pImage=(PlanarImage)metaTile;
+final PlanarImage pImage=(PlanarImage)metaTile;
 final WritableRaster wTile=WritableRaster.createWritableRaster(pImage.getSampleModel().createCompatibleSampleModel(tileSize,tileSize),new Point(x,y));
 Rectangle sourceArea=new Rectangle(x,y,tileSize,tileSize);
 sourceArea=sourceArea.intersection(pImage.getBounds());
@@ -42,13 +43,6 @@ throw new IllegalStateException(Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2,"met
 tiles[(i * key.getMetaFactor()) + j]=tile;
 }
 }
-if (type < 2) {
-ImageUtilities.disposePlanarImageChain((PlanarImage)metaTile);
-}
- else {
-BufferedImage image=(BufferedImage)metaTile;
-image.flush();
-image=null;
-}
+RasterCleaner.addImage(metaTile);
 return tiles;
 }
