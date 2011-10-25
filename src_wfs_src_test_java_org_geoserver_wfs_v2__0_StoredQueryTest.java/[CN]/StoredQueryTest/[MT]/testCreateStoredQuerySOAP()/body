@@ -1,0 +1,8 @@
+{
+  String xml="<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope'> " + " <soap:Header/> " + " <soap:Body>"+ "<wfs:CreateStoredQuery service='WFS' version='2.0.0' "+ "   xmlns:wfs='http://www.opengis.net/wfs/2.0' "+ "   xmlns:fes='http://www.opengis.org/fes/2.0' "+ "   xmlns:gml='http://www.opengis.net/gml/3.2' "+ "   xmlns:myns='http://www.someserver.com/myns' "+ "   xmlns:sf='" + MockData.SF_URI + "'>"+ "   <wfs:StoredQueryDefinition id='myStoredQuery'> "+ "      <wfs:Parameter name='AreaOfInterest' type='gml:Polygon'/> "+ "      <wfs:QueryExpressionText "+ "           returnFeatureTypes='sf:PrimitiveGeoFeature' "+ "           language='urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression' "+ "           isPrivate='false'> "+ "         <wfs:Query typeNames='sf:PrimitiveGeoFeature'> "+ "            <fes:Filter> "+ "               <fes:Within> "+ "                  <fes:ValueReference>pointProperty</fes:ValueReference> "+ "                  ${AreaOfInterest} "+ "               </fes:Within> "+ "            </fes:Filter> "+ "         </wfs:Query> "+ "      </wfs:QueryExpressionText> "+ "   </wfs:StoredQueryDefinition> "+ "</wfs:CreateStoredQuery>"+ " </soap:Body> "+ "</soap:Envelope> ";
+  MockHttpServletResponse resp=postAsServletResponse("wfs",xml,"application/soap+xml");
+  assertEquals("application/soap+xml",resp.getContentType());
+  Document dom=dom(new ByteArrayInputStream(resp.getOutputStreamContent().getBytes()));
+  assertEquals("soap:Envelope",dom.getDocumentElement().getNodeName());
+  assertEquals(1,dom.getElementsByTagName("wfs:CreateStoredQueryResponse").getLength());
+}

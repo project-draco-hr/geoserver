@@ -1,0 +1,44 @@
+{
+  File tempDir=IOUtils.createTempDirectory("shpziptemp");
+  try {
+    boolean shapefileCreated=false;
+    for (    SimpleFeatureCollection curCollection : collections) {
+      if (curCollection.getSchema().getGeometryDescriptor() == null) {
+        throw new WFSException(request,"Cannot write geometryless shapefiles, yet " + curCollection.getSchema() + " has no geometry field");
+      }
+      Class geomType=curCollection.getSchema().getGeometryDescriptor().getType().getBinding();
+      if (GeometryCollection.class.equals(geomType) || Geometry.class.equals(geomType)) {
+        shapefileCreated|=writeCollectionToShapefiles(curCollection,tempDir,charset,request);
+      }
+ else {
+        writeCollectionToShapefile(curCollection,tempDir,charset,request);
+        shapefileCreated=true;
+      }
+    }
+    if (!shapefileCreated) {
+      SimpleFeatureCollection fc;
+      fc=(SimpleFeatureCollection)collections.get(0);
+      fc=remapCollectionSchema(fc,Point.class);
+      writeCollectionToShapefile(fc,tempDir,charset,request);
+      createEmptyZipWarning(tempDir);
+    }
+    createRequestDump(tempDir,request,collections.get(0));
+    final FilenameFilter filter=new FilenameFilter(){
+      public boolean accept(      File dir,      String name){
+        return name.endsWith(".shp") || name.endsWith(".shx") || name.endsWith(".dbf")|| name.endsWith(".prj")|| name.endsWith(".cst")|| name.endsWith(".txt");
+      }
+    }
+;
+    ZipOutputStream zipOut=new ZipOutputStream(output);
+    IOUtils.zipDirectory(tempDir,zipOut,filter);
+    zipOut.finish();
+  }
+  finally {
+    try {
+      FileUtils.deleteDirectory(tempDir);
+    }
+ catch (    IOException e) {
+      LOGGER.warning("Could not delete temp directory: " + tempDir.getAbsolutePath() + " due to: "+ e.getMessage());
+    }
+  }
+}

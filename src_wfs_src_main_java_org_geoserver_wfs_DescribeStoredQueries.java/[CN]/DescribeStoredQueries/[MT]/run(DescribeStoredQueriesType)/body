@@ -1,0 +1,20 @@
+{
+  Wfs20Factory factory=Wfs20Factory.eINSTANCE;
+  DescribeStoredQueriesResponseType response=factory.createDescribeStoredQueriesResponseType();
+  List<StoredQueryProvider> providers=GeoServerExtensions.extensions(StoredQueryProvider.class);
+  if (request.getStoredQueryId().isEmpty()) {
+    for (    StoredQuery query : storedQueryProvider.listStoredQueries()) {
+      describeStoredQuery(query,response);
+    }
+  }
+ else {
+    for (    URI id : request.getStoredQueryId()) {
+      StoredQuery query=storedQueryProvider.getStoredQuery(id.toString());
+      if (query == null) {
+        throw new WFSException(request,"No such stored query: " + id,"InvalidParameterValue");
+      }
+      describeStoredQuery(query,response);
+    }
+  }
+  return response;
+}

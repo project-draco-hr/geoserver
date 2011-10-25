@@ -1,0 +1,225 @@
+{
+  List<Query> queries=request.getQueries();
+  if (queries.isEmpty()) {
+    throw new WFSException(request,"No query specified");
+  }
+  processStoredQueries(request);
+  queries=request.getQueries();
+  if (request.isQueryTypeNamesUnset()) {
+    for (    Query q : queries) {
+      if (!q.getTypeNames().isEmpty())       continue;
+      if (q.getFilter() != null) {
+        TypeNameExtractingVisitor v=new TypeNameExtractingVisitor(catalog);
+        q.getFilter().accept(v,null);
+        q.getTypeNames().addAll(v.getTypeNames());
+      }
+      if (q.getTypeNames().isEmpty()) {
+        String msg="No feature types specified";
+        throw new WFSException(request,msg);
+      }
+    }
+  }
+  BigInteger bi=request.getMaxFeatures();
+  if (bi == null) {
+    request.setMaxFeatures(BigInteger.valueOf(Integer.MAX_VALUE));
+  }
+  int maxFeatures=Math.min(request.getMaxFeatures().intValue(),wfs.getMaxFeatures());
+  List<Map<String,String>> viewParams=null;
+  if (request.getMetadata() != null) {
+    viewParams=(List<Map<String,String>>)request.getMetadata().get(SQL_VIEW_PARAMS);
+  }
+  int count=0;
+  int totalCount=0;
+  if (!request.getVersion().startsWith("2")) {
+    totalCount=-1;
+  }
+  if (totalCount > -1 && maxFeatures == Integer.MAX_VALUE) {
+    totalCount=-1;
+  }
+  int totalOffset=request.getStartIndex() != null ? request.getStartIndex().intValue() : -1;
+  int offset=totalOffset;
+  List results=new ArrayList();
+  try {
+    for (int i=0; (i < queries.size()) && (count < maxFeatures); i++) {
+      Query query=queries.get(i);
+      try {
+        if (!query.getAliases().isEmpty()) {
+          if (query.getAliases().size() != query.getTypeNames().size()) {
+            throw new WFSException(request,String.format("Query specifies %d type names and %d " + "aliases, must be equal",query.getTypeNames().size(),query.getAliases().size()));
+          }
+        }
+        List<FeatureTypeInfo> metas=new ArrayList();
+        for (        QName typeName : query.getTypeNames()) {
+          metas.add(featureTypeInfo(typeName,request));
+        }
+        FeatureTypeInfo meta=metas.get(0);
+        List<List<String>> reqPropertyNames=parsePropertyNames(query,metas);
+        NamespaceSupport ns=getNamespaceSupport();
+        List<List<PropertyName>> propNames=new ArrayList();
+        List<List<PropertyName>> allPropNames=new ArrayList();
+        for (int j=0; j < metas.size(); j++) {
+          List<String> propertyNames=reqPropertyNames.get(j);
+          List<PropertyName> metaPropNames=null;
+          List<PropertyName> metaAllPropNames=null;
+          if (!propertyNames.isEmpty()) {
+            metaPropNames=new ArrayList<PropertyName>();
+            for (Iterator iter=propertyNames.iterator(); iter.hasNext(); ) {
+              PropertyName propName=createPropertyName((String)iter.next(),ns);
+              if (propName.evaluate(meta.getFeatureType()) == null) {
+                String mesg="Requested property: " + propName + " is "+ "not available "+ "for "+ meta.getPrefixedName()+ ".  ";
+                if (meta.getFeatureType() instanceof SimpleFeatureType) {
+                  List<AttributeTypeInfo> atts=meta.attributes();
+                  List attNames=new ArrayList(atts.size());
+                  for (                  AttributeTypeInfo att : atts) {
+                    attNames.add(att.getName());
+                  }
+                  mesg+="The possible propertyName values are: " + attNames;
+                }
+                throw new WFSException(request,mesg,"InvalidParameterValue");
+              }
+              metaPropNames.add(propName);
+            }
+            if (wfs.isFeatureBounding()) {
+              metaAllPropNames=addGeometryProperties(meta,metaPropNames);
+            }
+ else {
+              metaAllPropNames=metaPropNames;
+            }
+            if (meta.getFeatureType() instanceof SimpleFeatureType) {
+              metaAllPropNames=DataUtilities.addMandatoryProperties((SimpleFeatureType)meta.getFeatureType(),metaAllPropNames);
+              metaPropNames=DataUtilities.addMandatoryProperties((SimpleFeatureType)meta.getFeatureType(),metaPropNames);
+            }
+          }
+          allPropNames.add(metaAllPropNames);
+          propNames.add(metaPropNames);
+        }
+        List<Join> joins=null;
+        Filter filter=query.getFilter();
+        if (filter == null && metas.size() > 1) {
+          throw new WFSException(request,"Join query must specify a filter");
+        }
+        if (filter != null && meta.getFeatureType() instanceof SimpleFeatureType) {
+          if (metas.size() > 1) {
+            if (!isValidJoinFilter(filter)) {
+              throw new WFSException(request,"Unable to preform join with specified filter: " + filter);
+            }
+            JoinExtractingVisitor extractor=new JoinExtractingVisitor(metas,query.getAliases());
+            filter.accept(extractor,null);
+            joins=extractor.getJoins();
+            if (joins.size() != metas.size() - 1) {
+              throw new WFSException(request,String.format("Query specified %d types but %d " + "join filters were found",metas.size(),extractor.getJoins().size()));
+            }
+            for (int j=1; j < metas.size(); j++) {
+              Join join=joins.get(j - 1);
+              if (join.getFilter() != null) {
+                validateFilter(join.getFilter(),query,metas.get(j),request);
+              }
+            }
+            filter=extractor.getPrimaryFilter();
+            if (filter != null) {
+              validateFilter(filter,query,meta,request);
+            }
+          }
+ else {
+            validateFilter(filter,query,meta,request);
+          }
+        }
+        Hints hints=null;
+        if (joins != null) {
+          hints=new Hints(ResourcePool.JOINS,joins);
+        }
+        FeatureSource<? extends FeatureType,? extends Feature> source=metas.get(0).getFeatureSource(null,hints);
+        int queryMaxFeatures=maxFeatures - count;
+        int metaMaxFeatures=maxFeatures(metas);
+        if (metaMaxFeatures > 0 && metaMaxFeatures < queryMaxFeatures) {
+          queryMaxFeatures=metaMaxFeatures;
+        }
+        Map<String,String> viewParam=viewParams != null ? viewParams.get(i) : null;
+        org.geotools.data.Query gtQuery=toDataQuery(query,filter,offset,queryMaxFeatures,source,request,allPropNames.get(0),viewParam,joins);
+        LOGGER.fine("Query is " + query + "\n To gt2: "+ gtQuery);
+        FeatureCollection<? extends FeatureType,? extends Feature> features=getFeatures(request,source,gtQuery);
+        if (!(meta.getFeatureType() instanceof SimpleFeatureType)) {
+          features.getSchema().getUserData().put("targetCrs",query.getSrsName());
+          features.getSchema().getUserData().put("targetVersion",request.getVersion());
+        }
+        boolean calculateSize=true;
+        calculateSize=!(("1.0".equals(request.getVersion()) || "1.0.0".equals(request.getVersion())) && (queries.size() == 1 || maxFeatures == Integer.MAX_VALUE));
+        if (!calculateSize) {
+          calculateSize=offset > 0 && i < queries.size() - 1;
+        }
+        int size=0;
+        if (calculateSize) {
+          size=features.size();
+        }
+        count+=size;
+        if (offset > 0) {
+          if (size > 0) {
+            offset=0;
+          }
+ else {
+            org.geotools.data.Query q2=toDataQuery(query,filter,0,queryMaxFeatures,source,request,allPropNames.get(0),viewParam,joins);
+            int size2=source.getCount(q2);
+            if (size2 > 0) {
+              offset=Math.max(0,offset - size2);
+            }
+          }
+        }
+        if (totalCount > -1) {
+          if (calculateSize && queryMaxFeatures == Integer.MAX_VALUE && offset == 0) {
+            totalCount+=size;
+          }
+ else {
+            org.geotools.data.Query q2=toDataQuery(query,filter,0,Integer.MAX_VALUE,source,request,allPropNames.get(0),viewParam,joins);
+            totalCount+=source.getFeatures(q2).size();
+          }
+        }
+        List<PropertyName> metaPropNames=propNames.get(0);
+        if (features.getSchema() instanceof SimpleFeatureType && metaPropNames != null && metaPropNames.size() < allPropNames.get(0).size()) {
+          String[] residualNames=new String[metaPropNames.size()];
+          Iterator<PropertyName> it=metaPropNames.iterator();
+          int j=0;
+          while (it.hasNext()) {
+            residualNames[j]=it.next().getPropertyName();
+            j++;
+          }
+          SimpleFeatureType targetType=DataUtilities.createSubType((SimpleFeatureType)features.getSchema(),residualNames);
+          features=new FeatureBoundsFeatureCollection((SimpleFeatureCollection)features,targetType);
+        }
+        results.add(features);
+      }
+ catch (      WFSException e) {
+        if (query.getHandle() != null && (e.getLocator() == null || "GetFeature".equalsIgnoreCase(e.getLocator()))) {
+          e.setLocator(query.getHandle());
+        }
+        throw e;
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new WFSException(request,"Error occurred getting features",e,request.getHandle());
+  }
+catch (  SchemaException e) {
+    throw new WFSException(request,"Error occurred getting features",e,request.getHandle());
+  }
+  String lockId=null;
+  if (request.isLockRequest()) {
+    LockFeatureRequest lockRequest=request.createLockRequest();
+    lockRequest.setExpiry(request.getExpiry());
+    lockRequest.setHandle(request.getHandle());
+    lockRequest.setLockActionAll();
+    for (int i=0; i < queries.size(); i++) {
+      Query query=queries.get(i);
+      Lock lock=lockRequest.createLock();
+      lock.setFilter(query.getFilter());
+      lock.setHandle(query.getHandle());
+      List<QName> typeNames=query.getTypeNames();
+      lock.setTypeName(typeNames.get(0));
+      lockRequest.addLock(lock);
+    }
+    LockFeature lockFeature=new LockFeature(wfs,catalog);
+    lockFeature.setFilterFactory(filterFactory);
+    LockFeatureResponse response=lockFeature.lockFeature(lockRequest);
+    lockId=response.getLockId();
+  }
+  return buildResults(request,totalOffset,maxFeatures,count,totalCount,results,lockId);
+}

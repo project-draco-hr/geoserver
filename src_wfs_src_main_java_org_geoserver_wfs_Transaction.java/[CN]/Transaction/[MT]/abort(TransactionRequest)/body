@@ -1,0 +1,31 @@
+{
+  if (transaction == null) {
+    return;
+  }
+  try {
+    transaction.rollback();
+    transaction.close();
+  }
+ catch (  IOException ioException) {
+    LOGGER.log(Level.SEVERE,"Failed trying to rollback a transaction:" + ioException);
+  }
+  String lockId=request.getLockId();
+  if (lockId != null) {
+    if (request.isReleaseActionSome()) {
+      try {
+        lockRefresh(lockId);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Error occured refreshing lock",e);
+      }
+    }
+ else     if (request.isReleaseActionAll()) {
+      try {
+        lockRelease(lockId);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Error occured releasing lock",e);
+      }
+    }
+  }
+}

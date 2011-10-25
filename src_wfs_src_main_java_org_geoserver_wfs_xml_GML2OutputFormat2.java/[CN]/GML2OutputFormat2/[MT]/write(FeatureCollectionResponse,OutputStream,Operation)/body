@@ -1,0 +1,37 @@
+{
+  GetFeatureRequest gft=GetFeatureRequest.adapt(getFeature.getParameters()[0]);
+  List featureCollections=results.getFeature();
+  MultiHashMap ns2metas=new MultiHashMap();
+  for (Iterator fc=featureCollections.iterator(); fc.hasNext(); ) {
+    SimpleFeatureCollection features=(SimpleFeatureCollection)fc.next();
+    SimpleFeatureType featureType=features.getSchema();
+    String namespaceURI=featureType.getName().getNamespaceURI();
+    FeatureTypeInfo meta=catalog.getFeatureTypeByName(namespaceURI,featureType.getTypeName());
+    if (meta == null)     throw new WFSException(gft,"Could not find feature type " + namespaceURI + ":"+ featureType.getTypeName()+ " in the GeoServer catalog");
+    NamespaceInfo ns=catalog.getNamespaceByURI(namespaceURI);
+    ns2metas.put(ns,meta);
+  }
+  Collection<FeatureTypeInfo> featureTypes=ns2metas.values();
+  ApplicationSchemaXSD xsd=new ApplicationSchemaXSD(null,catalog,gft.getBaseUrl(),org.geotools.wfs.v1_0.WFS.getInstance(),featureTypes);
+  Configuration configuration=new ApplicationSchemaConfiguration(xsd,new org.geotools.wfs.v1_0.WFSConfiguration());
+  Encoder encoder=new Encoder(configuration);
+  encoder.setSchemaLocation(org.geoserver.wfs.xml.v1_1_0.WFS.NAMESPACE,buildSchemaURL(gft.getBaseUrl(),"wfs/1.0.0/WFS-basic.xsd"));
+  Map<String,String> params=params("service","WFS","version","1.0.0","request","DescribeFeatureType");
+  for (Iterator i=ns2metas.entrySet().iterator(); i.hasNext(); ) {
+    Map.Entry entry=(Map.Entry)i.next();
+    NamespaceInfo ns=(NamespaceInfo)entry.getKey();
+    String namespaceURI=ns.getURI();
+    Collection metas=(Collection)entry.getValue();
+    StringBuffer typeNames=new StringBuffer();
+    for (Iterator m=metas.iterator(); m.hasNext(); ) {
+      FeatureTypeInfo meta=(FeatureTypeInfo)m.next();
+      typeNames.append(meta.getPrefixedName());
+      if (m.hasNext()) {
+        typeNames.append(",");
+      }
+    }
+    params.put("typeName",typeNames.toString());
+    encoder.setSchemaLocation(namespaceURI,buildURL(gft.getBaseUrl(),"wfs",params,URLType.RESOURCE));
+  }
+  encoder.encode(results.getAdaptee(),org.geotools.wfs.v1_0.WFS.FeatureCollection,output);
+}

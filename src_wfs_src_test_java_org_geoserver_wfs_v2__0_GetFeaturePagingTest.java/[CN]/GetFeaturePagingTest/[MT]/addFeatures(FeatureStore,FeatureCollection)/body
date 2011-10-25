@@ -1,0 +1,20 @@
+{
+  SimpleFeatureBuilder b=new SimpleFeatureBuilder((SimpleFeatureType)fs.getSchema());
+  DefaultFeatureCollection toAdd=new DefaultFeatureCollection(null,null);
+  FeatureIterator it=features.features();
+  try {
+    SimpleFeature f=null;
+    int i=0;
+    while (it.hasNext()) {
+      f=(SimpleFeature)it.next();
+      b.init(f);
+      b.add(f.getAttribute("pointProperty"));
+      b.add(i++);
+      toAdd.add(b.buildFeature(null));
+    }
+  }
+  finally {
+    it.close();
+  }
+  fs.addFeatures(toAdd);
+}

@@ -1,0 +1,22 @@
+{
+  String xml="<wfs:GetFeature" + "  service=\"WFS\"" + "  version=\"2.0.0\""+ "  expiry=\"10\""+ "  xmlns:cdf=\"http://www.opengis.net/cite/data\""+ "  xmlns:fes='" + FES.NAMESPACE + "' "+ "  xmlns:wfs='"+ WFS.NAMESPACE+ "'>"+ "  <wfs:Query typeNames=\"cdf:Locks\"/>"+ "</wfs:GetFeature>";
+  Document dom=postAsDOM("wfs",xml);
+  NodeList locks=dom.getElementsByTagName("cdf:Locks");
+  String fid1=((Element)locks.item(0)).getAttribute("gml:id");
+  String fid2=((Element)locks.item(1)).getAttribute("gml:id");
+  xml="<wfs:GetFeatureWithLock" + "  service=\"WFS\"" + "  version=\"2.0.0\""+ "  expiry=\"10\""+ "  xmlns:cdf=\"http://www.opengis.net/cite/data\""+ "  xmlns:fes='" + FES.NAMESPACE + "' "+ "  xmlns:wfs='"+ WFS.NAMESPACE+ "'>"+ "  <wfs:Query typeNames=\"cdf:Locks\">"+ "    <fes:Filter>"+ "      <fes:ResourceId rid=\""+ fid1+ "\"/>"+ "      <fes:ResourceId rid=\""+ fid2+ "\"/>"+ "    </fes:Filter>"+ "  </wfs:Query>"+ "</wfs:GetFeatureWithLock>";
+  dom=postAsDOM("wfs",xml);
+  assertEquals("wfs:FeatureCollection",dom.getDocumentElement().getNodeName());
+  String lockId=dom.getDocumentElement().getAttribute("lockId");
+  xml="<wfs:Transaction" + "  service=\"WFS\"" + "  version=\"2.0.0\""+ "  releaseAction=\"SOME\""+ "  xmlns:cdf=\"http://www.opengis.net/cite/data\""+ "  xmlns:fes='" + FES.NAMESPACE + "' "+ "  xmlns:wfs='"+ WFS.NAMESPACE+ "'>"+ "  <wfs:LockId>"+ lockId+ "</wfs:LockId>"+ "  <wfs:Update typeName=\"cdf:Locks\">"+ "    <wfs:Property>"+ "      <wfs:ValueReference>cdf:id</wfs:ValueReference>"+ "      <wfs:Value>gfwlrs0003</wfs:Value>"+ "    </wfs:Property>"+ "    <fes:Filter>"+ "      <fes:ResourceId rid=\""+ fid1+ "\"/>"+ "    </fes:Filter>"+ "  </wfs:Update>"+ "</wfs:Transaction>";
+  dom=postAsDOM("wfs",xml);
+  assertEquals("wfs:TransactionResponse",dom.getDocumentElement().getNodeName());
+  XMLAssert.assertXpathEvaluatesTo("1","//wfs:totalUpdated/text()",dom);
+  XMLAssert.assertXpathExists("//wfs:UpdateResults//fes:ResourceId[@rid = '" + fid1 + "']",dom);
+  xml="<wfs:Transaction" + "  service=\"WFS\"" + "  version=\"2.0.0\""+ "  xmlns:cdf=\"http://www.opengis.net/cite/data\""+ "  xmlns:fes='" + FES.NAMESPACE + "' "+ "  xmlns:wfs='"+ WFS.NAMESPACE+ "'>"+ "  <wfs:LockId>"+ lockId+ "</wfs:LockId>"+ "  <wfs:Update typeName=\"cdf:Locks\">"+ "    <wfs:Property>"+ "      <wfs:ValueReference>cdf:id</wfs:ValueReference>"+ "      <wfs:Value>gfwlrs0004</wfs:Value>"+ "    </wfs:Property>"+ "    <fes:Filter>"+ "      <fes:ResourceId rid=\""+ fid2+ "\"/>"+ "    </fes:Filter>"+ "  </wfs:Update>"+ "</wfs:Transaction>";
+  dom=postAsDOM("wfs",xml);
+  get("wfs?request=ReleaseLock&lockId=" + lockId);
+  assertEquals("wfs:TransactionResponse",dom.getDocumentElement().getNodeName());
+  XMLAssert.assertXpathEvaluatesTo("1","//wfs:totalUpdated/text()",dom);
+  XMLAssert.assertXpathExists("//wfs:UpdateResults//fes:ResourceId[@rid = '" + fid2 + "']",dom);
+}

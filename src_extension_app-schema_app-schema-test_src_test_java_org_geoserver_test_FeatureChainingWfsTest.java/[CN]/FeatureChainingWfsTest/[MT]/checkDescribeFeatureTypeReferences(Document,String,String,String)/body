@@ -1,0 +1,48 @@
+{
+  assertEquals("xsd:schema",doc.getDocumentElement().getNodeName());
+  String targetNamespace=evaluate("//@targetNamespace",doc);
+  assertTrue(targetNamespace.length() > 0);
+  int numberOfReferences=omSchemaLocation != null ? 3 : 2;
+  int numberOfImports=getMatchingNodes("//xsd:import",doc).getLength();
+  int numberOfIncludes=getMatchingNodes("//xsd:include",doc).getLength();
+  assertEquals(numberOfReferences,numberOfImports + numberOfIncludes);
+  ArrayList<String> namespaces=new ArrayList<String>();
+  namespaces.add(AbstractAppSchemaMockData.GSML_URI);
+  namespaces.add(FeatureChainingMockData.EX_URI);
+  if (omSchemaLocation != null) {
+    namespaces.add(FeatureChainingMockData.OM_URI);
+  }
+  for (int i=1; i <= numberOfReferences; i++) {
+    String namespace;
+    String schemaLocation;
+    if (i <= numberOfImports) {
+      namespace=evaluate("//xsd:import[" + i + "]/@namespace",doc);
+      schemaLocation="//xsd:import[" + i + "]/@schemaLocation";
+    }
+ else {
+      namespace=targetNamespace;
+      schemaLocation="//xsd:include[" + (i - numberOfImports) + "]/@schemaLocation";
+    }
+    if (namespace.equals(AbstractAppSchemaMockData.GSML_URI)) {
+      assertXpathEvaluatesTo(AbstractAppSchemaMockData.GSML_SCHEMA_LOCATION_URL,schemaLocation,doc);
+      namespaces.remove(AbstractAppSchemaMockData.GSML_URI);
+    }
+ else     if (namespace.equals(FeatureChainingMockData.EX_URI)) {
+      String loc=evaluate(schemaLocation,doc);
+      if (!loc.equals(exSchemaOneLocation)) {
+        assertNotNull(exSchemaTwoLocation);
+        assertEquals(exSchemaTwoLocation,loc);
+      }
+      namespaces.remove(FeatureChainingMockData.EX_URI);
+    }
+ else {
+      assertTrue(omSchemaLocation != null);
+      assertEquals(FeatureChainingMockData.OM_URI,namespace);
+      assertXpathEvaluatesTo(FeatureChainingMockData.OM_SCHEMA_LOCATION_URL,schemaLocation,doc);
+      namespaces.remove(FeatureChainingMockData.OM_URI);
+    }
+  }
+  assertTrue(namespaces.isEmpty());
+  assertXpathCount(0,"//xsd:complexType",doc);
+  assertXpathCount(0,"//xsd:element",doc);
+}

@@ -1,0 +1,15 @@
+{
+  Document doc=getAsDOM("/wfs?request=GetFeature&version=2.0.0&service=wfs&" + "typename=" + typeName + "&startIndex=10");
+  XMLAssert.assertXpathEvaluatesTo("5","count(//" + typeName + ")",doc);
+  doc=getAsDOM("/wfs?request=GetFeature&version=2.0.0&service=wfs&" + "typename=" + typeName + "&startIndex=10&count=4");
+  XMLAssert.assertXpathEvaluatesTo("4","count(//" + typeName + ")",doc);
+  String xml=String.format("<GetFeature version='2.0.0' " + "startIndex='%d' count='%d'>" + "<Query typeNames = '%s'/>"+ "</GetFeature>",10,100,typeName);
+  doc=postAsDOM("wfs",xml);
+  XMLAssert.assertXpathEvaluatesTo("5","count(//" + typeName + ")",doc);
+  xml=String.format("<GetFeature version='2.0.0' xmlns:gml='http://www.opengis.net/gml/2.0' " + "xmlns:fes='http://www.opengis.net/fes/2.0' startIndex='%d' count='%d'>" + "<Query typeNames = '%s'>"+ "  <fes:Filter>"+ "   <fes:ResourceId rid='%s'></fes:ResourceId>"+ "   <fes:ResourceId rid='%s'></fes:ResourceId>"+ "   <fes:ResourceId rid='%s'></fes:ResourceId>"+ "  </fes:Filter>"+ "</Query>"+ "</GetFeature>",1,100,typeName,"Fifteen.3","Fifteen.4","Fifteen.5");
+  doc=postAsDOM("wfs",xml);
+  XMLAssert.assertXpathEvaluatesTo("2","count(//" + typeName + ")",doc);
+  XMLAssert.assertXpathEvaluatesTo("0","count(//" + typeName + "[@gml:id='Fifteen.3'])",doc);
+  XMLAssert.assertXpathEvaluatesTo("1","count(//" + typeName + "[@gml:id='Fifteen.4'])",doc);
+  XMLAssert.assertXpathEvaluatesTo("1","count(//" + typeName + "[@gml:id='Fifteen.5'])",doc);
+}

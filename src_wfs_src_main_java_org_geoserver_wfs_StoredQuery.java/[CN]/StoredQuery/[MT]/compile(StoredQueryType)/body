@@ -1,0 +1,24 @@
+{
+  List list=new ArrayList();
+  for (  QueryExpressionTextType qe : queryDef.getQueryExpressionText()) {
+    StringBuffer sb=new StringBuffer(qe.getValue());
+    for (    ParameterType p : query.getParameter()) {
+      String name=p.getName();
+      String token="${" + name + "}";
+      int i=sb.indexOf(token);
+      while (i > 0) {
+        sb.replace(i,i + token.length(),p.getValue());
+        i=sb.indexOf(token,i + token.length());
+      }
+    }
+    Parser p=new Parser(new WFSConfiguration());
+    try {
+      QueryType compiled=(QueryType)p.parse(new ByteArrayInputStream(sb.toString().getBytes()));
+      list.add(compiled);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  return list;
+}

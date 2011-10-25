@@ -1,0 +1,21 @@
+{
+  start("ows:Operation",attributes(new String[]{"name",name}));
+  String serviceURL=buildURL(request.getBaseUrl(),"wfs",null,URLType.SERVICE);
+  delegate.dcp(serviceURL,get,post);
+  for (int i=0; parameters != null && i < parameters.length; i++) {
+    String pname=(String)parameters[i].getKey();
+    String[] pvalues=(String[])parameters[i].getValue();
+    start("ows:Parameter",attributes(new String[]{"name",pname}));
+    start("ows:AllowedValues");
+    for (int j=0; j < pvalues.length; j++) {
+      element("ows:Value",pvalues[j]);
+    }
+    end("ows:AllowedValues");
+    end("ows:Parameter");
+  }
+  for (int i=0; constraints != null && i < constraints.length; i++) {
+    String cname=(String)constraints[i].getKey();
+    constraint(cname,constraints[i].getValue());
+  }
+  end("ows:Operation");
+}

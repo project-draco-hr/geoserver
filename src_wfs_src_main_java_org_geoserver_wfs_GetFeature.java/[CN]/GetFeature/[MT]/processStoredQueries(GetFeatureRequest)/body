@@ -1,0 +1,20 @@
+{
+  List queries=request.getAdaptedQueries();
+  for (int i=0; i < queries.size(); i++) {
+    Object obj=queries.get(i);
+    if (obj instanceof StoredQueryType) {
+      if (storedQueryProvider == null) {
+        throw new WFSException(request,"Stored query not supported");
+      }
+      StoredQueryType sq=(StoredQueryType)obj;
+      StoredQuery storedQuery=storedQueryProvider.getStoredQuery(sq.getId());
+      if (storedQuery == null) {
+        throw new WFSException(request,"Stored query '" + sq.getId() + "' does not exist.");
+      }
+      List<net.opengis.wfs20.QueryType> compiled=storedQuery.compile(sq);
+      queries.remove(i);
+      queries.addAll(i,compiled);
+      i+=compiled.size();
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  if (getWfsSchema() != null && imports.get(getWfsSchema().getTargetNamespace()) == null) {
+  if (getWfsSchema() != null && references.get(getWfsSchema().getTargetNamespace()) == null) {
     schema.getQNamePrefixToNamespaceMap().put("wfs",getWfsSchema().getTargetNamespace());
     XSDImport wfsImport=factory.createXSDImport();
     wfsImport.setNamespace(getWfsSchema().getTargetNamespace());
@@ -7,23 +7,23 @@
     wfsImport.setResolvedSchema(getWfsSchema());
     schema.getContents().add(wfsImport);
     ((XSDSchemaImpl)getWfsSchema()).imported(wfsImport);
-    imports.put(getWfsSchema().getTargetNamespace(),getWfsSchema().getSchemaLocation());
+    references.put(getWfsSchema().getTargetNamespace(),getWfsSchema().getSchemaLocation());
   }
-  if (namespace.equals(schema.getTargetNamespace())) {
-    addInclude(schema,factory,namespace,schemaLocation);
+  if (references.get(namespace) != null) {
+    if (references.get(namespace).equals(schemaLocation)) {
+      logger.finer("Skipped generation of duplicate reference for namespace=\"" + namespace + "\" schemaLocation=\""+ schemaLocation+ " while generating schema for "+ schema.getTargetNamespace());
+    }
+ else {
+      logger.warning("Skipped generation of conflicting reference for namespace=\"" + namespace + "\" schemaLocation=\""+ schemaLocation+ " while generating schema for "+ schema.getTargetNamespace()+ " (some XML processors will ignore all imports"+ " for a namespace after the first)");
+    }
   }
  else {
-    if (imports.get(namespace) != null) {
-      if (imports.get(namespace).equals(schemaLocation)) {
-        logger.finer("Skipped generation of duplicate import for namespace=\"" + namespace + "\" schemaLocation=\""+ schemaLocation+ " while generating schema for "+ schema.getTargetNamespace());
-      }
- else {
-        logger.warning("Skipped generation of conflicting import for namespace=\"" + namespace + "\" schemaLocation=\""+ schemaLocation+ " while generating schema for "+ schema.getTargetNamespace()+ " (some XML processors will ignore all imports for a namespace after the first)");
-      }
+    if (namespace.equals(schema.getTargetNamespace())) {
+      addInclude(schema,factory,namespace,schemaLocation);
     }
  else {
       addImport(schema,factory,namespace,schemaLocation);
-      imports.put(namespace,schemaLocation);
     }
+    references.put(namespace,schemaLocation);
   }
 }

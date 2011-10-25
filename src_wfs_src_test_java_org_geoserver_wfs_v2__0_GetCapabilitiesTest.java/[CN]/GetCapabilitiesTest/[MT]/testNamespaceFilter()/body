@@ -1,0 +1,12 @@
+{
+  Document doc=getAsDOM("wfs?service=WFS&version=2.0.0&request=getCapabilities&namespace=sf");
+  Element e=doc.getDocumentElement();
+  assertEquals("WFS_Capabilities",e.getLocalName());
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  assertTrue(xpath.getMatchingNodes("//wfs:FeatureType/wfs:Name[starts-with(., sf)]",doc).getLength() > 0);
+  assertEquals(0,xpath.getMatchingNodes("//wfs:FeatureType/wfs:Name[not(starts-with(., sf))]",doc).getLength());
+  doc=getAsDOM("wfs?service=WFS&request=getCapabilities&namespace=NotThere");
+  e=doc.getDocumentElement();
+  assertEquals("WFS_Capabilities",e.getLocalName());
+  assertEquals(0,xpath.getMatchingNodes("//wfs:FeatureType",doc).getLength());
+}

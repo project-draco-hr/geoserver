@@ -1,0 +1,44 @@
+{
+  DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+  DocumentBuilder db;
+  try {
+    db=dbf.newDocumentBuilder();
+  }
+ catch (  ParserConfigurationException e) {
+    throw new IOException(e);
+  }
+  for (  QueryExpressionTextType qe : queryDef.getQueryExpressionText()) {
+    Set<QName> queryTypes=new HashSet();
+    try {
+      Document doc=db.parse(new ByteArrayInputStream(qe.getValue().getBytes()));
+      NodeList queries=doc.getElementsByTagName("wfs:Query");
+      if (queries.getLength() == 0) {
+        queries=doc.getElementsByTagName("Query");
+      }
+      if (queries.getLength() == 0) {
+        throw new WFSException("StoredQuery does not specify any Query elements");
+      }
+      for (int i=0; i < queries.getLength(); i++) {
+        Element query=(Element)queries.item(i);
+        String[] typeNames=query.getAttribute("typeNames").split(" ");
+        for (        String typeName : typeNames) {
+          queryTypes.addAll((List)new QNameKvpParser(null,catalog).parse(typeName));
+        }
+      }
+    }
+ catch (    Exception e) {
+      throw new IOException(e);
+    }
+    Set<QName> returnTypes=new HashSet(qe.getReturnFeatureTypes());
+    for (Iterator<QName> it=queryTypes.iterator(); it.hasNext(); ) {
+      QName qName=it.next();
+      if (!returnTypes.contains(qName)) {
+        throw new WFSException(String.format("StoredQuery references typeName %s:%s " + "not listed in returnFeatureTypes: %s",qName.getPrefix(),qName.getLocalPart(),toString(qe.getReturnFeatureTypes())));
+      }
+      returnTypes.remove(qName);
+    }
+    if (!returnTypes.isEmpty()) {
+      throw new WFSException(String.format("StoredQuery declares return feature type(s) not " + "not referenced in query definition: %s",toString(returnTypes)));
+    }
+  }
+}

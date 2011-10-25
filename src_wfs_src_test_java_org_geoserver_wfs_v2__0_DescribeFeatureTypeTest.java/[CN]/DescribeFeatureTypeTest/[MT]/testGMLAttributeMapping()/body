@@ -1,0 +1,15 @@
+{
+  WFSInfo wfs=getWFS();
+  GMLInfo gml=wfs.getGML().get(WFSInfo.Version.V_11);
+  gml.setOverrideGMLAttributes(false);
+  getGeoServer().save(wfs);
+  Document dom=getAsDOM("ows?service=WFS&version=2.0.0&request=DescribeFeatureType" + "&typename=" + getLayerId(MockData.PRIMITIVEGEOFEATURE));
+  assertSchema(dom,MockData.PRIMITIVEGEOFEATURE);
+  XMLAssert.assertXpathNotExists("//xsd:element[@name = 'name']",dom);
+  XMLAssert.assertXpathNotExists("//xsd:element[@name = 'description']",dom);
+  gml.setOverrideGMLAttributes(true);
+  dom=getAsDOM("ows?service=WFS&version=2.0.0&request=DescribeFeatureType" + "&typename=" + getLayerId(MockData.PRIMITIVEGEOFEATURE));
+  assertSchema(dom,MockData.PRIMITIVEGEOFEATURE);
+  XMLAssert.assertXpathExists("//xsd:element[@name = 'name']",dom);
+  XMLAssert.assertXpathExists("//xsd:element[@name = 'description']",dom);
+}

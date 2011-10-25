@@ -1,0 +1,23 @@
+{
+  if ("geometry".equals(arg.getName())) {
+    return new NameImpl(org.geotools.gml3.v3_2.GML.AbstractGeometryType);
+  }
+  Class clazz=arg.getType();
+  if (clazz == null || clazz == Object.class) {
+    return new NameImpl(XS.STRING);
+  }
+  for (  Schema profile : profiles) {
+    for (    Map.Entry<Name,AttributeType> e : profile.entrySet()) {
+      AttributeType at=e.getValue();
+      if (at.getBinding() != null && at.getBinding().equals(clazz)) {
+        return at.getName();
+      }
+    }
+    for (    AttributeType at : profile.values()) {
+      if (clazz.isAssignableFrom(at.getBinding())) {
+        return at.getName();
+      }
+    }
+  }
+  return new NameImpl(XS.STRING);
+}

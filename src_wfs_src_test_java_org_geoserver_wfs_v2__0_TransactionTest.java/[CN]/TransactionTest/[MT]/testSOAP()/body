@@ -1,0 +1,8 @@
+{
+  String xml="<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope'> " + " <soap:Header/> " + " <soap:Body>"+ "<wfs:Transaction service='WFS' version='2.0.0' "+ "xmlns:cgf=\"http://www.opengis.net/cite/geometry\" "+ "xmlns:fes='" + FES.NAMESPACE + "' "+ "xmlns:wfs='"+ WFS.NAMESPACE+ "' "+ "xmlns:gml='"+ GML.NAMESPACE+ "'> "+ "<wfs:Insert > "+ "<cgf:Points>"+ "<cgf:pointProperty>"+ "<gml:Point>"+ "<gml:pos>20 40</gml:pos>"+ "</gml:Point>"+ "</cgf:pointProperty>"+ "<cgf:id>t0002</cgf:id>"+ "</cgf:Points>"+ "</wfs:Insert>"+ "</wfs:Transaction>"+ " </soap:Body> "+ "</soap:Envelope> ";
+  MockHttpServletResponse resp=postAsServletResponse("wfs",xml,"application/soap+xml");
+  assertEquals("application/soap+xml",resp.getContentType());
+  Document dom=dom(new ByteArrayInputStream(resp.getOutputStreamContent().getBytes()));
+  assertEquals("soap:Envelope",dom.getDocumentElement().getNodeName());
+  assertEquals(1,dom.getElementsByTagName("wfs:TransactionResponse").getLength());
+}

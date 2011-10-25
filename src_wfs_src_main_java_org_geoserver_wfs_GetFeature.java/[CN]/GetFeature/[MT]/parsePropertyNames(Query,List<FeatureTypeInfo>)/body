@@ -1,0 +1,34 @@
+{
+  List<List<String>> propNames=new ArrayList();
+  for (  FeatureTypeInfo featureType : featureTypes) {
+    propNames.add(new ArrayList());
+  }
+  if (featureTypes.size() == 1) {
+    propNames.get(0).addAll(query.getPropertyNames());
+    return propNames;
+  }
+  O:   for (  String propName : query.getPropertyNames()) {
+    for (int j=0; j < featureTypes.size(); j++) {
+      FeatureTypeInfo featureType=featureTypes.get(j);
+      if (propName.startsWith(featureType.getPrefixedName() + "/")) {
+        propNames.get(j).add(propName.substring((featureType.getPrefixedName() + "/").length()));
+        continue O;
+      }
+      if (propName.startsWith(featureType.getName() + "/")) {
+        propNames.get(j).add(propName.substring((featureType.getName() + "/").length()));
+        continue O;
+      }
+    }
+    if (query.getAliases().isEmpty()) {
+      for (int j=0; j < query.getAliases().size(); j++) {
+        String alias=query.getAliases().get(j);
+        if (propName.startsWith(alias + "/")) {
+          propNames.get(j).add(propName.substring((alias + "/").length()));
+          continue O;
+        }
+      }
+    }
+    propNames.get(0).add(propName);
+  }
+  return propNames;
+}

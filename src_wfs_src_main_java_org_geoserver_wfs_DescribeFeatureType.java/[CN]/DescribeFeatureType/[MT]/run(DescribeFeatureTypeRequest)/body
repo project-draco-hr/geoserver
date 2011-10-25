@@ -1,0 +1,52 @@
+{
+  List<QName> names=new ArrayList<QName>(request.getTypeNames());
+  final boolean citeConformance=getWFS().isCiteCompliant();
+  if (!citeConformance) {
+    List<QName> hackedNames=new ArrayList<QName>(names.size());
+    final NamespaceInfo defaultNameSpace=catalog.getDefaultNamespace();
+    if (defaultNameSpace == null) {
+      throw new IllegalStateException("No default namespace configured in GeoServer");
+    }
+    final String defaultNsUri=defaultNameSpace.getURI();
+    for (    QName name : names) {
+      String nsUri=name.getNamespaceURI();
+      if (XMLConstants.NULL_NS_URI.equals(nsUri) || org.geoserver.wfs.xml.v1_1_0.WFS.NAMESPACE.equals(nsUri) || org.geotools.wfs.v2_0.WFS.NAMESPACE.equals(nsUri)) {
+        name=new QName(defaultNsUri,name.getLocalPart());
+      }
+      hackedNames.add(name);
+    }
+    names=hackedNames;
+  }
+  List<FeatureTypeInfo> requested=new ArrayList<FeatureTypeInfo>(names.size());
+  if (names.isEmpty()) {
+    for (    FeatureTypeInfo ftInfo : new ArrayList<FeatureTypeInfo>(catalog.getFeatureTypes())) {
+      if (ftInfo.enabled()) {
+        requested.add(ftInfo);
+      }
+    }
+  }
+ else {
+    for (    QName name : names) {
+      String namespaceURI=name.getNamespaceURI();
+      String typeName=name.getLocalPart();
+      FeatureTypeInfo typeInfo;
+      if (citeConformance && XMLConstants.NULL_NS_URI.equals(namespaceURI)) {
+        typeInfo=null;
+      }
+ else {
+        typeInfo=catalog.getFeatureTypeByName(namespaceURI,typeName);
+      }
+      if (typeInfo != null && typeInfo.enabled()) {
+        requested.add(typeInfo);
+      }
+ else {
+        String msg="Could not find type: " + name;
+        if (citeConformance) {
+          msg+=". \nStrict WFS protocol conformance is being applied.\n" + "Make sure the type name is correctly qualified";
+        }
+        throw new WFSException(request,msg);
+      }
+    }
+  }
+  return (FeatureTypeInfo[])requested.toArray(new FeatureTypeInfo[requested.size()]);
+}

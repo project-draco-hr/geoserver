@@ -1,0 +1,11 @@
+{
+  String xml="<wfs:GetFeature service='WFS' version='2.0.0' " + "outputFormat='text/xml; subtype=gml/3.2' " + "xmlns:cdf=\"http://www.opengis.net/cite/data\" "+ "xmlns:wfs='" + WFS.NAMESPACE + "' xmlns:fes='"+ FES.NAMESPACE+ "'>"+ "<wfs:Query typeNames=\"cdf:Other\"> "+ "<fes:Filter> "+ "<fes:PropertyIsEqualTo> "+ "<fes:ValueReference>cdf:integers</fes:ValueReference> "+ "<fes:Literal>7</fes:Literal> "+ "</fes:PropertyIsEqualTo> "+ "</fes:Filter> "+ "</wfs:Query> "+ "</wfs:GetFeature>";
+  Document doc=postAsDOM("wfs",xml);
+  assertGML32(doc);
+  NodeList features=doc.getElementsByTagName("cdf:Other");
+  assertFalse(features.getLength() == 0);
+  for (int i=0; i < features.getLength(); i++) {
+    Element feature=(Element)features.item(i);
+    assertTrue(feature.hasAttribute("gml:id"));
+  }
+}

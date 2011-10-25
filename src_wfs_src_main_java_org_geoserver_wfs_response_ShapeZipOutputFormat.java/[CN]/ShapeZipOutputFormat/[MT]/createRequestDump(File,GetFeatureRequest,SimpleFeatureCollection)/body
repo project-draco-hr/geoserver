@@ -1,0 +1,42 @@
+{
+  final Request request=Dispatcher.REQUEST.get();
+  if (request == null || gft == null) {
+    return;
+  }
+  FeatureTypeInfo ftInfo=getFeatureTypeInfo(fc);
+  String fileName=new FileNameSource(getClass()).getRequestDumpName(ftInfo) + ".txt";
+  File target=new File(tempDir,fileName);
+  try {
+    if (request.isGet()) {
+      final HttpServletRequest httpRequest=request.getHttpRequest();
+      String url=httpRequest.getRequestURL().append("?").append(httpRequest.getQueryString()).toString();
+      FileUtils.writeStringToFile(target,url);
+    }
+ else {
+      org.geotools.xml.Configuration cfg=null;
+      QName elementName=null;
+      if (gft.getVersion().equals("1.1.0")) {
+        cfg=new WFSConfiguration();
+        elementName=WFS.GetFeature;
+      }
+ else {
+        cfg=new org.geotools.wfs.v1_0.WFSConfiguration();
+        elementName=org.geotools.wfs.v1_0.WFS.GetFeature;
+      }
+      FileOutputStream fos=null;
+      try {
+        fos=new FileOutputStream(target);
+        Encoder encoder=new Encoder(cfg);
+        encoder.setIndenting(true);
+        encoder.setIndentSize(2);
+        encoder.encode(gft,elementName,fos);
+      }
+  finally {
+        if (fos != null)         fos.close();
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new WFSException(gft,"Failed to dump the WFS request");
+  }
+}

@@ -1,0 +1,26 @@
+{
+  GetFeatureRequest req=GetFeatureRequest.adapt(request);
+  req.getAdaptedQueries();
+  if (!(req instanceof GetFeatureRequest.WFS20)) {
+    throw new WFSException(req,"Stored queries only supported in WFS 2.0+");
+  }
+  StoredQueryProvider sqp=new StoredQueryProvider(catalog);
+  for (  URI storedQueryId : storedQueryIds) {
+    StoredQuery sq=sqp.getStoredQuery(storedQueryId.toString());
+    if (sq == null) {
+      throw new WFSException(req,"No such stored query: " + storedQueryId);
+    }
+    Wfs20Factory factory=(Wfs20Factory)req.getFactory();
+    StoredQueryType storedQuery=factory.createStoredQueryType();
+    storedQuery.setId(storedQueryId.toString());
+    for (    ParameterExpressionType p : sq.getQuery().getParameter()) {
+      if (kvp.containsKey(p.getName())) {
+        ParameterType param=factory.createParameterType();
+        param.setName(p.getName());
+        param.setValue(kvp.get(p.getName()).toString());
+        storedQuery.getParameter().add(param);
+      }
+    }
+    req.getAdaptedQueries().add(storedQuery);
+  }
+}

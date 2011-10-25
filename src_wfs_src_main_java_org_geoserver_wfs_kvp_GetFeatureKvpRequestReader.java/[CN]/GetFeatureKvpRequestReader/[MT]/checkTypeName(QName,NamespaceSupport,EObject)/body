@@ -1,0 +1,30 @@
+{
+  String namespaceURI=qName.getNamespaceURI();
+  String localPart=qName.getLocalPart();
+  String prefix=qName.getPrefix();
+  if (namespaces != null) {
+    if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
+      String uri=namespaces.getURI(XMLConstants.DEFAULT_NS_PREFIX);
+      if (!XMLConstants.NULL_NS_URI.equals(uri)) {
+        namespaceURI=uri;
+      }
+    }
+ else     if (namespaces.getURI(prefix) != null) {
+      namespaceURI=namespaces.getURI(qName.getPrefix());
+    }
+    NamespaceInfo ns=catalog.getNamespaceByURI(namespaceURI);
+    if (ns == null) {
+      throw new WFSException("Unknown namespace [" + qName.getPrefix() + "]","InvalidParameterValue","namespace");
+    }
+    prefix=ns.getPrefix();
+    qName=new QName(namespaceURI,localPart,prefix);
+  }
+  if (!XMLConstants.DEFAULT_NS_PREFIX.equals(qName.getPrefix()) && catalog.getNamespaceByPrefix(qName.getPrefix()) == null) {
+    throw new WFSException("Unknown namespace [" + qName.getPrefix() + "]","InvalidParameterValue","namespace");
+  }
+  if (catalog.getFeatureTypeByName(namespaceURI,localPart) == null) {
+    String name=qName.getPrefix() + ":" + qName.getLocalPart();
+    throw new WFSException("Feature type " + name + " unknown","InvalidParameterValue","typeName");
+  }
+  return qName;
+}

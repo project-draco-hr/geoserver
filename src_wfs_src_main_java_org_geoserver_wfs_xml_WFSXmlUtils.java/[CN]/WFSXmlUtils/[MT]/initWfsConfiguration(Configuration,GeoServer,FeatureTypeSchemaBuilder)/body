@@ -1,0 +1,21 @@
+{
+  MutablePicoContainer context=config.getContext();
+  FeatureTypeCache featureTypeCache=new FeatureTypeCache();
+  Collection featureTypes=gs.getCatalog().getFeatureTypes();
+  for (Iterator f=featureTypes.iterator(); f.hasNext(); ) {
+    FeatureTypeInfo meta=(FeatureTypeInfo)f.next();
+    if (!meta.enabled()) {
+      continue;
+    }
+    FeatureType featureType=null;
+    try {
+      featureType=meta.getFeatureType();
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+    featureTypeCache.put(featureType);
+  }
+  context.registerComponentInstance(featureTypeCache);
+  context.registerComponentInstance(new WFSHandlerFactory(gs.getCatalog(),schemaBuilder));
+}

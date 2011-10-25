@@ -2,7 +2,16 @@
   if (values == null) {
     return;
   }
-  List query=(List)EMFUtils.get(request,"query");
+  GetFeatureRequest req=GetFeatureRequest.adapt(request);
+  if (req instanceof GetFeatureRequest.WFS20) {
+    if ("typeName".equals(property)) {
+      property="typeNames";
+    }
+    if ("propertyName".equals(property)) {
+      property="abstractProjectionClause";
+    }
+  }
+  List query=req.getAdaptedQueries();
   int m=values.size();
   int n=query.size();
   if ((m == 1) && (n > 1)) {
@@ -12,19 +21,19 @@
   if (m > n) {
     if (n == 0) {
       for (int i=0; i < m; i++) {
-        query.add(getWfsFactory().createQueryType());
+        query.add(req.createQuery().getAdaptee());
       }
     }
  else     if (n == 1) {
       EObject q=(EObject)query.get(0);
       for (int i=1; i < m; i++) {
-        query.add(EMFUtils.clone(q,getWfsFactory()));
+        query.add(EMFUtils.clone(q,req.getFactory()));
       }
       return;
     }
  else {
       String msg="Specified " + m + " "+ property+ " for "+ n+ " queries.";
-      throw new WFSException(msg);
+      throw new WFSException(request,msg);
     }
   }
   EMFUtils.set(query,property,values);

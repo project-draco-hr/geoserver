@@ -1,160 +1,172 @@
 {
+  if (rawKvp.containsKey("startIndex")) {
+    kvp.put("startIndex",new NumericKvpParser(null,BigInteger.class).parse((String)rawKvp.get("startIndex")));
+  }
   request=super.read(request,kvp,rawKvp);
-  ensureMutuallyExclusive(kvp,new String[]{"featureId","filter","bbox","cql_filter"});
   EObject eObject=(EObject)request;
+  ensureMutuallyExclusive(kvp,new String[]{"featureId","resourceId","filter","bbox","cql_filter"},eObject);
   if (!EMFUtils.isSet(eObject,"outputFormat")) {
     String version=(String)EMFUtils.get(eObject,"version");
-    if ((version != null) && version.startsWith("1.0")) {
+switch (WFSInfo.Version.negotiate(version)) {
+case V_10:
       EMFUtils.set(eObject,"outputFormat","GML2");
-    }
+    break;
+case V_11:
+  EMFUtils.set(eObject,"outputFormat","text/xml; subtype=gml/3.1.1");
+break;
+case V_20:
+default :
+EMFUtils.set(eObject,"outputFormat","text/xml; subtype=gml/3.2");
+}
+;
+}
+NamespaceSupport namespaces=null;
+if (kvp.containsKey("namespace")) {
+if (kvp.get("namespace") instanceof NamespaceSupport) {
+namespaces=(NamespaceSupport)kvp.get("namespace");
+}
  else {
-      EMFUtils.set(eObject,"outputFormat","text/xml; subtype=gml/3.1.1");
-    }
-  }
-  NamespaceSupport namespaces=null;
-  if (kvp.containsKey("namespace")) {
-    if (kvp.get("namespace") instanceof NamespaceSupport) {
-      namespaces=(NamespaceSupport)kvp.get("namespace");
-    }
+LOGGER.warning("There's a namespace parameter but it seems it wasn't parsed to a " + NamespaceSupport.class.getName() + ": "+ kvp.get("namespace"));
+}
+}
+if (kvp.containsKey("typeName") || kvp.containsKey("typeNames")) {
+List typeName=(List)kvp.get("typeName");
+if (typeName == null) {
+typeName=(List)kvp.get("typeNames");
+}
+List list=new ArrayList();
+for (Iterator itr=typeName.iterator(); itr.hasNext(); ) {
+Object obj=itr.next();
+if (obj instanceof QName) {
+QName qName=(QName)obj;
+qName=checkTypeName(qName,namespaces,eObject);
+List l=new ArrayList();
+l.add(qName);
+list.add(l);
+}
  else {
-      LOGGER.warning("There's a namespace parameter but it seems it wasn't parsed to a " + NamespaceSupport.class.getName() + ": "+ kvp.get("namespace"));
-    }
-  }
-  if (kvp.containsKey("typeName")) {
-    List typeName=(List)kvp.get("typeName");
-    List list=new ArrayList();
-    for (Iterator itr=typeName.iterator(); itr.hasNext(); ) {
-      QName qName=(QName)itr.next();
-      String namespaceURI=qName.getNamespaceURI();
-      String localPart=qName.getLocalPart();
-      String prefix=qName.getPrefix();
-      if (namespaces != null) {
-        if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
-          String uri=namespaces.getURI(XMLConstants.DEFAULT_NS_PREFIX);
-          if (!XMLConstants.NULL_NS_URI.equals(uri)) {
-            namespaceURI=uri;
-          }
-        }
- else         if (namespaces.getURI(prefix) != null) {
-          namespaceURI=namespaces.getURI(qName.getPrefix());
-        }
-        NamespaceInfo ns=catalog.getNamespaceByURI(namespaceURI);
-        if (ns == null) {
-          throw new WFSException("Unknown namespace [" + qName.getPrefix() + "]","InvalidParameterValue","namespace");
-        }
-        prefix=ns.getPrefix();
-        qName=new QName(namespaceURI,localPart,prefix);
-      }
-      if (!XMLConstants.DEFAULT_NS_PREFIX.equals(qName.getPrefix()) && catalog.getNamespaceByPrefix(qName.getPrefix()) == null) {
-        throw new WFSException("Unknown namespace [" + qName.getPrefix() + "]","InvalidParameterValue","namespace");
-      }
-      if (catalog.getFeatureTypeByName(namespaceURI,localPart) == null) {
-        String name=qName.getPrefix() + ":" + qName.getLocalPart();
-        throw new WFSException("Feature type " + name + " unknown","InvalidParameterValue","typeName");
-      }
-      List l=new ArrayList();
-      l.add(qName);
-      list.add(l);
-    }
-    kvp.put("typeName",list);
-    querySet(eObject,"typeName",list);
-  }
+List<QName> qNames=(List<QName>)obj;
+for (int i=0; i < qNames.size(); i++) {
+qNames.set(i,checkTypeName(qNames.get(i),namespaces,eObject));
+}
+list.add(qNames);
+}
+}
+kvp.put("typeName",list);
+querySet(eObject,"typeName",list);
+}
  else {
-    if (kvp.containsKey("featureId")) {
-      List featureId=(List)kvp.get("featureId");
-      ArrayList typeNames=new ArrayList();
-      QNameKvpParser parser=new QNameKvpParser("typeName",catalog);
-      for (int i=0; i < featureId.size(); i++) {
-        String fid=(String)featureId.get(i);
-        int pos=fid.indexOf(".");
-        if (pos != -1) {
-          String typeName=fid.substring(0,fid.lastIndexOf("."));
-          List parsed=(List)parser.parse(typeName);
-          typeNames.add(parsed);
-        }
-      }
-      querySet(eObject,"typeName",typeNames);
-    }
+if (kvp.containsKey("featureId") || kvp.containsKey("resourceId")) {
+List featureId=(List)kvp.get("featureId");
+featureId=featureId != null ? featureId : (List)kvp.get("resourceId");
+ArrayList typeNames=new ArrayList();
+QNameKvpParser parser=new QNameKvpParser("typeName",catalog);
+for (int i=0; i < featureId.size(); i++) {
+String fid=(String)featureId.get(i);
+int pos=fid.indexOf(".");
+if (pos != -1) {
+String typeName=fid.substring(0,fid.lastIndexOf("."));
+List parsed=(List)parser.parse(typeName);
+typeNames.add(parsed);
+}
+}
+querySet(eObject,"typeName",typeNames);
+}
  else {
-      throw new WFSException("The query should specify either typeName or a featureId filter","MissingParameterValue");
-    }
-  }
-  if (kvp.containsKey("filter")) {
-    querySet(eObject,"filter",(List)kvp.get("filter"));
-  }
- else   if (kvp.containsKey("cql_filter")) {
-    querySet(eObject,"filter",(List)kvp.get("cql_filter"));
-  }
- else   if (kvp.containsKey("featureId")) {
-    List featureIdList=(List)kvp.get("featureId");
-    Set ids=new HashSet();
-    for (Iterator i=featureIdList.iterator(); i.hasNext(); ) {
-      String fid=(String)i.next();
-      FeatureId featureId=filterFactory.featureId(fid);
-      ids.add(featureId);
-    }
-    List filters=Collections.singletonList(filterFactory.id(ids));
-    querySet(eObject,"filter",filters);
-  }
- else   if (kvp.containsKey("bbox")) {
-    Envelope bbox=(Envelope)kvp.get("bbox");
-    List queries=(List)EMFUtils.get(eObject,"query");
-    List filters=new ArrayList();
-    for (Iterator q=queries.iterator(); q.hasNext(); ) {
-      QueryType query=(QueryType)q.next();
-      List typeName=query.getTypeName();
-      Filter filter=null;
-      if (typeName.size() > 1) {
-        List and=new ArrayList(typeName.size());
-        for (Iterator t=typeName.iterator(); t.hasNext(); ) {
-          and.add(bboxFilter((QName)t.next(),bbox));
-        }
-        filter=filterFactory.and(and);
-      }
+List<URI> storedQueryId=null;
+if (kvp.containsKey("storedQuery_Id")) {
+storedQueryId=(List<URI>)kvp.get("storedQuery_Id");
+}
+if (storedQueryId == null && kvp.containsKey("storedQueryId")) {
+storedQueryId=(List<URI>)kvp.get("storedQueryId");
+}
+if (storedQueryId != null) {
+buildStoredQueries(eObject,storedQueryId,kvp);
+}
  else {
-        filter=bboxFilter((QName)typeName.get(0),bbox);
-      }
-      filters.add(filter);
-    }
-    querySet(eObject,"filter",filters);
-  }
-  if (kvp.containsKey("propertyName")) {
-    querySet(eObject,"propertyName",(List)kvp.get("propertyName"));
-  }
-  if (kvp.containsKey("sortBy")) {
-    querySet(eObject,"sortBy",(List)kvp.get("sortBy"));
-  }
-  if (kvp.containsKey("srsName")) {
-    querySet(eObject,"srsName",Collections.singletonList((URI)kvp.get("srsName")));
-  }
-  if (kvp.containsKey("featureVersion")) {
-    querySet(eObject,"featureVersion",Collections.singletonList((String)kvp.get("featureVersion")));
-  }
-  if (kvp.containsKey("format_options")) {
-    GetFeatureType gft=(GetFeatureType)eObject;
-    gft.getFormatOptions().putAll((Map)kvp.get("format_options"));
-  }
-  if (kvp.containsKey("viewParams")) {
-    GetFeatureType gft=(GetFeatureType)eObject;
-    if (gft.getMetadata() == null) {
-      gft.setMetadata(new HashMap());
-    }
-    List<Map<String,String>> viewParams=(List<Map<String,String>>)kvp.get("viewParams");
-    if (viewParams.size() > 0) {
-      int layerCount=gft.getQuery().size();
-      if (viewParams.size() == 1 && layerCount > 1) {
-        List<Map<String,String>> replacement=new ArrayList<Map<String,String>>();
-        for (int i=0; i < layerCount; i++) {
-          replacement.add(viewParams.get(0));
-        }
-        viewParams=replacement;
-      }
- else       if (viewParams.size() != layerCount) {
-        String msg=layerCount + " feature types requested, but found " + viewParams.size()+ " view params specified. ";
-        throw new ServiceException(msg,getClass().getName());
-      }
-    }
-    gft.getMetadata().put(GetFeature.SQL_VIEW_PARAMS,viewParams);
-  }
-  return request;
+throw new WFSException(eObject,"The query should specify either typeName, featureId filter" + ", or a stored query id","MissingParameterValue");
+}
+}
+}
+if (kvp.containsKey("filter")) {
+querySet(eObject,"filter",(List)kvp.get("filter"));
+}
+ else if (kvp.containsKey("cql_filter")) {
+querySet(eObject,"filter",(List)kvp.get("cql_filter"));
+}
+ else if (kvp.containsKey("featureId") || kvp.containsKey("resourceId")) {
+List featureIdList=(List)kvp.get("featureId");
+featureIdList=featureIdList != null ? featureIdList : (List)kvp.get("resourceId");
+Set ids=new HashSet();
+for (Iterator i=featureIdList.iterator(); i.hasNext(); ) {
+String fid=(String)i.next();
+FeatureId featureId=filterFactory.featureId(fid);
+ids.add(featureId);
+}
+List filters=Collections.singletonList(filterFactory.id(ids));
+querySet(eObject,"filter",filters);
+}
+ else if (kvp.containsKey("bbox")) {
+Envelope bbox=(Envelope)kvp.get("bbox");
+List<Query> queries=GetFeatureRequest.adapt(eObject).getQueries();
+List filters=new ArrayList();
+for (Iterator<Query> it=queries.iterator(); it.hasNext(); ) {
+Query q=it.next();
+List typeName=q.getTypeNames();
+Filter filter=null;
+if (typeName.size() > 1) {
+List and=new ArrayList(typeName.size());
+for (Iterator t=typeName.iterator(); t.hasNext(); ) {
+and.add(bboxFilter((QName)t.next(),bbox));
+}
+filter=filterFactory.and(and);
+}
+ else {
+filter=bboxFilter((QName)typeName.get(0),bbox);
+}
+filters.add(filter);
+}
+querySet(eObject,"filter",filters);
+}
+if (kvp.containsKey("aliases")) {
+querySet(eObject,"aliases",(List)kvp.get("aliases"));
+}
+if (kvp.containsKey("propertyName")) {
+querySet(eObject,"propertyName",(List)kvp.get("propertyName"));
+}
+if (kvp.containsKey("sortBy")) {
+querySet(eObject,"sortBy",(List)kvp.get("sortBy"));
+}
+if (kvp.containsKey("srsName")) {
+querySet(eObject,"srsName",Collections.singletonList((URI)kvp.get("srsName")));
+}
+if (kvp.containsKey("featureVersion")) {
+querySet(eObject,"featureVersion",Collections.singletonList((String)kvp.get("featureVersion")));
+}
+GetFeatureRequest req=GetFeatureRequest.adapt(request);
+if (kvp.containsKey("format_options")) {
+req.getFormatOptions().putAll((Map)kvp.get("format_options"));
+}
+if (kvp.containsKey("viewParams")) {
+if (req.getMetadata() == null) {
+req.setMetadata(new HashMap());
+}
+List<Map<String,String>> viewParams=(List<Map<String,String>>)kvp.get("viewParams");
+if (viewParams.size() > 0) {
+int layerCount=req.getQueries().size();
+if (viewParams.size() == 1 && layerCount > 1) {
+List<Map<String,String>> replacement=new ArrayList<Map<String,String>>();
+for (int i=0; i < layerCount; i++) {
+replacement.add(viewParams.get(0));
+}
+viewParams=replacement;
+}
+ else if (viewParams.size() != layerCount) {
+String msg=layerCount + " feature types requested, but found " + viewParams.size()+ " view params specified. ";
+throw new WFSException(eObject,msg,getClass().getName());
+}
+}
+req.getMetadata().put(GetFeature.SQL_VIEW_PARAMS,viewParams);
+}
+return request;
 }

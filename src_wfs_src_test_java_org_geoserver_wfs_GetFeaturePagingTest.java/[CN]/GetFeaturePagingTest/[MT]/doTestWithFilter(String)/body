@@ -1,0 +1,15 @@
+{
+  Document doc=getAsDOM("/wfs?request=GetFeature&version=1.1.0&service=wfs&" + "typename=" + typeName + "&startIndex=10");
+  XMLAssert.assertXpathEvaluatesTo("5","count(//" + typeName + ")",doc);
+  doc=getAsDOM("/wfs?request=GetFeature&version=1.1.0&service=wfs&" + "typename=" + typeName + "&startIndex=10&maxfeatures=4");
+  XMLAssert.assertXpathEvaluatesTo("4","count(//" + typeName + ")",doc);
+  String xml=String.format("<GetFeature version='1.1.0' xmlns:gml='http://www.opengis.net/gml' " + "startIndex='%d' maxFeatures='%d'>" + "<Query typeName = '%s'/>"+ "</GetFeature>",10,100,typeName);
+  doc=postAsDOM("wfs",xml);
+  XMLAssert.assertXpathEvaluatesTo("5","count(//" + typeName + ")",doc);
+  xml=String.format("<GetFeature version='1.1.0' xmlns:gml='http://www.opengis.net/gml' " + "xmlns:ogc='http://www.opengis.net/ogc' startIndex='%d' maxFeatures='%d'>" + "<Query typeName = '%s'>"+ "  <ogc:Filter>"+ "   <ogc:FeatureId fid='%s'></ogc:FeatureId>"+ "   <ogc:FeatureId fid='%s'></ogc:FeatureId>"+ "   <ogc:FeatureId fid='%s'></ogc:FeatureId>"+ "  </ogc:Filter>"+ "</Query>"+ "</GetFeature>",1,100,typeName,"Fifteen.3","Fifteen.4","Fifteen.5");
+  doc=postAsDOM("wfs",xml);
+  XMLAssert.assertXpathEvaluatesTo("2","count(//" + typeName + ")",doc);
+  XMLAssert.assertXpathEvaluatesTo("0","count(//" + typeName + "[@gml:id='Fifteen.3'])",doc);
+  XMLAssert.assertXpathEvaluatesTo("1","count(//" + typeName + "[@gml:id='Fifteen.4'])",doc);
+  XMLAssert.assertXpathEvaluatesTo("1","count(//" + typeName + "[@gml:id='Fifteen.5'])",doc);
+}

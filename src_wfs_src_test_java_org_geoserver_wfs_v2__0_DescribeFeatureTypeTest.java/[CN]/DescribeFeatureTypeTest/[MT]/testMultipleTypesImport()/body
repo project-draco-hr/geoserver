@@ -1,0 +1,18 @@
+{
+  String typeName1=getLayerId(MockData.PRIMITIVEGEOFEATURE);
+  String typeName2=getLayerId(MockData.GENERICENTITY);
+  String xml="<wfs:DescribeFeatureType service='WFS' version='2.0.0' " + "xmlns:wfs='http://www.opengis.net/wfs/2.0'>" + " <wfs:TypeName>" + typeName1 + "</wfs:TypeName>"+ " <wfs:TypeName>"+ typeName2+ "</wfs:TypeName>"+ "</wfs:DescribeFeatureType>";
+  Document doc=postAsDOM("wfs",xml);
+  assertSchema(doc,MockData.PRIMITIVEGEOFEATURE,MockData.GENERICENTITY);
+  NodeList nodes=doc.getDocumentElement().getChildNodes();
+  boolean seenComplexType=false;
+  for (int i=0; i < nodes.getLength(); i++) {
+    Node node=nodes.item(i);
+    if (node.getNodeName().equals("xsd:complexType")) {
+      seenComplexType=true;
+    }
+ else     if (seenComplexType && node.getNodeName().equals("xsd:import")) {
+      fail("All xsd:import must occur before all xsd:complexType");
+    }
+  }
+}

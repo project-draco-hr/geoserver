@@ -1,0 +1,8 @@
+{
+  String xml="<wfs:Transaction service=\"WFS\" version=\"2.0.0\"" + " xmlns:fes='" + FES.NAMESPACE + "' "+ " xmlns:wfs='"+ WFS.NAMESPACE+ "' "+ " xmlns:gml='"+ GML.NAMESPACE+ "' "+ " xmlns:cite=\"http://www.opengis.net/cite\">"+ " <wfs:Update typeName=\"RoadSegments\">"+ "   <wfs:Property>"+ "     <wfs:ValueReference>cite:the_geom</wfs:ValueReference>"+ "     <wfs:Value>"+ "      <gml:MultiCurve xmlns:gml=\"http://www.opengis.net/gml\">"+ "       <gml:curveMember>"+ "         <gml:LineString>"+ "            <gml:posList>4.2582 52.0643 4.2584 52.0648</gml:posList>"+ "         </gml:LineString>"+ "       </gml:curveMember>"+ "      </gml:MultiCurve>"+ "     </wfs:Value>"+ "   </wfs:Property>"+ "   <fes:Filter>"+ "     <fes:PropertyIsEqualTo>"+ "       <fes:ValueReference>FID</fes:ValueReference>"+ "       <fes:Literal>102</fes:Literal>"+ "     </fes:PropertyIsEqualTo>"+ "   </fes:Filter>"+ " </wfs:Update>"+ "</wfs:Transaction>";
+  Document dom=postAsDOM("cite/Forests/wfs",xml);
+  XMLAssert.assertXpathEvaluatesTo("1","count(//ows:ExceptionReport)",dom);
+  dom=postAsDOM("cite/RoadSegments/wfs",xml);
+  assertEquals("wfs:TransactionResponse",dom.getDocumentElement().getNodeName());
+  assertEquals("1",getFirstElementByTagName(dom,"wfs:totalUpdated").getFirstChild().getNodeValue());
+}

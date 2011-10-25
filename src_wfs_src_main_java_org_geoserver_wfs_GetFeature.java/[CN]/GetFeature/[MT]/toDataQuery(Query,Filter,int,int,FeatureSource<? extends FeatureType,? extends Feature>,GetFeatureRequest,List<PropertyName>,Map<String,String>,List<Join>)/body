@@ -1,0 +1,82 @@
+{
+  String wfsVersion=request.getVersion();
+  if (maxFeatures <= 0) {
+    maxFeatures=org.geotools.data.Query.DEFAULT_MAX;
+  }
+  if (filter == null) {
+    filter=Filter.INCLUDE;
+  }
+ else {
+    SimplifyingFilterVisitor visitor=new SimplifyingFilterVisitor();
+    filter=(Filter)filter.accept(visitor,null);
+  }
+  CoordinateReferenceSystem crs=source.getSchema().getCoordinateReferenceSystem();
+  CoordinateReferenceSystem declaredCRS=WFSReprojectionUtil.getDeclaredCrs(crs,wfsVersion);
+  Filter transformedFilter=filter;
+  if (declaredCRS != null)   transformedFilter=WFSReprojectionUtil.normalizeFilterCRS(filter,source.getSchema(),declaredCRS);
+  QName typeName=query.getTypeNames().get(0);
+  org.geotools.data.Query dataQuery=new org.geotools.data.Query(typeName.getLocalPart(),transformedFilter,maxFeatures,props,query.getHandle());
+  if (!query.getAliases().isEmpty()) {
+    dataQuery.setAlias(query.getAliases().get(0));
+  }
+  CoordinateReferenceSystem target;
+  URI srsName=query.getSrsName();
+  if (srsName != null) {
+    try {
+      target=CRS.decode(srsName.toString());
+    }
+ catch (    Exception e) {
+      String msg="Unable to support srsName: " + srsName;
+      throw new WFSException(request,msg,e,"InvalidParameterValue").locator("srsName");
+    }
+  }
+ else {
+    target=declaredCRS;
+  }
+  if (target != null && declaredCRS != null && !CRS.equalsIgnoreMetadata(crs,target)) {
+    dataQuery.setCoordinateSystemReproject(target);
+  }
+  List<SortBy> sortBy=query.getSortBy();
+  if (sortBy != null) {
+    dataQuery.setSortBy((SortBy[])sortBy.toArray(new SortBy[sortBy.size()]));
+  }
+  String featureVersion=query.getFeatureVersion();
+  if (featureVersion != null) {
+    dataQuery.setVersion(featureVersion);
+  }
+  if (offset > 0) {
+    dataQuery.setStartIndex(offset);
+  }
+  final Hints hints=new Hints();
+  String traverseXlinkDepth=request.getTraverseXlinkDepth();
+  if (traverseXlinkDepth != null) {
+    Integer depth=traverseXlinkDepth(traverseXlinkDepth);
+    hints.put(Hints.ASSOCIATION_TRAVERSAL_DEPTH,depth);
+  }
+  List<XlinkPropertyNameType> xlinkProperties=query.getXlinkPropertyNames();
+  if (!xlinkProperties.isEmpty()) {
+    for (Iterator x=xlinkProperties.iterator(); x.hasNext(); ) {
+      XlinkPropertyNameType xlinkProperty=(XlinkPropertyNameType)x.next();
+      Integer xlinkDepth=traverseXlinkDepth(xlinkProperty.getTraverseXlinkDepth());
+      hints.put(Hints.ASSOCIATION_TRAVERSAL_DEPTH,xlinkDepth);
+      PropertyName xlinkPropertyName=filterFactory.property(xlinkProperty.getValue());
+      hints.put(Hints.ASSOCIATION_PROPERTY,xlinkPropertyName);
+      dataQuery.setHints(hints);
+      break;
+    }
+  }
+  hints.put(Hints.JTS_COORDINATE_SEQUENCE_FACTORY,new LiteCoordinateSequenceFactory());
+  if (viewParams != null) {
+    hints.put(Hints.VIRTUAL_TABLE_PARAMETERS,viewParams);
+  }
+  Map metadata=request.getMetadata();
+  if (metadata != null && metadata.containsKey(SQL_VIEW_PARAMS)) {
+    hints.put(Hints.VIRTUAL_TABLE_PARAMETERS,metadata.get(SQL_VIEW_PARAMS));
+  }
+  hints.put(org.geotools.data.Query.INCLUDE_MANDATORY_PROPS,true);
+  if (joins != null) {
+    dataQuery.getJoins().addAll(joins);
+  }
+  dataQuery.setHints(hints);
+  return dataQuery;
+}

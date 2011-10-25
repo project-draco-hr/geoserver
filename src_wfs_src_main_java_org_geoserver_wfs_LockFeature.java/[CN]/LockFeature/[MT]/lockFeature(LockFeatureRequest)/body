@@ -1,0 +1,120 @@
+{
+  FeatureLock fLock=null;
+  try {
+    List<Lock> locks=request.getLocks();
+    if ((locks == null) || locks.isEmpty()) {
+      String msg="A LockFeature request must contain at least one LOCK element";
+      throw new WFSException(request,msg);
+    }
+    LOGGER.info("locks size is " + locks.size());
+    fLock=newFeatureLock(request);
+    LockFeatureResponse response=request.createResponse();
+    response.setLockId(fLock.getAuthorization());
+    for (int i=0, n=locks.size(); i < n; i++) {
+      Lock lock=locks.get(i);
+      LOGGER.info("curLock is " + lock);
+      QName typeName=lock.getTypeName();
+      Filter filter=lock.getFilter();
+      if (filter == null) {
+        filter=Filter.INCLUDE;
+      }
+      FeatureTypeInfo meta;
+      FeatureSource<? extends FeatureType,? extends Feature> source;
+      FeatureCollection<? extends FeatureType,? extends Feature> features;
+      try {
+        meta=catalog.getFeatureTypeByName(typeName.getNamespaceURI(),typeName.getLocalPart());
+        if (meta == null) {
+          throw new WFSException(request,"Unknown feature type " + typeName.getPrefix() + ":"+ typeName.getLocalPart());
+        }
+        source=meta.getFeatureSource(null,null);
+        CoordinateReferenceSystem declaredCRS=WFSReprojectionUtil.getDeclaredCrs(source.getSchema(),request.getVersion());
+        filter=WFSReprojectionUtil.normalizeFilterCRS(filter,source.getSchema(),declaredCRS);
+        features=source.getFeatures(filter);
+        if (source instanceof FeatureLocking) {
+          ((FeatureLocking)source).setFeatureLock(fLock);
+        }
+      }
+ catch (      IOException e) {
+        throw new WFSException(request,e);
+      }
+      Iterator reader=null;
+      int numberLocked=-1;
+      try {
+        for (reader=features.iterator(); reader.hasNext(); ) {
+          SimpleFeature feature=(SimpleFeature)reader.next();
+          FeatureId fid=fid(feature.getID());
+          Id fidFilter=fidFilter(fid);
+          if (!(source instanceof FeatureLocking)) {
+            LOGGER.fine("Lock " + fid + " not supported by data store (authID:"+ fLock.getAuthorization()+ ")");
+            response.addNotLockedFeature(fid);
+          }
+ else {
+            Query query=new Query(meta.getName(),(Filter)fidFilter,Query.DEFAULT_MAX,Query.ALL_NAMES,lock.getHandle());
+            numberLocked=((FeatureLocking)source).lockFeatures(query);
+            if (numberLocked == 1) {
+              LOGGER.fine("Lock " + fid + " (authID:"+ fLock.getAuthorization()+ ")");
+              response.addLockedFeature(fid);
+            }
+ else             if (numberLocked == 0) {
+              LOGGER.fine("Lock " + fid + " conflict (authID:"+ fLock.getAuthorization()+ ")");
+              response.addNotLockedFeature(fid);
+            }
+ else {
+              LOGGER.warning("Lock " + numberLocked + " "+ fid+ " (authID:"+ fLock.getAuthorization()+ ") duplicated FeatureID!");
+              response.addLockedFeature(fid);
+            }
+          }
+        }
+      }
+ catch (      IOException ioe) {
+        throw new WFSException(request,ioe);
+      }
+ finally {
+        if (reader != null) {
+          features.close(reader);
+        }
+      }
+      if (numberLocked > 0) {
+        Transaction t=new DefaultTransaction();
+        try {
+          try {
+            t.addAuthorization(fLock.getAuthorization());
+            DataStore dataStore=(DataStore)source.getDataStore();
+            dataStore.getLockingManager().refresh(fLock.getAuthorization(),t);
+          }
+  finally {
+            t.commit();
+          }
+        }
+ catch (        IOException e) {
+          throw new WFSException(request,e);
+        }
+ finally {
+          try {
+            t.close();
+          }
+ catch (          IOException e) {
+            throw new WFSException(request,e);
+          }
+        }
+      }
+    }
+    boolean lockAll=!request.isLockActionSome();
+    List notLocked=response.getNotLockedFeatures();
+    if (lockAll && (notLocked != null && !notLocked.isEmpty())) {
+      throw new WFSException(request,"Could not aquire locks for:" + notLocked);
+    }
+    return response;
+  }
+ catch (  WFSException e) {
+    if (fLock != null) {
+      try {
+        release(fLock.getAuthorization());
+      }
+ catch (      WFSException e1) {
+        LOGGER.log(Level.SEVERE,"Error occured releasing locks",e1);
+      }
+    }
+    throw e;
+  }
+}

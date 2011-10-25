@@ -1,0 +1,15 @@
+{
+  String getFeature="<wfs:GetFeature service='WFS' version='2.0.0' xmlns:cgf='http://www.opengis.net/cite/geometry' " + "  xmlns:fes='" + FES.NAMESPACE + "' "+ "  xmlns:wfs='"+ WFS.NAMESPACE+ "'> "+ " <wfs:Query typeNames='cgf:Points'/> "+ "</wfs:GetFeature> ";
+  Document dom=postAsDOM("wfs",getFeature);
+  int n=dom.getElementsByTagName("cgf:Points").getLength();
+  String insert="<wfs:Transaction service='WFS' version='2.0.0' xmlns:cgf='http://www.opengis.net/cite/geometry' " + "  xmlns:fes='" + FES.NAMESPACE + "' "+ "  xmlns:wfs='"+ WFS.NAMESPACE+ "' "+ "  xmlns:gml='"+ GML.NAMESPACE+ "'> "+ " <wfs:Insert srsName='EPSG:32615'> "+ "  <cgf:Points> "+ "   <cgf:pointProperty> "+ "    <gml:Point> "+ "     <gml:pos>1 1</gml:pos> "+ "    </gml:Point> "+ "   </cgf:pointProperty> "+ "   <cgf:id>t0003</cgf:id> "+ "  </cgf:Points> "+ " </wfs:Insert> "+ "</wfs:Transaction>";
+  dom=postAsDOM("wfs",insert);
+  NodeList numberInserteds=dom.getElementsByTagName("wfs:totalInserted");
+  Element numberInserted=(Element)numberInserteds.item(0);
+  assertNotNull(numberInserted);
+  assertEquals("1",numberInserted.getFirstChild().getNodeValue());
+  getFeature="<wfs:GetFeature " + "service=\"WFS\" version=\"2.0.0\" " + "xmlns:cgf=\"http://www.opengis.net/cite/geometry\" "+ "  xmlns:fes='" + FES.NAMESPACE + "' "+ "  xmlns:wfs='"+ WFS.NAMESPACE+ "' "+ "  xmlns:gml='"+ GML.NAMESPACE+ "'> "+ "<wfs:Query typeNames=\"cgf:Points\"> "+ "</wfs:Query> "+ "</wfs:GetFeature>";
+  dom=postAsDOM("wfs",getFeature);
+  NodeList pointsList=dom.getElementsByTagName("cgf:Points");
+  assertEquals(n + 1,pointsList.getLength());
+}

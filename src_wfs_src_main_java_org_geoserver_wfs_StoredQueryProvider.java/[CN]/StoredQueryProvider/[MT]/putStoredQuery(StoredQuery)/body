@@ -1,0 +1,21 @@
+{
+  try {
+    File dir=storedQueryDir();
+    File f=new File(dir,toFilename(query.getName()));
+    if (f.exists()) {
+    }
+    BufferedOutputStream bout=new BufferedOutputStream(new FileOutputStream(f));
+    try {
+      Encoder e=new Encoder(new WFSConfiguration());
+      e.setRootElementType(WFS.StoredQueryDescriptionType);
+      e.encode(query.getQuery(),WFS.StoredQueryDescription,new BufferedOutputStream(bout));
+      bout.flush();
+    }
+  finally {
+      bout.close();
+    }
+  }
+ catch (  IOException e) {
+    throw new RuntimeException("i/o error listing stored queries",e);
+  }
+}

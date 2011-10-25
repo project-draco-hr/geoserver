@@ -1,0 +1,45 @@
+{
+  if (request.isSetResolve() && !ResolveValueType.NONE.equals(request.getResolve())) {
+    throw new WFSException(request,"Only resolve = none is supported","InvalidParameterValue").locator("resolve");
+  }
+  if (request.getValueReference() == null) {
+    throw new WFSException(request,"No valueReference specified","MissingParameterValue").locator("valueReference");
+  }
+  GetFeatureType getFeature=Wfs20Factory.eINSTANCE.createGetFeatureType();
+  getFeature.getAbstractQueryExpression().add(request.getAbstractQueryExpression());
+  FeatureCollectionType fc=(FeatureCollectionType)delegate.run(GetFeatureRequest.adapt(getFeature)).getAdaptee();
+  QueryType query=(QueryType)request.getAbstractQueryExpression();
+  QName typeName=(QName)query.getTypeNames().iterator().next();
+  FeatureTypeInfo featureType=catalog.getFeatureTypeByName(typeName.getNamespaceURI(),typeName.getLocalPart());
+  try {
+    AttributeTypeInfo attribute=null;
+    for (    AttributeTypeInfo at : featureType.attributes()) {
+      if (at.getName().equals(request.getValueReference())) {
+        attribute=at;
+        break;
+      }
+    }
+    if (attribute == null) {
+      throw new WFSException(request,"No such attribute: " + request.getValueReference());
+    }
+    AttributeDescriptor descriptor=attribute.getAttribute();
+    if (descriptor == null) {
+      PropertyDescriptor pd=featureType.getFeatureType().getDescriptor(attribute.getName());
+      if (pd instanceof AttributeDescriptor) {
+        descriptor=(AttributeDescriptor)pd;
+      }
+    }
+    if (descriptor == null) {
+      throw new WFSException(request,"Unable to obtain descriptor for " + attribute.getName());
+    }
+    ValueCollectionType vc=Wfs20Factory.eINSTANCE.createValueCollectionType();
+    vc.setTimeStamp(fc.getTimeStamp());
+    vc.setNumberMatched(fc.getNumberMatched());
+    vc.setNumberReturned(fc.getNumberReturned());
+    vc.getMember().add(new PropertyValueCollection(fc.getMember().iterator().next(),descriptor));
+    return vc;
+  }
+ catch (  IOException e) {
+    throw new WFSException(request,e);
+  }
+}

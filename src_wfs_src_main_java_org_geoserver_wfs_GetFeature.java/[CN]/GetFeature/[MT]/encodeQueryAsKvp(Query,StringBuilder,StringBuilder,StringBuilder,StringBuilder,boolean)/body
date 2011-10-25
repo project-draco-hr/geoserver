@@ -1,0 +1,53 @@
+{
+  if (useDelim) {
+    typeNames.append("(");
+  }
+  for (  QName qName : q.getTypeNames()) {
+    typeNames.append(qName.getPrefix()).append(":").append(qName.getLocalPart()).append(",");
+  }
+  typeNames.setLength(typeNames.length() - 1);
+  if (useDelim) {
+    typeNames.append(")");
+  }
+  if (propertyName != null) {
+    if (useDelim) {
+      propertyName.append("(");
+    }
+    for (    String pName : q.getPropertyNames()) {
+      propertyName.append(pName).append(",");
+    }
+    propertyName.setLength(propertyName.length() - 1);
+    if (useDelim) {
+      propertyName.append(")");
+    }
+  }
+  if (aliases != null) {
+    if (useDelim) {
+      aliases.append("(");
+    }
+    for (    String alias : q.getAliases()) {
+      aliases.append(alias).append(",");
+    }
+    aliases.setLength(aliases.length() - 1);
+    if (useDelim) {
+      aliases.append(")");
+    }
+  }
+  if (filter != null) {
+    Filter f=q.getFilter();
+    if (useDelim) {
+      filter.append("(");
+    }
+    try {
+      Encoder e=new Encoder(new FESConfiguration());
+      e.setOmitXMLDeclaration(true);
+      filter.append(e.encodeAsString(q.getFilter(),FES.Filter));
+    }
+ catch (    Exception e) {
+      throw new RuntimeException("Unable to encode filter " + f,e);
+    }
+    if (useDelim) {
+      filter.append(")");
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  FeatureCollectionResponse result=request.createResponse();
+  result.setNumberOfFeatures(BigInteger.valueOf(count));
+  result.setTotalNumberOfFeatures(BigInteger.valueOf(total));
+  result.setTimeStamp(Calendar.getInstance());
+  result.setLockId(lockId);
+  result.getFeature().addAll(results);
+  if (offset > 0 || count < Integer.MAX_VALUE) {
+    Request req=Dispatcher.REQUEST.get();
+    Map<String,String> kvp=null;
+    if (req.isGet()) {
+      kvp=new KvpMap(req.getRawKvp());
+    }
+ else {
+      kvp=buildKvpFromRequest(request);
+    }
+    if (offset > 0) {
+      int prevOffset=Math.max(offset - maxFeatures,0);
+      kvp.put("startIndex",String.valueOf(prevOffset));
+      kvp.put("count",String.valueOf(offset - prevOffset));
+      result.setPrevious(buildURL(request.getBaseUrl(),"wfs",kvp,URLType.SERVICE));
+    }
+    if (count > 0) {
+      int nextCount=total - (offset + count);
+      if (nextCount > 0) {
+        kvp.put("startIndex",String.valueOf(offset > 0 ? offset + count : count));
+        kvp.put("count",String.valueOf(maxFeatures));
+        result.setNext(buildURL(request.getBaseUrl(),"wfs",kvp,URLType.SERVICE));
+      }
+    }
+  }
+  return result;
+}

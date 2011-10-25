@@ -1,0 +1,19 @@
+{
+  WFSConfiguration config=new WFSConfiguration();
+  WFSXmlUtils.initWfsConfiguration(config,gs,new FeatureTypeSchemaBuilder.GML32(gs));
+  Parser parser=new Parser(config);
+  WFSInfo wfs=wfs();
+  WFSXmlUtils.initRequestParser(parser,wfs,gs.getCatalog(),kvp);
+  Object parsed=null;
+  try {
+    parsed=WFSXmlUtils.parseRequest(parser,reader,wfs);
+  }
+ catch (  Exception e) {
+    if (!(e instanceof ServiceException) || ((ServiceException)e).getCode() == null) {
+      e=new WFSException("Request parsing failed",e,"OperationParsingFailed");
+    }
+    throw e;
+  }
+  WFSXmlUtils.checkValidationErrors(parser,this);
+  return parsed;
+}

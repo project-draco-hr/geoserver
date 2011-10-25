@@ -1,0 +1,20 @@
+{
+  String handle=request.getHandle();
+  if ((handle == null) || handle.equals("")) {
+    handle="GeoServer";
+    request.setHandle(handle);
+  }
+  BigInteger expiry=request.getExpiry();
+  if (expiry == null) {
+    expiry=BigInteger.valueOf(0);
+    request.setExpiry(expiry);
+  }
+  int lockExpiry=expiry.intValue();
+  if (lockExpiry < 0) {
+    return FeatureLockFactory.generate(handle,lockExpiry);
+  }
+  if (lockExpiry == 0) {
+    return FeatureLockFactory.generate(handle,0);
+  }
+  return FeatureLockFactory.generate(handle,lockExpiry * 60 * 1000);
+}

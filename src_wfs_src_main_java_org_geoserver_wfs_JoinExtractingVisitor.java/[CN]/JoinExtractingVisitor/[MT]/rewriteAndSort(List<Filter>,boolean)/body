@@ -1,0 +1,23 @@
+{
+  Filter[] sorted=new Filter[featureTypes.size() + 1];
+  O:   for (  Filter f : filters) {
+    PropertyName[] names=names(f);
+    for (int i=0; i < featureTypes.size(); i++) {
+      PropertyName[] rewritten=rewrite(i,names[0],names[1],prefix);
+      if (rewritten != null) {
+        Filter newFilter=rewrite(f,names,rewritten);
+        updateFilter(sorted,i + 1,newFilter);
+        continue O;
+      }
+    }
+    PropertyName[] rewritten=rewrite(primaryFeatureType,primaryAlias,names[0],names[1],prefix);
+    if (rewritten != null) {
+      Filter newFilter=rewrite(f,names,rewritten);
+      updateFilter(sorted,0,newFilter);
+    }
+ else {
+      throw new IllegalStateException("Join filter inconsistent with regard to feature types");
+    }
+  }
+  return Arrays.asList(sorted);
+}

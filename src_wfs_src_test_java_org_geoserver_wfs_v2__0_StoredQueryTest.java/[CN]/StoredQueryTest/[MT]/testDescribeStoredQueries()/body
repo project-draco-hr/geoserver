@@ -1,0 +1,10 @@
+{
+  Document dom=getAsDOM("wfs?request=DescribeStoredQueries&storedQueryId=myStoredQuery");
+  assertEquals("ows:ExceptionReport",dom.getDocumentElement().getNodeName());
+  XMLAssert.assertXpathExists("//ows:Exception[@exceptionCode = 'InvalidParameterValue']",dom);
+  testCreateStoredQuery();
+  String xml="<wfs:DescribeStoredQueries xmlns:wfs='" + WFS.NAMESPACE + "' service='WFS'>"+ "<wfs:StoredQueryId>myStoredQuery</wfs:StoredQueryId>"+ "</wfs:DescribeStoredQueries>";
+  dom=postAsDOM("wfs",xml);
+  assertEquals("wfs:DescribeStoredQueriesResponse",dom.getDocumentElement().getNodeName());
+  XMLAssert.assertXpathExists("//wfs:StoredQueryDescription[@id='myStoredQuery']",dom);
+}

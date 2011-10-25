@@ -1,8 +1,12 @@
 {
-  GeoServerInfo global=gs.getGlobal();
-  DescribeFeatureTypeType req=(DescribeFeatureTypeType)describeFeatureType.getParameters()[0];
-  XSDSchema schema=schemaBuilder.build(featureTypeInfos,req.getBaseUrl());
-  schema.updateElement();
-  final String encoding=global.getCharset();
-  XSDResourceImpl.serialize(output,schema.getElement(),encoding);
+  if (Dispatcher.REQUEST.get() != null && Dispatcher.REQUEST.get().isSOAP()) {
+    output.write(("<wfs:DescribeFeatureTypeResponse xmlns:wfs='" + getWFSNamespaceURI() + "'>").getBytes());
+    ByteArrayOutputStream bout=new ByteArrayOutputStream();
+    doWrite(featureTypeInfos,bout,describeFeatureType);
+    output.write(Base64.encodeBase64(bout.toByteArray()));
+    output.write("</wfs:DescribeFeatureTypeResponse>".getBytes());
+  }
+ else {
+    doWrite(featureTypeInfos,output,describeFeatureType);
+  }
 }

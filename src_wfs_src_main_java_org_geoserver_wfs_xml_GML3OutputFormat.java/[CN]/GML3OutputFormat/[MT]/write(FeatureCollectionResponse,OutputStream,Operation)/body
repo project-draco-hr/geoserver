@@ -1,0 +1,95 @@
+{
+  List featureCollections=results.getFeature();
+  GetFeatureRequest request=GetFeatureRequest.adapt(getFeature.getParameters()[0]);
+  HashMap<String,Set<FeatureTypeInfo>> ns2metas=new HashMap<String,Set<FeatureTypeInfo>>();
+  for (int fcIndex=0; fcIndex < featureCollections.size(); fcIndex++) {
+    if (request != null) {
+      List<Query> queries=request.getQueries();
+      Query queryType=queries.get(fcIndex);
+      for (      QName name : queryType.getTypeNames()) {
+        Name featureTypeName=new NameImpl(name.getNamespaceURI(),name.getLocalPart());
+        FeatureTypeInfo meta=catalog.getFeatureTypeByName(featureTypeName);
+        if (meta == null) {
+          throw new WFSException(request,"Could not find feature type " + featureTypeName + " in the GeoServer catalog");
+        }
+        Set<FeatureTypeInfo> metas=ns2metas.get(featureTypeName.getNamespaceURI());
+        if (metas == null) {
+          metas=new HashSet<FeatureTypeInfo>();
+          ns2metas.put(featureTypeName.getNamespaceURI(),metas);
+        }
+        metas.add(meta);
+      }
+    }
+ else {
+      FeatureType featureType=((FeatureCollection)featureCollections.get(fcIndex)).getSchema();
+      String namespaceURI=featureType.getName().getNamespaceURI();
+      FeatureTypeInfo meta=catalog.getFeatureTypeByName(featureType.getName());
+      if (meta == null)       throw new WFSException(request,"Could not find feature type " + featureType.getName() + " in the GeoServer catalog");
+      Set metas=(Set)ns2metas.get(namespaceURI);
+      if (metas == null) {
+        metas=new HashSet();
+        ns2metas.put(namespaceURI,metas);
+      }
+      metas.add(meta);
+    }
+  }
+  WFSInfo wfs=getInfo();
+  if (wfs.isFeatureBounding()) {
+    configuration.getProperties().remove(GMLConfiguration.NO_FEATURE_BOUNDS);
+  }
+ else {
+    configuration.getProperties().add(GMLConfiguration.NO_FEATURE_BOUNDS);
+  }
+  if (wfs.isEncodeFeatureMember()) {
+    configuration.getProperties().add(GMLConfiguration.ENCODE_FEATURE_MEMBER);
+  }
+ else {
+    configuration.getProperties().remove(GMLConfiguration.ENCODE_FEATURE_MEMBER);
+  }
+  Object gft=getFeature.getParameters()[0];
+  Encoder encoder=createEncoder(configuration,ns2metas,gft);
+  encoder.setEncoding(Charset.forName(global.getCharset()));
+  if (wfs.isCanonicalSchemaLocation()) {
+    encoder.setSchemaLocation(getWfsNamespace(),getCanonicalWfsSchemaLocation());
+  }
+ else {
+    encoder.setSchemaLocation(getWfsNamespace(),buildSchemaURL(request.getBaseURL(),getRelativeWfsSchemaLocation()));
+  }
+  Map<String,String> params=params("service","WFS","version",request.getVersion(),"request","DescribeFeatureType");
+  for (Iterator i=ns2metas.entrySet().iterator(); i.hasNext(); ) {
+    Map.Entry entry=(Map.Entry)i.next();
+    String namespaceURI=(String)entry.getKey();
+    Set metas=(Set)entry.getValue();
+    StringBuffer typeNames=new StringBuffer();
+    for (Iterator m=metas.iterator(); m.hasNext(); ) {
+      FeatureTypeInfo meta=(FeatureTypeInfo)m.next();
+      FeatureType featureType=meta.getFeatureType();
+      Object userSchemaLocation=featureType.getUserData().get("schemaURI");
+      if (userSchemaLocation != null && userSchemaLocation instanceof Map) {
+        Map<String,String> schemaURIs=(Map<String,String>)userSchemaLocation;
+        for (        String namespace : schemaURIs.keySet()) {
+          encoder.setSchemaLocation(namespace,schemaURIs.get(namespace));
+        }
+      }
+ else {
+        typeNames.append(meta.getPrefixedName());
+        if (m.hasNext()) {
+          typeNames.append(",");
+        }
+      }
+    }
+    if (typeNames.length() > 0) {
+      params.put("typeName",typeNames.toString());
+      String schemaLocation=buildURL(request.getBaseURL(),"wfs",params,URLType.SERVICE);
+      LOGGER.finer("Unable to find user-defined schema location for: " + namespaceURI + ". Using a built schema location by default: "+ schemaLocation);
+      encoder.setSchemaLocation(namespaceURI,schemaLocation);
+    }
+  }
+  setAdditionalSchemaLocations(encoder,request,wfs);
+  if (this.isComplexFeature(results)) {
+    complexFeatureStreamIntercept(results,output,encoder);
+  }
+ else {
+    encode(results,output,encoder);
+  }
+}

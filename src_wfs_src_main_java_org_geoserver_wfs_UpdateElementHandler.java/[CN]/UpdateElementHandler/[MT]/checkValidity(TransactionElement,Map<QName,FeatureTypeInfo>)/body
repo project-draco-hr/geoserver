@@ -1,0 +1,42 @@
+{
+  if (!getInfo().getServiceLevel().getOps().contains(WFSInfo.Operation.TRANSACTION_UPDATE)) {
+    throw new WFSException(element,"Transaction Update support is not enabled");
+  }
+  Update update=(Update)element;
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  try {
+    FeatureTypeInfo meta=typeInfos.values().iterator().next();
+    FeatureType featureType=meta.getFeatureType();
+    List<Property> props=update.getUpdateProperties();
+    for (Iterator<Property> prop=props.iterator(); prop.hasNext(); ) {
+      Property property=prop.next();
+      if (property.getValue() == null) {
+        String propertyName=property.getName().getLocalPart();
+        AttributeDescriptor attributeType=null;
+        PropertyDescriptor pd=featureType.getDescriptor(propertyName);
+        if (pd instanceof AttributeDescriptor) {
+          attributeType=(AttributeDescriptor)pd;
+        }
+        if ((attributeType != null) && (attributeType.getMinOccurs() > 0)) {
+          String msg="Property '" + attributeType.getLocalName() + "' is mandatory but no value specified.";
+          throw new WFSException(element,msg,"MissingParameterValue");
+        }
+      }
+      QName name=property.getName();
+      PropertyName propertyName=null;
+      if (name.getPrefix() != null && !"".equals(name.getPrefix())) {
+        propertyName=ff.property(name.getPrefix() + ":" + name.getLocalPart());
+      }
+ else {
+        propertyName=ff.property(name.getLocalPart());
+      }
+      if (propertyName.evaluate(featureType) == null) {
+        String msg="No such property: " + name;
+        throw new WFSException(element,msg);
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new WFSTransactionException("Could not locate feature type information for " + update.getTypeName(),e,update.getHandle());
+  }
+}

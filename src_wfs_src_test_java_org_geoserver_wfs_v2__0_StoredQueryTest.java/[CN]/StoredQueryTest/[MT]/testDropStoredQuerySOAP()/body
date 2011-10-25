@@ -1,0 +1,9 @@
+{
+  testCreateStoredQuery();
+  String xml="<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope'> " + " <soap:Header/> " + " <soap:Body>"+ "<wfs:DropStoredQuery service='WFS' version='2.0.0' "+ " xmlns:wfs='" + WFS.NAMESPACE + "' id='myStoredQuery'/>"+ " </soap:Body> "+ "</soap:Envelope> ";
+  MockHttpServletResponse resp=postAsServletResponse("wfs",xml,"application/soap+xml");
+  assertEquals("application/soap+xml",resp.getContentType());
+  Document dom=dom(new ByteArrayInputStream(resp.getOutputStreamContent().getBytes()));
+  assertEquals("soap:Envelope",dom.getDocumentElement().getNodeName());
+  assertEquals(1,dom.getElementsByTagName("wfs:DropStoredQueryResponse").getLength());
+}

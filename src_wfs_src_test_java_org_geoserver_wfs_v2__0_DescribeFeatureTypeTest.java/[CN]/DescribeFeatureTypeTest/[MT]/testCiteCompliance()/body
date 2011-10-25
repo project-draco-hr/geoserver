@@ -1,0 +1,24 @@
+{
+  final QName typeName=MockData.STREAMS;
+  Catalog catalog=getCatalog();
+  catalog.setDefaultNamespace(catalog.getNamespaceByURI(typeName.getNamespaceURI()));
+  FeatureTypeInfo typeInfo=catalog.getFeatureTypeByName(typeName.getNamespaceURI(),typeName.getLocalPart());
+  typeInfo.setEnabled(true);
+  catalog.save(typeInfo);
+  DataStoreInfo store=typeInfo.getStore();
+  store.setEnabled(true);
+  catalog.save(store);
+  String path="ows?service=WFS&version=2.0.0&request=DescribeFeatureType&typeName=" + typeName.getLocalPart();
+  Document doc;
+  GeoServer geoServer=getGeoServer();
+  WFSInfo service=geoServer.getService(WFSInfo.class);
+  service.setCiteCompliant(false);
+  geoServer.save(service);
+  doc=getAsDOM(path);
+  print(doc);
+  assertSchema(doc,typeName);
+  service.setCiteCompliant(true);
+  geoServer.save(service);
+  doc=getAsDOM(path);
+  assertEquals("ows:ExceptionReport",doc.getDocumentElement().getNodeName());
+}

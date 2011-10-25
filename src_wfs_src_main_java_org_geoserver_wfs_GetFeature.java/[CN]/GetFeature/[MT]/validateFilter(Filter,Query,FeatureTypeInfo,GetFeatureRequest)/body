@@ -1,0 +1,67 @@
+{
+  final FeatureType featureType=meta.getFeatureType();
+  ExpressionVisitor visitor=new AbstractExpressionVisitor(){
+    public Object visit(    PropertyName name,    Object data){
+      if (name.evaluate(featureType) == null) {
+        throw new WFSException(request,"Illegal property name: " + name.getPropertyName(),"InvalidParameterValue");
+      }
+      return name;
+    }
+  }
+;
+  filter.accept(new AbstractFilterVisitor(visitor),null);
+  AbstractFilterVisitor fvisitor=new AbstractFilterVisitor(){
+    protected Object visit(    BinarySpatialOperator filter,    Object data){
+      PropertyName name=null;
+      if (filter.getExpression1() instanceof PropertyName) {
+        name=(PropertyName)filter.getExpression1();
+      }
+ else       if (filter.getExpression2() instanceof PropertyName) {
+        name=(PropertyName)filter.getExpression2();
+      }
+      if (name != null) {
+        AttributeDescriptor att=(AttributeDescriptor)name.evaluate(featureType);
+        if (!(att instanceof GeometryDescriptor)) {
+          throw new WFSException(request,"Property " + name + " is not geometric","InvalidParameterValue");
+        }
+      }
+      return filter;
+    }
+  }
+;
+  filter.accept(fvisitor,null);
+  if (wfs.isCiteCompliant()) {
+    if (query.getSrsName() != null) {
+      final Query fquery=query;
+      fvisitor=new AbstractFilterVisitor(){
+        public Object visit(        BBOX filter,        Object data){
+          if (filter.getSRS() != null && !fquery.getSrsName().toString().equals(filter.getSRS())) {
+            CoordinateReferenceSystem geo=DefaultGeographicCRS.WGS84;
+            GeneralEnvelope e=new GeneralEnvelope(new double[]{filter.getMinX(),filter.getMinY()},new double[]{filter.getMaxX(),filter.getMaxY()});
+            CoordinateReferenceSystem crs=null;
+            try {
+              crs=CRS.decode(filter.getSRS());
+              e=CRS.transform(CRS.findMathTransform(crs,geo,true),e);
+            }
+ catch (            Exception ex) {
+              throw new WFSException(request,ex);
+            }
+            try {
+              crs=CRS.decode(fquery.getSrsName().toString());
+            }
+ catch (            Exception ex) {
+              throw new WFSException(request,ex);
+            }
+            GeographicBoundingBox valid=(GeographicBoundingBox)crs.getDomainOfValidity().getGeographicElements().iterator().next();
+            if (e.getMinimum(0) < valid.getWestBoundLongitude() || e.getMinimum(0) > valid.getEastBoundLongitude() || e.getMaximum(0) < valid.getWestBoundLongitude() || e.getMaximum(0) > valid.getEastBoundLongitude() || e.getMinimum(1) < valid.getSouthBoundLatitude() || e.getMinimum(1) > valid.getNorthBoundLatitude() || e.getMaximum(1) < valid.getSouthBoundLatitude() || e.getMaximum(1) > valid.getNorthBoundLatitude()) {
+              throw new WFSException(request,"bounding box out of valid range of crs","InvalidParameterValue");
+            }
+          }
+          return data;
+        }
+      }
+;
+      filter.accept(fvisitor,null);
+    }
+  }
+}

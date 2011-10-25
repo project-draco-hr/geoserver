@@ -1,0 +1,7 @@
+{
+  String xml="<wfs:GetFeature xmlns:wfs='" + WFS.NAMESPACE + "' xmlns:fes='"+ FES.NAMESPACE+ "'"+ " xmlns:gs='"+ MockData.DEFAULT_URI+ "' version='2.0.0'>"+ "<wfs:Query typeNames='gs:Forests gs:Lakes' aliases='a b'>"+ "<fes:Filter> "+ "<fes:And>"+ "<fes:Intersects> "+ "<fes:ValueReference>a/the_geom</fes:ValueReference> "+ "<fes:ValueReference>b/the_geom</fes:ValueReference>"+ "</fes:Intersects> "+ "<PropertyIsEqualTo>"+ "<ValueReference>b/FID</ValueReference>"+ "<Literal>101</Literal>"+ "</PropertyIsEqualTo>"+ "</fes:And>"+ "</fes:Filter> "+ "</wfs:Query>"+ "</wfs:GetFeature>";
+  Document dom=postAsDOM("wfs",xml);
+  XMLAssert.assertXpathEvaluatesTo("1","count(//wfs:Tuple)",dom);
+  XMLAssert.assertXpathExists("//wfs:Tuple/wfs:member/gs:Forests/gs:NAME[text() = 'Green Forest']",dom);
+  XMLAssert.assertXpathExists("//wfs:Tuple/wfs:member/gs:Lakes/gs:NAME[text() = 'Blue Lake']",dom);
+}

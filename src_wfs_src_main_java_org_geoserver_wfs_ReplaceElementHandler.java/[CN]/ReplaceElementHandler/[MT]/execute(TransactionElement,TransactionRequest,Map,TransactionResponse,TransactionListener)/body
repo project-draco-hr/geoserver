@@ -1,0 +1,46 @@
+{
+  Replace replace=(Replace)element;
+  List<SimpleFeature> newFeatures=replace.getFeatures();
+  SimpleFeatureStore featureStore=DataUtilities.simple((FeatureStore)featureStores.values().iterator().next());
+  if (featureStore == null) {
+    throw new WFSException(element,"Could not obtain feature store");
+  }
+  String featureTypeName=featureStore.getSchema().getTypeName();
+  Collection<FeatureId> replaced=new ArrayList();
+  try {
+    Query query=new Query(featureTypeName,replace.getFilter());
+    SimpleFeatureCollection features=featureStore.getFeatures(replace.getFilter());
+    if (newFeatures.size() != features.size()) {
+      throw new WFSException(element,String.format("Specified filter matched %d features but " + "%d were supplied",features.size(),newFeatures.size()));
+    }
+    Map<String,SimpleFeature> oldFeatures=new LinkedHashMap<String,SimpleFeature>();
+    SimpleFeatureIterator it=features.features();
+    try {
+      while (it.hasNext()) {
+        SimpleFeature f=it.next();
+        oldFeatures.put(f.getID(),f);
+      }
+    }
+  finally {
+      it.close();
+    }
+    List<SimpleFeature> leftovers=new ArrayList();
+    for (    SimpleFeature newFeature : newFeatures) {
+      SimpleFeature oldFeature=oldFeatures.get(newFeature.getID());
+      if (oldFeature == null) {
+        leftovers.add(newFeature);
+        continue;
+      }
+      replace(oldFeature,newFeature,featureStore,oldFeatures,replaced);
+    }
+    for (    SimpleFeature newFeature : leftovers) {
+      SimpleFeature oldFeature=oldFeatures.values().iterator().next();
+      replace(oldFeature,newFeature,featureStore,oldFeatures,replaced);
+    }
+  }
+ catch (  IOException e) {
+    throw new WFSException(element,"Transaction REPLACE failed",e);
+  }
+  response.setTotalReplaced(BigInteger.valueOf(replaced.size()));
+  response.addReplacedFeatures(replace.getHandle(),replaced);
+}

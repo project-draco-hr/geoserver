@@ -1,0 +1,20 @@
+{
+  String typeName=getLayerId(MockData.PRIMITIVEGEOFEATURE);
+  String xml="<wfs:DescribeFeatureType service='WFS' version='2.0.0' " + "xmlns:wfs='http://www.opengis.net/wfs/2.0' " + "xmlns:sf='" + MockData.PRIMITIVEGEOFEATURE.getNamespaceURI() + "'>"+ " <wfs:TypeName>"+ typeName+ "</wfs:TypeName>"+ "</wfs:DescribeFeatureType>";
+  Document doc=postAsDOM("wfs",xml);
+  assertSchema(doc,MockData.PRIMITIVEGEOFEATURE);
+  NodeList elements=doc.getElementsByTagName("xsd:element");
+  boolean date=false;
+  boolean dateTime=false;
+  for (int i=0; i < elements.getLength(); i++) {
+    Element e=(Element)elements.item(i);
+    if ("dateProperty".equals(e.getAttribute("name"))) {
+      date="xsd:date".equals(e.getAttribute("type"));
+    }
+    if ("dateTimeProperty".equals(e.getAttribute("name"))) {
+      dateTime="xsd:dateTime".equals(e.getAttribute("type"));
+    }
+  }
+  assertTrue(date);
+  assertTrue(dateTime);
+}

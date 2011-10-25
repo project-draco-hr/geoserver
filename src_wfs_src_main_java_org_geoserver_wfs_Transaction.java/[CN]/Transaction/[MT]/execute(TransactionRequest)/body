@@ -1,0 +1,155 @@
+{
+  if (request.getReleaseAction() == null) {
+    request.setReleaseActionAll();
+  }
+  for (Iterator it=transactionPlugins.iterator(); it.hasNext(); ) {
+    TransactionPlugin tp=(TransactionPlugin)it.next();
+    fireBeforeTransaction(request,tp);
+  }
+  TransactionListenerMux multiplexer=new TransactionListenerMux();
+  transaction=getDatastoreTransaction(request);
+  Map stores=new HashMap();
+  Map stores2=new HashMap();
+  Map elementHandlers=gatherElementHandlers(request);
+  for (Iterator it=elementHandlers.entrySet().iterator(); it.hasNext(); ) {
+    Map.Entry entry=(Map.Entry)it.next();
+    TransactionElement element=(TransactionElement)entry.getKey();
+    TransactionElementHandler handler=(TransactionElementHandler)entry.getValue();
+    Map featureTypeInfos=new HashMap();
+    QName[] typeNames=handler.getTypeNames(element);
+    for (int i=0; i < typeNames.length; i++) {
+      final QName typeName=typeNames[i];
+      final String name=typeName.getLocalPart();
+      final String namespaceURI;
+      if (typeName.getNamespaceURI() != null) {
+        namespaceURI=typeName.getNamespaceURI();
+      }
+ else {
+        namespaceURI=catalog.getDefaultNamespace().getURI();
+      }
+      LOGGER.fine("Locating FeatureSource uri:'" + namespaceURI + "' name:'"+ name+ "'");
+      final FeatureTypeInfo meta=catalog.getFeatureTypeByName(namespaceURI,name);
+      if (meta == null) {
+        String msg="Feature type '" + name + "' is not available: ";
+        throw new WFSTransactionException(msg,(String)null,element.getHandle());
+      }
+      featureTypeInfos.put(typeName,meta);
+    }
+    handler.checkValidity(element,featureTypeInfos);
+    for (Iterator m=featureTypeInfos.values().iterator(); m.hasNext(); ) {
+      FeatureTypeInfo meta=(FeatureTypeInfo)m.next();
+      String typeRef=meta.getStore().getName() + ":" + meta.getName();
+      String URI=meta.getNamespace().getURI();
+      QName elementName=new QName(URI,meta.getName(),meta.getNamespace().getPrefix());
+      QName elementNameDefault=null;
+      if (catalog.getDefaultNamespace().getURI().equals(URI)) {
+        elementNameDefault=new QName(meta.getName());
+      }
+      LOGGER.fine("located FeatureType w/ typeRef '" + typeRef + "' and elementName '"+ elementName+ "'");
+      if (stores.containsKey(elementName)) {
+        continue;
+      }
+      try {
+        FeatureSource<? extends FeatureType,? extends Feature> source=meta.getFeatureSource(null,null);
+        if (source instanceof FeatureStore) {
+          FeatureStore<? extends FeatureType,? extends Feature> store;
+          store=(FeatureStore<? extends FeatureType,? extends Feature>)source;
+          store.setTransaction(transaction);
+          stores.put(elementName,source);
+          if (elementNameDefault != null) {
+            stores.put(elementNameDefault,source);
+          }
+          stores2.put(typeRef,source);
+        }
+ else {
+          String msg=elementName + " is read-only";
+          throw new WFSTransactionException(msg,(String)null,element.getHandle());
+        }
+      }
+ catch (      IOException ioException) {
+        String msg=elementName + " is not available: " + ioException.getLocalizedMessage();
+        throw new WFSTransactionException(msg,ioException,element.getHandle());
+      }
+    }
+  }
+  String authorizationID=request.getLockId();
+  if (authorizationID != null) {
+    if (!wfs.getServiceLevel().getOps().contains(WFSInfo.Operation.LOCKFEATURE)) {
+      throw new WFSException(request,"Lock support is not enabled");
+    }
+    LOGGER.finer("got lockId: " + authorizationID);
+    if (!lockExists(authorizationID)) {
+      String mesg="Attempting to use a lockID that does not exist" + ", it has either expired or was entered wrong.";
+      throw new WFSException(request,mesg,"InvalidParameterValue");
+    }
+    try {
+      transaction.addAuthorization(authorizationID);
+    }
+ catch (    IOException ioException) {
+      throw new WFSException(request,"Authorization ID '" + authorizationID + "' not useable",ioException);
+    }
+  }
+  TransactionResponse result=request.createResponse();
+  result.setHandle(request.getHandle());
+  Exception exception=null;
+  try {
+    for (Iterator it=elementHandlers.entrySet().iterator(); it.hasNext(); ) {
+      Map.Entry entry=(Map.Entry)it.next();
+      TransactionElement element=(TransactionElement)entry.getKey();
+      TransactionElementHandler handler=(TransactionElementHandler)entry.getValue();
+      handler.execute(element,request,stores,result,multiplexer);
+    }
+  }
+ catch (  WFSTransactionException e) {
+    LOGGER.log(Level.SEVERE,"Transaction failed",e);
+    exception=e;
+    if (request.getVersion().startsWith("2") && e.getCause() instanceof FeatureLockException && request.getLockId() == null) {
+      exception=new WFSTransactionException(e.getMessage(),e,"MissingParameterValue");
+    }
+    result.addAction(e.getCode() != null ? e.getCode() : "InvalidParameterValue",e.getLocator(),e.getMessage());
+  }
+  boolean committed=false;
+  try {
+    if (exception != null) {
+      transaction.rollback();
+    }
+ else {
+      for (Iterator it=transactionPlugins.iterator(); it.hasNext(); ) {
+        TransactionPlugin tp=(TransactionPlugin)it.next();
+        fireBeforeCommit(request,tp);
+      }
+      transaction.commit();
+      committed=true;
+      String lockId=request.getLockId();
+      if (lockId != null) {
+        if (request.isReleaseActionAll()) {
+          lockRelease(lockId);
+        }
+ else         if (request.isReleaseActionSome()) {
+          lockRefresh(lockId);
+        }
+      }
+    }
+  }
+  finally {
+    transaction.close();
+    transaction=null;
+  }
+  for (Iterator it=transactionPlugins.iterator(); it.hasNext(); ) {
+    TransactionPlugin tp=(TransactionPlugin)it.next();
+    fireAfterTransaction(request,result,committed,tp);
+  }
+  if (exception != null) {
+    if (request.getVersion() != null && request.getVersion().startsWith("2")) {
+      if (!(exception instanceof WFSException && ((WFSException)exception).getCode() != null)) {
+        exception=new WFSException(request,exception);
+      }
+      throw exception;
+    }
+  }
+  List insertedFeatures=result.getInsertedFeatures();
+  if (insertedFeatures != null && insertedFeatures.isEmpty()) {
+    result.addInsertedFeature(null,filterFactory.featureId("none"));
+  }
+  return result;
+}
