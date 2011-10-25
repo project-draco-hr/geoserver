@@ -1,10 +1,15 @@
 {
   String[] propNames=null;
   if (query.retrieveAllProperties()) {
-    propNames=new String[schema.getAttributeCount()];
+    List<String> props=new ArrayList();
     for (int i=0; i < schema.getAttributeCount(); i++) {
-      propNames[i]=schema.getDescriptor(i).getLocalName();
+      AttributeDescriptor att=schema.getDescriptor(i);
+      if (Feature.class.isAssignableFrom(att.getType().getBinding()) && !query.getJoins().isEmpty()) {
+        continue;
+      }
+      props.add(att.getLocalName());
     }
+    propNames=props.toArray(new String[props.size()]);
   }
  else {
     String[] queriedAtts=query.getPropertyNames();

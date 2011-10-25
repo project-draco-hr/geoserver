@@ -1,9 +1,21 @@
 {
+  Integer offset=null, maxFeatures=null;
+  if (query.getStartIndex() != null) {
+    if (!source.getQueryCapabilities().isOffsetSupported()) {
+      offset=query.getStartIndex();
+      maxFeatures=query.getMaxFeatures();
+      query.setStartIndex(null);
+      query.setMaxFeatures(Query.DEFAULT_MAX);
+    }
+  }
   Query reprojected=reprojectFilter(query);
   Query newQuery=adaptQuery(reprojected,schema);
   CoordinateReferenceSystem targetCRS=query.getCoordinateSystemReproject();
   try {
     SimpleFeatureCollection fc=source.getFeatures(newQuery);
+    if (offset != null) {
+      fc=new MaxSimpleFeatureCollection(fc,offset,maxFeatures);
+    }
     return applyProjectionPolicies(targetCRS,fc);
   }
  catch (  Exception e) {

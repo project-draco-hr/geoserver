@@ -64,6 +64,16 @@
     }
  catch (    ClassCastException e) {
     }
+    if (hints != null && hints.containsKey(JOINS)) {
+      List<Join> joins=(List<Join>)hints.get(JOINS);
+      SimpleFeatureTypeBuilder typeBuilder=new SimpleFeatureTypeBuilder();
+      typeBuilder.init(schema);
+      for (      Join j : joins) {
+        String attName=j.getAlias() != null ? j.getAlias() : j.getTypeName();
+        typeBuilder.add(attName,SimpleFeature.class);
+      }
+      schema=typeBuilder.buildFeatureType();
+    }
     return GeoServerFeatureLocking.create(fs,schema,info.getFilter(),resultCRS,info.getProjectionPolicy().getCode());
   }
 }
