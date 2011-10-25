@@ -6,12 +6,15 @@
   }
   ExceptionReportType report=Ows11Util.exceptionReport(exception,verboseExceptions,version);
   HttpServletResponse response=request.getHttpResponse();
-  response.setContentType("application/xml");
+  if (!request.isSOAP()) {
+    response.setContentType("application/xml");
+  }
   OWSConfiguration configuration=new OWSConfiguration();
   Encoder encoder=new Encoder(configuration,configuration.schema());
   encoder.setIndenting(true);
   encoder.setIndentSize(2);
   encoder.setLineWidth(60);
+  encoder.setOmitXMLDeclaration(request.isSOAP());
   String schemaLocation=buildSchemaURL(baseURL(request.getHttpRequest()),"ows/1.1.0/owsAll.xsd");
   encoder.setSchemaLocation(OWS.NAMESPACE,schemaLocation);
   try {

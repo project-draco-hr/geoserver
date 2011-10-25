@@ -3,7 +3,13 @@
   request.setGet("GET".equalsIgnoreCase(httpRequest.getMethod()) || "application/x-www-form-urlencoded".equals(httpRequest.getContentType()));
   parseKVP(request);
   if (!request.isGet()) {
-    request.setInput(reader(httpRequest));
+    if (httpRequest.getContentType() != null && httpRequest.getContentType().startsWith(SOAP_MIME)) {
+      request.setSOAP(true);
+      request.setInput(soapReader(httpRequest));
+    }
+ else {
+      request.setInput(reader(httpRequest));
+    }
     char[] req=new char[xmlPostRequestLogBufferSize];
     int read=request.getInput().read(req,0,xmlPostRequestLogBufferSize);
     if (logger.isLoggable(Level.FINE)) {

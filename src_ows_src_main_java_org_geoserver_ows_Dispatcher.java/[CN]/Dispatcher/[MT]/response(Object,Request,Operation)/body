@@ -58,10 +58,25 @@
     if (outputStrategy == null) {
       outputStrategy=new DefaultOutputStrategy();
     }
-    req.getHttpResponse().setContentType(response.getMimeType(result,opDescriptor));
+    String mimeType=response.getMimeType(result,opDescriptor);
+    if (req.isSOAP()) {
+      req.getHttpResponse().setContentType(SOAP_MIME);
+    }
+ else {
+      req.getHttpResponse().setContentType(mimeType);
+    }
     setHeaders(req,opDescriptor,result,response);
     OutputStream output=outputStrategy.getDestination(req.getHttpResponse());
+    if (req.isSOAP()) {
+      startSOAPEnvelope(output,response);
+    }
+    if (req.isSOAP() && result instanceof TransformerBase) {
+      ((TransformerBase)result).setOmitXMLDeclaration(true);
+    }
     response.write(result,output,opDescriptor);
+    if (req.isSOAP()) {
+      endSOAPEnvelope(output);
+    }
     try {
       outputStrategy.flush(req.getHttpResponse());
     }

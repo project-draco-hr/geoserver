@@ -21,12 +21,15 @@
   ExceptionReportType report=factory.createExceptionReportType();
   report.setVersion("1.0.0");
   report.getException().add(e);
-  request.getHttpResponse().setContentType("application/xml");
+  if (!request.isSOAP()) {
+    request.getHttpResponse().setContentType("application/xml");
+  }
   OWSConfiguration configuration=new OWSConfiguration();
   Encoder encoder=new Encoder(configuration,configuration.schema());
   encoder.setIndenting(true);
   encoder.setIndentSize(2);
   encoder.setLineWidth(60);
+  encoder.setOmitXMLDeclaration(request.isSOAP());
   String schemaLocation=buildSchemaURL(baseURL(request.getHttpRequest()),"ows/1.0.0/owsExceptionReport.xsd");
   encoder.setSchemaLocation(org.geoserver.ows.xml.v1_0.OWS.NAMESPACE,schemaLocation);
   try {

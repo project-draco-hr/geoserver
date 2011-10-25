@@ -1,0 +1,32 @@
+{
+  Document dom=null;
+  try {
+    dom=db.parse(httpRequest.getInputStream());
+  }
+ catch (  SAXException e) {
+    throw new IOException("Error parsing SOAP request",e);
+  }
+  NodeList list=dom.getElementsByTagNameNS(SOAP_NS,"Body");
+  if (list.getLength() != 1) {
+    throw new IOException("SOAP requests should specify a single Body element");
+  }
+  Element body=(Element)list.item(0);
+  Element payload=null;
+  for (int i=0; payload == null && i < body.getChildNodes().getLength(); i++) {
+    Node n=body.getChildNodes().item(i);
+    if (n instanceof Element) {
+      payload=(Element)n;
+    }
+  }
+  if (payload == null) {
+    throw new IOException("Could not find payload in SOAP request");
+  }
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  try {
+    TransformerFactory.newInstance().newTransformer().transform(new DOMSource(payload),new StreamResult(bout));
+  }
+ catch (  Exception e) {
+    throw new IOException("Error encoding payload of SOAP request",e);
+  }
+  return RequestUtils.getBufferedXMLReader(new ByteArrayInputStream(bout.toByteArray()),XML_LOOKAHEAD);
+}
