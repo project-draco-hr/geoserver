@@ -2,6 +2,12 @@
   Catalog catalog=getCatalog();
   StyleInfo s=(StyleInfo)styleForm.getModelObject();
   try {
+    catalog.getResourcePool().writeStyle(s,new ByteArrayInputStream(rawSLD.getBytes()));
+  }
+ catch (  IOException e) {
+    throw new WicketRuntimeException(e);
+  }
+  try {
     Version version=Styles.findVersion(new ByteArrayInputStream(rawSLD.getBytes()));
     s.setSLDVersion(version);
     if (s.getFilename() == null) {
@@ -13,12 +19,6 @@
     LOGGER.log(Level.SEVERE,"Error occurred saving the style",e);
     error(e);
     return;
-  }
-  try {
-    catalog.getResourcePool().writeStyle(s,new ByteArrayInputStream(rawSLD.getBytes()));
-  }
- catch (  IOException e) {
-    throw new WicketRuntimeException(e);
   }
   setResponsePage(StylePage.class);
 }
