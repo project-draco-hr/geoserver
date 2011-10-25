@@ -1,0 +1,25 @@
+{
+  ExceptionType e=f.createExceptionType();
+  if (exception.getCode() != null) {
+    e.setExceptionCode(exception.getCode());
+  }
+ else {
+    e.setExceptionCode("NoApplicableCode");
+  }
+  e.setLocator(exception.getLocator());
+  StringBuffer sb=new StringBuffer();
+  OwsUtils.dumpExceptionMessages(exception,sb,true);
+  e.getExceptionText().add(sb.toString());
+  e.getExceptionText().addAll(exception.getExceptionText());
+  if (verboseExceptions) {
+    e.getExceptionText().add("Details:");
+    ByteArrayOutputStream trace=new ByteArrayOutputStream();
+    exception.printStackTrace(new PrintStream(trace));
+    e.getExceptionText().add(new String(trace.toByteArray()));
+  }
+  ExceptionReportType report=f.createExceptionReportType();
+  version=version != null ? version : "1.1.0";
+  report.setVersion(version);
+  report.getException().add(e);
+  return report;
+}
