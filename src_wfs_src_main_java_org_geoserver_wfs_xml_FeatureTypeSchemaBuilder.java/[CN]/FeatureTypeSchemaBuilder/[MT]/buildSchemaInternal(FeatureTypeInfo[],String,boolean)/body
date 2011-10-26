@@ -32,8 +32,9 @@
         @SuppressWarnings("unchecked") Map<String,String> schemaURIs=new TreeMap<String,String>((Map<String,String>)schemaUri);
         if (!findTypeInSchema(featureTypeInfos[0],schema,factory)) {
           Map<String,String> imports=new HashMap<String,String>();
+          Set<String> includes=new HashSet<String>();
           for (          String namespace : schemaURIs.keySet()) {
-            addReference(schema,factory,namespace,schemaURIs.get(namespace),imports);
+            addReference(schema,factory,namespace,schemaURIs.get(namespace),imports,includes);
           }
         }
         return schema;
@@ -56,7 +57,8 @@
  else {
     NamespaceInfo ns=featureTypeInfos[0].getNamespace();
     schema.setTargetNamespace(ns.getURI());
-    Map<String,String> references=new HashMap<String,String>();
+    Map<String,String> imports=new HashMap<String,String>();
+    Set<String> includes=new HashSet<String>();
     for (Iterator i=ns2featureTypeInfos.entrySet().iterator(); i.hasNext(); ) {
       Map.Entry entry=(Map.Entry)i.next();
       String prefix=(String)entry.getKey();
@@ -69,7 +71,7 @@
         if (schemaUri != null && schemaUri instanceof Map) {
           @SuppressWarnings("unchecked") Map<String,String> schemaURIs=new TreeMap<String,String>((Map<String,String>)schemaUri);
           for (          String namespace : schemaURIs.keySet()) {
-            addReference(schema,factory,namespace,schemaURIs.get(namespace),references);
+            addReference(schema,factory,namespace,schemaURIs.get(namespace),imports,includes);
           }
         }
  else {
