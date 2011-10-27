@@ -1,34 +1,38 @@
 {
+  Map rawKvp=req.getRawKvp();
+  String disposition=response.getPreferredDisposition(result,opDescriptor);
+  String filename=response.getAttachmentFileName(result,opDescriptor);
+  if (rawKvp != null) {
+    if (rawKvp.get("FILENAME") != null) {
+      filename=(String)rawKvp.get("FILENAME");
+    }
+    if (rawKvp.get("CONTENT-DISPOSITION") != null) {
+      disposition=(String)rawKvp.get("CONTENT-DISPOSITION");
+    }
+  }
+  if (disposition != null && !Response.DISPOSITION_ATTACH.equals(disposition) && !Response.DISPOSITION_INLINE.equals(disposition)) {
+    disposition=null;
+  }
   String[][] headers=response.getHeaders(result,opDescriptor);
   boolean contentDispositionProvided=false;
   if (headers != null) {
     for (int i=0; i < headers.length; i++) {
       if (headers[i][0].equalsIgnoreCase("Content-Disposition")) {
         contentDispositionProvided=true;
+        if (disposition == null) {
+          req.getHttpResponse().addHeader(headers[i][0],headers[i][1]);
+        }
       }
-      req.getHttpResponse().addHeader(headers[i][0],headers[i][1]);
+ else {
+        req.getHttpResponse().addHeader(headers[i][0],headers[i][1]);
+      }
     }
   }
   if (!contentDispositionProvided) {
-    String fname=response.getAttachmentFileName(result,opDescriptor);
-    if (fname != null) {
-      String disposition=null;
-      Map rawKvp=req.getRawKvp();
-      if (rawKvp != null) {
-        disposition=(String)rawKvp.get("CONTENT-DISPOSITION");
-        boolean valid=Response.DISPOSITION_ATTACH.equals(disposition) || Response.DISPOSITION_INLINE.equals(disposition);
-        if (!valid) {
-          disposition=null;
-        }
-      }
-      if (disposition == null) {
-        disposition=response.getPreferredDisposition(result,opDescriptor);
-        if (disposition == null) {
-          disposition=Response.DISPOSITION_INLINE;
-        }
-      }
-      String disp=disposition + "; filename=" + fname;
-      req.getHttpResponse().setHeader("Content-Disposition",disp);
+    if (disposition == null) {
+      disposition=Response.DISPOSITION_INLINE;
     }
+    String disp=disposition + "; filename=" + filename;
+    req.getHttpResponse().setHeader("Content-Disposition",disp);
   }
 }
