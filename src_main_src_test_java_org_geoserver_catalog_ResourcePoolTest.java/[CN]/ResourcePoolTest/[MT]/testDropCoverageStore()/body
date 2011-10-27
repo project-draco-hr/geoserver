@@ -1,0 +1,18 @@
+{
+  Catalog cat=getCatalog();
+  CatalogBuilder cb=new CatalogBuilder(cat);
+  CoverageStoreInfo store=cb.buildCoverageStore("dem");
+  store.setURL(MockData.class.getResource("tazdem.tiff").toExternalForm());
+  store.setType("GeoTIFF");
+  cat.add(store);
+  cb.setStore(store);
+  CoverageInfo ci=cb.buildCoverage();
+  cat.add(ci);
+  LayerInfo layer=cb.buildLayer(ci);
+  cat.add(layer);
+  ci.getGridCoverage(null,null);
+  ci.getGridCoverageReader(null,GeoTools.getDefaultHints());
+  CascadeDeleteVisitor visitor=new CascadeDeleteVisitor(cat);
+  visitor.visit(store);
+  getGeoServer().reload();
+}
