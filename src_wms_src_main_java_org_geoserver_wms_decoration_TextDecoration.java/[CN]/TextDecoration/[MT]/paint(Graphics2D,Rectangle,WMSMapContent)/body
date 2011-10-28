@@ -1,0 +1,26 @@
+{
+  Font font=getFont();
+  String message=evaluateMessage(mapContent);
+  Font oldFont=g2d.getFont();
+  Color oldColor=g2d.getColor();
+  Stroke oldStroke=g2d.getStroke();
+  try {
+    GlyphVector gv=font.createGlyphVector(g2d.getFontRenderContext(),message.toCharArray());
+    AffineTransform at=AffineTransform.getTranslateInstance(paintArea.x + haloRadius,paintArea.y + paintArea.height - haloRadius * 2);
+    Shape outline=gv.getOutline();
+    outline=at.createTransformedShape(outline);
+    if (haloRadius > 0) {
+      g2d.setColor(haloColor);
+      g2d.setStroke(new BasicStroke(2 * haloRadius,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
+      g2d.draw(outline);
+    }
+    g2d.setFont(font);
+    g2d.setColor(fontColor);
+    g2d.fill(outline);
+  }
+  finally {
+    g2d.setColor(oldColor);
+    g2d.setFont(oldFont);
+    g2d.setStroke(oldStroke);
+  }
+}

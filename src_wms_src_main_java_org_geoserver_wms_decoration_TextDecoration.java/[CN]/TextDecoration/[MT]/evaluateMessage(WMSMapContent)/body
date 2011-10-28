@@ -1,0 +1,20 @@
+{
+  final Map env=content.getRequest().getEnv();
+  Template t=new Template("name",new StringReader(messageTemplate),new Configuration());
+  final BeansWrapper bw=new BeansWrapper();
+  return FreeMarkerTemplateUtils.processTemplateIntoString(t,new TemplateHashModel(){
+    @Override public boolean isEmpty() throws TemplateModelException {
+      return env.isEmpty();
+    }
+    @Override public TemplateModel get(    String key) throws TemplateModelException {
+      String value=(String)env.get(key);
+      if (value != null) {
+        return new StringModel(value,bw);
+      }
+ else {
+        return null;
+      }
+    }
+  }
+);
+}
