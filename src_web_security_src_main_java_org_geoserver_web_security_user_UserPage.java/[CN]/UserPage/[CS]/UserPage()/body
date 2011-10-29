@@ -1,7 +1,7 @@
 {
   UserListProvider provider=new UserListProvider();
   add(users=new GeoServerTablePanel<User>("table",provider,true){
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<User> property){
+    @SuppressWarnings("rawtypes") @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<User> property){
       if (property == UserListProvider.USERNAME) {
         return editUserLink(id,itemModel,property);
       }
@@ -9,7 +9,14 @@
         return new Label(id,property.getModel(itemModel));
       }
  else       if (property == UserListProvider.ADMIN) {
-        return new Label(id,property.getModel(itemModel));
+        User user=(User)itemModel.getObject();
+        Boolean isAdmin=(Boolean)property.getPropertyValue(user);
+        if (Boolean.TRUE.equals(isAdmin)) {
+          return new Icon(id,CatalogIconFactory.ENABLED_ICON);
+        }
+ else {
+          return new Label(id,"");
+        }
       }
       throw new RuntimeException("Uknown property " + property);
     }
