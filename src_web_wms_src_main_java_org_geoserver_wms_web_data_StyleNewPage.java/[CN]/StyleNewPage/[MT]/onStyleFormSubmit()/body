@@ -2,6 +2,9 @@
   Catalog catalog=getCatalog();
   StyleInfo s=(StyleInfo)styleForm.getModelObject();
   try {
+    if (s.getFilename() == null) {
+      s.setFilename(s.getName() + ".sld");
+    }
     catalog.getResourcePool().writeStyle(s,new ByteArrayInputStream(rawSLD.getBytes()));
   }
  catch (  IOException e) {
@@ -10,9 +13,6 @@
   try {
     Version version=Styles.findVersion(new ByteArrayInputStream(rawSLD.getBytes()));
     s.setSLDVersion(version);
-    if (s.getFilename() == null) {
-      s.setFilename(s.getName() + ".sld");
-    }
     getCatalog().add(s);
   }
  catch (  Exception e) {
