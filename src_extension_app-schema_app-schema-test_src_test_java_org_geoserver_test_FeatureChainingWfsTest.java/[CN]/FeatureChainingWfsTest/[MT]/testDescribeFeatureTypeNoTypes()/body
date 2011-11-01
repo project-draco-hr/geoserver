@@ -1,23 +1,30 @@
 {
+  Document doc=getAsDOM("wfs?request=DescribeFeatureType&version=1.1.0");
+  LOGGER.info("WFS DescribeFeatureType response:\n" + prettyString(doc));
   assertEquals("xsd:schema",doc.getDocumentElement().getNodeName());
   String targetNamespace=evaluate("//@targetNamespace",doc);
-  assertTrue(targetNamespace.length() > 0);
-  int numberOfReferences=omSchemaLocation != null ? 3 : 2;
+  assertFalse(targetNamespace.isEmpty());
   int numberOfImports=getMatchingNodes("//xsd:import",doc).getLength();
   int numberOfIncludes=getMatchingNodes("//xsd:include",doc).getLength();
-  assertEquals(numberOfReferences,numberOfImports + numberOfIncludes);
+  if (targetNamespace.equals(FeatureChainingMockData.EX_URI)) {
+    assertEquals(2,numberOfImports);
+    assertEquals(2,numberOfIncludes);
+  }
+ else {
+    assertEquals(2,numberOfImports);
+    assertEquals(1,numberOfIncludes);
+  }
   ArrayList<String> namespaces=new ArrayList<String>();
   namespaces.add(AbstractAppSchemaMockData.GSML_URI);
   namespaces.add(FeatureChainingMockData.EX_URI);
-  if (omSchemaLocation != null) {
-    namespaces.add(FeatureChainingMockData.OM_URI);
-  }
-  for (int i=1; i <= numberOfReferences; i++) {
+  namespaces.add(FeatureChainingMockData.OM_URI);
+  for (int i=1; i <= numberOfImports + numberOfIncludes; i++) {
     String namespace;
     String schemaLocation;
     if (i <= numberOfImports) {
       namespace=evaluate("//xsd:import[" + i + "]/@namespace",doc);
       schemaLocation="//xsd:import[" + i + "]/@schemaLocation";
+      assertFalse(namespace.equals(targetNamespace));
     }
  else {
       namespace=targetNamespace;
@@ -29,14 +36,10 @@
     }
  else     if (namespace.equals(FeatureChainingMockData.EX_URI)) {
       String loc=evaluate(schemaLocation,doc);
-      if (!loc.equals(exSchemaOneLocation)) {
-        assertNotNull(exSchemaTwoLocation);
-        assertEquals(exSchemaTwoLocation,loc);
-      }
+      assertTrue(loc.equals(getExSchemaOneLocation()) || loc.equals(getExSchemaTwoLocation()));
       namespaces.remove(FeatureChainingMockData.EX_URI);
     }
  else {
-      assertTrue(omSchemaLocation != null);
       assertEquals(FeatureChainingMockData.OM_URI,namespace);
       assertXpathEvaluatesTo(FeatureChainingMockData.OM_SCHEMA_LOCATION_URL,schemaLocation,doc);
       namespaces.remove(FeatureChainingMockData.OM_URI);

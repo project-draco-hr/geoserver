@@ -1,0 +1,13 @@
+{
+  Document doc=getAsDOM("wfs?request=DescribeFeatureType&version=1.1.0&typeName=ex:FirstParentFeature,ex:SecondParentFeature");
+  LOGGER.info("WFS DescribeFeatureType, typename=ex:FirstParentFeature," + "ex:SecondParentFeature response:\n" + prettyString(doc));
+  assertXpathEvaluatesTo(FeatureChainingMockData.EX_URI,"//@targetNamespace",doc);
+  assertXpathCount(1,"//xsd:include",doc);
+  assertXpathCount(0,"//xsd:import",doc);
+  String schemaLocation=evaluate("//xsd:include/@schemaLocation",doc);
+  if (!schemaLocation.equals(getExSchemaOneLocation())) {
+    assertEquals(getExSchemaTwoLocation(),schemaLocation);
+  }
+  assertXpathCount(0,"//xsd:complexType",doc);
+  assertXpathCount(0,"//xsd:element",doc);
+}
