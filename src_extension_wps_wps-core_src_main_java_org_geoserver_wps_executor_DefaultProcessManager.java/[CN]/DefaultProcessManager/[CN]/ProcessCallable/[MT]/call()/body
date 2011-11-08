@@ -1,0 +1,23 @@
+{
+  status.setPhase(ProcessState.RUNNING);
+  ProcessListener listener=status.listener;
+  Name processName=status.getProcessName();
+  ProcessFactory pf=Processors.createProcessFactory(processName);
+  if (pf == null) {
+    throw new WPSException("No such process: " + processName);
+  }
+  Map<String,Object> result=null;
+  try {
+    Process p=pf.create(processName);
+    result=p.execute(inputs,listener);
+    if (listener.exception != null) {
+      throw new WPSException("Process failed: " + listener.exception.getMessage(),listener.exception);
+    }
+    return result;
+  }
+  finally {
+    if (status.getPhase() == ProcessState.RUNNING) {
+      status.setPhase(ProcessState.COMPLETED);
+    }
+  }
+}

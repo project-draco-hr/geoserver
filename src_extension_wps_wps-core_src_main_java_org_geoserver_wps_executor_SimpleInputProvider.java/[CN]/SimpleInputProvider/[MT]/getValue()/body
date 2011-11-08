@@ -1,0 +1,36 @@
+{
+  if (value == null) {
+    if (input.getReference() != null) {
+      InputReferenceType ref=input.getReference();
+      String href=ref.getHref();
+      if (href.startsWith("http://geoserver/wfs")) {
+        value=handleAsInternalWFS(ppio,ref);
+      }
+ else       if (href.startsWith("http://geoserver/wcs")) {
+        value=handleAsInternalWCS(ppio,ref);
+      }
+ else       if (href.startsWith("http://geoserver/wps")) {
+        value=handleAsInternalWPS(ppio,ref);
+      }
+ else {
+        value=executeRemoteRequest(ref,(ComplexPPIO)ppio,inputId);
+      }
+    }
+ else {
+      DataType data=input.getData();
+      if (data.getLiteralData() != null) {
+        LiteralDataType literal=data.getLiteralData();
+        value=((LiteralPPIO)ppio).decode(literal.getValue());
+      }
+ else       if (data.getComplexData() != null) {
+        ComplexDataType complex=data.getComplexData();
+        value=((ComplexPPIO)ppio).decode(complex.getData().get(0));
+      }
+ else       if (data.getBoundingBoxData() != null) {
+        value=((BoundingBoxPPIO)ppio).decode(data.getBoundingBoxData());
+      }
+    }
+    input=null;
+  }
+  return value;
+}

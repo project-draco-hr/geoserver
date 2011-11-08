@@ -1,18 +1,23 @@
 {
-  ExecuteType execute=(ExecuteType)operation.getParameters()[0];
-  if (execute.getResponseForm().getRawDataOutput() == null) {
+  if (isStandardDocumentResponse(operation)) {
     return standardResponse.getMimeType(value,operation);
   }
  else {
     ExecuteResponseType response=(ExecuteResponseType)value;
+    if (response.getProcessOutputs() == null) {
+      return "text/xml";
+    }
     OutputDataType result=(OutputDataType)response.getProcessOutputs().getOutput().get(0);
     LiteralDataType literal=result.getData().getLiteralData();
+    ComplexDataType complex=result.getData().getComplexData();
     if (literal != null) {
       return "text/plain";
     }
+ else     if (complex != null) {
+      return complex.getMimeType();
+    }
  else {
-      OutputDefinitionType definition=(OutputDefinitionType)response.getOutputDefinitions().getOutput().get(0);
-      return definition.getMimeType();
+      return "text/xml";
     }
   }
 }

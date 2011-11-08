@@ -1,0 +1,101 @@
+{
+  ExecuteRequest helper=new ExecuteRequest(request);
+  Wps10Factory f=Wps10Factory.eINSTANCE;
+  ExecuteResponseType response=f.createExecuteResponseType();
+  response.setLang("en");
+  if (request.getBaseUrl() != null) {
+    response.setServiceInstance(ResponseUtils.appendQueryString(ResponseUtils.buildURL(request.getBaseUrl(),"ows",null,URLType.SERVICE),""));
+  }
+  Name processName=helper.getProcessName();
+  ProcessFactory pf=Processors.createProcessFactory(processName);
+  final ProcessBriefType process=f.createProcessBriefType();
+  response.setProcess(process);
+  process.setIdentifier((CodeType)EMFUtils.clone(request.getIdentifier(),Ows11Factory.eINSTANCE,true));
+  process.setProcessVersion(pf.getVersion(processName));
+  process.setTitle(Ows11Util.languageString(pf.getTitle(processName)));
+  process.setAbstract(Ows11Util.languageString(pf.getDescription(processName)));
+  response.setStatus(f.createStatusType());
+  XMLGregorianCalendar gc=Converters.convert(created,XMLGregorianCalendar.class);
+  response.getStatus().setCreationTime(gc);
+  if (status == null) {
+    if (exception != null) {
+      setResponseFailed(response,getException(ProcessState.COMPLETED));
+    }
+ else     if (outputs == null) {
+      response.getStatus().setProcessAccepted("Process accepted.");
+    }
+ else {
+      response.getStatus().setProcessSucceeded("Process succeeded.");
+    }
+  }
+ else {
+    if (status.getPhase() == ProcessState.QUEUED) {
+      response.getStatus().setProcessAccepted("Process accepted.");
+    }
+ else     if (status.getPhase() == ProcessState.RUNNING) {
+      ProcessStartedType startedType=f.createProcessStartedType();
+      int progressPercent=Math.round(status.getProgress() * 100);
+      startedType.setPercentCompleted(new BigInteger(String.valueOf(progressPercent)));
+      response.getStatus().setProcessStarted(startedType);
+    }
+ else     if (status.getPhase() == ProcessState.COMPLETED) {
+      response.getStatus().setProcessSucceeded("Process succeeded.");
+    }
+ else {
+      ServiceException reportException=getException(status.getPhase());
+      setResponseFailed(response,reportException);
+    }
+  }
+  if (helper.isAsynchronous() && request.getBaseUrl() != null && executionId != null) {
+    Map<String,String> kvp=new LinkedHashMap<String,String>();
+    kvp.put("service","WPS");
+    kvp.put("version","1.0.0");
+    kvp.put("request","GetExecutionStatus");
+    kvp.put("executionId",executionId);
+    response.setStatusLocation(ResponseUtils.buildURL(request.getBaseUrl(),"ows",kvp,URLType.SERVICE));
+  }
+  if (helper.isLineageRequested()) {
+    if (request.getDataInputs() != null && request.getDataInputs().getInput().size() > 0) {
+      response.setDataInputs(f.createDataInputsType1());
+      for (Iterator i=request.getDataInputs().getInput().iterator(); i.hasNext(); ) {
+        InputType input=(InputType)i.next();
+        response.getDataInputs().getInput().add(EMFUtils.clone(input,f,true));
+      }
+    }
+    List<DocumentOutputDefinitionType> outputList=helper.getRequestedOutputs();
+    if (outputList != null) {
+      OutputDefinitionsType outputs=f.createOutputDefinitionsType();
+      response.setOutputDefinitions(outputs);
+      for (      DocumentOutputDefinitionType output : outputList) {
+        outputs.getOutput().add(EMFUtils.clone(output,f,true));
+      }
+    }
+  }
+  if (exception == null && outputs != null) {
+    ProcessOutputsType1 processOutputs=f.createProcessOutputsType1();
+    response.setProcessOutputs(processOutputs);
+    Map<String,Parameter<?>> resultInfo=pf.getResultInfo(processName,null);
+    if (request.getResponseForm() != null && request.getResponseForm().getResponseDocument() != null && request.getResponseForm().getResponseDocument().getOutput() != null && request.getResponseForm().getResponseDocument().getOutput().size() > 0) {
+      EList outputs=request.getResponseForm().getResponseDocument().getOutput();
+      for (      Object object : outputs) {
+        DocumentOutputDefinitionType odt=(DocumentOutputDefinitionType)object;
+        String key=odt.getIdentifier().getValue();
+        Parameter<?> outputParam=resultInfo.get(key);
+        if (outputParam == null) {
+          throw new WPSException("Unknown output " + key + " possible values are: "+ resultInfo.keySet());
+        }
+        String mimeType=odt.getMimeType();
+        OutputDataType output=encodeOutput(key,outputParam,mimeType,odt.isAsReference());
+        processOutputs.getOutput().add(output);
+      }
+    }
+ else {
+      for (      String key : outputs.keySet()) {
+        Parameter<?> outputParam=resultInfo.get(key);
+        OutputDataType output=encodeOutput(key,outputParam,null,false);
+        processOutputs.getOutput().add(output);
+      }
+    }
+  }
+  return response;
+}

@@ -1,0 +1,18 @@
+{
+  Name processName=request.getProcessName();
+  ProcessManager processManager=getProcessManager(processName);
+  LazyInputMap inputs=request.getProcessInputs(this);
+  String executionId=resourceManager.getExecutionId(synchronous);
+  final AsynchronousProcessContext context=new AsynchronousProcessContext(request,executionId,inputs,processManager,applicationContext);
+  contexts.put(executionId,context);
+  processManager.submit(executionId,processName,inputs,request.isAsynchronous());
+  if (request.isAsynchronous()) {
+    storedResponseWriters.submit(new Runnable(){
+      @Override public void run(){
+        context.writeResponseFile();
+      }
+    }
+);
+  }
+  return executionId;
+}

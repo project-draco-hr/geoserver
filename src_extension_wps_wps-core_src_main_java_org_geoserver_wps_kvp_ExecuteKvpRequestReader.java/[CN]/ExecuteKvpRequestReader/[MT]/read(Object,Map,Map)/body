@@ -16,5 +16,31 @@
  else   if (rawKvp.containsKey("rawDataOutput")) {
     execute.setResponseForm(parseRawDataOutput(pf.getResultInfo(processName,null),(String)rawKvp.get("rawDataOutput")));
   }
+ else {
+    ResponseFormType responseForm=factory.createResponseFormType();
+    responseForm.setResponseDocument(factory.createResponseDocumentType());
+    execute.setResponseForm(responseForm);
+  }
+  if ("true".equals(kvp.get("storeExecuteResponse"))) {
+    if (execute.getResponseForm().getResponseDocument() == null) {
+      throw new WPSException("InvalidParameterValue","Cannot store the response for raw data outputs, " + "please use response document instead");
+    }
+    execute.getResponseForm().getResponseDocument().setStoreExecuteResponse(true);
+  }
+  if ("true".equals(kvp.get("lineage"))) {
+    if (execute.getResponseForm().getResponseDocument() == null) {
+      throw new WPSException("InvalidParameterValue","Cannot provide lineage in the response for raw data outputs, " + "please use response document instead");
+    }
+    execute.getResponseForm().getResponseDocument().setLineage(true);
+  }
+  if ("true".equals(kvp.get("status"))) {
+    if (execute.getResponseForm().getResponseDocument() == null) {
+      throw new WPSException("InvalidParameterValue","Cannot add status with raw data outputs, " + "please use response document with store option instead");
+    }
+    if (!execute.getResponseForm().getResponseDocument().isStoreExecuteResponse()) {
+      throw new WPSException("InvalidParameterValue","Cannot add status if the response " + "is not stored, please add storeExecuteResponse=true your request");
+    }
+    execute.getResponseForm().getResponseDocument().setStatus(true);
+  }
   return execute;
 }

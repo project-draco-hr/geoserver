@@ -1,0 +1,15 @@
+{
+  ExecutionStatusEx status=new ExecutionStatusEx(processName,executionId);
+  ProcessListener listener=new ProcessListener(status);
+  status.listener=listener;
+  ProcessCallable callable=new ProcessCallable(inputs,status);
+  Future<Map<String,Object>> future;
+  if (background) {
+    future=asynchService.submit(callable);
+  }
+ else {
+    future=synchService.submit(callable);
+  }
+  status.future=future;
+  executions.put(executionId,status);
+}
