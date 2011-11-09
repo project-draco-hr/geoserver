@@ -1,0 +1,33 @@
+{
+  super(id);
+  LayerProvider provider=new LayerProvider(demo);
+  GeoServerTablePanel<FeatureTypeInfo> table=new GeoServerTablePanel<FeatureTypeInfo>("layer.table",provider){
+    @Override public Component getComponentForProperty(    String id,    IModel value,    Property<FeatureTypeInfo> property){
+      final FeatureTypeInfo layer=(FeatureTypeInfo)value.getObject();
+      final String text=property.getPropertyValue(layer).toString();
+      if (property == LayerProvider.name) {
+        return new Fragment(id,"layer.link",LayerChooser.this){
+{
+            add(new AjaxLink("link"){
+{
+                add(new Label("Layer.name",new Model(text)));
+              }
+              @Override public void onClick(              AjaxRequestTarget target){
+                PageParameters params=new PageParameters();
+                params.put("layer",layer.getPrefixedName());
+                params.put("style",demo.styleInfo().getName());
+                setResponsePage(CssDemoPage.class,params);
+              }
+            }
+);
+          }
+        }
+;
+      }
+ else {
+        return new Label(id,text);
+      }
+    }
+  }
+;
+}
