@@ -1,0 +1,32 @@
+{
+  super(id);
+  Form form=new Form("layer.name.form");
+  IValidator<String> nameValidator=new IValidator<String>(){
+    @Override public void validate(    IValidatable<String> text){
+      String value=text.getValue();
+      if (value.matches("\\s")) {
+        text.error(new ValidationError().setMessage("Spaces not allowed in style names"));
+      }
+ else {
+        text.error(new ValidationError().setMessage("That name is already taken!"));
+      }
+    }
+  }
+;
+  TextField nameField=new TextField("layer.name.field",new PropertyModel<String>(this,"name"));
+  nameField.add(nameValidator);
+  AjaxButton submitButton=new AjaxButton("submit.button",form){
+    @Override public void onSubmit(    AjaxRequestTarget target,    Form f){
+      if (demo.catalog().getStyleByName(name) != null)       throw new RuntimeException("Trying to create style with same name as existing one!");
+      demo.createCssTemplate(name);
+      PageParameters params=new PageParameters();
+      params.put("layer",demo.layerInfo().getPrefixedName());
+      params.put("style",name);
+      setResponsePage(CssDemoPage.class,params);
+    }
+  }
+;
+  form.add(nameField);
+  form.add(submitButton);
+  add(form);
+}
