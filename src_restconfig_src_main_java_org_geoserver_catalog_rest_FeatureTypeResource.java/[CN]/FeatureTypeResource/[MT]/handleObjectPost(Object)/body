@@ -20,26 +20,28 @@
   }
   featureType.setEnabled(true);
   DataStoreInfo ds=catalog.getDataStoreByName(workspace,dataStore);
-  String typeName=featureType.getName();
-  if (featureType.getNativeName() != null) {
-    typeName=featureType.getNativeName();
-  }
-  boolean typeExists=false;
-  DataStore gtds=(DataStore)ds.getDataStore(null);
-  for (  String name : gtds.getTypeNames()) {
-    if (name.equals(typeName)) {
-      typeExists=true;
-      break;
+  if (ds.getDataStore(null) instanceof DataStore) {
+    String typeName=featureType.getName();
+    if (featureType.getNativeName() != null) {
+      typeName=featureType.getNativeName();
     }
-  }
-  MetadataMap mdm=featureType.getMetadata();
-  boolean virtual=mdm != null && mdm.containsKey(FeatureTypeInfo.JDBC_VIRTUAL_TABLE);
-  if (!virtual && !typeExists) {
-    gtds.createSchema(buildFeatureType(featureType));
-    featureType.getAttributes().clear();
-    List<String> typeNames=Arrays.asList(gtds.getTypeNames());
-    if (!typeNames.contains(typeName) && typeNames.contains(typeName.toUpperCase())) {
-      featureType.setNativeName(featureType.getName().toLowerCase());
+    boolean typeExists=false;
+    DataStore gtds=(DataStore)ds.getDataStore(null);
+    for (    String name : gtds.getTypeNames()) {
+      if (name.equals(typeName)) {
+        typeExists=true;
+        break;
+      }
+    }
+    MetadataMap mdm=featureType.getMetadata();
+    boolean virtual=mdm != null && mdm.containsKey(FeatureTypeInfo.JDBC_VIRTUAL_TABLE);
+    if (!virtual && !typeExists) {
+      gtds.createSchema(buildFeatureType(featureType));
+      featureType.getAttributes().clear();
+      List<String> typeNames=Arrays.asList(gtds.getTypeNames());
+      if (!typeNames.contains(typeName) && typeNames.contains(typeName.toUpperCase())) {
+        featureType.setNativeName(featureType.getName().toLowerCase());
+      }
     }
   }
   CatalogBuilder cb=new CatalogBuilder(catalog);
