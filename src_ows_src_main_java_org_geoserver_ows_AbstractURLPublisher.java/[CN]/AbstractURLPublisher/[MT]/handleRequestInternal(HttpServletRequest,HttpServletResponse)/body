@@ -1,0 +1,54 @@
+{
+  URL url=getUrl(request);
+  if (url == null) {
+    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+    return null;
+  }
+  File file=DataUtilities.urlToFile(url);
+  if (file != null && file.exists() && file.isDirectory()) {
+    String uri=request.getRequestURI().toString();
+    uri+=uri.endsWith("/") ? "index.html" : "/index.html";
+    response.addHeader("Location",uri);
+    response.sendError(HttpServletResponse.SC_MOVED_TEMPORARILY);
+    return null;
+  }
+  String mime=getServletContext().getMimeType(new File(url.getFile()).getName());
+  if (mime != null) {
+    response.setContentType(mime);
+  }
+  URLConnection connection=null;
+  InputStream input=null;
+  try {
+    connection=url.openConnection();
+    long length=connection.getContentLength();
+    if (length > 0 && length <= Integer.MAX_VALUE) {
+      response.setContentLength((int)length);
+    }
+    long lastModified=connection.getLastModified();
+    if (lastModified > 0) {
+      SimpleDateFormat format=new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss",Locale.ENGLISH);
+      format.setTimeZone(TimeZone.getTimeZone("GMT"));
+      String formatted=format.format(new Date(lastModified)) + " GMT";
+      response.setHeader("Last-Modified",formatted);
+    }
+    EncodingInfo encInfo=null;
+    OutputStream output=null;
+    final byte[] b4=new byte[4];
+    int count=0;
+    input=connection.getInputStream();
+    count=input.read(b4);
+    encInfo=XmlCharsetDetector.getEncodingName(b4,count);
+    response.setCharacterEncoding(encInfo.getEncoding() != null ? encInfo.getEncoding() : "UTF-8");
+    output=response.getOutputStream();
+    output.write(b4,0,count);
+    byte[] buffer=new byte[8192];
+    int n=-1;
+    while ((n=input.read(buffer)) != -1) {
+      output.write(buffer,0,n);
+    }
+  }
+  finally {
+    if (input != null)     input.close();
+  }
+  return null;
+}

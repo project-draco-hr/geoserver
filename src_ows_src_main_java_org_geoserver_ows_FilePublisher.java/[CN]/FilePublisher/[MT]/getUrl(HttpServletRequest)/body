@@ -1,0 +1,21 @@
+{
+  String ctxPath=request.getContextPath();
+  String reqPath=request.getRequestURI();
+  reqPath=reqPath.substring(ctxPath.length());
+  if ((reqPath.length() > 1) && reqPath.startsWith("/")) {
+    reqPath=reqPath.substring(1);
+  }
+  File file=loader.find(reqPath);
+  if (file == null && scloader != null) {
+    ServletContextResource resource=(ServletContextResource)scloader.getResource(reqPath);
+    if (resource != null && resource.exists()) {
+      file=resource.getFile();
+    }
+  }
+  if (file != null) {
+    return DataUtilities.fileToURL(file);
+  }
+ else {
+    return null;
+  }
+}
