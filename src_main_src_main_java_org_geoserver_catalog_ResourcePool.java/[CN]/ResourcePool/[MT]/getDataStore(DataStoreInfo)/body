@@ -1,7 +1,7 @@
 {
+  DataAccess<? extends FeatureType,? extends Feature> dataStore=null;
   try {
     String id=info.getId();
-    DataAccess<? extends FeatureType,? extends Feature> dataStore;
     dataStore=(DataAccess<? extends FeatureType,? extends Feature>)dataStoreCache.get(id);
     if (dataStore == null) {
 synchronized (dataStoreCache) {
@@ -59,10 +59,19 @@ synchronized (dataStoreCache) {
     }
     return dataStore;
   }
- catch (  IOException ioe) {
-    throw ioe;
-  }
-catch (  Exception e) {
-    throw (IOException)new IOException().initCause(e);
+ catch (  Exception e) {
+    if (dataStore != null) {
+      try {
+        dataStore.dispose();
+      }
+ catch (      Exception ex) {
+      }
+    }
+    if (e instanceof IOException) {
+      throw (IOException)e;
+    }
+ else {
+      throw (IOException)new IOException().initCause(e);
+    }
   }
 }
