@@ -1,0 +1,21 @@
+{
+  String threadId=Thread.currentThread().getId() + " ";
+  for (int i=0; i < loops && exception == null; i++) {
+    String base="/rest/workspaces/" + workspace + "/datastores/"+ store+ "/featuretypes/";
+    String xml="<featureType>" + "<name>" + typeName + "</name>"+ "<nativeName>"+ typeName+ "</nativeName>"+ "<srs>EPSG:4326</srs>"+ "<nativeCRS>EPSG:4326</nativeCRS>"+ "<nativeBoundingBox>"+ "<minx>0.0</minx>"+ "<maxx>1.0</maxx>"+ "<miny>0.0</miny>"+ "<maxy>1.0</maxy>"+ "<crs>EPSG:4326</crs>"+ "</nativeBoundingBox>"+ "<store>"+ store+ "</store>"+ "</featureType>";
+    LOGGER.info(threadId + "Adding " + typeName);
+    MockHttpServletResponse response=postAsServletResponse(base,xml,"text/xml");
+    assertEquals(201,response.getStatusCode());
+    assertNotNull(response.getHeader("Location"));
+    assertTrue(response.getHeader("Location").endsWith(base + typeName));
+    LOGGER.info(threadId + "Checking " + typeName);
+    String resourcePath="/rest/layers/" + workspace + ":"+ typeName;
+    response=getAsServletResponse(resourcePath + ".xml");
+    assertEquals(200,response.getStatusCode());
+    LOGGER.info(threadId + "Reloading catalog");
+    assertEquals(200,postAsServletResponse("/rest/reload","").getStatusCode());
+    LOGGER.info(threadId + "Removing layer");
+    String deletePath=resourcePath + "?recurse=true";
+    assertEquals(200,deleteAsServletResponse(deletePath).getStatusCode());
+  }
+}

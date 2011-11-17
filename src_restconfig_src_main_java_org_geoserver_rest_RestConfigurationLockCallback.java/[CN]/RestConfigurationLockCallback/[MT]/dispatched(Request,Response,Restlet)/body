@@ -1,0 +1,22 @@
+{
+  Method m=request.getMethod();
+  if (restlet instanceof Route) {
+    restlet=((Route)restlet).getNext();
+  }
+  if (restlet instanceof BeanDelegatingRestlet) {
+    restlet=((BeanDelegatingRestlet)restlet).getBean();
+  }
+  if (restlet != null) {
+    if (restlet.getClass().getPackage().getName().startsWith("org.geoserver.catalog.rest")) {
+      LockType type;
+      if ((m == Method.DELETE || m == Method.COPY || m == Method.MKCOL || m == Method.MOVE || m == Method.PROPPATCH || m == Method.POST || m == Method.PUT)) {
+        type=LockType.WRITE;
+      }
+ else {
+        type=LockType.READ;
+      }
+      THREAD_LOCK.set(type);
+      locker.lock(type);
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  LockType type=THREAD_LOCK.get();
+  if (type != null) {
+    return;
+  }
+  if (target instanceof IPageRequestTarget) {
+    IPageRequestTarget pt=(IPageRequestTarget)target;
+    Page page=pt.getPage();
+    if (page instanceof GeoServerSecuredPage) {
+      type=LockType.WRITE;
+    }
+  }
+ else   if (target instanceof IBookmarkablePageRequestTarget) {
+    IBookmarkablePageRequestTarget bt=(IBookmarkablePageRequestTarget)target;
+    if (GeoServerSecuredPage.class.isAssignableFrom(bt.getPageClass())) {
+      type=LockType.WRITE;
+    }
+  }
+  if (type == null) {
+    type=LockType.READ;
+  }
+  THREAD_LOCK.set(type);
+  locker.lock(type);
+}
