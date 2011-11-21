@@ -1,0 +1,64 @@
+{
+  T service=infoModel.getObject();
+  Form form=new Form("form",new CompoundPropertyModel(infoModel));
+  add(form);
+  if (service.getWorkspace() == null) {
+    form.add(new GlobalWorkspacePanel("workspace"));
+  }
+ else {
+    form.add(new LocalWorkspacePanel("workspace",service));
+  }
+  form.add(new AjaxLink("workspaceHelp"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      dialog.showInfo(target,new StringResourceModel("workspaceHelp.title",BaseServiceAdminPage.this,null),new StringResourceModel("workspaceHelp.message.1",BaseServiceAdminPage.this,null),new StringResourceModel("workspaceHelp.message.2",BaseServiceAdminPage.this,null),new StringResourceModel("workspaceHelp.message.3",BaseServiceAdminPage.this,null));
+    }
+  }
+);
+  form.add(new Label("service.enabled",new StringResourceModel("service.enabled",this,null,new Object[]{getServiceName()})));
+  form.add(new TextField("maintainer"));
+  TextField onlineResource=new TextField("onlineResource");
+  onlineResource.add(new UrlValidator());
+  form.add(onlineResource);
+  form.add(new CheckBox("enabled"));
+  form.add(new CheckBox("citeCompliant"));
+  form.add(new TextField("title"));
+  form.add(new TextArea("abstract"));
+  form.add(new KeywordsEditor("keywords",LiveCollectionModel.list(new PropertyModel(infoModel,"keywords"))));
+  form.add(new TextField("fees"));
+  form.add(new TextField("accessConstraints"));
+  build(infoModel,form);
+  ListView extensionPanels=createExtensionPanelList("extensions",infoModel);
+  form.add(extensionPanels);
+  SubmitLink submit=new SubmitLink("submit",new StringResourceModel("save",(Component)null,null)){
+    @Override public void onSubmit(){
+      try {
+        handleSubmit((T)infoModel.getObject());
+        if (responsePage != null) {
+          setResponsePage(responsePage);
+        }
+ else {
+          setResponsePage(GeoServerHomePage.class);
+        }
+      }
+ catch (      Exception e) {
+        error(e);
+      }
+    }
+  }
+;
+  form.add(submit);
+  Button cancel=new Button("cancel",new StringResourceModel("cancel",(Component)null,null)){
+    public void onSubmit(){
+      if (responsePage != null) {
+        setResponsePage(responsePage);
+      }
+ else {
+        setResponsePage(GeoServerHomePage.class);
+      }
+    }
+  }
+;
+  form.add(cancel);
+  dialog=new GeoServerDialog("dialog");
+  add(dialog);
+}

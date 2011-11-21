@@ -1,9 +1,12 @@
 {
-  if (service.getId() == null) {
-    throw new NullPointerException("service id must not be null");
-  }
-  if (facade.getService(service.getId(),ServiceInfo.class) != null) {
+  if (service.getId() != null && facade.getService(service.getId(),ServiceInfo.class) != null) {
     throw new IllegalArgumentException("service with id '" + service.getId() + "' already exists");
+  }
+  WorkspaceInfo workspace=service.getWorkspace();
+  if (workspace != null) {
+    if (facade.getServiceByName(service.getName(),workspace,ServiceInfo.class) != null) {
+      throw new IllegalArgumentException("service with name '" + service.getName() + "' already exists in workspace '"+ workspace.getName()+ "'");
+    }
   }
   facade.add(service);
   firePostServiceModified(service);

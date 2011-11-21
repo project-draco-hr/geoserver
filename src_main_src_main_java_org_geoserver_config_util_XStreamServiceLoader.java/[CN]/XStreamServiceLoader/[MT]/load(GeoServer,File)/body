@@ -1,0 +1,19 @@
+{
+  String filename=getFilename();
+  File file=resourceLoader.find(directory,filename);
+  if (file != null && file.exists()) {
+    BufferedInputStream in=new BufferedInputStream(new FileInputStream(file));
+    try {
+      XStreamPersister xp=xpf.createXMLPersister();
+      initXStreamPersister(xp,gs);
+      return initialize(xp.load(in,getServiceClass()));
+    }
+  finally {
+      in.close();
+    }
+  }
+ else {
+    ServiceInfo service=createServiceFromScratch(gs);
+    return initialize((T)service);
+  }
+}

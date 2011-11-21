@@ -1,0 +1,60 @@
+{
+  super(id,new Model());
+  services=services(wsModel);
+  ListView<Service> serviceList=new ListView<Service>("services",services){
+    @Override protected void populateItem(    ListItem<Service> item){
+      Service service=item.getModelObject();
+      final Link<Service> link=new Link<Service>("link",new Model(service)){
+        @Override public void onClick(){
+          Service s=getModelObject();
+          Page page=null;
+          if (s.model instanceof ExistingServiceModel) {
+            PageParameters pp=new PageParameters("workspace=" + wsModel.getObject().getName());
+            try {
+              page=s.adminPage.getComponentClass().getConstructor(PageParameters.class).newInstance(pp);
+            }
+ catch (            Exception e) {
+              throw new WicketRuntimeException(e);
+            }
+          }
+ else {
+            try {
+              page=s.adminPage.getComponentClass().getConstructor(s.adminPage.getServiceClass()).newInstance(s.model.getObject());
+            }
+ catch (            Exception e) {
+              throw new WicketRuntimeException(e);
+            }
+          }
+          ((BaseServiceAdminPage)page).responsePage(WorkspaceEditPage.this);
+          setResponsePage(page);
+        }
+      }
+;
+      link.setOutputMarkupId(true);
+      link.setEnabled(service.enabled);
+      AjaxCheckBox enabled=new AjaxCheckBox("enabled",new PropertyModel<Boolean>(service,"enabled")){
+        @Override protected void onUpdate(        AjaxRequestTarget target){
+          link.setEnabled(getModelObject());
+          target.addComponent(link);
+        }
+      }
+;
+      item.add(enabled);
+      ServiceMenuPageInfo info=service.adminPage;
+      link.add(new AttributeModifier("title",true,new StringResourceModel(info.getDescriptionKey(),(Component)null,null)));
+      link.add(new Label("link.label",new StringResourceModel(info.getTitleKey(),(Component)null,null)));
+      Image image;
+      if (info.getIcon() != null) {
+        image=new Image("link.icon",new ResourceReference(info.getComponentClass(),info.getIcon()));
+      }
+ else {
+        image=new Image("link.icon",new ResourceReference(GeoServerBasePage.class,"img/icons/silk/wrench.png"));
+      }
+      image.add(new AttributeModifier("alt",true,new ParamResourceModel(info.getTitleKey(),null)));
+      link.add(image);
+      item.add(link);
+    }
+  }
+;
+  add(serviceList);
+}
