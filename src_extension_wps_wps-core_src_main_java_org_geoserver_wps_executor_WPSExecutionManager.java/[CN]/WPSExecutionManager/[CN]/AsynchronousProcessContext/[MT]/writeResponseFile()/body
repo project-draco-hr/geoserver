@@ -1,34 +1,29 @@
 {
-  resourceManager.setCurrentExecutionId(executionId);
-  ExecuteResponseBuilder responseBuilder=new ExecuteResponseBuilder(request.getRequest(),applicationContext,started);
-  responseBuilder.setExecutionId(executionId);
   try {
-    Map<String,Object> outputs=processManager.getOutput(executionId,-1);
-    responseBuilder.setOutputs(outputs);
-  }
- catch (  Exception exception) {
-    responseBuilder.setException(exception);
-  }
-  ExecuteResponseType response=responseBuilder.build();
-  File output=resourceManager.getStoredResponseFile(executionId);
-  File tmpOutput=new File(output.getParent(),"tmp" + output.getName());
-  XmlObjectEncodingResponse encoder=new XmlObjectEncodingResponse(ExecuteResponseType.class,"ExecuteResponse",WPSConfiguration.class);
-  FileOutputStream fos=null;
-  try {
-    fos=new FileOutputStream(tmpOutput);
-    encoder.write(response,fos,null);
-    fos.flush();
-    fos.close();
-    if (!tmpOutput.renameTo(output)) {
-      LOGGER.log(Level.SEVERE,"Failed to rename " + tmpOutput + " to "+ output);
+    resourceManager.setCurrentExecutionId(executionId);
+    ExecuteResponseBuilder responseBuilder=new ExecuteResponseBuilder(request.getRequest(),applicationContext,started);
+    responseBuilder.setExecutionId(executionId);
+    try {
+      Map<String,Object> outputs=processManager.getOutput(executionId,-1);
+      responseBuilder.setOutputs(outputs);
+    }
+ catch (    Exception exception) {
+      responseBuilder.setException(exception);
+    }
+    File output=resourceManager.getStoredResponseFile(executionId);
+    try {
+      writeOutResponse(responseBuilder,output);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Request failed during output encoding",e);
+      responseBuilder.setException(e);
+      writeOutResponse(responseBuilder,output);
     }
   }
- catch (  IOException e) {
+ catch (  Exception e) {
     LOGGER.log(Level.SEVERE,"Failed to write out the stored WPS response for executionId " + executionId,e);
   }
  finally {
-    IOUtils.closeQuietly(fos);
-    tmpOutput.delete();
     contexts.remove(executionId);
   }
 }
