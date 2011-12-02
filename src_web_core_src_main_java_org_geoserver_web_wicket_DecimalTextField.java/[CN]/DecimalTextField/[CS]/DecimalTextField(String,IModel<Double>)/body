@@ -1,0 +1,25 @@
+{
+  super(id,model,Double.class);
+  format=DecimalFormat.getInstance();
+  format.setMaximumFractionDigits(16);
+  decimalConverter=new IConverter(){
+    private static final long serialVersionUID=1L;
+    @Override public String convertToString(    Object value,    Locale locale){
+      return value == null ? null : format.format(value);
+    }
+    @Override public Object convertToObject(    String value,    Locale locale){
+      if (value == null || value.trim().length() == 0) {
+        return null;
+      }
+      Number parsed;
+      try {
+        parsed=format.parse(value);
+      }
+ catch (      ParseException e) {
+        throw new RuntimeException(e);
+      }
+      return Double.valueOf(parsed.doubleValue());
+    }
+  }
+;
+}
