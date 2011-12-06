@@ -3,13 +3,25 @@
   if (frameCatalog == null) {
     throw new RuntimeException("Animator initialization error!");
   }
-  FrameCatalogVisitor visitor=new FrameCatalogVisitor();
-  frameCatalog.getFrames(visitor);
-  RenderedImage imageList=visitor.produce(frameCatalog.getWmsConfiguration());
-  request=DefaultWebMapService.autoSetMissingProperties(request);
   if (request.getFormat() == null) {
     request.setFormat(GIF_ANIMATED_FORMAT);
   }
+  if (frameCatalog.getParameter().equalsIgnoreCase("LAYERS")) {
+    List<String> layers0=Arrays.asList(frameCatalog.getValues()[0].replaceAll("\\\\,",",").split("\\s*,\\s*"));
+    LayerParser parser=new LayerParser(wmsConfiguration);
+    List<MapLayerInfo> layers=parser.parseLayerInfos(layers0,request.getRemoteOwsURL(),request.getRemoteOwsType());
+    request.setLayers(layers);
+  }
+  request=DefaultWebMapService.autoSetMissingProperties(request);
+  if (frameCatalog.getParameter().equalsIgnoreCase("LAYERS")) {
+    Envelope bbox=request.getBbox();
+    request.getRawKvp().put("BBOX",bbox.getMinX() + "," + request.getBbox().getMinY()+ ","+ request.getBbox().getMaxX()+ ","+ request.getBbox().getMaxY());
+    request.getRawKvp().put("WIDTH",String.valueOf(request.getWidth()));
+    request.getRawKvp().put("HEIGHT",String.valueOf(request.getHeight()));
+  }
+  FrameCatalogVisitor visitor=new FrameCatalogVisitor();
+  frameCatalog.getFrames(visitor);
+  RenderedImage imageList=visitor.produce(frameCatalog.getWmsConfiguration());
   WebMap wmsResponse=wms.getMap(request);
   return new RenderedImageMap(((RenderedImageMap)wmsResponse).getMapContext(),imageList,wmsResponse.getMimeType());
 }
