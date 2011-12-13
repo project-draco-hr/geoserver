@@ -1,4 +1,13 @@
 {
+  SortBy[] sortBy=query.getSortBy();
+  if (sortBy != null && sortBy != SortBy.UNSORTED) {
+    if (!source.getQueryCapabilities().supportsSorting(sortBy)) {
+      query.setSortBy(null);
+    }
+ else {
+      sortBy=null;
+    }
+  }
   Integer offset=null, maxFeatures=null;
   if (query.getStartIndex() != null) {
     if (!source.getQueryCapabilities().isOffsetSupported()) {
@@ -13,6 +22,9 @@
   CoordinateReferenceSystem targetCRS=query.getCoordinateSystemReproject();
   try {
     SimpleFeatureCollection fc=source.getFeatures(newQuery);
+    if (sortBy != null) {
+      fc=new SortedSimpleFeatureCollection(fc,sortBy);
+    }
     if (offset != null) {
       fc=new MaxSimpleFeatureCollection(fc,offset,maxFeatures);
     }
