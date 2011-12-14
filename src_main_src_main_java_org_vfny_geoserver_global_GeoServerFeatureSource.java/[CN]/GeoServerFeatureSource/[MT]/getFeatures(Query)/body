@@ -1,18 +1,22 @@
 {
   SortBy[] sortBy=query.getSortBy();
+  Integer offset=null, maxFeatures=null;
   if (sortBy != null && sortBy != SortBy.UNSORTED) {
     if (!source.getQueryCapabilities().supportsSorting(sortBy)) {
       query.setSortBy(null);
+      offset=query.getStartIndex();
+      maxFeatures=query.getMaxFeatures() == Integer.MAX_VALUE ? null : query.getMaxFeatures();
+      query.setStartIndex(null);
+      query.setMaxFeatures(Query.DEFAULT_MAX);
     }
  else {
       sortBy=null;
     }
   }
-  Integer offset=null, maxFeatures=null;
   if (query.getStartIndex() != null) {
     if (!source.getQueryCapabilities().isOffsetSupported()) {
       offset=query.getStartIndex();
-      maxFeatures=query.getMaxFeatures();
+      maxFeatures=query.getMaxFeatures() == Integer.MAX_VALUE ? null : query.getMaxFeatures();
       query.setStartIndex(null);
       query.setMaxFeatures(Query.DEFAULT_MAX);
     }
@@ -25,8 +29,8 @@
     if (sortBy != null) {
       fc=new SortedSimpleFeatureCollection(fc,sortBy);
     }
-    if (offset != null) {
-      fc=new MaxSimpleFeatureCollection(fc,offset,maxFeatures);
+    if (offset != null || maxFeatures != null) {
+      fc=new MaxSimpleFeatureCollection(fc,offset == null ? 0 : offset,maxFeatures == null ? Integer.MAX_VALUE : maxFeatures);
     }
     return applyProjectionPolicies(targetCRS,fc);
   }
