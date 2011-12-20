@@ -1,4 +1,5 @@
 {
+  Catalog catalog=geoServer.getCatalog();
   Boolean strict=(Boolean)kvp.get("strict");
   if (strict == null) {
     strict=Boolean.FALSE;
@@ -9,6 +10,7 @@
     parser.getNamespaces().declarePrefix(ns.getPrefix(),ns.getURI());
   }
   parser.setValidating(strict.booleanValue());
+  parser.getURIHandlers().add(new WFSURIHandler(geoServer));
   Object parsed=parser.parse(reader);
   if (strict.booleanValue() && !parser.getValidationErrors().isEmpty()) {
     WFSException exception=new WFSException("Invalid request","InvalidParameterValue");

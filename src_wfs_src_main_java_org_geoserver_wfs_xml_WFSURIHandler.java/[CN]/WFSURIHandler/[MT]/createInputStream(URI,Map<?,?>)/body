@@ -1,0 +1,42 @@
+{
+  Catalog catalog=geoServer.getCatalog();
+  try {
+    KvpMap kv=parseQueryString(uri.query());
+    WFSInfo.Version ver=WFSInfo.Version.negotiate((String)kv.get("VERSION"));
+    DescribeFeatureTypeKvpRequestReader dftReqReader=null;
+switch (ver) {
+case V_10:
+case V_11:
+      dftReqReader=new DescribeFeatureTypeKvpRequestReader(catalog);
+    break;
+default :
+  dftReqReader=new org.geoserver.wfs.kvp.v2_0.DescribeFeatureTypeKvpRequestReader(catalog);
+}
+KvpMap parsed=new KvpMap(kv);
+KvpUtils.parse(parsed);
+DescribeFeatureTypeRequest request=DescribeFeatureTypeRequest.adapt(dftReqReader.read(dftReqReader.createRequest(),parsed,kv));
+request.setBaseUrl(uri.scheme() + "://" + uri.host()+ ":"+ uri.port()+ uri.path());
+DescribeFeatureType dft=new DescribeFeatureType(geoServer.getService(WFSInfo.class),catalog);
+FeatureTypeInfo[] featureTypes=dft.run(request);
+XmlSchemaEncoder schemaEncoder=null;
+switch (ver) {
+case V_10:
+schemaEncoder=new XmlSchemaEncoder.V10(geoServer);
+break;
+case V_11:
+schemaEncoder=new XmlSchemaEncoder.V11(geoServer);
+break;
+case V_20:
+default :
+schemaEncoder=new XmlSchemaEncoder.V20(geoServer);
+}
+Operation op=new Operation("DescribeFeatureType",new Service("WFS",null,null,null),null,new Object[]{request.getAdaptee()});
+ByteArrayOutputStream bout=new ByteArrayOutputStream();
+schemaEncoder.write(featureTypes,bout,op);
+return new ByteArrayInputStream(bout.toByteArray());
+}
+ catch (Exception e) {
+LOGGER.log(Level.WARNING,"Unable to handle DescribeFeatureType uri: " + uri,e);
+}
+return super.createInputStream(uri,options);
+}
