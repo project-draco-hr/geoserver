@@ -17,11 +17,22 @@
   form.add(usernamePanel);
   PropertyModel passwordModel=new PropertyModel(model,"password");
   form.add(password=new PasswordParamPanel("passwordPanel",passwordModel,new ResourceModel("AbstractWMSStorePage.password"),false));
-  PropertyModel connectionsModel=new PropertyModel(model,"maxConnections");
-  if (store.getMaxConnections() <= 0) {
-    connectionsModel.setObject(Integer.valueOf(6));
+  final PropertyModel<Boolean> useHttpConnectionPoolModel=new PropertyModel<Boolean>(model,"useConnectionPooling");
+  CheckBoxParamPanel useConnectionPooling=new CheckBoxParamPanel("useConnectionPoolingPanel",useHttpConnectionPoolModel,new ResourceModel("AbstractWMSStorePage.useHttpConnectionPooling"));
+  form.add(useConnectionPooling);
+  PropertyModel<String> connectionsModel=new PropertyModel<String>(model,"maxConnections");
+  final TextParamPanel maxConnections=new TextParamPanel("maxConnectionsPanel",connectionsModel,new ResourceModel("AbstractWMSStorePage.maxConnections"),true,new RangeValidator<Integer>(1,128));
+  maxConnections.setOutputMarkupId(true);
+  maxConnections.setEnabled(useHttpConnectionPoolModel.getObject());
+  form.add(maxConnections);
+  useConnectionPooling.getFormComponent().add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      boolean enabled=useHttpConnectionPoolModel.getObject();
+      maxConnections.setEnabled(enabled);
+      target.addComponent(maxConnections);
+    }
   }
-  form.add(new TextParamPanel("maxConnectionsPanel",connectionsModel,new ResourceModel("AbstractWMSStorePage.maxConnections"),true,new RangeValidator<Integer>(1,128)));
+);
   PropertyModel<Integer> connectTimeoutModel=new PropertyModel<Integer>(model,"connectTimeout");
   form.add(new TextParamPanel("connectTimeoutPanel",connectTimeoutModel,new ResourceModel("AbstractWMSStorePage.connectTimeout"),true,new RangeValidator<Integer>(1,240)));
   PropertyModel<Integer> readTimeoutModel=new PropertyModel<Integer>(model,"readTimeout");

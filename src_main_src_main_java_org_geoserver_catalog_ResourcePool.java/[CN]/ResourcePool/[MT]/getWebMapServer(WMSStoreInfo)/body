@@ -6,9 +6,17 @@
 synchronized (wmsCache) {
         wms=(WebMapServer)wmsCache.get(id);
         if (wms == null) {
-          MultithreadedHttpClient client=new MultithreadedHttpClient();
-          if (info.getMaxConnections() > 0) {
-            client.setMaxConnections(info.getMaxConnections());
+          HTTPClient client;
+          if (info.isUseConnectionPooling()) {
+            client=new MultithreadedHttpClient();
+            if (info.getMaxConnections() > 0) {
+              int maxConnections=info.getMaxConnections();
+              MultithreadedHttpClient mtClient=(MultithreadedHttpClient)client;
+              mtClient.setMaxConnections(maxConnections);
+            }
+          }
+ else {
+            client=new SimpleHttpClient();
           }
           String username=info.getUsername();
           String password=info.getPassword();
