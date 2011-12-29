@@ -1,0 +1,19 @@
+{
+  String url="wms?LAYERS=" + getLayerId(MockData.TASMANIA_DEM) + "&styles=demTranslucent&"+ "FORMAT=image%2Fpng&SERVICE=WMS&VERSION=1.1.1"+ "&REQUEST=GetMap&SRS=EPSG%3A4326"+ "&BBOX=145,-43,146,-41&WIDTH=100&HEIGHT=200&bgcolor=0xFF0000";
+  BufferedImage bi=getAsImage(url,"image/png");
+  ColorModel cm=bi.getColorModel();
+  assertTrue(cm instanceof IndexColorModel);
+  assertEquals(Transparency.OPAQUE,cm.getTransparency());
+  int[] pixel=new int[1];
+  bi.getRaster().getPixel(4,196,pixel);
+  int[] color=new int[3];
+  cm.getComponents(pixel[0],color,0);
+  assertEquals(255,color[0]);
+  assertEquals(0,color[1]);
+  assertEquals(0,color[2]);
+  bi.getRaster().getPixel(56,49,pixel);
+  cm.getComponents(pixel[0],color,0);
+  assertEquals(0,color[0]);
+  assertEquals(255,color[1]);
+  assertEquals(0,color[2]);
+}
