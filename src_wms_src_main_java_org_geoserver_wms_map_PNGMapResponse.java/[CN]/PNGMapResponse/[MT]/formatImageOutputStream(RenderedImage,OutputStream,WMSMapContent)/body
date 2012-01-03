@@ -12,8 +12,11 @@
   SampleModel sm=image.getSampleModel();
   int numBits=sm.getSampleSize(0);
   boolean nativeAcceleration=PNGNativeAcc.booleanValue() && !(numBits > 1 && numBits < 8);
-  ImageWorker iw=new ImageWorker(image);
   boolean png8="image/png8".equalsIgnoreCase(format);
+  if (png8 && !(image.getColorModel() instanceof IndexColorModel)) {
+    image=forceIndexed8Bitmask(image,null);
+  }
+  ImageWorker iw=new ImageWorker(image);
   iw.writePNG(outStream,"FILTERED",quality,nativeAcceleration,png8);
   RasterCleaner.addImage(iw.getRenderedImage());
   if (LOGGER.isLoggable(Level.FINE)) {
