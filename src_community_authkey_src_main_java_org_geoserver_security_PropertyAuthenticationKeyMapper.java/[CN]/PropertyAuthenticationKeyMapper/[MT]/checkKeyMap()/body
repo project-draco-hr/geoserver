@@ -1,0 +1,26 @@
+{
+  if ((userMap == null) || userDefinitionsFile == null || userDefinitionsFile.isStale()) {
+    try {
+      if (userDefinitionsFile == null) {
+        File propFile=getPropertyFile();
+        if (propFile != null) {
+          if (!propFile.exists()) {
+            writeDefaultPropertyFile(propFile);
+          }
+          if (propFile.exists()) {
+            userDefinitionsFile=new PropertyFileWatcher(propFile);
+          }
+        }
+      }
+      if (userDefinitionsFile == null) {
+        userMap=Collections.emptyMap();
+      }
+ else {
+        userMap=new HashMap(userDefinitionsFile.getProperties());
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"An error occurred loading user definitions",e);
+    }
+  }
+}

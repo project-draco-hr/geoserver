@@ -1,0 +1,15 @@
+{
+  String name=mapper.getUserName(key);
+  if (name == null) {
+    throw new BadCredentialsException("The authentication key " + key + " is either invalid or expired");
+  }
+  UserDetails ud=userDetailsService.loadUserByUsername(name);
+  if (ud == null) {
+    LOGGER.severe("Authentication failed, key " + key + " mapped to user "+ name+ " which is not recognized by GeoServer");
+    throw new ProviderNotFoundException("Failed to map authkey " + key + " to a valid GeoServer user");
+  }
+ else {
+    Authentication authentication=new KeyAuthenticationToken(key,ud);
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+  }
+}

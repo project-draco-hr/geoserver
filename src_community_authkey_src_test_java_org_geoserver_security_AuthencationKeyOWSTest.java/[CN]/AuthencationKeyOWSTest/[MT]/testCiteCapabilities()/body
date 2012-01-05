@@ -1,0 +1,9 @@
+{
+  Document doc=getAsDOM("wms?request=GetCapabilities&version=1.1.0&authkey=" + citeKey);
+  XpathEngine engine=XMLUnit.newXpathEngine();
+  assertTrue(engine.getMatchingNodes("//Layer/Name[starts-with(text(), 'sf:')]",doc).getLength() > 1);
+  assertTrue(engine.getMatchingNodes("//Layer/Name[starts-with(text(), 'cite:')]",doc).getLength() > 1);
+  assertEquals(0,engine.getMatchingNodes("//Layer/Name[starts-with(text(), 'cdf:')]",doc).getLength());
+  String url=engine.evaluate("//GetMap/DCPType/HTTP/Get/OnlineResource/@xlink:href",doc);
+  assertTrue(url.contains("&authkey=" + citeKey));
+}
