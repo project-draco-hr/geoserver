@@ -1,0 +1,31 @@
+{
+  super(id,new Model());
+  SettingsInfo settings=getGeoServer().getSettings(model.getObject());
+  set=new Settings();
+  set.enabled=settings != null;
+  set.model=settings != null ? new ExistingSettingsModel(wsModel) : new NewSettingsModel(wsModel);
+  add(new CheckBox("enabled",new PropertyModel<Boolean>(set,"enabled")).add(new AjaxFormComponentUpdatingBehavior("onclick"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      contactPanel.setVisible(set.enabled);
+      otherSettingsPanel.setVisible(set.enabled);
+      target.addComponent(settingsContainer);
+    }
+  }
+));
+  settingsContainer=new WebMarkupContainer("settingsContainer");
+  settingsContainer.setOutputMarkupId(true);
+  add(settingsContainer);
+  contactPanel=new ContactPanel("contact",new CompoundPropertyModel<ContactInfo>(new PropertyModel<ContactInfo>(set.model,"contact")));
+  contactPanel.setOutputMarkupId(true);
+  contactPanel.setVisible(set.enabled);
+  settingsContainer.add(contactPanel);
+  otherSettingsPanel=new WebMarkupContainer("otherSettings",new CompoundPropertyModel<GeoServerInfo>(set.model));
+  otherSettingsPanel.setOutputMarkupId(true);
+  otherSettingsPanel.setVisible(set.enabled);
+  otherSettingsPanel.add(new CheckBox("verbose"));
+  otherSettingsPanel.add(new CheckBox("verboseExceptions"));
+  otherSettingsPanel.add(new TextField<Integer>("numDecimals").add(new MinimumValidator<Integer>(0)));
+  otherSettingsPanel.add(new DropDownChoice("charset",GlobalSettingsPage.AVAILABLE_CHARSETS));
+  otherSettingsPanel.add(new TextField("proxyBaseUrl").add(new UrlValidator()));
+  settingsContainer.add(otherSettingsPanel);
+}

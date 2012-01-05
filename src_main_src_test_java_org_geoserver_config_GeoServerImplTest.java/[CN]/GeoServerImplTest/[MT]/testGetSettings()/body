@@ -1,0 +1,22 @@
+{
+  SettingsInfo s=geoServer.getSettings();
+  assertNotNull(s);
+  assertEquals(4,s.getNumDecimals());
+  WorkspaceInfo ws=geoServer.getCatalog().getFactory().createWorkspace();
+  ws.setName("acme");
+  SettingsInfo t=geoServer.getFactory().createSettings();
+  t.setNumDecimals(7);
+  t.setWorkspace(ws);
+  geoServer.add(t);
+  assertNotNull(geoServer.getSettings(ws));
+  assertEquals(7,geoServer.getSettings(ws).getNumDecimals());
+  assertEquals(4,geoServer.getSettings().getNumDecimals());
+  LocalWorkspace.set(ws);
+  try {
+    assertNotNull(geoServer.getSettings());
+    assertEquals(7,geoServer.getSettings().getNumDecimals());
+  }
+  finally {
+    LocalWorkspace.remove();
+  }
+}

@@ -1,0 +1,15 @@
+{
+  GeoServer gs=getGeoServer();
+  SettingsInfo settings=gs.getFactory().createSettings();
+  settings.setProxyBaseUrl("http://foo.org");
+  settings.setWorkspace(citeWorkspace);
+  gs.add(settings);
+  assertNotNull(gs.getSettings(citeWorkspace));
+  tester.startPage(new WorkspaceEditPage(citeWorkspace));
+  tester.assertRenderedPage(WorkspaceEditPage.class);
+  FormTester form=tester.newFormTester("form");
+  assertEquals("http://foo.org",form.getTextComponentValue("settings:settingsContainer:otherSettings:proxyBaseUrl"));
+  form.setValue("settings:enabled",false);
+  form.submit();
+  assertNull(gs.getSettings(citeWorkspace));
+}

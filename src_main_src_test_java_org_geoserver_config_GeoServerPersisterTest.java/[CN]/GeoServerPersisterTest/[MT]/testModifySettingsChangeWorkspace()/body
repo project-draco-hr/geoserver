@@ -1,0 +1,16 @@
+{
+  testAddSettings();
+  WorkspaceInfo ws1=catalog.getWorkspaceByName("acme");
+  WorkspaceInfo ws2=catalog.getFactory().createWorkspace();
+  ws2.setName("foo");
+  catalog.add(ws2);
+  SettingsInfo settings=getGeoServer().getSettings(ws1);
+  settings.setWorkspace(ws2);
+  getGeoServer().save(settings);
+  File f=catalog.getResourceLoader().find("workspaces",ws1.getName(),"settings.xml");
+  assertNull(f);
+  f=catalog.getResourceLoader().find("workspaces",ws2.getName(),"settings.xml");
+  assertNotNull(f);
+  Document dom=dom(f);
+  assertXpathEvaluatesTo(ws2.getId(),"/settings/workspace/id",dom);
+}

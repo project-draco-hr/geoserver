@@ -3,29 +3,25 @@
   if (f == null) {
     f=resourceLoader.find("global.xml");
     if (f != null) {
-      BufferedInputStream in=new BufferedInputStream(new FileInputStream(f));
-      try {
-        GeoServerInfoImpl global=(GeoServerInfoImpl)xpf.createXMLPersister().load(in,GeoServerInfo.class);
-        geoServer.setGlobal(global);
-      }
-  finally {
-        in.close();
-      }
+      GeoServerInfo global=depersist(xp,f,GeoServerInfo.class);
+      geoServer.setGlobal(global);
     }
     f=resourceLoader.find("logging.xml");
     if (f != null) {
-      BufferedInputStream in=new BufferedInputStream(new FileInputStream(f));
-      try {
-        LoggingInfo logging=xpf.createXMLPersister().load(in,LoggingInfo.class);
-        geoServer.setLogging(logging);
-      }
-  finally {
-        in.close();
+      LoggingInfo logging=depersist(xp,f,LoggingInfo.class);
+      geoServer.setLogging(logging);
+    }
+    File workspaces=resourceLoader.find("workspaces");
+    for (    File dir : workspaces.listFiles()) {
+      if (!dir.isDirectory() && !dir.isHidden())       continue;
+      f=resourceLoader.find(dir,"settings.xml");
+      if (f != null) {
+        SettingsInfo settings=depersist(xp,f,SettingsInfo.class);
+        geoServer.add(settings);
       }
     }
     final List<XStreamServiceLoader> loaders=GeoServerExtensions.extensions(XStreamServiceLoader.class);
     loadServices(null,loaders,geoServer);
-    File workspaces=resourceLoader.find("workspaces");
     if (workspaces != null) {
       for (      File dir : workspaces.listFiles()) {
         if (!dir.isDirectory() && !dir.isHidden())         continue;
