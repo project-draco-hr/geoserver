@@ -17,12 +17,14 @@
     }
   }
   List<Preference<MediaType>> accepts=null;
+  boolean acceptsAll=false;
   if (df == null) {
-    accepts=new ArrayList(getRequest().getClientInfo().getAcceptedMediaTypes());
+    accepts=getRequest().getClientInfo().getAcceptedMediaTypes();
+    acceptsAll=accepts.isEmpty();
     for (Iterator<Preference<MediaType>> i=accepts.iterator(); i.hasNext(); ) {
       Preference<MediaType> pref=i.next();
       if (pref.getMetadata().equals(MediaType.ALL)) {
-        i.remove();
+        acceptsAll=true;
         continue;
       }
       df=lookupFormat(pref.getMetadata());
@@ -31,7 +33,7 @@
       }
     }
   }
-  if (df == null && accepts.isEmpty()) {
+  if (df == null && acceptsAll) {
     df=getFormats().values().iterator().next();
   }
   return df;
