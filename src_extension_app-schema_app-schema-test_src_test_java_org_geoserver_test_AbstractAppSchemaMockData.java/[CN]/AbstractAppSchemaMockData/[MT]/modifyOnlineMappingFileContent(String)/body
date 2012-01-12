@@ -1,0 +1,52 @@
+{
+  InputStream is=AppSchemaDataAccessTest.class.getResourceAsStream(TEST_DATA + mappingFileName);
+  BufferedReader br=new BufferedReader(new InputStreamReader(is));
+  StringBuffer content=new StringBuffer();
+  boolean parametersStartFound=false;
+  boolean parametersEndFound=false;
+  String idColumn="id";
+  boolean isOracle=onlineTestId.equals("oracle");
+  for (String line=br.readLine(); line != null; line=br.readLine()) {
+    if (!parametersStartFound || (parametersStartFound && parametersEndFound)) {
+      if (!parametersStartFound) {
+        if (line.trim().equals("<parameters>")) {
+          parametersStartFound=true;
+          if (isOracle) {
+            content.append(AppSchemaTestOracleSetup.DB_PARAMS);
+          }
+ else {
+            content.append(AppSchemaTestPostgisSetup.DB_PARAMS);
+          }
+        }
+ else {
+          content.append(line);
+        }
+      }
+ else       if (isOracle && line.trim().startsWith("<sourceType>")) {
+        line=line.trim();
+        String sourceTypeTag="<sourceType>";
+        content.append(sourceTypeTag);
+        String tableName=line.substring(line.indexOf(sourceTypeTag) + sourceTypeTag.length(),line.indexOf("</sourceType>"));
+        content.append(tableName.toUpperCase());
+        content.append("</sourceType>");
+        content.append("\n");
+      }
+ else {
+        String regex="getI[dD]\\(\\)";
+        Pattern pattern=Pattern.compile(regex);
+        Matcher matcher=pattern.matcher(line);
+        line=matcher.replaceAll(idColumn);
+        regex="\"@id\"";
+        line=line.replaceAll(regex,idColumn);
+        content.append(line);
+      }
+      content.append("\n");
+    }
+ else {
+      if (line.trim().equals("</parameters>")) {
+        parametersEndFound=true;
+      }
+    }
+  }
+  return content.toString();
+}

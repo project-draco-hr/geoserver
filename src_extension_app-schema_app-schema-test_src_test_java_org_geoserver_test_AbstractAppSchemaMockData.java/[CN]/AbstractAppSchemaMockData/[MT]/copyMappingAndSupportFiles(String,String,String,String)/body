@@ -1,6 +1,31 @@
 {
-  copyFileToFeatureTypeDir(namespacePrefix,typeName,mappingFileName);
-  for (  String propertyFileName : supportFileNames) {
-    copyFileToFeatureTypeDir(namespacePrefix,typeName,propertyFileName);
+  onlineTestId=System.getProperty("testDatabase");
+  if (onlineTestId != null) {
+    onlineTestId=onlineTestId.toLowerCase().trim();
+    try {
+      String newContent=modifyOnlineMappingFileContent(mappingFileName);
+      copy(newContent,"featureTypes/" + getDataStoreName(namespacePrefix,typeName) + "/"+ mappingFileName.substring(mappingFileName.lastIndexOf("/") + 1,mappingFileName.length()));
+      for (      String propertyFileName : supportFileNames) {
+        if (propertyFileName.endsWith(".xml")) {
+          newContent=modifyOnlineMappingFileContent(propertyFileName);
+          copy(newContent,"featureTypes/" + getDataStoreName(namespacePrefix,typeName) + "/"+ propertyFileName.substring(propertyFileName.lastIndexOf("/") + 1,propertyFileName.length()));
+        }
+ else {
+          copyFileToFeatureTypeDir(namespacePrefix,typeName,propertyFileName);
+          if (propertyFileName.endsWith(".properties")) {
+            propertiesFiles.put(propertyFileName,getFeatureTypeDir(featureTypesBaseDir,namespacePrefix,typeName));
+          }
+        }
+      }
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+ else {
+    copyFileToFeatureTypeDir(namespacePrefix,typeName,mappingFileName);
+    for (    String propertyFileName : supportFileNames) {
+      copyFileToFeatureTypeDir(namespacePrefix,typeName,propertyFileName);
+    }
   }
 }

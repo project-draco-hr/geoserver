@@ -1,6 +1,25 @@
 {
   File dir=new File(new File(new File(getTestData().getDataDirectoryRoot(),"workspaces"),"gsml"),"MappedFeature");
   dir.mkdirs();
-  IOUtils.copy(new ByteArrayInputStream(MAPPING.getBytes("UTF-8")),new File(dir,"MappedFeature.xml"));
-  IOUtils.copy(new ByteArrayInputStream(PROPERTIES.getBytes("UTF-8")),new File(dir,"MappedFeature.properties"));
+  File propertiesFile=new File(dir,"MappedFeature.properties");
+  IOUtils.copy(new ByteArrayInputStream(PROPERTIES.getBytes("UTF-8")),propertiesFile);
+  String mapping=MAPPING;
+  String onlineTestId=System.getProperty("testDatabase");
+  if (onlineTestId != null) {
+    onlineTestId=onlineTestId.trim().toLowerCase();
+    Map<String,File> propertyFiles=new HashMap<String,File>();
+    propertyFiles.put(propertiesFile.getName(),dir);
+    AbstractReferenceDataSetup setup;
+    if (onlineTestId.equals("oracle")) {
+      mapping=mapping.replaceAll(DS_PARAMETERS,Matcher.quoteReplacement(AppSchemaTestOracleSetup.DB_PARAMS));
+      setup=AppSchemaTestOracleSetup.getInstance(propertyFiles);
+    }
+ else {
+      mapping=mapping.replaceAll(DS_PARAMETERS,Matcher.quoteReplacement(AppSchemaTestPostgisSetup.DB_PARAMS));
+      setup=AppSchemaTestPostgisSetup.getInstance(propertyFiles);
+    }
+    setup.setUp();
+    setup.tearDown();
+  }
+  IOUtils.copy(new ByteArrayInputStream(mapping.getBytes("UTF-8")),new File(dir,"MappedFeature.xml"));
 }

@@ -1,0 +1,73 @@
+{
+  StringBuffer buf=new StringBuffer();
+  buf.append("CREATE OR REPLACE PROCEDURE DROP_TABLE(TabName in Varchar2) IS ").append("temp number:=0;").append(" tes VARCHAR2 (200) := TabName;").append(" drp_stmt VARCHAR2 (200):=null;").append("BEGIN select count(*) into temp from user_tables where TABLE_NAME = tes;").append("if temp =1 then drp_stmt := 'Drop Table '||tes;").append("EXECUTE IMMEDIATE drp_stmt;end if;").append("EXCEPTION WHEN OTHERS THEN ").append("raise_application_error(-20001,'An error was encountered - '||SQLCODE||' -ERROR- '||SQLERRM);").append("END DROP_TABLE;\n");
+  for (  String fileName : propertyFiles.keySet()) {
+    PropertyFeatureReader reader=new PropertyFeatureReader(propertyFiles.get(fileName),fileName.substring(0,fileName.lastIndexOf(".properties")));
+    SimpleFeatureType schema=reader.getFeatureType();
+    String tableName=schema.getName().getLocalPart().toUpperCase();
+    buf.append("CALL DROP_TABLE('").append(tableName).append("')\n");
+    buf.append("CREATE TABLE ").append(tableName).append("(");
+    int size=schema.getAttributeCount();
+    String[] fieldNames=new String[size];
+    List<String> nameTypePairs=new ArrayList<String>();
+    int j=0;
+    String type;
+    String field;
+    for (    PropertyDescriptor desc : schema.getDescriptors()) {
+      field="" + desc.getName() + " ";
+      if (desc instanceof GeometryDescriptor) {
+        type="SDO_GEOMETRY";
+      }
+ else {
+        type=Classes.getShortName(desc.getType().getBinding());
+        if (type.equalsIgnoreCase("String")) {
+          type="NVARCHAR2(100)";
+        }
+      }
+      field+=type;
+      nameTypePairs.add(field);
+      fieldNames[j]=desc.getName().toString();
+      j++;
+    }
+    if (!nameTypePairs.isEmpty()) {
+      buf.append(StringUtils.join(nameTypePairs.iterator(),", "));
+    }
+    buf.append(")\n");
+    SimpleFeature feature;
+    while (reader.hasNext()) {
+      buf.append("INSERT INTO ").append(tableName).append("(");
+      feature=reader.next();
+      buf.append(StringUtils.join(fieldNames,", "));
+      buf.append(") ");
+      buf.append("VALUES (");
+      Collection<Property> properties=feature.getProperties();
+      String[] values=new String[properties.size()];
+      int valueIndex=0;
+      for (      Property prop : properties) {
+        Object value=prop.getValue();
+        if (value == null || value.toString().equalsIgnoreCase("null")) {
+          values[valueIndex]="null";
+        }
+ else         if (prop.getType() instanceof GeometryType) {
+          int srid=getSrid(((GeometryType)prop.getType()));
+          StringBuffer geomValue=new StringBuffer("SDO_GEOMETRY('");
+          geomValue.append(value).append("'");
+          if (srid > -1) {
+            geomValue.append(", ").append(srid);
+          }
+          geomValue.append(")");
+          values[valueIndex]=geomValue.toString();
+        }
+ else {
+          values[valueIndex]="'" + value + "'";
+        }
+        valueIndex++;
+      }
+      buf.append(StringUtils.join(values,","));
+      buf.append(")\n");
+    }
+  }
+  if (buf.length() > 0) {
+    this.sql=buf.toString();
+  }
+}

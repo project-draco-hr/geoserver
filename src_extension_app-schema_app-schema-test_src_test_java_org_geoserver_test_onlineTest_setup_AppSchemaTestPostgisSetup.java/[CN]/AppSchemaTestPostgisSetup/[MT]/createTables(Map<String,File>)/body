@@ -1,0 +1,104 @@
+{
+  StringBuffer buf=new StringBuffer();
+  buf.append("DROP SCHEMA IF EXISTS ").append(ONLINE_DB_SCHEMA).append(" CASCADE;\n");
+  buf.append("CREATE SCHEMA ").append(ONLINE_DB_SCHEMA).append(";\n");
+  for (  String fileName : propertyFiles.keySet()) {
+    PropertyFeatureReader reader=new PropertyFeatureReader(propertyFiles.get(fileName),fileName.substring(0,fileName.lastIndexOf(".properties")));
+    SimpleFeatureType schema=reader.getFeatureType();
+    String tableName=schema.getName().getLocalPart();
+    buf.append("CREATE TABLE ").append(ONLINE_DB_SCHEMA).append(".\"").append(tableName).append("\"(");
+    List<GeometryDescriptor> geoms=new ArrayList<GeometryDescriptor>();
+    int size=schema.getAttributeCount();
+    if (schema.isIdentified()) {
+      buf.append("\"id\" TEXT");
+    }
+    String[] fieldNames=new String[size];
+    List<String> nameTypePairs=new ArrayList<String>();
+    int j=0;
+    String field;
+    String type;
+    for (    PropertyDescriptor desc : schema.getDescriptors()) {
+      if (desc instanceof GeometryDescriptor) {
+        geoms.add((GeometryDescriptor)desc);
+      }
+ else {
+        field="\"" + desc.getName() + "\" ";
+        type=Classes.getShortName(desc.getType().getBinding());
+        if (type.equalsIgnoreCase("String")) {
+          type="TEXT";
+        }
+        field+=type;
+        nameTypePairs.add(field);
+      }
+      fieldNames[j]=desc.getName().toString();
+      j++;
+    }
+    if (!nameTypePairs.isEmpty()) {
+      if (schema.isIdentified()) {
+        buf.append(", ");
+      }
+      buf.append(StringUtils.join(nameTypePairs.iterator(),", "));
+    }
+    buf.append(");\n");
+    for (    GeometryDescriptor geom : geoms) {
+      buf.append("SELECT AddGeometryColumn ('").append(ONLINE_DB_SCHEMA).append("', ");
+      buf.append("'").append(tableName).append("', ");
+      buf.append("'").append(geom.getName().toString()).append("', ");
+      int srid=getSrid(geom.getType());
+      buf.append(srid).append(", ");
+      buf.append("'GEOMETRY'").append(", ");
+      buf.append(2);
+      buf.append(");\n");
+    }
+    SimpleFeature feature;
+    FeatureId id;
+    while (reader.hasNext()) {
+      buf.append("INSERT INTO ").append(ONLINE_DB_SCHEMA).append(".\"").append(tableName).append("\"(\"");
+      feature=reader.next();
+      id=feature.getIdentifier();
+      if (id != null) {
+        buf.append("id\"");
+        if (size > 0) {
+          buf.append(", \"");
+        }
+      }
+      buf.append(StringUtils.join(fieldNames,"\", \""));
+      buf.append("\") ");
+      buf.append("VALUES (");
+      if (id != null) {
+        buf.append("'");
+        buf.append(id.toString());
+        if (size > 0) {
+          buf.append("', ");
+        }
+      }
+      Collection<Property> properties=feature.getProperties();
+      String[] values=new String[properties.size()];
+      int valueIndex=0;
+      for (      Property prop : properties) {
+        Object value=prop.getValue();
+        if (value == null || value.toString().equalsIgnoreCase("null")) {
+          values[valueIndex]="null";
+        }
+ else         if (prop.getType() instanceof GeometryType) {
+          int srid=getSrid(((GeometryType)prop.getType()));
+          if (srid > -1) {
+            values[valueIndex]="ST_GeomFromText('" + value + "', "+ srid+ ")";
+          }
+ else {
+            values[valueIndex]="ST_GeomFromText('" + value + "')";
+          }
+        }
+ else {
+          values[valueIndex]="'" + value + "'";
+        }
+        valueIndex++;
+      }
+      buf.append(StringUtils.join(values,","));
+      buf.append(");\n");
+    }
+  }
+  if (buf.length() > 0) {
+    this.sql=buf.toString();
+  }
+}
