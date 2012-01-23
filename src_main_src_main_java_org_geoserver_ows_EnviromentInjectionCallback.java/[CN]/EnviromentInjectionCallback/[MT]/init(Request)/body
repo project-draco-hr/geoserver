@@ -1,0 +1,19 @@
+{
+  Object obj=request.getKvp().get("env");
+  Map<String,Object> envVars=null;
+  if (obj instanceof Map) {
+    envVars=(Map)obj;
+  }
+  Authentication auth=SecurityContextHolder.getContext().getAuthentication();
+  if (auth != null && !(auth instanceof AnonymousAuthenticationToken)) {
+    String name=auth.getName();
+    if (envVars == null) {
+      envVars=new HashMap<String,Object>();
+    }
+    envVars.put("GSUSER",name);
+  }
+  if (envVars != null) {
+    EnvFunction.setLocalValues(envVars);
+  }
+  return request;
+}

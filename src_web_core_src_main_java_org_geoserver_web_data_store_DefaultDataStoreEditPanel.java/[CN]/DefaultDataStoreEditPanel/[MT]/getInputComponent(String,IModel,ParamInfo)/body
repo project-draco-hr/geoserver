@@ -35,12 +35,19 @@
  else {
       model=new MapModel(paramsModel,paramName);
     }
-    TextParamPanel tp=new TextParamPanel(componentId,model,new ResourceModel(paramLabel,paramLabel),required);
+    Panel tp;
+    if (paramMetadata.isLargeText()) {
+      tp=new TextAreaParamPanel(componentId,model,new ResourceModel(paramLabel,paramLabel),required);
+    }
+ else {
+      tp=new TextParamPanel(componentId,model,new ResourceModel(paramLabel,paramLabel),required);
+    }
+    FormComponent<String> fc=((ParamPanel)tp).getFormComponent();
     if (paramName.equalsIgnoreCase("url")) {
-      tp.getFormComponent().add(new FileExistsValidator());
+      fc.add(new FileExistsValidator());
     }
     if (binding != null && !String.class.equals(binding) && !File.class.equals(binding) && !URL.class.equals(binding) && !binding.isArray()) {
-      tp.getFormComponent().setType(binding);
+      fc.setType(binding);
     }
     parameterPanel=tp;
   }

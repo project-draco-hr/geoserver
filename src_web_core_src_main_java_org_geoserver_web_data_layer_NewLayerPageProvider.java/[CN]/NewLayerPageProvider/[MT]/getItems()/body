@@ -1,49 +1,9 @@
 {
-  if (storeId == null)   return new ArrayList<Resource>();
-  try {
-    List<Resource> result;
-    StoreInfo store=getCatalog().getStore(storeId,StoreInfo.class);
-    Map<String,Resource> resources=new HashMap<String,Resource>();
-    if (store instanceof DataStoreInfo) {
-      DataStoreInfo dstore=(DataStoreInfo)store;
-      List<Name> names=dstore.getDataStore(null).getNames();
-      for (      Name name : names) {
-        Catalog catalog=GeoServerApplication.get().getCatalog();
-        FeatureTypeInfo fti=catalog.getFeatureTypeByDataStore(dstore,name.getLocalPart());
-        if (fti == null || fti.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE) == null) {
-          resources.put(name.getLocalPart(),new Resource(name));
-        }
-      }
-    }
- else     if (store instanceof CoverageStoreInfo) {
-      CatalogBuilder builder=new CatalogBuilder(getCatalog());
-      builder.setStore(store);
-      CoverageInfo ci=builder.buildCoverage();
-      Name name=ci.getQualifiedName();
-      resources.put(name.getLocalPart(),new Resource(name));
-    }
- else     if (store instanceof WMSStoreInfo) {
-      WMSStoreInfo wmsInfo=(WMSStoreInfo)store;
-      CatalogBuilder builder=new CatalogBuilder(getCatalog());
-      builder.setStore(store);
-      List<Layer> layers=wmsInfo.getWebMapServer(null).getCapabilities().getLayerList();
-      for (      Layer l : layers) {
-        if (l.getName() == null) {
-          continue;
-        }
-        resources.put(l.getName(),new Resource(new NameImpl(l.getName())));
-      }
-    }
-    List<ResourceInfo> configuredTypes=getCatalog().getResourcesByStore(store,ResourceInfo.class);
-    for (    ResourceInfo type : configuredTypes) {
-      Resource resource=resources.get(type.getNativeName());
-      if (resource != null)       resource.setPublished(true);
-    }
-    result=new ArrayList<Resource>(resources.values());
-    Collections.sort(result);
-    return result;
+  if (storeId == null) {
+    return new ArrayList<Resource>();
   }
- catch (  Exception e) {
-    throw new RuntimeException("Could not list layers for this store, " + "an error occurred retrieving them: " + e.getMessage(),e);
+ else   if (cachedItems == null) {
+    cachedItems=getItemsInternal();
   }
+  return cachedItems;
 }
