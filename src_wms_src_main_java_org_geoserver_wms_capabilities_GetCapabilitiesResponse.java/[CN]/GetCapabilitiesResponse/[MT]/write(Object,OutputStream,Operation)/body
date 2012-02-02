@@ -35,7 +35,25 @@
       }
     }
     dtdIncludeTransformer.setParameter("DTDDeclaration",internalDTDDeclaration.toString());
-    Source source=new StreamSource(new ByteArrayInputStream(rawCapabilities));
+    Source source;
+    try {
+      SAXParserFactory spf=SAXParserFactory.newInstance();
+      spf.setNamespaceAware(true);
+      SAXParser sp=spf.newSAXParser();
+      XMLReader rawCapsReader=sp.getXMLReader();
+      rawCapsReader.setEntityResolver(new EntityResolver(){
+        @Override public InputSource resolveEntity(        String publicId,        String systemId) throws SAXException {
+          final String dtdLocation="/schemas/wms/1.1.1/WMS_MS_Capabilities.dtd";
+          String dtdSystemId=getClass().getResource(dtdLocation).toExternalForm();
+          return new InputSource(dtdSystemId);
+        }
+      }
+);
+      source=new SAXSource(rawCapsReader,new InputSource(new ByteArrayInputStream(rawCapabilities)));
+    }
+ catch (    Exception e) {
+      throw new ServiceException(e);
+    }
     Result result=new StreamResult(output);
     try {
       dtdIncludeTransformer.transform(source,result);
