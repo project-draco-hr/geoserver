@@ -1,30 +1,65 @@
 {
-  int x=0, y=0;
-  Catalog catalog=findCatalog(mapContent);
-  FontMetrics metrics=g2d.getFontMetrics(g2d.getFont().deriveFont(Font.BOLD));
-  double scaleDenominator=RendererUtilities.calculateOGCScale(mapContent.getRenderingArea(),mapContent.getRequest().getWidth(),null);
-  for (  Layer layer : mapContent.layers()) {
-    SimpleFeatureType type=(SimpleFeatureType)layer.getFeatureSource().getSchema();
-    if (!isGridLayer(type)) {
-      try {
-        Dimension legend=getLegendSize(type,layer.getStyle(),scaleDenominator,g2d);
-        x=Math.max(x,(int)legend.width);
-        y+=legend.height;
-        String title=findTitle(layer,catalog);
-        if (title != null) {
-          x=Math.max(x,TITLE_INDENT + metrics.stringWidth(title));
-          y+=metrics.getHeight();
-        }
-      }
- catch (      Exception e) {
-        LOGGER.log(Level.WARNING,"Error sizing legend for " + layer);
-        continue;
-      }
+  double scaleDenominator=RendererUtilities.calculateOGCScale(mapContext.getViewport().getBounds(),mapContext.getRequest().getWidth(),mapContext.getRequest().getFormatOptions());
+  double dpi=RendererUtilities.getDpi(mapContext.getRequest().getFormatOptions());
+  double standardDpi=RendererUtilities.getDpi(Collections.emptyMap());
+  double scaleFactor=dpi / standardDpi;
+  List<LayerLegend> layerLegends=new ArrayList<LayerLegend>();
+  for (  Layer layer : mapContext.layers()) {
+    Rule[] applicableRules=LegendUtils.getApplicableRules(layer.getStyle().featureTypeStyles().toArray(new FeatureTypeStyle[0]),scaleDenominator);
+    if ((!layers.isEmpty() && !layers.contains(layer.getTitle())) || applicableRules.length == 0) {
+      continue;
     }
- else {
-      LOGGER.log(Level.FINE,"Skipping raster layer: " + layer);
+    BufferedImageLegendGraphicBuilder legendGraphicBuilder=new BufferedImageLegendGraphicBuilder();
+    GetLegendGraphicRequest request=new GetLegendGraphicRequest();
+    request.setLayer(layer.getFeatureSource().getSchema());
+    request.setTransparent(true);
+    request.setScale(scaleDenominator);
+    request.setStyle(layer.getStyle());
+    request.setWidth((int)Math.ceil(GetLegendGraphicRequest.DEFAULT_WIDTH * scaleFactor));
+    request.setHeight((int)Math.ceil(GetLegendGraphicRequest.DEFAULT_HEIGHT * scaleFactor));
+    Map legendOptions=new CaseInsensitiveMap(options);
+    legendOptions.putAll(mapContext.getRequest().getFormatOptions());
+    request.setLegendOptions(legendOptions);
+    LayerLegend legend=new LayerLegend();
+    legend.request=request;
+    String title=findTitle(layer,wms.getGeoServer().getCatalog());
+    if (title != null) {
+      Font newFont=LegendUtils.getLabelFont(request);
+      newFont=newFont.deriveFont(Font.BOLD);
+      newFont=newFont.deriveFont((float)newFont.getSize() + 2);
+      Font oldFont=g2d.getFont();
+      g2d.setFont(newFont);
+      BufferedImage titleImage=LegendUtils.renderLabel(title,g2d,request);
+      g2d.setFont(oldFont);
+      legend.title=titleImage;
+    }
+    BufferedImage legendImage=legendGraphicBuilder.buildLegendGraphic(request);
+    legend.legend=legendImage;
+    layerLegends.add(legend);
+  }
+  legends.set(layerLegends);
+  int width=0;
+  int height=0;
+  for (  LayerLegend legend : layerLegends) {
+    int legendHeight=legend.legend.getHeight();
+    int legendWidth=legend.legend.getWidth();
+    int titleWidth=0;
+    int titleHeight=0;
+    if (legend.title != null) {
+      titleWidth=legend.title.getWidth();
+      titleHeight=legend.title.getHeight();
+    }
+    int tmpHeight=legendHeight + titleHeight;
+    int tmpWidth=legendWidth;
+    if (titleWidth > legendWidth) {
+      tmpWidth=titleWidth;
+      tmpWidth+=((int)Math.ceil(TITLE_INDENT * 2 * scaleFactor));
+    }
+    Dimension size=new BasicStroke((float)scaleFactor).createStrokedShape(new Rectangle(0,0,tmpWidth,tmpHeight)).getBounds().getSize();
+    height+=(int)Math.ceil(size.getHeight() + (size.getHeight() * BETWEEN_LEGENDS_PERCENT_INDENT));
+    if (size.getWidth() > width) {
+      width=(int)Math.ceil(size.getWidth());
     }
   }
-  x+=metrics.getDescent();
-  return new Dimension(x,y);
+  return new Dimension(width,height);
 }
