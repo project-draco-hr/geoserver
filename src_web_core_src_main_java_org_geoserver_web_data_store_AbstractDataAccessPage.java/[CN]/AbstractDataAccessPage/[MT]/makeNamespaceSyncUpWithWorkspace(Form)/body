@@ -1,0 +1,48 @@
+{
+  final DropDownChoice wsDropDown=(DropDownChoice)workspacePanel.getFormComponent();
+  wsDropDown.add(new OnChangeAjaxBehavior(){
+    private static final long serialVersionUID=1L;
+    private NamespaceParamModel namespaceModel;
+    private NamespacePanel namespacePanel;
+    private boolean namespaceLookupOccurred;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      if (!namespaceLookupOccurred) {
+        Component paramsPanel=AbstractDataAccessPage.this.get("dataStoreForm:parametersPanel");
+        namespacePanel=findNamespacePanel((MarkupContainer)paramsPanel);
+        if (namespacePanel == null) {
+          final IModel model=paramsForm.getModel();
+          final DataStoreInfo info=(DataStoreInfo)model.getObject();
+          final Catalog catalog=getCatalog();
+          final ResourcePool resourcePool=catalog.getResourcePool();
+          DataAccessFactory dsFactory;
+          try {
+            dsFactory=resourcePool.getDataStoreFactory(info);
+          }
+ catch (          IOException e) {
+            throw new RuntimeException(e);
+          }
+          final Param[] dsParams=dsFactory.getParametersInfo();
+          for (          Param p : dsParams) {
+            if ("namespace".equals(p.getName())) {
+              final IModel paramsModel=new PropertyModel(model,"connectionParameters");
+              namespaceModel=new NamespaceParamModel(paramsModel,"namespace");
+              break;
+            }
+          }
+        }
+        namespaceLookupOccurred=true;
+      }
+      WorkspaceInfo ws=(WorkspaceInfo)wsDropDown.getModelObject();
+      String prefix=ws.getName();
+      NamespaceInfo namespaceInfo=getCatalog().getNamespaceByPrefix(prefix);
+      if (namespacePanel != null) {
+        namespacePanel.setDefaultModelObject(namespaceInfo);
+        target.addComponent(namespacePanel.getFormComponent());
+      }
+ else       if (namespaceModel != null) {
+        namespaceModel.setObject(namespaceInfo);
+      }
+    }
+  }
+);
+}
