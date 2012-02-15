@@ -1,0 +1,14 @@
+{
+  FeatureTypeInfo timeWithStartEnd=getCatalog().getFeatureTypeByName(TIME_WITH_START_END.getLocalPart());
+  FeatureSource fs=timeWithStartEnd.getFeatureSource(null,null);
+  List times=time == null ? null : Arrays.asList(time);
+  List elevations=elevation == null ? null : Arrays.asList(elevation);
+  Filter filter=wms.getTimeElevationToFilter(times,elevations,timeWithStartEnd);
+  FeatureCollection features=fs.getFeatures(filter);
+  Set<Integer> results=new HashSet<Integer>();
+  FeatureIterator it=features.features();
+  while (it.hasNext()) {
+    results.add((Integer)it.next().getProperty("id").getValue());
+  }
+  assertTrue("expected " + Arrays.toString(expectedIds) + " but got "+ results,results.containsAll(Arrays.asList(expectedIds)));
+}

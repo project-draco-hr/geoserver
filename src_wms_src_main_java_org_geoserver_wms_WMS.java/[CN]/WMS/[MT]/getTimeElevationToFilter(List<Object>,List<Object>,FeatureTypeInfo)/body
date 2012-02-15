@@ -4,18 +4,13 @@
   Filter result=null;
   if (timeInfo != null && timeInfo.isEnabled() && times != null) {
     final List<Filter> timeFilters=new ArrayList<Filter>();
+    final PropertyName attribute=ff.property(timeInfo.getAttribute());
+    final PropertyName endAttribute=timeInfo.getEndAttribute() == null ? null : ff.property(timeInfo.getEndAttribute());
     for (    Object datetime : times) {
       if (datetime == null) {
         datetime=getCurrentTime(typeInfo);
       }
-      PropertyName attribute=ff.property(timeInfo.getAttribute());
-      if (datetime instanceof Date) {
-        timeFilters.add(ff.equal(attribute,ff.literal(datetime),true));
-      }
- else {
-        final DateRange range=(DateRange)datetime;
-        timeFilters.add(ff.between(attribute,ff.literal(range.getMinValue()),ff.literal(range.getMaxValue())));
-      }
+      timeFilters.add(buildDimensionFilter(datetime,attribute,endAttribute));
     }
     final int sizeTime=timeFilters.size();
     if (sizeTime > 1) {
@@ -27,18 +22,13 @@
   }
   if (elevationInfo != null && elevationInfo.isEnabled() && elevations != null) {
     final List<Filter> elevationFilters=new ArrayList<Filter>();
+    final PropertyName attribute=ff.property(elevationInfo.getAttribute());
+    final PropertyName endAttribute=elevationInfo.getEndAttribute() == null ? null : ff.property(elevationInfo.getEndAttribute());
     for (    Object elevation : elevations) {
       if (elevation == null) {
         elevation=getDefaultElevation(typeInfo);
       }
-      PropertyName attribute=ff.property(elevationInfo.getAttribute());
-      if (elevation instanceof Double) {
-        elevationFilters.add(ff.equal(attribute,ff.literal(elevation),true));
-      }
- else {
-        final NumberRange range=(NumberRange)elevation;
-        elevationFilters.add(ff.between(attribute,ff.literal(range.getMinValue()),ff.literal(range.getMaxValue())));
-      }
+      elevationFilters.add(buildDimensionFilter(elevation,attribute,endAttribute));
     }
     final int size=elevationFilters.size();
     Filter summary=null;
