@@ -3,8 +3,23 @@
   if (gt2Style == null) {
     throw new NullPointerException("request.getStyle()");
   }
+  int w=request.getWidth();
+  int h=request.getHeight();
+  double dpi=RendererUtilities.getDpi(request.getLegendOptions());
+  double standardDpi=RendererUtilities.getDpi(Collections.emptyMap());
+  if (dpi != standardDpi) {
+    double scaleFactor=dpi / standardDpi;
+    w=(int)Math.round(w * scaleFactor);
+    h=(int)Math.round(h * scaleFactor);
+    RescaleStyleVisitor dpiVisitor=new RescaleStyleVisitor(scaleFactor);
+    dpiVisitor.visit(gt2Style);
+    gt2Style=(Style)dpiVisitor.getCopy();
+  }
   if (request.getScale() > 0) {
-    gt2Style=applyUnitRescale(gt2Style,request);
+    double pixelsPerMeters=RendererUtilities.calculatePixelsPerMeterRatio(request.getScale(),request.getLegendOptions());
+    UomRescaleStyleVisitor rescaleVisitor=new UomRescaleStyleVisitor(pixelsPerMeters);
+    rescaleVisitor.visit(gt2Style);
+    gt2Style=(Style)rescaleVisitor.getCopy();
   }
   final FeatureType layer=request.getLayer();
   boolean strict=request.isStrict();
@@ -37,8 +52,6 @@
   final NumberRange<Double> scaleRange=NumberRange.create(scaleDenominator,scaleDenominator);
   final int ruleCount=applicableRules.length;
   final List<RenderedImage> legendsStack=new ArrayList<RenderedImage>(ruleCount);
-  final int w=request.getWidth();
-  final int h=request.getHeight();
   final SLDStyleFactory styleFactory=new SLDStyleFactory();
   final Color bgColor=LegendUtils.getBackgroundColor(request);
   for (int i=0; i < ruleCount; i++) {
