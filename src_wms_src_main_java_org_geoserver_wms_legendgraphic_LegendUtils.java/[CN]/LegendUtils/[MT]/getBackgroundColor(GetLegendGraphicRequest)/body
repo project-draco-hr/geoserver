@@ -2,15 +2,18 @@
   ensureNotNull(req,"GetLegendGraphicRequestre");
   final Map legendOptions=req.getLegendOptions();
   if (legendOptions == null)   return DEFAULT_BG_COLOR;
-  final String color=(String)legendOptions.get("bgColor");
-  if (color == null) {
+  Object clr=legendOptions.get("bgColor");
+  if (clr instanceof Color) {
+    return (Color)clr;
+  }
+ else   if (clr == null) {
     return DEFAULT_BG_COLOR;
   }
   try {
-    return color(color);
+    return color((String)clr);
   }
  catch (  NumberFormatException e) {
-    LOGGER.warning("Could not decode background color: " + color + ", default to "+ DEFAULT_BG_COLOR.toString());
+    LOGGER.warning("Could not decode background color: " + clr + ", default to "+ DEFAULT_BG_COLOR.toString());
     return DEFAULT_BG_COLOR;
   }
 }
