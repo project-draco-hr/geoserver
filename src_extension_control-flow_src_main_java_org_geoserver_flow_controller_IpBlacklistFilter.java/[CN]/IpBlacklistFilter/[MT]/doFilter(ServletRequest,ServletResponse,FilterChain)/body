@@ -1,0 +1,18 @@
+{
+  isBlocked=false;
+  HttpServletRequest httpRequest=(HttpServletRequest)request;
+  String incomingIp=httpRequest.getRemoteAddr();
+  if (response instanceof HttpServletResponse) {
+    HttpServletResponse httpResponse=(HttpServletResponse)response;
+    for (    String ipAddress : ipAddresses) {
+      if (ipAddress.equals(incomingIp)) {
+        httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN,"This IP has been blocked. Please contact the server administrator");
+        isBlocked=true;
+        break;
+      }
+    }
+    if (!isBlocked) {
+      chain.doFilter(request,response);
+    }
+  }
+}

@@ -7,8 +7,14 @@
     String value=(String)p.get(okey);
     String[] keys=key.trim().split("\\s*\\.\\s*");
     int queueSize=0;
+    StringTokenizer tokenizer=new StringTokenizer(value,",");
     try {
-      queueSize=Integer.parseInt(value);
+      if (tokenizer.countTokens() == 1) {
+        queueSize=Integer.parseInt(value);
+      }
+ else {
+        queueSize=Integer.parseInt(tokenizer.nextToken());
+      }
     }
  catch (    NumberFormatException e) {
       LOGGER.severe("Rules should be assigned just a queue size, instead " + okey + " is associated to "+ value);
@@ -35,6 +41,14 @@
     }
  else     if ("user".equals(keys[0])) {
       controller=new UserFlowController(queueSize);
+    }
+ else     if ("ip".equals(keys[0])) {
+      if (keys.length == 1) {
+        controller=new IpFlowController(queueSize);
+      }
+ else       if (keys.length > 1) {
+        controller=new SingleIpFlowController(queueSize,tokenizer.nextToken());
+      }
     }
     if (controller == null) {
       LOGGER.severe("Could not parse rule '" + okey + "="+ value);

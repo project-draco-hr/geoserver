@@ -1,0 +1,24 @@
+{
+  Properties props=new Properties();
+  props.put("ip.blacklist","192.168.1.8,192.168.1.10");
+  IpBlacklistFilter filter=new IpBlacklistFilter(props);
+  assertNotNull(filter);
+  MockFilterChain filterChain=new MockFilterChain();
+  filterChain.addFilter(filter);
+  TestServlet testServlet=new TestServlet();
+  filterChain.setServlet(testServlet);
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  request.setRemoteAddr("192.168.1.8");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  filterChain.doFilter(request,response);
+  assertFalse(testServlet.wasServiceCalled());
+  testServlet.reset();
+  request.setRemoteAddr("192.168.1.9");
+  filterChain.doFilter(request,response);
+  assertTrue(testServlet.wasServiceCalled());
+  testServlet.reset();
+  request.setRemoteAddr("192.168.1.10");
+  filterChain.doFilter(request,response);
+  assertFalse(testServlet.wasServiceCalled());
+  testServlet.reset();
+}
