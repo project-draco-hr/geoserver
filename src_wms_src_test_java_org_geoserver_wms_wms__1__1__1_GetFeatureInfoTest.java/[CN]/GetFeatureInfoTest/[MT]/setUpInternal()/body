@@ -7,4 +7,16 @@
   WFSInfo wfsInfo=getGeoServer().getService(WFSInfo.class);
   wfsInfo.setFeatureBounding(true);
   getGeoServer().save(wfsInfo);
+  if (RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    CatalogBuilder cb=new CatalogBuilder(getCatalog());
+    WMSStoreInfo wms=cb.buildWMSStore("demo");
+    wms.setCapabilitiesURL(RemoteOWSTestSupport.WMS_SERVER_URL + "service=WMS&request=GetCapabilities");
+    getCatalog().save(wms);
+    cb.setStore(wms);
+    WMSLayerInfo states=cb.buildWMSLayer("topp:states");
+    states.setName("rstates");
+    getCatalog().add(states);
+    LayerInfo layer=cb.buildLayer(states);
+    getCatalog().add(layer);
+  }
 }

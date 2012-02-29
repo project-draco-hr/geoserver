@@ -17,11 +17,22 @@
   int maxFeatures=request.getFeatureCount();
   for (int i=0; i < requestedLayers.size(); i++) {
     final MapLayerInfo layer=requestedLayers.get(i);
+    String[] names;
+    List<List<String>> propertyNames=request.getPropertyNames();
+    if (propertyNames == null || propertyNames.size() == 0 || propertyNames.get(i) == null) {
+      names=Query.ALL_NAMES;
+    }
+ else {
+      List<String> layerPropNames=propertyNames.get(i);
+      names=(String[])layerPropNames.toArray(new String[layerPropNames.size()]);
+    }
     if (layer.getType() == MapLayerInfo.TYPE_WMS) {
       List<FeatureCollection> cascadedResults;
       cascadedResults=handleGetFeatureInfoCascade(request,maxFeatures,layer);
       if (cascadedResults != null) {
-        results.addAll(cascadedResults);
+        for (        FeatureCollection fc : cascadedResults) {
+          results.add(selectProperties(fc,names));
+        }
       }
       continue;
     }
@@ -33,7 +44,7 @@
     FeatureCollection collection=null;
     if (layer.getType() == MapLayerInfo.TYPE_VECTOR) {
       final Map<String,String> viewParam=viewParams != null ? viewParams.get(i) : null;
-      collection=identifyVectorLayer(filters,x,y,buffer,viewParam,requestedCRS,width,height,bbox,ff,results,i,layer,rules,maxFeatures,times,elevations);
+      collection=identifyVectorLayer(filters,x,y,buffer,viewParam,requestedCRS,width,height,bbox,ff,results,i,layer,rules,maxFeatures,times,elevations,names);
     }
  else     if (layer.getType() == MapLayerInfo.TYPE_RASTER) {
       final CoverageInfo cinfo=requestedLayers.get(i).getCoverage();
@@ -57,6 +68,7 @@
       }
       GeneralParameterValue[] parameters=wms.getWMSReadParameters(request.getGetMapRequest(),requestedLayers.get(i),filters[i],times,elevations,reader,true);
       collection=identifyRasterLayer(reader,position,parameters,cinfo,getMapReq);
+      collection=selectProperties(collection,names);
     }
  else {
       LOGGER.log(Level.SEVERE,"Can't perform feature info " + "requests on " + layer.getName() + ", layer type not supported");

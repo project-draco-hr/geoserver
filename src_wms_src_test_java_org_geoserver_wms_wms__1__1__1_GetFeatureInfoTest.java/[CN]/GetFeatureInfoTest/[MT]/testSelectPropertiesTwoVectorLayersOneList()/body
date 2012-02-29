@@ -1,0 +1,16 @@
+{
+  String layer=getLayerId(MockData.FORESTS) + "," + getLayerId(MockData.LAKES);
+  String request="wms?version=1.1.1&bbox=-0.002,-0.002,0.002,0.002&styles=&format=jpeg" + "&info_format=text/plain&request=GetFeatureInfo&layers=" + layer + "&query_layers="+ layer+ "&width=20&height=20&x=10&y=10&buffer=10&service=wms"+ "&feature_count=2&propertyName=NAME";
+  String result=getAsString(request);
+  assertNotNull(result);
+  int idxGeom=result.indexOf("the_geom");
+  int idxLakes=result.indexOf("Lakes");
+  int idxName1=result.indexOf("NAME");
+  int idxName2=result.indexOf("NAME",idxLakes);
+  assertEquals(-1,idxGeom);
+  assertTrue(idxName1 > 0);
+  assertTrue(idxName2 > 0);
+  assertTrue(idxLakes > 0);
+  assertTrue(idxName1 < idxLakes);
+  assertTrue(idxName2 > idxLakes);
+}

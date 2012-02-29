@@ -1,0 +1,16 @@
+{
+  if (!RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    LOGGER.log(Level.WARNING,"Skipping testPropertySelectionWmsCascade");
+    return;
+  }
+  String result=getAsString("wms?REQUEST=GetFeatureInfo" + "&BBOX=-132.835937%2C21.132813%2C-64.867187%2C55.117188" + "&SERVICE=WMS&INFO_FORMAT=text/plain"+ "&QUERY_LAYERS=rstates&FEATURE_COUNT=50&Layers=rstates&WIDTH=300&HEIGHT=150"+ "&format=image%2Fpng&styles=&srs=EPSG%3A4326&version=1.1.1&x=149&y=70&propertyName=STATE_ABBR,STATE_NAME");
+  int idxGeom=result.indexOf("the_geom");
+  int idxName=result.indexOf("STATE_NAME");
+  int idxFips=result.indexOf("STATE_FIPS");
+  int idxAbbr=result.indexOf("STATE_ABBR");
+  assertEquals(-1,idxGeom);
+  assertEquals(-1,idxFips);
+  assertTrue(idxAbbr > 0);
+  assertTrue(idxName > 0);
+  assertTrue(idxAbbr < idxName);
+}
