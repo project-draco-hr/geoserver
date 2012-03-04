@@ -1,6 +1,6 @@
 {
   this.returnPage=LayerPage.class;
-  this.tabPanelClasses=new ArrayList<Class<? extends LayerEditTabPanel>>(5);
+  this.tabPanelCustomModels=new LinkedHashMap<Class<? extends LayerEditTabPanel>,IModel<?>>();
   add(new Label("resourcename",getResourceInfo().getPrefixedName()));
   Form theForm=new Form("resource",myResourceModel);
   add(theForm);
@@ -11,14 +11,14 @@
     }
   }
 );
-  tabPanelClasses.add(DataLayerEditTabPanel.class);
+  tabPanelCustomModels.put(DataLayerEditTabPanel.class,null);
   tabs.add(new AbstractTab(new org.apache.wicket.model.ResourceModel("ResourceConfigurationPage.Publishing")){
     public Panel getPanel(    String panelID){
       return new PublishingLayerEditTabPanel(panelID,myLayerModel);
     }
   }
 );
-  tabPanelClasses.add(PublishingLayerEditTabPanel.class);
+  tabPanelCustomModels.put(PublishingLayerEditTabPanel.class,null);
   List<LayerEditTabPanelInfo> tabPanels=getGeoServerApplication().getBeansOfType(LayerEditTabPanelInfo.class);
   Collections.sort(tabPanels,new Comparator<LayerEditTabPanelInfo>(){
     public int compare(    LayerEditTabPanelInfo o1,    LayerEditTabPanelInfo o2){
@@ -28,28 +28,38 @@
     }
   }
 );
-  for (  LayerEditTabPanelInfo tabPanel : tabPanels) {
-    String titleKey=tabPanel.getTitleKey();
+  for (  LayerEditTabPanelInfo tabPanelInfo : tabPanels) {
+    String titleKey=tabPanelInfo.getTitleKey();
     IModel titleModel=null;
     if (titleKey != null) {
       titleModel=new org.apache.wicket.model.ResourceModel(titleKey);
     }
  else {
-      titleModel=new Model(tabPanel.getComponentClass().getSimpleName());
+      titleModel=new Model(tabPanelInfo.getComponentClass().getSimpleName());
     }
-    final Class<LayerEditTabPanel> panelClass=tabPanel.getComponentClass();
+    final Class<LayerEditTabPanel> panelClass=tabPanelInfo.getComponentClass();
+    IModel<?> panelCustomModel=tabPanelInfo.createOwnModel(myResourceModel,myLayerModel,isNew);
+    tabPanelCustomModels.put(panelClass,panelCustomModel);
     tabs.add(new AbstractTab(titleModel){
+      private final Class<LayerEditTabPanel> panelType=panelClass;
       @Override public Panel getPanel(      String panelId){
+        LayerEditTabPanel tabPanel;
+        final IModel<?> panelCustomModel=tabPanelCustomModels.get(panelType);
         try {
-          return panelClass.getConstructor(String.class,IModel.class).newInstance(panelId,myLayerModel);
+          if (panelCustomModel == null) {
+            tabPanel=panelClass.getConstructor(String.class,IModel.class).newInstance(panelId,myLayerModel);
+          }
+ else {
+            tabPanel=panelClass.getConstructor(String.class,IModel.class,IModel.class).newInstance(panelId,myLayerModel,panelCustomModel);
+          }
         }
  catch (        Exception e) {
           throw new WicketRuntimeException(e);
         }
+        return tabPanel;
       }
     }
 );
-    tabPanelClasses.add(panelClass);
   }
   tabbedPanel=new TabbedPanel("tabs",tabs){
     @Override protected WebMarkupContainer newLink(    String linkId,    final int index){
