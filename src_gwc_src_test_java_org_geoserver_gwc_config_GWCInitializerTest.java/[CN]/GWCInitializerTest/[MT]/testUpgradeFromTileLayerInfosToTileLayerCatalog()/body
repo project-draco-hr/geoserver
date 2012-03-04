@@ -1,0 +1,22 @@
+{
+  File fakeConfig=new File("target","gwc-gs.xml");
+  when(configPersister.findConfigFile()).thenReturn(fakeConfig);
+  GWCConfig defaults=GWCConfig.getOldDefaults();
+  defaults.setCacheLayersByDefault(true);
+  when(configPersister.getConfig()).thenReturn(defaults);
+  LayerInfo layer=mockLayer("testLayer");
+  LayerGroupInfo group=mockGroup("testGroup",layer);
+  when(rawCatalog.getLayers()).thenReturn(Lists.newArrayList(layer));
+  when(rawCatalog.getLayerGroups()).thenReturn(Lists.newArrayList(group));
+  GeoServerTileLayerInfoImpl layerInfo=TileLayerInfoUtil.loadOrCreate(layer,defaults);
+  GeoServerTileLayerInfoImpl groupInfo=TileLayerInfoUtil.loadOrCreate(group,defaults);
+  LegacyTileLayerInfoLoader.save(layerInfo,layer.getMetadata());
+  LegacyTileLayerInfoLoader.save(groupInfo,group.getMetadata());
+  initializer.initialize(geoServer);
+  verify(tileLayerCatalog,times(1)).save(eq(layerInfo));
+  assertFalse(LegacyTileLayerInfoLoader.hasTileLayerDef(layer.getMetadata()));
+  verify(rawCatalog,times(1)).save(eq(layer));
+  verify(tileLayerCatalog,times(1)).save(eq(groupInfo));
+  assertFalse(LegacyTileLayerInfoLoader.hasTileLayerDef(group.getMetadata()));
+  verify(rawCatalog,times(1)).save(eq(group));
+}

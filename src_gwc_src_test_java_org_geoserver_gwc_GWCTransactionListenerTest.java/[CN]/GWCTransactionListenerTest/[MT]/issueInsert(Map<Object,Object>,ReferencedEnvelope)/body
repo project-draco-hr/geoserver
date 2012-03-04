@@ -1,0 +1,16 @@
+{
+  TransactionType transaction=mock(TransactionType.class);
+  when(transaction.getExtendedProperties()).thenReturn(extendedProperties);
+  TransactionEvent event=mock(TransactionEvent.class);
+  when(event.getRequest()).thenReturn(transaction);
+  QName layerName=new QName("testType");
+  when(event.getLayerName()).thenReturn(layerName);
+  InsertElementType insert=mock(InsertElementType.class);
+  when(event.getSource()).thenReturn(insert);
+  when(event.getType()).thenReturn(TransactionEventType.PRE_INSERT);
+  when(mediator.getTileLayersByFeatureType(eq(layerName.getNamespaceURI()),eq(layerName.getLocalPart()))).thenReturn(ImmutableSet.of("theLayer","theGroup"));
+  SimpleFeatureCollection affectedFeatures=mock(SimpleFeatureCollection.class);
+  when(affectedFeatures.getBounds()).thenReturn(affectedBounds);
+  when(event.getAffectedFeatures()).thenReturn(affectedFeatures);
+  listener.dataStoreChange(event);
+}

@@ -1,0 +1,14 @@
+{
+  when(configPersister.findConfigFile()).thenReturn(null);
+  when(geoServer.getService(eq(WMSInfo.class))).thenReturn(null);
+  LayerInfo layer=mockLayer("testLayer");
+  LayerGroupInfo group=mockGroup("testGroup",layer);
+  when(rawCatalog.getLayers()).thenReturn(Lists.newArrayList(layer));
+  when(rawCatalog.getLayerGroups()).thenReturn(Lists.newArrayList(group));
+  initializer.initialize(geoServer);
+  GWCConfig oldDefaults=GWCConfig.getOldDefaults();
+  GeoServerTileLayerInfo tileLayer=TileLayerInfoUtil.loadOrCreate(layer,oldDefaults);
+  GeoServerTileLayerInfo tileLayerGroup=TileLayerInfoUtil.loadOrCreate(group,oldDefaults);
+  verify(tileLayerCatalog,times(1)).save(eq(tileLayer));
+  verify(tileLayerCatalog,times(1)).save(eq(tileLayerGroup));
+}

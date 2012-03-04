@@ -1,0 +1,33 @@
+{
+  layersById.clear();
+  File baseDir;
+  try {
+    baseDir=resourceLoader.findOrCreateDirectory(baseDirectory);
+  }
+ catch (  IOException e) {
+    throw propagate(e);
+  }
+  LOGGER.info("GeoServer TileLayer store base directory is: " + baseDir.getAbsolutePath());
+  final String[] tileLayerFiles=baseDir.list(new FilenameFilter(){
+    @Override public boolean accept(    File dir,    String name){
+      return name.endsWith(".xml");
+    }
+  }
+);
+  LOGGER.info("Loading tile layers from " + baseDir.getAbsolutePath());
+  for (  String fileName : tileLayerFiles) {
+    GeoServerTileLayerInfoImpl info;
+    try {
+      File file=new File(baseDir,fileName);
+      info=depersist(file);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Error depersisting tile layer information from file " + fileName,e);
+      continue;
+    }
+    layersById.put(info.getId(),info.getName());
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("Loaded tile layer '" + info.getName() + "'");
+    }
+  }
+}

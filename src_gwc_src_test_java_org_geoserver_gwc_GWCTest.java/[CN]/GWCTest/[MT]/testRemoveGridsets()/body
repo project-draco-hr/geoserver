@@ -1,0 +1,38 @@
+{
+  try {
+    mediator.removeGridSets(null);
+    fail();
+  }
+ catch (  NullPointerException e) {
+    assertTrue(true);
+  }
+{
+    final GridSet oldGridset=gridSetBroker.get("EPSG:4326");
+    final GridSet newGridset;
+    XMLGridSet xmlGridSet=new XMLGridSet(oldGridset);
+    xmlGridSet.setName("My4326");
+    xmlGridSet.setAlignTopLeft(!xmlGridSet.getAlignTopLeft());
+    newGridset=xmlGridSet.makeGridSet();
+    gridSetBroker.put(newGridset);
+  }
+  when(tld.getConfiguration(same(tileLayer))).thenReturn(config);
+  when(tld.getConfiguration(same(tileLayerGroup))).thenReturn(config);
+  when(tld.modify(same(tileLayer))).thenReturn(config);
+  when(tld.modify(same(tileLayerGroup))).thenReturn(config);
+  when(tld.removeGridset(eq("EPSG:4326"))).thenReturn(config);
+  when(tld.removeGridset(eq("My4326"))).thenReturn(config);
+  mediator.removeGridSets(ImmutableSet.of("My4326","EPSG:4326"));
+  assertEquals(ImmutableSet.of("EPSG:900913"),tileLayer.getGridSubsets());
+  assertEquals(ImmutableSet.of("EPSG:900913"),tileLayerGroup.getGridSubsets());
+  verify(storageBroker,times(1)).deleteByGridSetId(eq(tileLayer.getName()),eq("EPSG:4326"));
+  verify(storageBroker,times(1)).deleteByGridSetId(eq(tileLayerGroup.getName()),eq("EPSG:4326"));
+  verify(storageBroker,never()).deleteByGridSetId(eq(tileLayer.getName()),eq("EPSG:900913"));
+  verify(storageBroker,never()).deleteByGridSetId(eq(tileLayer.getName()),eq("My4326"));
+  verify(storageBroker,never()).deleteByGridSetId(eq(tileLayerGroup.getName()),eq("EPSG:900913"));
+  verify(storageBroker,never()).deleteByGridSetId(eq(tileLayerGroup.getName()),eq("My4326"));
+  verify(tld,times(1)).modify(same(tileLayer));
+  verify(tld,times(1)).modify(same(tileLayerGroup));
+  verify(tld,times(1)).removeGridset(eq("EPSG:4326"));
+  verify(tld,times(1)).removeGridset(eq("My4326"));
+  verify(config,times(1)).save();
+}

@@ -1,3 +1,16 @@
 {
-  return getTileLayers();
+  lock.readLock().lock();
+  try {
+    final Set<String> layerIds=tileLayerCatalog.getLayerIds();
+    Function<String,GeoServerTileLayer> lazyLayerFetch=new Function<String,GeoServerTileLayer>(){
+      @Override public GeoServerTileLayer apply(      final String layerId){
+        return CatalogConfiguration.this.getTileLayerById(layerId);
+      }
+    }
+;
+    return Iterables.transform(layerIds,lazyLayerFetch);
+  }
+  finally {
+    lock.readLock().unlock();
+  }
 }

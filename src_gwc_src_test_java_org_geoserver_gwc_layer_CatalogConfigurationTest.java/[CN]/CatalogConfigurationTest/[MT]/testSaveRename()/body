@@ -1,0 +1,12 @@
+{
+  GeoServerTileLayerInfo originalState=layerInfo1;
+  GeoServerTileLayerInfo forceState1=TileLayerInfoUtil.loadOrCreate(layer1,defaults);
+  when(tileLayerCatalog.save(same(forceState1))).thenReturn(originalState);
+  forceState1.setName("newName");
+  config.modifyLayer(new GeoServerTileLayer(layer1,gridSetBroker,forceState1));
+  verify(mockMediator,never()).layerRemoved(anyString());
+  verify(mockMediator,never()).layerRenamed(anyString(),anyString());
+  config.save();
+  verify(tileLayerCatalog,times(1)).save(same(forceState1));
+  verify(mockMediator,times(1)).layerRenamed(eq(layerInfo1.getName()),eq("newName"));
+}

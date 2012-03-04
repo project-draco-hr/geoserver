@@ -1,0 +1,26 @@
+{
+  MetadataMap metadataMap=layer.getMetadata();
+  if (!hasTileLayerDef(metadataMap)) {
+    return null;
+  }
+  GeoServerTileLayerInfoImpl tileLayerInfo=load(metadataMap);
+  if (metadataMap.containsKey(CONFIG_KEY_CACHED_STYLES)) {
+    final String defaultStyle=layer.getDefaultStyle() == null ? "" : layer.getDefaultStyle().getName();
+    String cachedStylesStr=metadataMap.get(CONFIG_KEY_CACHED_STYLES,String.class);
+    Set<String> cachedStyles=unmarshalSet(cachedStylesStr);
+    TileLayerInfoUtil.setCachedStyles(tileLayerInfo,defaultStyle,cachedStyles);
+  }
+ else   if (tileLayerInfo.isAutoCacheStyles()) {
+    if (layer.getStyles() != null && layer.getStyles().size() > 0) {
+      final String defaultStyle=layer.getDefaultStyle() == null ? "" : layer.getDefaultStyle().getName();
+      Set<String> cachedStyles=new HashSet<String>();
+      for (      StyleInfo style : layer.getStyles()) {
+        cachedStyles.add(style.getName());
+      }
+      TileLayerInfoUtil.setCachedStyles(tileLayerInfo,defaultStyle,cachedStyles);
+    }
+  }
+  tileLayerInfo.setName(layer.getResource().getPrefixedName());
+  tileLayerInfo.setId(layer.getId());
+  return tileLayerInfo;
+}

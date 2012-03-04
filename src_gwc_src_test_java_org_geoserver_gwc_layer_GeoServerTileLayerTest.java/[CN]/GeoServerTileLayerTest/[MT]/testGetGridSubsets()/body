@@ -1,16 +1,20 @@
 {
-  layerInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerInfo);
+  layerInfoTileLayer=new GeoServerTileLayer(layerInfo,defaults,gridSetBroker);
   Set<String> gridSubsets=layerInfoTileLayer.getGridSubsets();
   assertNotNull(gridSubsets);
   assertEquals(2,gridSubsets.size());
-  layerInfoTileLayer.getInfo().setCachedGridSetIds(Collections.singleton("EPSG:900913"));
-  layerInfoTileLayer.getInfo().saveTo(layerInfo.getMetadata());
-  layerInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerInfo);
+  Set<XMLGridSubset> subsets=layerInfoTileLayer.getInfo().getGridSubsets();
+  subsets.clear();
+  XMLGridSubset xmlGridSubset=new XMLGridSubset();
+  xmlGridSubset.setGridSetName("EPSG:900913");
+  subsets.add(xmlGridSubset);
+  LegacyTileLayerInfoLoader.save(layerInfoTileLayer.getInfo(),layerInfo.getMetadata());
+  layerInfoTileLayer=new GeoServerTileLayer(layerInfo,defaults,gridSetBroker);
   gridSubsets=layerInfoTileLayer.getGridSubsets();
   assertNotNull(gridSubsets);
   assertEquals(1,gridSubsets.size());
   layerGroup.setBounds(layerInfo.getResource().getLatLonBoundingBox());
-  layerGroupInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerGroup);
+  layerGroupInfoTileLayer=new GeoServerTileLayer(layerGroup,defaults,gridSetBroker);
   gridSubsets=layerGroupInfoTileLayer.getGridSubsets();
   assertNotNull(gridSubsets);
   assertEquals(2,gridSubsets.size());

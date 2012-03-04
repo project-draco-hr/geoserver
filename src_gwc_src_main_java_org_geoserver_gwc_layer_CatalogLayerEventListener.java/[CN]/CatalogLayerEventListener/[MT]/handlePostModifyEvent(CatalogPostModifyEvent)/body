@@ -1,32 +1,33 @@
 {
-  final Object source=event.getSource();
+  final CatalogInfo source=event.getSource();
   if (!(source instanceof LayerInfo || source instanceof LayerGroupInfo || source instanceof FeatureTypeInfo|| source instanceof CoverageInfo|| source instanceof WMSLayerInfo)) {
     return;
   }
+  final GeoServerTileLayerInfo tileLayerInfo=PRE_MODIFY_TILELAYER.get();
+  PRE_MODIFY_TILELAYER.remove();
   final CatalogModifyEvent preModifyEvent=PRE_MODIFY_EVENT.get();
+  PRE_MODIFY_EVENT.remove();
+  if (tileLayerInfo == null) {
+    return;
+  }
   if (preModifyEvent == null) {
     throw new IllegalStateException("PostModifyEvent called without having called handlePreModify first?");
   }
-  PRE_MODIFY_EVENT.remove();
   final List<String> changedProperties=preModifyEvent.getPropertyNames();
   final List<Object> oldValues=preModifyEvent.getOldValues();
   final List<Object> newValues=preModifyEvent.getNewValues();
   log.finer("Handling modify event for " + source);
   if (source instanceof FeatureTypeInfo || source instanceof CoverageInfo || source instanceof WMSLayerInfo|| source instanceof LayerGroupInfo) {
     if (changedProperties.contains("name") || changedProperties.contains("namespace")) {
-      handleRename(source,changedProperties,oldValues,newValues);
+      handleRename(tileLayerInfo,source,changedProperties,oldValues,newValues);
     }
   }
   if (source instanceof LayerInfo) {
-    if (changedProperties.contains("defaultStyle") || changedProperties.contains("styles")) {
-      final LayerInfo li=(LayerInfo)source;
-      handleLayerInfo(changedProperties,oldValues,newValues,li);
-    }
+    final LayerInfo li=(LayerInfo)source;
+    handleLayerInfoChange(changedProperties,oldValues,newValues,li,tileLayerInfo);
   }
  else   if (source instanceof LayerGroupInfo) {
-    if (changedProperties.contains("layers") || changedProperties.contains("styles")) {
-      LayerGroupInfo lgInfo=(LayerGroupInfo)source;
-      handleLayerGroupInfo(changedProperties,oldValues,newValues,lgInfo);
-    }
+    LayerGroupInfo lgInfo=(LayerGroupInfo)source;
+    handleLayerGroupInfoChange(changedProperties,oldValues,newValues,lgInfo,tileLayerInfo);
   }
 }

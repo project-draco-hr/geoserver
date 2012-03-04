@@ -1,0 +1,21 @@
+{
+  GeoServerTileLayerInfo newState=TileLayerInfoUtil.create(defaults);
+  newState.setId(orig.getInfo().getId());
+  newState.setName(orig.getInfo().getName());
+  assertFalse(orig.equals(newState));
+  final GeoServerTileLayer modified;
+  if (orig.getLayerInfo() != null) {
+    modified=new GeoServerTileLayer(orig.getLayerInfo(),gridSetBroker,newState);
+  }
+ else {
+    modified=new GeoServerTileLayer(orig.getLayerGroupInfo(),gridSetBroker,newState);
+  }
+  assertEquals(orig.getInfo(),config.getTileLayer(orig.getName()).getInfo());
+  config.modifyLayer(modified);
+  assertEquals(newState,config.getTileLayer(orig.getName()).getInfo());
+  final String origName=orig.getName();
+  modified.getInfo().setName("changed");
+  config.modifyLayer(modified);
+  assertNull(config.getTileLayer(origName));
+  assertFalse(config.getTileLayerNames().contains(origName));
+}

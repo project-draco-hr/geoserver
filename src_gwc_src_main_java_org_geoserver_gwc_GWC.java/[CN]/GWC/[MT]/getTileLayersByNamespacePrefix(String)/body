@@ -5,20 +5,25 @@
   final Catalog catalog=getCatalog();
   final NamespaceInfo namespaceFilter=catalog.getNamespaceByPrefix(nsPrefix);
   if (namespaceFilter == null) {
-    return getTileLayers();
+    Iterable<TileLayer> tileLayers=getTileLayers();
+    return tileLayers;
   }
-  List<TileLayer> filteredLayers=new ArrayList<TileLayer>();
-  NamespaceInfo layerNamespace;
-  String layerName;
-  for (  TileLayer tileLayer : getTileLayers()) {
-    layerName=tileLayer.getName();
-    LayerInfo layerInfo=catalog.getLayerByName(layerName);
-    if (layerInfo != null) {
-      layerNamespace=layerInfo.getResource().getNamespace();
-      if (namespaceFilter.equals(layerNamespace)) {
-        filteredLayers.add(tileLayer);
+  Iterable<GeoServerTileLayer> geoServerTileLayers=getGeoServerTileLayers();
+  return Iterables.filter(geoServerTileLayers,new Predicate<GeoServerTileLayer>(){
+    @Override public boolean apply(    GeoServerTileLayer tileLayer){
+      String layerName=tileLayer.getName();
+      if (-1 == layerName.indexOf(':')) {
+        return false;
       }
+      LayerInfo layerInfo=catalog.getLayerByName(layerName);
+      if (layerInfo != null) {
+        NamespaceInfo layerNamespace=layerInfo.getResource().getNamespace();
+        if (namespaceFilter.equals(layerNamespace)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
-  return filteredLayers;
+);
 }

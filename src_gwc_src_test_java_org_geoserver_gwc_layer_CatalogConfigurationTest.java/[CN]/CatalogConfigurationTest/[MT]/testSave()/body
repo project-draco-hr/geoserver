@@ -1,0 +1,32 @@
+{
+  when(tileLayerCatalog.delete(eq(layerInfo2.getId()))).thenReturn(layerInfo2);
+  assertTrue(config.removeLayer(layerInfo2.getName()));
+  when(tileLayerCatalog.delete(eq(groupInfo1.getId()))).thenReturn(groupInfo1);
+  assertTrue(config.removeLayer(groupInfo1.getName()));
+  doThrow(new IllegalArgumentException("failedDelete")).when(tileLayerCatalog).delete(eq(group1.getId()));
+  GeoServerTileLayerInfo forceState1=TileLayerInfoUtil.loadOrCreate(layer1,defaults);
+  forceState1.setName("newName");
+  GeoServerTileLayerInfo forceState2=TileLayerInfoUtil.loadOrCreate(group2,defaults);
+  when(tileLayerCatalog.save(same(forceState1))).thenReturn(layerInfo1);
+  config.modifyLayer(new GeoServerTileLayer(layer1,gridSetBroker,forceState1));
+  config.modifyLayer(new GeoServerTileLayer(group2,gridSetBroker,forceState2));
+  doThrow(new IllegalArgumentException("failedSave")).when(tileLayerCatalog).save(eq(forceState2));
+  verify(mockMediator,never()).layerRemoved(anyString());
+  verify(mockMediator,never()).layerRenamed(anyString(),anyString());
+  GeoServerTileLayerInfo addedState1=TileLayerInfoUtil.loadOrCreate(layerWithNoTileLayer,defaults);
+  config.addLayer(new GeoServerTileLayer(layerWithNoTileLayer,gridSetBroker,addedState1));
+  doThrow(new IllegalArgumentException("callback exception")).when(mockMediator).layerAdded(eq(addedState1.getName()));
+  GeoServerTileLayerInfo addedState2=TileLayerInfoUtil.loadOrCreate(groupWithNoTileLayer,defaults);
+  config.addLayer(new GeoServerTileLayer(groupWithNoTileLayer,gridSetBroker,addedState2));
+  config.save();
+  verify(tileLayerCatalog,times(1)).delete(eq(group1.getId()));
+  verify(tileLayerCatalog,times(1)).delete(eq(layer2.getId()));
+  verify(tileLayerCatalog,times(1)).save(same(forceState1));
+  verify(tileLayerCatalog,times(1)).save(same(forceState2));
+  verify(tileLayerCatalog,times(1)).save(same(addedState1));
+  verify(tileLayerCatalog,times(1)).save(same(addedState2));
+  verify(mockMediator,times(1)).layerRemoved(eq(layerInfo2.getName()));
+  verify(mockMediator,times(1)).layerRenamed(eq(layerInfo1.getName()),eq("newName"));
+  verify(mockMediator,times(1)).layerAdded(eq(addedState1.getName()));
+  verify(mockMediator,times(1)).layerAdded(eq(addedState2.getName()));
+}

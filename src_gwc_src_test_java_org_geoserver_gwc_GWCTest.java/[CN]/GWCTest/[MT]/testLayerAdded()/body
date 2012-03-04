@@ -1,0 +1,16 @@
+{
+  when(diskQuotaMonitor.isEnabled()).thenReturn(false);
+  mediator.layerAdded("someLayer");
+  verify(quotaStore,never()).createLayer(anyString());
+  when(diskQuotaMonitor.isEnabled()).thenReturn(true);
+  mediator.layerAdded("someLayer");
+  verify(quotaStore,times(1)).createLayer(eq("someLayer"));
+  doThrow(new InterruptedException("fake")).when(quotaStore).createLayer(eq("someLayer"));
+  try {
+    mediator.layerAdded("someLayer");
+    fail("Expected RTE");
+  }
+ catch (  RuntimeException e) {
+    assertTrue(e.getCause() instanceof InterruptedException);
+  }
+}

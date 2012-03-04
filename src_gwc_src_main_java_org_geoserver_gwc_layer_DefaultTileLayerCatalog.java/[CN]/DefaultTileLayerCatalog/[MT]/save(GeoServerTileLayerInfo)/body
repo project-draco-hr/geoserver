@@ -1,0 +1,27 @@
+{
+  GeoServerTileLayerInfoImpl oldValue=null;
+  final String tileLayerId=newValue.getId();
+  Preconditions.checkNotNull(tileLayerId);
+  try {
+    try {
+      oldValue=loadInternal(tileLayerId);
+    }
+ catch (    FileNotFoundException ignore) {
+    }
+catch (    Exception other) {
+      throw propagate(other);
+    }
+    if (oldValue != null) {
+      layersByName.remove(oldValue.getName());
+    }
+    persist(newValue);
+    layersById.put(newValue.getId(),newValue.getName());
+  }
+ catch (  Exception e) {
+    if (e instanceof ExecutionException) {
+      propagate(((ExecutionException)e).getCause());
+    }
+    propagate(e);
+  }
+  return oldValue;
+}

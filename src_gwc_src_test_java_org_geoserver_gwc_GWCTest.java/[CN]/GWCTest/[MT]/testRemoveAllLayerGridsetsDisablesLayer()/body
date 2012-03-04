@@ -1,0 +1,20 @@
+{
+  when(tld.getConfiguration(same(tileLayer))).thenReturn(config);
+  when(tld.getConfiguration(same(tileLayerGroup))).thenReturn(config);
+  when(tld.modify(same(tileLayer))).thenReturn(config);
+  when(tld.modify(same(tileLayerGroup))).thenReturn(config);
+  when(tld.removeGridset(eq("EPSG:4326"))).thenReturn(config);
+  when(tld.removeGridset(eq("EPSG:900913"))).thenReturn(config);
+  assertTrue(tileLayer.getInfo().isEnabled());
+  assertTrue(tileLayer.getInfo().isEnabled());
+  mediator.removeGridSets(ImmutableSet.of("EPSG:900913","EPSG:4326"));
+  verify(config,times(1)).save();
+  verify(storageBroker,times(1)).deleteByGridSetId(eq(tileLayer.getName()),eq("EPSG:4326"));
+  verify(storageBroker,times(1)).deleteByGridSetId(eq(tileLayerGroup.getName()),eq("EPSG:900913"));
+  verify(storageBroker,times(1)).deleteByGridSetId(eq(tileLayer.getName()),eq("EPSG:4326"));
+  verify(storageBroker,times(1)).deleteByGridSetId(eq(tileLayerGroup.getName()),eq("EPSG:900913"));
+  assertTrue(tileLayer.getGridSubsets().isEmpty());
+  assertTrue(tileLayerGroup.getGridSubsets().isEmpty());
+  assertFalse(tileLayer.getInfo().isEnabled());
+  assertFalse(tileLayerGroup.getInfo().isEnabled());
+}

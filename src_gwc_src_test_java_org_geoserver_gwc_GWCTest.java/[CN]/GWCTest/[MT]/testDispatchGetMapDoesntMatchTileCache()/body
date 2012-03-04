@@ -1,0 +1,34 @@
+{
+  GetMapRequest request=new GetMapRequest();
+  @SuppressWarnings("unchecked") Map<String,String> rawKvp=new CaseInsensitiveMap(new HashMap<String,String>());
+  request.setRawKvp(rawKvp);
+  rawKvp.put("layers","more,than,one,layer");
+  assertDispatchMismatch(request,"more than one layer requested");
+  rawKvp.put("layers","SomeNonCachedLayer");
+  when(tld.getTileLayer(eq("SomeNonCachedLayer"))).thenThrow(new GeoWebCacheException("layer not found"));
+  assertDispatchMismatch(request,"not a tile layer");
+  rawKvp.put("layers",tileLayer.getName());
+  request.setFormat("badFormat");
+  assertDispatchMismatch(request,"not a GWC supported format");
+  request.setFormat("image/gif");
+  assertDispatchMismatch(request,"no tile cache for requested format");
+  request.setFormat(tileLayer.getMimeTypes().get(0).getMimeType());
+  request.setSRS("EPSG:4326");
+  request.setBbox(new Envelope(10,10,20,20));
+  assertDispatchMismatch(request,"request does not align to grid");
+  request.setSRS("EPSG:23036");
+  assertDispatchMismatch(request,"no cache exists for requested CRS");
+  request.setSRS("badCRS");
+  assertDispatchMismatch(request,"exception occurred");
+  request.setSRS("EPSG:4326");
+  request.setWidth(128);
+  request.setHeight(256);
+  assertDispatchMismatch(request,"request does not align to grid");
+  request.setWidth(256);
+  request.setHeight(128);
+  assertDispatchMismatch(request,"request does not align to grid");
+  request.setSRS("EPSG:4326");
+  request.setWidth(256);
+  request.setHeight(256);
+  assertDispatchMismatch(request,"request does not align to grid");
+}

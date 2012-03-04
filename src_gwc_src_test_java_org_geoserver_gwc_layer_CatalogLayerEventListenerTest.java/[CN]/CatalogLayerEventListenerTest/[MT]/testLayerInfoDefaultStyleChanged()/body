@@ -12,11 +12,15 @@
   when(modifyEvent.getOldValues()).thenReturn(Collections.singletonList((Object)oldStyle));
   when(modifyEvent.getNewValues()).thenReturn(Collections.singletonList((Object)newStyle));
   GeoServerTileLayer tileLayer=mock(GeoServerTileLayer.class);
-  when(mockConfiguration.getTileLayer(eq(PREFIXED_RESOURCE_NAME))).thenReturn(tileLayer);
+  when(mockMediator.getTileLayerByName(eq(PREFIXED_RESOURCE_NAME))).thenReturn(tileLayer);
+  GeoServerTileLayerInfo info=TileLayerInfoUtil.loadOrCreate(mockLayerInfo,GWCConfig.getOldDefaults());
+  when(tileLayer.getInfo()).thenReturn(info);
+  when(mockMediator.hasTileLayer(same(mockLayerInfo))).thenReturn(true);
+  when(mockMediator.getTileLayer(same(mockLayerInfo))).thenReturn(tileLayer);
   listener.handleModifyEvent(modifyEvent);
   CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
   when(postModifyEvent.getSource()).thenReturn(mockLayerInfo);
   listener.handlePostModifyEvent(postModifyEvent);
-  verify(mockConfiguration).truncate(eq(PREFIXED_RESOURCE_NAME),eq(oldName));
-  verify(mockConfiguration).save(same(tileLayer));
+  verify(mockMediator).truncateByLayerAndStyle(eq(PREFIXED_RESOURCE_NAME),eq(oldName));
+  verify(mockMediator).save(any(GeoServerTileLayer.class));
 }

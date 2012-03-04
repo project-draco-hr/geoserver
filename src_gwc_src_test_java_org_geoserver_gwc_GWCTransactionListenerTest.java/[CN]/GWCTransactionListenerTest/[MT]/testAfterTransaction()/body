@@ -1,0 +1,16 @@
+{
+  Map<Object,Object> extendedProperties=new HashMap<Object,Object>();
+  ReferencedEnvelope affectedBounds1=new ReferencedEnvelope(-180,0,0,90,WGS84);
+  ReferencedEnvelope affectedBounds2=new ReferencedEnvelope(0,180,0,90,WGS84);
+  issueInsert(extendedProperties,affectedBounds1);
+  issueInsert(extendedProperties,affectedBounds2);
+  TransactionType request=mock(TransactionType.class);
+  TransactionResponseType result=mock(TransactionResponseType.class);
+  when(request.getExtendedProperties()).thenReturn(extendedProperties);
+  when(mediator.getDeclaredCrs(anyString())).thenReturn(WGS84);
+  listener.afterTransaction(request,result,true);
+  ReferencedEnvelope expectedEnv=new ReferencedEnvelope(affectedBounds1);
+  expectedEnv.expandToInclude(affectedBounds2);
+  verify(mediator,times(1)).truncate(eq("theLayer"),eq(expectedEnv));
+  verify(mediator,times(1)).truncate(eq("theGroup"),eq(expectedEnv));
+}

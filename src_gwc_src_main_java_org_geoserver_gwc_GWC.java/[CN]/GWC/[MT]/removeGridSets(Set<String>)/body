@@ -1,0 +1,36 @@
+{
+  checkNotNull(gridsetIds);
+  final Set<String> affectedLayers=getLayerNamesForGridSets(gridsetIds);
+  final Set<Configuration> changedConfigs=new HashSet<Configuration>();
+  for (  String layerName : affectedLayers) {
+    TileLayer tileLayer=getTileLayerByName(layerName);
+    tileLayer.acquireLayerLock();
+    try {
+      for (      String gridSetId : gridsetIds) {
+        if (tileLayer.getGridSubsets().contains(gridSetId)) {
+          tileLayer.removeGridSubset(gridSetId);
+          deleteCacheByGridSetId(layerName,gridSetId);
+        }
+      }
+      if (tileLayer.getGridSubsets().isEmpty()) {
+        tileLayer.setEnabled(false);
+      }
+      try {
+        Configuration configuration=tld.modify(tileLayer);
+        changedConfigs.add(configuration);
+      }
+ catch (      IllegalArgumentException ignore) {
+      }
+    }
+  finally {
+      tileLayer.releaseLayerLock();
+    }
+  }
+  for (  String gridSetId : gridsetIds) {
+    Configuration configuration=tld.removeGridset(gridSetId);
+    changedConfigs.add(configuration);
+  }
+  for (  Configuration config : changedConfigs) {
+    config.save();
+  }
+}

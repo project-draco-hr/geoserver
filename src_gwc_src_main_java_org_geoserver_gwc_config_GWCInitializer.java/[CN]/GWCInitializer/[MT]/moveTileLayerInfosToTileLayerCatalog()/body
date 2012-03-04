@@ -1,0 +1,32 @@
+{
+  for (  LayerInfo layer : rawCatalog.getLayers()) {
+    try {
+      GeoServerTileLayerInfo tileLayerInfo;
+      tileLayerInfo=LegacyTileLayerInfoLoader.load(layer);
+      if (tileLayerInfo != null) {
+        tileLayerCatalog.save(tileLayerInfo);
+        MetadataMap metadata=layer.getMetadata();
+        LegacyTileLayerInfoLoader.clear(metadata);
+        rawCatalog.save(layer);
+      }
+    }
+ catch (    RuntimeException e) {
+      LOGGER.log(Level.WARNING,"Error migrating GWC Tile Layer settings for Layer '" + layer.getName() + "'",e);
+    }
+  }
+  for (  LayerGroupInfo layer : rawCatalog.getLayerGroups()) {
+    try {
+      GeoServerTileLayerInfo tileLayerInfo;
+      tileLayerInfo=LegacyTileLayerInfoLoader.load(layer);
+      if (tileLayerInfo != null) {
+        tileLayerCatalog.save(tileLayerInfo);
+        MetadataMap metadata=layer.getMetadata();
+        LegacyTileLayerInfoLoader.clear(metadata);
+        rawCatalog.save(layer);
+      }
+    }
+ catch (    RuntimeException e) {
+      LOGGER.log(Level.WARNING,"Error occurred saving default GWC Tile Layer settings for LayerGroup '" + layer.getName() + "'",e);
+    }
+  }
+}

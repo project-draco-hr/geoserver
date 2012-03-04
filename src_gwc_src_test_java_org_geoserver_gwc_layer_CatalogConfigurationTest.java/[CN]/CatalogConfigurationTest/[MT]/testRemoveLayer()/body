@@ -1,0 +1,24 @@
+{
+  try {
+    config.removeLayer(null);
+    fail("expected precondition violation exception");
+  }
+ catch (  RuntimeException e) {
+    assertTrue(true);
+  }
+  assertFalse(config.removeLayer(layerWithNoTileLayer.getResource().getPrefixedName()));
+  assertFalse(config.removeLayer(groupWithNoTileLayer.getName()));
+  String layerName;
+  layerName=layer1.getResource().getPrefixedName();
+  assertNotNull(config.getTileLayer(layerName));
+  final int initialCount=config.getTileLayerCount();
+  assertTrue(config.removeLayer(layerName));
+  assertNull(config.getTileLayer(layerName));
+  assertFalse(config.getTileLayerNames().contains(layerName));
+  assertEquals(initialCount - 1,config.getTileLayerCount());
+  layerName=group1.getName();
+  assertNotNull(config.getTileLayer(layerName));
+  assertTrue(config.removeLayer(layerName));
+  assertNull(config.getTileLayer(layerName));
+  assertEquals(initialCount - 2,config.getTileLayerCount());
+}

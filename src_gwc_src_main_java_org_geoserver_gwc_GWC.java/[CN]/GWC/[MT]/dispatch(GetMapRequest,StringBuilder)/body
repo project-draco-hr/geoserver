@@ -1,0 +1,31 @@
+{
+  final String layerName=request.getRawKvp().get("LAYERS");
+  if (layerName.indexOf(',') != -1) {
+    requestMistmatchTarget.append("more than one layer requested");
+    return null;
+  }
+  final TileLayer tileLayer;
+  try {
+    tileLayer=this.tld.getTileLayer(layerName);
+  }
+ catch (  GeoWebCacheException e) {
+    requestMistmatchTarget.append("not a tile layer");
+    return null;
+  }
+  if (!tileLayer.isEnabled()) {
+    requestMistmatchTarget.append("tile layer disabled");
+    return null;
+  }
+  ConveyorTile tileReq=prepareRequest(tileLayer,request,requestMistmatchTarget);
+  if (null == tileReq) {
+    return null;
+  }
+  ConveyorTile tileResp=null;
+  try {
+    tileResp=tileLayer.getTile(tileReq);
+  }
+ catch (  Exception e) {
+    log.log(Level.INFO,"Error dispatching tile request to GeoServer",e);
+  }
+  return tileResp;
+}

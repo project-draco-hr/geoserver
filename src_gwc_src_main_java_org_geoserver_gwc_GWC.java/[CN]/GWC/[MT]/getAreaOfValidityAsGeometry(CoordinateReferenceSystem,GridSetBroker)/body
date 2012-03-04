@@ -1,0 +1,43 @@
+{
+  CoordinateReferenceSystem variant;
+  String[] variants={"EPSG:900913","EPSG:3857","EPSG:3785"};
+  boolean is900913Compatible=false;
+  for (  String variantCode : variants) {
+    variant=variant(variantCode);
+    is900913Compatible=variant != null && CRS.equalsIgnoreMetadata(targetCrs,variant);
+    if (is900913Compatible) {
+      break;
+    }
+  }
+  if (is900913Compatible) {
+    BoundingBox prescribedBounds=gridSetBroker.WORLD_EPSG3857.getBounds();
+    return JTS.toGeometry(new Envelope(prescribedBounds.getMinX(),prescribedBounds.getMaxX(),prescribedBounds.getMinY(),prescribedBounds.getMaxY()));
+  }
+  final org.opengis.geometry.Envelope envelope=CRS.getEnvelope(targetCrs);
+  if (envelope == null) {
+    return null;
+  }
+  Geometry aovGeom;
+  final double tolerance=1E-6;
+  if (envelope.getSpan(0) < tolerance || envelope.getSpan(1) < tolerance) {
+    GeographicBoundingBox latLonBBox=CRS.getGeographicBoundingBox(targetCrs);
+    ReferencedEnvelope bbox=new ReferencedEnvelope(new GeneralEnvelope(latLonBBox));
+    Polygon geometry=JTS.toGeometry(bbox);
+    double distanceTolerance=Math.max(bbox.getSpan(0),bbox.getSpan(1)) / 2E5;
+    Geometry densifiedGeom=Densifier.densify(geometry,distanceTolerance);
+    MathTransform mathTransform;
+    try {
+      CoordinateReferenceSystem sourceCRS=bbox.getCoordinateReferenceSystem();
+      mathTransform=CRS.findMathTransform(sourceCRS,targetCrs);
+      aovGeom=JTS.transform(densifiedGeom,mathTransform);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+ else {
+    aovGeom=JTS.toGeometry(new Envelope(envelope.getMinimum(0),envelope.getMaximum(0),envelope.getMinimum(1),envelope.getMaximum(1)));
+  }
+  aovGeom.setUserData(targetCrs);
+  return aovGeom;
+}

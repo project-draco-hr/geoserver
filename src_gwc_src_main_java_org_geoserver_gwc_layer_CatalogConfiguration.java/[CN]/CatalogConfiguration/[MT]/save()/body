@@ -1,2 +1,64 @@
 {
+  final GWC mediator=GWC.get();
+  final Set<String> deletedNames=Sets.newHashSet();
+  final List<GeoServerTileLayerInfo[]> modifications=Lists.newLinkedList();
+  lock.writeLock().lock();
+  try {
+    for (    String deletedId : pendingDeletes) {
+      try {
+        GeoServerTileLayerInfo info=tileLayerCatalog.delete(deletedId);
+        if (info != null) {
+          deletedNames.add(info.getName());
+        }
+      }
+ catch (      RuntimeException e) {
+        LOGGER.log(Level.SEVERE,"Error deleting tile layer '" + deletedId + "'",e);
+      }
+    }
+    for (    GeoServerTileLayerInfo modified : pendingModications.values()) {
+      final GeoServerTileLayerInfo old;
+      try {
+        old=tileLayerCatalog.save(modified);
+        modifications.add(new GeoServerTileLayerInfo[]{old,modified});
+      }
+ catch (      RuntimeException e) {
+        LOGGER.log(Level.SEVERE,"Error saving tile layer '" + modified.getName() + "'",e);
+      }
+    }
+    this.pendingModications.clear();
+    this.pendingDeletes.clear();
+  }
+  finally {
+    lock.readLock().lock();
+    lock.writeLock().unlock();
+    try {
+      for (      String deletedLayerName : deletedNames) {
+        try {
+          mediator.layerRemoved(deletedLayerName);
+        }
+ catch (        RuntimeException e) {
+          LOGGER.log(Level.SEVERE,"Error deleting tile layer '" + deletedLayerName + "'",e);
+        }
+      }
+      for (      GeoServerTileLayerInfo[] oldNew : modifications) {
+        final GeoServerTileLayerInfo old=oldNew[0];
+        final GeoServerTileLayerInfo modified=oldNew[1];
+        try {
+          if (old == null) {
+            String layerName=modified.getName();
+            mediator.layerAdded(layerName);
+          }
+ else {
+            issueTileLayerInfoChangeNotifications(old,modified);
+          }
+        }
+ catch (        RuntimeException e) {
+          LOGGER.log(Level.SEVERE,"Error issuing chanve events for tile layer " + modified,e);
+        }
+      }
+    }
+  finally {
+      lock.readLock().unlock();
+    }
+  }
 }

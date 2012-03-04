@@ -1,0 +1,27 @@
+{
+  final String tileLayerId;
+  if (source instanceof ResourceInfo) {
+    LayerInfo layerInfo=getCatalog().getLayerByName(((ResourceInfo)source).getPrefixedName());
+    if (layerInfo == null) {
+      return false;
+    }
+    tileLayerId=layerInfo.getId();
+  }
+ else   if (source instanceof LayerInfo) {
+    tileLayerId=((LayerInfo)source).getId();
+  }
+ else   if (source instanceof LayerGroupInfo) {
+    tileLayerId=((LayerGroupInfo)source).getId();
+  }
+ else {
+    return false;
+  }
+  Configuration configuration;
+  try {
+    configuration=tld.getConfiguration(tileLayerId);
+  }
+ catch (  IllegalArgumentException notFound) {
+    return false;
+  }
+  return configuration instanceof CatalogConfiguration;
+}

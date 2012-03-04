@@ -1,6 +1,22 @@
 {
-  List<LayerGroupInfo> layerGroups=catalog.getLayerGroups();
-  List<LayerInfo> layerInfos=catalog.getLayers();
-  int count=layerGroups.size() + layerInfos.size();
+  int count=0;
+  lock.readLock().lock();
+  try {
+    Set<String> layerIds=tileLayerCatalog.getLayerIds();
+    if (pendingDeletes.isEmpty()) {
+      count=layerIds.size();
+    }
+ else {
+      for (      String layerId : layerIds) {
+        if (pendingDeletes.contains(layerId)) {
+          continue;
+        }
+        ++count;
+      }
+    }
+  }
+  finally {
+    lock.readLock().unlock();
+  }
   return count;
 }

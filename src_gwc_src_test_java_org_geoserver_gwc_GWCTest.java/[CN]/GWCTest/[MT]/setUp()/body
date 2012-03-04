@@ -1,0 +1,24 @@
+{
+  catalog=mock(Catalog.class);
+  layer=mockLayer("testLayer","style1","style2");
+  layerGroup=mockGroup("testGroup",layer);
+  mockCatalog();
+  defaults=GWCConfig.getOldDefaults();
+  gwcConfigPersister=mock(GWCConfigPersister.class);
+  when(gwcConfigPersister.getConfig()).thenReturn(defaults);
+  storageBroker=mock(StorageBroker.class);
+  gridSetBroker=new GridSetBroker(true,true);
+  tileLayerInfo=TileLayerInfoUtil.loadOrCreate(layer,defaults);
+  tileLayerGroupInfo=TileLayerInfoUtil.loadOrCreate(layerGroup,defaults);
+  tileLayer=new GeoServerTileLayer(layer,gridSetBroker,tileLayerInfo);
+  tileLayerGroup=new GeoServerTileLayer(layerGroup,gridSetBroker,tileLayerGroupInfo);
+  tld=mock(TileLayerDispatcher.class);
+  mockTileLayerDispatcher();
+  config=mock(Configuration.class);
+  tileBreeder=mock(TileBreeder.class);
+  quotaStore=mock(QuotaStore.class);
+  diskQuotaMonitor=mock(DiskQuotaMonitor.class);
+  owsDispatcher=mock(Dispatcher.class);
+  mediator=new GWC(gwcConfigPersister,storageBroker,tld,gridSetBroker,tileBreeder,quotaStore,diskQuotaMonitor,owsDispatcher,catalog);
+  GWC.set(mediator);
+}

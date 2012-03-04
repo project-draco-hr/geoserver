@@ -1,15 +1,15 @@
 {
   Resource mockResult=mock(Resource.class);
   ArgumentCaptor<Map> argument=ArgumentCaptor.forClass(Map.class);
-  Mockito.when(catalogConfig.dispatchOwsRequest(argument.capture(),(Cookie[])anyObject())).thenReturn(mockResult);
+  Mockito.when(mockGWC.dispatchOwsRequest(argument.capture(),(Cookie[])anyObject())).thenReturn(mockResult);
   BufferedImage image=new BufferedImage(256,256,BufferedImage.TYPE_INT_ARGB);
   RenderedImageMap fakeDispatchedMap=new RenderedImageMap(new WMSMapContent(),image,"image/png");
   RenderedImageMapResponse fakeResponseEncoder=mock(RenderedImageMapResponse.class);
   MimeType mimeType=MimeType.createFromFormat("image/png");
-  when(catalogConfig.getResponseEncoder(eq(mimeType),(WebMap)anyObject())).thenReturn(fakeResponseEncoder);
+  when(mockGWC.getResponseEncoder(eq(mimeType),(RenderedImageMap)anyObject())).thenReturn(fakeResponseEncoder);
   StorageBroker storageBroker=mock(StorageBroker.class);
   when(storageBroker.get((TileObject)anyObject())).thenReturn(false);
-  layerInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerInfo);
+  layerInfoTileLayer=new GeoServerTileLayer(layerInfo,defaults,gridSetBroker);
   MockHttpServletRequest servletReq=new MockHttpServletRequest();
   HttpServletResponse servletResp=new MockHttpServletResponse();
   long[] tileIndex={0,0,0};
@@ -21,5 +21,5 @@
   assertEquals(CacheResult.MISS,returned.getCacheResult());
   assertEquals(200,returned.getStatus());
   verify(storageBroker,atLeastOnce()).get((TileObject)anyObject());
-  verify(catalogConfig,times(1)).getResponseEncoder(eq(mimeType),isA(RenderedImageMap.class));
+  verify(mockGWC,times(1)).getResponseEncoder(eq(mimeType),isA(RenderedImageMap.class));
 }

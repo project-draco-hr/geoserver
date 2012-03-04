@@ -1,4 +1,20 @@
 {
-  getGWC().layerRemoved(tileLayerName);
-  return true;
+  checkNotNull(layerName);
+  lock.writeLock().lock();
+  try {
+    GeoServerTileLayerInfo tileLayerInfo=getTileLayerInfoByName(layerName);
+    if (tileLayerInfo != null) {
+      final String layerId=tileLayerInfo.getId();
+      pendingModications.remove(layerId);
+      pendingDeletes.add(layerId);
+      layerCache.invalidate(layerId);
+      return true;
+    }
+ else {
+      return false;
+    }
+  }
+  finally {
+    lock.writeLock().unlock();
+  }
 }

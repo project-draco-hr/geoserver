@@ -1,3 +1,23 @@
 {
-  throw new UnsupportedOperationException();
+  checkNotNull(tl);
+  checkArgument(canSave(tl),"Can't save TileLayer of type ",tl.getClass());
+  GeoServerTileLayer tileLayer=(GeoServerTileLayer)tl;
+  checkNotNull(tileLayer.getInfo(),"GeoServerTileLayerInfo is null");
+  checkNotNull(tileLayer.getInfo().getId(),"id is null");
+  checkNotNull(tileLayer.getInfo().getName(),"name is null");
+  GeoServerTileLayerInfo info=tileLayer.getInfo();
+  lock.writeLock().lock();
+  try {
+    boolean pending=pendingModications.containsKey(info.getId());
+    boolean exists=null != tileLayerCatalog.getLayerById(info.getId());
+    boolean notExists=!pending && !exists;
+    checkArgument(notExists,"A GeoServerTileLayer named '" + info.getName() + "' already exists");
+    if (pendingDeletes.remove(info.getId())) {
+      LOGGER.finer("Adding a new layer " + info.getName() + " before saving the deleted one with the same name");
+    }
+    pendingModications.put(info.getId(),info);
+  }
+  finally {
+    lock.writeLock().unlock();
+  }
 }

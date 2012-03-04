@@ -14,17 +14,23 @@
     return;
   }
   List<GeoServerTileLayer> affectedLayers;
-  affectedLayers=catalogConfig.getTileLayersForStyle(oldStyleName);
+  affectedLayers=mediator.getTileLayersForStyle(oldStyleName);
   for (  GeoServerTileLayer tl : affectedLayers) {
+    LayerInfo layerInfo=tl.getLayerInfo();
+    if (layerInfo == null) {
+      continue;
+    }
     GeoServerTileLayerInfo info=tl.getInfo();
-    Set<String> styleNames=new HashSet<String>(info.getCachedStyles());
+    ImmutableSet<String> styleNames=info.cachedStyles();
     if (styleNames.contains(oldStyleName)) {
       tl.resetParameterFilters();
-      catalogConfig.truncate(tl.getName(),oldStyleName);
-      styleNames.remove(oldStyleName);
-      styleNames.add(newStyleName);
-      info.setCachedStyles(styleNames);
-      catalogConfig.save(tl);
+      mediator.truncateByLayerAndStyle(tl.getName(),oldStyleName);
+      Set<String> newStyles=new HashSet<String>(styleNames);
+      newStyles.remove(oldStyleName);
+      newStyles.add(newStyleName);
+      String defaultStyle=layerInfo.getDefaultStyle() == null ? null : layerInfo.getDefaultStyle().getName();
+      TileLayerInfoUtil.setCachedStyles(info,defaultStyle,newStyles);
+      mediator.save(tl);
     }
   }
 }

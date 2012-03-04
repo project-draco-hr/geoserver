@@ -1,0 +1,45 @@
+{
+  CoordinateReferenceSystem targetCrs;
+  try {
+    final String epsgCode=srs.toString();
+    final boolean longitudeFirst=true;
+    targetCrs=CRS.decode(epsgCode,longitudeFirst);
+    checkNotNull(targetCrs);
+  }
+ catch (  Exception e) {
+    throw propagate(e);
+  }
+  ReferencedEnvelope nativeBounds;
+  if (getLayerInfo() != null) {
+    nativeBounds=getLayerInfo().getResource().getNativeBoundingBox();
+  }
+ else {
+    nativeBounds=getLayerGroupInfo().getBounds();
+  }
+  checkState(nativeBounds != null,getName()," has no native bounds set");
+  Envelope transformedBounds;
+  try {
+    transformedBounds=nativeBounds.transform(targetCrs,true,10000);
+  }
+ catch (  Exception e) {
+    final Geometry targetAov=GWC.getAreaOfValidityAsGeometry(targetCrs,gridSetBroker);
+    if (null == targetAov) {
+      String msg="Can't compute tile layer bouds out of resource native bounds for CRS " + srs;
+      LOGGER.log(Level.WARNING,msg,e);
+      throw new IllegalArgumentException(msg,e);
+    }
+    LOGGER.log(Level.FINE,"Can't compute tile layer bouds out of resource " + "native bounds for CRS " + srs,e);
+    final CoordinateReferenceSystem nativeCrs=nativeBounds.getCoordinateReferenceSystem();
+    try {
+      ReferencedEnvelope targetAovBounds=new ReferencedEnvelope(targetAov.getEnvelopeInternal(),targetCrs);
+      ReferencedEnvelope targetAovInNativeCrs=targetAovBounds.transform(nativeCrs,true,10000);
+      ReferencedEnvelope clipped=new ReferencedEnvelope(targetAovInNativeCrs.intersection(nativeBounds),nativeCrs);
+      transformedBounds=clipped.transform(targetCrs,true,10000);
+    }
+ catch (    Exception e1) {
+      throw propagate(e1);
+    }
+  }
+  BoundingBox targetBbox=new BoundingBox(transformedBounds.getMinX(),transformedBounds.getMinY(),transformedBounds.getMaxX(),transformedBounds.getMaxY());
+  return targetBbox;
+}

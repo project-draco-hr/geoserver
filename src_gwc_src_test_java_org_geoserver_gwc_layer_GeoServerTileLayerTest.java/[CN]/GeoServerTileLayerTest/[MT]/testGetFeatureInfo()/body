@@ -1,5 +1,5 @@
 {
-  layerInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerInfo);
+  layerInfoTileLayer=new GeoServerTileLayer(layerInfo,defaults,gridSetBroker);
   ConveyorTile convTile=new ConveyorTile(null,null,null,null);
   convTile.setTileLayer(layerInfoTileLayer);
   convTile.setMimeType(MimeType.createFromFormat("image/png"));
@@ -8,7 +8,7 @@
   BoundingBox bbox=new BoundingBox(0,0,10,10);
   Resource mockResult=mock(Resource.class);
   ArgumentCaptor<Map> argument=ArgumentCaptor.forClass(Map.class);
-  Mockito.when(catalogConfig.dispatchOwsRequest(argument.capture(),(Cookie[])anyObject())).thenReturn(mockResult);
+  Mockito.when(mockGWC.dispatchOwsRequest(argument.capture(),(Cookie[])anyObject())).thenReturn(mockResult);
   Resource result=layerInfoTileLayer.getFeatureInfo(convTile,bbox,100,100,50,50);
   assertSame(mockResult,result);
   final Map<String,String> capturedParams=argument.getValue();
@@ -27,8 +27,8 @@
   assertEquals("EPSG:4326",capturedParams.get("SRS"));
   assertEquals("50",capturedParams.get("X"));
   assertEquals("50",capturedParams.get("Y"));
-  verify(catalogConfig,times(1)).dispatchOwsRequest((Map)anyObject(),(Cookie[])anyObject());
-  when(catalogConfig.dispatchOwsRequest((Map)anyObject(),(Cookie[])anyObject())).thenThrow(new RuntimeException("mock exception"));
+  verify(mockGWC,times(1)).dispatchOwsRequest((Map)anyObject(),(Cookie[])anyObject());
+  when(mockGWC.dispatchOwsRequest((Map)anyObject(),(Cookie[])anyObject())).thenThrow(new RuntimeException("mock exception"));
   try {
     layerInfoTileLayer.getFeatureInfo(convTile,bbox,100,100,50,50);
     fail("Expected GeoWebCacheException");

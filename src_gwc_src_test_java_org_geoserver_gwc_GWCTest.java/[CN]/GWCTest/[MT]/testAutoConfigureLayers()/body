@@ -1,0 +1,36 @@
+{
+{
+    GWCConfig insaneDefaults=new GWCConfig();
+    insaneDefaults.setMetaTilingX(-1);
+    assertFalse(insaneDefaults.isSane());
+    try {
+      mediator.autoConfigureLayers(Arrays.asList(tileLayer.getName()),insaneDefaults);
+    }
+ catch (    IllegalArgumentException e) {
+      assertTrue(true);
+    }
+  }
+  try {
+    mediator.autoConfigureLayers(Arrays.asList(tileLayer.getName()),defaults);
+    fail("expected IAE, layer exists");
+  }
+ catch (  IllegalArgumentException e) {
+    assertTrue(true);
+  }
+  LayerInfo layer2=mockLayer("layer2");
+  LayerGroupInfo group2=mockGroup("group2",layer,layer2);
+  when(catalog.getLayerByName(eq(layer2.getResource().getPrefixedName()))).thenReturn(layer2);
+  when(catalog.getLayerGroupByName(eq(group2.getName()))).thenReturn(group2);
+  List<String> layerNames=Arrays.asList(layer2.getResource().getPrefixedName(),group2.getName());
+  when(tld.addLayer(any(GeoServerTileLayer.class))).thenReturn(config);
+  mediator.autoConfigureLayers(layerNames,defaults);
+  GeoServerTileLayerInfo expected1=new GeoServerTileLayer(layer2,defaults,gridSetBroker).getInfo();
+  GeoServerTileLayerInfo expected2=new GeoServerTileLayer(group2,defaults,gridSetBroker).getInfo();
+  ArgumentCaptor<GeoServerTileLayer> addCaptor=ArgumentCaptor.forClass(GeoServerTileLayer.class);
+  verify(tld,times(2)).addLayer(addCaptor.capture());
+  verify(config,times(2)).save();
+  GeoServerTileLayerInfo actual1=addCaptor.getAllValues().get(0).getInfo();
+  GeoServerTileLayerInfo actual2=addCaptor.getAllValues().get(1).getInfo();
+  assertEquals(expected1,actual1);
+  assertEquals(expected2,actual2);
+}

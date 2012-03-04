@@ -1,0 +1,26 @@
+{
+  checkNotNull(gridSetName,"GridSet name is null");
+  if (!isDiskQuotaAvailable()) {
+    return null;
+  }
+  final Quota quota=new Quota();
+  TileSetVisitor visitor=new TileSetVisitor(){
+    @Override public void visit(    final TileSet tileSet,    final QuotaStore store){
+      if (!gridSetName.equals(tileSet.getGridsetId())) {
+        return;
+      }
+      final String tileSetId=tileSet.getId();
+      try {
+        Quota used=store.getUsedQuotaByTileSetId(tileSetId);
+        quota.add(used);
+      }
+ catch (      InterruptedException e) {
+        log.fine(e.getMessage());
+        return;
+      }
+    }
+  }
+;
+  quotaStore.accept(visitor);
+  return quota;
+}

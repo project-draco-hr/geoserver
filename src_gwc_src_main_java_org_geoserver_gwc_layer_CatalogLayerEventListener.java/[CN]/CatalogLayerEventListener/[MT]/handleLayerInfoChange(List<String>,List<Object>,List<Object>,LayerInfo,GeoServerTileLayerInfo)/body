@@ -1,0 +1,44 @@
+{
+  checkNotNull(tileLayerInfo);
+  final String layerName=li.getResource().getPrefixedName();
+  boolean save=false;
+  final String defaultStyle;
+  if (changedProperties.contains("defaultStyle")) {
+    final int propIndex=changedProperties.indexOf("defaultStyle");
+    final StyleInfo oldStyle=(StyleInfo)oldValues.get(propIndex);
+    final StyleInfo newStyle=(StyleInfo)newValues.get(propIndex);
+    final String oldStyleName=oldStyle.getName();
+    defaultStyle=newStyle.getName();
+    if (!Objects.equal(oldStyleName,defaultStyle)) {
+      save=true;
+      log.info("Truncating default style for layer " + layerName + ", as it changed from "+ oldStyleName+ " to "+ defaultStyle);
+      mediator.truncateByLayerAndStyle(layerName,oldStyleName);
+    }
+  }
+ else {
+    StyleInfo styleInfo=li.getDefaultStyle();
+    defaultStyle=styleInfo == null ? null : styleInfo.getName();
+  }
+  if (tileLayerInfo.isAutoCacheStyles()) {
+    Set<String> styles=new HashSet<String>();
+    for (    StyleInfo s : li.getStyles()) {
+      styles.add(s.getName());
+    }
+    ImmutableSet<String> cachedStyles=tileLayerInfo.cachedStyles();
+    if (!styles.equals(cachedStyles)) {
+      Set<String> notCachedAnyMore=Sets.difference(cachedStyles,styles);
+      for (      String oldCachedStyle : notCachedAnyMore) {
+        log.info("Truncating cached style " + oldCachedStyle + " of layer "+ layerName+ " as it's no longer one of the layer's styles");
+        mediator.truncateByLayerAndStyle(layerName,oldCachedStyle);
+      }
+      final boolean createParamIfNotExists=true;
+      TileLayerInfoUtil.updateStringParameterFilter(tileLayerInfo,"STYLES",createParamIfNotExists,defaultStyle,styles);
+      save=true;
+    }
+  }
+  if (save) {
+    GridSetBroker gridSetBroker=mediator.getGridSetBroker();
+    GeoServerTileLayer tileLayer=new GeoServerTileLayer(li,gridSetBroker,tileLayerInfo);
+    mediator.save(tileLayer);
+  }
+}

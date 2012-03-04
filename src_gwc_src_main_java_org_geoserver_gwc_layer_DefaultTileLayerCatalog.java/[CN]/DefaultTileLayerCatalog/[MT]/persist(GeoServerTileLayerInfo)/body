@@ -1,0 +1,36 @@
+{
+  final String tileLayerId=real.getId();
+  File file=getFile(tileLayerId,false);
+  boolean cleanup=false;
+  if (file == null) {
+    cleanup=true;
+    file=getFile(tileLayerId,true);
+  }
+  final File tmp=new File(file.getParentFile(),file.getName() + ".tmp");
+  try {
+    final Writer writer=new OutputStreamWriter(new FileOutputStream(tmp),"UTF-8");
+    try {
+      serializer.toXML(real,writer);
+    }
+  finally {
+      writer.close();
+    }
+  }
+ catch (  Exception e) {
+    tmp.delete();
+    if (cleanup) {
+      file.delete();
+    }
+    propagateIfInstanceOf(e,IOException.class);
+    throw propagate(e);
+  }
+  try {
+    depersist(tmp);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Persisted version of tile layer " + real.getName() + " can't be loaded back",e);
+    propagateIfInstanceOf(e,IOException.class);
+    throw propagate(e);
+  }
+  rename(tmp,file);
+}

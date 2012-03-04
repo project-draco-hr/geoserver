@@ -1,0 +1,67 @@
+{
+  checkNotNull(oldGridSetName);
+  checkNotNull(newGridSet);
+  final GridSet oldGridSet=gridSetBroker.get(oldGridSetName);
+  if (null == oldGridSet) {
+    throw new IllegalArgumentException("GridSet " + oldGridSetName + " does not exist");
+  }
+  final boolean needsTruncate=oldGridSet.shouldTruncateIfChanged(newGridSet);
+  if (needsTruncate) {
+    log.warning("### Changes in gridset force truncation of affected Tile layers");
+    log.info("### Old gridset: " + oldGridSet);
+    log.info("### New gridset: " + newGridSet);
+  }
+  Map<TileLayer,GridSubset> affectedLayers=new HashMap<TileLayer,GridSubset>();
+  try {
+    for (    TileLayer layer : getTileLayers()) {
+      GridSubset gridSubet;
+      if (null != (gridSubet=layer.getGridSubset(oldGridSetName))) {
+        layer.acquireLayerLock();
+        affectedLayers.put(layer,gridSubet);
+        layer.removeGridSubset(oldGridSetName);
+        if (needsTruncate) {
+          deleteCacheByGridSetId(layer.getName(),oldGridSetName);
+        }
+      }
+    }
+    XMLConfiguration mainConfig=getXmlConfiguration();
+    mainConfig.removeGridset(oldGridSetName);
+    mainConfig.addOrReplaceGridSet(new XMLGridSet(newGridSet));
+    mainConfig.save();
+    getGridSetBroker().remove(oldGridSetName);
+    getGridSetBroker().put(newGridSet);
+    final boolean sameSRS=oldGridSet.getSrs().equals(newGridSet.getSrs());
+    final int maxZoomLevel=newGridSet.getNumLevels() - 1;
+    Set<Configuration> saveConfigurations=new HashSet<Configuration>();
+    for (    Map.Entry<TileLayer,GridSubset> entry : affectedLayers.entrySet()) {
+      TileLayer layer=entry.getKey();
+      GridSubset gsubset=entry.getValue();
+      BoundingBox gridSetExtent=gsubset.getOriginalExtent();
+      if (null != gridSetExtent && sameSRS) {
+        gridSetExtent=newGridSet.getOriginalExtent().intersection(gridSetExtent);
+      }
+      int zoomStart=gsubset.getZoomStart();
+      int zoomStop=gsubset.getZoomStop();
+      if (zoomStart > maxZoomLevel) {
+        zoomStart=maxZoomLevel;
+      }
+      if (zoomStop > maxZoomLevel || zoomStop < zoomStart) {
+        zoomStop=maxZoomLevel;
+      }
+      GridSubset newGridSubset=GridSubsetFactory.createGridSubSet(newGridSet,gridSetExtent,zoomStart,zoomStop);
+      layer.removeGridSubset(oldGridSetName);
+      layer.addGridSubset(newGridSubset);
+      Configuration config=tld.getConfiguration(layer);
+      config.modifyLayer(layer);
+      saveConfigurations.add(config);
+    }
+    for (    Configuration config : saveConfigurations) {
+      config.save();
+    }
+  }
+  finally {
+    for (    TileLayer layer : affectedLayers.keySet()) {
+      layer.releaseLayerLock();
+    }
+  }
+}

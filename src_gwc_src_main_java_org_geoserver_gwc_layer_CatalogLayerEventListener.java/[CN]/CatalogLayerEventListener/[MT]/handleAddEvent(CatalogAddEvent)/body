@@ -1,12 +1,21 @@
 {
+  GWCConfig config=mediator.getConfig();
+  boolean sane=config.isSane();
+  boolean cacheLayersByDefault=config.isCacheLayersByDefault();
+  if (!cacheLayersByDefault) {
+    return;
+  }
+  if (!sane) {
+    log.info("Ignoring auto-creation of tile layer for " + event.getSource() + ": global gwc settings are not sane");
+  }
   Object obj=event.getSource();
   if (obj instanceof LayerInfo) {
     log.finer("Handling add event: " + obj);
     LayerInfo layerInfo=(LayerInfo)obj;
-    catalogConfig.createLayer(layerInfo);
+    createTileLayer(layerInfo);
   }
  else   if (obj instanceof LayerGroupInfo) {
     LayerGroupInfo lgi=(LayerGroupInfo)obj;
-    catalogConfig.createLayer(lgi);
+    createTileLayer(lgi);
   }
 }

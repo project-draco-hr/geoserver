@@ -1,0 +1,20 @@
+{
+  final String oldName="EPSG:4326";
+  final String newName="MyEPSG:4326";
+  final GridSet oldGridset=gridSetBroker.get(oldName);
+  final GridSet newGridset;
+{
+    XMLGridSet xmlGridSet=new XMLGridSet(oldGridset);
+    xmlGridSet.setName(newName);
+    xmlGridSet.setAlignTopLeft(!xmlGridSet.getAlignTopLeft());
+    newGridset=xmlGridSet.makeGridSet();
+  }
+  XMLConfiguration xmlConfig=mock(XMLConfiguration.class);
+  mediator=spy(mediator);
+  when(mediator.getXmlConfiguration()).thenReturn(xmlConfig);
+  when(tld.getConfiguration(same(tileLayer))).thenReturn(config);
+  when(tld.getConfiguration(same(tileLayerGroup))).thenReturn(config);
+  mediator.modifyGridSet(oldName,newGridset);
+  verify(storageBroker,times(1)).deleteByGridSetId(eq(tileLayer.getName()),eq(oldName));
+  verify(storageBroker,times(1)).deleteByGridSetId(eq(tileLayerGroup.getName()),eq(oldName));
+}

@@ -1,5 +1,11 @@
 {
-  Object obj=event.getSource();
+  CatalogInfo obj=event.getSource();
+  if (!(obj instanceof LayerInfo || obj instanceof LayerGroupInfo)) {
+    return;
+  }
+  if (!mediator.hasTileLayer(obj)) {
+    return;
+  }
   String prefixedName=null;
   if (obj instanceof LayerGroupInfo) {
     LayerGroupInfo lgInfo=(LayerGroupInfo)obj;
@@ -10,6 +16,6 @@
     prefixedName=layerInfo.getResource().getPrefixedName();
   }
   if (null != prefixedName) {
-    catalogConfig.removeLayer(prefixedName);
+    mediator.removeTileLayers(Arrays.asList(prefixedName));
   }
 }

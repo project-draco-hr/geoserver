@@ -1,13 +1,22 @@
 {
   LOGGER.info("Initializing GeoServer specific GWC configuration from " + GWCConfigPersister.GWC_CONFIG_FILE);
-  File configFile=configPersister.findConfigFile();
+  final Version currentVersion=new Version("1.0.0");
+  final File configFile=configPersister.findConfigFile();
   if (configFile == null) {
     LOGGER.fine("GWC's GeoServer specific configuration not found, creating with old defaults");
     GWCConfig oldDefaults=GWCConfig.getOldDefaults();
+    oldDefaults.setVersion(currentVersion.toString());
     upgradeWMSIntegrationConfig(geoServer,oldDefaults);
     createDefaultTileLayerInfos(oldDefaults);
     configPersister.save(oldDefaults);
   }
+  final GWCConfig config=configPersister.getConfig();
+  final Version version=new Version(config.getVersion());
+  if (currentVersion.compareTo(version) > 0) {
+    moveTileLayerInfosToTileLayerCatalog();
+    config.setVersion(currentVersion.toString());
+    configPersister.save(config);
+  }
   final GWCConfig gwcConfig=configPersister.getConfig();
-  Assert.notNull(gwcConfig);
+  checkNotNull(gwcConfig);
 }

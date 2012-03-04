@@ -1,4 +1,5 @@
 {
+  final String oldGroupName=LAYER_GROUP_NAME;
   final String renamedGroupName=LAYER_GROUP_NAME + "_Renamed";
   when(mockLayerGroupInfo.getName()).thenReturn(renamedGroupName);
   CatalogModifyEvent modifyEvent=mock(CatalogModifyEvent.class);
@@ -6,9 +7,25 @@
   when(modifyEvent.getPropertyNames()).thenReturn(Arrays.asList("name"));
   when(modifyEvent.getOldValues()).thenReturn(Arrays.asList((Object)LAYER_GROUP_NAME));
   when(modifyEvent.getNewValues()).thenReturn(Arrays.asList((Object)renamedGroupName));
+  GeoServerTileLayerInfo info=TileLayerInfoUtil.loadOrCreate(mockLayerGroupInfo,GWCConfig.getOldDefaults());
+  GeoServerTileLayer tileLayer=mock(GeoServerTileLayer.class);
+  when(tileLayer.getInfo()).thenReturn(info);
+  when(tileLayer.getLayerGroupInfo()).thenReturn(mockLayerGroupInfo);
+  when(mockMediator.hasTileLayer(same(mockLayerGroupInfo))).thenReturn(true);
+  when(mockMediator.getTileLayer(same(mockLayerGroupInfo))).thenReturn(tileLayer);
+  when(mockMediator.getTileLayerByName(eq(oldGroupName))).thenReturn(tileLayer);
   listener.handleModifyEvent(modifyEvent);
+  verify(mockMediator,times(1)).hasTileLayer(same(mockLayerGroupInfo));
+  verify(mockMediator,times(1)).getTileLayer(same(mockLayerGroupInfo));
   CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
   when(postModifyEvent.getSource()).thenReturn(mockLayerGroupInfo);
   listener.handlePostModifyEvent(postModifyEvent);
-  verify(mockConfiguration).renameTileLayer(eq(LAYER_GROUP_NAME),eq(renamedGroupName));
+  ArgumentCaptor<GeoServerTileLayer> captor=ArgumentCaptor.forClass(GeoServerTileLayer.class);
+  verify(mockMediator).save(captor.capture());
+  GeoServerTileLayer saved=captor.getValue();
+  assertNotNull(saved);
+  assertNotNull(saved.getInfo());
+  GeoServerTileLayerInfo savedInfo=saved.getInfo();
+  assertSame(info,savedInfo);
+  assertEquals(renamedGroupName,savedInfo.getName());
 }

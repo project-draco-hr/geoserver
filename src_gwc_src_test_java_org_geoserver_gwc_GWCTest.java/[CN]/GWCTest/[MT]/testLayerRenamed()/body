@@ -1,0 +1,12 @@
+{
+  mediator.layerRenamed("old","new");
+  verify(storageBroker,times(1)).rename(eq("old"),eq("new"));
+  doThrow(new StorageException("target directory already exists")).when(storageBroker).rename(eq("old"),eq("new"));
+  try {
+    mediator.layerRenamed("old","new");
+    fail("Expected RTE");
+  }
+ catch (  RuntimeException e) {
+    assertTrue(e.getCause() instanceof StorageException);
+  }
+}

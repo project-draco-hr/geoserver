@@ -1,0 +1,25 @@
+{
+  GeoServerTileLayerInfo tileLayerInfo=null;
+  if (!pendingModications.isEmpty()) {
+    for (    GeoServerTileLayerInfo info : pendingModications.values()) {
+      String name=info.getName();
+      if (name.equals(layerName)) {
+        tileLayerInfo=info;
+        break;
+      }
+    }
+  }
+  if (null == tileLayerInfo) {
+    tileLayerInfo=tileLayerCatalog.getLayerByName(layerName);
+    if (null == tileLayerInfo) {
+      return null;
+    }
+    if (pendingDeletes.contains(tileLayerInfo.getId())) {
+      return null;
+    }
+    if (pendingModications.containsKey(tileLayerInfo.getId())) {
+      return null;
+    }
+  }
+  return tileLayerInfo;
+}

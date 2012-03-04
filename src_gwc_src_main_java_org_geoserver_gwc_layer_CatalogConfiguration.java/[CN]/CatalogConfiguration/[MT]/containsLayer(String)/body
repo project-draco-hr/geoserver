@@ -1,3 +1,15 @@
 {
-  return null != getTileLayerById(tileLayerId);
+  checkNotNull(layerId,"layer id is null");
+  lock.readLock().lock();
+  try {
+    if (pendingDeletes.contains(layerId)) {
+      return false;
+    }
+    Set<String> layerIds=tileLayerCatalog.getLayerIds();
+    boolean hasLayer=layerIds.contains(layerId);
+    return hasLayer;
+  }
+  finally {
+    lock.readLock().unlock();
+  }
 }

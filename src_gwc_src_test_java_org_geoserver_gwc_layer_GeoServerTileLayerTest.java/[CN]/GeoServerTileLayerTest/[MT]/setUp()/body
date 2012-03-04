@@ -1,4 +1,6 @@
 {
+  mockGWC=mock(GWC.class);
+  GWC.set(mockGWC);
   final String layerInfoId="mock-layer-info";
   NamespaceInfo ns=new NamespaceInfoImpl();
   ns.setPrefix("test");
@@ -39,13 +41,11 @@
   layerGroup.setId(layerGroupId);
   layerGroup.setName("MockLayerGroup");
   layerGroup.setLayers(Collections.singletonList((LayerInfo)layerInfo));
-  defaultSettings=GWCConfig.getOldDefaults();
-  catalogConfig=mock(CatalogConfiguration.class);
-  when(catalogConfig.getConfig()).thenReturn(defaultSettings);
-  when(catalogConfig.getLayerInfoById(eq(layerInfoId))).thenReturn(layerInfo);
-  when(catalogConfig.getLayerGroupById(eq(layerGroupId))).thenReturn(layerGroup);
-  GridSetBroker gridSetBroker=new GridSetBroker(true,true);
+  defaults=GWCConfig.getOldDefaults();
+  catalog=mock(Catalog.class);
+  when(catalog.getLayer(eq(layerInfoId))).thenReturn(layerInfo);
+  when(catalog.getLayerGroup(eq(layerGroupId))).thenReturn(layerGroup);
+  gridSetBroker=new GridSetBroker(true,true);
   gridSetBroker.put(gridSetBroker.WORLD_EPSG4326);
   gridSetBroker.put(gridSetBroker.WORLD_EPSG3857);
-  when(catalogConfig.getGridSetBroker()).thenReturn(gridSetBroker);
 }

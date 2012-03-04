@@ -1,0 +1,44 @@
+{
+  Catalog cat=getCatalog();
+  TileLayerDispatcher tld=GeoWebCacheExtensions.bean(TileLayerDispatcher.class);
+  assertNotNull(tld);
+  GridSetBroker gridSetBroker=GeoWebCacheExtensions.bean(GridSetBroker.class);
+  assertNotNull(gridSetBroker);
+  try {
+    tld.getTileLayer("");
+  }
+ catch (  GeoWebCacheException gwce) {
+  }
+  boolean foundLakes=false;
+  for (  TileLayer tl : tld.getLayerList()) {
+    if (tl.getName().equals("cite:Lakes")) {
+      foundLakes=true;
+      break;
+    }
+  }
+  assertTrue(foundLakes);
+  boolean foudAGF=false;
+  for (  TileLayer tl : tld.getLayerList()) {
+    if (tl.getName().equals("sf:AggregateGeoFeature")) {
+      foudAGF=true;
+      GridSubset epsg4326=tl.getGridSubset(gridSetBroker.WORLD_EPSG4326.getName());
+      assertTrue(epsg4326.getGridSetBounds().equals(new BoundingBox(-180.0,-90.0,180.0,90.0)));
+      String mime=tl.getMimeTypes().get(1).getMimeType();
+      assertTrue(mime.startsWith("image/") || mime.startsWith("application/vnd.google-earth.kml+xml"));
+    }
+  }
+  assertTrue(foudAGF);
+  LayerInfo li=cat.getLayers().get(1);
+  String layerName=li.getResource().getPrefixedName();
+  TileLayer tl=tld.getTileLayer(layerName);
+  assertEquals(layerName,tl.getName());
+  cat.remove(li);
+  assertNull(cat.getLayerByName(tl.getName()));
+  try {
+    tld.getTileLayer(layerName);
+    fail("Layer should not exist");
+  }
+ catch (  GeoWebCacheException gwce) {
+    assertTrue(true);
+  }
+}

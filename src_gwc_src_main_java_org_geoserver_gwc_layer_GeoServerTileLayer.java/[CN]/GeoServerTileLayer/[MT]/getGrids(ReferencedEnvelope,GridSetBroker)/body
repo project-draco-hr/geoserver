@@ -1,19 +1,49 @@
 {
-  Set<String> cachedGridSetIds=info.getCachedGridSetIds();
-  if (cachedGridSetIds.size() == 0) {
-    throw new IllegalStateException("TileLayer " + getName() + " has no gridsets configured");
+  Set<XMLGridSubset> cachedGridSets=info.getGridSubsets();
+  if (cachedGridSets.size() == 0) {
+    return Collections.emptyMap();
   }
   Map<String,GridSubset> grids=new HashMap<String,GridSubset>(2);
-  for (  String gridSetId : cachedGridSetIds) {
-    GridSet gridSet=gridSetBroker.get(gridSetId);
+  for (  XMLGridSubset gridSubset : cachedGridSets) {
+    final String gridSetId=gridSubset.getGridSetName();
+    final GridSet gridSet=gridSetBroker.get(gridSetId);
     if (gridSet == null) {
-      throw new ConfigurationException("No GWC GridSet named '" + gridSetId + "' exists.");
+      LOGGER.info("No GWC GridSet named '" + gridSetId + "' exists.");
+      continue;
     }
-    BoundingBox extent=getBoundsFromWGS84Bounds(latLonBbox,gridSet.getSrs());
-    Integer zoomStart=0;
-    Integer zoomStop=gridSet.getGridLevels().length - 1;
-    GridSubset gridSubSet;
-    gridSubSet=GridSubsetFactory.createGridSubSet(gridSet,extent,zoomStart,zoomStop);
+    BoundingBox extent=gridSubset.getExtent();
+    if (null == extent) {
+      try {
+        SRS srs=gridSet.getSrs();
+        try {
+          extent=getBounds(srs);
+        }
+ catch (        RuntimeException cantComputeBounds) {
+          final String msg="Can't compute bounds for tile layer " + getName() + " in CRS "+ srs+ ". Assuming full GridSet bounds. ("+ cantComputeBounds.getMessage()+ ")";
+          if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE,msg,cantComputeBounds);
+          }
+ else {
+            LOGGER.warning(msg);
+          }
+          extent=gridSet.getBounds();
+        }
+        BoundingBox maxBounds=gridSet.getBounds();
+        if (!maxBounds.contains(extent)) {
+          if (LOGGER.isLoggable(Level.FINER)) {
+            LOGGER.finer("Layer bounds exceed GridSet bounds for " + gridSetId + ", clipping.");
+          }
+          BoundingBox intersection=maxBounds.intersection(extent);
+          extent=intersection;
+        }
+      }
+ catch (      RuntimeException e) {
+        LOGGER.log(Level.WARNING,"Error computing layer bounds, assuming whole GridSet bounds",e);
+        extent=gridSet.getOriginalExtent();
+      }
+    }
+    gridSubset.setExtent(extent);
+    GridSubset gridSubSet=gridSubset.getGridSubSet(gridSetBroker);
     grids.put(gridSetId,gridSubSet);
   }
   return grids;

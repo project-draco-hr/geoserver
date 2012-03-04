@@ -1,7 +1,15 @@
 {
-  String styleName=null;
-  String gridSetId=null;
-  BoundingBox bounds=null;
-  String format=null;
-  truncate(layerName,styleName,gridSetId,bounds,format);
+  checkNotNull(layerName,"layerName is null");
+  TileLayer layer;
+  try {
+    layer=tld.getTileLayer(layerName);
+  }
+ catch (  GeoWebCacheException e) {
+    log.log(Level.INFO,e.getMessage(),e);
+    return;
+  }
+  final Set<String> gridSubsets=layer.getGridSubsets();
+  for (  String gridSetId : gridSubsets) {
+    deleteCacheByGridSetId(layerName,gridSetId);
+  }
 }

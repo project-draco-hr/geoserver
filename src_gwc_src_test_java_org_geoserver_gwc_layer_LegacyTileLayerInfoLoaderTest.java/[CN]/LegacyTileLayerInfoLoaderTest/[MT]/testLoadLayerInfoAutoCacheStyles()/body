@@ -1,0 +1,17 @@
+{
+  GeoServerTileLayerInfo info=defaultVectorInfo;
+  info.setAutoCacheStyles(true);
+  LayerInfoImpl layer=mockLayer("testLayer","style1","style2");
+  assertNull(LegacyTileLayerInfoLoader.load(layer));
+  LegacyTileLayerInfoLoader.save(info,layer.getMetadata());
+  GeoServerTileLayerInfo actual;
+  actual=LegacyTileLayerInfoLoader.load(layer);
+  TileLayerInfoUtil.setCachedStyles(info,"default",ImmutableSet.of("style1","style2"));
+  info.setId(layer.getId());
+  info.setName(layer.getResource().getPrefixedName());
+  assertEquals(info,actual);
+  layer.setDefaultStyle(null);
+  TileLayerInfoUtil.setCachedStyles(info,null,ImmutableSet.of("style1","style2"));
+  actual=LegacyTileLayerInfoLoader.load(layer);
+  assertEquals(ImmutableSet.of("style1","style2"),actual.cachedStyles());
+}

@@ -6,9 +6,14 @@
   List<LayerInfo> newLayers=Collections.singletonList(mockLayerInfo);
   when(modifyEvent.getOldValues()).thenReturn(Collections.singletonList((Object)oldLayers));
   when(modifyEvent.getNewValues()).thenReturn(Collections.singletonList((Object)newLayers));
+  GeoServerTileLayerInfo tileLayerInfo=TileLayerInfoUtil.loadOrCreate(mockLayerGroupInfo,mockMediator.getConfig());
+  GridSetBroker gridsets=new GridSetBroker(true,true);
+  GeoServerTileLayer tileLayer=new GeoServerTileLayer(mockLayerGroupInfo,gridsets,tileLayerInfo);
+  when(mockMediator.hasTileLayer(same(mockLayerGroupInfo))).thenReturn(true);
+  when(mockMediator.getTileLayer(same(mockLayerGroupInfo))).thenReturn(tileLayer);
   listener.handleModifyEvent(modifyEvent);
   CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
   when(postModifyEvent.getSource()).thenReturn(mockLayerGroupInfo);
   listener.handlePostModifyEvent(postModifyEvent);
-  verify(mockConfiguration).truncate(eq(LAYER_GROUP_NAME));
+  verify(mockMediator).truncate(eq(LAYER_GROUP_NAME));
 }

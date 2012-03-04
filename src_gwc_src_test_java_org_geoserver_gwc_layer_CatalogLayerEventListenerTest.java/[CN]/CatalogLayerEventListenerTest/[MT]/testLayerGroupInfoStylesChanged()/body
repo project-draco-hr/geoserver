@@ -7,9 +7,14 @@
   List<StyleInfo> newStyles=Collections.singletonList(newStyle);
   when(modifyEvent.getOldValues()).thenReturn(Collections.singletonList((Object)oldStyles));
   when(modifyEvent.getNewValues()).thenReturn(Collections.singletonList((Object)newStyles));
+  GeoServerTileLayerInfo info=TileLayerInfoUtil.loadOrCreate(mockLayerGroupInfo,GWCConfig.getOldDefaults());
+  GeoServerTileLayer tileLayer=mock(GeoServerTileLayer.class);
+  when(tileLayer.getInfo()).thenReturn(info);
+  when(mockMediator.hasTileLayer(same(mockLayerGroupInfo))).thenReturn(true);
+  when(mockMediator.getTileLayer(same(mockLayerGroupInfo))).thenReturn(tileLayer);
   listener.handleModifyEvent(modifyEvent);
   CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
   when(postModifyEvent.getSource()).thenReturn(mockLayerGroupInfo);
   listener.handlePostModifyEvent(postModifyEvent);
-  verify(mockConfiguration).truncate(eq(LAYER_GROUP_NAME));
+  verify(mockMediator).truncate(eq(LAYER_GROUP_NAME));
 }

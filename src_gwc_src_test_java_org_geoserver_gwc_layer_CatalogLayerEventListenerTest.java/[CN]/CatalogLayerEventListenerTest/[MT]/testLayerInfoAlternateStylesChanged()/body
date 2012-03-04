@@ -1,25 +1,31 @@
 {
   StyleInfo removedStyle=mock(StyleInfo.class);
   when(removedStyle.getName()).thenReturn("removedStyleName");
-  final Set<StyleInfo> oldStyles=Collections.singleton(removedStyle);
+  StyleInfo remainingStyle=mock(StyleInfo.class);
+  when(remainingStyle.getName()).thenReturn("remainingStyle");
+  final Set<StyleInfo> oldStyles=new HashSet<StyleInfo>(Arrays.asList(remainingStyle,removedStyle));
+  when(mockLayerInfo.getStyles()).thenReturn(oldStyles);
   StyleInfo addedStyle=mock(StyleInfo.class);
   when(addedStyle.getName()).thenReturn("addedStyleName");
-  final Set<StyleInfo> newStyles=Collections.singleton(addedStyle);
+  final Set<StyleInfo> newStyles=new HashSet<StyleInfo>(Arrays.asList(addedStyle,remainingStyle));
   CatalogModifyEvent modifyEvent=mock(CatalogModifyEvent.class);
   when(modifyEvent.getSource()).thenReturn(mockLayerInfo);
   when(modifyEvent.getPropertyNames()).thenReturn(Arrays.asList("styles"));
   when(modifyEvent.getOldValues()).thenReturn(Collections.singletonList((Object)oldStyles));
   when(modifyEvent.getNewValues()).thenReturn(Collections.singletonList((Object)newStyles));
   GeoServerTileLayerInfo info=mock(GeoServerTileLayerInfo.class);
-  when(info.getCachedStyles()).thenReturn(new HashSet<String>(Arrays.asList("remainingStyle","removedStyleName")));
+  when(info.cachedStyles()).thenReturn(ImmutableSet.of("remainingStyle","removedStyleName"));
   when(info.isAutoCacheStyles()).thenReturn(true);
   GeoServerTileLayer tileLayer=mock(GeoServerTileLayer.class);
   when(tileLayer.getInfo()).thenReturn(info);
-  when(mockConfiguration.getTileLayer(eq(PREFIXED_RESOURCE_NAME))).thenReturn(tileLayer);
+  when(mockMediator.hasTileLayer(any(CatalogInfo.class))).thenReturn(true);
+  when(mockMediator.getTileLayer(any(CatalogInfo.class))).thenReturn(tileLayer);
   listener.handleModifyEvent(modifyEvent);
   CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
+  when(mockLayerInfo.getStyles()).thenReturn(newStyles);
   when(postModifyEvent.getSource()).thenReturn(mockLayerInfo);
   listener.handlePostModifyEvent(postModifyEvent);
-  verify(mockConfiguration).truncate(eq(PREFIXED_RESOURCE_NAME),eq("removedStyleName"));
-  verify(mockConfiguration).save(same(tileLayer));
+  verify(mockMediator).truncateByLayerAndStyle(eq(PREFIXED_RESOURCE_NAME),eq("removedStyleName"));
+  verify(mockMediator,atMost(1)).truncateByLayerAndStyle(anyString(),anyString());
+  verify(mockMediator).save(any(GeoServerTileLayer.class));
 }

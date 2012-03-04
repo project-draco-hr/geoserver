@@ -1,6 +1,6 @@
 {
   StorageBroker storageBroker=mock(StorageBroker.class);
-  layerInfoTileLayer=new GeoServerTileLayer(catalogConfig,layerInfo);
+  layerInfoTileLayer=new GeoServerTileLayer(layerInfo,defaults,gridSetBroker);
   MockHttpServletRequest servletReq=new MockHttpServletRequest();
   HttpServletResponse servletResp=new MockHttpServletResponse();
   ConveyorTile tile=new ConveyorTile(storageBroker,layerInfoTileLayer.getName(),servletReq,servletResp);
@@ -21,15 +21,16 @@
  catch (  IllegalArgumentException e) {
     assertTrue(e.getMessage().contains("gridset not found"));
   }
-  long[] coverage=layerInfoTileLayer.getGridSubset("EPSG:4326").getCoverage(1);
-  long[] tileIndex={coverage[0] - 1,coverage[1],1};
-  MimeType mimeType=MimeType.createFromFormat("image/png");
-  tile=new ConveyorTile(storageBroker,layerInfoTileLayer.getName(),"EPSG:900913",tileIndex,mimeType,null,servletReq,servletResp);
-  try {
-    layerInfoTileLayer.getTile(tile);
-    fail("Expected outside coverage exception");
-  }
- catch (  OutsideCoverageException e) {
-    assertTrue(true);
+  long[][] outsideTiles={{0,1,1},{1,1,1},{1,0,1}};
+  for (  long[] tileIndex : outsideTiles) {
+    MimeType mimeType=MimeType.createFromFormat("image/png");
+    tile=new ConveyorTile(storageBroker,layerInfoTileLayer.getName(),"EPSG:900913",tileIndex,mimeType,null,servletReq,servletResp);
+    try {
+      layerInfoTileLayer.getTile(tile);
+      fail("Expected outside coverage exception");
+    }
+ catch (    OutsideCoverageException e) {
+      assertTrue(true);
+    }
   }
 }

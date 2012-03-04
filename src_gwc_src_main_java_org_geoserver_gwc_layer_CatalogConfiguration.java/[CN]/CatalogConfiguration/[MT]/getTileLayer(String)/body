@@ -1,11 +1,20 @@
 {
-  LayerInfo layerInfo=catalog.getLayerByName(layerName);
-  if (layerInfo != null) {
-    return new GeoServerTileLayer(this,layerInfo);
+  checkNotNull(layerName,"layer name is null");
+  GeoServerTileLayer layerByName;
+  lock.readLock().lock();
+  try {
+    GeoServerTileLayerInfo tileLayerInfo=getTileLayerInfoByName(layerName);
+    if (null == tileLayerInfo) {
+      layerByName=null;
+    }
+ else {
+      final String id=tileLayerInfo.getId();
+      checkState(id != null,"Got tile layer with null id: ",tileLayerInfo);
+      layerByName=getTileLayerById(id);
+    }
   }
-  LayerGroupInfo lgi=catalog.getLayerGroupByName(layerName);
-  if (lgi != null) {
-    return new GeoServerTileLayer(this,lgi);
+  finally {
+    lock.readLock().unlock();
   }
-  return null;
+  return layerByName;
 }

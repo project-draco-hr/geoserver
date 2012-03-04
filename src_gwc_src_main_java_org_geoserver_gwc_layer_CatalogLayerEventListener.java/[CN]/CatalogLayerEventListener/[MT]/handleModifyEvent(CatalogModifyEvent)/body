@@ -2,5 +2,15 @@
   CatalogInfo source=event.getSource();
   if (source instanceof LayerInfo || source instanceof LayerGroupInfo || source instanceof FeatureTypeInfo|| source instanceof CoverageInfo|| source instanceof WMSLayerInfo) {
     PRE_MODIFY_EVENT.set(event);
+    if (mediator.hasTileLayer(source)) {
+      try {
+        GeoServerTileLayer tileLayer=mediator.getTileLayer(source);
+        GeoServerTileLayerInfo tileLayerInfo=tileLayer.getInfo();
+        PRE_MODIFY_TILELAYER.set(tileLayerInfo);
+      }
+ catch (      RuntimeException e) {
+        log.info("Ignoring misconfigured tile layer info for " + source);
+      }
+    }
   }
 }

@@ -1,0 +1,28 @@
+{
+  GetMapRequest request=new GetMapRequest();
+  @SuppressWarnings("unchecked") Map<String,String> rawKvp=new CaseInsensitiveMap(new HashMap<String,String>());
+  request.setRawKvp(rawKvp);
+  request.setFormat("image/png");
+  request.setSRS("EPSG:900913");
+  request.setWidth(256);
+  request.setHeight(256);
+  rawKvp.put("layers",tileLayer.getName());
+  BoundingBox bounds;
+  bounds=tileLayer.getGridSubset("EPSG:900913").boundsFromIndex(new long[]{0,0,1});
+  Envelope reqBbox=new Envelope(bounds.getMinX(),bounds.getMaxX(),bounds.getMinY(),bounds.getMaxY());
+  request.setBbox(reqBbox);
+  assertTrue(tileLayer.getInfo().cachedStyles().size() > 0);
+  for (  String style : tileLayer.getInfo().cachedStyles()) {
+    String rawKvpParamName="styles";
+    String rawKvpParamValue=style;
+    testParameterFilter(request,rawKvp,rawKvpParamName,rawKvpParamValue);
+  }
+  request.setEnv(ImmutableMap.of("envKey","envValue"));
+  updateStringParameterFilter(tileLayerInfo,"ENV",true,"def:devVal","envKey:envValue","envKey2:envValue2");
+  testParameterFilter(request,rawKvp,"env","envKey:envValue");
+  updateAcceptAllFloatParameterFilter(tileLayerInfo,"ANGLE",true);
+  request.setAngle(60);
+  testParameterFilter(request,rawKvp,"angle","60.0");
+  request.setAngle(61.1);
+  testParameterFilter(request,rawKvp,"angle","61.1");
+}

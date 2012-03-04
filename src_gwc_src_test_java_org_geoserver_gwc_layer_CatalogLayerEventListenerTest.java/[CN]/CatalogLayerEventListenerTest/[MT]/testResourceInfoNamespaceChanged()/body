@@ -1,6 +1,7 @@
 {
   NamespaceInfo newNamespace=mock(NamespaceInfo.class);
   when(newNamespace.getPrefix()).thenReturn("newMock");
+  final String oldPrefixedName=mockResourceInfo.getPrefixedName();
   final String newPrefixedName=newNamespace.getPrefix() + ":" + mockResourceInfo.getName();
   when(mockResourceInfo.getNamespace()).thenReturn(newNamespace);
   when(mockResourceInfo.getPrefixedName()).thenReturn(newPrefixedName);
@@ -9,9 +10,23 @@
   when(modifyEvent.getPropertyNames()).thenReturn(Arrays.asList("namespace"));
   when(modifyEvent.getOldValues()).thenReturn(Arrays.asList((Object)mockNamespaceInfo));
   when(modifyEvent.getNewValues()).thenReturn(Arrays.asList((Object)newNamespace));
+  GeoServerTileLayerInfo info=TileLayerInfoUtil.loadOrCreate(mockLayerInfo,GWCConfig.getOldDefaults());
+  GeoServerTileLayer tileLayer=mock(GeoServerTileLayer.class);
+  when(tileLayer.getInfo()).thenReturn(info);
+  when(tileLayer.getLayerInfo()).thenReturn(mockLayerInfo);
+  when(mockMediator.hasTileLayer(same(mockResourceInfo))).thenReturn(true);
+  when(mockMediator.getTileLayer(same(mockResourceInfo))).thenReturn(tileLayer);
+  when(mockMediator.getTileLayerByName(eq(oldPrefixedName))).thenReturn(tileLayer);
   listener.handleModifyEvent(modifyEvent);
   CatalogPostModifyEvent postModifyEvent=mock(CatalogPostModifyEvent.class);
   when(postModifyEvent.getSource()).thenReturn(mockResourceInfo);
   listener.handlePostModifyEvent(postModifyEvent);
-  verify(mockConfiguration).renameTileLayer(eq(PREFIXED_RESOURCE_NAME),eq(newPrefixedName));
+  ArgumentCaptor<GeoServerTileLayer> captor=ArgumentCaptor.forClass(GeoServerTileLayer.class);
+  verify(mockMediator).save(captor.capture());
+  GeoServerTileLayer saved=captor.getValue();
+  assertNotNull(saved);
+  assertNotNull(saved.getInfo());
+  GeoServerTileLayerInfo savedInfo=saved.getInfo();
+  assertSame(info,savedInfo);
+  assertEquals(newPrefixedName,savedInfo.getName());
 }

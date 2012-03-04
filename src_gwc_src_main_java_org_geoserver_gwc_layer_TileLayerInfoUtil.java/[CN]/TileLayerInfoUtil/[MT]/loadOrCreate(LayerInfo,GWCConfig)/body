@@ -1,0 +1,19 @@
+{
+  GeoServerTileLayerInfoImpl info=LegacyTileLayerInfoLoader.load(layerInfo);
+  if (info == null) {
+    info=create(defaults);
+    final ResourceInfo resource=layerInfo.getResource();
+    if (resource instanceof FeatureTypeInfo) {
+      info.getMimeFormats().clear();
+      info.getMimeFormats().addAll(defaults.getDefaultVectorCacheFormats());
+    }
+ else     if (resource instanceof CoverageInfo) {
+      info.getMimeFormats().clear();
+      info.getMimeFormats().addAll(defaults.getDefaultCoverageCacheFormats());
+    }
+    checkStyles(layerInfo,info);
+  }
+  info.setName(layerInfo.getResource().getPrefixedName());
+  info.setId(layerInfo.getId());
+  return info;
+}

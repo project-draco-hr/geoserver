@@ -1,10 +1,34 @@
 {
-  Set<String> names=new HashSet<String>();
-  for (  LayerGroupInfo lgi : catalog.getLayerGroups()) {
-    names.add(lgi.getName());
+  lock.readLock().lock();
+  try {
+    final Set<String> storedNames=tileLayerCatalog.getLayerNames();
+    Set<String> names=null;
+    if (!pendingDeletes.isEmpty()) {
+      names=new HashSet<String>(storedNames);
+      for (      String id : pendingDeletes) {
+        GeoServerTileLayerInfo old=tileLayerCatalog.getLayerById(id);
+        names.remove(old.getName());
+      }
+    }
+    if (!pendingModications.isEmpty()) {
+      for (      Map.Entry<String,GeoServerTileLayerInfo> e : pendingModications.entrySet()) {
+        GeoServerTileLayerInfo old=tileLayerCatalog.getLayerById(e.getKey());
+        if (old != null) {
+          String oldName=old.getName();
+          String newName=e.getValue().getName();
+          if (!Objects.equal(oldName,newName)) {
+            if (names == null) {
+              names=new HashSet<String>(storedNames);
+            }
+            names.remove(oldName);
+            names.add(newName);
+          }
+        }
+      }
+    }
+    return names == null ? storedNames : Collections.unmodifiableSet(names);
   }
-  for (  LayerInfo li : catalog.getLayers()) {
-    names.add(li.getResource().getPrefixedName());
+  finally {
+    lock.readLock().unlock();
   }
-  return names;
 }

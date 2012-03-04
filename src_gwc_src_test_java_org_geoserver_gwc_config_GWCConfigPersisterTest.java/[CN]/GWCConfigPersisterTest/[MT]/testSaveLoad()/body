@@ -1,0 +1,22 @@
+{
+  final File baseDirectory=new File("target");
+  baseDirectory.mkdirs();
+  final File configFile=new File(baseDirectory,GWCConfigPersister.GWC_CONFIG_FILE);
+  if (configFile.exists()) {
+    assertTrue(configFile.delete());
+  }
+  when(resourceLoader.getBaseDirectory()).thenReturn(baseDirectory);
+  when(resourceLoader.find(eq(GWCConfigPersister.GWC_CONFIG_FILE))).thenReturn(configFile);
+  GWCConfig config=GWCConfig.getOldDefaults();
+  config.setCacheNonDefaultStyles(true);
+  config.setDirectWMSIntegrationEnabled(true);
+  persister.save(config);
+  assertSame(config,persister.getConfig());
+  persister=new GWCConfigPersister(new XStreamPersisterFactory(),resourceLoader);
+  assertEquals(config,persister.getConfig());
+  when(resourceLoader.find(eq(GWCConfigPersister.GWC_CONFIG_FILE))).thenReturn(new File("shall_not_exist"));
+  persister=new GWCConfigPersister(new XStreamPersisterFactory(),resourceLoader);
+  GWCConfig expected=new GWCConfig();
+  GWCConfig actual=persister.getConfig();
+  assertEquals(expected,actual);
+}

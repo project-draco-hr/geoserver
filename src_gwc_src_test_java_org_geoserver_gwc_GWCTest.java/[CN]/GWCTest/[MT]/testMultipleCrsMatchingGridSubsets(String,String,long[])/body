@@ -1,0 +1,25 @@
+{
+  GetMapRequest request=new GetMapRequest();
+  @SuppressWarnings("unchecked") Map<String,String> rawKvp=new CaseInsensitiveMap(new HashMap<String,String>());
+  request.setRawKvp(rawKvp);
+  request.setFormat("image/png");
+  request.setSRS(srs);
+  request.setWidth(256);
+  request.setHeight(256);
+  rawKvp.put("layers","mockLayer");
+  List<String> gridSetNames=Arrays.asList("GlobalCRS84Pixel","GlobalCRS84Scale","EPSG:4326");
+  tileLayer=mockTileLayer("mockLayer",gridSetNames);
+  BoundingBox bounds;
+  bounds=tileLayer.getGridSubset(expectedGridset).boundsFromIndex(tileIndex);
+  Envelope reqBbox=new Envelope(bounds.getMinX(),bounds.getMaxX(),bounds.getMinY(),bounds.getMaxY());
+  request.setBbox(reqBbox);
+  ArgumentCaptor<ConveyorTile> captor=ArgumentCaptor.forClass(ConveyorTile.class);
+  StringBuilder errors=new StringBuilder();
+  mediator.dispatch(request,errors);
+  assertTrue(errors.toString(),errors.length() == 0);
+  verify(tileLayer,times(1)).getTile(captor.capture());
+  ConveyorTile tileRequest=captor.getValue();
+  assertEquals(expectedGridset,tileRequest.getGridSetId());
+  assertEquals("image/png",tileRequest.getMimeType().getMimeType());
+  assertTrue("Expected " + Arrays.toString(tileIndex) + " got "+ Arrays.toString(tileRequest.getTileIndex()),Arrays.equals(tileIndex,tileRequest.getTileIndex()));
+}

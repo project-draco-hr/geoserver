@@ -1,0 +1,28 @@
+{
+  try {
+    mediator.save(null);
+    fail();
+  }
+ catch (  NullPointerException e) {
+    assertTrue(true);
+  }
+  when(tld.modify(same(tileLayer))).thenThrow(new IllegalArgumentException());
+  try {
+    mediator.save(tileLayer);
+    fail();
+  }
+ catch (  IllegalArgumentException e) {
+    assertTrue(true);
+  }
+  when(tld.modify(same(tileLayerGroup))).thenReturn(config);
+  mediator.save(tileLayerGroup);
+  verify(config,times(1)).save();
+  when(tld.modify(same(tileLayer))).thenReturn(config);
+  doThrow(new IOException()).when(config).save();
+  try {
+    mediator.save(tileLayer);
+  }
+ catch (  RuntimeException e) {
+    assertTrue(true);
+  }
+}

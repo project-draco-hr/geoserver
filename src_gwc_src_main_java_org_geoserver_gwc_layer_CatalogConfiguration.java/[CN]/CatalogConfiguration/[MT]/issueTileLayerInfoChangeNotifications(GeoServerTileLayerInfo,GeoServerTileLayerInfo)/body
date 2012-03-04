@@ -1,0 +1,44 @@
+{
+  checkNotNull(oldInfo);
+  checkNotNull(newInfo);
+  checkNotNull(oldInfo.getName());
+  checkNotNull(newInfo.getName());
+  checkNotNull(oldInfo.getId());
+  checkNotNull(newInfo.getId());
+  checkArgument(equal(oldInfo.getId(),newInfo.getId()));
+  final GWC mediator=GWC.get();
+  final String oldLayerName=oldInfo.getName();
+  final String layerName=newInfo.getName();
+  final boolean isRename=!equal(oldLayerName,layerName);
+  if (isRename) {
+    mediator.layerRenamed(oldLayerName,layerName);
+  }
+  Set<XMLGridSubset> oldGridSubsets=oldInfo.getGridSubsets();
+  Set<XMLGridSubset> newGridSubsets=newInfo.getGridSubsets();
+  Set<String> oldGridSubsetNames=gridsetNames(oldGridSubsets);
+  Set<String> newGridSubsetNames=gridsetNames(newGridSubsets);
+  Set<String> removedGridSets=new HashSet<String>(oldGridSubsetNames);
+  removedGridSets.removeAll(newGridSubsetNames);
+  for (  String removedGridset : removedGridSets) {
+    mediator.deleteCacheByGridSetId(layerName,removedGridset);
+  }
+  Set<String> oldFormats=new HashSet<String>(oldInfo.getMimeFormats());
+  Set<String> newFormats=new HashSet<String>(newInfo.getMimeFormats());
+  if (!oldFormats.equals(newFormats)) {
+    oldFormats.removeAll(newFormats);
+    for (    String removedFormat : oldFormats) {
+      String styleName=null;
+      String gridSetName=null;
+      BoundingBox bounds=null;
+      mediator.truncate(layerName,styleName,gridSetName,bounds,removedFormat);
+    }
+  }
+  if (!newInfo.cachedStyles().equals(oldInfo.cachedStyles())) {
+    Set<String> oldStyles=new HashSet<String>(oldInfo.cachedStyles());
+    Set<String> newStyles=new HashSet<String>(newInfo.cachedStyles());
+    oldStyles.removeAll(newStyles);
+    for (    String removedStyle : oldStyles) {
+      mediator.truncateByLayerAndStyle(layerName,removedStyle);
+    }
+  }
+}

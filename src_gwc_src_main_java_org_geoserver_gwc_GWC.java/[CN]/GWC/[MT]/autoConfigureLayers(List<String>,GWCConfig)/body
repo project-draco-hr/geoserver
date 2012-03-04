@@ -1,0 +1,24 @@
+{
+  checkArgument(saneConfig.isSane());
+  final Catalog catalog=getCatalog();
+  for (  String name : catalogLayerNames) {
+    checkArgument(!tileLayerExists(name),"Can't auto configure Layer, a tile layer named '",name,"' already exists.");
+    GeoServerTileLayer tileLayer=null;
+    LayerInfo layer=catalog.getLayerByName(name);
+    if (layer != null) {
+      tileLayer=new GeoServerTileLayer(layer,saneConfig,gridSetBroker);
+    }
+ else {
+      LayerGroupInfo layerGroup=catalog.getLayerGroupByName(name);
+      if (layerGroup != null) {
+        tileLayer=new GeoServerTileLayer(layerGroup,saneConfig,gridSetBroker);
+      }
+    }
+    if (tileLayer != null) {
+      add(tileLayer);
+    }
+ else {
+      log.warning("Requested layer " + name + " does not exist. Won't create TileLayer");
+    }
+  }
+}

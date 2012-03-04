@@ -1,0 +1,45 @@
+{
+  final int nameIndex=changedProperties.indexOf("name");
+  final int namespaceIndex=changedProperties.indexOf("namespace");
+  String oldLayerName;
+  String newLayerName;
+  if (source instanceof ResourceInfo) {
+    final ResourceInfo resourceInfo=(ResourceInfo)source;
+    final NamespaceInfo currNamespace=resourceInfo.getNamespace();
+    final NamespaceInfo oldNamespace;
+    if (namespaceIndex > -1) {
+      oldNamespace=(NamespaceInfo)oldValues.get(namespaceIndex);
+    }
+ else {
+      oldNamespace=currNamespace;
+    }
+    newLayerName=resourceInfo.getPrefixedName();
+    if (nameIndex > -1) {
+      oldLayerName=(String)oldValues.get(nameIndex);
+    }
+ else {
+      oldLayerName=resourceInfo.getName();
+    }
+    oldLayerName=oldNamespace.getPrefix() + ":" + oldLayerName;
+  }
+ else {
+    oldLayerName=(String)oldValues.get(nameIndex);
+    newLayerName=(String)newValues.get(nameIndex);
+  }
+  if (!oldLayerName.equals(newLayerName)) {
+    tileLayerInfo.setName(newLayerName);
+    GridSetBroker gridSetBroker=mediator.getGridSetBroker();
+    final GeoServerTileLayer oldTileLayer=(GeoServerTileLayer)mediator.getTileLayerByName(oldLayerName);
+    checkState(null != oldTileLayer,"hanldeRename: old tile layer not found: '" + oldLayerName + "'. New name: '"+ newLayerName+ "'");
+    final GeoServerTileLayer modifiedTileLayer;
+    if (oldTileLayer.getLayerInfo() != null) {
+      LayerInfo layerInfo=oldTileLayer.getLayerInfo();
+      modifiedTileLayer=new GeoServerTileLayer(layerInfo,gridSetBroker,tileLayerInfo);
+    }
+ else {
+      LayerGroupInfo layerGroup=oldTileLayer.getLayerGroupInfo();
+      modifiedTileLayer=new GeoServerTileLayer(layerGroup,gridSetBroker,tileLayerInfo);
+    }
+    mediator.save(modifiedTileLayer);
+  }
+}
