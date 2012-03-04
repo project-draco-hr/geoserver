@@ -1,0 +1,30 @@
+{
+  super(id,new PropertyModel<CoordinateReferenceSystem>(model,"crs"));
+  this.infoModel=model;
+  units=new Label("units",new Model<String>());
+  metersPerUnit=new Label("metersPerUnit",new Model<String>());
+  units.setOutputMarkupId(true);
+  metersPerUnit.setOutputMarkupId(true);
+  updateUnits((CoordinateReferenceSystem)getModelObject());
+  add(units);
+  add(metersPerUnit);
+  super.srsTextField.add(new AjaxFormComponentUpdatingBehavior("onblur"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      convertInput();
+      CoordinateReferenceSystem crs=(CoordinateReferenceSystem)getConvertedInput();
+      if (crs != null) {
+        setModelObject(crs);
+        wktLabel.setDefaultModelObject(crs.getName().toString());
+        wktLink.setEnabled(true);
+      }
+ else {
+        wktLabel.setDefaultModelObject(null);
+        wktLink.setEnabled(false);
+      }
+      target.addComponent(wktLink);
+      target.addComponent(units);
+      target.addComponent(metersPerUnit);
+    }
+  }
+);
+}

@@ -1,0 +1,18 @@
+{
+  GWC mediator=GWC.get();
+  mediator.removeTileLayers(Arrays.asList(tileLayerModel.getObject().getName()));
+  assertNull(mediator.getTileLayer(layerModel.getObject()));
+  GeoServerTileLayerInfo newInfo=TileLayerInfoUtil.loadOrCreate(layerModel.getObject(),mediator.getConfig());
+  tileLayerModel=new GeoServerTileLayerInfoModel(newInfo,true);
+  tester.startPage(new FormTestPage(new ComponentBuilder(){
+    private static final long serialVersionUID=-6705646666953650890L;
+    public Component buildComponent(    final String id){
+      return new LayerCacheOptionsTabPanel(id,layerModel,tileLayerModel);
+    }
+  }
+));
+  tester.assertComponent("form:panel",LayerCacheOptionsTabPanel.class);
+  LayerCacheOptionsTabPanel panel=(LayerCacheOptionsTabPanel)tester.getComponentFromLastRenderedPage("form:panel");
+  panel.save();
+  assertNotNull(mediator.getTileLayer(layerModel.getObject()));
+}

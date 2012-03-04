@@ -1,0 +1,21 @@
+{
+  LayerInfo layerInfo=layerModel.getObject();
+  GeoServerTileLayerInfo tileLayerInfo;
+  final GWC mediator=GWC.get();
+  final GWCConfig defaultSettings=mediator.getConfig();
+  final GeoServerTileLayer tileLayer=isNew ? null : mediator.getTileLayer(layerInfo);
+  if (isNew || tileLayer == null) {
+    final GWCConfig saneDefaults=defaultSettings.saneConfig();
+    tileLayerInfo=TileLayerInfoUtil.loadOrCreate(layerInfo,saneDefaults);
+  }
+ else {
+    GeoServerTileLayerInfo info=((GeoServerTileLayer)tileLayer).getInfo();
+    tileLayerInfo=info.clone();
+  }
+  tileLayerInfo.setEnabled(true);
+  final boolean initWithTileLayer=(isNew && defaultSettings.isCacheLayersByDefault()) || tileLayer != null;
+  if (!initWithTileLayer) {
+    tileLayerInfo.setId(null);
+  }
+  return new GeoServerTileLayerInfoModel(tileLayerInfo,isNew);
+}

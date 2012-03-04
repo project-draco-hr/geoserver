@@ -1,0 +1,42 @@
+{
+  if (!validate) {
+    return;
+  }
+  Set<XMLGridSubset> gridSubsets=validatable.getValue();
+  if (gridSubsets == null || gridSubsets.size() == 0) {
+    error(validatable,"GridSubsetsEditor.validation.empty");
+    return;
+  }
+  final GWC gwc=GWC.get();
+  for (  XMLGridSubset subset : gridSubsets) {
+    final String gridSetName=subset.getGridSetName();
+    final Integer zoomStart=subset.getZoomStart();
+    final Integer zoomStop=subset.getZoomStop();
+    final BoundingBox extent=subset.getExtent();
+    if (gridSetName == null) {
+      throw new IllegalStateException("GridSet name is null");
+    }
+    if (zoomStart != null && zoomStop != null) {
+      if (zoomStart.intValue() > zoomStop.intValue()) {
+        error(validatable,"GridSubsetsEditor.validation.zoomLevelsError");
+        return;
+      }
+    }
+    final GridSetBroker gridSetBroker=gwc.getGridSetBroker();
+    final GridSet gridSet=gridSetBroker.get(gridSetName);
+    if (null == gridSet) {
+      error(validatable,"GridSubsetsEditor.validation.gridSetNotFound",gridSetName);
+      return;
+    }
+    if (extent != null) {
+      if (extent.isNull() || !extent.isSane()) {
+        error(validatable,"GridSubsetsEditor.validation.invalidBounds");
+      }
+      final BoundingBox fullBounds=gridSet.getOriginalExtent();
+      final boolean intersects=fullBounds.intersects(extent);
+      if (!intersects) {
+        error(validatable,"GridSubsetsEditor.validation.boundsOutsideCoverage");
+      }
+    }
+  }
+}

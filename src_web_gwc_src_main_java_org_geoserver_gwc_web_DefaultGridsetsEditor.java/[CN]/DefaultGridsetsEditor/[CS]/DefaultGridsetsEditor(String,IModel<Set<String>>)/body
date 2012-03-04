@@ -1,0 +1,60 @@
+{
+  super(id,model);
+  selection=new Model<ArrayList<String>>(new ArrayList<String>(model.getObject()));
+  GridSetTableProvider provider=new GridSetTableProvider(){
+    private static final long serialVersionUID=1L;
+    @Override public List<GridSet> getItems(){
+      GridSetBroker gridSetBroker=GWC.get().getGridSetBroker();
+      List<String> list=selection.getObject();
+      List<GridSet> gridsets=new ArrayList<GridSet>(list.size());
+      for (      String id : list) {
+        GridSet gridSet=gridSetBroker.get(id);
+        if (gridSet != null) {
+          gridsets.add(gridSet);
+        }
+      }
+      return gridsets;
+    }
+  }
+;
+  defaultGridsetsTable=new DefaultGridSetsTable("table",provider);
+  defaultGridsetsTable.setOutputMarkupId(true);
+  defaultGridsetsTable.setPageable(false);
+  add(defaultGridsetsTable);
+  IModel<List<String>> availableModel=new LoadableDetachableModel<List<String>>(){
+    private static final long serialVersionUID=1L;
+    @Override protected List<String> load(){
+      List<String> gridSetNames=new ArrayList<String>(GWC.get().getGridSetBroker().getNames());
+      for (      String gsId : selection.getObject()) {
+        gridSetNames.remove(gsId);
+      }
+      Collections.sort(gridSetNames);
+      return gridSetNames;
+    }
+  }
+;
+  availableGridSets=new DropDownChoice<String>("availableGridsets",new Model<String>(),availableModel);
+  availableGridSets.setOutputMarkupId(true);
+  add(availableGridSets);
+  GeoServerAjaxFormLink addGridsubsetLink=new GeoServerAjaxFormLink("addGridset"){
+    private static final long serialVersionUID=1L;
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      availableGridSets.processInput();
+      final String selectedGridset=availableGridSets.getModelObject();
+      if (null == selectedGridset) {
+        return;
+      }
+      List<String> choices=new ArrayList<String>(availableGridSets.getChoices());
+      choices.remove(selectedGridset);
+      availableGridSets.setChoices(choices);
+      availableGridSets.setEnabled(!choices.isEmpty());
+      List<String> selectedIds=selection.getObject();
+      selectedIds.add(selectedGridset);
+      target.addComponent(defaultGridsetsTable);
+      target.addComponent(availableGridSets);
+    }
+  }
+;
+  addGridsubsetLink.add(new Icon("addIcon",GWCIconFactory.ADD_ICON));
+  add(addGridsubsetLink);
+}

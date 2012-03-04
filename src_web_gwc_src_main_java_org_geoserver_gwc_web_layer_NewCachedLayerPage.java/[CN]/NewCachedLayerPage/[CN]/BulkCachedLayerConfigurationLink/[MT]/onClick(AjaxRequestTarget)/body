@@ -1,0 +1,38 @@
+{
+  List<TileLayer> selection=NewCachedLayerPage.this.table.getSelection();
+  if (selection.isEmpty()) {
+    return;
+  }
+  final List<String> selectedNames=new ArrayList<String>();
+  for (  TileLayer layer : selection) {
+    selectedNames.add(layer.getName());
+  }
+  dialog.setTitle(new ParamResourceModel("confirmBulkConfig.title",NewCachedLayerPage.this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    private static final long serialVersionUID=1L;
+    @Override protected Component getContents(    final String id){
+      final Integer selectedLayerCount=selectedNames.size();
+      IModel<String> model=new StringResourceModel("NewCachedLayerPage.confirmBulkConfig.message",BulkCachedLayerConfigurationLink.this,null,new Object[]{selectedLayerCount.toString()});
+      Label confirmLabel=new Label(id,model);
+      confirmLabel.setEscapeModelStrings(false);
+      return confirmLabel;
+    }
+    @Override protected boolean onSubmit(    final AjaxRequestTarget target,    final Component contents){
+      GWC facade=GWC.get();
+      GWCConfig saneConfig=facade.getConfig().saneConfig();
+      saneConfig.setCacheLayersByDefault(true);
+      facade.autoConfigureLayers(selectedNames,saneConfig);
+      table.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    final AjaxRequestTarget target){
+      List<TileLayer> selection=table.getSelection();
+      if (selection.isEmpty()) {
+        updateBulkConfigLink();
+        target.addComponent(BulkCachedLayerConfigurationLink.this);
+        target.addComponent(table);
+      }
+    }
+  }
+);
+}

@@ -1,0 +1,25 @@
+{
+  ValidationError error=new ValidationError();
+  List<Grid> grids=validatable.getValue();
+  if (grids == null || grids.size() == 0) {
+    error.setMessage(new ResourceModel("TileMatrixSetEditor.validation.empty").getObject());
+    validatable.error(error);
+    return;
+  }
+  for (int i=1; i < grids.size(); i++) {
+    Grid prev=grids.get(i - 1);
+    Grid curr=grids.get(i);
+    if (curr.getResolution() >= prev.getResolution()) {
+      String message="Each resolution should be lower than it's prior one. Res[" + i + "] == "+ curr.getResolution()+ ", Res["+ (i - 1)+ "] == "+ prev.getResolution()+ ".";
+      error.setMessage(message);
+      validatable.error(error);
+      return;
+    }
+    if (curr.getScaleDenominator() >= prev.getScaleDenominator()) {
+      String message="Each scale denominator should be lower " + "than it's prior one. Scale[" + i + "] == "+ curr.getScaleDenominator()+ ", Scale["+ (i - 1)+ "] == "+ prev.getScaleDenominator()+ ".";
+      error.setMessage(message);
+      validatable.error(error);
+      return;
+    }
+  }
+}

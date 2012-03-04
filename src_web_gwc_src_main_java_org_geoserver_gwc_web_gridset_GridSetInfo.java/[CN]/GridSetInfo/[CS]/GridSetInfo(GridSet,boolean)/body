@@ -1,0 +1,31 @@
+{
+  this.internal=internal;
+  this.name=gridset.getName();
+  this.description=gridset.getDescription();
+  String code="EPSG:" + gridset.getSrs().getNumber();
+  final boolean longitudeFirst=true;
+  try {
+    this.crs=CRS.decode(code,longitudeFirst);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  BoundingBox gridsetBounds=gridset.getOriginalExtent();
+  double x1=gridsetBounds.getMinX();
+  double x2=gridsetBounds.getMaxX();
+  double y1=gridsetBounds.getMinY();
+  double y2=gridsetBounds.getMaxY();
+  this.bounds=new ReferencedEnvelope(x1,x2,y1,y2,this.crs);
+  this.pixelSize=gridset.getPixelSize();
+  this.tileWidth=gridset.getTileWidth();
+  this.tileHeight=gridset.getTileHeight();
+  this.alignTopLeft=gridset.isTopLeftAligned();
+  this.resolutionsPreserved=gridset.isResolutionsPreserved();
+  Grid[] grids=gridset.getGridLevels();
+  this.levels=new ArrayList<Grid>();
+  if (grids != null) {
+    for (    Grid grid : grids) {
+      this.levels.add(grid.clone());
+    }
+  }
+}

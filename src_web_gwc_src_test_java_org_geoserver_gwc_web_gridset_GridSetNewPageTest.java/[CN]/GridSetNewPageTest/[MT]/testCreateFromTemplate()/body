@@ -1,0 +1,17 @@
+{
+  PageParameters params=new PageParameters(ImmutableMap.of("template","EPSG:4326"));
+  GridSetNewPage page=new GridSetNewPage(params);
+  tester.startPage(page);
+  tester.assertModelValue("gridSetForm:name:border:paramValue","My_EPSG:4326");
+  FormTester ft=tester.newFormTester("gridSetForm");
+  ft.setValue("name:border:paramValue","customWGS84");
+  tester.executeAjaxEvent("gridSetForm:addZoomLevel","onclick");
+  tester.executeAjaxEvent("gridSetForm:addZoomLevel","onclick");
+  tester.executeAjaxEvent("gridSetForm:save","onclick");
+  GWC mediator=GWC.get();
+  GridSetBroker gridSetBroker=mediator.getGridSetBroker();
+  assertTrue(gridSetBroker.getNames().toString(),gridSetBroker.getNames().contains("customWGS84"));
+  GridSet check=gridSetBroker.get("EPSG:4326");
+  GridSet created=gridSetBroker.get("customWGS84");
+  assertEquals(check.getNumLevels() + 2,created.getNumLevels());
+}

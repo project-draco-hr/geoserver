@@ -1,0 +1,40 @@
+{
+  String layerName=tileLayerNameModel.getObject().getName();
+  IModel<String> model=new Model<String>(layerName);
+  IModel<String> labelModel=new ResourceModel("truncate");
+  SimpleAjaxLink<String> link=new SimpleAjaxLink<String>(id,model,labelModel){
+    private static final long serialVersionUID=1L;
+    @Override protected void onClick(    AjaxRequestTarget target){
+      dialog.setTitle(new ParamResourceModel("confirmTruncateTitle",CachedLayersPage.this));
+      dialog.setDefaultModel(getDefaultModel());
+      dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+        private static final long serialVersionUID=1L;
+        @Override protected Component getContents(        final String id){
+          final String layerName=getDefaultModelObjectAsString();
+          final GWC gwcFacade=GWC.get();
+          Quota usedQuota=gwcFacade.getUsedQuota(layerName);
+          if (usedQuota == null) {
+            usedQuota=new Quota();
+          }
+          final String usedQuotaStr=usedQuota.toNiceString();
+          IModel<String> model=new ParamResourceModel("CachedLayersPage.confirmTruncateMessage",CachedLayersPage.this,layerName,usedQuotaStr);
+          Label confirmLabel=new Label(id,model);
+          confirmLabel.setEscapeModelStrings(false);
+          return confirmLabel;
+        }
+        @Override protected boolean onSubmit(        final AjaxRequestTarget target,        final Component contents){
+          final String layerName=getDefaultModelObjectAsString();
+          GWC facade=GWC.get();
+          facade.truncate(layerName);
+          return true;
+        }
+        @Override public void onClose(        final AjaxRequestTarget target){
+          target.addComponent(table);
+        }
+      }
+);
+    }
+  }
+;
+  return link;
+}

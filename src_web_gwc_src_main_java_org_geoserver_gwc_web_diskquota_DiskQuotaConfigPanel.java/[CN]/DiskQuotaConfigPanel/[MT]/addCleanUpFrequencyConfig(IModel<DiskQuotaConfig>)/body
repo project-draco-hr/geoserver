@@ -1,0 +1,45 @@
+{
+  final DiskQuotaConfig diskQuotaConfig=diskQuotaModel.getObject();
+  int frequency=diskQuotaConfig.getCacheCleanUpFrequency();
+  TimeUnit unit=diskQuotaConfig.getCacheCleanUpUnits();
+  if (TimeUnit.SECONDS != unit) {
+    frequency=(int)TimeUnit.SECONDS.convert(frequency,unit);
+    diskQuotaConfig.setCacheCleanUpFrequency(frequency);
+    diskQuotaConfig.setCacheCleanUpUnits(TimeUnit.SECONDS);
+  }
+  IModel<Integer> cleanUpFreqModel;
+  cleanUpFreqModel=new PropertyModel<Integer>(diskQuotaModel,"cacheCleanUpFrequency");
+  TextField<Integer> cleanUpFreq=new TextField<Integer>("cleanUpFreq",cleanUpFreqModel);
+  cleanUpFreq.setRequired(true);
+  cleanUpFreq.add(new AttributeModifier("title",true,new StringResourceModel("DiskQuotaConfigPanel.cleanUpFreq.title",(Component)null,null)));
+  add(cleanUpFreq);
+{
+    Date lastRun=diskQuotaConfig.getLastCleanUpTime();
+    String resourceId;
+    HashMap<String,String> params=new HashMap<String,String>();
+    if (lastRun == null) {
+      resourceId="DiskQuotaConfigPanel.cleanUpLastRunNever";
+    }
+ else {
+      resourceId="DiskQuotaConfigPanel.cleanUpLastRun";
+      long timeAgo=(System.currentTimeMillis() - lastRun.getTime()) / 1000;
+      String timeUnits="s";
+      if (timeAgo > 60 * 60 * 24) {
+        timeUnits="d";
+        timeAgo/=60 * 60 * 24;
+      }
+ else       if (timeAgo > 60 * 60) {
+        timeUnits="h";
+        timeAgo/=60 * 60;
+      }
+ else       if (timeAgo > 60) {
+        timeUnits="m";
+        timeAgo/=60;
+      }
+      params.put("x",String.valueOf(timeAgo));
+      params.put("timeUnit",timeUnits);
+    }
+    IModel<String> lastRunModel=new StringResourceModel(resourceId,this,new Model(params));
+    add(new Label("cleanUpLastRun",lastRunModel));
+  }
+}

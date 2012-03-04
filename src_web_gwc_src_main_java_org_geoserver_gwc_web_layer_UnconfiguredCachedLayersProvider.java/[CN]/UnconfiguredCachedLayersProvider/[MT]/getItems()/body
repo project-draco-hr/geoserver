@@ -1,0 +1,25 @@
+{
+  final GWC gwc=GWC.get();
+  final GWCConfig defaults=gwc.getConfig().saneConfig().clone();
+  final GridSetBroker gridsets=gwc.getGridSetBroker();
+  final Catalog catalog=getCatalog();
+  defaults.setCacheLayersByDefault(true);
+  List<String> unconfiguredLayerIds=getUnconfiguredLayers();
+  List<TileLayer> layers=Lists.transform(unconfiguredLayerIds,new Function<String,TileLayer>(){
+    @Override public TileLayer apply(    String input){
+      GeoServerTileLayer geoServerTileLayer;
+      LayerInfo layer=catalog.getLayer(input);
+      if (layer != null) {
+        geoServerTileLayer=new GeoServerTileLayer(layer,defaults,gridsets);
+      }
+ else {
+        LayerGroupInfo layerGroup=catalog.getLayerGroup(input);
+        geoServerTileLayer=new GeoServerTileLayer(layerGroup,defaults,gridsets);
+      }
+      geoServerTileLayer.getInfo().setEnabled(true);
+      return geoServerTileLayer;
+    }
+  }
+);
+  return layers;
+}

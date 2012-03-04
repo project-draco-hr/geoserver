@@ -1,0 +1,35 @@
+{
+  boolean hasTimeDimension=false;
+  if (info instanceof LayerInfo) {
+    LayerInfo layerInfo=(LayerInfo)info;
+    ResourceInfo resource=layerInfo.getResource();
+    MetadataMap resourceMetadata=resource.getMetadata();
+    DimensionInfo elevationDimension=resourceMetadata.get(ResourceInfo.TIME,DimensionInfo.class);
+    if (elevationDimension != null && elevationDimension.isEnabled()) {
+      hasTimeDimension=true;
+    }
+  }
+  GeoServerTileLayerInfo layerInfo=model.getObject();
+  Set<? extends ParameterFilter> parameterFilters=layerInfo.getParameterFilters();
+  boolean hasTimeParameterFilter=false;
+  if (hasTimeDimension) {
+    for (    ParameterFilter p : parameterFilters) {
+      if ("TIME".equalsIgnoreCase(p.getKey())) {
+        hasTimeParameterFilter=true;
+        break;
+      }
+    }
+  }
+  Label timeParameterFilterLabel=new Label("timeParameterFilterLabel",new ResourceModel("timeParameterFilter"));
+  configs.add(timeParameterFilterLabel);
+  IModel<Boolean> timeParameterFilterModel=new Model<Boolean>(Boolean.valueOf(hasTimeParameterFilter));
+  CheckBox timeParameterFilter=new CheckBox("timeParameterFilter",timeParameterFilterModel);
+  timeParameterFilter.setEnabled(hasTimeDimension);
+  if (!hasTimeDimension) {
+    timeParameterFilter.add(new AttributeModifier("title",true,new ResourceModel("timeParameterFilterDisabled")));
+  }
+  configs.add(timeParameterFilter);
+  timeParameterFilterLabel.setVisible(info instanceof LayerInfo);
+  timeParameterFilter.setVisible(info instanceof LayerInfo);
+  return timeParameterFilter;
+}

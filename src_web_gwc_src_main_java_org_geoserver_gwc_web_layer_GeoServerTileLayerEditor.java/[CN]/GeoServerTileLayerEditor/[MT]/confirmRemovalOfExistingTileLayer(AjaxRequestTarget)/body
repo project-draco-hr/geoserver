@@ -1,0 +1,28 @@
+{
+  confirmRemovalDialog.setTitle(new Model<String>("Confirm removal of cached contents?"));
+  confirmRemovalDialog.showOkCancel(origTarget,new GeoServerDialog.DialogDelegate(){
+    private static final long serialVersionUID=1L;
+    @Override protected Component getContents(    final String id){
+      GWC gwc=GWC.get();
+      Quota usedQuota=gwc.getUsedQuota(originalLayerName);
+      if (usedQuota == null) {
+        usedQuota=new Quota();
+      }
+      String usedQuotaStr=usedQuota.toNiceString();
+      return new Label(id,new ParamResourceModel("confirmTileLayerRemoval",GeoServerTileLayerEditor.this,usedQuotaStr));
+    }
+    @Override protected boolean onSubmit(    final AjaxRequestTarget target,    final Component contents){
+      return true;
+    }
+    @Override public void onClose(    final AjaxRequestTarget target){
+      target.addComponent(createLayer);
+      updateConfigsVisibility(target);
+    }
+    @Override protected boolean onCancel(    final AjaxRequestTarget target){
+      createLayer.setModelObject(Boolean.TRUE);
+      final boolean closeWindow=true;
+      return closeWindow;
+    }
+  }
+);
+}

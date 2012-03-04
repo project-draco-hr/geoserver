@@ -1,0 +1,19 @@
+{
+  List<Grid> list=grids.getModelObject();
+  final Grid newGrid=new Grid();
+  if (list.isEmpty()) {
+    BoundingBox extent=new BoundingBox(bbox.getMinX(),bbox.getMinY(),bbox.getMaxX(),bbox.getMaxY());
+    final int levels=1;
+    GridSet tmpGridset=GridSetFactory.createGridSet("stub",SRS.getEPSG4326(),extent,false,levels,1D,GridSetFactory.DEFAULT_PIXEL_SIZE_METER,tileWidth,tileHeight,false);
+    Grid grid=tmpGridset.getGridLevels()[0];
+    newGrid.setResolution(grid.getResolution());
+    newGrid.setScaleDenominator(grid.getScaleDenominator());
+  }
+ else {
+    Grid prev=list.get(list.size() - 1);
+    newGrid.setResolution(prev.getResolution() / 2);
+    newGrid.setScaleDenominator(prev.getScaleDenominator() / 2);
+  }
+  list.add(newGrid);
+  grids.setModelObject(list);
+}

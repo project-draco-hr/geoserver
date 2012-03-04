@@ -1,0 +1,49 @@
+{
+  List<GridSet> selection=gridsets.getSelection();
+  if (selection.size() == 0) {
+    return;
+  }
+  final Set<String> selectedGridsetIds=new HashSet<String>();
+  for (  GridSet gset : selection) {
+    selectedGridsetIds.add(gset.getName());
+  }
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    @Override protected Component getContents(    final String id){
+      final GWC gwc=GWC.get();
+      final int count=selectedGridsetIds.size();
+      Quota totalQuota=new Quota();
+      for (      String gridsetId : selectedGridsetIds) {
+        Quota usedQuotaByGridSet=gwc.getUsedQuotaByGridSet(gridsetId);
+        if (usedQuotaByGridSet != null) {
+          totalQuota.add(usedQuotaByGridSet);
+        }
+      }
+      final Set<String> affectedLayers=gwc.getLayerNamesForGridSets(selectedGridsetIds);
+      IModel<String> confirmModel=new ParamResourceModel("GridSetsPage.confirmGridsetsDelete",GridSetsPage.this,String.valueOf(count),String.valueOf(affectedLayers.size()),totalQuota.toNiceString());
+      Label confirmMessage=new Label(id,confirmModel);
+      confirmMessage.setEscapeModelStrings(false);
+      return confirmMessage;
+    }
+    @Override protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      GWC gwc=GWC.get();
+      try {
+        gwc.removeGridSets(selectedGridsetIds);
+      }
+ catch (      IOException e) {
+        getPage().error(e.getMessage());
+        LOGGER.log(Level.WARNING,e.getMessage(),e);
+      }
+      gridsets.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (gridsets.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(SelectionRemovalLink.this);
+        target.addComponent(gridsets);
+      }
+    }
+  }
+);
+}

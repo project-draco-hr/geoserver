@@ -1,0 +1,45 @@
+{
+  List<TileLayer> selection=CachedLayersPage.this.table.getSelection();
+  if (selection.isEmpty()) {
+    return;
+  }
+  final List<String> selectedNames=new ArrayList<String>();
+  for (  TileLayer layer : selection) {
+    selectedNames.add(layer.getName());
+  }
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",CachedLayersPage.this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    private static final long serialVersionUID=1L;
+    @Override protected Component getContents(    final String id){
+      final GWC gwcFacade=GWC.get();
+      Quota totalQuota=new Quota();
+      for (      String layerName : selectedNames) {
+        Quota usedQuota=gwcFacade.getUsedQuota(layerName);
+        if (usedQuota != null) {
+          totalQuota.add(usedQuota);
+        }
+      }
+      final String usedQuotaStr=totalQuota.toNiceString();
+      final Integer selectedLayerCount=selectedNames.size();
+      IModel<String> model=new StringResourceModel("CachedLayersPage.confirmSelectionRemoval",CachedLayerSelectionRemovalLink.this,null,new Object[]{selectedLayerCount.toString(),usedQuotaStr});
+      Label confirmLabel=new Label(id,model);
+      confirmLabel.setEscapeModelStrings(false);
+      return confirmLabel;
+    }
+    @Override protected boolean onSubmit(    final AjaxRequestTarget target,    final Component contents){
+      GWC facade=GWC.get();
+      facade.removeTileLayers(selectedNames);
+      table.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    final AjaxRequestTarget target){
+      List<TileLayer> selection=table.getSelection();
+      if (selection.isEmpty()) {
+        setEnabled(false);
+        target.addComponent(CachedLayerSelectionRemovalLink.this);
+        target.addComponent(table);
+      }
+    }
+  }
+);
+}

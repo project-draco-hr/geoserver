@@ -1,0 +1,35 @@
+{
+  boolean hasElevationDimension=false;
+  if (info instanceof LayerInfo) {
+    LayerInfo layerInfo=(LayerInfo)info;
+    ResourceInfo resource=layerInfo.getResource();
+    MetadataMap resourceMetadata=resource.getMetadata();
+    DimensionInfo elevationDimension=resourceMetadata.get(ResourceInfo.ELEVATION,DimensionInfo.class);
+    if (elevationDimension != null && elevationDimension.isEnabled()) {
+      hasElevationDimension=true;
+    }
+  }
+  GeoServerTileLayerInfo layerInfo=model.getObject();
+  Set<? extends ParameterFilter> parameterFilters=layerInfo.getParameterFilters();
+  boolean hasElevationParameterFilter=false;
+  if (hasElevationDimension) {
+    for (    ParameterFilter p : parameterFilters) {
+      if ("ELEVATION".equalsIgnoreCase(p.getKey())) {
+        hasElevationParameterFilter=true;
+        break;
+      }
+    }
+  }
+  Label elevationParameterFilterLabel=new Label("elevationParameterFilterLabel",new ResourceModel("elevationParameterFilter"));
+  configs.add(elevationParameterFilterLabel);
+  IModel<Boolean> elevationParameterFilterModel=new Model<Boolean>(Boolean.valueOf(hasElevationParameterFilter));
+  CheckBox elevationParameterFilter=new CheckBox("elevationParameterFilter",elevationParameterFilterModel);
+  elevationParameterFilter.setEnabled(hasElevationDimension);
+  if (!hasElevationDimension) {
+    elevationParameterFilter.add(new AttributeModifier("title",true,new ResourceModel("elevationParameterFilterDisabled")));
+  }
+  configs.add(elevationParameterFilter);
+  elevationParameterFilterLabel.setVisible(info instanceof LayerInfo);
+  elevationParameterFilter.setVisible(info instanceof LayerInfo);
+  return elevationParameterFilter;
+}

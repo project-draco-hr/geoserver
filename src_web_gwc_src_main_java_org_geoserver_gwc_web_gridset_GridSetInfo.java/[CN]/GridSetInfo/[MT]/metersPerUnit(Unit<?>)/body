@@ -1,0 +1,20 @@
+{
+  double meters;
+  final Unit<Angle> degree=NonSI.DEGREE_ANGLE;
+  final Unit<Angle> dms=Units.DEGREE_MINUTE_SECOND;
+  if (degree.equals(unit)) {
+    meters=GridSetFactory.EPSG4326_TO_METERS;
+  }
+ else {
+    Unit<? extends Quantity> metre=Unit.valueOf("m");
+    try {
+      meters=unit.getConverterTo(metre).convert(1);
+    }
+ catch (    Exception e) {
+      UnitConverter converter=unit.getConverterTo(degree);
+      double toDegree=converter.convert(1);
+      meters=toDegree * GridSetFactory.EPSG4326_TO_METERS;
+    }
+  }
+  return meters;
+}

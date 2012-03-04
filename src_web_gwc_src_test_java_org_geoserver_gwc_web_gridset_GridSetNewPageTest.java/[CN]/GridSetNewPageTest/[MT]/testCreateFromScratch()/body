@@ -1,0 +1,47 @@
+{
+  GWC mediator=GWC.get();
+  GridSetBroker gridSetBroker=mediator.getGridSetBroker();
+  GridSetNewPage page=new GridSetNewPage(new PageParameters());
+  tester.startPage(page);
+  final String gridsetName="fromScratch";
+  FormTester ft=tester.newFormTester("gridSetForm");
+  ft.setValue("name:border:paramValue",gridsetName);
+  ft.setValue("description","sample description");
+  ft.setValue("crs:srs","EPSG:3857");
+  tester.executeAjaxEvent("gridSetForm:crs:srs","onblur");
+  Component computeBounds=tester.getComponentFromLastRenderedPage("gridSetForm:computeBounds");
+  assertTrue(computeBounds.isEnabled());
+  page.computeBounds();
+{
+    BoundingBox expected=gridSetBroker.get("EPSG:900913").getOriginalExtent();
+    Double minx=((DecimalTextField)tester.getComponentFromLastRenderedPage("gridSetForm:bounds:minX")).getModelObject();
+    Double miny=((DecimalTextField)tester.getComponentFromLastRenderedPage("gridSetForm:bounds:minY")).getModelObject();
+    Double maxx=((DecimalTextField)tester.getComponentFromLastRenderedPage("gridSetForm:bounds:maxX")).getModelObject();
+    Double maxy=((DecimalTextField)tester.getComponentFromLastRenderedPage("gridSetForm:bounds:maxY")).getModelObject();
+    assertEquals(expected.getMinX(),minx,1.0E-2);
+    assertEquals(expected.getMinY(),miny,1.0E-2);
+    assertEquals(expected.getMaxX(),maxx,1.0E-2);
+    assertEquals(expected.getMaxY(),maxy,1.0E-2);
+    EnvelopePanel envPanel=(EnvelopePanel)tester.getComponentFromLastRenderedPage("gridSetForm:bounds");
+    assertNotNull(envPanel.getModelObject());
+    ft.setValue("bounds:minX","-1000000");
+    ft.setValue("bounds:minY","-1000000");
+    ft.setValue("bounds:maxX","1000000");
+    ft.setValue("bounds:maxY","1000000");
+  }
+  ft.setValue("tileWidth:border:paramValue","512");
+  tester.executeAjaxEvent("gridSetForm:tileWidth:border:paramValue","onblur");
+  ft.setValue("tileHeight:border:paramValue","512");
+  tester.executeAjaxEvent("gridSetForm:tileHeight:border:paramValue","onblur");
+  final int numLevels=6;
+  for (int i=0; i < numLevels; i++) {
+    AjaxRequestTarget target=new AjaxRequestTarget(page);
+    page.addZoomLevel(target);
+  }
+  Session.get().getFeedbackMessages().clear();
+  tester.executeAjaxEvent("gridSetForm:save","onclick");
+  tester.assertNoErrorMessage();
+  assertTrue(gridSetBroker.getNames().toString(),gridSetBroker.getNames().contains(gridsetName));
+  GridSet created=gridSetBroker.get(gridsetName);
+  assertEquals(numLevels,created.getNumLevels());
+}

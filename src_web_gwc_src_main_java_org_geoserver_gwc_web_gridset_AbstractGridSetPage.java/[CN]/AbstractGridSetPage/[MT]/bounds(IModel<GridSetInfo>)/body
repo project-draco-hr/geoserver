@@ -1,0 +1,31 @@
+{
+class UpdatingEnvelopePanel extends EnvelopePanel {
+    private static final long serialVersionUID=1L;
+    public UpdatingEnvelopePanel(    String id,    IModel<ReferencedEnvelope> e){
+      super(id,e);
+class UpdateTableBehavior extends AjaxFormSubmitBehavior {
+        private static final long serialVersionUID=1L;
+        public UpdateTableBehavior(){
+          super(form,"onblur");
+        }
+        @Override protected void onSubmit(        AjaxRequestTarget target){
+          target.addComponent(AbstractGridSetPage.this.tileMatrixSetEditor);
+        }
+        @SuppressWarnings("unchecked") @Override protected void onError(        AjaxRequestTarget target){
+          UpdatingEnvelopePanel.this.setModelObject(null);
+          target.addComponent(AbstractGridSetPage.this.tileMatrixSetEditor);
+        }
+      }
+      minXInput.add(new UpdateTableBehavior());
+      minYInput.add(new UpdateTableBehavior());
+      maxXInput.add(new UpdateTableBehavior());
+      maxYInput.add(new UpdateTableBehavior());
+    }
+  }
+  PropertyModel<ReferencedEnvelope> boundsModel;
+  boundsModel=new PropertyModel<ReferencedEnvelope>(model,"bounds");
+  EnvelopePanel panel=new UpdatingEnvelopePanel("bounds",boundsModel);
+  panel.setRequired(true);
+  panel.setOutputMarkupId(true);
+  return panel;
+}

@@ -1,0 +1,36 @@
+{
+  final GWC gwc=GWC.get();
+  final CatalogInfo layer=layerModel.getObject();
+  final GeoServerTileLayerInfo tileLayerInfo=getModelObject();
+  final boolean tileLayerExists=gwc.hasTileLayer(layer);
+  final boolean createLayer=this.createLayer.getModelObject().booleanValue();
+  if (!createLayer) {
+    if (tileLayerExists) {
+      String tileLayerName=tileLayerInfo.getName();
+      gwc.removeTileLayers(Arrays.asList(tileLayerName));
+    }
+    return;
+  }
+  Preconditions.checkState(layer.getId() != null);
+  tileLayerInfo.setId(layer.getId());
+  final String name;
+  final GridSetBroker gridsets=gwc.getGridSetBroker();
+  GeoServerTileLayer tileLayer;
+  if (layer instanceof LayerGroupInfo) {
+    LayerGroupInfo groupInfo=(LayerGroupInfo)layer;
+    name=groupInfo.getName();
+    tileLayer=new GeoServerTileLayer(groupInfo,gridsets,tileLayerInfo);
+  }
+ else {
+    LayerInfo layerInfo=(LayerInfo)layer;
+    name=layerInfo.getResource().getPrefixedName();
+    tileLayer=new GeoServerTileLayer(layerInfo,gridsets,tileLayerInfo);
+  }
+  tileLayerInfo.setName(name);
+  if (tileLayerExists) {
+    gwc.save(tileLayer);
+  }
+ else {
+    gwc.add(tileLayer);
+  }
+}

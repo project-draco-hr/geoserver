@@ -1,0 +1,22 @@
+{
+  crs.processInput();
+  bounds.processInput();
+  tileWidth.getFormComponent().processInput();
+  tileHeight.getFormComponent().processInput();
+  ReferencedEnvelope bbox=(ReferencedEnvelope)bounds.getModelObject();
+  if (null == bbox) {
+    String message=new ResourceModel("AbstractGridSetPage.cantAddZoomLevel").getObject();
+    FeedbackPanel feedback=(FeedbackPanel)form.get("feedback");
+    if (feedback != null) {
+      feedback.error(message);
+      target.addComponent(feedback);
+    }
+ else {
+      form.error(message);
+    }
+    return;
+  }
+  Integer width=(Integer)tileWidth.getFormComponent().getModelObject();
+  Integer height=(Integer)tileHeight.getFormComponent().getModelObject();
+  tileMatrixSetEditor.addZoomLevel(bbox,width == null ? 256 : width,height == null ? 256 : height);
+}
