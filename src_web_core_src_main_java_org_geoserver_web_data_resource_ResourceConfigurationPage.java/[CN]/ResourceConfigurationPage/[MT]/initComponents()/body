@@ -1,4 +1,6 @@
 {
+  this.returnPage=LayerPage.class;
+  this.tabPanelClasses=new ArrayList<Class<? extends LayerEditTabPanel>>(5);
   add(new Label("resourcename",getResourceInfo().getPrefixedName()));
   Form theForm=new Form("resource",myResourceModel);
   add(theForm);
@@ -9,12 +11,14 @@
     }
   }
 );
+  tabPanelClasses.add(DataLayerEditTabPanel.class);
   tabs.add(new AbstractTab(new org.apache.wicket.model.ResourceModel("ResourceConfigurationPage.Publishing")){
     public Panel getPanel(    String panelID){
       return new PublishingLayerEditTabPanel(panelID,myLayerModel);
     }
   }
 );
+  tabPanelClasses.add(PublishingLayerEditTabPanel.class);
   List<LayerEditTabPanelInfo> tabPanels=getGeoServerApplication().getBeansOfType(LayerEditTabPanelInfo.class);
   Collections.sort(tabPanels,new Comparator<LayerEditTabPanelInfo>(){
     public int compare(    LayerEditTabPanelInfo o1,    LayerEditTabPanelInfo o2){
@@ -45,8 +49,9 @@
       }
     }
 );
+    tabPanelClasses.add(panelClass);
   }
-  theForm.add(new TabbedPanel("tabs",tabs){
+  tabbedPanel=new TabbedPanel("tabs",tabs){
     @Override protected WebMarkupContainer newLink(    String linkId,    final int index){
       return new SubmitLink(linkId){
         @Override public void onSubmit(){
@@ -56,7 +61,8 @@
 ;
     }
   }
-);
+;
+  theForm.add(tabbedPanel);
   theForm.add(saveLink());
   theForm.add(cancelLink());
 }
