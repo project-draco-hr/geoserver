@@ -10,18 +10,20 @@
   final List<LayerInfo> layers=getCatalog().getLayers(typeInfo);
   Set<String> affectedLayers=new HashSet<String>();
   for (  LayerInfo layer : layers) {
-    if (tileLayerExists(layer.getResource().getPrefixedName())) {
-      affectedLayers.add(layer.getResource().getPrefixedName());
+    final String tileLayerName=tileLayerName(layer);
+    if (tileLayerExists(tileLayerName)) {
+      affectedLayers.add(tileLayerName);
     }
   }
   for (  LayerGroupInfo lgi : getLayerGroups()) {
-    if (!tileLayerExists(lgi.getName())) {
+    final String tileLayerName=tileLayerName(lgi);
+    if (!tileLayerExists(tileLayerName)) {
       continue;
     }
     for (    LayerInfo li : lgi.getLayers()) {
       ResourceInfo resource=li.getResource();
       if (typeInfo.equals(resource)) {
-        affectedLayers.add(lgi.getName());
+        affectedLayers.add(tileLayerName);
       }
     }
   }
