@@ -2,15 +2,31 @@
   if (isNull(layerGroup.getName())) {
     throw new NullPointerException("Layer group name must not be null");
   }
-  LayerGroupInfo existing=getLayerGroupByName(layerGroup.getName());
+  WorkspaceInfo ws=layerGroup.getWorkspace();
+  LayerGroupInfo existing=getLayerGroupByName(ws,layerGroup.getName());
   if (existing != null && !existing.getId().equals(layerGroup.getId())) {
-    throw new IllegalArgumentException("Layer group named '" + layerGroup.getName() + "' already exists.");
+    WorkspaceInfo ews=existing.getWorkspace();
+    if ((ws == null && ews == null) || (ws != null && ws.equals(ews))) {
+      String msg="Layer group named '" + layerGroup.getName() + "' already exists";
+      if (ws != null) {
+        msg+=" in workspace " + ws.getName();
+      }
+      throw new IllegalArgumentException(msg);
+    }
   }
   if (layerGroup.getLayers() == null || layerGroup.getLayers().isEmpty()) {
     throw new IllegalArgumentException("Layer group must not be empty");
   }
   if (layerGroup.getStyles() != null && !layerGroup.getStyles().isEmpty() && !(layerGroup.getStyles().size() == layerGroup.getLayers().size())) {
     throw new IllegalArgumentException("Layer group has different number of styles than layers");
+  }
+  if (ws != null) {
+    for (    LayerInfo l : layerGroup.getLayers()) {
+      ResourceInfo r=l.getResource();
+      if (!ws.equals(r.getStore().getWorkspace())) {
+        throw new IllegalArgumentException("Layer group within a workspace (" + ws.getName() + ") can not contain resoures from other workspace: "+ r.getStore().getWorkspace().getName());
+      }
+    }
   }
   return postValidate(layerGroup,isNew);
 }

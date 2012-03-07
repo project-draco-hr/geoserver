@@ -1,12 +1,16 @@
 {
+  String ws=getAttribute("workspace");
   LayerGroupInfo lg=(LayerGroupInfo)object;
-  LOGGER.info("POST layer group " + lg.getName());
+  LOGGER.info("POST layer group " + lg.getName() + ws != null ? " to workspace " + ws : "");
   if (lg.getLayers().isEmpty()) {
     throw new RestletException("layer group must not be empty",Status.CLIENT_ERROR_BAD_REQUEST);
   }
   if (lg.getBounds() == null) {
     LOGGER.fine("Auto calculating layer group bounds");
     new CatalogBuilder(catalog).calculateLayerGroupBounds(lg);
+  }
+  if (ws != null) {
+    lg.setWorkspace(catalog.getWorkspaceByName(ws));
   }
   catalog.add(lg);
   return lg.getName();

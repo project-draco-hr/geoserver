@@ -4,7 +4,13 @@
   tester.assertRenderedPage(LayerGroupNewPage.class);
   FormTester form=tester.newFormTester("form");
   form.setValue("name","lakes");
-  form.submit();
+  form.setValue("bounds:minX","0");
+  form.setValue("bounds:minY","0");
+  form.setValue("bounds:maxX","0");
+  form.setValue("bounds:maxY","0");
+  page.lgEntryPanel.getEntries().add(new LayerGroupEntry(getCatalog().getLayerByName(getLayerId(MockData.LAKES)),null));
+  form.submit("save");
   tester.assertRenderedPage(LayerGroupNewPage.class);
-  tester.assertErrorMessages(new String[]{"A layer group named lakes already exists","Field 'Bounds' is required."});
+  assertEquals(1,tester.getMessages(FeedbackMessage.ERROR).size());
+  assertTrue(tester.getMessages(FeedbackMessage.ERROR).get(0).toString().endsWith("Layer group named 'lakes' already exists"));
 }

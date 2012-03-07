@@ -1,0 +1,14 @@
+{
+  File f=new File(testData.getDataDirectoryRoot(),"workspaces/acme/layergroups/foolayergroup.xml");
+  assertFalse(f.exists());
+  testAddLayer();
+  LayerGroupInfo lg=catalog.getFactory().createLayerGroup();
+  lg.setName("foolayergroup");
+  lg.setWorkspace(catalog.getWorkspaceByName("acme"));
+  lg.getLayers().add(catalog.getLayerByName("foo"));
+  lg.getStyles().add(null);
+  catalog.add(lg);
+  assertTrue(f.exists());
+  Document dom=dom(f);
+  assertXpathEvaluatesTo(catalog.getWorkspaceByName("acme").getId(),"/layerGroup/workspace/id",dom);
+}

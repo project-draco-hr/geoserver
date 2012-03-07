@@ -1,8 +1,17 @@
 {
+  String workspace=getAttribute(request,"workspace");
   String style=getAttribute(request,"style");
   String layer=getAttribute(request,"layer");
-  if (style != null && catalog.getStyleByName(style) == null) {
-    throw new RestletException("No such style: " + style,Status.CLIENT_ERROR_NOT_FOUND);
+  if (workspace != null && catalog.getWorkspaceByName(workspace) == null) {
+    throw new RestletException("No such workspace: " + workspace,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  if (style != null) {
+    if (workspace != null && catalog.getStyleByName(workspace,style) == null) {
+      throw new RestletException(String.format("No such style %s in workspace %s",style,workspace),Status.CLIENT_ERROR_NOT_FOUND);
+    }
+    if (workspace == null && catalog.getStyleByName(style) == null) {
+      throw new RestletException("No such style: " + style,Status.CLIENT_ERROR_NOT_FOUND);
+    }
   }
   if (layer != null && catalog.getLayerByName(layer) == null) {
     throw new RestletException("No such layer: " + layer,Status.CLIENT_ERROR_NOT_FOUND);

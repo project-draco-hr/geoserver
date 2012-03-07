@@ -1,0 +1,31 @@
+{
+  final List<File> files=new ArrayList<File>();
+  try {
+    s.getStyle().accept(new AbstractStyleVisitor(){
+      @Override public void visit(      ExternalGraphic exgr){
+        if (exgr.getOnlineResource() == null) {
+          return;
+        }
+        URI uri=exgr.getOnlineResource().getLinkage();
+        if (uri == null) {
+          return;
+        }
+        File f=null;
+        try {
+          f=DataUtilities.urlToFile(uri.toURL());
+        }
+ catch (        MalformedURLException e) {
+          LOGGER.log(Level.WARNING,"Error attemping to processing SLD resource",e);
+        }
+        if (f != null && f.exists()) {
+          files.add(f);
+        }
+      }
+    }
+);
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Error loading style",e);
+  }
+  return files;
+}
