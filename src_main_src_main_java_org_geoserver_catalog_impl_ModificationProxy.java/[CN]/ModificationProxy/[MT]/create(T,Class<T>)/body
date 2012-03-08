@@ -1,24 +1,3 @@
 {
-  InvocationHandler h=new ModificationProxy(proxyObject);
-  List<Class> proxyInterfaces=(List)Arrays.asList(proxyObject.getClass().getInterfaces());
-  boolean add=true;
-  for (  Class interfce : proxyObject.getClass().getInterfaces()) {
-    if (clazz.isAssignableFrom(interfce)) {
-      add=false;
-      break;
-    }
-  }
-  if (add) {
-    proxyInterfaces=new ArrayList<Class>(proxyInterfaces);
-    proxyInterfaces.add(clazz);
-  }
-  Class proxyClass=Proxy.getProxyClass(clazz.getClassLoader(),(Class[])proxyInterfaces.toArray(new Class[proxyInterfaces.size()]));
-  T proxy;
-  try {
-    proxy=(T)proxyClass.getConstructor(new Class[]{InvocationHandler.class}).newInstance(new Object[]{h});
-  }
- catch (  Exception e) {
-    throw new RuntimeException(e);
-  }
-  return proxy;
+  return ProxyUtils.createProxy(proxyObject,clazz,new ModificationProxy(proxyObject));
 }
