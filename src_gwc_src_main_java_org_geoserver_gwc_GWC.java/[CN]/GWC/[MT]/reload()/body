@@ -1,9 +1,16 @@
 {
+  final Set<String> currLayerNames=new HashSet<String>(getTileLayerNames());
   try {
     tld.reInit();
   }
  catch (  RuntimeException e) {
     log.log(Level.WARNING,"Unable to reinit TileLayerDispatcher",e);
     throw e;
+  }
+  Set<String> newLayerNames=getTileLayerNames();
+  SetView<String> removedExternally=Sets.difference(currLayerNames,newLayerNames);
+  for (  String removedLayerName : removedExternally) {
+    log.info("Notifying of TileLayer '" + removedLayerName + "' removed externally");
+    layerRemoved(removedLayerName);
   }
 }

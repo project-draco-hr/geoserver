@@ -1,0 +1,20 @@
+{
+  final String removedLayer=tileLayer.getName();
+  final String remainingLayer=tileLayerGroup.getName();
+  final Set<String> layerNames=Sets.newHashSet(removedLayer,remainingLayer);
+  when(tld.getLayerNames()).thenReturn(layerNames);
+  doAnswer(new Answer<Void>(){
+    @Override public Void answer(    InvocationOnMock invocation) throws Throwable {
+      layerNames.remove(removedLayer);
+      return null;
+    }
+  }
+).when(tld).reInit();
+  ArgumentCaptor<String> argCaptor=ArgumentCaptor.forClass(String.class);
+  mediator=spy(mediator);
+  doReturn(true).when(mediator).layerRemoved(argCaptor.capture());
+  mediator.reload();
+  verify(tld,times(1)).reInit();
+  assertEquals(1,argCaptor.getAllValues().size());
+  assertEquals(removedLayer,argCaptor.getValue());
+}
