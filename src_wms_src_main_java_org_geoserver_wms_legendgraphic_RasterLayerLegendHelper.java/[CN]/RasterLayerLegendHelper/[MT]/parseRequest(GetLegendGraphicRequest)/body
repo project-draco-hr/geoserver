@@ -3,8 +3,13 @@
   final FeatureTypeStyle[] ftStyles=gt2Style.getFeatureTypeStyles();
   final double scaleDenominator=request.getScale();
   final Rule[] applicableRules;
-  if (request.getRule() != null) {
-    applicableRules=new Rule[]{request.getRule()};
+  String ruleName=request.getRule();
+  if (ruleName != null) {
+    Rule rule=LegendUtils.getRule(ftStyles,ruleName);
+    if (rule == null) {
+      throw new ServiceException("Specified style does not contains a rule named " + ruleName);
+    }
+    applicableRules=new Rule[]{rule};
   }
  else {
     applicableRules=LegendUtils.getApplicableRules(ftStyles,scaleDenominator);
