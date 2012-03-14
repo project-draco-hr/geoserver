@@ -1,0 +1,15 @@
+{
+  loginAsCite();
+  Document dom=getAsDOM("/rest/styles.xml");
+  assertXpathNotExists("//style/name[text() = 'cite_style']",dom);
+  assertXpathNotExists("//style/name[text() = 'sf_style']",dom);
+  MockHttpServletResponse response=getAsServletResponse("/rest/workspaces/sf/styles.xml");
+  assertEquals(404,response.getStatusCode());
+  loginAsSf();
+  dom=getAsDOM("/rest/styles.xml");
+  assertXpathNotExists("//style/name[text() = 'cite_style']",dom);
+  assertXpathNotExists("//style/name[text() = 'sf_style']",dom);
+  dom=getAsDOM("/rest/workspaces/sf/styles.xml");
+  assertEquals(1,dom.getElementsByTagName("style").getLength());
+  assertXpathEvaluatesTo("sf_style","//style/name",dom);
+}

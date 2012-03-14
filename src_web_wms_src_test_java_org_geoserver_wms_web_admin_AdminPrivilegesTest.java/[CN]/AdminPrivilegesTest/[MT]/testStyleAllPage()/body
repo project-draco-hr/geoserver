@@ -1,0 +1,14 @@
+{
+  loginAsCite();
+  tester.startPage(StylePage.class);
+  tester.assertRenderedPage(StylePage.class);
+  Catalog cat=getCatalog();
+  DataView view=(DataView)tester.getComponentFromLastRenderedPage("table:listContainer:items");
+  int expected=cat.getStyles().size() - cat.getStylesByWorkspace("sf").size();
+  AdminRequest.start(new Object());
+  assertEquals(expected,view.getItemCount());
+  for (Iterator<Item> it=view.getItems(); it.hasNext(); ) {
+    String name=it.next().get("itemProperties:0:component:link:label").getDefaultModelObjectAsString();
+    assertFalse("sf_style".equals(name));
+  }
+}

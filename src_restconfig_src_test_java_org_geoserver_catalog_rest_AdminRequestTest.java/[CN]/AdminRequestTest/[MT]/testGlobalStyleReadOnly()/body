@@ -1,0 +1,14 @@
+{
+  loginAsSf();
+  Document dom=getAsDOM("/rest/styles.xml");
+  assertXpathNotExists("//style/name[text() = 'sf_style']",dom);
+  assertXpathNotExists("//style/name[text() = 'cite_style']",dom);
+  dom=getAsDOM("/rest/styles/point.xml");
+  assertEquals("style",dom.getDocumentElement().getNodeName());
+  String xml="<style>" + "<filename>foo.sld</filename>" + "</style>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/styles/point",xml,"text/xml");
+  assertEquals(405,response.getStatusCode());
+  xml="<style>" + "<name>foo</name>" + "<filename>foo.sld</filename>"+ "</style>";
+  response=postAsServletResponse("/rest/styles",xml,"text/xml");
+  assertEquals(405,response.getStatusCode());
+}

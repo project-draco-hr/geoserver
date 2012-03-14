@@ -1,0 +1,14 @@
+{
+  loginAsSf();
+  Document dom=getAsDOM("/rest/layergroups.xml");
+  assertEquals(1,dom.getElementsByTagName("layerGroup").getLength());
+  assertXpathEvaluatesTo("global","//layerGroup/name",dom);
+  dom=getAsDOM("/rest/layergroups/global.xml");
+  assertEquals("layerGroup",dom.getDocumentElement().getNodeName());
+  String xml="<layerGroup>" + "<styles>" + "<style>polygon</style>"+ "<style>line</style>"+ "</styles>"+ "</layerGroup>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/layergroups/global",xml,"text/xml");
+  assertEquals(405,response.getStatusCode());
+  xml="<layerGroup>" + "<name>newLayerGroup</name>" + "<layers>"+ "<layer>Ponds</layer>"+ "<layer>Forests</layer>"+ "</layers>"+ "<styles>"+ "<style>polygon</style>"+ "<style>point</style>"+ "</styles>"+ "</layerGroup>";
+  response=postAsServletResponse("/rest/layergroups",xml,"text/xml");
+  assertEquals(405,response.getStatusCode());
+}
