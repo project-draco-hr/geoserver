@@ -49,11 +49,16 @@
  else     if (layer.getType() == MapLayerInfo.TYPE_RASTER) {
       final CoverageInfo cinfo=requestedLayers.get(i).getCoverage();
       final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)cinfo.getGridCoverageReader(new NullProgressListener(),GeoTools.getDefaultHints());
-      final GridGeometry2D coverageGeometry=(GridGeometry2D)cinfo.getGrid();
       final Coordinate middle=pixelToWorld(x,y,bbox,width,height);
       DirectPosition position=new DirectPosition2D(requestedCRS,middle.x,middle.y);
       if (requestedCRS != null) {
-        final CoordinateReferenceSystem targetCRS=coverageGeometry.getCoordinateReferenceSystem();
+        final CoordinateReferenceSystem targetCRS;
+        if (cinfo.getProjectionPolicy() == ProjectionPolicy.NONE) {
+          targetCRS=cinfo.getNativeCRS();
+        }
+ else {
+          targetCRS=cinfo.getCRS();
+        }
         final TransformedDirectPosition arbitraryToInternal=new TransformedDirectPosition(requestedCRS,targetCRS,new Hints(Hints.LENIENT_DATUM_SHIFT,Boolean.TRUE));
         try {
           arbitraryToInternal.transform(position);
