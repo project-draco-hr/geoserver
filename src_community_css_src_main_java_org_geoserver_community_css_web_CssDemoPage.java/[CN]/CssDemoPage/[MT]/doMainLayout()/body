@@ -52,20 +52,25 @@
     public String getObject(){
       File file=findStyleFile(style.getFilename());
       if (file != null && file.isFile()) {
+        BufferedReader reader=null;
         try {
-          BufferedReader reader=new BufferedReader(new FileReader(file));
+          reader=new BufferedReader(new FileReader(file));
           StringBuilder builder=new StringBuilder();
-          String line=null;
-          do {
-            line=reader.readLine();
-            builder.append(line);
-          }
- while (line != null);
-          reader.close();
+          char[] line=new char[4096];
+          int len=0;
+          while ((len=reader.read(line,0,4096)) >= 0)           builder.append(line,0,len);
           return builder.toString();
         }
  catch (        IOException e) {
           throw new WicketRuntimeException(e);
+        }
+ finally {
+          try {
+            if (reader != null)             reader.close();
+          }
+ catch (          IOException e) {
+            throw new WicketRuntimeException(e);
+          }
         }
       }
  else {
