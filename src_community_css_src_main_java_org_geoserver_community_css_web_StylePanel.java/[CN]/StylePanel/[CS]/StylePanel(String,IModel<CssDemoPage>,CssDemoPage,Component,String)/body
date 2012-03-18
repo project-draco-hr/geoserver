@@ -2,17 +2,23 @@
   super(id,model);
   File cssFile=page.findStyleFile(cssSource);
   if (cssFile != null && cssFile.exists()) {
-    styleBody="";
+    try {
+      styleBody=FileUtils.readFileToString(cssFile);
+    }
+ catch (    IOException ioe) {
+      throw new WicketRuntimeException("Error loading CSS: ",ioe);
+    }
   }
  else {
     styleBody="No CSS file was found for this style. Please make sure " + "this is the style you intended to edit, since saving " + "the CSS will destroy the existing SLD.";
   }
   Form styleEditor=new Form("style-editor");
   styleEditor.add(new Label("label","The stylesheet for this map"));
-  UpdatingTextArea textArea=new UpdatingTextArea("editor",new PropertyModel(this,"styleBody"),feedback);
+  PropertyModel<String> styleBodyModel=new PropertyModel(this,"styleBody");
+  UpdatingTextArea textArea=new UpdatingTextArea("editor",styleBodyModel,feedback);
   textArea.add(new CssValidator());
   styleEditor.add(textArea);
-  styleEditor.add(new CssSubmitButton("submit",styleEditor,page,cssSource,styleBody));
+  styleEditor.add(new CssSubmitButton("submit",styleEditor,page,cssSource,styleBodyModel));
   AjaxFormValidatingBehavior.addToAllFormComponents(styleEditor,"onkeyup",Duration.ONE_SECOND);
   add(styleEditor);
 }
