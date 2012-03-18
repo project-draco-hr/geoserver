@@ -1,0 +1,21 @@
+{
+  String storedName=layerName;
+  if (!pendingModications.isEmpty()) {
+    for (    GeoServerTileLayerInfo info : pendingModications.values()) {
+      String name=info.getName();
+      if (name.equals(layerName)) {
+        storedName=info.getName();
+        break;
+      }
+    }
+  }
+  final String layerId=tileLayerCatalog.getLayerId(storedName);
+  if (layerId == null || pendingDeletes.contains(layerId)) {
+    return null;
+  }
+  GeoServerTileLayerInfo modifiedState=pendingModications.get(layerId);
+  if (modifiedState != null && !layerName.equals(modifiedState.getName())) {
+    return null;
+  }
+  return layerId;
+}

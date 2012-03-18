@@ -1,20 +1,15 @@
 {
   checkNotNull(layerName,"layer name is null");
-  GeoServerTileLayer layerByName;
+  final String layerId;
   lock.readLock().lock();
   try {
-    GeoServerTileLayerInfo tileLayerInfo=getTileLayerInfoByName(layerName);
-    if (null == tileLayerInfo) {
-      layerByName=null;
-    }
- else {
-      final String id=tileLayerInfo.getId();
-      checkState(id != null,"Got tile layer with null id: ",tileLayerInfo);
-      layerByName=getTileLayerById(id);
+    layerId=getLayerId(layerName);
+    if (layerId == null) {
+      return null;
     }
   }
   finally {
     lock.readLock().unlock();
   }
-  return layerByName;
+  return getTileLayerById(layerId);
 }
