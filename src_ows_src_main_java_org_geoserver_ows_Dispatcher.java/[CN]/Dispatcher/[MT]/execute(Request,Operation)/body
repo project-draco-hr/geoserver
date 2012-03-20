@@ -1,16 +1,23 @@
 {
   Service serviceDescriptor=opDescriptor.getService();
   Object serviceBean=serviceDescriptor.getService();
-  Method operation=opDescriptor.getMethod();
   Object[] parameters=opDescriptor.getParameters();
   Object result=null;
   try {
-    result=operation.invoke(serviceBean,parameters);
-  }
- catch (  InvocationTargetException e) {
-    if (e.getTargetException() != null) {
-      throw e.getTargetException();
+    if (serviceBean instanceof DirectInvocationService) {
+      String operationName=opDescriptor.getId();
+      result=((DirectInvocationService)serviceBean).invokeDirect(operationName,parameters);
     }
+ else {
+      Method operation=opDescriptor.getMethod();
+      result=operation.invoke(serviceBean,parameters);
+    }
+  }
+ catch (  Exception e) {
+    if (e.getCause() != null) {
+      throw e.getCause();
+    }
+    throw e;
   }
   return fireOperationExecutedCallback(req,opDescriptor,result);
 }

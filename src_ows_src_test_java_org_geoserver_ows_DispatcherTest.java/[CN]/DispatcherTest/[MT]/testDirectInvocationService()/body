@@ -1,0 +1,28 @@
+{
+  URL url=getClass().getResource("applicationContext.xml");
+  FileSystemXmlApplicationContext context=new FileSystemXmlApplicationContext(url.toString());
+  Dispatcher dispatcher=(Dispatcher)context.getBean("dispatcher");
+  final AtomicBoolean invokeDirectCalled=new AtomicBoolean();
+  DirectInvocationService serviceBean=new DirectInvocationService(){
+    @Override public Object invokeDirect(    String operationName,    Object[] parameters) throws IllegalArgumentException, Exception {
+      invokeDirectCalled.set(true);
+      if ("concat".equals(operationName)) {
+        String param1=(String)parameters[0];
+        String param2=(String)parameters[1];
+        return concat(param1,param2);
+      }
+      throw new IllegalArgumentException("Unknown operation name");
+    }
+    public String concat(    String param1,    String param2){
+      return param1 + param2;
+    }
+  }
+;
+  Service service=new Service("directCallService",serviceBean,new Version("1.0.0"),Collections.singletonList("concat"));
+  Method method=serviceBean.getClass().getMethod("concat",String.class,String.class);
+  Object[] parameters={"p1","p2"};
+  Operation opDescriptor=new Operation("concat",service,method,parameters);
+  Object result=dispatcher.execute(new Request(),opDescriptor);
+  assertEquals("p1p2",result);
+  assertTrue(invokeDirectCalled.get());
+}
