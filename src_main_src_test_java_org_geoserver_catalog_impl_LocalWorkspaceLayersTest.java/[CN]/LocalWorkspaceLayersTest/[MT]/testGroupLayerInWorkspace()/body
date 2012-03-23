@@ -1,0 +1,26 @@
+{
+  WorkspaceInfo workspace=catalog.getWorkspaceByName("sf");
+  WorkspaceInfo workspace2=catalog.getWorkspaceByName("cite");
+  CatalogFactory factory=catalog.getFactory();
+  LayerGroupInfo globalGroup=factory.createLayerGroup();
+  globalGroup.setName("globalGroup");
+  globalGroup.setWorkspace(workspace2);
+  globalGroup.getLayers().add(catalog.getLayerByName("Lakes"));
+  catalog.add(globalGroup);
+  LayerGroupInfo localGroup=factory.createLayerGroup();
+  localGroup.setName("localGroup");
+  localGroup.setWorkspace(workspace);
+  localGroup.getLayers().add(catalog.getLayerByName("GenericEntity"));
+  catalog.add(localGroup);
+  String localName=localGroup.prefixedName();
+  assertEquals("sf:localGroup",localName);
+  assertEquals(2,catalog.getLayerGroups().size());
+  LocalWorkspace.set(workspace2);
+  assertNull(catalog.getLayerGroupByName("localGroup"));
+  LocalWorkspace.remove();
+  LocalWorkspace.set(workspace);
+  assertNotNull(catalog.getLayerGroupByName("localGroup"));
+  assertEquals(1,catalog.getLayerGroups().size());
+  assertEquals("localGroup",catalog.getLayerGroupByName("localGroup").prefixedName());
+  LocalWorkspace.remove();
+}
