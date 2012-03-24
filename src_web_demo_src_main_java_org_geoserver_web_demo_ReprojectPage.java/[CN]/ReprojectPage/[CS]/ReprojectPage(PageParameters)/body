@@ -1,0 +1,100 @@
+{
+  if (params != null) {
+    sourceCRS=params.getString("fromSRS");
+    targetCRS=params.getString("toSRS");
+  }
+  popupWindow=new ModalWindow("popup");
+  add(popupWindow);
+  Form form=new Form("form");
+  add(form);
+  CRSPanel sourcePanel=new CRSPanel("sourceCRS",new SRSToCRSModel(new PropertyModel(this,"sourceCRS"))){
+    protected void onSRSUpdated(    String srs,    AjaxRequestTarget target){
+      sourceCRS=srs;
+      updateTransformation(target);
+    }
+  }
+;
+  sourcePanel.setRequired(true);
+  form.add(sourcePanel);
+  CRSPanel targetPanel=new CRSPanel("targetCRS",new SRSToCRSModel(new PropertyModel(this,"targetCRS"))){
+    protected void onSRSUpdated(    String srs,    AjaxRequestTarget target){
+      targetCRS=srs;
+      updateTransformation(target);
+    }
+  }
+;
+  targetPanel.setRequired(true);
+  form.add(targetPanel);
+  wktLink=new GeoServerAjaxFormLink("wkt",form){
+    @Override public void onClick(    AjaxRequestTarget target,    Form form){
+      popupWindow.setInitialHeight(525);
+      popupWindow.setInitialWidth(525);
+      popupWindow.setContent(new WKTPanel(popupWindow.getContentId()));
+      popupWindow.setTitle(sourceCRS + " -> " + targetCRS);
+      popupWindow.show(target);
+    }
+  }
+;
+  wktLink.setEnabled(false);
+  form.add(wktLink);
+  sourceGeom=new GeometryTextArea("sourceGeom");
+  form.add(sourceGeom);
+  sourceGeom.setOutputMarkupId(true);
+  targetGeom=new GeometryTextArea("targetGeom");
+  targetGeom.setOutputMarkupId(true);
+  form.add(targetGeom);
+  AjaxSubmitLink forward=new AjaxSubmitLink("forward",form){
+    @Override protected void onSubmit(    AjaxRequestTarget at,    Form<?> form){
+      Geometry source=sourceGeom.getModelObject();
+      if (source == null) {
+        error("Source point is not specified");
+      }
+ else {
+        MathTransform mt=getTransform();
+        if (mt != null) {
+          try {
+            Geometry target=JTS.transform(source,mt);
+            targetGeom.setModelObject(target);
+            at.addComponent(targetGeom);
+          }
+ catch (          Exception e) {
+            error(e.getMessage());
+          }
+        }
+      }
+      at.addComponent(feedbackPanel);
+    }
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      target.addComponent(feedbackPanel);
+    }
+  }
+;
+  form.add(forward);
+  AjaxSubmitLink backward=new AjaxSubmitLink("backward",form){
+    @Override protected void onSubmit(    AjaxRequestTarget at,    Form<?> form){
+      Geometry target=targetGeom.getModelObject();
+      if (target == null) {
+        error("Target point is not specified");
+      }
+ else {
+        MathTransform mt=getTransform();
+        if (mt != null) {
+          try {
+            Geometry source=JTS.transform(target,mt.inverse());
+            sourceGeom.setModelObject(source);
+            at.addComponent(sourceGeom);
+          }
+ catch (          Exception e) {
+            error(e.getMessage());
+          }
+        }
+      }
+      at.addComponent(feedbackPanel);
+    }
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      target.addComponent(feedbackPanel);
+    }
+  }
+;
+  form.add(backward);
+}
