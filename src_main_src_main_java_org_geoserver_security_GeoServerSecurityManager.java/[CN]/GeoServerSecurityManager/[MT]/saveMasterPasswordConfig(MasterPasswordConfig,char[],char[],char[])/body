@@ -1,0 +1,43 @@
+{
+  MasterPasswordProviderConfig mpProviderConfig=loadMasterPassswordProviderConfig(config.getProviderName());
+  MasterPasswordProvider mpProvider=loadMasterPasswordProvider(config.getProviderName());
+  if (mpProviderConfig.isReadOnly()) {
+    newPasswd=mpProvider.getMasterPassword();
+  }
+  MasterPasswordChangeRequest req=new MasterPasswordChangeRequest();
+  req.setCurrentPassword(currPasswd);
+  req.setNewPassword(newPasswd);
+  req.setConfirmPassword(newPasswdConfirm);
+  MasterPasswordChangeValidator val=new MasterPasswordChangeValidator(this);
+  val.validateChangeRequest(req);
+  MasterPasswordConfigValidator validator=new MasterPasswordConfigValidator(this);
+  validator.validateMasterPasswordConfig(config);
+  MasterPasswordConfig oldConfig=new MasterPasswordConfig(this.masterPasswordConfig);
+  String oldMasterPasswdDigest=masterPasswdDigest;
+  KeyStoreProvider ksProvider=getKeyStoreProvider();
+synchronized (ksProvider) {
+    ksProvider.prepareForMasterPasswordChange(currPasswd,newPasswdConfirm);
+    try {
+      if (!mpProviderConfig.isReadOnly()) {
+        try {
+          mpProvider.setMasterPassword(newPasswd);
+        }
+ catch (        Exception e) {
+          throw new IOException(e);
+        }
+      }
+      saveMasterPasswordConfig(config);
+      masterPasswdDigest=computeAndSaveMasterPasswordDigest(newPasswdConfirm);
+      ksProvider.commitMasterPasswordChange();
+      if (!config.getProviderName().equals(oldConfig.getProviderName())) {
+      }
+    }
+ catch (    IOException e) {
+      ksProvider.abortMasterPasswordChange();
+      this.masterPasswordConfig=oldConfig;
+      this.masterPasswdDigest=oldMasterPasswdDigest;
+      saveMasterPasswordDigest(oldMasterPasswdDigest);
+      throw e;
+    }
+  }
+}

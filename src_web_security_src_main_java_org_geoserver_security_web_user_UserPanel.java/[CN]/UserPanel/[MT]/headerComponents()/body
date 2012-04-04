@@ -1,0 +1,26 @@
+{
+  boolean canCreateStore=getService().canCreateStore();
+  WebMarkupContainer h=new WebMarkupContainer("header");
+  add(h);
+  if (!canCreateStore) {
+    h.add(new Label("message",new StringResourceModel("noCreateStore",this,null)).add(new AttributeAppender("class",new Model("info-link")," ")));
+  }
+ else {
+    h.add(new Label("message",new Model()).add(new AttributeAppender("class",new Model("displayNone")," ")));
+  }
+  h.add(add=new Link("addNew"){
+    @Override public void onClick(){
+      setResponsePage(new NewUserPage(serviceName).setReturnPage(this.getPage()));
+    }
+  }
+);
+  add.setVisible(canCreateStore);
+  h.add(removal=new SelectionUserRemovalLink(serviceName,"removeSelected",users,dialog,false));
+  removal.setOutputMarkupId(true);
+  removal.setEnabled(false);
+  removal.setVisible(canCreateStore);
+  h.add(removalWithRoles=new SelectionUserRemovalLink(serviceName,"removeSelectedWithRoles",users,dialog,true));
+  removalWithRoles.setOutputMarkupId(true);
+  removalWithRoles.setEnabled(false);
+  removalWithRoles.setVisible(canCreateStore && GeoServerApplication.get().getSecurityManager().getActiveRoleService().canCreateStore());
+}

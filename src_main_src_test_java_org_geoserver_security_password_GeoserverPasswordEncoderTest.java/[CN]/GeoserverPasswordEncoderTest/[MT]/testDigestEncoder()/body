@@ -1,0 +1,26 @@
+{
+  GeoServerPasswordEncoder encoder=getDigestPasswordEncoder();
+  assertEquals(PasswordEncodingType.DIGEST,encoder.getEncodingType());
+  assertTrue(encoder.encodePassword(testPassword,null).startsWith("digest1:"));
+  String enc=encoder.encodePassword(testPassword,null);
+  String enc2=encoder.encodePassword(testPasswordArray,null);
+  assertTrue(encoder.isPasswordValid(enc,testPassword,null));
+  assertTrue(encoder.isPasswordValid(enc,testPasswordArray,null));
+  assertTrue(encoder.isPasswordValid(enc2,testPassword,null));
+  assertTrue(encoder.isPasswordValid(enc2,testPasswordArray,null));
+  assertFalse(encoder.isPasswordValid(enc,"plain:blabla",null));
+  assertFalse(encoder.isPasswordValid(enc,"plain:blabla".toCharArray(),null));
+  assertFalse(encoder.isPasswordValid(enc2,"plain:blabla",null));
+  assertFalse(encoder.isPasswordValid(enc2,"plain:blabla".toCharArray(),null));
+  enc=encoder.encodePassword("",null);
+  assertTrue(encoder.isPasswordValid(enc,"",null));
+  enc2=encoder.encodePassword(emptyArray,null);
+  assertTrue(encoder.isPasswordValid(enc,emptyArray,null));
+  try {
+    encoder.decode(enc);
+    fail("Must fail, digested passwords cannot be decoded");
+  }
+ catch (  UnsupportedOperationException ex) {
+  }
+  assertTrue(encoder.isPasswordValid("digest1:CTBPxdfHvqy0K0M6uoYlb3+fPFrfMhpTm7+ey5rL/1xGI4s6g8n/OrkXdcyqzJ3D",testPassword,null));
+}

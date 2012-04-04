@@ -1,0 +1,31 @@
+{
+  File dir=getFile().getParentFile();
+  File newKSFile=new File(dir,PREPARED_FILE_NAME);
+  if (newKSFile.exists())   newKSFile.delete();
+  try {
+    KeyStore oldKS=KeyStore.getInstance(keyStoreType);
+    FileInputStream fin=new FileInputStream(getFile());
+    oldKS.load(fin,oldPassword);
+    fin.close();
+    KeyStore newKS=KeyStore.getInstance(keyStoreType);
+    newKS.load(null,newPassword);
+    KeyStore.PasswordProtection protectionparam=new KeyStore.PasswordProtection(newPassword);
+    Enumeration<String> enumeration=oldKS.aliases();
+    while (enumeration.hasMoreElements()) {
+      String alias=enumeration.nextElement();
+      Key key=oldKS.getKey(alias,oldPassword);
+      KeyStore.Entry entry=null;
+      if (key instanceof SecretKey)       entry=new KeyStore.SecretKeyEntry((SecretKey)key);
+      if (key instanceof PrivateKey)       entry=new KeyStore.PrivateKeyEntry((PrivateKey)key,oldKS.getCertificateChain(alias));
+      if (key instanceof PublicKey)       entry=new KeyStore.TrustedCertificateEntry(oldKS.getCertificate(alias));
+      if (entry == null)       LOGGER.warning("Unknown key in store, alias: " + alias + " class: "+ key.getClass().getName());
+ else       newKS.setEntry(alias,entry,protectionparam);
+    }
+    FileOutputStream fos=new FileOutputStream(newKSFile);
+    newKS.store(fos,newPassword);
+    fos.close();
+  }
+ catch (  Exception ex) {
+    throw new IOException(ex);
+  }
+}

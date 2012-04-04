@@ -1,0 +1,18 @@
+{
+  SecurityConfigValidator validator=new SecurityConfigValidator(this);
+  validator.validateManagerConfig(config);
+  SecurityManagerConfig oldConfig=new SecurityManagerConfig(this.securityConfig);
+  try {
+    init(config);
+    if (config.getConfigPasswordEncrypterName().equals(oldConfig.getConfigPasswordEncrypterName()) == false) {
+      updateConfigurationFilesWithEncryptedFields();
+    }
+    xStreamPersist(new File(getSecurityRoot(),CONFIG_FILENAME),config,globalPersister());
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.SEVERE,"Error saving security config, reverting back to previous",e);
+    init(oldConfig);
+    return;
+  }
+  fireChanged();
+}

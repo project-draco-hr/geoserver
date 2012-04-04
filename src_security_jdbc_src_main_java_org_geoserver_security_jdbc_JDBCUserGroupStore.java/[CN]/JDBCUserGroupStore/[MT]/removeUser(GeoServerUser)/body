@@ -1,0 +1,28 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null;
+  boolean retval=false;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("users.delete",con);
+    ps.setString(1,user.getUsername());
+    ps.execute();
+    retval=ps.getUpdateCount() > 0;
+    ps.close();
+    ps=getDMLStatement("userprops.deleteForUser",con);
+    ps.setString(1,user.getUsername());
+    ps.execute();
+    ps.close();
+    ps=getDMLStatement("groupmembers.deleteUser",con);
+    ps.setString(1,user.getUsername());
+    ps.execute();
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,null);
+  }
+  setModified(true);
+  return retval;
+}

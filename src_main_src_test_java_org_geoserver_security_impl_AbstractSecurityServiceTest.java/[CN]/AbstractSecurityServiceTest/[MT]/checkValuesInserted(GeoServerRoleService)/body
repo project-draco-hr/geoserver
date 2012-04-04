@@ -1,0 +1,69 @@
+{
+  GeoServerRole role_auth=roleService.getRoleByName("ROLE_AUTHENTICATED");
+  GeoServerRole role_wfs=roleService.getRoleByName("ROLE_WFS");
+  GeoServerRole role_wms=roleService.getRoleByName("ROLE_WMS");
+  GeoServerRole role_admin=roleService.getRoleByName(GeoServerRole.ADMIN_ROLE.getAuthority());
+  assertEquals(4,roleService.getRoles().size());
+  assertEquals(4,roleService.getRoleCount());
+  assertTrue(roleService.getRoles().contains(role_admin));
+  assertTrue(roleService.getRoles().contains(role_auth));
+  assertTrue(roleService.getRoles().contains(role_wfs));
+  assertTrue(roleService.getRoles().contains(role_wms));
+  assertNull(roleService.getRoleByName("xxx"));
+  for (  GeoServerRole role : roleService.getRoles()) {
+    if (role_auth.getAuthority().equals(role.getAuthority())) {
+      assertEquals(2,role.getProperties().size());
+      assertEquals(role.getProperties().getProperty("employee"),"");
+      assertEquals(role.getProperties().getProperty("bbox"),"lookupAtRuntime");
+    }
+ else {
+      assertEquals(0,role.getProperties().size());
+    }
+  }
+  assertEquals(0,role_admin.getProperties().size());
+  assertEquals(0,role_wfs.getProperties().size());
+  assertEquals(0,role_wms.getProperties().size());
+  assertEquals(2,role_auth.getProperties().size());
+  assertEquals(role_auth.getProperties().getProperty("employee"),"");
+  assertEquals(role_auth.getProperties().getProperty("bbox"),"lookupAtRuntime");
+  assertNull(roleService.getParentRole(role_admin));
+  assertNull(roleService.getParentRole(role_auth));
+  assertEquals(role_auth,roleService.getParentRole(role_wms));
+  assertEquals(role_auth,roleService.getParentRole(role_wfs));
+  assertEquals(2,roleService.getParentRole(role_wfs).getProperties().size());
+  assertEquals(roleService.getParentRole(role_wfs).getProperties().getProperty("employee"),"");
+  assertEquals(roleService.getParentRole(role_wfs).getProperties().getProperty("bbox"),"lookupAtRuntime");
+  assertEquals(0,roleService.getRolesForUser("xxx").size());
+  assertEquals(1,roleService.getRolesForUser("admin").size());
+  assertTrue(roleService.getRolesForUser("admin").contains(GeoServerRole.ADMIN_ROLE));
+  assertEquals(2,roleService.getRolesForUser("user1").size());
+  assertTrue(roleService.getRolesForUser("user1").contains(role_wfs));
+  assertTrue(roleService.getRolesForUser("user1").contains(role_wms));
+  assertEquals(0,roleService.getRolesForGroup("xxx").size());
+  assertEquals(1,roleService.getRolesForGroup("g_wfs").size());
+  assertTrue(roleService.getRolesForGroup("g_wfs").contains(role_wfs));
+  assertEquals(1,roleService.getRolesForGroup("g_wms").size());
+  assertTrue(roleService.getRolesForGroup("g_wms").contains(role_wms));
+  assertEquals(2,roleService.getRolesForGroup("g_all").size());
+  assertTrue(roleService.getRolesForGroup("g_all").contains(role_wfs));
+  assertTrue(roleService.getRolesForGroup("g_all").contains(role_wms));
+  assertEquals(1,roleService.getUserNamesForRole(GeoServerRole.ADMIN_ROLE).size());
+  assertTrue(roleService.getUserNamesForRole(GeoServerRole.ADMIN_ROLE).contains("admin"));
+  assertEquals(1,roleService.getUserNamesForRole(role_wfs).size());
+  assertTrue(roleService.getUserNamesForRole(role_wfs).contains("user1"));
+  assertEquals(1,roleService.getUserNamesForRole(role_wms).size());
+  assertTrue(roleService.getUserNamesForRole(role_wms).contains("user1"));
+  assertEquals(0,roleService.getUserNamesForRole(roleService.createRoleObject("xxx")).size());
+  assertEquals(2,roleService.getGroupNamesForRole(role_wfs).size());
+  assertTrue(roleService.getGroupNamesForRole(role_wfs).contains("g_wfs"));
+  assertTrue(roleService.getGroupNamesForRole(role_wfs).contains("g_all"));
+  assertEquals(2,roleService.getGroupNamesForRole(role_wms).size());
+  assertTrue(roleService.getGroupNamesForRole(role_wms).contains("g_wms"));
+  assertTrue(roleService.getGroupNamesForRole(role_wms).contains("g_all"));
+  assertEquals(0,roleService.getGroupNamesForRole(roleService.createRoleObject("xxx")).size());
+  assertEquals(4,roleService.getParentMappings().size());
+  assertNull(roleService.getParentMappings().get(GeoServerRole.ADMIN_ROLE.getAuthority()));
+  assertNull(roleService.getParentMappings().get(role_auth.getAuthority()));
+  assertEquals(roleService.getParentMappings().get(role_wfs.getAuthority()),role_auth.getAuthority());
+  assertEquals(roleService.getParentMappings().get(role_wms.getAuthority()),role_auth.getAuthority());
+}

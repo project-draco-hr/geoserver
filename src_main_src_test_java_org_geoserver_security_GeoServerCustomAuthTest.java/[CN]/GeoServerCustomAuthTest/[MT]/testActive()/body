@@ -1,0 +1,14 @@
+{
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  UsernamePasswordAuthenticationProviderConfig config=new UsernamePasswordAuthenticationProviderConfig();
+  config.setName("custom");
+  config.setClassName(AuthProvider.class.getName());
+  secMgr.saveAuthenticationProvider(config);
+  SecurityManagerConfig mgrConfig=secMgr.getSecurityConfig();
+  mgrConfig.getAuthProviderNames().add("custom");
+  mgrConfig.setConfigPasswordEncrypterName(getPlainTextPasswordEncoder().getName());
+  secMgr.saveSecurityConfig(mgrConfig);
+  Authentication auth=new UsernamePasswordAuthenticationToken("foo","bar");
+  auth=getSecurityManager().authenticate(auth);
+  assertTrue(auth.isAuthenticated());
+}

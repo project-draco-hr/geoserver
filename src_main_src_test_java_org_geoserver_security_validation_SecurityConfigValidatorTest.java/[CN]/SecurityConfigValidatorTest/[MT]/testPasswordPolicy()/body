@@ -1,0 +1,89 @@
+{
+  PasswordPolicyConfig config=getPolicyConfig(PasswordValidator.DEFAULT_NAME,PasswordValidatorImpl.class,-1,10);
+  boolean fail;
+  fail=false;
+  try {
+    config.setName("default2");
+    getSecurityManager().savePasswordPolicy(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_40,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    getSecurityManager().savePasswordPolicy(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_40,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setMinLength(1);
+  config.setMaxLength(0);
+  fail=false;
+  try {
+    getSecurityManager().savePasswordPolicy(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_41,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    getSecurityManager().savePasswordPolicy(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_41,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setMaxLength(-1);
+  fail=false;
+  try {
+    config.setName("");
+    getSecurityManager().removePasswordValidator(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_22,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName(PasswordValidator.DEFAULT_NAME);
+    getSecurityManager().removePasswordValidator(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_34,ex.getErrorId());
+    assertEquals(PasswordValidator.DEFAULT_NAME,ex.getArgs()[0]);
+    assertEquals(XMLUserGroupService.DEFAULT_NAME,ex.getArgs()[1]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName(PasswordValidator.MASTERPASSWORD_NAME);
+    getSecurityManager().removePasswordValidator(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_42,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+}

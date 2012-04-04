@@ -1,0 +1,14 @@
+{
+  List<GeoServerPBEPasswordEncoder> encoders=securityManager.loadPasswordEncoders(GeoServerPBEPasswordEncoder.class);
+  Set<String> encryptedFields=getEncryptedFields(info);
+  if (info.getConnectionParameters() != null) {
+    for (    String key : info.getConnectionParameters().keySet()) {
+      if (encryptedFields.contains(key)) {
+        String value=(String)info.getConnectionParameters().get(key);
+        if (value != null) {
+          info.getConnectionParameters().put(key,decode(value,encoders));
+        }
+      }
+    }
+  }
+}

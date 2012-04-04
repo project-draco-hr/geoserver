@@ -1,0 +1,14 @@
+{
+  char[] pw=null;
+  try {
+    pw=enc.decodeToCharArray(user.getPassword());
+    String a1=encodePasswordInA1Format(user.getUsername(),GeoServerSecurityManager.REALM,pw);
+    List<GrantedAuthority> roles=new ArrayList<GrantedAuthority>();
+    roles.addAll(user.getAuthorities());
+    roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+    return new DigestUserDetails(user,a1,roles);
+  }
+  finally {
+    manager.disposePassword(pw);
+  }
+}

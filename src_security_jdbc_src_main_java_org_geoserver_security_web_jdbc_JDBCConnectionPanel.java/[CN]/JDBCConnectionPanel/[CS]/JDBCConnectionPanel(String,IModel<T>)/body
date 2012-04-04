@@ -1,0 +1,32 @@
+{
+  super(id,new Model());
+  add(new AjaxCheckBox("jndi"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      WebMarkupContainer c=(WebMarkupContainer)JDBCConnectionPanel.this.get("cxPanelContainer");
+      ((ConnectionPanel)c.get("cxPanel")).resetModel();
+      c.addOrReplace(createCxPanel("cxPanel",getModelObject()));
+      target.addComponent(c);
+    }
+  }
+);
+  boolean useJNDI=model.getObject().isJndi();
+  add(new WebMarkupContainer("cxPanelContainer").add(createCxPanel("cxPanel",useJNDI)).setOutputMarkupId(true));
+  add(new AjaxSubmitLink("cxTest"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      try {
+        ((ConnectionPanel)JDBCConnectionPanel.this.get("cxPanelContainer:cxPanel")).test();
+        info(new StringResourceModel("connectionSuccessful",JDBCConnectionPanel.this,null).getObject());
+      }
+ catch (      Exception e) {
+        error(e);
+        LOGGER.log(Level.WARNING,"Connection error",e);
+      }
+ finally {
+        target.addComponent(feedbackPanel);
+      }
+    }
+  }
+.setDefaultFormProcessing(false));
+  add(feedbackPanel=new FeedbackPanel("feedback"));
+  feedbackPanel.setOutputMarkupId(true);
+}

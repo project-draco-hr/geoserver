@@ -1,0 +1,19 @@
+{
+  UsernamePasswordAuthenticationToken token=(UsernamePasswordAuthenticationToken)authentication;
+  if (GeoServerUser.ROOT_USERNAME.equals(token.getPrincipal()) == false)   return null;
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  if (token.getCredentials() != null) {
+    if (getSecurityManager().checkMasterPassword(token.getCredentials().toString())) {
+      Collection<GrantedAuthority> roles=new ArrayList<GrantedAuthority>();
+      roles.add(GeoServerRole.ADMIN_ROLE);
+      GeoServerRole adminRole=secMgr.getActiveRoleService().getAdminRole();
+      if (adminRole != null && !GeoServerRole.ADMIN_ROLE.equals(adminRole)) {
+        roles.add(adminRole);
+      }
+      UsernamePasswordAuthenticationToken result=new UsernamePasswordAuthenticationToken(GeoServerUser.ROOT_USERNAME,null,roles);
+      result.setDetails(token.getDetails());
+      return result;
+    }
+  }
+  return null;
+}

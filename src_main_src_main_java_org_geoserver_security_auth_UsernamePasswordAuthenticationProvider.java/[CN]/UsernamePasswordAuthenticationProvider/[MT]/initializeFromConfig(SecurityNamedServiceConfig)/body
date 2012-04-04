@@ -1,0 +1,19 @@
+{
+  UsernamePasswordAuthenticationProviderConfig upAuthConfig=(UsernamePasswordAuthenticationProviderConfig)config;
+  GeoServerUserGroupService ugService=getSecurityManager().loadUserGroupService(upAuthConfig.getUserGroupServiceName());
+  if (ugService == null) {
+    throw new IllegalArgumentException("Unable to load user group service " + upAuthConfig.getUserGroupServiceName());
+  }
+  userGroupServiceName=upAuthConfig.getUserGroupServiceName();
+  authProvider=new DaoAuthenticationProvider();
+  authProvider.setUserDetailsService(ugService);
+  GeoServerPasswordEncoder encoder=getSecurityManager().loadPasswordEncoder(ugService.getPasswordEncoderName());
+  encoder.initializeFor(ugService);
+  authProvider.setPasswordEncoder(encoder);
+  try {
+    authProvider.afterPropertiesSet();
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+}

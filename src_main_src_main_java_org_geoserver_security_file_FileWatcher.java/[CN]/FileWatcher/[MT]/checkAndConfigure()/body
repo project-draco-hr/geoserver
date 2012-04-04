@@ -1,0 +1,24 @@
+{
+  boolean fileExists;
+  try {
+    fileExists=file.exists();
+  }
+ catch (  SecurityException e) {
+    LOGGER.warning("Was not allowed to read check file existance, file:[" + filename + "].");
+    setTerminate(true);
+    return;
+  }
+  if (fileExists) {
+    long l=file.lastModified();
+    if (testAndSetLastModified(l)) {
+      doOnChange();
+      warnedAlready=false;
+    }
+  }
+ else {
+    if (!warnedAlready) {
+      LOGGER.warning("[" + filename + "] does not exist.");
+      warnedAlready=true;
+    }
+  }
+}

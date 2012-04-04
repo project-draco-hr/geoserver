@@ -1,0 +1,23 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  Map<String,String> map=new HashMap<String,String>();
+  try {
+    con=getConnection();
+    ps=getDMLStatement("roles.all",con);
+    rs=ps.executeQuery();
+    while (rs.next()) {
+      String rolename=rs.getString(1);
+      String parentname=rs.getString(2);
+      map.put(rolename,parentname);
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,rs);
+  }
+  return Collections.unmodifiableMap(map);
+}

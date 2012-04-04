@@ -1,0 +1,22 @@
+{
+  List<GeoServerRole> tmp=new ArrayList<GeoServerRole>();
+  List<GeoServerRole> result=new ArrayList<GeoServerRole>();
+  try {
+    GeoServerUserGroupService ugService=getSecurityManager().loadUserGroupService(ugServiceName);
+    GeoServerRoleService gaService=getSecurityManager().getActiveRoleService();
+    RoleCalculator calc=new RoleCalculator(ugService,gaService);
+    tmp.addAll(rolePalette.getSelectedRoles());
+    calc.addInheritedRoles(tmp);
+    for (    GeoServerUserGroup group : userGroupPalette.getSelectedGroups()) {
+      if (group.isEnabled()) {
+        tmp.addAll(calc.calculateRoles(group));
+      }
+    }
+    result.addAll(calc.personalizeRoles(user,tmp));
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  Collections.sort(result);
+  return result;
+}

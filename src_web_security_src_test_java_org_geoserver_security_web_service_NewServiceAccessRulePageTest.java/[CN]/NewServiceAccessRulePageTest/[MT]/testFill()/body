@@ -1,0 +1,39 @@
+{
+  initializeForXML();
+  tester.startPage(page=new NewServiceAccessRulePage());
+  tester.assertRenderedPage(NewServiceAccessRulePage.class);
+  FormTester form=tester.newFormTester("form");
+  int index=indexOf(page.serviceChoice.getChoices(),"wms");
+  form.select("service",index);
+  tester.executeAjaxEvent("form:service","onchange");
+  form=tester.newFormTester("form");
+  index=indexOf(page.methodChoice.getChoices(),"GetStyles");
+  form.select("method",index);
+  tester.assertComponent("form:roles:palette:recorder",Recorder.class);
+  form.submit("roles:addRole");
+  tester.assertRenderedPage(NewRolePage.class);
+  form=tester.newFormTester("form");
+  form.setValue("name","ROLE_NEW");
+  form.submit("save");
+  form=tester.newFormTester("form");
+  tester.assertRenderedPage(NewServiceAccessRulePage.class);
+  form.setValue("roles:palette:recorder",gaService.getRoleByName("ROLE_NEW").getAuthority());
+  form.submit("roles:addRole");
+  tester.assertRenderedPage(NewRolePage.class);
+  tester.clickLink("form:cancel");
+  tester.assertRenderedPage(NewServiceAccessRulePage.class);
+  form=tester.newFormTester("form");
+  form.submit("save");
+  tester.assertErrorMessages(new String[0]);
+  tester.assertRenderedPage(ServiceAccessRulePage.class);
+  ServiceAccessRule foundRule=null;
+  for (  ServiceAccessRule rule : ServiceAccessRuleDAO.get().getRules()) {
+    if ("wms".equals(rule.getService()) && "GetStyles".equals(rule.getMethod())) {
+      foundRule=rule;
+      break;
+    }
+  }
+  assertNotNull(foundRule);
+  assertEquals(1,foundRule.getRoles().size());
+  assertEquals("ROLE_NEW",foundRule.getRoles().iterator().next());
+}

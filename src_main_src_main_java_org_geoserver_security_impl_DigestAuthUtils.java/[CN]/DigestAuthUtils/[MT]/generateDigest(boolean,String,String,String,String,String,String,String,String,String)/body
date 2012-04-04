@@ -1,0 +1,23 @@
+{
+  String a1Md5=null;
+  String a2=httpMethod + ":" + uri;
+  String a2Md5=md5Hex(a2);
+  if (passwordAlreadyEncoded) {
+    a1Md5=password;
+  }
+ else {
+    a1Md5=DigestAuthUtils.encodePasswordInA1Format(username,realm,password);
+  }
+  String digest;
+  if (qop == null) {
+    digest=a1Md5 + ":" + nonce+ ":"+ a2Md5;
+  }
+ else   if ("auth".equals(qop)) {
+    digest=a1Md5 + ":" + nonce+ ":"+ nc+ ":"+ cnonce+ ":"+ qop+ ":"+ a2Md5;
+  }
+ else {
+    throw new IllegalArgumentException("This method does not support a qop: '" + qop + "'");
+  }
+  String digestMd5=new String(md5Hex(digest));
+  return digestMd5;
+}

@@ -1,0 +1,26 @@
+{
+  GeoServerRoleStore store=null;
+  try {
+    GeoServerRole newRole=new GeoServerRole(get("form:name").getDefaultModelObjectAsString());
+    newRole.setUserName(role.getUserName());
+    newRole.getProperties().putAll(role.getProperties());
+    role=newRole;
+    store=new RoleStoreValidationWrapper(getRoleStore(roleServiceName));
+    store.addRole(role);
+    String parentRoleName=get("form:parent").getDefaultModelObjectAsString();
+    if (parentRoleName != null) {
+      GeoServerRole parentRole=store.getRoleByName(parentRoleName);
+      store.setParentRole(role,parentRole);
+    }
+    store.store();
+  }
+ catch (  IOException ex) {
+    try {
+      store.load();
+    }
+ catch (    IOException ex2) {
+    }
+    ;
+    throw ex;
+  }
+}

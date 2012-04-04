@@ -1,0 +1,18 @@
+{
+  insertValues();
+  activateROUGService();
+  AbstractSecurityPage returnPage=initializeForUGServiceNamed(getROUserGroupServiceName());
+  tester.startPage(page=(EditGroupPage)new EditGroupPage(getROUserGroupServiceName(),ugService.getGroupByGroupname("group1")).setReturnPage(returnPage));
+  tester.assertRenderedPage(EditGroupPage.class);
+  assertFalse(tester.getComponentFromLastRenderedPage("form:groupname").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("form:enabled").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:roles").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:save").isEnabled());
+  FormTester form=tester.newFormTester("form");
+  form.setValue("roles:palette:recorder",gaService.getRoleByName("ROLE_WFS").getAuthority());
+  form.submit("save");
+  tester.assertRenderedPage(SecurityNamedServiceEditPage.class);
+  SortedSet<GeoServerRole> roleList=gaService.getRolesForGroup("group1");
+  assertEquals(1,roleList.size());
+  assertEquals("ROLE_WFS",roleList.iterator().next().getAuthority());
+}

@@ -1,0 +1,44 @@
+{
+  SecurityNamedServiceConfig config=loadConfig(name);
+  if (config == null) {
+    return null;
+  }
+  GeoServerRoleService service=null;
+  for (  GeoServerSecurityProvider p : lookupSecurityProviders()) {
+    if (p.getRoleServiceClass() == null) {
+      continue;
+    }
+    if (p.getRoleServiceClass().getName().equals(config.getClassName())) {
+      service=p.createRoleService(config);
+      break;
+    }
+  }
+  if (service == null) {
+    throw new IOException("No authority service matching config: " + config);
+  }
+  service.setSecurityManager(GeoServerSecurityManager.this);
+  if (config instanceof SecurityRoleServiceConfig) {
+    boolean needsLockProtection=GeoServerSecurityProvider.getProvider(GeoServerRoleService.class,config.getClassName()).roleServiceNeedsLockProtection();
+    if (needsLockProtection) {
+      service=new LockingRoleService(service);
+    }
+  }
+  service.setName(name);
+  service.initializeFromConfig(config);
+  if (config instanceof FileBasedSecurityServiceConfig) {
+    FileBasedSecurityServiceConfig fileConfig=(FileBasedSecurityServiceConfig)config;
+    if (fileConfig.getCheckInterval() > 0) {
+      File file=new File(fileConfig.getFileName());
+      if (file.isAbsolute() == false)       file=new File(new File(getRoleRoot(),name),file.getPath());
+      if (file.canRead() == false) {
+        throw new IOException("Cannot read file: " + file.getCanonicalPath());
+      }
+      RoleFileWatcher watcher=new RoleFileWatcher(file.getCanonicalPath(),service,file.lastModified());
+      watcher.setDelay(fileConfig.getCheckInterval());
+      service.registerRoleLoadedListener(watcher);
+      watcher.start();
+      fileWatchers.add(watcher);
+    }
+  }
+  return service;
+}

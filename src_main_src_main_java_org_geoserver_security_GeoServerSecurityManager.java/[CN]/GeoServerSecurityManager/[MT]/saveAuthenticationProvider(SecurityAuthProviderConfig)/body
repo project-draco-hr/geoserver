@@ -1,0 +1,25 @@
+{
+  SecurityConfigValidator validator=SecurityConfigValidator.getConfigurationValiator(GeoServerAuthenticationProvider.class,config.getClassName());
+  if (config.getId() == null) {
+    config.initBeforeSave();
+    validator.validateAddAuthProvider(config);
+  }
+ else {
+    validator.validateModifiedAuthProvider(config,authProviderHelper.loadConfig(config.getName()));
+  }
+  if (authProviders != null) {
+    GeoServerAuthenticationProvider authProvider=null;
+    for (    GeoServerAuthenticationProvider ap : authProviders) {
+      if (config.getName().equals(ap.getName())) {
+        authProvider=ap;
+        break;
+      }
+    }
+    if (authProvider != null) {
+synchronized (authProvider) {
+        authProvider.initializeFromConfig(config);
+      }
+    }
+  }
+  authProviderHelper.saveConfig(config);
+}

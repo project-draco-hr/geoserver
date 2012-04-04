@@ -1,0 +1,36 @@
+{
+  this.roleServiceName=roleService;
+  boolean hasRoleStore=hasRoleStore(roleServiceName);
+  Form form=new Form("form",new CompoundPropertyModel(role));
+  add(form);
+  StringResourceModel descriptionModel;
+  if (role.getUserName() == null) {
+    descriptionModel=new StringResourceModel("anonymousRole",getPage(),null);
+  }
+ else {
+    descriptionModel=new StringResourceModel("personalizedRole",getPage(),null,new Object[]{role.getUserName()});
+  }
+  form.add(new Label("description",descriptionModel));
+  form.add(new TextField("name",new Model(role.getAuthority())).setRequired(true).setEnabled(hasRoleStore));
+  form.add(new DropDownChoice("parent",new ParentRoleModel(role),new ParentRolesModel(role)).setEnabled(hasRoleStore));
+  form.add(new PropertyEditorFormComponent("properties").setEnabled(hasRoleStore));
+  form.add(new SubmitLink("save"){
+    @Override public void onSubmit(){
+      try {
+        onFormSubmit((GeoServerRole)getForm().getModelObject());
+        setReturnPageDirtyAndReturn(true);
+      }
+ catch (      IOException e) {
+        if (e.getCause() instanceof AbstractSecurityException) {
+          error(e.getCause());
+        }
+ else {
+          error(new ParamResourceModel("saveError",getPage(),e.getMessage()).getObject());
+        }
+        LOGGER.log(Level.SEVERE,"Error occurred while saving role",e);
+      }
+    }
+  }
+.setVisible(hasRoleStore));
+  form.add(getCancelLink());
+}

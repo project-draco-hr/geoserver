@@ -1,0 +1,18 @@
+{
+  if (rms != null) {
+    return rms;
+  }
+  RememberMeServicesConfig rmsConfig=securityManager.getSecurityConfig().getRememberMeService();
+  try {
+    rms=(RememberMeServices)Class.forName(rmsConfig.getClassName()).newInstance();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  if (rms instanceof AbstractRememberMeServices) {
+    AbstractRememberMeServices arms=(AbstractRememberMeServices)rms;
+    arms.setUserDetailsService(new RememberMeUserDetailsService(securityManager));
+    arms.setKey(rmsConfig.getKey());
+  }
+  return rms;
+}

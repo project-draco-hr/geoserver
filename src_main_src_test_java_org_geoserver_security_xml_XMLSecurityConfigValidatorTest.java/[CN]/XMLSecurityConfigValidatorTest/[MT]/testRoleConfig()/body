@@ -1,0 +1,100 @@
+{
+  super.testRoleConfig();
+  XMLRoleServiceConfig config=(XMLRoleServiceConfig)getRoleConfig(XMLRoleService.DEFAULT_NAME,XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),XMLConstants.FILE_RR);
+  boolean fail;
+  fail=false;
+  try {
+    config.setName("default2");
+    config.setCheckInterval(-1l);
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_100,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setCheckInterval(999l);
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_100,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setCheckInterval(0);
+  XMLRoleServiceConfig xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test1",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),"test1.xml");
+  try {
+    getSecurityManager().saveRoleService(xmlConfig);
+    getSecurityManager().removeRoleService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work");
+  }
+  fail=false;
+  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test2",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),"test2.xml");
+  try {
+    getSecurityManager().saveRoleService(xmlConfig);
+    GeoServerRoleStore store=getSecurityManager().loadRoleService("test2").createStore();
+    store.addRole(GeoServerRole.ADMIN_ROLE);
+    store.store();
+    getSecurityManager().removeRoleService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_102,ex.getErrorId());
+    assertEquals("test2",ex.getArgs()[0]);
+    fail=true;
+  }
+  assertTrue(fail);
+  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test3",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),new File(getSecurityManager().getRoleRoot(),"test3.xml").getAbsolutePath());
+  try {
+    getSecurityManager().saveRoleService(xmlConfig);
+    GeoServerRoleStore store=getSecurityManager().loadRoleService("test3").createStore();
+    store.addRole(GeoServerRole.ADMIN_ROLE);
+    store.store();
+    getSecurityManager().removeRoleService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work");
+  }
+  if (new XMLSecurityConfigValidator(getSecurityManager()).getTempDir() != null) {
+    String invalidPath="abc" + File.separator + "def.xml";
+    xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test4",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),invalidPath);
+    fail=false;
+    try {
+      getSecurityManager().saveRoleService(xmlConfig);
+    }
+ catch (    SecurityConfigException ex) {
+      assertEquals(SEC_ERR_101,ex.getErrorId());
+      assertEquals(invalidPath,ex.getArgs()[0]);
+      fail=true;
+    }
+    assertTrue(fail);
+  }
+  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test4",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),"testModify.xml");
+  try {
+    getSecurityManager().saveRoleService(xmlConfig);
+    xmlConfig.setValidating(true);
+    getSecurityManager().saveRoleService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work");
+  }
+  fail=false;
+  try {
+    xmlConfig.setFileName("xyz.xml");
+    getSecurityManager().saveRoleService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_105,ex.getErrorId());
+    assertEquals("testModify.xml",ex.getArgs()[0]);
+    assertEquals("xyz.xml",ex.getArgs()[1]);
+    fail=true;
+  }
+  assertTrue(fail);
+}

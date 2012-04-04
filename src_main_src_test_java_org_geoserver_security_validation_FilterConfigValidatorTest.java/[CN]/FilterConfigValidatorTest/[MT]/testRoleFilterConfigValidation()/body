@@ -1,0 +1,32 @@
+{
+  GeoServerRoleFilterConfig config=new GeoServerRoleFilterConfig();
+  config.setClassName(GeoServerRoleFilter.class.getName());
+  config.setName("testRoleFilter");
+  boolean failed=false;
+  try {
+    getSecurityManager().saveFilter(config);
+  }
+ catch (  FilterConfigException ex) {
+    assertEquals(FilterConfigException.HEADER_ATTRIBUTE_NAME_REQUIRED,ex.getId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setHttpResponseHeaderAttrForIncludedRoles("roles");
+  config.setRoleConverterName("unknown");
+  failed=false;
+  try {
+    getSecurityManager().saveFilter(config);
+  }
+ catch (  FilterConfigException ex) {
+    assertEquals(FilterConfigException.UNKNOWN_ROLE_CONVERTER,ex.getId());
+    assertEquals(1,ex.getArgs().length);
+    assertEquals("unknown",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setRoleConverterName(null);
+  getSecurityManager().saveFilter(config);
+}

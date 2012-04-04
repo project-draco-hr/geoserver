@@ -1,0 +1,17 @@
+{
+  MockHttpServletRequest request=createRequest("/foo");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain();
+  GeoServerSecurityFilterChainProxy filterChainProxy=GeoServerExtensions.bean(GeoServerSecurityFilterChainProxy.class);
+  filterChainProxy.doFilter(request,response,chain);
+  chain.addFilter(filterChainProxy);
+  chain.addFilter(new DummyFilter(){
+    @Override public void doFilter(    ServletRequest request,    ServletResponse response,    FilterChain chain) throws IOException, ServletException {
+      Authentication auth=SecurityContextHolder.getContext().getAuthentication();
+      assertNotNull(auth);
+      assertTrue(auth instanceof AnonymousAuthenticationToken);
+    }
+  }
+);
+  chain.doFilter(request,response);
+}

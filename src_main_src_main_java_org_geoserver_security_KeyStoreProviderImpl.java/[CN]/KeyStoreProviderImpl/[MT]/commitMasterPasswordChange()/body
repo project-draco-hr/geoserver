@@ -1,0 +1,50 @@
+{
+  File dir=getFile().getParentFile();
+  File newKSFile=new File(dir,PREPARED_FILE_NAME);
+  File oldKSFile=new File(dir,DEFAULT_FILE_NAME);
+  if (newKSFile.exists() == false)   return;
+  if (oldKSFile.exists() == false)   return;
+  FileInputStream fin=new FileInputStream(newKSFile);
+  char[] passwd=securityManager.getMasterPassword();
+  try {
+    KeyStore newKS=KeyStore.getInstance(keyStoreType);
+    newKS.load(fin,passwd);
+    Enumeration<String> enumeration=newKS.aliases();
+    while (enumeration.hasMoreElements()) {
+      newKS.getKey(enumeration.nextElement(),passwd);
+    }
+    fin.close();
+    fin=null;
+    if (oldKSFile.delete() == false) {
+      LOGGER.severe("cannot delete " + getFile().getCanonicalPath());
+      return;
+    }
+    if (newKSFile.renameTo(oldKSFile) == false) {
+      String msg="cannot rename " + newKSFile.getCanonicalPath();
+      msg+="to " + oldKSFile.getCanonicalPath();
+      msg+="Try to rename manually and restart";
+      LOGGER.severe(msg);
+      return;
+    }
+    reloadKeyStore();
+    LOGGER.info("Successfully changed master password");
+  }
+ catch (  IOException e) {
+    String msg="Error creating new keystore: " + newKSFile.getCanonicalPath();
+    LOGGER.log(Level.WARNING,msg,e);
+    throw e;
+  }
+catch (  Exception ex) {
+    throw new RuntimeException(ex);
+  }
+ finally {
+    securityManager.disposePassword(passwd);
+    if (fin != null) {
+      try {
+        fin.close();
+      }
+ catch (      IOException ex) {
+      }
+    }
+  }
+}

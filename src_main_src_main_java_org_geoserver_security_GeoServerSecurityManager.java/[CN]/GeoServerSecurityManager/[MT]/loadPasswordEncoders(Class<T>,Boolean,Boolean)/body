@@ -1,0 +1,27 @@
+{
+  filter=(Class<T>)(filter != null ? filter : GeoServerPasswordEncoder.class);
+  List list=GeoServerExtensions.extensions(filter);
+  for (Iterator it=list.iterator(); it.hasNext(); ) {
+    boolean remove=false;
+    T pw=(T)it.next();
+    if (reversible != null && !reversible.equals(pw.isReversible())) {
+      remove=true;
+    }
+    if (!remove && strong != null && strong.equals(pw.isAvailableWithoutStrongCryptogaphy())) {
+      remove=true;
+    }
+    if (remove) {
+      it.remove();
+    }
+ else {
+      try {
+        pw.initialize(this);
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.WARNING,"Error initializing password encoder " + pw.getName() + ", skipping",e);
+        it.remove();
+      }
+    }
+  }
+  return list;
+}

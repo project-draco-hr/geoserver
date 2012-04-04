@@ -1,0 +1,32 @@
+{
+  ResourceBundle bundle=null;
+  try {
+    bundle=ResourceBundle.getBundle("GeoServerException",locale,control);
+  }
+ catch (  MissingResourceException ex) {
+  }
+  if (bundle == null) {
+    return null;
+  }
+  String localized=null;
+  try {
+    localized=bundle.getString(clazz.getCanonicalName() + "." + id);
+  }
+ catch (  MissingResourceException ex) {
+    try {
+      localized=bundle.getString(clazz.getSimpleName() + "." + id);
+    }
+ catch (    MissingResourceException ex2) {
+    }
+  }
+  if (localized == null) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("Resource lookup failed for key" + id + ", class = "+ clazz);
+    }
+    return null;
+  }
+  if (args != null && args.length > 0) {
+    localized=MessageFormat.format(localized,args);
+  }
+  return localized;
+}

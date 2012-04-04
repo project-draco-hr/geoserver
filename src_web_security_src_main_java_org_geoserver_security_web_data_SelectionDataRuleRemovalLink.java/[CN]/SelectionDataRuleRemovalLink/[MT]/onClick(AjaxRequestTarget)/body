@@ -1,0 +1,39 @@
+{
+  final List<DataAccessRule> selection=rules.getSelection();
+  if (selection.size() == 0)   return;
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,delegate=new GeoServerDialog.DialogDelegate(){
+    protected Component getContents(    String id){
+      return removePanel=new ConfirmRemovalDataAccessRulePanel(id,selection){
+        @Override protected IModel<String> canRemove(        DataAccessRule data){
+          return SelectionDataRuleRemovalLink.this.canRemove(data);
+        }
+      }
+;
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      Catalog catalog=GeoServerApplication.get().getCatalog();
+      CascadeDeleteVisitor visitor=new CascadeDeleteVisitor(catalog);
+      DataAccessRuleDAO dao=DataAccessRuleDAO.get();
+      for (      DataAccessRule rule : removePanel.getRoots()) {
+        dao.removeRule(rule);
+      }
+      try {
+        dao.storeRules();
+      }
+ catch (      IOException e) {
+        e.printStackTrace();
+      }
+      rules.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (rules.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(SelectionDataRuleRemovalLink.this);
+        target.addComponent(rules);
+      }
+    }
+  }
+);
+}

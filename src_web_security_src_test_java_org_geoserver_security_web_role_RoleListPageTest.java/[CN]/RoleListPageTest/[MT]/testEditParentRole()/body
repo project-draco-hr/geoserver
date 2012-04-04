@@ -1,0 +1,20 @@
+{
+  initializeForXML();
+  insertValues();
+  tester.startPage(listPage(getRoleServiceName()));
+  GeoServerRole role=gaService.getRoleByName("ROLE_AUTHENTICATED");
+  assertNotNull(role);
+  List<Property<GeoServerRole>> props=new RoleListProvider(getRoleServiceName()).getProperties();
+  Property<GeoServerRole> parentProp=null;
+  for (  Property<GeoServerRole> prop : props) {
+    if (RoleListProvider.ParentPropertyName.equals(prop.getName())) {
+      parentProp=prop;
+      break;
+    }
+  }
+  Component c=getFromList(SECOND_COLUM_PATH,role,parentProp);
+  assertNotNull(c);
+  tester.clickLink(c.getPageRelativePath());
+  tester.assertRenderedPage(EditRolePage.class);
+  assertTrue(checkEditForm(role.getAuthority()));
+}

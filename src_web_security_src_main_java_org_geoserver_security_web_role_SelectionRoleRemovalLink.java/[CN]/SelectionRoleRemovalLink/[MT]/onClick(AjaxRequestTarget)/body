@@ -1,0 +1,47 @@
+{
+  final List<GeoServerRole> selection=roles.getSelection();
+  if (selection.size() == 0)   return;
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,delegate=new GeoServerDialog.DialogDelegate(){
+    private static final long serialVersionUID=1L;
+    protected Component getContents(    String id){
+      return removePanel=new ConfirmRemovalRolePanel(id,selection){
+        private static final long serialVersionUID=1L;
+        @Override protected IModel<String> canRemove(        GeoServerRole role){
+          return SelectionRoleRemovalLink.this.canRemove(role);
+        }
+      }
+;
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      GeoServerRoleStore gaStore=null;
+      try {
+        GeoServerRoleService gaService=GeoServerApplication.get().getSecurityManager().loadRoleService(roleServiceName);
+        gaStore=new RoleStoreValidationWrapper(gaService.createStore());
+        for (        GeoServerRole role : removePanel.getRoots()) {
+          gaStore.removeRole(role);
+        }
+        gaStore.store();
+      }
+ catch (      IOException ex) {
+        try {
+          gaStore.load();
+        }
+ catch (        IOException ex2) {
+        }
+        ;
+        throw new RuntimeException(ex);
+      }
+      roles.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (roles.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(SelectionRoleRemovalLink.this);
+        target.addComponent(roles);
+      }
+    }
+  }
+);
+}

@@ -1,0 +1,92 @@
+{
+  try {
+    setServices("rolecalulation");
+    insertValues(roleStore);
+    insertValues(usergroupStore);
+    String username="theUser";
+    GeoServerUser theUser=null;
+    boolean fail=true;
+    try {
+      theUser=(GeoServerUser)usergroupService.loadUserByUsername(username);
+    }
+ catch (    UsernameNotFoundException ex) {
+      fail=false;
+    }
+    if (fail) {
+      Assert.fail("No UsernameNotFoundException thrown");
+    }
+    theUser=usergroupStore.createUserObject(username,"",true);
+    usergroupStore.addUser(theUser);
+    GeoServerRole role=null;
+    Set<GeoServerRole> roles=new HashSet<GeoServerRole>();
+    checkRoles(username,roles);
+    role=roleStore.createRoleObject("userrole1");
+    roleStore.addRole(role);
+    roleStore.associateRoleToUser(role,username);
+    roles.add(role);
+    checkRoles(username,roles);
+    role=roleStore.createRoleObject("userrole2");
+    roleStore.addRole(role);
+    roleStore.associateRoleToUser(role,username);
+    roles.add(role);
+    checkRoles(username,roles);
+    GeoServerUserGroup theGroup1=usergroupStore.createGroupObject("theGroup1",true);
+    usergroupStore.addGroup(theGroup1);
+    usergroupStore.associateUserToGroup(theUser,theGroup1);
+    role=roleStore.createRoleObject("grouprole1a");
+    roleStore.addRole(role);
+    roleStore.associateRoleToGroup(role,"theGroup1");
+    roles.add(role);
+    checkRoles(username,roles);
+    role=roleStore.createRoleObject("grouprole1b");
+    roleStore.addRole(role);
+    roleStore.associateRoleToGroup(role,"theGroup1");
+    roles.add(role);
+    checkRoles(username,roles);
+    GeoServerUserGroup theGroup2=usergroupStore.createGroupObject("theGroup2",false);
+    usergroupStore.addGroup(theGroup2);
+    usergroupStore.associateUserToGroup(theUser,theGroup2);
+    role=roleStore.createRoleObject("grouprole2a");
+    roleStore.addRole(role);
+    roleStore.associateRoleToGroup(role,"theGroup2");
+    checkRoles(username,roles);
+    theGroup2.setEnabled(true);
+    usergroupStore.updateGroup(theGroup2);
+    roles.add(role);
+    checkRoles(username,roles);
+    GeoServerRole tmp=role;
+    role=roleStore.createRoleObject("grouprole2aa");
+    roleStore.addRole(role);
+    roleStore.setParentRole(tmp,role);
+    roles.add(role);
+    checkRoles(username,roles);
+    tmp=role;
+    role=roleStore.createRoleObject("grouprole2aaa");
+    roleStore.addRole(role);
+    roleStore.setParentRole(tmp,role);
+    roles.add(role);
+    checkRoles(username,roles);
+    tmp=roleStore.getRoleByName("grouprole2aa");
+    roleStore.setParentRole(tmp,null);
+    roles.remove(role);
+    checkRoles(username,roles);
+    roleStore.removeRole(tmp);
+    roles.remove(tmp);
+    checkRoles(username,roles);
+    usergroupStore.removeGroup(theGroup2);
+    tmp=roleStore.getRoleByName("grouprole2a");
+    roles.remove(tmp);
+    checkRoles(username,roles);
+    tmp=roleStore.getRoleByName("grouprole1b");
+    roleStore.disAssociateRoleFromGroup(tmp,theGroup1.getGroupname());
+    roles.remove(tmp);
+    checkRoles(username,roles);
+    tmp=roleStore.getRoleByName("userrole2");
+    roleStore.disAssociateRoleFromUser(tmp,theUser.getUsername());
+    roles.remove(tmp);
+    checkRoles(username,roles);
+  }
+ catch (  Exception ex) {
+    Assert.fail(ex.getMessage());
+  }
+}

@@ -1,0 +1,26 @@
+{
+  if (ks != null)   return;
+  char[] passwd=securityManager.getMasterPassword();
+  try {
+    ks=KeyStore.getInstance(keyStoreType);
+    if (getFile().exists() == false) {
+      ks.load(null,passwd);
+      addInitialKeys();
+      FileOutputStream fos=new FileOutputStream(getFile());
+      ks.store(fos,passwd);
+      fos.close();
+    }
+ else {
+      FileInputStream fis=new FileInputStream(getFile());
+      ks.load(fis,passwd);
+      fis.close();
+    }
+  }
+ catch (  Exception ex) {
+    if (ex instanceof IOException)     throw (IOException)ex;
+    throw new IOException(ex);
+  }
+ finally {
+    securityManager.disposePassword(passwd);
+  }
+}

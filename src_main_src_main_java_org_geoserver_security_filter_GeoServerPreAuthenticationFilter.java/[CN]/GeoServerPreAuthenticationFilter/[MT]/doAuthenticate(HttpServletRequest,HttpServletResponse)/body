@@ -1,0 +1,24 @@
+{
+  String principal=getPreAuthenticatedPrincipal(request);
+  if (principal == null || principal.trim().length() == 0) {
+    return;
+  }
+  LOGGER.log(Level.FINE,"preAuthenticatedPrincipal = " + principal + ", trying to authenticate");
+  PreAuthenticatedAuthenticationToken result=null;
+  if (GeoServerUser.ROOT_USERNAME.equals(principal)) {
+    result=new PreAuthenticatedAuthenticationToken(principal,null,Collections.singleton(GeoServerRole.ADMIN_ROLE));
+  }
+ else {
+    Collection<GeoServerRole> roles=null;
+    try {
+      roles=getRoles(request,principal);
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+    if (roles.contains(GeoServerRole.AUTHENTICATED_ROLE) == false)     roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+    result=new PreAuthenticatedAuthenticationToken(principal,null,roles);
+  }
+  result.setDetails(authenticationDetailsSource.buildDetails(request));
+  SecurityContextHolder.getContext().setAuthentication(result);
+}

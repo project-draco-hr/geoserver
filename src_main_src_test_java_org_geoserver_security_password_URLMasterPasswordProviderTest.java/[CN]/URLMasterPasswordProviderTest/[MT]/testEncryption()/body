@@ -1,0 +1,19 @@
+{
+  File tmp=File.createTempFile("passwd","tmp",new File("target"));
+  tmp=tmp.getCanonicalFile();
+  URLMasterPasswordProviderConfig config=new URLMasterPasswordProviderConfig();
+  config.setName("test");
+  config.setReadOnly(false);
+  config.setClassName(URLMasterPasswordProvider.class.getCanonicalName());
+  config.setURL(tmp.toURI().toURL());
+  config.setEncrypting(true);
+  URLMasterPasswordProvider mpp=new URLMasterPasswordProvider();
+  mpp.setSecurityManager(getSecurityManager());
+  mpp.initializeFromConfig(config);
+  mpp.setName(config.getName());
+  mpp.doSetMasterPassword("geoserver".toCharArray());
+  String encoded=IOUtils.toString(new FileInputStream(tmp));
+  assertFalse("geoserver".equals(encoded));
+  char[] passwd=mpp.doGetMasterPassword();
+  assertTrue(Arrays.equals("geoserver".toCharArray(),passwd));
+}

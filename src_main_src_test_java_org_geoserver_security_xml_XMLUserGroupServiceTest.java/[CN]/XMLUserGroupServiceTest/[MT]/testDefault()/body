@@ -1,0 +1,19 @@
+{
+  try {
+    GeoServerUserGroupService service=getSecurityManager().loadUserGroupService(XMLUserGroupService.DEFAULT_NAME);
+    assertEquals(1,service.getUsers().size());
+    assertEquals(1,service.getUserCount());
+    assertEquals(0,service.getUserGroups().size());
+    assertEquals(0,service.getGroupCount());
+    GeoServerUser admin=service.getUserByUsername(GeoServerUser.AdminName);
+    assertNotNull(admin);
+    assertEquals(GeoServerUser.AdminEnabled,admin.isEnabled());
+    GeoServerPasswordEncoder enc=getEncoder(service);
+    assertTrue(enc.isPasswordValid(admin.getPassword(),GeoServerUser.AdminPasword,null));
+    assertEquals(admin.getProperties().size(),0);
+    assertEquals(0,service.getGroupsForUser(admin).size());
+  }
+ catch (  IOException ex) {
+    Assert.fail(ex.getMessage());
+  }
+}

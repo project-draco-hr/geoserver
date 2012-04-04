@@ -1,0 +1,19 @@
+{
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  GeoServerRoleService roleService=secMgr.getActiveRoleService();
+  GeoServerRoleStore roleStore=roleService.createStore();
+  roleStore.addRole(new GeoServerRole("ROLE_FOO"));
+  roleStore.store();
+  SecurityRoleServiceConfig config=secMgr.loadRoleServiceConfig(roleService.getName());
+  config.setAdminRoleName("ROLE_FOO");
+  secMgr.saveRoleService(config);
+  GeoServerRootAuthenticationProvider provider=new GeoServerRootAuthenticationProvider();
+  provider.setSecurityManager(secMgr);
+  provider.initializeFromConfig(null);
+  String masterPassword=getMasterPassword();
+  UsernamePasswordAuthenticationToken token=new UsernamePasswordAuthenticationToken(GeoServerUser.ROOT_USERNAME,masterPassword);
+  Authentication auth=provider.authenticate(token);
+  assertTrue(auth.isAuthenticated());
+  assertEquals(GeoServerUser.ROOT_USERNAME,auth.getPrincipal());
+  assertTrue(auth.getAuthorities().contains(new GeoServerRole("ROLE_FOO")));
+}

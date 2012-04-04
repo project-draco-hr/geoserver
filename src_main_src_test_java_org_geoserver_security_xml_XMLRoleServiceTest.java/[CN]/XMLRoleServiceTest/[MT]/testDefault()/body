@@ -1,0 +1,18 @@
+{
+  try {
+    GeoServerRoleService service=getSecurityManager().loadRoleService("default");
+    assertEquals(2,service.getRoles().size());
+    GeoServerRole adminRole=service.getRoleByName(GeoServerRole.ADMIN_ROLE.getAuthority());
+    GeoServerRole groupAdminRole=service.getRoleByName(GeoServerRole.GROUP_ADMIN_ROLE.getAuthority());
+    assertEquals(0,service.getGroupNamesForRole(adminRole).size());
+    assertEquals(0,service.getGroupNamesForRole(groupAdminRole).size());
+    assertEquals(1,service.getUserNamesForRole(adminRole).size());
+    assertEquals(0,service.getUserNamesForRole(groupAdminRole).size());
+    assertEquals(1,service.getRolesForUser(GeoServerUser.AdminName).size());
+    assertTrue(service.getRolesForUser(GeoServerUser.AdminName).contains(adminRole));
+  }
+ catch (  Exception ex) {
+    ex.printStackTrace();
+    Assert.fail(ex.getMessage());
+  }
+}

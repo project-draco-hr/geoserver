@@ -1,0 +1,42 @@
+{
+  service=new DefaultDirectoryService();
+  service.setWorkingDirectory(workDir);
+  initSchemaPartition();
+  Partition systemPartition=addPartition("system",ServerDNConstants.SYSTEM_DN);
+  service.setSystemPartition(systemPartition);
+  service.getChangeLog().setEnabled(false);
+  service.setDenormalizeOpAttrsEnabled(true);
+  Partition acmePartition=addPartition("acme","dc=acme,dc=org");
+  addIndex(acmePartition,"objectClass","ou","uid");
+  service.startup();
+  try {
+    service.getAdminSession().lookup(acmePartition.getSuffixDn());
+  }
+ catch (  LdapException lnnfe) {
+    DN dnBar=new DN("dc=acme,dc=org");
+    ServerEntry entryBar=service.newEntry(dnBar);
+    entryBar.add("objectClass","dcObject","organization");
+    entryBar.add("o","acme");
+    entryBar.add("dc","acme");
+    service.getAdminSession().add(entryBar);
+  }
+  DN peopleDn=new DN("ou=people,dc=acme,dc=org");
+  if (!service.getAdminSession().exists(peopleDn)) {
+    ServerEntry e=service.newEntry(peopleDn);
+    e.add("objectClass","organizationalUnit");
+    e.add("ou","people");
+    service.getAdminSession().add(e);
+  }
+  DN groupsDn=new DN("ou=groups,dc=acme,dc=org");
+  if (!service.getAdminSession().exists(groupsDn)) {
+    ServerEntry e=service.newEntry(groupsDn);
+    e.add("objectClass","organizationalUnit");
+    e.add("ou","groups");
+    service.getAdminSession().add(e);
+  }
+  addUser("bob","Bob","secret");
+  addUser("alice","Alice","foobar");
+  addUser("bill","Bill","hello");
+  addGroup("user","bob","alice");
+  addGroup("admin","bill");
+}

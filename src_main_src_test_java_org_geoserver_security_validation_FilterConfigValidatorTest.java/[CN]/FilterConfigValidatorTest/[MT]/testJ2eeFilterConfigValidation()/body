@@ -1,0 +1,20 @@
+{
+  J2eeAuthenticationFilterConfig config=new J2eeAuthenticationFilterConfig();
+  config.setClassName(GeoServerJ2eeAuthenticationFilter.class.getName());
+  config.setName("testJ2ee");
+  config.setRoleServiceName("blabla");
+  boolean failed=false;
+  try {
+    getSecurityManager().saveFilter(config);
+  }
+ catch (  FilterConfigException ex) {
+    assertEquals(FilterConfigException.UNKNOWN_ROLE_SERVICE,ex.getId());
+    assertEquals(1,ex.getArgs().length);
+    assertEquals("blabla",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setRoleServiceName(XMLRoleService.DEFAULT_NAME);
+  getSecurityManager().saveFilter(config);
+}

@@ -1,0 +1,36 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null;
+  boolean retval=false;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("roles.delete",con);
+    ps.setString(1,role.getAuthority());
+    ps.execute();
+    retval=ps.getUpdateCount() > 0;
+    ps.close();
+    ps=getDMLStatement("userroles.deleteRole",con);
+    ps.setString(1,role.getAuthority());
+    ps.execute();
+    ps.close();
+    ps=getDMLStatement("grouproles.deleteRole",con);
+    ps.setString(1,role.getAuthority());
+    ps.execute();
+    ps.close();
+    ps=getDMLStatement("roleprops.deleteForRole",con);
+    ps.setString(1,role.getAuthority());
+    ps.execute();
+    ps.close();
+    ps=getDMLStatement("roles.deleteParent",con);
+    ps.setString(1,role.getAuthority());
+    ps.execute();
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,null);
+  }
+  setModified(true);
+  return retval;
+}

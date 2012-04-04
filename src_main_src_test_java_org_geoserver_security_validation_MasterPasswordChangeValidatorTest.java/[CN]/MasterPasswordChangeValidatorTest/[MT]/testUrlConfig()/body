@@ -1,0 +1,21 @@
+{
+  URLMasterPasswordProviderConfig config=new URLMasterPasswordProviderConfig();
+  config.setName("foo");
+  config.setClassName(URLMasterPasswordProvider.class.getCanonicalName());
+  try {
+    getSecurityManager().saveMasterPasswordProviderConfig(config);
+    fail();
+  }
+ catch (  URLMasterPasswordProviderException e) {
+    assertSecurityException(e,URLMasterPasswordProviderException.URL_REQUIRED);
+  }
+  config.setURL(new URL("file:ABC"));
+  config.setReadOnly(true);
+  try {
+    getSecurityManager().saveMasterPasswordProviderConfig(config);
+    fail();
+  }
+ catch (  URLMasterPasswordProviderException e) {
+    assertSecurityException(e,URLMasterPasswordProviderException.URL_LOCATION_NOT_READABLE,new URL("file:ABC"));
+  }
+}

@@ -1,0 +1,46 @@
+{
+  final String property=System.getProperty("gs." + fixtureId);
+  if (property != null && "false".equals(property.toLowerCase())) {
+    return null;
+  }
+  File base=new File(System.getProperty("user.home"),".geoserver");
+  if (!base.exists())   base.mkdir();
+  File fixtureFile=new File(base,fixtureId + ".properties");
+  if (!fixtureFile.exists()) {
+    final String warning="Disabling test based on fixture " + fixtureId + " since the file "+ fixtureFile+ " could not be found";
+    disableTest(warning);
+    return null;
+  }
+  Properties props=new Properties();
+  try {
+    props.load(new FileInputStream(fixtureFile));
+    String tmp=props.getProperty(CAS_SERVER_PROPERTY);
+    if (tmp == null)     tmp="";
+    serverURL=new URL(tmp);
+    loginURL=new URL(tmp + "/login");
+    tmp=props.getProperty(CAS_SERVICE_PROPERTY);
+    if (tmp == null)     tmp="";
+    serviceURL=new URL(tmp);
+    tmp=props.getProperty(CAS_PROXYCALLBACK_PROPERTY);
+    if (tmp == null)     tmp="";
+    proxyCallbackURL=new URL(tmp);
+  }
+ catch (  Exception e) {
+    disableTest("Error in fixture file: " + e.getMessage());
+    return null;
+  }
+  try {
+    HttpURLConnection huc=(HttpURLConnection)loginURL.openConnection();
+    huc.setRequestMethod("GET");
+    huc.connect();
+    if (huc.getResponseCode() != HttpServletResponse.SC_OK) {
+      disableTest("Cannot connect to " + loginURL.toString());
+      return null;
+    }
+  }
+ catch (  Exception ex) {
+    disableTest("problem with cas connection: " + ex.getMessage());
+    return null;
+  }
+  return fixtureFile;
+}

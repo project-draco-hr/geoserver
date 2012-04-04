@@ -1,0 +1,31 @@
+{
+  Class serviceClass=null;
+  try {
+    serviceClass=Class.forName(config.getClassName());
+  }
+ catch (  ClassNotFoundException e) {
+    throw new RuntimeException(e);
+  }
+  List<SecurityNamedServicePanelInfo> pageInfos=new ArrayList();
+  for (  SecurityNamedServicePanelInfo pageInfo : GeoServerApplication.get().getBeansOfType(SecurityNamedServicePanelInfo.class)) {
+    if (pageInfo.getServiceClass().isAssignableFrom(serviceClass)) {
+      pageInfos.add(pageInfo);
+    }
+  }
+  if (pageInfos.isEmpty()) {
+    throw new RuntimeException("Unable to find page info for service config: " + config + ", service class: "+ serviceClass);
+  }
+  if (pageInfos.size() > 1) {
+    List<SecurityNamedServicePanelInfo> l=new ArrayList(pageInfos);
+    for (Iterator<SecurityNamedServicePanelInfo> it=l.iterator(); it.hasNext(); ) {
+      if (!it.next().getServiceClass().equals(serviceClass)) {
+        it.remove();
+      }
+    }
+    if (l.size() == 1) {
+      return l.get(0);
+    }
+    throw new RuntimeException("Found multiple page infos for service config: " + config + ", service class: "+ serviceClass);
+  }
+  return pageInfos.get(0);
+}

@@ -1,0 +1,19 @@
+{
+  super(id,model);
+  add(new TextField("serverURL").setRequired(true));
+  add(new CheckBox("useTLS"));
+  add(new TextField("userDnPattern"));
+  boolean useLdapAuth=model.getObject().getUserGroupServiceName() == null;
+  add(new AjaxCheckBox("useLdapAuthorization",new Model(useLdapAuth)){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      WebMarkupContainer c=(WebMarkupContainer)LDAPAuthProviderPanel.this.get("authorizationPanelContainer");
+      ((AuthorizationPanel)c.get("authorizationPanel")).resetModel();
+      c.remove("authorizationPanel");
+      c.add(createAuthorizationPanel("authorizationPanel",getModelObject()));
+      target.addComponent(c);
+    }
+  }
+);
+  add(new WebMarkupContainer("authorizationPanelContainer").add(createAuthorizationPanel("authorizationPanel",useLdapAuth)).setOutputMarkupId(true));
+  add(new TestLDAPConnectionPanel("testCx"));
+}

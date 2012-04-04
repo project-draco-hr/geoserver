@@ -1,0 +1,38 @@
+{
+  GeoServerRole role_auth=roleService.getRoleByName("ROLE_AUTHENTICATED");
+  GeoServerRole role_wms=roleService.getRoleByName("ROLE_WMS");
+  GeoServerRole role_wfs=roleService.getRoleByName("ROLE_WFS");
+  assertEquals(1,role_auth.getProperties().size());
+  assertEquals("4711",role_auth.getProperties().get("employee"));
+  assertEquals(1,role_wms.getProperties().size());
+  assertEquals("10 10 20 20",role_wms.getProperties().get("envelope"));
+  assertEquals(0,role_wfs.getProperties().size());
+  for (  GeoServerRole role : roleService.getRoles()) {
+    if ("ROLE_AUTHENTICATED".equals(role.getAuthority())) {
+      assertEquals(1,role.getProperties().size());
+      assertEquals("4711",role.getProperties().get("employee"));
+    }
+ else     if ("ROLE_WMS".equals(role.getAuthority())) {
+      assertEquals(1,role.getProperties().size());
+      assertEquals("10 10 20 20",role.getProperties().get("envelope"));
+    }
+ else {
+      assertEquals(0,role.getProperties().size());
+    }
+  }
+  assertEquals(1,roleService.getGroupNamesForRole(role_wfs).size());
+  assertTrue(roleService.getGroupNamesForRole(role_wfs).contains("g_wfs"));
+  assertEquals(0,roleService.getUserNamesForRole(role_wfs).size());
+  assertEquals(1,roleService.getRolesForGroup("g_all").size());
+  assertTrue(roleService.getRolesForGroup("g_all").contains(role_wms));
+  GeoServerRole role=roleService.getRolesForGroup("g_all").iterator().next();
+  assertEquals(1,role.getProperties().size());
+  assertEquals("10 10 20 20",role.getProperties().get("envelope"));
+  assertEquals(1,roleService.getRolesForUser("user1").size());
+  assertTrue(roleService.getRolesForUser("user1").contains(role_wms));
+  role=roleService.getRolesForUser("user1").iterator().next();
+  assertEquals(1,role.getProperties().size());
+  assertEquals("10 10 20 20",role.getProperties().get("envelope"));
+  assertNull(roleService.getParentRole(role_wms));
+  assertEquals(role_wms,roleService.getParentRole(role_wfs));
+}

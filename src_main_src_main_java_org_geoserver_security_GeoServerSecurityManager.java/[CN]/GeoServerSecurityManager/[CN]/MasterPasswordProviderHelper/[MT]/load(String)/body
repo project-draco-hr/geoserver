@@ -1,0 +1,26 @@
+{
+  MasterPasswordProviderConfig config=loadConfig(name);
+  if (config == null) {
+    return null;
+  }
+  MasterPasswordProvider provider=null;
+  for (  GeoServerSecurityProvider p : lookupSecurityProviders()) {
+    if (p.getMasterPasswordProviderClass() == null) {
+      continue;
+    }
+    if (p.getMasterPasswordProviderClass().getName().equals(config.getClassName())) {
+      provider=p.createMasterPasswordProvider(config);
+      break;
+    }
+  }
+  if (provider == null) {
+    throw new IOException("No master password provider matching config: " + config);
+  }
+  if (!Modifier.isFinal(provider.getClass().getModifiers())) {
+    throw new RuntimeException("Master password provider class: " + provider.getClass().getCanonicalName() + " is not final");
+  }
+  provider.setName(config.getName());
+  provider.setSecurityManager(GeoServerSecurityManager.this);
+  provider.initializeFromConfig(config);
+  return provider;
+}

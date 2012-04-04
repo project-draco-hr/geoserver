@@ -1,0 +1,25 @@
+{
+  JDBCConnectAuthProviderConfig config=createAuthConfg("jdbc1",null);
+  getSecurityManager().saveAuthenticationProvider(config);
+  GeoServerAuthenticationProvider provider=getSecurityManager().loadAuthenticationProvider("jdbc1");
+  UsernamePasswordAuthenticationToken token=new UsernamePasswordAuthenticationToken("sa","");
+  token.setDetails("details");
+  assertTrue(provider.supports(token.getClass()));
+  assertFalse(provider.supports(RememberMeAuthenticationToken.class));
+  Authentication auth=provider.authenticate(token);
+  assertNotNull(auth);
+  assertEquals("sa",auth.getPrincipal());
+  assertNull(auth.getCredentials());
+  assertEquals("details",auth.getDetails());
+  assertEquals(1,auth.getAuthorities().size());
+  checkForAuthenticatedRole(auth);
+  token=new UsernamePasswordAuthenticationToken("abc","def");
+  boolean fail=false;
+  try {
+    provider.authenticate(token);
+  }
+ catch (  BadCredentialsException ex) {
+    fail=true;
+  }
+  assertTrue(fail);
+}

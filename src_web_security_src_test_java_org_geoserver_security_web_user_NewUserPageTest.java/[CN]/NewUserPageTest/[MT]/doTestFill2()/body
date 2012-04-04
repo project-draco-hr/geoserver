@@ -1,0 +1,29 @@
+{
+  insertValues();
+  addAdditonalData();
+  initializeTester();
+  tester.assertRenderedPage(NewUserPage.class);
+  newFormTester();
+  form.setValue("username","testuser");
+  form.setValue("password","pwd");
+  form.setValue("confirmPassword","pwd");
+  openCloseGroupPanel(NewUserPage.class);
+  assignGroup("group1");
+  assertCalculatedRoles(new String[]{"ROLE_AUTHENTICATED","ROLE_WFS","ROLE_WMS"});
+  form.submit("save");
+  tester.assertErrorMessages(new String[0]);
+  tester.assertRenderedPage(SecurityNamedServiceEditPage.class);
+  GeoServerUser user=ugService.getUserByUsername("testuser");
+  assertNotNull(user);
+  assertTrue(user.isEnabled());
+  SortedSet<GeoServerUserGroup> groupList=ugService.getGroupsForUser(user);
+  assertEquals(1,groupList.size());
+  assertEquals("group1",groupList.iterator().next().getGroupname());
+  SortedSet<GeoServerRole> roleList=gaService.getRolesForUser("testuser");
+  assertEquals(0,roleList.size());
+  user=(GeoServerUser)ugService.loadUserByUsername("testuser");
+  assertEquals(3,user.getAuthorities().size());
+  assertTrue(user.getAuthorities().contains(gaService.createRoleObject("ROLE_AUTHENTICATED")));
+  assertTrue(user.getAuthorities().contains(gaService.createRoleObject("ROLE_WFS")));
+  assertTrue(user.getAuthorities().contains(gaService.createRoleObject("ROLE_WMS")));
+}

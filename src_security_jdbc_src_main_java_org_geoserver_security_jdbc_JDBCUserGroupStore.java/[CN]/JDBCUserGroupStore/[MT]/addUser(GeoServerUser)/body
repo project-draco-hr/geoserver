@@ -1,0 +1,26 @@
+{
+  preparePassword(user);
+  Connection con=null;
+  PreparedStatement ps=null;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("users.insert",con);
+    ps.setString(1,user.getUsername());
+    if (user.getPassword() != null) {
+      ps.setString(2,user.getPassword());
+    }
+ else {
+      ps.setNull(2,Types.VARCHAR);
+    }
+    ps.setString(3,convertToString(user.isEnabled()));
+    ps.execute();
+    addUserProperties(user,con);
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,null);
+  }
+  setModified(true);
+}

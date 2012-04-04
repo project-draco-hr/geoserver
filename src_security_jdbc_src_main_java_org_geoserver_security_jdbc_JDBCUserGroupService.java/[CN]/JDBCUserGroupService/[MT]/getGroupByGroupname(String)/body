@@ -1,0 +1,24 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  GeoServerUserGroup g=null;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("groups.keyed",con);
+    ps.setString(1,groupname);
+    rs=ps.executeQuery();
+    if (rs.next()) {
+      String enabledString=rs.getString(1);
+      boolean isEnabled=convertFromString(enabledString);
+      g=createGroupObject(groupname,isEnabled);
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,rs);
+  }
+  return g;
+}

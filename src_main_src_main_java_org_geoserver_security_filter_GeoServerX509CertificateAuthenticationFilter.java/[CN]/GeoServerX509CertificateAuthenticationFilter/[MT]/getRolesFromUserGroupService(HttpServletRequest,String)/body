@@ -1,0 +1,15 @@
+{
+  Collection<GeoServerRole> roles=new ArrayList<GeoServerRole>();
+  GeoServerUserGroupService service=getSecurityManager().loadUserGroupService(getUserGroupServiceName());
+  UserDetails details=null;
+  try {
+    details=service.loadUserByUsername(principal);
+  }
+ catch (  UsernameNotFoundException ex) {
+    LOGGER.log(Level.WARNING,"User " + principal + " not found in "+ getUserGroupServiceName());
+  }
+  if (details != null) {
+    for (    GrantedAuthority auth : details.getAuthorities())     roles.add((GeoServerRole)auth);
+  }
+  return roles;
+}

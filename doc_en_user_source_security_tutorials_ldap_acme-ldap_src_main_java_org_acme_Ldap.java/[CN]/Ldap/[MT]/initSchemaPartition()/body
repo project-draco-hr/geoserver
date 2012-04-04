@@ -1,0 +1,19 @@
+{
+  SchemaPartition schemaPartition=service.getSchemaService().getSchemaPartition();
+  LdifPartition ldifPartition=new LdifPartition();
+  String workingDirectory=service.getWorkingDirectory().getPath();
+  ldifPartition.setWorkingDirectory(workingDirectory + "/schema");
+  File schemaRepository=new File(workingDirectory,"schema");
+  SchemaLdifExtractor extractor=new DefaultSchemaLdifExtractor(new File(workingDirectory));
+  extractor.extractOrCopy(true);
+  schemaPartition.setWrappedPartition(ldifPartition);
+  SchemaLoader loader=new LdifSchemaLoader(schemaRepository);
+  SchemaManager schemaManager=new DefaultSchemaManager(loader);
+  service.setSchemaManager(schemaManager);
+  schemaManager.loadAllEnabled();
+  schemaPartition.setSchemaManager(schemaManager);
+  List<Throwable> errors=schemaManager.getErrors();
+  if (errors.size() != 0) {
+    throw new Exception("Schema load failed : " + errors);
+  }
+}

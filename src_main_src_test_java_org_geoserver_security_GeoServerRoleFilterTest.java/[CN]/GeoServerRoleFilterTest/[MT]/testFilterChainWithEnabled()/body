@@ -1,0 +1,16 @@
+{
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  GeoServerRoleFilterConfig config=new GeoServerRoleFilterConfig();
+  config.setName("roleConverter");
+  config.setClassName(GeoServerRoleFilter.class.getName());
+  config.setRoleConverterName("roleConverter");
+  config.setHttpResponseHeaderAttrForIncludedRoles("ROLES");
+  secMgr.saveFilter(config);
+  MockHttpServletRequest request=createRequest("/foo");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain();
+  chain.addFilter(getSecurityManager().loadFilter("roleConverter"));
+  GeoServerSecurityFilterChainProxy filterChainProxy=GeoServerExtensions.bean(GeoServerSecurityFilterChainProxy.class);
+  filterChainProxy.doFilter(request,response,chain);
+  assertEquals(GeoServerRole.ANONYMOUS_ROLE.getAuthority(),response.getHeader("ROLES"));
+}

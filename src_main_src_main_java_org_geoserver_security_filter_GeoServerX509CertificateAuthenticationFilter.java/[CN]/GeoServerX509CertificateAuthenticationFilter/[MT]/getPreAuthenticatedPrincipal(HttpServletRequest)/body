@@ -1,0 +1,18 @@
+{
+  X509Certificate[] certs=(X509Certificate[])request.getAttribute("javax.servlet.request.X509Certificate");
+  if (certs == null || certs.length == 0)   return null;
+  X509Certificate cert=certs[0];
+  String principal=(String)principalExtractor.extractPrincipal(cert);
+  if (principal != null && principal.trim().length() == 0)   principal=null;
+  try {
+    if (principal != null && RoleSource.UserGroupService.equals(getRoleSource())) {
+      GeoServerUserGroupService service=getSecurityManager().loadUserGroupService(getUserGroupServiceName());
+      GeoServerUser u=service.getUserByUsername(principal);
+      if (u != null && u.isEnabled() == false)       principal=null;
+    }
+  }
+ catch (  IOException ex) {
+    throw new RuntimeException(ex);
+  }
+  return principal;
+}

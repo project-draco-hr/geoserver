@@ -1,0 +1,28 @@
+{
+  super(id);
+  this.roleServiceName=serviceName;
+  RoleListProvider provider=new RoleListProvider(this.roleServiceName);
+  add(roles=new GeoServerTablePanel<GeoServerRole>("table",provider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<GeoServerRole> property){
+      if (property == RoleListProvider.ROLENAME) {
+        return editRoleLink(id,itemModel,property);
+      }
+ else       if (RoleListProvider.ParentPropertyName.equals(property.getName())) {
+        return editParentRoleLink(id,itemModel,property);
+      }
+ else       if (property == RoleListProvider.HASROLEPARAMS) {
+        if ((Boolean)property.getModel(itemModel).getObject())         return new Icon(id,CatalogIconFactory.ENABLED_ICON);
+ else         return new Label(id,"");
+      }
+      throw new RuntimeException("Uknown property " + property);
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      removal.setEnabled(roles.getSelection().size() > 0);
+      target.addComponent(removal);
+    }
+  }
+);
+  roles.setOutputMarkupId(true);
+  add(dialog=new GeoServerDialog("dialog"));
+  headerComponents();
+}

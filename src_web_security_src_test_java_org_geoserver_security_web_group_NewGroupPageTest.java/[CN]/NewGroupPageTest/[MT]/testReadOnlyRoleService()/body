@@ -1,0 +1,15 @@
+{
+  initializeForXML();
+  activateRORoleService();
+  AbstractSecurityPage returnPage=initializeForUGServiceNamed(getUserGroupServiceName());
+  tester.startPage(page=(NewGroupPage)new NewGroupPage(getUserGroupServiceName()).setReturnPage(returnPage));
+  assertFalse(page.rolePalette.isEnabled());
+  FormTester form=tester.newFormTester("form");
+  form.setValue("groupname","testgroup");
+  form.submit("save");
+  GeoServerUserGroup group=ugService.getGroupByGroupname("testgroup");
+  assertNotNull(group);
+  assertTrue(group.isEnabled());
+  SortedSet<GeoServerRole> roleList=gaService.getRolesForGroup("testgroup");
+  assertEquals(0,roleList.size());
+}

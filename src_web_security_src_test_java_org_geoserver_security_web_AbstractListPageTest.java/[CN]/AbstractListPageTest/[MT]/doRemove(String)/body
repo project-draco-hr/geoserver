@@ -1,0 +1,26 @@
+{
+  GeoserverTablePanelTestPage testPage=new GeoserverTablePanelTestPage(new ComponentBuilder(){
+    private static final long serialVersionUID=1L;
+    public Component buildComponent(    String id){
+      try {
+        return listPage(null);
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+);
+  tester.startPage(testPage);
+  String selectAllPath=testPage.getWicketPath() + ":table:listContainer:selectAllContainer:selectAll";
+  tester.assertComponent(selectAllPath,CheckBox.class);
+  FormTester ft=tester.newFormTester(GeoserverTablePanelTestPage.FORM);
+  ft.setValue(testPage.getComponentId() + ":table:listContainer:selectAllContainer:selectAll","true");
+  tester.executeAjaxEvent(selectAllPath,"onclick");
+  ModalWindow w=(ModalWindow)tester.getLastRenderedPage().get("dialog:dialog");
+  assertNull(w.getTitle());
+  tester.executeAjaxEvent(pathForLink,"onclick");
+  assertNotNull(w.getTitle());
+  simulateDeleteSubmit();
+  executeModalWindowCloseButtonCallback(w);
+}

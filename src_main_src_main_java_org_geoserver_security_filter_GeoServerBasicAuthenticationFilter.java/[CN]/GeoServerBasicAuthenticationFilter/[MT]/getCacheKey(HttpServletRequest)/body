@@ -1,0 +1,39 @@
+{
+  String header=request.getHeader("Authorization");
+  if ((header != null) && header.startsWith("Basic ")) {
+    byte[] base64Token=null;
+    try {
+      base64Token=header.substring(6).getBytes("UTF-8");
+    }
+ catch (    UnsupportedEncodingException e1) {
+      throw new RuntimeException(e1);
+    }
+    String token=new String(Base64.decode(base64Token));
+    String username="";
+    String password="";
+    int delim=token.indexOf(":");
+    if (delim != -1) {
+      username=token.substring(0,delim);
+      password=token.substring(delim + 1);
+    }
+ else {
+      return null;
+    }
+    if (GeoServerUser.ROOT_USERNAME.equals(username))     return null;
+    StringBuffer buff=new StringBuffer(password);
+    buff.append(":");
+    buff.append(getName());
+    String digestString=null;
+    try {
+      digestString=new String(Hex.encode(digest.digest(buff.toString().getBytes("utf-8"))));
+    }
+ catch (    UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+    buff=new StringBuffer(username);
+    buff.append(":");
+    buff.append(digestString);
+    return buff.toString();
+  }
+ else   return null;
+}

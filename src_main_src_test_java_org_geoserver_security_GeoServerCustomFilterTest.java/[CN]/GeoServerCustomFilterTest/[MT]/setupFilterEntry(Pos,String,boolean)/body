@@ -1,0 +1,15 @@
+{
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  FilterConfig config=new FilterConfig();
+  config.setName("custom");
+  config.setClassName(Filter.class.getName());
+  config.setAssertAuth(assertSecurityContext);
+  secMgr.saveFilter(config);
+  SecurityManagerConfig mgrConfig=secMgr.getSecurityConfig();
+  mgrConfig.setConfigPasswordEncrypterName(getPlainTextPasswordEncoder().getName());
+  if (pos == Pos.FIRST)   mgrConfig.getFilterChain().insertFirst("/**","custom");
+  if (pos == Pos.LAST)   mgrConfig.getFilterChain().insertLast("/**","custom");
+  if (pos == Pos.BEFORE)   mgrConfig.getFilterChain().insertBefore("/**","custom",relativeTo);
+  if (pos == Pos.AFTER)   mgrConfig.getFilterChain().insertAfter("/**","custom",relativeTo);
+  secMgr.saveSecurityConfig(mgrConfig);
+}

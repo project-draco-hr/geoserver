@@ -1,0 +1,17 @@
+{
+  Matcher m=TOKEN_PATTERN.matcher(username);
+  if (!m.matches()) {
+    throw new UsernameNotFoundException("No delimiter '@' found in username: " + username);
+  }
+  String user=m.group(1).replace("\\@","@");
+  String service=m.group(2);
+  try {
+    GeoServerUserGroupService ugService=securityManager.loadUserGroupService(service);
+    return new RememberMeUserDetails(ugService.loadUserByUsername(user),service);
+  }
+ catch (  IOException e) {
+    throw new DataAccessException("Error loading user group service " + service,e){
+    }
+;
+  }
+}

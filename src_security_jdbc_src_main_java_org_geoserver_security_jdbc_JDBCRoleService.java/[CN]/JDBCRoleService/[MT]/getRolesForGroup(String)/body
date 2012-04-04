@@ -1,0 +1,41 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null, ps2=null;
+  ResultSet rs=null, rs2=null;
+  Map<String,GeoServerRole> map=new HashMap<String,GeoServerRole>();
+  try {
+    con=getConnection();
+    ps=getDMLStatement("grouproles.rolesForGroup",con);
+    ps.setString(1,groupname);
+    rs=ps.executeQuery();
+    while (rs.next()) {
+      String rolename=rs.getString(1);
+      GeoServerRole roleObject=createRoleObject(rolename);
+      map.put(rolename,roleObject);
+    }
+    rs.close();
+    ps.close();
+    ps=getDMLStatement("roleprops.selectForGroup",con);
+    ps.setString(1,groupname);
+    rs=ps.executeQuery();
+    while (rs.next()) {
+      String rolename=rs.getString(1);
+      String propName=rs.getString(2);
+      Object propValue=rs.getObject(3);
+      GeoServerRole roleObject=map.get(rolename);
+      if (roleObject != null) {
+        roleObject.getProperties().put(propName,propValue == null ? "" : propValue);
+      }
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(null,ps2,rs2);
+    closeFinally(con,ps,rs);
+  }
+  TreeSet<GeoServerRole> roles=new TreeSet<GeoServerRole>();
+  roles.addAll(map.values());
+  return Collections.unmodifiableSortedSet(roles);
+}

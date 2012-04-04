@@ -1,0 +1,15 @@
+{
+  GeoServerUserGroupService ugService=userGroupServices.get(name);
+  if (ugService == null) {
+synchronized (this) {
+      ugService=userGroupServices.get(name);
+      if (ugService == null) {
+        ugService=userGroupServiceHelper.load(name);
+        if (ugService != null) {
+          userGroupServices.put(name,ugService);
+        }
+      }
+    }
+  }
+  return wrapUserGroupService(ugService);
+}

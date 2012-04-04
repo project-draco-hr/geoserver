@@ -1,0 +1,23 @@
+{
+  String header=request.getHeader("Authorization");
+  if ((header != null) && header.startsWith("Digest ")) {
+    String section212response=header.substring(7);
+    String[] headerEntries=DigestAuthUtils.splitIgnoringQuotes(section212response,',');
+    Map<String,String> headerMap=DigestAuthUtils.splitEachArrayElementAndCreateMap(headerEntries,"=","\"");
+    String username=headerMap.get("username");
+    String realm=headerMap.get("realm");
+    String nonce=headerMap.get("nonce");
+    String responseDigest=headerMap.get("response");
+    if (StringUtils.hasLength(username) == false || StringUtils.hasLength(realm) == false || StringUtils.hasLength(nonce) == false || StringUtils.hasLength(responseDigest) == false)     return null;
+    if (GeoServerUser.ROOT_USERNAME.equals(username))     return null;
+    StringBuffer buff=new StringBuffer();
+    buff.append(username).append(":");
+    buff.append(realm).append(":");
+    buff.append(nonce).append(":");
+    buff.append(responseDigest);
+    return buff.toString();
+  }
+ else {
+    return null;
+  }
+}

@@ -1,0 +1,119 @@
+{
+  super.testUserGroupConfig();
+  XMLUserGroupServiceConfig config=(XMLUserGroupServiceConfig)getUGConfig(XMLUserGroupService.DEFAULT_NAME,XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,XMLConstants.FILE_UR);
+  boolean fail;
+  fail=false;
+  try {
+    config.setName("default2");
+    config.setCheckInterval(-1l);
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_100,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setCheckInterval(999l);
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_100,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setCheckInterval(0);
+  XMLUserGroupServiceConfig xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test1",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"test1.xml");
+  GeoServerUserGroup group=new GeoServerUserGroup("testgroup");
+  try {
+    getSecurityManager().saveUserGroupService(xmlConfig);
+    getSecurityManager().removeUserGroupService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work");
+  }
+  fail=false;
+  xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test2",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"test2.xml");
+  try {
+    getSecurityManager().saveUserGroupService(xmlConfig);
+    GeoServerUserGroupStore store=getSecurityManager().loadUserGroupService("test2").createStore();
+    store.addGroup(group);
+    store.store();
+    getSecurityManager().removeUserGroupService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_103,ex.getErrorId());
+    assertEquals("test2",ex.getArgs()[0]);
+    fail=true;
+  }
+  assertTrue(fail);
+  xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test3",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,new File(getSecurityManager().getUserGroupRoot(),"test3.xml").getAbsolutePath());
+  try {
+    getSecurityManager().saveUserGroupService(xmlConfig);
+    GeoServerUserGroupStore store=getSecurityManager().loadUserGroupService("test3").createStore();
+    store.addGroup(group);
+    store.store();
+    getSecurityManager().removeUserGroupService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work");
+  }
+  if (new XMLSecurityConfigValidator(getSecurityManager()).getTempDir() != null) {
+    String invalidPath="abc" + File.separator + "def.xml";
+    xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test4",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,invalidPath);
+    fail=false;
+    try {
+      getSecurityManager().saveUserGroupService(xmlConfig);
+    }
+ catch (    SecurityConfigException ex) {
+      assertEquals(SEC_ERR_101,ex.getErrorId());
+      assertEquals(invalidPath,ex.getArgs()[0]);
+      fail=true;
+    }
+    assertTrue(fail);
+  }
+  xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test5",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"abc.xml");
+  try {
+    getSecurityManager().saveUserGroupService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work");
+  }
+  fail=false;
+  try {
+    xmlConfig.setFileName("");
+    getSecurityManager().saveUserGroupService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_104,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    fail=true;
+  }
+  assertTrue(fail);
+  xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("testModify",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"testModify.xml");
+  try {
+    getSecurityManager().saveUserGroupService(xmlConfig);
+    xmlConfig.setValidating(true);
+    getSecurityManager().saveUserGroupService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work");
+  }
+  fail=false;
+  try {
+    xmlConfig.setFileName("xyz.xml");
+    getSecurityManager().saveUserGroupService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_105,ex.getErrorId());
+    assertEquals("testModify.xml",ex.getArgs()[0]);
+    assertEquals("xyz.xml",ex.getArgs()[1]);
+    fail=true;
+  }
+  assertTrue(fail);
+}

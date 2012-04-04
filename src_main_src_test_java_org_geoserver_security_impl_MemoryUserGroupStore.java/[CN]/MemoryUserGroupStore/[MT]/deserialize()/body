@@ -1,0 +1,20 @@
+{
+  clearMaps();
+  byte[] bytes=((MemoryUserGroupService)service).byteArray;
+  if (bytes == null) {
+    setModified(false);
+    return;
+  }
+  ByteArrayInputStream in=new ByteArrayInputStream(bytes);
+  ObjectInputStream oin=new ObjectInputStream(in);
+  try {
+    helper.userMap=(TreeMap<String,GeoServerUser>)oin.readObject();
+    helper.groupMap=(TreeMap<String,GeoServerUserGroup>)oin.readObject();
+    helper.user_groupMap=(TreeMap<GeoServerUser,SortedSet<GeoServerUserGroup>>)oin.readObject();
+    helper.group_userMap=(TreeMap<GeoServerUserGroup,SortedSet<GeoServerUser>>)oin.readObject();
+  }
+ catch (  ClassNotFoundException e) {
+    throw new IOException(e);
+  }
+  setModified(false);
+}

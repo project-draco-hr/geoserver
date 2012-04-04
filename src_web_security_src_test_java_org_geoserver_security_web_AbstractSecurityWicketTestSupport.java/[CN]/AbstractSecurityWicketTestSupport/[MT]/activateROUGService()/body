@@ -1,0 +1,16 @@
+{
+  MemoryUserGroupServiceConfigImpl config=new MemoryUserGroupServiceConfigImpl();
+  config.setName(getROUserGroupServiceName());
+  config.setClassName(ReadOnlyUGService.class.getName());
+  config.setPasswordEncoderName(getDigestPasswordEncoder().getName());
+  config.setPasswordPolicyName(PasswordValidator.DEFAULT_NAME);
+  getSecurityManager().saveUserGroupService(config);
+  ugService=getSecurityManager().loadUserGroupService(getROUserGroupServiceName());
+  ugService.initializeFromConfig(config);
+  ugService.setSecurityManager(GeoServerApplication.get().getSecurityManager());
+  ugStore=new MemoryUserGroupStore();
+  ugStore.initializeFromService(ugService);
+  ugTest.insertValues(ugStore);
+  ugStore.store();
+  ugStore=null;
+}

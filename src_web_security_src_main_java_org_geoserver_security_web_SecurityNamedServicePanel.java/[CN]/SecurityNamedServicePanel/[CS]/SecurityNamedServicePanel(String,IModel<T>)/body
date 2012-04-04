@@ -1,0 +1,13 @@
+{
+  super(id,new Model());
+  this.configModel=model;
+  boolean isAdmin=getSecurityManager().checkAuthenticationForAdminRole();
+  setEnabled(isAdmin);
+  add(new Label("message",isAdmin ? new Model() : new StringResourceModel("notAdmin",this,null)));
+  if (!isAdmin) {
+    get("message").add(new AttributeAppender("class",new Model("info-link")," "));
+  }
+  setOutputMarkupId(true);
+  add(new TextField("name").setRequired(true).setEnabled(model.getObject().getId() == null));
+  add(dialog=new GeoServerDialog("dialog"));
+}

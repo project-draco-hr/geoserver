@@ -1,0 +1,26 @@
+{
+  GeoServerSecurityFilterChain filterChain=new GeoServerSecurityFilterChain();
+  SortedMap<Integer,String> temp=new TreeMap<Integer,String>();
+  while (reader.hasMoreChildren()) {
+    reader.moveDown();
+    String path=reader.getAttribute("path");
+    String indexString=reader.getAttribute("index");
+    Integer index=new Integer(indexString);
+    temp.put(index,path);
+    ArrayList<String> filterEntries=new ArrayList<String>();
+    while (reader.hasMoreChildren()) {
+      reader.moveDown();
+      String name=reader.getValue();
+      filterEntries.add(name);
+      reader.moveUp();
+    }
+    filterChain.getFilterMap().put(path,filterEntries);
+    reader.moveUp();
+  }
+  ArrayList<String> antPatterns=new ArrayList<String>();
+  for (  Entry<Integer,String> e : temp.entrySet()) {
+    antPatterns.add(e.getValue());
+  }
+  filterChain.setAntPatterns(antPatterns);
+  return filterChain;
+}

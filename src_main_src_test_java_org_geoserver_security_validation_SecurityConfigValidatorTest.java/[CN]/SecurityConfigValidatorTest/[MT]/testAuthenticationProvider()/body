@@ -1,0 +1,52 @@
+{
+  SecurityAuthProviderConfig config=getAuthConfig(GeoServerAuthenticationProvider.DEFAULT_NAME,UsernamePasswordAuthenticationProvider.class,"default2");
+  boolean fail;
+  fail=false;
+  try {
+    config.setName("default2");
+    getSecurityManager().saveAuthenticationProvider(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_24d,ex.getErrorId());
+    assertEquals("default2",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName("other");
+    getSecurityManager().saveAuthenticationProvider(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_24d,ex.getErrorId());
+    assertEquals("default2",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName("");
+    getSecurityManager().removeAuthenticationProvider(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_22,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName(GeoServerAuthenticationProvider.DEFAULT_NAME);
+    getSecurityManager().removeAuthenticationProvider(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_31,ex.getErrorId());
+    assertEquals(GeoServerAuthenticationProvider.DEFAULT_NAME,ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+}

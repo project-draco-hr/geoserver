@@ -1,0 +1,23 @@
+{
+  Map<String,SQLException> reportMap=new HashMap<String,SQLException>();
+  Connection con=null;
+  try {
+    con=getConnection();
+    for (    Object key : props.keySet()) {
+      String stmt=props.getProperty(key.toString()).trim();
+      try {
+        con.prepareStatement(stmt.trim());
+      }
+ catch (      SQLException ex) {
+        reportMap.put(key.toString() + "|" + stmt,ex);
+      }
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,null,null);
+  }
+  return reportMap;
+}

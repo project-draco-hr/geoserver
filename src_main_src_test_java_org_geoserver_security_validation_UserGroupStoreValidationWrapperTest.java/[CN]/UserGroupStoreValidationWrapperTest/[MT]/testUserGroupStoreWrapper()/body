@@ -1,0 +1,128 @@
+{
+  boolean failed;
+  UserGroupStoreValidationWrapper store=createStore("test");
+  failed=false;
+  try {
+    store.addUser(store.createUserObject("","",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_01);
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.addGroup(store.createGroupObject(null,true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_02);
+    failed=true;
+  }
+  assertTrue(failed);
+  store.addUser(store.createUserObject("user1","abc",true));
+  store.addGroup(store.createGroupObject("group1",true));
+  assertEquals(1,store.getUsers().size());
+  assertEquals(1,store.getUserCount());
+  assertEquals(1,store.getUserGroups().size());
+  assertEquals(1,store.getGroupCount());
+  failed=false;
+  try {
+    store.addUser(store.createUserObject("user1","abc",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_05,"user1");
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.addGroup(store.createGroupObject("group1",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_06,"group1");
+    failed=true;
+  }
+  assertTrue(failed);
+  store.updateUser(store.createUserObject("user1","abc",false));
+  store.updateGroup(store.createGroupObject("group1",false));
+  failed=false;
+  try {
+    store.updateUser(store.createUserObject("user1xxxx","abc",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_03,"user1xxxx");
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.updateGroup(store.createGroupObject("group1xxx",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_04,"group1xxx");
+    failed=true;
+  }
+  assertTrue(failed);
+  GeoServerUser user1=store.getUserByUsername("user1");
+  GeoServerUserGroup group1=store.getGroupByGroupname("group1");
+  failed=false;
+  try {
+    store.associateUserToGroup(store.createUserObject("xxx","abc",true),group1);
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_03,"xxx");
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.associateUserToGroup(user1,store.createGroupObject("yyy",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_04,"yyy");
+    failed=true;
+  }
+  assertTrue(failed);
+  store.associateUserToGroup(user1,group1);
+  assertEquals(1,store.getUsersForGroup(group1).size());
+  assertEquals(1,store.getGroupsForUser(user1).size());
+  failed=false;
+  try {
+    store.getGroupsForUser(store.createUserObject("xxx","abc",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_03,"xxx");
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.getUsersForGroup(store.createGroupObject("yyy",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_04,"yyy");
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.disAssociateUserFromGroup(store.createUserObject("xxx","abc",true),group1);
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_03,"xxx");
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.disAssociateUserFromGroup(user1,store.createGroupObject("yyy",true));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,UG_ERR_04,"yyy");
+    failed=true;
+  }
+  assertTrue(failed);
+  store.disAssociateUserFromGroup(user1,group1);
+  store.removeUser(user1);
+  store.removeGroup(group1);
+}

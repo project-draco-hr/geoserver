@@ -1,0 +1,25 @@
+{
+  boolean update=true;
+  HashMap<String,ArrayList<String>> tmp=new HashMap<String,ArrayList<String>>();
+  for (  String p : cat.patterns) {
+    ArrayList<String> list=new ArrayList(filterMap.get(p));
+    tmp.put(p,list);
+    int i=list.indexOf(SECURITY_CONTEXT_ASC_FILTER);
+    i=i != -1 ? i : list.indexOf(SECURITY_CONTEXT_NO_ASC_FILTER);
+    int j=list.indexOf(DYNAMIC_EXCEPTION_TRANSLATION_FILTER);
+    j=j != -1 ? j : list.indexOf(GUI_EXCEPTION_TRANSLATION_FILTER);
+    if (i == -1 || j == -1) {
+      update=false;
+    }
+ else {
+      ArrayList<String> sub=new ArrayList(list.subList(i + 1,j));
+      list.removeAll(sub);
+      list.addAll(i + 1,filterNames);
+    }
+  }
+  if (update) {
+    filterMap.putAll(tmp);
+    return true;
+  }
+  return false;
+}

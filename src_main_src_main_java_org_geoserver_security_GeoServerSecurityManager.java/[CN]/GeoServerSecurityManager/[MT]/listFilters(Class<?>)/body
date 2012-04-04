@@ -1,0 +1,18 @@
+{
+  SortedSet<String> configs=new TreeSet<String>();
+  for (  String name : listFilters()) {
+    SecurityFilterConfig config=(SecurityFilterConfig)loadFilterConfig(name);
+    if (config.getClassName() == null) {
+      continue;
+    }
+    try {
+      if (type.isAssignableFrom(Class.forName(config.getClassName()))) {
+        configs.add(config.getName());
+      }
+    }
+ catch (    ClassNotFoundException e) {
+      LOGGER.log(Level.WARNING,e.getMessage(),e);
+    }
+  }
+  return configs;
+}

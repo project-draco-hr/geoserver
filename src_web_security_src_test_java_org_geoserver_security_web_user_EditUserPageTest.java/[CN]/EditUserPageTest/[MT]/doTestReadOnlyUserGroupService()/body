@@ -1,0 +1,23 @@
+{
+  insertValues();
+  activateROUGService();
+  AbstractSecurityPage returnPage=initializeForUGServiceNamed(getROUserGroupServiceName());
+  current=ugService.getUserByUsername("user1");
+  tester.startPage(page=(AbstractUserPage)new EditUserPage(getROUserGroupServiceName(),current).setReturnPage(returnPage));
+  tester.assertRenderedPage(EditUserPage.class);
+  assertFalse(tester.getComponentFromLastRenderedPage("form:username").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("form:password").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("form:confirmPassword").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("form:enabled").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:roles").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("form:groups").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("form:properties").isEnabled());
+  tester.assertVisible("form:save");
+  newFormTester();
+  assignRole(GeoServerRole.ADMIN_ROLE.getAuthority());
+  newFormTester();
+  form.submit("save");
+  SortedSet<GeoServerRole> roleList=gaService.getRolesForUser("user1");
+  assertEquals(1,roleList.size());
+  assertTrue(roleList.contains(gaService.getRoleByName(GeoServerRole.ADMIN_ROLE.getAuthority())));
+}

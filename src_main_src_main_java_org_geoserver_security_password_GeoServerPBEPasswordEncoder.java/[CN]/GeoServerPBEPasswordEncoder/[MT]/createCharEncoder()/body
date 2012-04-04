@@ -1,0 +1,34 @@
+{
+  byte[] password=lookupPasswordFromKeyStore();
+  char[] chars=toChars(password);
+  byteEncrypter=new StandardPBEByteEncryptor();
+  byteEncrypter.setPasswordCharArray(chars);
+  if (getProviderName() != null && !getProviderName().isEmpty()) {
+    byteEncrypter.setProviderName(getProviderName());
+  }
+  byteEncrypter.setAlgorithm(getAlgorithm());
+  return new CharArrayPasswordEncoder(){
+    @Override public boolean isPasswordValid(    String encPass,    char[] rawPass,    Object salt){
+      byte[] decoded=Base64.decode(encPass.getBytes());
+      byte[] decrypted=byteEncrypter.decrypt(decoded);
+      char[] chars=toChars(decrypted);
+      try {
+        return Arrays.equals(chars,rawPass);
+      }
+  finally {
+        scramble(decrypted);
+        scramble(chars);
+      }
+    }
+    @Override public String encodePassword(    char[] rawPass,    Object salt){
+      byte[] bytes=toBytes(rawPass);
+      try {
+        return new String(Base64.encode(byteEncrypter.encrypt(bytes)));
+      }
+  finally {
+        scramble(bytes);
+      }
+    }
+  }
+;
+}

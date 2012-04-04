@@ -1,0 +1,19 @@
+{
+  if (versionMapRR == null)   initializeSchemataRR();
+  XPathExpression expr=XMLXpathFactory.Singleton.getVersionExpressionRR();
+  String versionString;
+  try {
+    versionString=expr.evaluate(doc);
+  }
+ catch (  XPathExpressionException e) {
+    throw new IOException(e);
+  }
+  Schema schema=versionMapRR.get(versionString);
+  Validator val=schema.newValidator();
+  try {
+    val.validate(new DOMSource(doc));
+  }
+ catch (  SAXException e) {
+    throw new IOException(e);
+  }
+}

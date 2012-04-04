@@ -1,0 +1,38 @@
+{
+  GeoServerUserGroupStore store=null;
+  try {
+    store=new UserGroupStoreValidationWrapper(getUserGroupStore(userGroupServiceName));
+    group=store.createGroupObject(group.getGroupname(),group.isEnabled());
+    store.addGroup(group);
+    store.store();
+  }
+ catch (  IOException ex) {
+    try {
+      store.load();
+    }
+ catch (    IOException ex2) {
+    }
+    ;
+    throw ex;
+  }
+  GeoServerRoleStore gaStore=null;
+  try {
+    if (hasRoleStore(getSecurityManager().getActiveRoleService().getName())) {
+      gaStore=getRoleStore(getSecurityManager().getActiveRoleService().getName());
+      gaStore=new RoleStoreValidationWrapper(gaStore);
+      for (      GeoServerRole role : rolePalette.getSelectedRoles()) {
+        gaStore.associateRoleToGroup(role,group.getGroupname());
+      }
+      gaStore.store();
+    }
+  }
+ catch (  IOException ex) {
+    try {
+      gaStore.load();
+    }
+ catch (    IOException ex2) {
+    }
+    ;
+    throw ex;
+  }
+}

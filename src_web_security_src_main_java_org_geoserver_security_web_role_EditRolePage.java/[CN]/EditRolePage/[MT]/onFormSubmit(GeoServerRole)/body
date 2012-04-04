@@ -1,0 +1,28 @@
+{
+  if (hasRoleStore(roleServiceName) == false) {
+    throw new RuntimeException("Invalid workflow, cannot store in a read only role service");
+  }
+  GeoServerRoleStore store=null;
+  try {
+    store=new RoleStoreValidationWrapper(getRoleStore(roleServiceName));
+    GeoServerRole role=store.getRoleByName(updated.getAuthority());
+    role.getProperties().clear();
+    role.getProperties().putAll(updated.getProperties());
+    store.updateRole(role);
+    String parentRoleName=get("form:parent").getDefaultModelObjectAsString();
+    if (parentRoleName != null) {
+      GeoServerRole parentRole=store.getRoleByName(parentRoleName);
+      store.setParentRole(role,parentRole);
+    }
+    store.store();
+  }
+ catch (  IOException ex) {
+    try {
+      store.load();
+    }
+ catch (    IOException ex2) {
+    }
+    ;
+    throw ex;
+  }
+}

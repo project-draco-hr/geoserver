@@ -1,0 +1,16 @@
+{
+  initializeForXML();
+  initializeServiceRules();
+  tester.startPage(page=new NewServiceAccessRulePage());
+  FormTester form=tester.newFormTester("form");
+  int index=indexOf(page.serviceChoice.getChoices(),"wms");
+  form.select("service",index);
+  tester.executeAjaxEvent("form:service","onchange");
+  form=tester.newFormTester("form");
+  index=indexOf(page.methodChoice.getChoices(),"GetMap");
+  form.select("method",index);
+  form.setValue("roles:palette:recorder","ROLE_WMS");
+  form.submit("save");
+  assertTrue(testErrorMessagesWithRegExp(".*wms\\.GetMap.*"));
+  tester.assertRenderedPage(NewServiceAccessRulePage.class);
+}

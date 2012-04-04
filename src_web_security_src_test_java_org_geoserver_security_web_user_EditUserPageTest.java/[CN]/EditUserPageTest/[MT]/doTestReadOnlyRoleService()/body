@@ -1,0 +1,21 @@
+{
+  insertValues();
+  activateRORoleService();
+  current=ugService.getUserByUsername("user1");
+  initializeTester();
+  tester.assertRenderedPage(EditUserPage.class);
+  assertFalse(tester.getComponentFromLastRenderedPage("form:username").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:password").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:confirmPassword").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:enabled").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("form:roles").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:groups").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:properties").isEnabled());
+  tester.assertVisible("form:save");
+  newFormTester();
+  form.setValue("enabled",Boolean.FALSE);
+  form.submit("save");
+  GeoServerUser user=ugService.getUserByUsername("user1");
+  assertNotNull(user);
+  assertFalse(user.isEnabled());
+}

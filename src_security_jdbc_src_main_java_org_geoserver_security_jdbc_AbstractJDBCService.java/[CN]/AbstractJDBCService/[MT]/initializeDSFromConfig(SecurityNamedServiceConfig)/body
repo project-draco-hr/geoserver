@@ -1,0 +1,24 @@
+{
+  JDBCSecurityServiceConfig config=(JDBCSecurityServiceConfig)namedConfig;
+  if (config.isJndi()) {
+    String jndiName=config.getJndiName();
+    try {
+      Context initialContext=new InitialContext();
+      datasource=(DataSource)initialContext.lookup(jndiName);
+    }
+ catch (    NamingException e) {
+      throw new IOException(e);
+    }
+  }
+ else {
+    BasicDataSource bds=new BasicDataSource();
+    bds.setDriverClassName(config.getDriverClassName());
+    bds.setUrl(config.getConnectURL());
+    bds.setUsername(config.getUserName());
+    bds.setPassword(config.getPassword());
+    bds.setDefaultAutoCommit(false);
+    bds.setDefaultTransactionIsolation(DEFAULT_ISOLATION_LEVEL);
+    bds.setMaxActive(10);
+    datasource=bds;
+  }
+}

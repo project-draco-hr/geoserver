@@ -1,0 +1,60 @@
+{
+  LOGGER.info("Start encrypting configuration passwords using " + getSecurityConfig().getConfigPasswordEncrypterName());
+  Catalog catalog=getCatalog();
+  List<StoreInfo> stores=catalog.getStores(StoreInfo.class);
+  for (  StoreInfo info : stores) {
+    if (!configPasswordEncryptionHelper.getEncryptedFields(info).isEmpty()) {
+      catalog.save(info);
+    }
+  }
+  Set<Class<?>> configClasses=new HashSet<Class<?>>();
+  for (  GeoServerSecurityProvider prov : lookupSecurityProviders()) {
+    configClasses.addAll(prov.getFieldsForEncryption().keySet());
+  }
+  for (  String name : listPasswordValidators()) {
+    PasswordPolicyConfig config=passwordValidatorHelper.loadConfig(name);
+    for (    Class<?> classWithEncryption : configClasses) {
+      if (config.getClass().isAssignableFrom(classWithEncryption)) {
+        passwordValidatorHelper.saveConfig(config);
+        break;
+      }
+    }
+  }
+  for (  String name : listRoleServices()) {
+    SecurityNamedServiceConfig config=roleServiceHelper.loadConfig(name);
+    for (    Class<?> classWithEncryption : configClasses) {
+      if (config.getClass().isAssignableFrom(classWithEncryption)) {
+        roleServiceHelper.saveConfig(config);
+        break;
+      }
+    }
+  }
+  for (  String name : listUserGroupServices()) {
+    SecurityNamedServiceConfig config=userGroupServiceHelper.loadConfig(name);
+    for (    Class<?> classWithEncryption : configClasses) {
+      if (config.getClass().isAssignableFrom(classWithEncryption)) {
+        userGroupServiceHelper.saveConfig(config);
+        break;
+      }
+    }
+  }
+  for (  String name : listAuthenticationProviders()) {
+    SecurityNamedServiceConfig config=authProviderHelper.loadConfig(name);
+    for (    Class<?> classWithEncryption : configClasses) {
+      if (config.getClass().isAssignableFrom(classWithEncryption)) {
+        authProviderHelper.saveConfig(config);
+        break;
+      }
+    }
+  }
+  for (  String name : listFilters()) {
+    SecurityNamedServiceConfig config=filterHelper.loadConfig(name);
+    for (    Class<?> classWithEncryption : configClasses) {
+      if (config.getClass().isAssignableFrom(classWithEncryption)) {
+        filterHelper.saveConfig(config);
+        break;
+      }
+    }
+  }
+  LOGGER.info("End encrypting configuration passwords");
+}

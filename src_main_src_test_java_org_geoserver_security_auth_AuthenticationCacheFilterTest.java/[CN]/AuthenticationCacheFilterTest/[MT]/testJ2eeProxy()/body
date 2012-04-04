@@ -1,0 +1,78 @@
+{
+  J2eeAuthenticationFilterConfig config=new J2eeAuthenticationFilterConfig();
+  config.setClassName(GeoServerJ2eeAuthenticationFilter.class.getName());
+  config.setName(testFilterName3);
+  config.setRoleServiceName("rs1");
+  getSecurityManager().saveFilter(config);
+  prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_NO_ASC_FILTER,testFilterName3,GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
+  SecurityContextHolder.getContext().setAuthentication(null);
+  MockHttpServletRequest request=createRequest("/foo/bar");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain();
+  getProxy().doFilter(request,response,chain);
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertNull(SecurityContextHolder.getContext().getAuthentication());
+  request=createRequest("/foo/bar");
+  response=new MockHttpServletResponse();
+  chain=new MockFilterChain();
+  request.setUserPrincipal(new Principal(){
+    @Override public String getName(){
+      return testUserName;
+    }
+  }
+);
+  request.setUserInRole(derivedRole,true);
+  request.setUserInRole(rootRole,false);
+  getProxy().doFilter(request,response,chain);
+  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  Authentication auth=getAuth(testFilterName3,testUserName,null,null);
+  assertNotNull(auth);
+  assertNull(SecurityContextHolder.getContext().getAuthentication());
+  checkForAuthenticatedRole(auth);
+  assertEquals(testUserName,auth.getPrincipal());
+  assertTrue(auth.getAuthorities().contains(new GeoServerRole(rootRole)));
+  assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
+  request=createRequest("/foo/bar");
+  response=new MockHttpServletResponse();
+  chain=new MockFilterChain();
+  request.setUserPrincipal(new Principal(){
+    @Override public String getName(){
+      return GeoServerUser.ROOT_USERNAME;
+    }
+  }
+);
+  getProxy().doFilter(request,response,chain);
+  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  auth=getAuth(testFilterName3,GeoServerUser.ROOT_USERNAME,null,null);
+  assertNull(auth);
+  assertNull(SecurityContextHolder.getContext().getAuthentication());
+  config.setRoleServiceName(null);
+  getSecurityManager().saveFilter(config);
+  request=createRequest("/foo/bar");
+  response=new MockHttpServletResponse();
+  chain=new MockFilterChain();
+  request.setUserPrincipal(new Principal(){
+    @Override public String getName(){
+      return testUserName;
+    }
+  }
+);
+  request.setUserInRole(derivedRole,true);
+  request.setUserInRole(rootRole,false);
+  getProxy().doFilter(request,response,chain);
+  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  auth=getAuth(testFilterName3,testUserName,null,null);
+  assertNotNull(auth);
+  assertNull(SecurityContextHolder.getContext().getAuthentication());
+  checkForAuthenticatedRole(auth);
+  assertEquals(testUserName,auth.getPrincipal());
+  assertTrue(auth.getAuthorities().contains(new GeoServerRole(rootRole)));
+  assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
+  insertAnonymousFilter(GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER);
+  request=createRequest("/foo/bar");
+  response=new MockHttpServletResponse();
+  chain=new MockFilterChain();
+  getProxy().doFilter(request,response,chain);
+  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  removeAnonymousFilter();
+}

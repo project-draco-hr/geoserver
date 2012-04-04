@@ -1,0 +1,32 @@
+{
+  T config=model.getObject();
+  Class serviceClass=null;
+  try {
+    serviceClass=Class.forName(config.getClassName());
+  }
+ catch (  ClassNotFoundException e) {
+    throw new RuntimeException(e);
+  }
+  List<SecurityNamedServicePanelInfo> panelInfos=new ArrayList();
+  for (  SecurityNamedServicePanelInfo pageInfo : GeoServerApplication.get().getBeansOfType(SecurityNamedServicePanelInfo.class)) {
+    if (pageInfo.getServiceClass().isAssignableFrom(serviceClass)) {
+      panelInfos.add(pageInfo);
+    }
+  }
+  if (panelInfos.isEmpty()) {
+    throw new RuntimeException("Unable to find panel info for service config: " + config + ", service class: "+ serviceClass);
+  }
+  if (panelInfos.size() > 1) {
+    List<SecurityNamedServicePanelInfo> l=new ArrayList(panelInfos);
+    for (Iterator<SecurityNamedServicePanelInfo> it=l.iterator(); it.hasNext(); ) {
+      if (!it.next().getServiceClass().equals(serviceClass)) {
+        it.remove();
+      }
+    }
+    if (l.size() == 1) {
+      return l.get(0);
+    }
+    throw new RuntimeException("Found multiple panel infos for service config: " + config + ", service class: "+ serviceClass);
+  }
+  return panelInfos.get(0);
+}

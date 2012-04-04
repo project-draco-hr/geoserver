@@ -1,0 +1,67 @@
+{
+  DocumentBuilder builder=null;
+  try {
+    builder=DocumentBuilderFactory.newInstance().newDocumentBuilder();
+  }
+ catch (  ParserConfigurationException e1) {
+    throw new IOException(e1);
+  }
+  Document doc=builder.newDocument();
+  Element rolereg=doc.createElement(E_ROLEREGISTRY_RR);
+  doc.appendChild(rolereg);
+  rolereg.setAttribute(javax.xml.XMLConstants.XMLNS_ATTRIBUTE,NS_RR);
+  rolereg.setAttribute(A_VERSION_RR,VERSION_RR_1_0);
+  Element rolelist=doc.createElement(E_ROLELIST_RR);
+  rolereg.appendChild(rolelist);
+  for (  GeoServerRole roleObject : helper.roleMap.values()) {
+    Element role=doc.createElement(E_ROLE_RR);
+    rolelist.appendChild(role);
+    role.setAttribute(A_ROLEID_RR,roleObject.getAuthority());
+    GeoServerRole parentObject=helper.role_parentMap.get(roleObject);
+    if (parentObject != null) {
+      role.setAttribute(A_PARENTID_RR,parentObject.getAuthority());
+    }
+    for (    Object key : roleObject.getProperties().keySet()) {
+      Element property=doc.createElement(E_PROPERTY_RR);
+      role.appendChild(property);
+      property.setAttribute(A_PROPERTY_NAME_RR,key.toString());
+      property.setTextContent(roleObject.getProperties().getProperty(key.toString()));
+    }
+  }
+  Element userList=doc.createElement(E_USERLIST_RR);
+  rolereg.appendChild(userList);
+  for (  String userName : helper.user_roleMap.keySet()) {
+    Element userroles=doc.createElement(E_USERROLES_RR);
+    userList.appendChild(userroles);
+    userroles.setAttribute(A_USERNAME_RR,userName);
+    SortedSet<GeoServerRole> roleObjects=helper.user_roleMap.get(userName);
+    for (    GeoServerRole roleObject : roleObjects) {
+      Element ref=doc.createElement(E_ROLEREF_RR);
+      userroles.appendChild(ref);
+      ref.setAttribute(A_ROLEREFID_RR,roleObject.getAuthority());
+    }
+  }
+  Element groupList=doc.createElement(E_GROUPLIST_RR);
+  rolereg.appendChild(groupList);
+  for (  String groupName : helper.group_roleMap.keySet()) {
+    Element grouproles=doc.createElement(E_GROUPROLES_RR);
+    groupList.appendChild(grouproles);
+    grouproles.setAttribute(A_GROUPNAME_RR,groupName);
+    SortedSet<GeoServerRole> roleObjects=helper.group_roleMap.get(groupName);
+    for (    GeoServerRole roleObject : roleObjects) {
+      Element ref=doc.createElement(E_ROLEREF_RR);
+      grouproles.appendChild(ref);
+      ref.setAttribute(A_ROLEREFID_RR,roleObject.getAuthority());
+    }
+  }
+  try {
+    OutputFormat of=new OutputFormat("XML","UTF-8",true);
+    XMLSerializer serializer=new XMLSerializer();
+    serializer.setOutputFormat(of);
+    serializer.setOutputByteStream(new FileOutputStream(roleFile));
+    serializer.serialize(doc);
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+}

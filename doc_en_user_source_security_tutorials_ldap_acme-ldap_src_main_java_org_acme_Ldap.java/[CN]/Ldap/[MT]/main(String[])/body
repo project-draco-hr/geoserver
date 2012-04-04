@@ -1,0 +1,34 @@
+{
+  try {
+    File workDir=new File(System.getProperty("java.io.tmpdir") + "/server-work");
+    workDir.mkdirs();
+    Ldap ldap=new Ldap(workDir);
+    System.out.println("Directory contents:");
+    EntryFilteringCursor cursor=ldap.service.getAdminSession().search(new DN("ou=people,dc=acme,dc=org"),SearchScope.SUBTREE,FilterParser.parse("(objectClass=*)"),AliasDerefMode.NEVER_DEREF_ALIASES,null);
+    for (    ClonedServerEntry e : cursor) {
+      String indent="  ";
+      if (e.hasObjectClass("person")) {
+        indent+="  ";
+      }
+      System.out.println(indent + e.getDn());
+    }
+    cursor.close();
+    cursor=ldap.service.getAdminSession().search(new DN("ou=groups,dc=acme,dc=org"),SearchScope.SUBTREE,FilterParser.parse("(objectClass=*)"),AliasDerefMode.NEVER_DEREF_ALIASES,null);
+    for (    ClonedServerEntry e : cursor) {
+      String indent="  ";
+      if (e.hasObjectClass("groupOfNames")) {
+        indent+="  ";
+      }
+      System.out.println("  " + e.getDn());
+      if (e.hasObjectClass("groupOfNames")) {
+        System.out.print(e.get("member"));
+      }
+    }
+    System.out.println();
+    System.out.println("Server running on port " + LDAP_PORT);
+    ldap.startServer();
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+  }
+}

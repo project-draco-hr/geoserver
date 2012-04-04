@@ -1,0 +1,21 @@
+{
+  insertValues();
+  AbstractSecurityPage returnPage=initializeForRoleServiceNamed(getRoleServiceName());
+  tester.startPage(page=(EditRolePage)new EditRolePage(getRoleServiceName(),gaService.getRoleByName("ROLE_WFS")).setReturnPage(returnPage));
+  tester.assertRenderedPage(EditRolePage.class);
+  assertFalse(tester.getComponentFromLastRenderedPage("form:name").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:properties").isEnabled());
+  assertTrue(tester.getComponentFromLastRenderedPage("form:parent").isEnabled());
+  tester.assertVisible("form:save");
+  tester.assertModelValue("form:name","ROLE_WFS");
+  tester.assertModelValue("form:parent","ROLE_AUTHENTICATED");
+  FormTester form=tester.newFormTester("form");
+  form.setValue("parent",null);
+  form.submit("save");
+  tester.assertRenderedPage(SecurityNamedServiceEditPage.class);
+  tester.assertErrorMessages(new String[0]);
+  GeoServerRole role=gaService.getRoleByName("ROLE_WFS");
+  assertNotNull(role);
+  GeoServerRole parentRole=gaService.getParentRole(role);
+  assertNull(parentRole);
+}

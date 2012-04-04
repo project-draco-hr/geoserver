@@ -1,0 +1,14 @@
+{
+  testCreateNewUser();
+  GeoServerUserGroupService ugService=getSecurityManager().loadUserGroupService(ugStore.getName());
+  GeoServerUserGroupStore ugStore=ugService.createStore();
+  GeoServerUser bill=ugStore.getUserByUsername("bill");
+  ugStore.associateUserToGroup(bill,users);
+  ugStore.store();
+  assertEquals(1,ugStore.getGroupsForUser(bill).size());
+  assertTrue(ugStore.getGroupsForUser(bill).contains(users));
+  ugStore.associateUserToGroup(bill,admins);
+  assertEquals(1,ugStore.getGroupsForUser(bill).size());
+  assertTrue(ugStore.getGroupsForUser(bill).contains(users));
+  assertFalse(ugStore.getGroupsForUser(bill).contains(admins));
+}

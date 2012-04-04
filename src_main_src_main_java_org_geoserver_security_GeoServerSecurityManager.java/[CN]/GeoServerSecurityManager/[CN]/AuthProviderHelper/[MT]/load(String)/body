@@ -1,0 +1,23 @@
+{
+  SecurityNamedServiceConfig config=loadConfig(name);
+  if (config == null) {
+    return null;
+  }
+  GeoServerAuthenticationProvider authProvider=null;
+  for (  GeoServerSecurityProvider p : lookupSecurityProviders()) {
+    if (p.getAuthenticationProviderClass() == null) {
+      continue;
+    }
+    if (p.getAuthenticationProviderClass().getName().equals(config.getClassName())) {
+      authProvider=p.createAuthenticationProvider(config);
+      break;
+    }
+  }
+  if (authProvider == null) {
+    throw new IOException("No authentication provider matching config: " + config);
+  }
+  authProvider.setName(name);
+  authProvider.setSecurityManager(GeoServerSecurityManager.this);
+  authProvider.initializeFromConfig(config);
+  return authProvider;
+}

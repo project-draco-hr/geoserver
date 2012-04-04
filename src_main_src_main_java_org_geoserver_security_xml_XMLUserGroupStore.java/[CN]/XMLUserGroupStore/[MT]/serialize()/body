@@ -1,0 +1,58 @@
+{
+  DocumentBuilder builder=null;
+  try {
+    DocumentBuilderFactory fac=DocumentBuilderFactory.newInstance();
+    builder=fac.newDocumentBuilder();
+  }
+ catch (  ParserConfigurationException e1) {
+    throw new IOException(e1);
+  }
+  Document doc=builder.newDocument();
+  Element userreg=doc.createElement(E_USERREGISTRY_UR);
+  doc.appendChild(userreg);
+  userreg.setAttribute(javax.xml.XMLConstants.XMLNS_ATTRIBUTE,NS_UR);
+  userreg.setAttribute(A_VERSION_UR,VERSION_UR_1_0);
+  Element users=doc.createElement(E_USERS_UR);
+  userreg.appendChild(users);
+  for (  GeoServerUser userObject : helper.userMap.values()) {
+    Element user=doc.createElement(E_USER_UR);
+    users.appendChild(user);
+    user.setAttribute(A_USER_NAME_UR,userObject.getUsername());
+    if (userObject.getPassword() != null) {
+      user.setAttribute(A_USER_PASSWORD_UR,userObject.getPassword());
+    }
+    user.setAttribute(A_USER_ENABLED_UR,String.valueOf(userObject.isEnabled()));
+    for (    Object key : userObject.getProperties().keySet()) {
+      Element property=doc.createElement(E_PROPERTY_UR);
+      user.appendChild(property);
+      property.setAttribute(A_PROPERTY_NAME_UR,key.toString());
+      property.setTextContent(userObject.getProperties().getProperty(key.toString()));
+    }
+  }
+  Element groups=doc.createElement(E_GROUPS_UR);
+  userreg.appendChild(groups);
+  for (  GeoServerUserGroup groupObject : helper.groupMap.values()) {
+    Element group=doc.createElement(E_GROUP_UR);
+    groups.appendChild(group);
+    group.setAttribute(A_GROUP_NAME_UR,groupObject.getGroupname());
+    group.setAttribute(A_GROUP_ENABLED_UR,groupObject.isEnabled() ? "true" : "false");
+    SortedSet<GeoServerUser> userObjects=helper.group_userMap.get(groupObject);
+    if (userObjects != null) {
+      for (      GeoServerUser userObject : userObjects) {
+        Element member=doc.createElement(E_MEMBER_UR);
+        group.appendChild(member);
+        member.setAttribute(A_MEMBER_NAME_UR,userObject.getUsername());
+      }
+    }
+  }
+  try {
+    OutputFormat of=new OutputFormat("XML","UTF-8",true);
+    XMLSerializer serializer=new XMLSerializer();
+    serializer.setOutputFormat(of);
+    serializer.setOutputByteStream(new FileOutputStream(userFile));
+    serializer.serialize(doc);
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+}

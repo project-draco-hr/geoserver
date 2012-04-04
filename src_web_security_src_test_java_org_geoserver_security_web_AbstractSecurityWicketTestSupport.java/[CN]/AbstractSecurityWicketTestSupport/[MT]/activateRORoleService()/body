@@ -1,0 +1,16 @@
+{
+  MemoryRoleServiceConfigImpl config=new MemoryRoleServiceConfigImpl();
+  config.setName(getRORoleServiceName());
+  config.setAdminRoleName(GeoServerRole.ADMIN_ROLE.getAuthority());
+  config.setClassName(ReadOnlyRoleService.class.getName());
+  getSecurityManager().saveRoleService(config);
+  gaService=getSecurityManager().loadRoleService(getRORoleServiceName());
+  gaService.initializeFromConfig(config);
+  gaService.setSecurityManager(GeoServerApplication.get().getSecurityManager());
+  gaStore=new MemoryRoleStore();
+  gaStore.initializeFromService(gaService);
+  gaTest.insertValues(gaStore);
+  gaStore.store();
+  getSecurityManager().setActiveRoleService(gaService);
+  gaStore=null;
+}

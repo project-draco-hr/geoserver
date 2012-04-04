@@ -1,0 +1,73 @@
+{
+  super(id);
+  final boolean isAdmin=getSecurityManager().checkAuthenticationForAdminRole();
+  add(new AjaxLink("add"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      SecurityNamedServiceNewPage newPage=new SecurityNamedServiceNewPage(getServiceClass());
+      newPage.setReturnPage(getPage());
+      setResponsePage(newPage);
+    }
+  }
+.setEnabled(isAdmin));
+  add(removeLink=new AjaxLink("remove"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      boolean ok=true;
+      for (      T config : tablePanel.getSelection()) {
+        try {
+          validateRemoveConfig(config);
+        }
+ catch (        Exception e) {
+          handleException(e,null);
+          ok=false;
+        }
+      }
+      if (ok) {
+        dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+          @Override protected Component getContents(          String id){
+            return new AbstractConfirmRemovalPanel<T>(id,tablePanel.getSelection()){
+              @Override protected String getConfirmationMessage(              T object) throws Exception {
+                return object.getName();
+              }
+            }
+;
+          }
+          @Override protected boolean onSubmit(          AjaxRequestTarget target,          Component contents){
+            for (            T config : tablePanel.getSelection()) {
+              try {
+                removeConfig(config);
+                feedbackPanel.info(config.getName() + " removed");
+                tablePanel.clearSelection();
+              }
+ catch (              Exception e) {
+                handleException(e,feedbackPanel);
+              }
+            }
+            return true;
+          }
+          @Override public void onClose(          AjaxRequestTarget target){
+            target.addComponent(tablePanel);
+            target.addComponent(feedbackPanel);
+          }
+        }
+);
+      }
+      target.addComponent(feedbackPanel);
+    }
+  }
+);
+  removeLink.setEnabled(false);
+  add(tablePanel=new SecurityNamedServiceTablePanel<T>("table",dataProvider){
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      if (isAdmin) {
+        target.addComponent(removeLink.setEnabled(!getSelection().isEmpty()));
+      }
+    }
+  }
+);
+  tablePanel.setOutputMarkupId(true);
+  tablePanel.getTopPager().setVisible(false);
+  add(tablePanel);
+  add(feedbackPanel=new FeedbackPanel("feedback"));
+  feedbackPanel.setOutputMarkupId(true);
+  add(dialog=new GeoServerDialog("dialog"));
+}

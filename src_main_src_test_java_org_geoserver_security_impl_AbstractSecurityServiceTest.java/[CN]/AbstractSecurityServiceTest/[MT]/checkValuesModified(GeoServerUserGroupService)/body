@@ -1,0 +1,18 @@
+{
+  GeoServerUser disableduser=userGroupService.getUserByUsername("disableduser");
+  assertTrue(disableduser.isEnabled());
+  GeoServerPasswordEncoder encoder=getEncoder(userGroupService);
+  assertTrue(encoder.isPasswordValid(disableduser.getPassword(),"hallo",null));
+  assertEquals(1,disableduser.getProperties().size());
+  assertEquals("miller",disableduser.getProperties().getProperty("lastname"));
+  GeoServerUser user2=userGroupService.getUserByUsername("user2");
+  assertEquals(1,user2.getProperties().size());
+  assertEquals("11-22-33",user2.getProperties().getProperty("tel"));
+  GeoServerUserGroup disabledgroup=userGroupService.getGroupByGroupname("disabledgroup");
+  assertTrue(disabledgroup.isEnabled());
+  GeoServerUserGroup group1=userGroupService.getGroupByGroupname("group1");
+  GeoServerUser user1=userGroupService.getUserByUsername("user1");
+  assertEquals(1,userGroupService.getUsersForGroup(group1).size());
+  assertTrue(userGroupService.getUsersForGroup(group1).contains(user1));
+  assertEquals(0,userGroupService.getGroupsForUser(user2).size());
+}

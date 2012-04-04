@@ -1,0 +1,52 @@
+{
+  super.initializeFromConfig(config);
+  CasAuthenticationFilterConfig authConfig=(CasAuthenticationFilterConfig)config;
+  ServiceProperties sp=new ServiceProperties();
+  sp.setSendRenew(authConfig.isSendRenew());
+  sp.setService(authConfig.getService());
+  sp.setAuthenticateAllArtifacts(true);
+  try {
+    sp.afterPropertiesSet();
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+  aep=new CasAuthenticationEntryPoint();
+  aep.setLoginUrl(authConfig.getCasServerUrlPrefix() + "/login");
+  aep.setServiceProperties(sp);
+  try {
+    aep.afterPropertiesSet();
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+  provider=new CasAuthenticationProvider();
+  provider.setKey(config.getName());
+  GeoServerUserGroupService ugService=getSecurityManager().loadUserGroupService(authConfig.getUserGroupServiceName());
+  provider.setAuthenticationUserDetailsService(new CasUserDetailsWrapper(ugService));
+  provider.setServiceProperties(sp);
+  Cas20ProxyTicketValidator ticketValidator=new Cas20ProxyTicketValidator(authConfig.getCasServerUrlPrefix());
+  ticketValidator.setAcceptAnyProxy(true);
+  ticketValidator.setProxyGrantingTicketStorage(ProxyGrantingTicketStorageProvider.get());
+  ticketValidator.setProxyCallbackUrl(authConfig.getProxyCallbackUrl());
+  provider.setTicketValidator(ticketValidator);
+  getSecurityManager().getProviders().add(provider);
+  try {
+    provider.afterPropertiesSet();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  CasAuthenticationFilter filter=new CasAuthenticationFilter();
+  if (StringUtils.hasLength(authConfig.getProxyCallbackUrl())) {
+    filter.setProxyGrantingTicketStorage(ProxyGrantingTicketStorageProvider.get());
+    filter.setProxyReceptorUrl(CasAuthenticationFilterConfig.CAS_PROXY_RECEPTOR_PATTERN);
+    filter.setAuthenticationDetailsSource(new ServiceAuthenticationDetailsSource());
+  }
+  filter.setAuthenticationManager(getSecurityManager());
+  filter.setAllowSessionCreation(false);
+  filter.setFilterProcessesUrl(CasAuthenticationFilterConfig.CAS_CHAIN_PATTERN);
+  filter.setServiceProperties(sp);
+  filter.afterPropertiesSet();
+  getNestedFilters().add(filter);
+}

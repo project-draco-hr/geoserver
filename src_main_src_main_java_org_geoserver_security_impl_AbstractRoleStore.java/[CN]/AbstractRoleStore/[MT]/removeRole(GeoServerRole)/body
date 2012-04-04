@@ -1,0 +1,20 @@
+{
+  if (helper.roleMap.containsKey(role.getAuthority()) == false)   return false;
+  for (  SortedSet<GeoServerRole> set : helper.user_roleMap.values()) {
+    set.remove(role);
+  }
+  for (  SortedSet<GeoServerRole> set : helper.group_roleMap.values()) {
+    set.remove(role);
+  }
+  helper.role_parentMap.remove(role);
+  Set<GeoServerRole> toBeRemoved=new HashSet<GeoServerRole>();
+  for (  Entry<GeoServerRole,GeoServerRole> entry : helper.role_parentMap.entrySet()) {
+    if (role.equals(entry.getValue()))     toBeRemoved.add(entry.getKey());
+  }
+  for (  GeoServerRole ga : toBeRemoved) {
+    helper.role_parentMap.put(ga,null);
+  }
+  helper.roleMap.remove(role.getAuthority());
+  setModified(true);
+  return true;
+}

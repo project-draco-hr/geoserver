@@ -1,0 +1,19 @@
+{
+  String section212response=serverDigestString.substring(7);
+  String[] headerEntries=DigestAuthUtils.splitIgnoringQuotes(section212response,',');
+  Map<String,String> headerMap=DigestAuthUtils.splitEachArrayElementAndCreateMap(headerEntries,"=","\"");
+  String realm=headerMap.get("realm");
+  String qop=headerMap.get("qop");
+  String nonce=headerMap.get("nonce");
+  String uri="/foo/bar";
+  String nc="00000001";
+  String cnonce="0a4f113b";
+  String opaque="5ccc069c403ebaf9f0171e9517f40e41";
+  String responseString=DigestAuthUtils.generateDigest(false,username,realm,password,method,uri,qop,nonce,nc,cnonce);
+  String template="Digest username=\"{0}\",realm=\"{1}\"";
+  template+=",nonce=\"{2}\",uri=\"{3}\"";
+  template+=",qop=\"{4}\",nc=\"{5}\"";
+  template+=",cnonce=\"{6}\",response=\"{7}\"";
+  template+=",opaque=\"{8}\"";
+  return MessageFormat.format(template,username,realm,nonce,uri,qop,nc,cnonce,responseString,opaque);
+}

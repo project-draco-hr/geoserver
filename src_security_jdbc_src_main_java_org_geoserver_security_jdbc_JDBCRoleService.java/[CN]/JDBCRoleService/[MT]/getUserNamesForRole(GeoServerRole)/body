@@ -1,0 +1,23 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  SortedSet<String> result=new TreeSet<String>();
+  try {
+    con=getConnection();
+    ps=getDMLStatement("userroles.usersForRole",con);
+    ps.setString(1,role.getAuthority());
+    rs=ps.executeQuery();
+    while (rs.next()) {
+      String username=rs.getString(1);
+      result.add(username);
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,rs);
+  }
+  return Collections.unmodifiableSortedSet(result);
+}

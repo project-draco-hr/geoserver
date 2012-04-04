@@ -1,0 +1,53 @@
+{
+  super(id,new Model(new HashMap()));
+  add(new TextField("username",new MapModel(getModel(),"username")));
+  add(new PasswordTextField("password",new MapModel(getModel(),"password")).setRequired(false));
+  add(new AjaxSubmitLink("test"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      ((FormComponent)TestLDAPConnectionPanel.this.get("username")).processInput();
+      ((FormComponent)TestLDAPConnectionPanel.this.get("password")).processInput();
+      ((FormComponent)LDAPAuthProviderPanel.this.get("serverURL")).processInput();
+      ((FormComponent)LDAPAuthProviderPanel.this.get("useTLS")).processInput();
+      ((FormComponent)LDAPAuthProviderPanel.this.get("userDnPattern")).processInput();
+      Map map=(Map)TestLDAPConnectionPanel.this.getDefaultModelObject();
+      String username=(String)map.get("username");
+      String password=(String)map.get("password");
+      LDAPSecurityServiceConfig ldapConfig=(LDAPSecurityServiceConfig)getForm().getModelObject();
+      doTest(ldapConfig,username,password);
+      target.addComponent(((GeoServerBasePage)getPage()).get("feedback"));
+    }
+    void doTest(    LDAPSecurityServiceConfig ldapConfig,    String username,    String password){
+      LdapContext ctx=null;
+      try {
+        Hashtable env=new Hashtable(11);
+        env.put(Context.INITIAL_CONTEXT_FACTORY,"com.sun.jndi.ldap.LdapCtxFactory");
+        env.put(Context.PROVIDER_URL,ldapConfig.getServerURL());
+        env.put(Context.SECURITY_AUTHENTICATION,"simple");
+        URI url=new URI(ldapConfig.getServerURL());
+        if (ldapConfig.getUserDnPattern() == null) {
+          error("No user dn pattern specified");
+          return;
+        }
+        String p=ldapConfig.getUserDnPattern().replaceAll("\\{0\\}",username) + "," + url.getPath().substring(1);
+        env.put(Context.SECURITY_PRINCIPAL,p);
+        env.put(Context.SECURITY_CREDENTIALS,password);
+        ctx=new InitialLdapContext(env,null);
+        info(new StringResourceModel(LDAPAuthProviderPanel.class.getSimpleName() + ".connectionSuccessful",null).getObject());
+      }
+ catch (      Exception e) {
+        error(e);
+        LOGGER.log(Level.WARNING,e.getMessage(),e);
+      }
+ finally {
+        if (ctx != null) {
+          try {
+            ctx.close();
+          }
+ catch (          NamingException e) {
+          }
+        }
+      }
+    }
+  }
+.setDefaultFormProcessing(false));
+}

@@ -1,0 +1,30 @@
+{
+  foo.getProps().put("foo","bar");
+  foo.getProps().put("bar","baz");
+  foo.getProps().put("baz","foo");
+  startPage();
+  tester.assertComponent("form:props:container:list:0:remove",AjaxLink.class);
+  tester.assertComponent("form:props:container:list:1:remove",AjaxLink.class);
+  tester.assertComponent("form:props:container:list:2:remove",AjaxLink.class);
+  try {
+    tester.assertComponent("form:props:container:list:3:remove",AjaxLink.class);
+    fail();
+  }
+ catch (  Exception e) {
+  }
+  ListView list=(ListView)tester.getComponentFromLastRenderedPage("form:props:container:list");
+  assertNotNull(list);
+  int i=0;
+  for (Iterator<ListItem> it=list.iterator(); it.hasNext(); i++) {
+    if ("baz".equals(it.next().get("key").getDefaultModelObjectAsString())) {
+      break;
+    }
+  }
+  assertFalse(i == 3);
+  tester.clickLink("form:props:container:list:" + i + ":remove",true);
+  tester.newFormTester("form").submit();
+  assertEquals(2,foo.getProps().size());
+  assertEquals("bar",foo.getProps().get("foo"));
+  assertEquals("baz",foo.getProps().get("bar"));
+  assertFalse(foo.getProps().containsKey("baz"));
+}

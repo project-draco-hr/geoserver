@@ -1,0 +1,58 @@
+{
+  try {
+    assertFalse(store.isModified());
+    insertValues(store);
+    assertTrue(store.isModified());
+    store.load();
+    assertFalse(store.isModified());
+    insertValues(store);
+    store.store();
+    assertFalse(store.isModified());
+    GeoServerRole role=store.createRoleObject("ROLE_DUMMY");
+    GeoServerRole role_parent=store.createRoleObject("ROLE_PARENT");
+    assertFalse(store.isModified());
+    store.addRole(role);
+    store.addRole(role_parent);
+    assertTrue(store.isModified());
+    store.store();
+    assertFalse(store.isModified());
+    store.updateRole(role);
+    assertTrue(store.isModified());
+    store.load();
+    assertFalse(store.isModified());
+    store.removeRole(role);
+    assertTrue(store.isModified());
+    store.load();
+    assertFalse(store.isModified());
+    store.associateRoleToGroup(role,"agroup");
+    assertTrue(store.isModified());
+    store.store();
+    assertFalse(store.isModified());
+    store.disAssociateRoleFromGroup(role,"agroup");
+    assertTrue(store.isModified());
+    store.load();
+    assertFalse(store.isModified());
+    store.associateRoleToUser(role,"auser");
+    assertTrue(store.isModified());
+    store.store();
+    assertFalse(store.isModified());
+    store.disAssociateRoleFromUser(role,"auser");
+    assertTrue(store.isModified());
+    store.load();
+    assertFalse(store.isModified());
+    store.setParentRole(role,role_parent);
+    assertTrue(store.isModified());
+    store.store();
+    assertFalse(store.isModified());
+    store.setParentRole(role,null);
+    assertTrue(store.isModified());
+    store.store();
+    assertFalse(store.isModified());
+    store.clear();
+    assertTrue(store.isModified());
+    store.load();
+  }
+ catch (  IOException ex) {
+    Assert.fail(ex.getMessage());
+  }
+}

@@ -1,0 +1,22 @@
+{
+  super.validate(config);
+  URLMasterPasswordProviderConfig urlConfig=(URLMasterPasswordProviderConfig)config;
+  URL url=urlConfig.getURL();
+  if (url == null) {
+    throw new URLMasterPasswordProviderException(URL_REQUIRED);
+  }
+  if (config.isReadOnly()) {
+    try {
+      InputStream in=input(url,new File(manager.getMasterPasswordProviderRoot(),config.getName()));
+      try {
+        in.read();
+      }
+  finally {
+        in.close();
+      }
+    }
+ catch (    IOException ex) {
+      throw new URLMasterPasswordProviderException(URL_LOCATION_NOT_READABLE,url);
+    }
+  }
+}

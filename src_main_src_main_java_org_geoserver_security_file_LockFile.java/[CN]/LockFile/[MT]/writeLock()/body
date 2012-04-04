@@ -1,0 +1,15 @@
+{
+  if (hasWriteLock())   return;
+  if (lockFile.exists()) {
+    LOGGER.warning("Cannot obtain  lock: " + lockFile.getCanonicalPath());
+    Properties props=new Properties();
+    props.load(new FileInputStream(lockFile));
+    throw new IOException(Util.convertPropsToString(props,"Already locked"));
+  }
+ else {
+    writeLockFileContent(lockFile);
+    lockFileLastModified=lockFile.lastModified();
+    lockFile.deleteOnExit();
+    LOGGER.info("Successful lock: " + lockFile.getCanonicalPath());
+  }
+}

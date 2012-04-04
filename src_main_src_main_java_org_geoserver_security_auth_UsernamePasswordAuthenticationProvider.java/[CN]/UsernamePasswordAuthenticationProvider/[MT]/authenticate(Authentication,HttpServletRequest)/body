@@ -1,0 +1,15 @@
+{
+  UsernamePasswordAuthenticationToken auth=(UsernamePasswordAuthenticationToken)authProvider.authenticate(authentication);
+  if (auth.getDetails() instanceof GeoServerWebAuthenticationDetails) {
+    ((GeoServerWebAuthenticationDetails)auth.getDetails()).setUserGroupServiceName(userGroupServiceName);
+  }
+  if (auth.getAuthorities().contains(GeoServerRole.AUTHENTICATED_ROLE) == false) {
+    List<GrantedAuthority> roles=new ArrayList<GrantedAuthority>();
+    roles.addAll(auth.getAuthorities());
+    roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+    UsernamePasswordAuthenticationToken newAuth=new UsernamePasswordAuthenticationToken(auth.getPrincipal(),auth.getCredentials(),roles);
+    newAuth.setDetails(auth.getDetails());
+    return newAuth;
+  }
+  return auth;
+}

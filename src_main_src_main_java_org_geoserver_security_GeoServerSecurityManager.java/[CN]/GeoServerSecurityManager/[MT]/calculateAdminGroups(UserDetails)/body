@@ -1,0 +1,18 @@
+{
+  if (userDetails instanceof GeoServerUser) {
+    Properties props=((GeoServerUser)userDetails).getProperties();
+    if (GroupAdminProperty.has(props)) {
+      return Arrays.asList(GroupAdminProperty.get(props));
+    }
+  }
+  List<String> groupNames=new ArrayList<String>();
+  for (  GeoServerUserGroupService ugService : loadUserGroupServices()) {
+    GeoServerUser user=ugService.getUserByUsername(userDetails.getUsername());
+    if (user != null) {
+      for (      GeoServerUserGroup group : ugService.getGroupsForUser(user)) {
+        groupNames.add(group.getGroupname());
+      }
+    }
+  }
+  return groupNames;
+}

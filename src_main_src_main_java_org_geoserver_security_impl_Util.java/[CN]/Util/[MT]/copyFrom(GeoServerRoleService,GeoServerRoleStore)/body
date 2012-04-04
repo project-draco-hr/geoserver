@@ -1,0 +1,29 @@
+{
+  store.clear();
+  Map<String,GeoServerRole> newRoleDict=new HashMap<String,GeoServerRole>();
+  for (  GeoServerRole role : service.getRoles()) {
+    GeoServerRole newRole=store.createRoleObject(role.getAuthority());
+    for (    Object key : role.getProperties().keySet()) {
+      newRole.getProperties().put(key,role.getProperties().get(key));
+    }
+    store.addRole(newRole);
+    newRoleDict.put(newRole.getAuthority(),newRole);
+  }
+  for (  GeoServerRole role : service.getRoles()) {
+    GeoServerRole parentRole=service.getParentRole(role);
+    GeoServerRole newRole=newRoleDict.get(role.getAuthority());
+    GeoServerRole newParentRole=parentRole == null ? null : newRoleDict.get(parentRole.getAuthority());
+    store.setParentRole(newRole,newParentRole);
+  }
+  for (  GeoServerRole role : service.getRoles()) {
+    GeoServerRole newRole=newRoleDict.get(role.getAuthority());
+    SortedSet<String> usernames=service.getUserNamesForRole(role);
+    for (    String username : usernames) {
+      store.associateRoleToUser(newRole,username);
+    }
+    SortedSet<String> groupnames=service.getGroupNamesForRole(role);
+    for (    String groupname : groupnames) {
+      store.associateRoleToGroup(newRole,groupname);
+    }
+  }
+}

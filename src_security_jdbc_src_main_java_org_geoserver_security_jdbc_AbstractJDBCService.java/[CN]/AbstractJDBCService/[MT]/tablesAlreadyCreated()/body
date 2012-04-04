@@ -1,0 +1,39 @@
+{
+  ResultSet rs=null;
+  Connection con=null;
+  try {
+    con=getConnection();
+    DatabaseMetaData md=con.getMetaData();
+    String schemaName=null;
+    String tableName=ddlProps.getProperty("check.table");
+    if (tableName.contains(".")) {
+      StringTokenizer tok=new StringTokenizer(tableName,".");
+      schemaName=tok.nextToken();
+      tableName=tok.nextToken();
+    }
+    rs=md.getTables(null,schemaName,tableName,null);
+    if (rs.next())     return true;
+    rs.close();
+    schemaName=schemaName == null ? null : schemaName.toUpperCase();
+    tableName=tableName.toUpperCase();
+    rs=md.getTables(null,schemaName,tableName,null);
+    if (rs.next())     return true;
+    rs.close();
+    schemaName=schemaName == null ? null : schemaName.toLowerCase();
+    tableName=tableName.toLowerCase();
+    rs=md.getTables(null,schemaName,tableName,null);
+    if (rs.next())     return true;
+    return false;
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    try {
+      if (rs != null)       rs.close();
+      if (con != null)       closeConnection(con);
+    }
+ catch (    SQLException e) {
+    }
+  }
+}

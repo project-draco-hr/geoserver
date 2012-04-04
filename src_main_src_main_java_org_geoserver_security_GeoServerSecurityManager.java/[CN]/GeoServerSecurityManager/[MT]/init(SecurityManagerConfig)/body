@@ -1,0 +1,40 @@
+{
+  getKeyStoreProvider().reloadKeyStore();
+  String roleServiceName=config.getRoleServiceName();
+  GeoServerRoleService roleService=null;
+  try {
+    roleService=loadRoleService(roleServiceName);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,String.format("Error occured loading role service %s, " + "falling back to default role service",roleServiceName),e);
+  }
+  if (roleService == null) {
+    try {
+      roleService=loadRoleService("default");
+    }
+ catch (    Exception e) {
+      throw new RuntimeException("Fatal error occurred loading default role service",e);
+    }
+  }
+  setActiveRoleService(roleService);
+  this.authProviders=new ArrayList<GeoServerAuthenticationProvider>();
+  GeoServerRootAuthenticationProvider rootAuthProvider=new GeoServerRootAuthenticationProvider();
+  rootAuthProvider.setSecurityManager(this);
+  rootAuthProvider.initializeFromConfig(null);
+  this.authProviders.add(rootAuthProvider);
+  if (!config.getAuthProviderNames().isEmpty()) {
+    for (    String authProviderName : config.getAuthProviderNames()) {
+      GeoServerAuthenticationProvider authProvider=authProviderHelper.load(authProviderName);
+      authProviders.add(authProvider);
+    }
+  }
+  List<AuthenticationProvider> allAuthProviders=new ArrayList<AuthenticationProvider>();
+  allAuthProviders.addAll(authProviders);
+  RememberMeAuthenticationProvider rap=new RememberMeAuthenticationProvider();
+  rap.setKey(config.getRememberMeService().getKey());
+  rap.afterPropertiesSet();
+  allAuthProviders.add(rap);
+  setProviders(allAuthProviders);
+  this.securityConfig=new SecurityManagerConfig(config);
+  this.initialized=true;
+}

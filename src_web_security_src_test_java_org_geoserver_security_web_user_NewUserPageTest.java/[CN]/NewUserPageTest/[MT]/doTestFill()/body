@@ -1,0 +1,37 @@
+{
+  insertValues();
+  initializeTester();
+  tester.assertRenderedPage(NewUserPage.class);
+  newFormTester();
+  form.setValue("username","testuser");
+  form.setValue("password","pwd");
+  form.setValue("confirmPassword","pwd");
+  assertTrue(((GeoServerUser)page.get("form").getDefaultModelObject()).isEnabled());
+  form.setValue("enabled",false);
+  assertTrue(page.userGroupPalette.isEnabled());
+  tester.assertComponent("form:roles:palette:recorder",Recorder.class);
+  addNewRole("ROLE_NEW");
+  tester.assertRenderedPage(NewUserPage.class);
+  tester.assertNoErrorMessage();
+  assignRole("ROLE_NEW");
+  openCloseRolePanel(NewUserPage.class);
+  tester.assertNoErrorMessage();
+  addNewGroup("testgroup");
+  assignGroup("testgroup");
+  tester.assertNoErrorMessage();
+  openCloseGroupPanel(NewUserPage.class);
+  tester.assertNoErrorMessage();
+  assertCalculatedRoles(new String[]{"ROLE_NEW"});
+  form.submit("save");
+  tester.assertNoErrorMessage();
+  tester.assertRenderedPage(SecurityNamedServiceEditPage.class);
+  GeoServerUser user=ugService.getUserByUsername("testuser");
+  assertNotNull(user);
+  assertFalse(user.isEnabled());
+  SortedSet<GeoServerUserGroup> groupList=ugService.getGroupsForUser(user);
+  assertEquals(1,groupList.size());
+  assertEquals("testgroup",groupList.iterator().next().getGroupname());
+  SortedSet<GeoServerRole> roleList=gaService.getRolesForUser("testuser");
+  assertEquals(1,roleList.size());
+  assertEquals("ROLE_NEW",roleList.iterator().next().getAuthority());
+}

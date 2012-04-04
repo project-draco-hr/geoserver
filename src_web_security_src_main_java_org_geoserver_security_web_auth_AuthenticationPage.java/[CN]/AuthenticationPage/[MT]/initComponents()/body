@@ -1,0 +1,31 @@
+{
+  Form<SecurityManagerConfig> form=new Form("form",new CompoundPropertyModel<SecurityManagerConfig>(getSecurityManager().getSecurityConfig()));
+  add(form);
+  form.add(new AuthenticationFiltersPanel("authFilters"));
+  form.add(new HelpLink("authFiltersHelp").setDialog(dialog));
+  form.add(new AuthenticationProvidersPanel("authProviders"));
+  form.add(new HelpLink("authProvidersHelp").setDialog(dialog));
+  form.add(new AuthFilterChainPanel("filterChain",new PropertyModel<GeoServerSecurityFilterChain>(form.getModel(),"filterChain")));
+  form.add(new HelpLink("filterChainHelp").setDialog(dialog));
+  form.add(new AuthenticationChainPanel("providerChain",form));
+  form.add(new HelpLink("providerChainHelp").setDialog(dialog));
+  form.add(new SubmitLink("save",form){
+    @Override public void onSubmit(){
+      try {
+        getSecurityManager().saveSecurityConfig((SecurityManagerConfig)getForm().getModelObject());
+        doReturn();
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Error saving authentication config",e);
+        error(e);
+      }
+    }
+  }
+);
+  form.add(new Link("cancel"){
+    @Override public void onClick(){
+      doReturn();
+    }
+  }
+);
+}

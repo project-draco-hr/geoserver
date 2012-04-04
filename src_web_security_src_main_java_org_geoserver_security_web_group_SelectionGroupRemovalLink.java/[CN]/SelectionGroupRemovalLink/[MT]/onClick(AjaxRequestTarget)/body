@@ -1,0 +1,68 @@
+{
+  final List<GeoServerUserGroup> selection=groups.getSelection();
+  if (selection.size() == 0)   return;
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,delegate=new GeoServerDialog.DialogDelegate(){
+    protected Component getContents(    String id){
+      Model<Boolean> model=new Model<Boolean>(SelectionGroupRemovalLink.this.disassociateRoles);
+      return removePanel=new ConfirmRemovalGroupPanel(id,model,selection){
+        @Override protected IModel<String> canRemove(        GeoServerUserGroup group){
+          return SelectionGroupRemovalLink.this.canRemove(group);
+        }
+      }
+;
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      GeoServerUserGroupStore ugStore=null;
+      try {
+        GeoServerUserGroupService ugService=GeoServerApplication.get().getSecurityManager().loadUserGroupService(userGroupsServiceName);
+        ugStore=new UserGroupStoreValidationWrapper(ugService.createStore());
+        for (        GeoServerUserGroup group : removePanel.getRoots()) {
+          ugStore.removeGroup(group);
+        }
+        ugStore.store();
+      }
+ catch (      IOException ex) {
+        try {
+          ugStore.load();
+        }
+ catch (        IOException ex2) {
+        }
+        ;
+        throw new RuntimeException(ex);
+      }
+      GeoServerRoleStore gaStore=null;
+      if (disassociateRoles) {
+        try {
+          gaStore=GeoServerApplication.get().getSecurityManager().getActiveRoleService().createStore();
+          gaStore=new RoleStoreValidationWrapper(gaStore);
+          for (          GeoServerUserGroup group : removePanel.getRoots()) {
+            List<GeoServerRole> list=new ArrayList<GeoServerRole>();
+            list.addAll(gaStore.getRolesForGroup(group.getGroupname()));
+            for (            GeoServerRole role : list)             gaStore.disAssociateRoleFromGroup(role,group.getGroupname());
+          }
+          gaStore.store();
+        }
+ catch (        IOException ex) {
+          try {
+            gaStore.load();
+          }
+ catch (          IOException ex2) {
+          }
+          ;
+          throw new RuntimeException(ex);
+        }
+      }
+      groups.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (groups.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(SelectionGroupRemovalLink.this);
+        target.addComponent(groups);
+      }
+    }
+  }
+);
+}

@@ -1,0 +1,24 @@
+{
+  if (isNotEmpty(config.getAccessDeniedErrorPage()) == false) {
+    throw createFilterException(FilterConfigException.ACCESS_DENIED_PAGE_NEEDED);
+  }
+  if (config.getAccessDeniedErrorPage().startsWith("/") == false) {
+    throw createFilterException(FilterConfigException.ACCESS_DENIED_PAGE_PREFIX);
+  }
+  if (isNotEmpty(config.getAuthenticationFilterName())) {
+    try {
+      SecurityNamedServiceConfig filterConfig=manager.loadFilterConfig(config.getAuthenticationFilterName());
+      if (filterConfig == null)       throw createFilterException(FilterConfigException.INVALID_ENTRY_POINT,config.getAuthenticationFilterName());
+      boolean valid=false;
+      if (filterConfig instanceof SecurityFilterConfig) {
+        if (((SecurityFilterConfig)filterConfig).providesAuthenticationEntryPoint())         valid=true;
+      }
+      if (!valid) {
+        throw createFilterException(FilterConfigException.NO_AUTH_ENTRY_POINT,config.getAuthenticationFilterName());
+      }
+    }
+ catch (    IOException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+}

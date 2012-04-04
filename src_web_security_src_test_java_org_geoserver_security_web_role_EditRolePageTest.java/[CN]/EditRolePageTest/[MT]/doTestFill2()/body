@@ -1,0 +1,20 @@
+{
+  insertValues();
+  AbstractSecurityPage returnPage=initializeForRoleServiceNamed(getRoleServiceName());
+  tester.startPage(page=(EditRolePage)new EditRolePage(getRoleServiceName(),gaService.getRoleByName("ROLE_AUTHENTICATED")).setReturnPage(returnPage));
+  tester.assertRenderedPage(EditRolePage.class);
+  tester.assertModelValue("form:name","ROLE_AUTHENTICATED");
+  tester.assertModelValue("form:parent",null);
+  tester.assertModelValue("form:properties:container:list:0:key","bbox");
+  tester.assertModelValue("form:properties:container:list:0:value","lookupAtRuntime");
+  tester.assertModelValue("form:properties:container:list:1:key","employee");
+  tester.assertModelValue("form:properties:container:list:1:value","");
+  tester.executeAjaxEvent("form:properties:container:list:1:remove","onclick");
+  FormTester form=tester.newFormTester("form");
+  form.submit("save");
+  tester.assertRenderedPage(SecurityNamedServiceEditPage.class);
+  GeoServerRole role=gaService.getRoleByName("ROLE_AUTHENTICATED");
+  assertNotNull(role);
+  assertEquals(1,role.getProperties().size());
+  assertEquals("lookupAtRuntime",role.getProperties().get("bbox"));
+}

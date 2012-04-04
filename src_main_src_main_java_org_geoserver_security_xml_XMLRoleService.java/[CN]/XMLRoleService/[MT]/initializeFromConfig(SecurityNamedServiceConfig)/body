@@ -1,0 +1,27 @@
+{
+  this.name=config.getName();
+  validatingXMLSchema=false;
+  String adminRoleName=((SecurityRoleServiceConfig)config).getAdminRoleName();
+  adminRole=createRoleObject(adminRoleName != null ? adminRoleName : GeoServerRole.ADMIN_ROLE.getAuthority());
+  if (config instanceof XMLSecurityServiceConfig) {
+    validatingXMLSchema=((XMLSecurityServiceConfig)config).isValidating();
+    File xsdFile=new File(getConfigRoot(),XMLConstants.FILE_RR_SCHEMA);
+    if (xsdFile.exists() == false) {
+      FileUtils.copyURLToFile(getClass().getResource(XMLConstants.FILE_RR_SCHEMA),xsdFile);
+    }
+  }
+  if (config instanceof FileBasedSecurityServiceConfig) {
+    String fileName=((FileBasedSecurityServiceConfig)config).getFileName();
+    roleFile=new File(fileName);
+    if (roleFile.isAbsolute() == false) {
+      roleFile=new File(getConfigRoot(),fileName);
+    }
+    if (roleFile.exists() == false) {
+      FileUtils.copyURLToFile(getClass().getResource("rolesTemplate.xml"),roleFile);
+    }
+  }
+ else {
+    throw new IOException("Cannot initialize from " + config.getClass().getName());
+  }
+  deserialize();
+}

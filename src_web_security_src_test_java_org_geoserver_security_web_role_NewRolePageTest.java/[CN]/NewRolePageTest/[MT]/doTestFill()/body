@@ -1,0 +1,23 @@
+{
+  insertValues();
+  AbstractSecurityPage returnPage=initializeForRoleServiceNamed(getRoleServiceName());
+  tester.startPage(page=(NewRolePage)new NewRolePage(getRoleServiceName()).setReturnPage(returnPage));
+  tester.assertRenderedPage(NewRolePage.class);
+  FormTester form=tester.newFormTester("form");
+  form.setValue("name","ROLE_TEST");
+  int index=-1;
+  for (  String name : ((DropDownChoice<String>)page.get("form:parent")).getChoices()) {
+    index++;
+    if ("ROLE_AUTHENTICATED".equals(name))     break;
+  }
+  assertTrue(index >= 0);
+  form.select("parent",index);
+  form.submit("save");
+  tester.assertRenderedPage(SecurityNamedServiceEditPage.class);
+  tester.assertErrorMessages(new String[0]);
+  GeoServerRole role=gaService.getRoleByName("ROLE_TEST");
+  assertNotNull(role);
+  GeoServerRole parentRole=gaService.getParentRole(role);
+  assertNotNull(parentRole);
+  assertEquals("ROLE_AUTHENTICATED",parentRole.getAuthority());
+}

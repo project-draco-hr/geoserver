@@ -1,0 +1,42 @@
+{
+  SecurityNamedServiceConfig config=loadConfig(name);
+  if (config == null) {
+    return null;
+  }
+  GeoServerUserGroupService service=null;
+  for (  GeoServerSecurityProvider p : lookupSecurityProviders()) {
+    if (p.getUserGroupServiceClass() == null) {
+      continue;
+    }
+    if (p.getUserGroupServiceClass().getName().equals(config.getClassName())) {
+      service=p.createUserGroupService(config);
+      break;
+    }
+  }
+  if (service == null) {
+    throw new IOException("No user group service matching config: " + config);
+  }
+  service.setSecurityManager(GeoServerSecurityManager.this);
+  if (config instanceof SecurityUserGroupServiceConfig) {
+    boolean needsLockProtection=GeoServerSecurityProvider.getProvider(GeoServerUserGroupService.class,config.getClassName()).roleServiceNeedsLockProtection();
+    if (needsLockProtection)     service=new LockingUserGroupService(service);
+  }
+  service.setName(name);
+  service.initializeFromConfig(config);
+  if (config instanceof FileBasedSecurityServiceConfig) {
+    FileBasedSecurityServiceConfig fileConfig=(FileBasedSecurityServiceConfig)config;
+    if (fileConfig.getCheckInterval() > 0) {
+      File file=new File(fileConfig.getFileName());
+      if (file.isAbsolute() == false)       file=new File(new File(getUserGroupRoot(),name),file.getPath());
+      if (file.canRead() == false) {
+        throw new IOException("Cannot read file: " + file.getCanonicalPath());
+      }
+      UserGroupFileWatcher watcher=new UserGroupFileWatcher(file.getCanonicalPath(),service,file.lastModified());
+      watcher.setDelay(fileConfig.getCheckInterval());
+      service.registerUserGroupLoadedListener(watcher);
+      watcher.start();
+      fileWatchers.add(watcher);
+    }
+  }
+  return service;
+}

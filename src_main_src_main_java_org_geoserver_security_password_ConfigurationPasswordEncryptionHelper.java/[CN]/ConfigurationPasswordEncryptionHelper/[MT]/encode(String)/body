@@ -1,0 +1,17 @@
+{
+  String encoderName=securityManager.getSecurityConfig().getConfigPasswordEncrypterName();
+  if (encoderName != null) {
+    GeoServerPasswordEncoder pwEncoder=securityManager.loadPasswordEncoder(encoderName);
+    if (pwEncoder != null) {
+      String prefix=pwEncoder.getPrefix();
+      if (value.startsWith(prefix + GeoServerPasswordEncoder.PREFIX_DELIMTER)) {
+        throw new RuntimeException("Cannot encode a password with prefix: " + prefix + GeoServerPasswordEncoder.PREFIX_DELIMTER);
+      }
+      value=pwEncoder.encodePassword(value,null);
+    }
+  }
+ else {
+    LOGGER.warning("Encryption disabled, no password encoder set");
+  }
+  return value;
+}

@@ -1,0 +1,22 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("roles.update",con);
+    ps.setString(1,role.getAuthority());
+    ps.execute();
+    ps.close();
+    ps=getDMLStatement("roleprops.deleteForRole",con);
+    ps.setString(1,role.getAuthority());
+    ps.execute();
+    addRoleProperties(role,con);
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,null);
+  }
+  setModified(true);
+}

@@ -1,0 +1,37 @@
+{
+  final WebMarkupContainer container=new WebMarkupContainer("container");
+  container.setOutputMarkupId(true);
+  add(container);
+  listView=new ListView<Tuple>("list"){
+    @Override protected void populateItem(    ListItem<Tuple> item){
+      item.setModel(new CompoundPropertyModel<Tuple>(item.getModelObject()));
+      item.add(new TextField("key").add(new AjaxFormComponentUpdatingBehavior("onblur"){
+        @Override protected void onUpdate(        AjaxRequestTarget target){
+        }
+      }
+));
+      item.add(new TextField("value").add(new AjaxFormComponentUpdatingBehavior("onblur"){
+        @Override protected void onUpdate(        AjaxRequestTarget target){
+        }
+      }
+));
+      item.add(new AjaxLink<Tuple>("remove",item.getModel()){
+        @Override public void onClick(        AjaxRequestTarget target){
+          List l=((List)listView.getDefaultModelObject());
+          l.remove(getModelObject());
+          target.addComponent(container);
+        }
+      }
+);
+    }
+  }
+;
+  container.add(listView);
+  add(new AjaxLink("add"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      ((List)listView.getDefaultModelObject()).add(new Tuple());
+      target.addComponent(container);
+    }
+  }
+);
+}

@@ -1,0 +1,30 @@
+{
+  String encoderName=config.getPasswordEncoderName();
+  GeoServerPasswordEncoder encoder=null;
+  if (isNotEmpty(encoderName)) {
+    try {
+      encoder=manager.loadPasswordEncoder(encoderName);
+    }
+ catch (    NoSuchBeanDefinitionException ex) {
+      throw createSecurityException(SEC_ERR_04,encoderName);
+    }
+    if (encoder == null) {
+      throw createSecurityException(SEC_ERR_04,encoderName);
+    }
+  }
+ else {
+    throw createSecurityException(SEC_ERR_32,config.getName());
+  }
+  if (!manager.isStrongEncryptionAvailable()) {
+    if (encoder != null && encoder.isAvailableWithoutStrongCryptogaphy() == false) {
+      throw createSecurityException(SEC_ERR_06);
+    }
+  }
+  String policyName=config.getPasswordPolicyName();
+  if (isNotEmpty(policyName) == false) {
+    throw createSecurityException(SEC_ERR_33,config.getName());
+  }
+  if (getNamesFor(PasswordValidator.class).contains(policyName) == false) {
+    throw createSecurityException(SEC_ERR_24b,policyName);
+  }
+}

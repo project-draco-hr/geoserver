@@ -1,0 +1,38 @@
+{
+  Catalog cat=getCatalog();
+  SecurityManagerConfig config=getSecurityManager().getSecurityConfig();
+  config.setConfigPasswordEncrypterName(getNullPasswordEncoder().getName());
+  getSecurityManager().saveSecurityConfig(config);
+  GeoServerPersister p=new GeoServerPersister(getResourceLoader(),new XStreamPersisterFactory().createXMLPersister());
+  cat.addListener(p);
+  WorkspaceInfo ws=cat.getFactory().createWorkspace();
+  ws.setName("password");
+  cat.add(ws);
+  DataStoreInfo ds=cat.getFactory().createDataStore();
+  ds.setName("password");
+  ds.getConnectionParameters().put("user","testuser");
+  ds.getConnectionParameters().put("passwd","secret");
+  ds.getConnectionParameters().put("host","localhost");
+  ds.getConnectionParameters().put("port","5432");
+  ds.getConnectionParameters().put("database","testdb");
+  ds.getConnectionParameters().put("dbtype","postgisng");
+  ds.setWorkspace(ws);
+  cat.add(ds);
+  File store=new File(getDataDirectory().root(),"workspaces/password/password/datastore.xml");
+  Document dom=DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(store);
+  XPath xpath=XPathFactory.newInstance().newXPath();
+  String encrypted=xpath.evaluate("//entry[@key='passwd']",dom.getDocumentElement());
+  assertTrue("secret".equals(encrypted));
+  XStreamPersister xs=new XStreamPersisterFactory().createXMLPersister();
+  DataStoreInfo load=xs.load(new FileInputStream(store),DataStoreInfo.class);
+  assertEquals("secret",load.getConnectionParameters().get("passwd"));
+  config.setConfigPasswordEncrypterName(getPBEPasswordEncoder().getName());
+  getSecurityManager().saveSecurityConfig(config);
+  getSecurityManager().updateConfigurationFilesWithEncryptedFields();
+  dom=DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(store);
+  xpath=XPathFactory.newInstance().newXPath();
+  encrypted=xpath.evaluate("//entry[@key='passwd']",dom.getDocumentElement());
+  xs=new XStreamPersisterFactory().createXMLPersister();
+  load=xs.load(new FileInputStream(store),DataStoreInfo.class);
+  assertEquals("secret",load.getConnectionParameters().get("passwd"));
+}

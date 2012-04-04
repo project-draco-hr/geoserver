@@ -1,0 +1,24 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null;
+  boolean retval=false;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("groups.delete",con);
+    ps.setString(1,group.getGroupname());
+    ps.execute();
+    retval=ps.getUpdateCount() > 0;
+    ps.close();
+    ps=getDMLStatement("groupmembers.deleteGroup",con);
+    ps.setString(1,group.getGroupname());
+    ps.execute();
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,null);
+  }
+  setModified(true);
+  return retval;
+}

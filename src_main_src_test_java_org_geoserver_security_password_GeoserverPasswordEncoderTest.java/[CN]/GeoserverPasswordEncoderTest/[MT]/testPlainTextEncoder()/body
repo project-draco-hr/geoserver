@@ -1,0 +1,25 @@
+{
+  GeoServerPasswordEncoder encoder=getPlainTextPasswordEncoder();
+  assertEquals(PasswordEncodingType.PLAIN,encoder.getEncodingType());
+  assertEquals("plain:" + testPassword,encoder.encodePassword(testPassword,null));
+  assertTrue(encoder.isResponsibleForEncoding("plain:123"));
+  assertFalse(encoder.isResponsibleForEncoding("digest1:123"));
+  String enc=encoder.encodePassword(testPassword,null);
+  String enc2=encoder.encodePassword(testPasswordArray,null);
+  assertTrue(encoder.isPasswordValid(enc,testPassword,null));
+  assertTrue(encoder.isPasswordValid(enc,testPasswordArray,null));
+  assertTrue(encoder.isPasswordValid(enc2,testPassword,null));
+  assertTrue(encoder.isPasswordValid(enc2,testPasswordArray,null));
+  assertFalse(encoder.isPasswordValid(enc,"plain:blabla",null));
+  assertFalse(encoder.isPasswordValid(enc,"plain:blabla".toCharArray(),null));
+  assertFalse(encoder.isPasswordValid(enc2,"plain:blabla",null));
+  assertFalse(encoder.isPasswordValid(enc2,"plain:blabla".toCharArray(),null));
+  assertEquals(testPassword,encoder.decode(enc));
+  assertTrue(Arrays.equals(testPasswordArray,encoder.decodeToCharArray(enc)));
+  assertEquals(testPassword,encoder.decode(enc2));
+  assertTrue(Arrays.equals(testPasswordArray,encoder.decodeToCharArray(enc2)));
+  enc=encoder.encodePassword("",null);
+  assertTrue(encoder.isPasswordValid(enc,"",null));
+  enc2=encoder.encodePassword(emptyArray,null);
+  assertTrue(encoder.isPasswordValid(enc,emptyArray,null));
+}

@@ -1,0 +1,16 @@
+{
+  SortedSet<GeoServerRole> set=new TreeSet<GeoServerRole>();
+  for (  GeoServerRole role : roles) {
+    Properties personalizedProps=getRoleService().personalizeRoleParams(role.getAuthority(),role.getProperties(),user.getUsername(),user.getProperties());
+    if (personalizedProps == null) {
+      set.add(role);
+    }
+ else {
+      GeoServerRole pRole=getRoleService().createRoleObject(role.getAuthority());
+      pRole.setUserName(user.getUsername());
+      for (      Object key : personalizedProps.keySet())       pRole.getProperties().put(key,personalizedProps.get(key));
+      set.add(pRole);
+    }
+  }
+  return set;
+}

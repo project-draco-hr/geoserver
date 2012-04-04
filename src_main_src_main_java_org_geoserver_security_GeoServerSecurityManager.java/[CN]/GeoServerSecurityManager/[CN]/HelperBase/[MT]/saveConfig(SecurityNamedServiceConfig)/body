@@ -1,0 +1,20 @@
+{
+  File dir=new File(getRoot(),config.getName());
+  dir.mkdir();
+  boolean isNew=config.getId() == null;
+  if (isNew) {
+    config.setId(newId());
+  }
+  try {
+    saveConfigFile(config,dir,persister());
+  }
+ catch (  Exception e) {
+    if (isNew) {
+      config.setId(null);
+    }
+    if (e instanceof IOException) {
+      throw (IOException)e;
+    }
+    throw new IOException(e);
+  }
+}

@@ -1,0 +1,25 @@
+{
+  preparePassword(user);
+  Connection con=null;
+  PreparedStatement ps=null;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("users.update",con);
+    ps.setString(1,user.getPassword());
+    ps.setString(2,convertToString(user.isEnabled()));
+    ps.setString(3,user.getUsername());
+    ps.execute();
+    ps.close();
+    ps=getDMLStatement("userprops.deleteForUser",con);
+    ps.setString(1,user.getUsername());
+    ps.execute();
+    addUserProperties(user,con);
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,null);
+  }
+  setModified(true);
+}

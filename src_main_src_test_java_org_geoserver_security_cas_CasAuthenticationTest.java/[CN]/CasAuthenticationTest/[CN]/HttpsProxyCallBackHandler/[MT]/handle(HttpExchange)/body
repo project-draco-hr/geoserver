@@ -1,0 +1,25 @@
+{
+  URI uri=ex.getRequestURI();
+  ex.getRequestBody().close();
+  LOGGER.info("Cas proxy callback: " + uri.toString());
+  String query=uri.getQuery();
+  MockHttpServletRequest request=createRequest(CasAuthenticationFilterConfig.CAS_PROXY_RECEPTOR_PATTERN);
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain();
+  if (query != null) {
+    String[] kvps=query.split("&");
+    for (    String kvp : kvps) {
+      String[] tmp=kvp.split("=");
+      request.setupAddParameter(tmp[0],tmp[1]);
+    }
+  }
+  try {
+    getProxy().doFilter(request,response,chain);
+  }
+ catch (  ServletException e) {
+    throw new RuntimeException(e);
+  }
+  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  ex.sendResponseHeaders(200,0);
+  ex.getResponseBody().close();
+}

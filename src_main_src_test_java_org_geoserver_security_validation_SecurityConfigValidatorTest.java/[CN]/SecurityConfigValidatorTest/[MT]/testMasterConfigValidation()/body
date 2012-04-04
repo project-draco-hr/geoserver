@@ -1,0 +1,78 @@
+{
+  SecurityManagerConfig config=new SecurityManagerConfig();
+  config.setRoleServiceName(XMLRoleService.DEFAULT_NAME);
+  config.setConfigPasswordEncrypterName(getPBEPasswordEncoder().getName());
+  config.getAuthProviderNames().add(GeoServerAuthenticationProvider.DEFAULT_NAME);
+  getSecurityManager().saveSecurityConfig(config);
+  boolean failed=false;
+  try {
+    config.setConfigPasswordEncrypterName("abc");
+    getSecurityManager().saveSecurityConfig(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_01,ex.getErrorId());
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    config.setConfigPasswordEncrypterName(null);
+    getSecurityManager().saveSecurityConfig(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_07,ex.getErrorId());
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  if (getSecurityManager().isStrongEncryptionAvailable() == false) {
+    config.setConfigPasswordEncrypterName(getStrongPBEPasswordEncoder().getName());
+    failed=false;
+    try {
+      getSecurityManager().saveSecurityConfig(config);
+    }
+ catch (    SecurityConfigException ex) {
+      assertEquals(SEC_ERR_05,ex.getErrorId());
+      LOGGER.info(ex.getMessage());
+      failed=true;
+    }
+    assertTrue(failed);
+  }
+  config.setConfigPasswordEncrypterName(getPBEPasswordEncoder().getName());
+  config.setRoleServiceName("XX");
+  failed=false;
+  try {
+    getSecurityManager().saveSecurityConfig(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_02,ex.getErrorId());
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setRoleServiceName(null);
+  failed=false;
+  try {
+    getSecurityManager().saveSecurityConfig(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_02,ex.getErrorId());
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setRoleServiceName(XMLRoleService.DEFAULT_NAME);
+  config.getAuthProviderNames().add("XX");
+  failed=false;
+  try {
+    getSecurityManager().saveSecurityConfig(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_03,ex.getErrorId());
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.getAuthProviderNames().remove("XX");
+}

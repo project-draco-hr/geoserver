@@ -1,0 +1,23 @@
+{
+  SecurityNamedServiceConfig config=loadConfig(name);
+  if (config == null) {
+    return null;
+  }
+  GeoServerSecurityFilter filter=null;
+  for (  GeoServerSecurityProvider p : lookupSecurityProviders()) {
+    if (p.getFilterClass() == null) {
+      continue;
+    }
+    if (p.getFilterClass().getName().equals(config.getClassName())) {
+      filter=p.createFilter(config);
+      break;
+    }
+  }
+  if (filter == null) {
+    throw new IOException("No authentication provider matching config: " + config);
+  }
+  filter.setName(name);
+  filter.setSecurityManager(GeoServerSecurityManager.this);
+  filter.initializeFromConfig(config);
+  return filter;
+}

@@ -1,0 +1,21 @@
+{
+  GeoServerSecurityManager secMgr=GeoServerApplication.get().getSecurityManager();
+  KeyStoreProvider ksp=secMgr.getKeyStoreProvider();
+  byte[] password=null;
+  try {
+    password=ksp.getUrlParamKey();
+    if (password != null) {
+      try {
+        encryptor=new CryptImpl(password);
+        return;
+      }
+  finally {
+        secMgr.disposePassword(password);
+      }
+    }
+  }
+ catch (  IOException e) {
+  }
+  LOGGER.severe("No key with alias: " + KeyStoreProviderImpl.URLPARAMKEY + " found in: "+ ksp.getFile().getAbsolutePath()+ ". Falling back to no encryption for "+ "    url parameters");
+  encryptor=new NoCrypt();
+}

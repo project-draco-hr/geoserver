@@ -1,0 +1,19 @@
+{
+  super(userGroupServiceName,group.copy());
+  get("form:groupname").setEnabled(false);
+  ((Form)get("form")).add(new UserTablePanel("users",userGroupServiceName,new GeoServerDataProvider<GeoServerUser>(){
+    @Override protected List<GeoServerDataProvider.Property<GeoServerUser>> getProperties(){
+      return Arrays.asList(UserListProvider.USERNAME);
+    }
+    @Override protected List<GeoServerUser> getItems(){
+      GeoServerUserGroupService ugService=getUserGroupService(EditGroupPage.this.userGroupServiceName);
+      try {
+        return new ArrayList<GeoServerUser>(ugService.getUsersForGroup(group));
+      }
+ catch (      IOException e) {
+        throw new WicketRuntimeException(e);
+      }
+    }
+  }
+).setFilterable(false));
+}

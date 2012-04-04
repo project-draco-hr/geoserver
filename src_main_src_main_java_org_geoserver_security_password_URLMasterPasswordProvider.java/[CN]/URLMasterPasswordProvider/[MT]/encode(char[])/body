@@ -1,0 +1,14 @@
+{
+  if (!config.isEncrypting()) {
+    return toBytes(passwd);
+  }
+  StandardPBEByteEncryptor encryptor=new StandardPBEByteEncryptor();
+  char[] key=key();
+  try {
+    encryptor.setPasswordCharArray(key);
+    return Base64.encodeBase64(encryptor.encrypt(toBytes(passwd)));
+  }
+  finally {
+    scramble(key);
+  }
+}

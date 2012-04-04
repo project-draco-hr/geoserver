@@ -1,0 +1,37 @@
+{
+  if (copyPossible(service,store) == false)   throw new IOException("Cannot copy user/group data, passwords encoders are not compatible");
+  GeoServerPasswordEncoder storeEncoder=null;
+  GeoServerPasswordEncoder serviceEncoder=service.getSecurityManager().loadPasswordEncoder(service.getPasswordEncoderName());
+  serviceEncoder.initializeFor(service);
+  if (serviceEncoder.getEncodingType() == PasswordEncodingType.PLAIN || serviceEncoder.getEncodingType() == PasswordEncodingType.ENCRYPT) {
+    storeEncoder=service.getSecurityManager().loadPasswordEncoder(store.getPasswordEncoderName());
+    storeEncoder.initializeFor(store);
+  }
+  store.clear();
+  Map<String,GeoServerUser> newUserDict=new HashMap<String,GeoServerUser>();
+  Map<String,GeoServerUserGroup> newGroupDict=new HashMap<String,GeoServerUserGroup>();
+  for (  GeoServerUser user : service.getUsers()) {
+    GeoServerUser newUser=store.createUserObject(user.getUsername(),user.getPassword(),user.isEnabled());
+    if (storeEncoder != null) {
+      String plainText=serviceEncoder.decode(user.getPassword());
+      newUser.setPassword(storeEncoder.encodePassword(plainText,null));
+    }
+    for (    Object key : user.getProperties().keySet()) {
+      newUser.getProperties().put(key,user.getProperties().get(key));
+    }
+    store.addUser(newUser);
+    newUserDict.put(newUser.getUsername(),newUser);
+  }
+  for (  GeoServerUserGroup group : service.getUserGroups()) {
+    GeoServerUserGroup newGroup=store.createGroupObject(group.getGroupname(),group.isEnabled());
+    store.addGroup(newGroup);
+    newGroupDict.put(newGroup.getGroupname(),newGroup);
+  }
+  for (  GeoServerUserGroup group : service.getUserGroups()) {
+    GeoServerUserGroup newGroup=newGroupDict.get(group.getGroupname());
+    for (    GeoServerUser member : service.getUsersForGroup(group)) {
+      GeoServerUser newUser=newUserDict.get(member.getUsername());
+      store.associateUserToGroup(newUser,newGroup);
+    }
+  }
+}

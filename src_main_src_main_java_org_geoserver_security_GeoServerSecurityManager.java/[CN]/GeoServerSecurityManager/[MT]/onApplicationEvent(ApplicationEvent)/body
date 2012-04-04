@@ -1,0 +1,32 @@
+{
+  if (event instanceof ContextLoadedEvent) {
+    try {
+      migrateIfNecessary();
+    }
+ catch (    Exception e1) {
+      throw new RuntimeException(e1);
+    }
+    KeyStoreProvider keyStoreProvider=getKeyStoreProvider();
+    try {
+      keyStoreProvider.commitMasterPasswordChange();
+      init();
+    }
+ catch (    Exception e) {
+      throw new BeanCreationException("Error occured reading security configuration",e);
+    }
+    try {
+      afterPropertiesSetInternal();
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  if (event instanceof ContextClosedEvent) {
+    try {
+      destroy();
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"Error destroying security manager",e);
+    }
+  }
+}

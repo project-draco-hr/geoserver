@@ -1,0 +1,24 @@
+{
+  if (this.canCreateStore() == false)   return;
+  if (config.isCreatingTables() == false)   return;
+  if (tablesAlreadyCreated())   return;
+  Connection con=null;
+  PreparedStatement ps=null;
+  try {
+    con=datasource.getConnection();
+    if (con.getAutoCommit() == true)     con.setAutoCommit(false);
+    con=getConnection();
+    for (    String stmt : getOrderedNamesForCreate()) {
+      ps=getDDLStatement(stmt,con);
+      ps.execute();
+      ps.close();
+    }
+    con.commit();
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,null);
+  }
+}

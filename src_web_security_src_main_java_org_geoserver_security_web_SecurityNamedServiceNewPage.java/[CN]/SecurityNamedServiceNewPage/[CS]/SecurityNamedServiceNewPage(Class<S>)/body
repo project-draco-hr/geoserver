@@ -1,0 +1,33 @@
+{
+  add(new Label("title1",createTitleModel(serviceClass).getString()));
+  add(new Label("title2",createTitleModel(serviceClass).getString()));
+  List<SecurityNamedServicePanelInfo> panelInfos=lookupPanelInfos(serviceClass);
+  AjaxLinkGroup<SecurityNamedServicePanelInfo> serviceLinks=new AjaxLinkGroup<SecurityNamedServicePanelInfo>("services",panelInfos){
+    @Override protected void populateItem(    ListItem<SecurityNamedServicePanelInfo> item){
+      SecurityNamedServicePanelInfo panelInfo=item.getModelObject();
+      item.add(newLink("link",item.getModel()).add(new Label("title",createShortTitleModel(panelInfo))).setEnabled(item.getIndex() > 0));
+      item.add(new Label("description",createDescriptionModel(panelInfo)));
+    }
+    @Override protected void onClick(    AjaxLink<SecurityNamedServicePanelInfo> link,    AjaxRequestTarget target){
+      updatePanel(link.getModelObject(),target);
+    }
+  }
+;
+  add(new WebMarkupContainer("servicesContainer").add(serviceLinks).setOutputMarkupId(true));
+  add(form=new Form<T>("form"));
+  form.add(panelContainer=new WebMarkupContainer("panel"));
+  panelContainer.setOutputMarkupId(true);
+  form.add(new SubmitLink("save",form){
+    @Override public void onSubmit(){
+      handleSubmit(getForm());
+    }
+  }
+);
+  form.add(new Link("cancel"){
+    @Override public void onClick(){
+      doReturn();
+    }
+  }
+);
+  updatePanel(panelInfos.get(0),null);
+}

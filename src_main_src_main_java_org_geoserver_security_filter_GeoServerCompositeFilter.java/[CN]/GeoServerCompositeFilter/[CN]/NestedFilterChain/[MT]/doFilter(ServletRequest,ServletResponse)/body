@@ -1,0 +1,24 @@
+{
+  if (GeoServerCompositeFilter.this instanceof AuthenticationCachingFilter && currentPosition == 0) {
+    String cacheKey=authenticateFromCache((AuthenticationCachingFilter)GeoServerCompositeFilter.this,(HttpServletRequest)request);
+    if (cacheKey != null)     request.setAttribute(CACHE_KEY_ATTRIBUTE,cacheKey);
+  }
+  if (nestedFilters == null || currentPosition == nestedFilters.size()) {
+    Authentication postAuthentication=SecurityContextHolder.getContext().getAuthentication();
+    String cacheKey=(String)request.getAttribute(CACHE_KEY_ATTRIBUTE);
+    if (postAuthentication != null && cacheKey != null) {
+      Integer idleSecs=(Integer)request.getAttribute(CACHE_KEY_IDLE_SECS);
+      Integer liveSecs=(Integer)request.getAttribute(CACHE_KEY_LIVE_SECS);
+      getSecurityManager().getAuthenticationCache().put(getName(),cacheKey,postAuthentication,idleSecs,liveSecs);
+    }
+    request.setAttribute(CACHE_KEY_ATTRIBUTE,null);
+    request.setAttribute(CACHE_KEY_IDLE_SECS,null);
+    request.setAttribute(CACHE_KEY_LIVE_SECS,null);
+    originalChain.doFilter(request,response);
+  }
+ else {
+    currentPosition++;
+    Filter nextFilter=nestedFilters.get(currentPosition - 1);
+    nextFilter.doFilter(request,response,this);
+  }
+}

@@ -1,0 +1,21 @@
+{
+  PasswordPolicyConfig config=loadConfig(name);
+  if (config == null) {
+    return null;
+  }
+  PasswordValidator validator=null;
+  for (  GeoServerSecurityProvider p : lookupSecurityProviders()) {
+    if (p.getPasswordValidatorClass() == null) {
+      continue;
+    }
+    if (p.getPasswordValidatorClass().getName().equals(config.getClassName())) {
+      validator=p.createPasswordValidator(config,GeoServerSecurityManager.this);
+      break;
+    }
+  }
+  if (validator == null) {
+    throw new IOException("No password policy matching config: " + config);
+  }
+  validator.setConfig(config);
+  return validator;
+}

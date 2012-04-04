@@ -1,0 +1,17 @@
+{
+  super.initializeFromConfig(config);
+  ExceptionTranslationFilterConfig authConfig=(ExceptionTranslationFilterConfig)config;
+  DynamicAuthenticationEntryPoint ep=new DynamicAuthenticationEntryPoint();
+  if (StringUtils.hasLength(authConfig.getAuthenticationFilterName())) {
+    GeoServerSecurityFilter authFilter=getSecurityManager().loadFilter(authConfig.getAuthenticationFilterName());
+    ep.setEntryEntryPoint(authFilter.getAuthenticationEntryPoint());
+  }
+  ExceptionTranslationFilter filter=new ExceptionTranslationFilter(ep);
+  if (StringUtils.hasLength(authConfig.getAccessDeniedErrorPage())) {
+    AccessDeniedHandlerImpl accessDeniedHandler=new AccessDeniedHandlerImpl();
+    accessDeniedHandler.setErrorPage(authConfig.getAccessDeniedErrorPage());
+    filter.setAccessDeniedHandler(accessDeniedHandler);
+  }
+  filter.afterPropertiesSet();
+  getNestedFilters().add(filter);
+}

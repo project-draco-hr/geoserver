@@ -1,0 +1,21 @@
+{
+  File pwDigestFile=new File(getSecurityRoot(),MASTER_PASSWD_DIGEST_FILENAME);
+  if (pwDigestFile.exists()) {
+    FileInputStream fin=new FileInputStream(pwDigestFile);
+    try {
+      return IOUtils.toString(fin);
+    }
+  finally {
+      fin.close();
+    }
+  }
+ else {
+    char[] masterPasswd=getMasterPassword();
+    try {
+      return computeAndSaveMasterPasswordDigest(masterPasswd);
+    }
+  finally {
+      disposePassword(masterPasswd);
+    }
+  }
+}

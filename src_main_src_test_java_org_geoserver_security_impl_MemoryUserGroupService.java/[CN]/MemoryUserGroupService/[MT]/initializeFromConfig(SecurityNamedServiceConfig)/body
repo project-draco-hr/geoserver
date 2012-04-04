@@ -1,0 +1,17 @@
+{
+  this.name=config.getName();
+  SecurityUserGroupServiceConfig ugConfig=(SecurityUserGroupServiceConfig)config;
+  passwordEncoderName=ugConfig.getPasswordEncoderName();
+  GeoServerPasswordEncoder enc=getSecurityManager().loadPasswordEncoder(passwordEncoderName);
+  if (enc.getEncodingType() == PasswordEncodingType.ENCRYPT) {
+    KeyStoreProvider prov=getSecurityManager().getKeyStoreProvider();
+    String alias=prov.aliasForGroupService(name);
+    if (prov.containsAlias(alias) == false) {
+      prov.setUserGroupKey(name,getSecurityManager().getRandomPassworddProvider().getRandomPasswordWithDefaultLength());
+      prov.storeKeyStore();
+    }
+  }
+  enc.initializeFor(this);
+  passwordValidatorName=ugConfig.getPasswordPolicyName();
+  toBeEncrypted=(((MemoryUserGroupServiceConfigImpl)config).getToBeEncrypted());
+}

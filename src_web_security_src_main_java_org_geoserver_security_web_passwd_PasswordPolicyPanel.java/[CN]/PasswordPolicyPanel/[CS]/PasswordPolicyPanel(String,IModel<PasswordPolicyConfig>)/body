@@ -1,0 +1,21 @@
+{
+  super(id,model);
+  PasswordPolicyConfig pwPolicy=model.getObject();
+  add(new CheckBox("digitRequired"));
+  add(new CheckBox("uppercaseRequired"));
+  add(new CheckBox("lowercaseRequired"));
+  add(new TextField<Integer>("minLength"));
+  boolean unlimited=pwPolicy.getMaxLength() == -1;
+  add(new AjaxCheckBox("unlimitedMaxLength",new Model(unlimited)){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      Boolean value=getModelObject();
+      maxLengthPanel.setVisible(!value);
+      if (value) {
+        maxLengthPanel.setUnlimited();
+      }
+      target.addComponent(maxLengthPanel.getParent());
+    }
+  }
+);
+  add(maxLengthPanel=(MaxLengthPanel)new MaxLengthPanel("maxLength").setVisible(!unlimited));
+}

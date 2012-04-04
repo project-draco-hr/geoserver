@@ -1,0 +1,27 @@
+{
+  super(id);
+  this.serviceName=serviceName;
+  GroupListProvider provider=new GroupListProvider(serviceName);
+  add(groups=new GeoServerTablePanel<GeoServerUserGroup>("table",provider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<GeoServerUserGroup> property){
+      if (property == GroupListProvider.GROUPNAME) {
+        return editGroupLink(id,itemModel,property);
+      }
+ else       if (property == GroupListProvider.ENABLED) {
+        if ((Boolean)property.getModel(itemModel).getObject())         return new Icon(id,CatalogIconFactory.ENABLED_ICON);
+ else         return new Label(id,"");
+      }
+      throw new RuntimeException("Uknown property " + property);
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      removal.setEnabled(groups.getSelection().size() > 0);
+      target.addComponent(removal);
+      removalWithRoles.setEnabled(groups.getSelection().size() > 0);
+      target.addComponent(removalWithRoles);
+    }
+  }
+);
+  groups.setOutputMarkupId(true);
+  add(dialog=new GeoServerDialog("dialog"));
+  headerComponents();
+}

@@ -1,0 +1,38 @@
+{
+  LDAPSecurityServiceConfig ldapConfig=(LDAPSecurityServiceConfig)config;
+  DefaultSpringSecurityContextSource ldapContext=new DefaultSpringSecurityContextSource(ldapConfig.getServerURL());
+  ldapContext.setCacheEnvironmentProperties(false);
+  ldapContext.setAuthenticationSource(new SpringSecurityAuthenticationSource());
+  if (ldapConfig.isUseTLS()) {
+    ldapContext.setPooled(false);
+    DefaultTlsDirContextAuthenticationStrategy tls=new DefaultTlsDirContextAuthenticationStrategy();
+    tls.setHostnameVerifier(new HostnameVerifier(){
+      @Override public boolean verify(      String hostname,      SSLSession session){
+        return true;
+      }
+    }
+);
+    ldapContext.setAuthenticationStrategy(tls);
+  }
+  BindAuthenticator authenticator=new BindAuthenticator(ldapContext);
+  authenticator.setUserDnPatterns(new String[]{ldapConfig.getUserDnPattern()});
+  LdapAuthoritiesPopulator authPopulator=null;
+  String ugServiceName=ldapConfig.getUserGroupServiceName();
+  if (ugServiceName != null) {
+    GeoServerUserGroupService ugService;
+    try {
+      ugService=securityManager.loadUserGroupService(ugServiceName);
+      authPopulator=new UserDetailsServiceLdapAuthoritiesPopulator(ugService);
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.SEVERE,String.format("Unable to load user group service '%s', " + "will use LDAP server for calculating roles",ugServiceName),e);
+    }
+  }
+  if (authPopulator == null) {
+    authPopulator=new DefaultLdapAuthoritiesPopulator(ldapContext,ldapConfig.getGroupSearchBase());
+    if (ldapConfig.getGroupSearchFilter() != null) {
+      ((DefaultLdapAuthoritiesPopulator)authPopulator).setGroupSearchFilter(ldapConfig.getGroupSearchFilter());
+    }
+  }
+  return new LDAPAuthenticationProvider(new LdapAuthenticationProvider(authenticator,authPopulator));
+}

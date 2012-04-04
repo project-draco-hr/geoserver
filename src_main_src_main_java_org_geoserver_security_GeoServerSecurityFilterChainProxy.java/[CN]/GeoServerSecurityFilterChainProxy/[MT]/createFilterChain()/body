@@ -1,0 +1,40 @@
+{
+  if (!securityManager.isInitialized()) {
+  }
+  SecurityManagerConfig config=securityManager.getSecurityConfig();
+  GeoServerSecurityFilterChain filterChain=config.getFilterChain();
+  Map<RequestMatcher,List<Filter>> filterChainMap=new LinkedHashMap<RequestMatcher,List<Filter>>();
+  for (  String pattern : filterChain.getAntPatterns()) {
+    List<Filter> filters=new ArrayList<Filter>();
+    for (    String filterName : filterChain.getFilterMap().get(pattern)) {
+      try {
+        Filter filter=lookupFilter(filterName);
+        if (filter == null) {
+          throw new NullPointerException("No filter named " + filterName + " could "+ "be found");
+        }
+        if (filter instanceof GeoServerAnonymousAuthenticationFilter && !config.isAnonymousAuth()) {
+          continue;
+        }
+        filters.add(filter);
+      }
+ catch (      Exception ex) {
+        LOGGER.log(Level.SEVERE,"Error loading filter: " + filterName,ex);
+      }
+    }
+    for (    String p : pattern.split(",")) {
+      filterChainMap.put(new AntPathRequestMatcher(p),filters);
+    }
+  }
+synchronized (this) {
+    if (chainsInitialized) {
+      for (      SecurityFilterChain chain : getFilterChains()) {
+        for (        Filter filter : chain.getFilters()) {
+          filter.destroy();
+        }
+      }
+    }
+    securityManager.getAuthenticationCache().removeAll();
+    setFilterChainMap(filterChainMap);
+    chainsInitialized=true;
+  }
+}

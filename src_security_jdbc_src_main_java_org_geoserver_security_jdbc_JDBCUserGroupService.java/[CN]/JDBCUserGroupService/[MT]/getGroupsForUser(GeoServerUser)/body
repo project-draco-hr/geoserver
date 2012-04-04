@@ -1,0 +1,28 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  Collection<GeoServerUserGroup> tmp=new ArrayList<GeoServerUserGroup>();
+  try {
+    con=getConnection();
+    ps=getDMLStatement("groupmembers.groupsForUser",con);
+    ps.setString(1,user.getUsername());
+    rs=ps.executeQuery();
+    while (rs.next()) {
+      String groupname=rs.getString(1);
+      String enabledString=rs.getString(2);
+      boolean isEnabled=convertFromString(enabledString);
+      GeoServerUserGroup g=createGroupObject(groupname,isEnabled);
+      tmp.add(g);
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,rs);
+  }
+  TreeSet<GeoServerUserGroup> groups=new TreeSet<GeoServerUserGroup>();
+  groups.addAll(tmp);
+  return Collections.unmodifiableSortedSet(groups);
+}

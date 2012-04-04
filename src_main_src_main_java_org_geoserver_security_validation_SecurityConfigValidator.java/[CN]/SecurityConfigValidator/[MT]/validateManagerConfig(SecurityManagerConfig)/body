@@ -1,0 +1,48 @@
+{
+  String encrypterName=config.getConfigPasswordEncrypterName();
+  if (isNotEmpty(encrypterName) == false) {
+    throw createSecurityException(SEC_ERR_07);
+  }
+  GeoServerPasswordEncoder encoder=null;
+  try {
+    encoder=manager.loadPasswordEncoder(config.getConfigPasswordEncrypterName());
+  }
+ catch (  NoSuchBeanDefinitionException ex) {
+    throw createSecurityException(SEC_ERR_01,encrypterName);
+  }
+  if (encoder == null) {
+    throw createSecurityException(SEC_ERR_01,encrypterName);
+  }
+  if (!encoder.isReversible()) {
+    throw createSecurityException(SEC_ERR_01,encrypterName);
+  }
+  if (!manager.isStrongEncryptionAvailable()) {
+    if (encoder != null && encoder.isAvailableWithoutStrongCryptogaphy() == false) {
+      throw createSecurityException(SEC_ERR_05);
+    }
+  }
+  String roleServiceName=config.getRoleServiceName();
+  if (roleServiceName == null)   roleServiceName="";
+  try {
+    if (manager.listRoleServices().contains(roleServiceName) == false)     throw createSecurityException(SEC_ERR_02,roleServiceName);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  SortedSet<String> authProviders=null;
+  try {
+    authProviders=manager.listAuthenticationProviders();
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  for (  String authProvName : config.getAuthProviderNames()) {
+    if (authProviders.contains(authProvName) == false)     throw createSecurityException(SEC_ERR_03,authProvName);
+  }
+  GeoServerSecurityFilterChain chain=config.getFilterChain();
+  Set<String> keys=chain.getFilterMap().keySet();
+  if (keys.size() != chain.getAntPatterns().size())   throw createSecurityException(SecurityConfigException.FILTER_CHAIN_CONFIG_ERROR);
+  for (  String pattern : chain.getAntPatterns()) {
+    if (keys.contains(pattern) == false)     throw createSecurityException(SecurityConfigException.FILTER_CHAIN_CONFIG_ERROR);
+  }
+}

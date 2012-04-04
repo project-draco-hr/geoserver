@@ -1,0 +1,36 @@
+{
+  super.initializeFromConfig(config);
+  try {
+    digest=MessageDigest.getInstance("MD5");
+  }
+ catch (  NoSuchAlgorithmException e) {
+    throw new IllegalStateException("No MD5 algorithm available!");
+  }
+  UsernamePasswordAuthenticationFilterConfig upConfig=(UsernamePasswordAuthenticationFilterConfig)config;
+  aep=new LoginUrlAuthenticationEntryPoint(URL_LOGIN_FORM);
+  aep.setForceHttps(false);
+  try {
+    aep.afterPropertiesSet();
+  }
+ catch (  Exception e2) {
+    throw new IOException(e2);
+  }
+  RememberMeServices rms=securityManager.getRememberMeService();
+  UsernamePasswordAuthenticationFilter filter=new UsernamePasswordAuthenticationFilter();
+  filter.setPasswordParameter(upConfig.getPasswordParameterName());
+  filter.setUsernameParameter(upConfig.getUsernameParameterName());
+  filter.setAuthenticationManager(getSecurityManager());
+  filter.setRememberMeServices(rms);
+  GeoServerWebAuthenticationDetailsSource s=new GeoServerWebAuthenticationDetailsSource();
+  filter.setAuthenticationDetailsSource(s);
+  filter.setAllowSessionCreation(false);
+  filter.setFilterProcessesUrl(URL_FOR_LOGIN);
+  SimpleUrlAuthenticationSuccessHandler successHandler=new SimpleUrlAuthenticationSuccessHandler();
+  successHandler.setDefaultTargetUrl(URL_LOGIN_SUCCCESS);
+  filter.setAuthenticationSuccessHandler(successHandler);
+  SimpleUrlAuthenticationFailureHandler failureHandler=new SimpleUrlAuthenticationFailureHandler();
+  failureHandler.setDefaultFailureUrl(URL_LOGIN_FAILURE);
+  filter.setAuthenticationFailureHandler(failureHandler);
+  filter.afterPropertiesSet();
+  getNestedFilters().add(filter);
+}

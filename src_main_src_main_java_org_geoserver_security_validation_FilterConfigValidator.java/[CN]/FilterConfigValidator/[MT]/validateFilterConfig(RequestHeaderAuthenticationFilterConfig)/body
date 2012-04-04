@@ -1,0 +1,17 @@
+{
+  if (isNotEmpty(config.getPrincipalHeaderAttribute()) == false)   throw createFilterException(FilterConfigException.PRINCIPAL_HEADER_ATTRIBUTE_NEEDED);
+  if (config.getRoleSource() == null)   throw createFilterException(FilterConfigException.ROLE_SOURCE_NEEDED);
+  if (config.getRoleSource().equals(RequestHeaderAuthenticationFilterConfig.RoleSource.RoleService))   checkExistingRoleService(config.getRoleServiceName());
+  if (config.getRoleSource().equals(RequestHeaderAuthenticationFilterConfig.RoleSource.UserGroupService))   checkExistingUGService(config.getUserGroupServiceName());
+  if (config.getRoleSource().equals(RequestHeaderAuthenticationFilterConfig.RoleSource.Header)) {
+    if (isNotEmpty(config.getRolesHeaderAttribute()) == false)     throw createFilterException(FilterConfigException.ROLES_HEADER_ATTRIBUTE_NEEDED);
+    if (isNotEmpty(config.getRoleConverterName())) {
+      try {
+        GeoServerExtensions.bean(config.getRoleConverterName());
+      }
+ catch (      NoSuchBeanDefinitionException ex) {
+        throw createFilterException(FilterConfigException.UNKNOWN_ROLE_CONVERTER,config.getRoleConverterName());
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  initializeForXML();
+  tester.startPage(page=new EditServiceAccessRulePage(getRule("wms.GetMap")));
+  tester.assertRenderedPage(EditServiceAccessRulePage.class);
+  tester.assertModelValue("form:service","wms");
+  tester.assertModelValue("form:method","GetMap");
+  tester.assertModelValue("form:roles:anyRole",Boolean.FALSE);
+  tester.assertComponent("form:roles:palette:recorder",Recorder.class);
+  FormTester form=tester.newFormTester("form");
+  form.setValue("roles:anyRole",true);
+  form.submit("roles:addRole");
+  tester.assertRenderedPage(NewRolePage.class);
+  tester.clickLink("form:cancel");
+  tester.assertRenderedPage(EditServiceAccessRulePage.class);
+  form=tester.newFormTester("form");
+  form.submit("save");
+  tester.assertErrorMessages(new String[0]);
+  tester.assertRenderedPage(ServiceAccessRulePage.class);
+  ServiceAccessRule rule=getRule("wms.GetMap");
+  assertNotNull(rule);
+  assertEquals(1,rule.getRoles().size());
+  assertEquals(GeoServerRole.ANY_ROLE,rule.getRoles().iterator().next());
+}

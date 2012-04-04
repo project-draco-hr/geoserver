@@ -1,0 +1,20 @@
+{
+  super.initializeFromConfig(config);
+  SecurityInterceptorFilterConfig siConfig=(SecurityInterceptorFilterConfig)config;
+  FilterSecurityInterceptor filter=new FilterSecurityInterceptor();
+  filter.setAuthenticationManager(getSecurityManager());
+  List<AccessDecisionVoter> voters=new ArrayList<AccessDecisionVoter>();
+  voters.add(new RoleVoter());
+  voters.add(new AuthenticatedVoter());
+  AffirmativeBased accessDecisionManager=new AffirmativeBased(voters);
+  accessDecisionManager.setAllowIfAllAbstainDecisions(siConfig.isAllowIfAllAbstainDecisions());
+  filter.setAccessDecisionManager(accessDecisionManager);
+  filter.setSecurityMetadataSource((FilterInvocationSecurityMetadataSource)GeoServerExtensions.bean(siConfig.getSecurityMetadataSource()));
+  try {
+    filter.afterPropertiesSet();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException();
+  }
+  getNestedFilters().add(filter);
+}

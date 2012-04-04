@@ -1,0 +1,139 @@
+{
+  super.testRoleConfig();
+  JDBCRoleServiceConfig config=(JDBCRoleServiceConfig)getRoleConfig("jdbc",JDBCRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority());
+  config.setDriverClassName("a.b.c");
+  config.setUserName("user");
+  config.setConnectURL("jdbc:connect");
+  config.setPropertyFileNameDDL(JDBCRoleService.DEFAULT_DDL_FILE);
+  config.setPropertyFileNameDML(JDBCRoleService.DEFAULT_DML_FILE);
+  JDBCRoleServiceConfig configJNDI=(JDBCRoleServiceConfig)getRoleConfig("jndi",JDBCRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority());
+  configJNDI.setJndi(true);
+  configJNDI.setJndiName("jndi:connect");
+  configJNDI.setPropertyFileNameDDL(JDBCRoleService.DEFAULT_DDL_FILE);
+  configJNDI.setPropertyFileNameDML(JDBCRoleService.DEFAULT_DML_FILE);
+  boolean fail;
+  fail=false;
+  try {
+    configJNDI.setJndiName("");
+    getSecurityManager().saveRoleService(configJNDI);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_210,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setDriverClassName("");
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_200,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setDriverClassName("a.b.c");
+  fail=false;
+  try {
+    config.setUserName("");
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_201,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setUserName("user");
+  fail=false;
+  try {
+    config.setConnectURL(null);
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_202,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setConnectURL("jdbc:connect");
+  try {
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_203,ex.getErrorId());
+    assertEquals("a.b.c",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setDriverClassName("java.lang.String");
+  config.setPropertyFileNameDDL(null);
+  try {
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    throw new IOException(ex);
+  }
+  config.setPropertyFileNameDML(null);
+  try {
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_212,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setPropertyFileNameDDL(JDBCRoleService.DEFAULT_DDL_FILE);
+  config.setPropertyFileNameDML(JDBCRoleService.DEFAULT_DML_FILE);
+  if (new JdbcSecurityConfigValidator(getSecurityManager()).getTempDir() != null) {
+    String invalidPath="abc" + File.separator + "def.properties";
+    config.setPropertyFileNameDDL(invalidPath);
+    fail=false;
+    try {
+      getSecurityManager().saveRoleService(config);
+    }
+ catch (    SecurityConfigException ex) {
+      assertEquals(SEC_ERR_211,ex.getErrorId());
+      assertEquals(invalidPath,ex.getArgs()[0]);
+      fail=true;
+    }
+    assertTrue(fail);
+  }
+  config.setPropertyFileNameDDL(JDBCRoleService.DEFAULT_DDL_FILE);
+  config.setPropertyFileNameDML(JDBCRoleService.DEFAULT_DML_FILE);
+  if (new JdbcSecurityConfigValidator(getSecurityManager()).getTempDir() != null) {
+    String invalidPath="abc" + File.separator + "def.properties";
+    config.setPropertyFileNameDML(invalidPath);
+    fail=false;
+    try {
+      getSecurityManager().saveRoleService(config);
+    }
+ catch (    SecurityConfigException ex) {
+      assertEquals(SEC_ERR_213,ex.getErrorId());
+      assertEquals(invalidPath,ex.getArgs()[0]);
+      fail=true;
+    }
+    assertTrue(fail);
+  }
+  config.setPropertyFileNameDDL(null);
+  config.setCreatingTables(true);
+  config.setPropertyFileNameDML(JDBCRoleService.DEFAULT_DML_FILE);
+  try {
+    getSecurityManager().saveRoleService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_204,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    fail=true;
+  }
+  assertTrue(fail);
+}

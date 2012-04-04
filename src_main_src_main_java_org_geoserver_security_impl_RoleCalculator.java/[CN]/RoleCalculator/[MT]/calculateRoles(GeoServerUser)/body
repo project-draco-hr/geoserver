@@ -1,0 +1,21 @@
+{
+  Set<GeoServerRole> set1=new HashSet<GeoServerRole>();
+  set1.addAll(getRoleService().getRolesForUser(user.getUsername()));
+  addInheritedRoles(set1);
+  if (getUserGroupService() != null) {
+    for (    GeoServerUserGroup group : getUserGroupService().getGroupsForUser(user)) {
+      if (group.isEnabled())       set1.addAll(calculateRoles(group));
+    }
+  }
+  SortedSet<GeoServerRole> set2=personalizeRoles(user,set1);
+  GeoServerRole adminRole=roleService.getAdminRole();
+  if (adminRole != null) {
+    String adminRoleName=adminRole.getAuthority();
+    if (adminRoleName != null && adminRoleName.length() > 0 && (adminRoleName.equals(GeoServerRole.ADMIN_ROLE.getAuthority()) == false)) {
+      if (set2.contains(adminRole)) {
+        set2.add(GeoServerRole.ADMIN_ROLE);
+      }
+    }
+  }
+  return set2;
+}

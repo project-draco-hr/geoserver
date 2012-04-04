@@ -1,0 +1,13 @@
+{
+  validateRemoveNamedService(PasswordValidator.class,config);
+  if (PasswordValidator.MASTERPASSWORD_NAME.equals(config.getName()))   throw createSecurityException(SEC_ERR_42);
+  try {
+    for (    String name : manager.listUserGroupServices()) {
+      SecurityUserGroupServiceConfig ugConfig=manager.loadUserGroupServiceConfig(name);
+      if (ugConfig.getPasswordPolicyName().equals(config.getName()))       throw createSecurityException(SEC_ERR_34,config.getName(),ugConfig.getName());
+    }
+  }
+ catch (  IOException ex) {
+    throw new RuntimeException(ex);
+  }
+}

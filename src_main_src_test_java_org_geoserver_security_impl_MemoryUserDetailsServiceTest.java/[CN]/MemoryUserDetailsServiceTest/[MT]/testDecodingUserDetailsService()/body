@@ -1,0 +1,13 @@
+{
+  GeoServerUserGroupService service=createUserGroupService("test");
+  assertTrue(DecodingUserDetailsService.canBeUsedFor(service));
+  DecodingUserDetailsService decService=DecodingUserDetailsService.newInstance(service);
+  GeoServerUserGroupStore store=createStore(service);
+  insertValues(store);
+  store.store();
+  String plainpassword="geoserver";
+  UserDetails admin=service.loadUserByUsername(GeoServerUser.AdminName);
+  assertFalse(plainpassword.equals(admin.getPassword()));
+  UserDetails admin2=decService.loadUserByUsername(GeoServerUser.AdminName);
+  assertTrue(plainpassword.equals(admin2.getPassword()));
+}

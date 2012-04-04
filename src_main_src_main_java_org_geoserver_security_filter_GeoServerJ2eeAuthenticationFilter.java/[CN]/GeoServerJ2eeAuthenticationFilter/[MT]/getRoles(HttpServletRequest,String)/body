@@ -1,0 +1,9 @@
+{
+  Collection<GeoServerRole> roles=new ArrayList<GeoServerRole>();
+  boolean useActiveService=getRoleServiceName() == null || getRoleServiceName().trim().length() == 0;
+  GeoServerRoleService service=useActiveService ? getSecurityManager().getActiveRoleService() : getSecurityManager().loadRoleService(getRoleServiceName());
+  for (  GeoServerRole role : service.getRoles())   if (request.isUserInRole(role.getAuthority()))   roles.add(role);
+  RoleCalculator calc=new RoleCalculator(service);
+  calc.addInheritedRoles(roles);
+  return roles;
+}

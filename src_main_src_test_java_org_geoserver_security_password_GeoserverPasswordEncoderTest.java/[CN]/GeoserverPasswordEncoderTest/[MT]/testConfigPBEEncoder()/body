@@ -1,0 +1,28 @@
+{
+  System.out.println("Strong cryptography enabled: " + getSecurityManager().isStrongEncryptionAvailable());
+  List<String> encoderNames=getConfigPBEEncoderNames();
+  for (  String encoderName : encoderNames) {
+    GeoServerPasswordEncoder encoder=(GeoServerPBEPasswordEncoder)GeoServerExtensions.bean(encoderName);
+    encoder.initialize(getSecurityManager());
+    assertEquals(PasswordEncodingType.ENCRYPT,encoder.getEncodingType());
+    assertTrue(encoder.encodePassword(testPassword,null).startsWith(encoder.getPrefix() + AbstractGeoserverPasswordEncoder.PREFIX_DELIMTER));
+    String enc=encoder.encodePassword(testPassword,null);
+    String enc2=encoder.encodePassword(testPasswordArray,null);
+    assertTrue(encoder.isPasswordValid(enc,testPassword,null));
+    assertTrue(encoder.isPasswordValid(enc,testPasswordArray,null));
+    assertTrue(encoder.isPasswordValid(enc2,testPassword,null));
+    assertTrue(encoder.isPasswordValid(enc2,testPasswordArray,null));
+    assertFalse(encoder.isPasswordValid(enc,"crypt1:blabla",null));
+    assertFalse(encoder.isPasswordValid(enc,"crypt1:blabla".toCharArray(),null));
+    assertFalse(encoder.isPasswordValid(enc2,"crypt1:blabla",null));
+    assertFalse(encoder.isPasswordValid(enc2,"crypt1:blabla".toCharArray(),null));
+    assertEquals(testPassword,encoder.decode(enc));
+    assertTrue(Arrays.equals(testPasswordArray,encoder.decodeToCharArray(enc)));
+    assertEquals(testPassword,encoder.decode(enc2));
+    assertTrue(Arrays.equals(testPasswordArray,encoder.decodeToCharArray(enc2)));
+    enc=encoder.encodePassword("",null);
+    assertTrue(encoder.isPasswordValid(enc,"",null));
+    enc2=encoder.encodePassword(emptyArray,null);
+    assertTrue(encoder.isPasswordValid(enc,emptyArray,null));
+  }
+}

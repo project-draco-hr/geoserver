@@ -1,0 +1,21 @@
+{
+  RoleHierarchyHelper helper=new RoleHierarchyHelper(getParentMappings());
+  if (helper.isValidParent(role.getAuthority(),parentRole == null ? null : parentRole.getAuthority()) == false)   throw new IOException(parentRole.getAuthority() + " is not a valid parent for " + role.getAuthority());
+  Connection con=null;
+  PreparedStatement ps=null;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("roles.parentUpdate",con);
+    if (parentRole == null)     ps.setNull(1,Types.VARCHAR);
+ else     ps.setString(1,parentRole.getAuthority());
+    ps.setString(2,role.getAuthority());
+    ps.execute();
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,null);
+  }
+  setModified(true);
+}

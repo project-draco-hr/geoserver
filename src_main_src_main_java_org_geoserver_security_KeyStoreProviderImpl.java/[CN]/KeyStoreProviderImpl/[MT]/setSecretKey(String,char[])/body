@@ -1,0 +1,15 @@
+{
+  assertActivatedKeyStore();
+  SecretKey mySecretKey=new SecretKeySpec(toBytes(key),"PBE");
+  KeyStore.SecretKeyEntry skEntry=new KeyStore.SecretKeyEntry(mySecretKey);
+  char[] passwd=securityManager.getMasterPassword();
+  try {
+    ks.setEntry(alias,skEntry,new KeyStore.PasswordProtection(passwd));
+  }
+ catch (  KeyStoreException e) {
+    throw new IOException(e);
+  }
+ finally {
+    securityManager.disposePassword(passwd);
+  }
+}

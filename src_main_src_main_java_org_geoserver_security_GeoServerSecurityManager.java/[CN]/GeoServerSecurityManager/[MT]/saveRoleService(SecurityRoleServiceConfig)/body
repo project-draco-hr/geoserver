@@ -1,0 +1,17 @@
+{
+  SecurityConfigValidator validator=SecurityConfigValidator.getConfigurationValiator(GeoServerRoleService.class,config.getClassName());
+  if (config.getId() == null) {
+    config.initBeforeSave();
+    validator.validateAddRoleService(config);
+  }
+ else {
+    validator.validateModifiedRoleService(config,roleServiceHelper.loadConfig(config.getName()));
+  }
+  roleServiceHelper.saveConfig(config);
+  roleServices.remove(config.getName());
+  if (activeRoleService != null && config.getName().equals(activeRoleService.getName())) {
+synchronized (activeRoleService) {
+      activeRoleService.initializeFromConfig(config);
+    }
+  }
+}

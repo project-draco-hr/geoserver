@@ -1,0 +1,140 @@
+{
+  boolean failed;
+  RoleStoreValidationWrapper store=createStore("test",GeoServerRole.ADMIN_ROLE.getAuthority());
+  failed=false;
+  try {
+    store.addRole(store.createRoleObject(""));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_01);
+    failed=true;
+  }
+  assertTrue(failed);
+  store.addRole(store.createRoleObject("role1"));
+  assertEquals(1,store.getRoles().size());
+  assertEquals(1,store.getRoleCount());
+  GeoServerRole role1=store.getRoleByName("role1");
+  failed=false;
+  try {
+    store.addRole(role1);
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_03,"role1");
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.updateRole(store.createRoleObject("xxx"));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_02,"xxx");
+    failed=true;
+  }
+  assertTrue(failed);
+  store.addRole(store.createRoleObject("parent1"));
+  GeoServerRole parent1=store.getRoleByName("parent1");
+  assertNotNull(parent1);
+  failed=false;
+  try {
+    store.setParentRole(role1,store.createRoleObject("xxx"));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_02,"xxx");
+    failed=true;
+  }
+  assertTrue(failed);
+  store.setParentRole(role1,parent1);
+  store.setParentRole(role1,null);
+  failed=false;
+  try {
+    store.associateRoleToGroup(role1,"");
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_05);
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.disAssociateRoleFromGroup(role1,"");
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_05);
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.associateRoleToUser(role1,"");
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_04);
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.disAssociateRoleFromUser(role1,"");
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_04);
+    failed=true;
+  }
+  assertTrue(failed);
+  store.associateRoleToGroup(role1,"group1");
+  store.associateRoleToUser(role1,"user1");
+  failed=false;
+  try {
+    store.getRolesForUser(null);
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_04);
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.getRolesForGroup(null);
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_05);
+    failed=true;
+  }
+  assertTrue(failed);
+  assertEquals(1,store.getRolesForGroup("group1").size());
+  assertEquals(1,store.getRolesForUser("user1").size());
+  store.disAssociateRoleFromGroup(role1,"group1");
+  store.disAssociateRoleFromUser(role1,"user1");
+  DataAccessRuleDAO dao=DataAccessRuleDAO.get();
+  DataAccessRule newRule=new DataAccessRule();
+  newRule.setAccessMode(AccessMode.READ);
+  newRule.setWorkspace(DataAccessRule.ANY);
+  newRule.setLayer(DataAccessRule.ANY);
+  newRule.getRoles().add(role1.getAuthority());
+  dao.addRule(newRule);
+  dao.storeRules();
+  RoleStoreValidationWrapper store2=new RoleStoreValidationWrapper((GeoServerRoleStore)store.getWrappedService(),true);
+  failed=false;
+  try {
+    store2.removeRole(parent1);
+    store2.removeRole(role1);
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_09,role1.getAuthority(),newRule.getKey());
+    failed=true;
+  }
+  assertTrue(failed);
+  dao.removeRule(newRule);
+  dao.storeRules();
+  store2.removeRole(role1);
+  failed=false;
+  try {
+    store.removeRole(GeoServerRole.ADMIN_ROLE);
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_ERR_08,GeoServerRole.ADMIN_ROLE.getAuthority());
+    failed=true;
+  }
+  assertTrue(failed);
+}

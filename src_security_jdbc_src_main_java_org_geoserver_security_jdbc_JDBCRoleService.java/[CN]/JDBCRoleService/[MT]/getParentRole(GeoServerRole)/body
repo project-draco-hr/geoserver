@@ -1,0 +1,34 @@
+{
+  Connection con=null;
+  PreparedStatement ps=null, ps2=null;
+  ResultSet rs=null, rs2=null;
+  GeoServerRole roleObject=null;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("roles.keyed",con);
+    ps.setString(1,role.getAuthority());
+    rs=ps.executeQuery();
+    if (rs.next()) {
+      String parent=rs.getString(1);
+      if (parent != null) {
+        roleObject=createRoleObject(parent);
+        ps2=getDMLStatement("roleprops.selectForRole",con);
+        ps2.setString(1,parent);
+        rs2=ps2.executeQuery();
+        while (rs2.next()) {
+          String propName=rs2.getString(1);
+          Object propValue=rs2.getObject(2);
+          roleObject.getProperties().put(propName,propValue == null ? "" : propValue);
+        }
+      }
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(null,ps2,rs2);
+    closeFinally(con,ps,rs);
+  }
+  return roleObject;
+}

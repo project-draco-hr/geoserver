@@ -1,0 +1,38 @@
+{
+  if (!(info instanceof DataStoreInfo)) {
+    return Collections.emptySet();
+  }
+  DataAccessFactory factory;
+  try {
+    factory=getCatalog().getResourcePool().getDataStoreFactory((DataStoreInfo)info);
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Error looking up factory for store : " + info + ". Unable to "+ "encrypt connection parameters.",e);
+    return Collections.emptySet();
+  }
+  if (factory == null) {
+    LOGGER.warning("Could not find factory for store : " + info + ". Unable to encrypt "+ "connection parameters.");
+    return Collections.emptySet();
+  }
+  Set<String> toEncrypt=CACHE.get(factory.getClass());
+  if (toEncrypt != null) {
+    return toEncrypt;
+  }
+synchronized (CACHE) {
+    toEncrypt=CACHE.get(info.getClass());
+    if (toEncrypt != null) {
+      return toEncrypt;
+    }
+    toEncrypt=Collections.emptySet();
+    if (info != null && info.getConnectionParameters() != null) {
+      toEncrypt=new HashSet<String>(3);
+      for (      Param p : factory.getParametersInfo()) {
+        if (p.isPassword()) {
+          toEncrypt.add(p.getName());
+        }
+      }
+    }
+    CACHE.put(factory.getClass(),toEncrypt);
+  }
+  return toEncrypt;
+}

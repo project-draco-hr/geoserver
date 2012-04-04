@@ -1,4 +1,9 @@
 {
+  Set<String> encryptionFields=(Set<String>)context.get(ENCRYPTED_FIELDS_KEY);
+  if (encryptionFields == null) {
+    encryptionFields=Collections.emptySet();
+  }
+  GeoServerSecurityManager secMgr=getSecurityManager();
   Map map=(Map)source;
   for (Iterator iterator=map.entrySet().iterator(); iterator.hasNext(); ) {
     Map.Entry entry=(Map.Entry)iterator.next();
@@ -14,6 +19,9 @@
         String str=Converters.convert(value,String.class);
         if (str == null) {
           str=value.toString();
+        }
+        if (encryptionFields.contains(entry.getKey()) && secMgr != null) {
+          str=secMgr.getConfigPasswordEncryptionHelper().encode(str);
         }
         writer.setValue(str);
       }

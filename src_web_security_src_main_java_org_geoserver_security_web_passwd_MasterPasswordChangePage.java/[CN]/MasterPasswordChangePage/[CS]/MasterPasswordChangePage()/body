@@ -1,0 +1,40 @@
+{
+  MasterPasswordConfigModel configModel=new MasterPasswordConfigModel();
+  Form form=new Form("form",new CompoundPropertyModel(configModel));
+  add(form);
+  form.add(new Label("providerName"));
+  MasterPasswordConfig config=configModel.getObject();
+  MasterPasswordProviderConfig providerConfig=null;
+  try {
+    providerConfig=getSecurityManager().loadMasterPassswordProviderConfig(config.getProviderName());
+  }
+ catch (  IOException e) {
+    throw new WicketRuntimeException(e);
+  }
+  form.add(new PasswordTextField("currentPassword",new Model()));
+  form.add(new PasswordTextField("newPassword",new Model()).setEnabled(!providerConfig.isReadOnly()));
+  form.add(new PasswordTextField("newPasswordConfirm",new Model()));
+  form.add(new SubmitLink("save",form){
+    @Override public void onSubmit(){
+      Form f=getForm();
+      String currPasswd=f.get("currentPassword").getDefaultModelObjectAsString();
+      String newPasswd=f.get("newPassword").getDefaultModelObjectAsString();
+      String newPasswdConfirm=f.get("newPasswordConfirm").getDefaultModelObjectAsString();
+      MasterPasswordConfig mpConfig=(MasterPasswordConfig)getForm().getModelObject();
+      try {
+        getSecurityManager().saveMasterPasswordConfig(mpConfig,currPasswd.toCharArray(),newPasswd != null ? newPasswd.toCharArray() : null,newPasswdConfirm.toCharArray());
+        doReturn();
+      }
+ catch (      Exception e) {
+        error(e);
+      }
+    }
+  }
+);
+  form.add(new AjaxLink("cancel"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      doReturn();
+    }
+  }
+);
+}

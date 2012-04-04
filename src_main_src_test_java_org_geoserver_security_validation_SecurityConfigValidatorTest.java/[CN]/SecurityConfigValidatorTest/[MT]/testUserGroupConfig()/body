@@ -1,0 +1,147 @@
+{
+  SecurityUserGroupServiceConfig config=getUGConfig(XMLUserGroupService.DEFAULT_NAME,MemoryUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME);
+  boolean fail;
+  fail=false;
+  try {
+    config.setName("default2");
+    config.setPasswordEncoderName("xxx");
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_04,ex.getErrorId());
+    assertEquals("xxx",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  if (getSecurityManager().isStrongEncryptionAvailable() == false) {
+    config.setPasswordEncoderName(getStrongPBEPasswordEncoder().getName());
+    fail=false;
+    try {
+      getSecurityManager().saveUserGroupService(config);
+    }
+ catch (    SecurityConfigException ex) {
+      assertEquals(SEC_ERR_06,ex.getErrorId());
+      LOGGER.info(ex.getMessage());
+      fail=true;
+    }
+    assertTrue(fail);
+  }
+  fail=false;
+  try {
+    config.setName("other");
+    config.setPasswordEncoderName("xxx");
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_04,ex.getErrorId());
+    assertEquals("xxx",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName("default2");
+    config.setPasswordEncoderName("");
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_32,ex.getErrorId());
+    assertEquals("default2",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName("default3");
+    config.setPasswordEncoderName(null);
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_32,ex.getErrorId());
+    assertEquals("default3",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  config.setPasswordEncoderName(getPlainTextPasswordEncoder().getName());
+  fail=false;
+  try {
+    config.setName("default2");
+    config.setPasswordPolicyName("default2");
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_24b,ex.getErrorId());
+    assertEquals("default2",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName("default3");
+    config.setPasswordPolicyName("default2");
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_24b,ex.getErrorId());
+    assertEquals("default2",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName("default2");
+    config.setPasswordPolicyName("");
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_33,ex.getErrorId());
+    assertEquals("default2",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName("default3");
+    config.setPasswordPolicyName(null);
+    getSecurityManager().saveUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_33,ex.getErrorId());
+    assertEquals("default3",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName(null);
+    getSecurityManager().removeUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_22,ex.getErrorId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+  fail=false;
+  try {
+    config.setName(XMLUserGroupService.DEFAULT_NAME);
+    getSecurityManager().removeUserGroupService(config);
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(SEC_ERR_35,ex.getErrorId());
+    assertEquals(XMLUserGroupService.DEFAULT_NAME,ex.getArgs()[0]);
+    assertEquals(GeoServerAuthenticationProvider.DEFAULT_NAME,ex.getArgs()[1]);
+    LOGGER.info(ex.getMessage());
+    fail=true;
+  }
+  assertTrue(fail);
+}

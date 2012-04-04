@@ -1,0 +1,12 @@
+{
+  DN dn=new DN(format("cn=%s,ou=groups,dc=acme,dc=org",groupname));
+  if (!service.getAdminSession().exists(dn)) {
+    ServerEntry e=service.newEntry(dn);
+    e.add("objectClass","groupOfNames");
+    e.add("cn",groupname);
+    for (    String user : users) {
+      e.add("member",format("uid=%s,ou=people,dc=acme,dc=org",user));
+    }
+    service.getAdminSession().add(e);
+  }
+}

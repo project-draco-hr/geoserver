@@ -1,0 +1,23 @@
+{
+  super(id,new Model());
+  List<ITab> tabs=new ArrayList<ITab>();
+  tabs.add(new AbstractTab(new StringResourceModel("settings",(IModel<?>)null)){
+    @Override public Panel getPanel(    String panelId){
+      return new ContentPanel(panelId,config);
+    }
+  }
+);
+  tabs.addAll(((SecurityNamedServiceTabbedPanel)panel).createTabs(config));
+  try {
+    panel.doLoad(config.getObject());
+  }
+ catch (  final Exception e) {
+    tabs.add(new AbstractTab(new StringResourceModel("error",(IModel<?>)null)){
+      @Override public Panel getPanel(      String panelId){
+        return new ErrorPanel(panelId,e);
+      }
+    }
+);
+  }
+  add(new TabbedPanel("panel",tabs));
+}

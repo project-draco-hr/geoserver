@@ -1,0 +1,25 @@
+{
+  Form form=new Form<Serializable>("form",new CompoundPropertyModel(rule));
+  add(form);
+  form.add(new EmptyRolesValidator());
+  form.add(serviceChoice=new DropDownChoice<String>("service",getServiceNames()));
+  serviceChoice.add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      methodChoice.updateModel();
+      target.addComponent(methodChoice);
+    }
+  }
+);
+  serviceChoice.setRequired(true);
+  form.add(methodChoice=new DropDownChoice<String>("method",new MethodsModel(rule)));
+  methodChoice.setOutputMarkupId(true);
+  methodChoice.setRequired(true);
+  form.add(rolesFormComponent=new RuleRolesFormComponent("roles",new PropertyModel<Collection<String>>(rule,"roles")));
+  form.add(new SubmitLink("save"){
+    @Override public void onSubmit(){
+      onFormSubmit((ServiceAccessRule)getForm().getModelObject());
+    }
+  }
+);
+  form.add(new BookmarkablePageLink("cancel",ServiceAccessRulePage.class));
+}

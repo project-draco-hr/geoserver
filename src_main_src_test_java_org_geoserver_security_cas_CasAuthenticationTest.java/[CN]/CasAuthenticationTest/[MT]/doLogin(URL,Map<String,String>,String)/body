@@ -1,0 +1,21 @@
+{
+  boolean follow=HttpURLConnection.getFollowRedirects();
+  HttpURLConnection.setFollowRedirects(false);
+  HttpURLConnection conn=(HttpURLConnection)siteUrl.openConnection();
+  HttpURLConnection.setFollowRedirects(follow);
+  conn.setRequestMethod("POST");
+  conn.setDoOutput(true);
+  conn.setDoInput(true);
+  conn.setRequestProperty("Cookie",cookie);
+  DataOutputStream out=new DataOutputStream(conn.getOutputStream());
+  StringBuffer buff=new StringBuffer();
+  for (  Entry<String,String> entry : data.entrySet()) {
+    if (buff.length() > 0)     buff.append("&");
+    buff.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(),"utf-8"));
+  }
+  out.writeBytes(buff.toString());
+  out.flush();
+  out.close();
+  if (HttpServletResponse.SC_MOVED_TEMPORARILY == conn.getResponseCode())   return getResponseHeaderValue(conn,"Location");
+ else   return null;
+}
