@@ -3,17 +3,19 @@
     BufferedWriter writer=new BufferedWriter(new FileWriter(propFile));
     writer.write("# Format is authkey=username");
     writer.newLine();
-    if (userDetailsService != null) {
+    if (secMgr != null) {
       writer.write("# Here is an example content based on your users, uncomment to activate");
       writer.newLine();
       writer.write("#" + UUID.randomUUID().toString() + "=admin");
       writer.newLine();
-      List<User> users=userDetailsService.getUsers();
-      if (users.size() > 0) {
-        for (        User user : users) {
-          if (!"admin".equals(user.getUsername())) {
-            writer.write("#" + UUID.randomUUID().toString() + "="+ user.getUsername());
-            writer.newLine();
+      for (      GeoServerUserGroupService ugService : secMgr.loadUserGroupServices()) {
+        Set<GeoServerUser> users=ugService.getUsers();
+        if (users.size() > 0) {
+          for (          GeoServerUser user : users) {
+            if (!"admin".equals(user.getUsername())) {
+              writer.write("#" + UUID.randomUUID().toString() + "="+ user.getUsername());
+              writer.newLine();
+            }
           }
         }
       }
