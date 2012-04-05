@@ -1,5 +1,11 @@
 {
-  if (configurator.isStale())   reloadConfiguration();
+  if (configurator.isStale()) {
+synchronized (configurator) {
+      if (configurator.isStale()) {
+        reloadConfiguration();
+      }
+    }
+  }
   SENTINEL.start();
   if (SENTINEL.isOutermostRequest()) {
     List<FlowController> controllers=this.controllers;
