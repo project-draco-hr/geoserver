@@ -1,28 +1,26 @@
 {
   boolean retval=true;
-  String incomingIp="";
-  String ip=getRemoteAddr(request.getHttpRequest());
-  if (ipAddresses.size() > 0) {
-    for (    String ipAddress : ipAddresses) {
-      if (ipAddress.equals(ip)) {
-        incomingIp=ipAddress;
-        break;
+  final String incomingIp;
+{
+    String ip=getRemoteAddr(request.getHttpRequest());
+    if (null == ip || "".equals(ip)) {
+      incomingIp="";
+    }
+ else {
+      incomingIp=ip;
+    }
+  }
+  TimedBlockingQueue queue=queues.get(incomingIp);
+  if (queue == null) {
+synchronized (queues) {
+      queue=queues.get(incomingIp);
+      if (queue == null) {
+        queue=new TimedBlockingQueue(queueSize,true);
+        queues.put(incomingIp,queue);
       }
     }
   }
-  if (incomingIp.equals("")) {
-    incomingIp=ip;
-  }
-  TimedBlockingQueue queue=null;
-  if (incomingIp != null && !incomingIp.equals("")) {
-    queue=queues.get(incomingIp);
-  }
-  if (queue == null) {
-    queue=new TimedBlockingQueue(queueSize,true);
-    queues.put(incomingIp,queue);
-  }
   QUEUE_ID.set(incomingIp);
-  ipAddresses.add(incomingIp);
   try {
     if (timeout > 0) {
       retval=queue.offer(request,timeout,TimeUnit.MILLISECONDS);
