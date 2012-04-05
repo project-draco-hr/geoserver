@@ -1,0 +1,15 @@
+{
+  if (configFile != null && configFile.isStale()) {
+synchronized (configFile) {
+      if (configFile.isStale()) {
+        this.blackListedAddresses=reloadConfiguration();
+      }
+    }
+  }
+  if (blackListedAddresses.isEmpty()) {
+    return false;
+  }
+  String incomingIp=IpFlowController.getRemoteAddr(httpRequest);
+  boolean blocked=blackListedAddresses.contains(incomingIp);
+  return blocked;
+}
