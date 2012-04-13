@@ -1,6 +1,18 @@
 {
-  CasFormAuthenticationHelper helper=new CasFormAuthenticationHelper(casServerURLPrefix,"success","success");
+  CasFormAuthenticationHelper helper=new CasFormAuthenticationHelper(casServerURLPrefix,"fail","abc");
+  assertFalse(helper.ssoLogin());
+  helper=new CasFormAuthenticationHelper(casServerURLPrefix,"success","success");
   assertTrue(helper.ssoLogin());
+  assertNotNull(helper.getTicketGrantingCookie());
+  LOGGER.info("TGC after login : " + helper.getTicketGrantingCookie());
+  assertTrue(helper.ssoLogout());
+  assertNotNull(helper.getTicketGrantingCookie());
+  LOGGER.info("TGC after logout : " + helper.getTicketGrantingCookie());
+  assertTrue(helper.ssoLogin());
+  assertNotNull(helper.getTicketGrantingCookie());
+  String ticket=helper.getServiceTicket(serviceUrl);
+  assertNotNull(ticket);
+  assertTrue(ticket.startsWith("ST-"));
+  LOGGER.info("ST : " + ticket);
   helper.ssoLogout();
-  helper.ssoLogin(serviceUrl);
 }

@@ -1,0 +1,42 @@
+{
+  InetSocketAddress address=new InetSocketAddress(getProxyCallbackURLPrefix().getPort());
+  HttpsServer httpsServer=HttpsServer.create(address,0);
+  SSLContext sslContext=SSLContext.getInstance("TLS");
+  char[] password="cascas".toCharArray();
+  KeyStore ks=KeyStore.getInstance("JKS");
+  File base=new File(System.getProperty("user.home"),".geoserver");
+  File keystore=new File(base,"cas.jks");
+  FileInputStream fis=new FileInputStream(keystore);
+  ks.load(fis,password);
+  KeyManagerFactory kmf=KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+  kmf.init(ks,password);
+  sslContext.init(kmf.getKeyManagers(),new TrustManager[]{trustManager},null);
+  httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext){
+    public void configure(    HttpsParameters params){
+      try {
+        SSLContext c=SSLContext.getDefault();
+        SSLEngine engine=c.createSSLEngine();
+        params.setNeedClientAuth(false);
+        params.setCipherSuites(engine.getEnabledCipherSuites());
+        params.setProtocols(engine.getEnabledProtocols());
+        SSLParameters defaultSSLParameters=c.getDefaultSSLParameters();
+        params.setSSLParameters(defaultSSLParameters);
+      }
+ catch (      Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+  }
+);
+  httpsServer.createContext("/test",new HttpHandler(){
+    @Override public void handle(    HttpExchange t) throws IOException {
+      LOGGER.info("https server working");
+      t.getRequestBody().close();
+      t.sendResponseHeaders(200,0);
+      t.getResponseBody().close();
+    }
+  }
+);
+  httpsServer.setExecutor(null);
+  return httpsServer;
+}

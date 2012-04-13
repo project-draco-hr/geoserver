@@ -1,0 +1,32 @@
+{
+  CasAuthenticationFilterConfig config=new CasAuthenticationFilterConfig();
+  config.setClassName(GeoServerCasAuthenticationFilter.class.getName());
+  config.setName("testCAS");
+  config.setUrlInCasLogoutPage("blbalba");
+  boolean failed=false;
+  try {
+    getSecurityManager().saveFilter(config);
+  }
+ catch (  CasFilterConfigException ex) {
+    assertEquals(CasFilterConfigException.CAS_URL_IN_LOGOUT_PAGE_MALFORMED,ex.getId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setUrlInCasLogoutPage(null);
+  config.setUserGroupServiceName("unkown");
+  failed=false;
+  try {
+    getSecurityManager().saveFilter(config);
+  }
+ catch (  FilterConfigException ex) {
+    assertEquals(FilterConfigException.UNKNOWN_USER_GROUP_SERVICE,ex.getId());
+    assertEquals("unkown",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setUserGroupServiceName(XMLUserGroupService.DEFAULT_NAME);
+  check((CasAuthenticationProperties)config);
+}

@@ -1,4 +1,29 @@
 {
-  req.setAttribute(GeoServerSecurityFilter.AUTHENTICATION_ENTRY_POINT_HEADER,aep);
-  super.doFilter(req,res,chain);
+  HttpServletRequest httpReq=(HttpServletRequest)req;
+  HttpServletResponse httpRes=(HttpServletResponse)res;
+  String booleanString=httpReq.getParameter(LOGOUT_PARAM);
+  if (StringUtils.hasLength(booleanString)) {
+    Boolean blogout=Boolean.parseBoolean(booleanString);
+    if (blogout) {
+      httpRes.sendRedirect(casLogoutURL);
+      return;
+    }
+  }
+  if (Handler.isLogoutRequest(httpReq)) {
+    Handler.destroySession(httpReq);
+    RememberMeServices rms=securityManager.getRememberMeService();
+    Authentication auth=SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null)     ((LogoutHandler)rms).logout(httpReq,httpRes,auth);
+    return;
+  }
+  if (SecurityContextHolder.getContext().getAuthentication() == null) {
+    doAuthenticate((HttpServletRequest)req,(HttpServletResponse)res);
+    if (SecurityContextHolder.getContext().getAuthentication() == null) {
+      aep.commence(httpReq,httpRes,null);
+    }
+ else {
+      Handler.recordSession(httpReq);
+      successHandler.onAuthenticationSuccess(httpReq,httpRes,SecurityContextHolder.getContext().getAuthentication());
+    }
+  }
 }

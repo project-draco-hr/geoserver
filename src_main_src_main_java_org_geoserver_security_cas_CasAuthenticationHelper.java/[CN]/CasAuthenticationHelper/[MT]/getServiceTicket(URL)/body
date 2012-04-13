@@ -1,0 +1,25 @@
+{
+  if (getTicketGrantingCookie() == null || getTicketGrantingCookie().getValue().isEmpty()) {
+    throw new IOException("na valid TGC ");
+  }
+  URL loginUrl=createURLFromCasURI(GeoServerCasConstants.LOGIN_URI + "?service=" + service.toExternalForm());
+  HttpURLConnection conn=(HttpURLConnection)loginUrl.openConnection();
+  conn.setInstanceFollowRedirects(false);
+  addCasCookies(conn);
+  conn.getInputStream().close();
+  List<String> values=getResponseHeaderValues(conn,"Location");
+  if (values.isEmpty()) {
+    throw new IOException("No redirect received for " + loginUrl);
+  }
+  String redirectURL=values.get(0);
+  String ticket=null;
+  URL rURL=new URL(redirectURL);
+  for (  String kvp : rURL.getQuery().split("&")) {
+    String[] tmp=kvp.split("=");
+    if ("ticket".equalsIgnoreCase((tmp[0]).trim())) {
+      ticket=tmp[1].trim();
+      break;
+    }
+  }
+  return ticket;
+}

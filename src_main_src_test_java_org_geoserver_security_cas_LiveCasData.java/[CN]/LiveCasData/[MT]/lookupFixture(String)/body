@@ -16,14 +16,14 @@
     props.load(new FileInputStream(fixtureFile));
     String tmp=props.getProperty(CAS_SERVER_PROPERTY);
     if (tmp == null)     tmp="";
-    serverURL=new URL(tmp);
+    serverURLPrefix=new URL(tmp);
     loginURL=new URL(tmp + "/login");
     tmp=props.getProperty(CAS_SERVICE_PROPERTY);
     if (tmp == null)     tmp="";
     serviceURL=new URL(tmp);
     tmp=props.getProperty(CAS_PROXYCALLBACK_PROPERTY);
     if (tmp == null)     tmp="";
-    proxyCallbackURL=new URL(tmp);
+    proxyCallbackURLPrefix=new URL(tmp);
   }
  catch (  Exception e) {
     disableTest("Error in fixture file: " + e.getMessage());
@@ -41,6 +41,34 @@
  catch (  Exception ex) {
     disableTest("problem with cas connection: " + ex.getMessage());
     return null;
+  }
+  keyStoreFile=new File(base,"cas.jks");
+  if (keyStoreFile.exists() == false) {
+    disableTest("Keystore not found: " + keyStoreFile.getAbsolutePath());
+    return null;
+  }
+  trustManager=new X509TrustManager(){
+    @Override public X509Certificate[] getAcceptedIssuers(){
+      return null;
+    }
+    @Override public void checkServerTrusted(    X509Certificate[] arg0,    String arg1) throws CertificateException {
+    }
+    @Override public void checkClientTrusted(    X509Certificate[] arg0,    String arg1) throws CertificateException {
+    }
+  }
+;
+  HttpsServer httpsServer=null;
+  try {
+    httpsServer=createSSLServer();
+    httpsServer.start();
+    checkSSLServer();
+  }
+ catch (  Exception ex) {
+    disableTest("problem simulating ssl server: " + ex.getMessage());
+    return null;
+  }
+ finally {
+    if (httpsServer != null)     httpsServer.stop(0);
   }
   return fixtureFile;
 }

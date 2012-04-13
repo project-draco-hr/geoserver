@@ -1,0 +1,33 @@
+{
+  Assertion assertion=getCASAssertion(request);
+  if (assertion == null) {
+    return;
+  }
+  UserDetails details=null;
+  ;
+  String principal=assertion.getPrincipal().getName();
+  try {
+    details=getSecurityManager().loadUserGroupService(userGroupServiceName).loadUserByUsername(principal);
+  }
+ catch (  UsernameNotFoundException ex) {
+    details=new GeoServerUser(principal);
+  }
+catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  if (details.isEnabled() == false)   return;
+  LOGGER.log(Level.FINE,"preAuthenticatedPrincipal = " + assertion.getPrincipal().getName());
+  CasAuthenticationToken result=null;
+  if (GeoServerUser.ROOT_USERNAME.equals(principal)) {
+    details=GeoServerUser.createRoot();
+    result=new CasAuthenticationToken(getName(),details,request.getParameter(GeoServerCasConstants.ARTIFACT_PARAMETER),Collections.singleton(GeoServerRole.ADMIN_ROLE),details,assertion);
+  }
+ else {
+    Collection<GeoServerRole> roles=new ArrayList<GeoServerRole>();
+    for (    GrantedAuthority role : details.getAuthorities())     roles.add((GeoServerRole)role);
+    if (roles.contains(GeoServerRole.AUTHENTICATED_ROLE) == false)     roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+    result=new CasAuthenticationToken(getName(),details,request.getParameter(GeoServerCasConstants.ARTIFACT_PARAMETER),roles,details,assertion);
+  }
+  result.setDetails(casAuthenticationDetailsSource.buildDetails(request));
+  SecurityContextHolder.getContext().setAuthentication(result);
+}

@@ -1,10 +1,10 @@
 {
   if (!secure)   return true;
   if (ticketGrantingCookie == null)   return true;
-  URL logoutUrl=createURLFromCasURI("/logout");
+  URL logoutUrl=createURLFromCasURI(GeoServerCasConstants.LOGOUT_URI);
   HttpURLConnection conn=(HttpURLConnection)logoutUrl.openConnection();
   addCasCookies(conn);
-  boolean result=HttpServletResponse.SC_OK == conn.getResponseCode();
-  if (result)   warningCookie=ticketGrantingCookie=null;
-  return result;
+  conn.getInputStream().close();
+  extractCASCookies(getCookies(conn),conn);
+  return getTicketGrantingCookie() != null && getTicketGrantingCookie().getValue().isEmpty();
 }

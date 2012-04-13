@@ -3,9 +3,9 @@
   CasProxiedAuthenticationFilterConfig authConfig=(CasProxiedAuthenticationFilterConfig)config;
   validator=new Cas20ProxyTicketValidator(authConfig.getCasServerUrlPrefix());
   validator.setAcceptAnyProxy(true);
-  validator.setProxyGrantingTicketStorage(ProxyGrantingTicketStorageProvider.get());
+  validator.setProxyGrantingTicketStorage(ProxyGrantingTicketCallbackFilter.getPGTStorage());
   validator.setRenew(authConfig.isSendRenew());
-  if (StringUtils.hasLength(authConfig.getProxyCallbackUrl()))   validator.setProxyCallbackUrl(authConfig.getProxyCallbackUrl());
+  if (StringUtils.hasLength(authConfig.getProxyCallbackUrlPrefix()))   validator.setProxyCallbackUrl(GeoServerCasConstants.createProxyCallBackURl(authConfig.getProxyCallbackUrlPrefix()));
   service=authConfig.getService();
   aep=new AuthenticationEntryPoint(){
     @Override public void commence(    HttpServletRequest request,    HttpServletResponse response,    AuthenticationException authException) throws IOException, ServletException {
