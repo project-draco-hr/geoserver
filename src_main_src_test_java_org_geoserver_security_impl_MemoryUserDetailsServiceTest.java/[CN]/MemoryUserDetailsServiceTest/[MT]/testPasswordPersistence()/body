@@ -24,7 +24,9 @@
   String encrypted=xpath.evaluate("//entry[@key='passwd']",dom.getDocumentElement());
   assertTrue("secret".equals(encrypted));
   XStreamPersister xs=new XStreamPersisterFactory().createXMLPersister();
-  DataStoreInfo load=xs.load(new FileInputStream(store),DataStoreInfo.class);
+  FileInputStream fin=new FileInputStream(store);
+  DataStoreInfo load=xs.load(fin,DataStoreInfo.class);
+  fin.close();
   assertEquals("secret",load.getConnectionParameters().get("passwd"));
   config.setConfigPasswordEncrypterName(getPBEPasswordEncoder().getName());
   getSecurityManager().saveSecurityConfig(config);
@@ -33,6 +35,8 @@
   xpath=XPathFactory.newInstance().newXPath();
   encrypted=xpath.evaluate("//entry[@key='passwd']",dom.getDocumentElement());
   xs=new XStreamPersisterFactory().createXMLPersister();
-  load=xs.load(new FileInputStream(store),DataStoreInfo.class);
+  fin=new FileInputStream(store);
+  load=xs.load(fin,DataStoreInfo.class);
   assertEquals("secret",load.getConnectionParameters().get("passwd"));
+  fin.close();
 }

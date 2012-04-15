@@ -2,8 +2,14 @@
   if (hasWriteLock())   return;
   if (lockFile.exists()) {
     LOGGER.warning("Cannot obtain  lock: " + lockFile.getCanonicalPath());
+    FileInputStream in=new FileInputStream(lockFile);
     Properties props=new Properties();
-    props.load(new FileInputStream(lockFile));
+    try {
+      props.load(in);
+    }
+  finally {
+      IOUtils.closeQuietly(in);
+    }
     throw new IOException(Util.convertPropsToString(props,"Already locked"));
   }
  else {

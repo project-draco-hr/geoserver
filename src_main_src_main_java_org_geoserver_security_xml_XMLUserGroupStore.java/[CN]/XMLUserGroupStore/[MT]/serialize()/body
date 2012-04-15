@@ -49,8 +49,15 @@
     OutputFormat of=new OutputFormat("XML","UTF-8",true);
     XMLSerializer serializer=new XMLSerializer();
     serializer.setOutputFormat(of);
-    serializer.setOutputByteStream(new FileOutputStream(userFile));
-    serializer.serialize(doc);
+    OutputStream out=new BufferedOutputStream(new FileOutputStream(userFile));
+    try {
+      serializer.setOutputByteStream(out);
+      serializer.serialize(doc);
+      out.flush();
+    }
+  finally {
+      IOUtils.closeQuietly(out);
+    }
   }
  catch (  Exception e) {
     throw new IOException(e);

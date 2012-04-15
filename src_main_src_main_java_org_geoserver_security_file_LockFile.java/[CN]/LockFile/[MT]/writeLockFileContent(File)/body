@@ -1,22 +1,27 @@
 {
   FileOutputStream out=new FileOutputStream(lockFile);
   Properties props=new Properties();
-  props.store(out,"Locking info");
-  String hostname="UNKNOWN";
-  String ip="UNKNOWN";
   try {
-    hostname=InetAddress.getLocalHost().getHostName();
-    InetAddress addrs[]=InetAddress.getAllByName(hostname);
-    for (    InetAddress addr : addrs) {
-      if (!addr.isLoopbackAddress() && addr.isSiteLocalAddress())       ip=addr.getHostAddress();
+    props.store(out,"Locking info");
+    String hostname="UNKNOWN";
+    String ip="UNKNOWN";
+    try {
+      hostname=InetAddress.getLocalHost().getHostName();
+      InetAddress addrs[]=InetAddress.getAllByName(hostname);
+      for (      InetAddress addr : addrs) {
+        if (!addr.isLoopbackAddress() && addr.isSiteLocalAddress())         ip=addr.getHostAddress();
+      }
     }
+ catch (    UnknownHostException ex) {
+    }
+    props.put("hostname",hostname);
+    props.put("ip",ip);
+    props.put("location",lockFile.getCanonicalPath());
+    Authentication auth=SecurityContextHolder.getContext().getAuthentication();
+    props.put("principal",auth == null ? "UNKNOWN" : auth.getName());
+    props.store(out,"Locking info");
   }
- catch (  UnknownHostException ex) {
+  finally {
+    IOUtils.closeQuietly(out);
   }
-  props.put("hostname",hostname);
-  props.put("ip",ip);
-  props.put("location",lockFile.getCanonicalPath());
-  Authentication auth=SecurityContextHolder.getContext().getAuthentication();
-  props.put("principal",auth == null ? "UNKNOWN" : auth.getName());
-  props.store(out,"Locking info");
 }
