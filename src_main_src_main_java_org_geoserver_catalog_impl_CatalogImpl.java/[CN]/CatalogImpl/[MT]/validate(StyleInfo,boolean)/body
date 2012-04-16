@@ -7,15 +7,13 @@
   }
   WorkspaceInfo ws=style.getWorkspace();
   StyleInfo existing=getStyleByName(ws,style.getName());
-  if (existing != null && !existing.getId().equals(style.getId())) {
+  if (existing != null && (isNew || !existing.getId().equals(style.getId()))) {
     WorkspaceInfo ews=existing.getWorkspace();
-    if ((ws == null && ews == null) || (ws != null && ws.equals(ews))) {
-      String msg="Style named '" + style.getName() + "' already exists";
-      if (ws != null) {
-        msg+=" in workspace " + ws.getName();
-      }
-      throw new IllegalArgumentException(msg);
+    String msg="Style named '" + style.getName() + "' already exists";
+    if (ews != null) {
+      msg+=" in workspace " + ews.getName();
     }
+    throw new IllegalArgumentException(msg);
   }
   return postValidate(style,isNew);
 }
