@@ -1,8 +1,9 @@
 {
   String style=getAttribute("style");
+  String workspace=getAttribute("workspace");
   if (object instanceof StyleInfo) {
     StyleInfo s=(StyleInfo)object;
-    StyleInfo original=catalog.getStyleByName(style);
+    StyleInfo original=catalog.getStyleByName(workspace,style);
     if (s.getWorkspace() != null) {
       if (!s.getWorkspace().equals(original.getWorkspace())) {
         throw new RestletException("Can't change the workspace of a style, instead " + "DELETE from existing workspace and POST to new workspace",Status.CLIENT_ERROR_FORBIDDEN);
@@ -12,7 +13,7 @@
     catalog.save(original);
   }
  else   if (object instanceof Style) {
-    StyleInfo s=catalog.getStyleByName(style);
+    StyleInfo s=catalog.getStyleByName(workspace,style);
     catalog.getResourcePool().writeStyle(s,(Style)object,true);
     catalog.save(s);
   }
