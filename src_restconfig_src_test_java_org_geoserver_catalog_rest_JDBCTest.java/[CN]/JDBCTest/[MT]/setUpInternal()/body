@@ -2,17 +2,12 @@
   super.setUpInternal();
   HashMap params=new HashMap();
   params.put(JDBCDataStoreFactory.NAMESPACE.key,MockData.DEFAULT_URI);
-  params.put(JDBCDataStoreFactory.DATABASE.key,"target/acme");
+  params.put(JDBCDataStoreFactory.DATABASE.key,databasePath());
   params.put(JDBCDataStoreFactory.DBTYPE.key,"h2");
   H2DataStoreFactory fac=new H2DataStoreFactory();
-  fac.setBaseDirectory(getTestData().getDataDirectoryRoot());
   JDBCDataStore ds=fac.createDataStore(params);
-  try {
-    if (ds.getSchema("widgets") != null) {
-      return;
-    }
-  }
- catch (  Exception e) {
+  if (Arrays.asList(ds.getTypeNames()).indexOf("widgets") >= 0) {
+    return;
   }
   SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
   tb.setName("widgets");
