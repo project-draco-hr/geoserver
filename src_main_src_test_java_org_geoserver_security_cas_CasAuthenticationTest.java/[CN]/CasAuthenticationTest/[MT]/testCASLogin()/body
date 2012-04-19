@@ -48,7 +48,7 @@
   assertEquals(username,((UserDetails)auth.getPrincipal()).getUsername());
   assertTrue(auth.getAuthorities().contains(new GeoServerRole(rootRole)));
   assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
-  assertNotNull(GeoServerCasAuthenticationFilter.Handler.getSessionMappingStorage().removeSessionByMappingId(ticket));
+  assertNotNull(GeoServerCasAuthenticationFilter.getHandler().getSessionMappingStorage().removeSessionByMappingId(ticket));
   helper.ssoLogout();
   username="unknown";
   password=username;
@@ -70,7 +70,7 @@
   checkForAuthenticatedRole(ctx.getAuthentication());
   assertEquals(username,((UserDetails)auth.getPrincipal()).getUsername());
   assertEquals(1,auth.getAuthorities().size());
-  assertNotNull(GeoServerCasAuthenticationFilter.Handler.getSessionMappingStorage().removeSessionByMappingId(ticket));
+  assertNotNull(GeoServerCasAuthenticationFilter.getHandler().getSessionMappingStorage().removeSessionByMappingId(ticket));
   helper.ssoLogout();
   username=GeoServerUser.ROOT_USERNAME;
   password=username;
@@ -93,7 +93,7 @@
   assertEquals(GeoServerUser.ROOT_USERNAME,((UserDetails)auth.getPrincipal()).getUsername());
   assertTrue(auth.getAuthorities().size() == 1);
   assertTrue(auth.getAuthorities().contains(GeoServerRole.ADMIN_ROLE));
-  assertNotNull(GeoServerCasAuthenticationFilter.Handler.getSessionMappingStorage().removeSessionByMappingId(ticket));
+  assertNotNull(GeoServerCasAuthenticationFilter.getHandler().getSessionMappingStorage().removeSessionByMappingId(ticket));
   helper.ssoLogout();
   username="castest";
   password=username;
@@ -115,7 +115,7 @@
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
-  assertNull(GeoServerCasAuthenticationFilter.Handler.getSessionMappingStorage().removeSessionByMappingId(ticket));
+  assertNull(GeoServerCasAuthenticationFilter.getHandler().getSessionMappingStorage().removeSessionByMappingId(ticket));
   updateUser("ug1",username,true);
   helper.ssoLogout();
   insertAnonymousFilter(CAS_EXCEPTION_TRANSLATION_FILTER);
@@ -145,7 +145,7 @@
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
-  assertNull(GeoServerCasAuthenticationFilter.Handler.getSessionMappingStorage().removeSessionByMappingId(ticket));
+  assertNull(GeoServerCasAuthenticationFilter.getHandler().getSessionMappingStorage().removeSessionByMappingId(ticket));
   helper.ssoLogout();
   config.setProxyCallbackUrlPrefix(proxyCallbackUrlPrefix.toString());
   getSecurityManager().saveFilter(config);
@@ -175,6 +175,6 @@
   assertTrue(casAuth.getAuthorities().contains(new GeoServerRole(derivedRole)));
   String proxyTicket=casAuth.getAssertion().getPrincipal().getProxyTicketFor("http://localhost/blabla");
   assertNotNull(proxyTicket);
-  assertNotNull(GeoServerCasAuthenticationFilter.Handler.getSessionMappingStorage().removeSessionByMappingId(ticket));
+  assertNotNull(GeoServerCasAuthenticationFilter.getHandler().getSessionMappingStorage().removeSessionByMappingId(ticket));
   helper.ssoLogout();
 }

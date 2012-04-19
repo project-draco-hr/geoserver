@@ -1,13 +1,17 @@
 {
+  ICrypt result=(ICrypt)s.getAttribute(ICRYPT_ATTR_NAME);
+  if (result != null)   return result;
+  GeoServerSecurityManager manager=GeoServerApplication.get().getSecurityManager();
   char[] key=manager.getRandomPassworddProvider().getRandomPasswordWithDefaultLength();
   StandardPBEByteEncryptor enc=new StandardPBEByteEncryptor();
   enc.setPasswordCharArray(key);
+  manager.disposePassword(key);
   if (manager.isStrongEncryptionAvailable()) {
     enc.setProvider(new BouncyCastleProvider());
     enc.setAlgorithm("PBEWITHSHA256AND128BITAES-CBC-BC");
   }
  else   enc.setAlgorithm("PBEWITHMD5ANDDES");
-  session.setAttribute(SESSION_PARAM_NAME,enc);
-  session.setAttribute(SESSION_PARAM_KEYNAME,key);
-  return enc;
+  result=new CryptImpl(enc);
+  s.setAttribute(ICRYPT_ATTR_NAME,result);
+  return result;
 }

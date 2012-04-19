@@ -9,8 +9,9 @@
       return;
     }
   }
-  if (Handler.isLogoutRequest(httpReq)) {
-    Handler.destroySession(httpReq);
+  SingleSignOutHandler handler=getHandler();
+  if (handler.isLogoutRequest(httpReq)) {
+    handler.destroySession(httpReq);
     RememberMeServices rms=securityManager.getRememberMeService();
     Authentication auth=SecurityContextHolder.getContext().getAuthentication();
     if (auth != null)     ((LogoutHandler)rms).logout(httpReq,httpRes,auth);
@@ -22,7 +23,7 @@
       aep.commence(httpReq,httpRes,null);
     }
  else {
-      Handler.recordSession(httpReq);
+      handler.recordSession(httpReq);
       successHandler.onAuthenticationSuccess(httpReq,httpRes,SecurityContextHolder.getContext().getAuthentication());
     }
   }
