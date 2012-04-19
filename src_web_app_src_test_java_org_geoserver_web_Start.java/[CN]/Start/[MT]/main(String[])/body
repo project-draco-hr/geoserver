@@ -9,7 +9,19 @@
     conn.setAcceptQueueSize(100);
     conn.setMaxIdleTime(1000 * 60 * 60);
     conn.setSoLingerTime(-1);
-    jettyServer.setConnectors(new Connector[]{conn});
+    String sslHost=System.getProperty("ssl.hostname");
+    SslSocketConnector sslConn=null;
+    if (sslHost != null && sslHost.length() > 0) {
+      Security.addProvider(new BouncyCastleProvider());
+      sslConn=getSslSocketConnector(sslHost);
+    }
+    if (sslConn == null) {
+      jettyServer.setConnectors(new Connector[]{conn});
+    }
+ else {
+      conn.setConfidentialPort(sslConn.getPort());
+      jettyServer.setConnectors(new Connector[]{conn,sslConn});
+    }
     WebAppContext wah=new WebAppContext();
     wah.setContextPath("/geoserver");
     wah.setWar("src/main/webapp");

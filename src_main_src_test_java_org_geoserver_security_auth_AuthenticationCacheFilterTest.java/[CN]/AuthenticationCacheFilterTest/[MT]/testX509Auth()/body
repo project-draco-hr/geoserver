@@ -5,6 +5,7 @@
   config.setRoleServiceName("rs1");
   config.setRoleSource(org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource.RoleService);
   config.setUserGroupServiceName("ug1");
+  config.setRolesHeaderAttribute("roles");
   getSecurityManager().saveFilter(config);
   prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_NO_ASC_FILTER,testFilterName8,GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
   SecurityContextHolder.getContext().setAuthentication(null);
@@ -15,14 +16,21 @@
   assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
   assertNull(SecurityContextHolder.getContext().getAuthentication());
   for (  org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource rs : org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource.values()) {
+    getCache().removeAll();
     config.setRoleSource(rs);
     getSecurityManager().saveFilter(config);
     request=createRequest("/foo/bar");
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
+    if (rs == RoleSource.Header) {
+      request.setHeader("roles",derivedRole + ";" + rootRole);
+    }
     setCertifacteForUser(testUserName,request);
     getProxy().doFilter(request,response,chain);
     assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    if (rs == RoleSource.Header) {
+      continue;
+    }
     Authentication auth=getAuth(testFilterName8,testUserName,null,null);
     assertNotNull(auth);
     assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -32,6 +40,7 @@
     assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
   }
   for (  org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource rs : org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource.values()) {
+    getCache().removeAll();
     config.setRoleSource(rs);
     getSecurityManager().saveFilter(config);
     config.setRoleSource(rs);
@@ -41,6 +50,9 @@
     setCertifacteForUser("unknown",request);
     getProxy().doFilter(request,response,chain);
     assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    if (rs == RoleSource.Header) {
+      continue;
+    }
     Authentication auth=getAuth(testFilterName8,"unknown",null,null);
     assertNotNull(auth);
     assertNull(SecurityContextHolder.getContext().getAuthentication());

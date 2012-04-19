@@ -19,7 +19,7 @@
   assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
   assertNull(SecurityContextHolder.getContext().getAuthentication());
   for (  RoleSource rs : RoleSource.values()) {
-    if (RoleSource.Header.equals(rs))     continue;
+    getCache().removeAll();
     config.setRoleSource(rs);
     getSecurityManager().saveFilter(config);
     request=createRequest("/foo/bar");
@@ -32,6 +32,9 @@
     getProxy().doFilter(request,response,chain);
     assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
     Authentication auth=getAuth(testFilterName4,testUserName,null,null);
+    if (rs == RoleSource.Header) {
+      continue;
+    }
     assertNotNull(auth);
     assertNull(SecurityContextHolder.getContext().getAuthentication());
     checkForAuthenticatedRole(auth);
@@ -40,7 +43,7 @@
     assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
   }
   for (  RoleSource rs : RoleSource.values()) {
-    if (RoleSource.Header.equals(rs))     continue;
+    getCache().removeAll();
     config.setRoleSource(rs);
     getSecurityManager().saveFilter(config);
     config.setRoleSource(rs);
@@ -50,6 +53,9 @@
     request.setHeader("principal","unknown");
     getProxy().doFilter(request,response,chain);
     assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    if (rs == RoleSource.Header) {
+      continue;
+    }
     Authentication auth=getAuth(testFilterName4,"unknown",null,null);
     assertNotNull(auth);
     assertNull(SecurityContextHolder.getContext().getAuthentication());
