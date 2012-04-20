@@ -2,12 +2,7 @@
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Writing tiff image ...");
   }
-  GetMapRequest request=mapContent.getRequest();
-  final String format=request.getFormat();
-  InverseColorMapOp paletteInverter=mapContent.getPaletteInverter();
-  if (IMAGE_GEOTIFF8.equalsIgnoreCase(format) || (paletteInverter != null)) {
-    image=forceIndexed8Bitmask(image,paletteInverter);
-  }
+  image=applyPalette(image,mapContent,IMAGE_GEOTIFF8,false);
   final GridCoverage2D gc=factory.create("geotiff",image,new GeneralEnvelope(mapContent.getRenderingArea()));
   final ImageOutputStream imageOutStream=ImageIOExt.createImageOutputStream(image,outStream);
   if (imageOutStream == null) {

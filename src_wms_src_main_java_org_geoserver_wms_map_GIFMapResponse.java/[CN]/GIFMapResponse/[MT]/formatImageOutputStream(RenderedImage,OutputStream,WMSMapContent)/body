@@ -19,8 +19,8 @@
   if (numfiles == 1 || !animatedGIF) {
     if (LOGGER.isLoggable(Level.FINE))     LOGGER.fine("Preparing to write a gif...");
     try {
-      InverseColorMapOp paletteInverter=mapContent.getPaletteInverter();
-      ImageWorker iw=new ImageWorker(super.forceIndexed8Bitmask(originalImage,paletteInverter));
+      originalImage=applyPalette(originalImage,mapContent,MIME_TYPE,false);
+      ImageWorker iw=new ImageWorker(originalImage);
       iw.writeGIF(outStream,"LZW",0.75f);
       RasterCleaner.addImage(iw.getRenderedImage());
     }
@@ -50,8 +50,7 @@
     for (int i=0; i < numfiles; i++) {
       if (LOGGER.isLoggable(Level.FINE))       LOGGER.fine("Writing image " + i);
       RenderedImage ri=(RenderedImage)ril.get(i);
-      InverseColorMapOp paletteInverter=mapContent.getPaletteInverter();
-      ri=super.forceIndexed8Bitmask(ri,paletteInverter);
+      ri=applyPalette(ri,mapContent,MIME_TYPE,false);
       if (ri != null) {
         final IIOMetadata imageMetadata=gifWriter.getDefaultImageMetadata(new ImageTypeSpecifier(ri),param);
         prepareMetadata(imageMetadata,loopContinuosly,delay);

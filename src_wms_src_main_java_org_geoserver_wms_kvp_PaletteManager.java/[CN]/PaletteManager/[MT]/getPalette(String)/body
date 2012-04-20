@@ -1,6 +1,6 @@
 {
   if ("SAFE".equals(name.toUpperCase())) {
-    return safePaletteInversion;
+    return safePalette;
   }
   final PaletteCacheEntry entry=(PaletteCacheEntry)paletteCache.get(name);
   if (entry != null) {
@@ -8,7 +8,7 @@
       paletteCache.remove(name);
     }
  else {
-      return entry.eicm;
+      return entry.icm;
     }
   }
   final File root=GeoserverDataDirectory.getGeoserverDataDirectory();
@@ -31,9 +31,8 @@
     if (fileName.endsWith("pal")) {
       final IndexColorModel icm=new PALFileLoader(file).getIndexColorModel();
       if (icm != null) {
-        final InverseColorMapOp eicm=new InverseColorMapOp(icm);
-        paletteCache.put(name,new PaletteCacheEntry(file,eicm));
-        return eicm;
+        paletteCache.put(name,new PaletteCacheEntry(file,icm));
+        return icm;
       }
     }
  else {
@@ -45,9 +44,8 @@
         final ColorModel cm=((ImageTypeSpecifier)reader.getImageTypes(0).next()).getColorModel();
         if (cm instanceof IndexColorModel) {
           final IndexColorModel icm=(IndexColorModel)cm;
-          final InverseColorMapOp eicm=new InverseColorMapOp(icm);
-          paletteCache.put(name,new PaletteCacheEntry(file,eicm));
-          return eicm;
+          paletteCache.put(name,new PaletteCacheEntry(file,icm));
+          return icm;
         }
       }
     }

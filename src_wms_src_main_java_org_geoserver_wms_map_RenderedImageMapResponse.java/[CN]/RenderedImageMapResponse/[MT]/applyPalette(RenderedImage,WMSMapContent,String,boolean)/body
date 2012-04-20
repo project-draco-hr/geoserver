@@ -1,0 +1,31 @@
+{
+  GetMapRequest request=mapContent.getRequest();
+  QuantizeMethod method=(QuantizeMethod)request.getFormatOptions().get(PaletteManager.QUANTIZER);
+  boolean useBitmaskQuantizer=method == QuantizeMethod.Octree || !supportsTranslucency || (method == null && image.getColorModel().getTransparency() != Transparency.TRANSLUCENT);
+  final String format=request.getFormat();
+  IndexColorModel icm=mapContent.getPalette();
+  if (useBitmaskQuantizer) {
+    if (icm != null) {
+      image=forceIndexed8Bitmask(image,PaletteManager.getInverseColorMapOp(icm));
+    }
+ else     if (palettedFormatName.equalsIgnoreCase(format)) {
+      image=forceIndexed8Bitmask(image,null);
+    }
+  }
+ else {
+    if (!(image.getColorModel() instanceof IndexColorModel)) {
+      image=new ImageWorker(image).rescaleToBytes().forceComponentColorModel().getRenderedImage();
+      ColorIndexer indexer=null;
+      if (mapContent.getPalette() != null) {
+        indexer=new CachingColorIndexer(new LRUColorIndexer(icm,1024));
+      }
+ else       if (palettedFormatName.equalsIgnoreCase(format)) {
+        indexer=new Quantizer(256).subsample().buildColorIndexer(image);
+      }
+      if (indexer != null) {
+        image=ColorIndexerDescriptor.create(image,indexer,null);
+      }
+    }
+  }
+  return image;
+}

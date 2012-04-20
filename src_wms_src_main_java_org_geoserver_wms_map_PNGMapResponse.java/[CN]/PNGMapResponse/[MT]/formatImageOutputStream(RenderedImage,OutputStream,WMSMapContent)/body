@@ -2,22 +2,14 @@
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Writing png image ...");
   }
-  final String format=mapContent.getRequest().getFormat();
-  if (mapContent.getPaletteInverter() != null) {
-    InverseColorMapOp paletteInverter=mapContent.getPaletteInverter();
-    image=forceIndexed8Bitmask(image,paletteInverter);
-  }
+  image=applyPalette(image,mapContent,"image/png8",true);
   Boolean PNGNativeAcc=wms.getPNGNativeAcceleration();
   float quality=(100 - wms.getPngCompression()) / 100.0f;
   SampleModel sm=image.getSampleModel();
   int numBits=sm.getSampleSize(0);
   boolean nativeAcceleration=PNGNativeAcc.booleanValue() && !(numBits > 1 && numBits < 8);
-  boolean png8="image/png8".equalsIgnoreCase(format);
-  if (png8 && !(image.getColorModel() instanceof IndexColorModel)) {
-    image=forceIndexed8Bitmask(image,null);
-  }
   ImageWorker iw=new ImageWorker(image);
-  iw.writePNG(outStream,"FILTERED",quality,nativeAcceleration,png8);
+  iw.writePNG(outStream,"FILTERED",quality,nativeAcceleration,false);
   RasterCleaner.addImage(iw.getRenderedImage());
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Writing png image ... done!");
