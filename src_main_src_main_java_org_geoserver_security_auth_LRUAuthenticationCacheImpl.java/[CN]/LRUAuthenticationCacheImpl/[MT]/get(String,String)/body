@@ -1,0 +1,19 @@
+{
+  readLock.lock();
+  boolean hasTobeRemoved=false;
+  try {
+    long currentTime=System.currentTimeMillis();
+    AuthenticationCacheEntry entry=cache.get(new AuthenticationCacheKey(filterName,cacheKey));
+    if (entry == null)     return null;
+    if (entry.hasExpired(currentTime)) {
+      hasTobeRemoved=true;
+      return null;
+    }
+    entry.setLastAccessed(currentTime);
+    return entry.getAuthentication();
+  }
+  finally {
+    readLock.unlock();
+    if (hasTobeRemoved)     remove(filterName,cacheKey);
+  }
+}

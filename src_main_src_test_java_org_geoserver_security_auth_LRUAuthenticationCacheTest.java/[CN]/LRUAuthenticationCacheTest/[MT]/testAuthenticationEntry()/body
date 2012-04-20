@@ -1,0 +1,20 @@
+{
+  UsernamePasswordAuthenticationToken t1=new UsernamePasswordAuthenticationToken("user1","password1");
+  AuthenticationCacheEntry entry1=new AuthenticationCacheEntry(t1,10,10);
+  assertTrue(entry1.hashCode() != 0);
+  assertEquals(t1.hashCode(),entry1.hashCode());
+  assertTrue(entry1.equals(entry1));
+  AuthenticationCacheEntry entry1_1=new AuthenticationCacheEntry(t1,20,20);
+  assertEquals(t1.hashCode(),entry1_1.hashCode());
+  assertTrue(entry1.equals(entry1_1));
+  UsernamePasswordAuthenticationToken t2=new UsernamePasswordAuthenticationToken("user2","password2");
+  AuthenticationCacheEntry entry2=new AuthenticationCacheEntry(t2,5,10);
+  assertFalse(entry2.equals(entry1));
+  long currentTime=System.currentTimeMillis();
+  entry2.setLastAccessed(currentTime + 6000);
+  assertFalse(entry2.hasExpired(currentTime + 10 * 1000));
+  assertTrue(entry2.hasExpired(currentTime + 10 * 1000 + 1));
+  entry2.setLastAccessed(currentTime + 2000);
+  assertFalse(entry2.hasExpired(currentTime + 7000));
+  assertTrue(entry2.hasExpired(currentTime + 70001));
+}
