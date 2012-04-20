@@ -8,7 +8,7 @@
     String tableName=schema.getName().getLocalPart();
     buf.append("CREATE TABLE ").append(ONLINE_DB_SCHEMA).append(".\"").append(tableName).append("\"(");
     List<GeometryDescriptor> geoms=new ArrayList<GeometryDescriptor>();
-    int size=schema.getAttributeCount() + 1;
+    int size=schema.getAttributeCount() + 2;
     String[] fieldNames=new String[size];
     List<String> createParams=new ArrayList<String>();
     int j=0;
@@ -36,10 +36,11 @@
     if (schema.isIdentified()) {
       fieldNames[j]="ROW_ID";
       createParams.add("\"ROW_ID\" TEXT");
+      j++;
     }
-    if (!createParams.isEmpty()) {
-      buf.append(StringUtils.join(createParams.iterator(),", "));
-    }
+    fieldNames[j]="PKEY";
+    createParams.add("\"PKEY\" INTEGER");
+    buf.append(StringUtils.join(createParams.iterator(),", "));
     buf.append(");\n");
     for (    GeometryDescriptor geom : geoms) {
       buf.append("SELECT AddGeometryColumn ('").append(ONLINE_DB_SCHEMA).append("', ");
@@ -53,6 +54,7 @@
     }
     SimpleFeature feature;
     FeatureId id;
+    int pKey=0;
     while (reader.hasNext()) {
       buf.append("INSERT INTO ").append(ONLINE_DB_SCHEMA).append(".\"").append(tableName).append("\"(\"");
       feature=reader.next();
@@ -84,7 +86,10 @@
       id=feature.getIdentifier();
       if (id != null) {
         values[valueIndex]="'" + id.toString() + "'";
+        valueIndex++;
       }
+      values[valueIndex]="'" + pKey + "'";
+      pKey++;
       buf.append(StringUtils.join(values,","));
       buf.append(");\n");
     }
