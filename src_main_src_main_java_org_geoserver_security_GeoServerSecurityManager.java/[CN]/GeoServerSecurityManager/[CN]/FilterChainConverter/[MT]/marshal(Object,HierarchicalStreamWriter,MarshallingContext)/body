@@ -1,16 +1,23 @@
 {
   GeoServerSecurityFilterChain filterChain=(GeoServerSecurityFilterChain)source;
-  int index=0;
-  for (  String pattern : filterChain.getAntPatterns()) {
+  for (  RequestFilterChain requestChain : filterChain.getRequestChains()) {
     writer.startNode("filters");
-    writer.addAttribute("path",pattern);
-    writer.addAttribute("index",Integer.toString(index));
-    for (    String filterName : filterChain.getFilterMap().get(pattern)) {
+    StringBuilder sb=new StringBuilder();
+    for (    String s : requestChain.getPatterns()) {
+      sb.append(s).append(",");
+    }
+    if (sb.length() > 0) {
+      sb.setLength(sb.length() - 1);
+    }
+    if (requestChain.getName() != null) {
+      writer.addAttribute("name",requestChain.getName());
+    }
+    writer.addAttribute("path",sb.toString());
+    for (    String filterName : requestChain.getFilterNames()) {
       writer.startNode("filter");
       writer.setValue(filterName);
       writer.endNode();
     }
     writer.endNode();
-    index++;
   }
 }

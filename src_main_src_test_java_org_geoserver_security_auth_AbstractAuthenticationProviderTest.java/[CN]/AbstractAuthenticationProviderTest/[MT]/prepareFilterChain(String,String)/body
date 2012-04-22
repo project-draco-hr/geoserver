@@ -1,12 +1,9 @@
 {
   SecurityManagerConfig config=getSecurityManager().getSecurityConfig();
-  if (config.getFilterChain().getAntPatterns().contains(pattern)) {
-    config.getFilterChain().getAntPatterns().remove(pattern);
-    config.getFilterChain().getFilterMap().remove(pattern);
-  }
-  config.getFilterChain().getAntPatterns().add(config.getFilterChain().getAntPatterns().size() - 2,pattern);
-  ArrayList<String> filters=new ArrayList<String>();
-  for (  String filterName : filterNames)   filters.add(filterName);
-  config.getFilterChain().getFilterMap().put(pattern,filters);
+  GeoServerSecurityFilterChain filterChain=config.getFilterChain();
+  filterChain.removeForPattern(pattern);
+  RequestFilterChain requestChain=new RequestFilterChain(pattern);
+  requestChain.setFilterNames(filterNames);
+  filterChain.getRequestChains().add(filterChain.getRequestChains().size() - 2,requestChain);
   getSecurityManager().saveSecurityConfig(config);
 }

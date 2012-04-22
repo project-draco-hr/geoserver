@@ -2,12 +2,13 @@
   if (!securityManager.isInitialized()) {
   }
   SecurityManagerConfig config=securityManager.getSecurityConfig();
-  GeoServerSecurityFilterChain filterChain=config.getFilterChain();
+  GeoServerSecurityFilterChain filterChain=new GeoServerSecurityFilterChain(config.getFilterChain());
+  filterChain.postConfigure(securityManager);
+  Map<String,List<String>> rawFilterChainMap=filterChain.compileFilterMap();
   Map<RequestMatcher,List<Filter>> filterChainMap=new LinkedHashMap<RequestMatcher,List<Filter>>();
-  addConstantFilterChains(filterChainMap);
-  for (  String pattern : filterChain.getAntPatterns()) {
+  for (  String pattern : rawFilterChainMap.keySet()) {
     List<Filter> filters=new ArrayList<Filter>();
-    for (    String filterName : filterChain.getFilterMap().get(pattern)) {
+    for (    String filterName : rawFilterChainMap.get(pattern)) {
       try {
         Filter filter=lookupFilter(filterName);
         if (filter == null) {
@@ -26,6 +27,7 @@
       filterChainMap.put(new AntPathRequestMatcher(p),filters);
     }
   }
+  filterChainMap.put(new AntPathRequestMatcher(GeoServerCasConstants.CAS_PROXY_RECEPTOR_PATTERN),(List)Arrays.asList(ProxyGrantingTicketCallbackFilter.get()));
 synchronized (this) {
     if (chainsInitialized) {
       for (      SecurityFilterChain chain : getFilterChains()) {

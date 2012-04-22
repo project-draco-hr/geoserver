@@ -1,26 +1,30 @@
 {
   GeoServerSecurityFilterChain filterChain=new GeoServerSecurityFilterChain();
-  SortedMap<Integer,String> temp=new TreeMap<Integer,String>();
   while (reader.hasMoreChildren()) {
     reader.moveDown();
     String path=reader.getAttribute("path");
-    String indexString=reader.getAttribute("index");
-    Integer index=new Integer(indexString);
-    temp.put(index,path);
-    ArrayList<String> filterEntries=new ArrayList<String>();
+    String name=reader.getAttribute("name");
+    if (name == null) {
+      RequestFilterChain requestChain=GeoServerSecurityFilterChain.lookupRequestChainByPattern(path,GeoServerSecurityManager.this);
+      if (requestChain != null) {
+        name=requestChain.getName();
+      }
+ else {
+        name=path;
+      }
+    }
+    ArrayList<String> filterNames=new ArrayList<String>();
     while (reader.hasMoreChildren()) {
       reader.moveDown();
-      String name=reader.getValue();
-      filterEntries.add(name);
+      filterNames.add(reader.getValue());
       reader.moveUp();
     }
-    filterChain.getFilterMap().put(path,filterEntries);
+    RequestFilterChain requestChain=new RequestFilterChain(path.split(","));
+    requestChain.setName(name);
+    requestChain.setFilterNames(filterNames);
+    filterChain.getRequestChains().add(requestChain);
     reader.moveUp();
   }
-  ArrayList<String> antPatterns=new ArrayList<String>();
-  for (  Entry<Integer,String> e : temp.entrySet()) {
-    antPatterns.add(e.getValue());
-  }
-  filterChain.setAntPatterns(antPatterns);
+  filterChain.simplify();
   return filterChain;
 }
