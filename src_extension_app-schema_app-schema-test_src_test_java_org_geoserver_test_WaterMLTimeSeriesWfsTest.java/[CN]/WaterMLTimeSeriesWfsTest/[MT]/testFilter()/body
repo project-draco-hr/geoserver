@@ -1,0 +1,10 @@
+{
+  String xml="<wfs:GetFeature " + "service=\"WFS\" " + "version=\"1.1.0\" "+ "outputFormat=\"gml32\" "+ "xmlns:ogc=\"http://www.opengis.net/ogc\" "+ "xmlns:wfs=\"http://www.opengis.net/wfs\" "+ "xmlns:gml=\"http://www.opengis.net/gml/3.2\" "+ "xmlns:wml2dr=\"http://www.opengis.net/waterml/DR/2.0\" "+ "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "+ "xsi:schemaLocation=\""+ "http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"+ "\""+ ">"+ "<wfs:Query typeName=\"wml2dr:MeasurementTimeseriesDomainRange\">"+ "    <ogc:Filter>"+ "        <ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escapeChar=\"\\\">"+ "            <ogc:PropertyName>wml2dr:MeasurementTimeseriesDomainRange/gml:rangeSet/gml:QuantityList</ogc:PropertyName>"+ "            <ogc:Literal>*16.2*</ogc:Literal>"+ "        </ogc:PropertyIsLike>"+ "    </ogc:Filter>"+ "</wfs:Query> "+ "</wfs:GetFeature>";
+  validate(xml);
+  Document doc=postAsDOM("wfs",xml);
+  LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
+  assertXpathEvaluatesTo("1","/wfs:FeatureCollection/@numberReturned",doc);
+  assertXpathCount(1,"//wml2dr:MeasurementTimeseriesDomainRange",doc);
+  assertXpathEvaluatesTo("ID2","//wml2dr:MeasurementTimeseriesDomainRange/@gml:id",doc);
+}
