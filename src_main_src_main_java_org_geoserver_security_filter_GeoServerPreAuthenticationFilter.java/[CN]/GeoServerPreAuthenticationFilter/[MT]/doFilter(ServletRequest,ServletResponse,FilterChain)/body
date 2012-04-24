@@ -4,7 +4,9 @@
     doAuthenticate((HttpServletRequest)request,(HttpServletResponse)response);
     Authentication postAuthentication=SecurityContextHolder.getContext().getAuthentication();
     if (postAuthentication != null && cacheKey != null) {
-      if ((postAuthentication instanceof Assertion == false) || GeoServerUser.ROOT_USERNAME.equals(((Assertion)postAuthentication).getPrincipal().getName()) == false)       getSecurityManager().getAuthenticationCache().put(getName(),cacheKey,postAuthentication);
+      if (cacheAuthentication(postAuthentication)) {
+        getSecurityManager().getAuthenticationCache().put(getName(),cacheKey,postAuthentication);
+      }
     }
   }
   request.setAttribute(GeoServerSecurityFilter.AUTHENTICATION_ENTRY_POINT_HEADER,aep);
