@@ -1,0 +1,28 @@
+{
+  GeoServerSecurityManager secMgr=GeoServerApplication.get().getSecurityManager();
+  if (secMgr.checkAuthenticationForAdminRole()) {
+    if (testAuthentication(ROOT_USERNAME,DEFAULT_ADMIN_PASSWD,secMgr)) {
+      return new PasswordChangeWarningPanel(id,"changeMasterPassword",new MasterPasswordChangePage());
+    }
+ else     if (testAuthentication(ADMIN_USERNAME,"geoserver",secMgr)) {
+      Page changeItPage=null;
+      try {
+        GeoServerUserGroupService ugService=secMgr.loadUserGroupService("default");
+        if (ugService != null) {
+          GeoServerUser user=ugService.getUserByUsername(ADMIN_USERNAME);
+          if (user != null) {
+            changeItPage=new EditUserPage(ugService.getName(),user);
+          }
+        }
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.WARNING,"Error looking up admin user",e);
+      }
+      if (changeItPage == null) {
+        changeItPage=new UserGroupRoleServicesPage();
+      }
+      return new PasswordChangeWarningPanel(id,"changeAdminPassword",changeItPage);
+    }
+  }
+  return null;
+}
