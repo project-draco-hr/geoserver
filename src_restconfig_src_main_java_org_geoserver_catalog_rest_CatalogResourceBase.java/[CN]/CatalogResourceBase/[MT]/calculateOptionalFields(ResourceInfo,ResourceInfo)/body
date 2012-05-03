@@ -1,0 +1,42 @@
+{
+  Form form=getRequest().getResourceRef().getQueryAsForm();
+  String calculate=form.getFirstValue("recalculate",true);
+  List<String> fieldsToCalculate;
+  if (calculate == null) {
+    boolean changedProjection=message.getSRS() != null;
+    boolean changedProjectionPolicy=message.getProjectionPolicy() != null;
+    boolean changedNativeBounds=message.getNativeBoundingBox() != null;
+    boolean changedLatLonBounds=message.getLatLonBoundingBox() != null;
+    boolean changedNativeInterpretation=changedProjectionPolicy || changedProjection;
+    fieldsToCalculate=new ArrayList<String>();
+    if (changedNativeInterpretation && !changedNativeBounds) {
+      fieldsToCalculate.add("nativebbox");
+    }
+    if ((changedNativeInterpretation || changedNativeBounds) && !changedLatLonBounds) {
+      fieldsToCalculate.add("latlonbbox");
+    }
+  }
+ else {
+    fieldsToCalculate=Arrays.asList(calculate.toLowerCase().split("'"));
+  }
+  if (fieldsToCalculate.contains("nativebbox")) {
+    CatalogBuilder builder=new CatalogBuilder(catalog);
+    try {
+      resource.setNativeBoundingBox(builder.getNativeBounds(resource));
+    }
+ catch (    IOException e) {
+      String errorMessage="Error while calculating native bounds for layer: " + resource;
+      throw new RestletException(errorMessage,Status.SERVER_ERROR_INTERNAL,e);
+    }
+  }
+  if (fieldsToCalculate.contains("latlonbbox")) {
+    CatalogBuilder builder=new CatalogBuilder(catalog);
+    try {
+      resource.setLatLonBoundingBox(builder.getLatLonBounds(resource.getNativeBoundingBox(),resolveCRS(resource.getSRS())));
+    }
+ catch (    IOException e) {
+      String errorMessage="Error while calculating lat/lon bounds for featuretype: " + resource;
+      throw new RestletException(errorMessage,Status.SERVER_ERROR_INTERNAL,e);
+    }
+  }
+}

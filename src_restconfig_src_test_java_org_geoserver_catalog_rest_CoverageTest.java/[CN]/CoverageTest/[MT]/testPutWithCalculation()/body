@@ -1,0 +1,15 @@
+{
+  String path="/rest/workspaces/wcs/coveragestores/DEM/coverages/DEM.xml";
+  String clearLatLonBoundingBox="<coverage>" + "<latLonBoundingBox/>" + "</coverage>";
+  MockHttpServletResponse response=putAsServletResponse(path,clearLatLonBoundingBox,"text/xml");
+  assertEquals("Couldn't remove lat/lon bounding box: \n" + response.getOutputStreamContent(),200,response.getStatusCode());
+  Document dom=getAsDOM(path);
+  assertXpathEvaluatesTo("0.0","/coverage/latLonBoundingBox/minx",dom);
+  print(dom);
+  String updateNativeBounds="<coverage>" + "<srs>EPSG:3785</srs>" + "</coverage>";
+  response=putAsServletResponse(path,updateNativeBounds,"text/xml");
+  assertEquals("Couldn't update native bounding box: \n" + response.getOutputStreamContent(),200,response.getStatusCode());
+  dom=getAsDOM(path);
+  print(dom);
+  assertXpathExists("/coverage/latLonBoundingBox/minx[text()!='0.0']",dom);
+}

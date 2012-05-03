@@ -2,15 +2,22 @@
   String workspace=getAttribute("workspace");
   String datastore=getAttribute("datastore");
   String featureType=getAttribute("featuretype");
+  FeatureTypeInfo ftInfo;
   if (datastore == null) {
     LOGGER.fine("GET feature type" + workspace + ","+ featureType);
     NamespaceInfo ns=catalog.getNamespaceByPrefix(workspace);
     if (ns != null) {
-      return catalog.getFeatureTypeByName(ns,featureType);
+      ftInfo=catalog.getFeatureTypeByName(ns,featureType);
     }
-    throw new RestletException("",Status.CLIENT_ERROR_NOT_FOUND);
+ else {
+      String message="No feature found in workspace '" + workspace + "' with name '"+ featureType+ "'";
+      throw new RestletException(message,Status.CLIENT_ERROR_NOT_FOUND);
+    }
   }
-  LOGGER.fine("GET feature type" + datastore + ","+ featureType);
-  DataStoreInfo ds=catalog.getDataStoreByName(workspace,datastore);
-  return catalog.getFeatureTypeByDataStore(ds,featureType);
+ else {
+    LOGGER.fine("GET feature type" + datastore + ","+ featureType);
+    DataStoreInfo dsInfo=catalog.getDataStoreByName(workspace,datastore);
+    ftInfo=catalog.getFeatureTypeByDataStore(dsInfo,featureType);
+  }
+  return ftInfo;
 }
