@@ -1,11 +1,6 @@
 {
-  String request="wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&storeExecuteResponse=true&status=true";
-  Document dom=getAsDOM(request);
-  assertXpathExists("//wps:ProcessAccepted",dom);
-  XpathEngine xpath=XMLUnit.newXpathEngine();
-  String fullStatusLocation=xpath.evaluate("//wps:ExecuteResponse/@statusLocation",dom);
-  String statusLocation=fullStatusLocation.substring(fullStatusLocation.indexOf('?') - 3);
-  MonkeyProcess.exit(bombOutCollection(),true);
-  dom=waitForProcessEnd(statusLocation,60);
+  String statusLocation=submitMonkey("x");
+  MonkeyProcess.exit("x",bombOutCollection(),true);
+  Document dom=waitForProcessEnd(statusLocation,60);
   assertXpathExists("//wps:ProcessFailed",dom);
 }

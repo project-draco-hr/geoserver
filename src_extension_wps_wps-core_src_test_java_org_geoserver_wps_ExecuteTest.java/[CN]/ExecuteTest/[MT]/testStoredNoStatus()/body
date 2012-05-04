@@ -1,15 +1,15 @@
 {
-  String request="wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&storeExecuteResponse=true";
+  String request="wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&storeExecuteResponse=true&DataInputs=" + urlEncode("id=x");
   Document dom=getAsDOM(request);
   assertXpathExists("//wps:ProcessAccepted",dom);
   XpathEngine xpath=XMLUnit.newXpathEngine();
   String fullStatusLocation=xpath.evaluate("//wps:ExecuteResponse/@statusLocation",dom);
   String statusLocation=fullStatusLocation.substring(fullStatusLocation.indexOf('?') - 3);
-  MonkeyProcess.progress(0.5f,true);
+  MonkeyProcess.progress("x",50f,true);
   dom=getAsDOM(statusLocation);
   assertXpathExists("//wps:ProcessAccepted",dom);
   ListFeatureCollection fc=collectionOfThings();
-  MonkeyProcess.exit(fc,true);
+  MonkeyProcess.exit("x",fc,true);
   dom=waitForProcessEnd(statusLocation,60);
   assertXpathExists("//wps:ProcessSucceeded",dom);
 }
