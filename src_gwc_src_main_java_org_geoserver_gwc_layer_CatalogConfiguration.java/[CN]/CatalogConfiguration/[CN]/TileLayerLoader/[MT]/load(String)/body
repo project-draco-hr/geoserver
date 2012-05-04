@@ -1,0 +1,34 @@
+{
+  GeoServerTileLayer tileLayer=null;
+  final GridSetBroker gridSetBroker=CatalogConfiguration.this.gridSetBroker;
+  lock.readLock().lock();
+  try {
+    if (pendingDeletes.contains(layerId)) {
+      throw new IllegalArgumentException("Tile layer '" + layerId + "' was deleted.");
+    }
+    GeoServerTileLayerInfo tileLayerInfo=pendingModications.get(layerId);
+    if (tileLayerInfo == null) {
+      tileLayerInfo=tileLayerCatalog.getLayerById(layerId);
+    }
+    if (tileLayerInfo == null) {
+      throw new IllegalArgumentException("GeoServerTileLayerInfo '" + layerId + "' does not exist.");
+    }
+    LayerInfo layerInfo=geoServerCatalog.getLayer(layerId);
+    if (layerInfo != null) {
+      tileLayer=new GeoServerTileLayer(layerInfo,gridSetBroker,tileLayerInfo);
+    }
+ else {
+      LayerGroupInfo lgi=geoServerCatalog.getLayerGroup(layerId);
+      if (lgi != null) {
+        tileLayer=new GeoServerTileLayer(lgi,gridSetBroker,tileLayerInfo);
+      }
+    }
+  }
+  finally {
+    lock.readLock().unlock();
+  }
+  if (null == tileLayer) {
+    throw new IllegalArgumentException("GeoServer layer or layer group '" + layerId + "' does not exist");
+  }
+  return tileLayer;
+}

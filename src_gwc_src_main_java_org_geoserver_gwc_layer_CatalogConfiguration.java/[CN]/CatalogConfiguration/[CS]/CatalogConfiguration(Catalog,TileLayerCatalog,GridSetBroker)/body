@@ -5,37 +5,5 @@
   this.tileLayerCatalog=tileLayerCatalog;
   this.geoServerCatalog=catalog;
   this.gridSetBroker=gridSetBroker;
-  this.layerCache=CacheBuilder.newBuilder().concurrencyLevel(10).expireAfterAccess(10,TimeUnit.MINUTES).initialCapacity(10).maximumSize(100).build(new CacheLoader<String,GeoServerTileLayer>(){
-    @Override public GeoServerTileLayer load(    String layerId) throws Exception {
-      GeoServerTileLayer tileLayer=null;
-      final GridSetBroker gridSetBroker=CatalogConfiguration.this.gridSetBroker;
-      lock.readLock().lock();
-      try {
-        if (pendingDeletes.contains(layerId)) {
-          return null;
-        }
-        GeoServerTileLayerInfo tileLayerInfo=pendingModications.get(layerId);
-        if (tileLayerInfo == null) {
-          tileLayerInfo=tileLayerCatalog.getLayerById(layerId);
-          if (tileLayerInfo == null) {
-            return null;
-          }
-        }
-        LayerInfo layerInfo=geoServerCatalog.getLayer(layerId);
-        if (layerInfo != null) {
-          tileLayer=new GeoServerTileLayer(layerInfo,gridSetBroker,tileLayerInfo);
-          return tileLayer;
-        }
-        LayerGroupInfo lgi=geoServerCatalog.getLayerGroup(layerId);
-        if (lgi != null) {
-          tileLayer=new GeoServerTileLayer(lgi,gridSetBroker,tileLayerInfo);
-        }
-      }
-  finally {
-        lock.readLock().unlock();
-      }
-      return tileLayer;
-    }
-  }
-);
+  this.layerCache=CacheBuilder.newBuilder().concurrencyLevel(10).expireAfterAccess(10,TimeUnit.MINUTES).initialCapacity(10).maximumSize(100).build(new TileLayerLoader(tileLayerCatalog));
 }
