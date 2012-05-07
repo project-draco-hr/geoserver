@@ -1,21 +1,22 @@
 {
-  if (copyPossible(service,store) == false)   throw new IOException("Cannot copy user/group data, passwords encoders are not compatible");
-  GeoServerPasswordEncoder storeEncoder=null;
-  GeoServerPasswordEncoder serviceEncoder=service.getSecurityManager().loadPasswordEncoder(service.getPasswordEncoderName());
-  serviceEncoder.initializeFor(service);
-  if (serviceEncoder.getEncodingType() == PasswordEncodingType.PLAIN || serviceEncoder.getEncodingType() == PasswordEncodingType.ENCRYPT) {
-    storeEncoder=service.getSecurityManager().loadPasswordEncoder(store.getPasswordEncoderName());
-    storeEncoder.initializeFor(store);
-  }
+  GeoServerPasswordEncoder encoder=store.getSecurityManager().loadPasswordEncoder(store.getPasswordEncoderName());
+  encoder.initializeFor(store);
+  GeoServerMultiplexingPasswordEncoder mEncoder=new GeoServerMultiplexingPasswordEncoder(store.getSecurityManager(),service);
   store.clear();
   Map<String,GeoServerUser> newUserDict=new HashMap<String,GeoServerUser>();
   Map<String,GeoServerUserGroup> newGroupDict=new HashMap<String,GeoServerUserGroup>();
   for (  GeoServerUser user : service.getUsers()) {
-    GeoServerUser newUser=store.createUserObject(user.getUsername(),user.getPassword(),user.isEnabled());
-    if (storeEncoder != null) {
-      String plainText=serviceEncoder.decode(user.getPassword());
-      newUser.setPassword(storeEncoder.encodePassword(plainText,null));
+    String rawPassword=null;
+    String encPassword=null;
+    try {
+      rawPassword=mEncoder.decode(user.getPassword());
+      encPassword=encoder.encodePassword(rawPassword,null);
     }
+ catch (    UnsupportedOperationException ex) {
+      LOGGER.warning("Cannot recode user: " + user.getUsername() + " password: "+ user.getPassword());
+      encPassword=user.getPassword();
+    }
+    GeoServerUser newUser=store.createUserObject(user.getUsername(),encPassword,user.isEnabled());
     for (    Object key : user.getProperties().keySet()) {
       newUser.getProperties().put(key,user.getProperties().get(key));
     }

@@ -1,0 +1,24 @@
+{
+  GeoServerPasswordEncoder encoder=store.getSecurityManager().loadPasswordEncoder(store.getPasswordEncoderName());
+  encoder.initializeFor(store);
+  GeoServerMultiplexingPasswordEncoder mEncoder=new GeoServerMultiplexingPasswordEncoder(store.getSecurityManager(),store);
+  for (  GeoServerUser user : store.getUsers()) {
+    if (encoder.isResponsibleForEncoding(user.getPassword()))     continue;
+    try {
+      String rawpass=mEncoder.decode(user.getPassword());
+      String encPass=encoder.encodePassword(rawpass,null);
+      user.setPassword(encPass);
+      try {
+        store.updateUser(user);
+      }
+ catch (      PasswordPolicyException e) {
+        store.load();
+        throw new RuntimeException("Never should reach this point",e);
+      }
+    }
+ catch (    UnsupportedOperationException ex) {
+      LOGGER.warning("Cannot recode user: " + user.getUsername() + " with password: "+ user.getPassword());
+    }
+  }
+  store.store();
+}

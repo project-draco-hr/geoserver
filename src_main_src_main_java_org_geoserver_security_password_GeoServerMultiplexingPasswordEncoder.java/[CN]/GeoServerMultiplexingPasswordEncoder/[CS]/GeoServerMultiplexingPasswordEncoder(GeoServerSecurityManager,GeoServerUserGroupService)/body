@@ -1,0 +1,21 @@
+{
+  encoders=new HashSet<GeoServerPasswordEncoder>();
+  for (  GeoServerPasswordEncoder enc : secMgr.loadPasswordEncoders()) {
+    if (StringUtils.hasLength(enc.getPrefix())) {
+      if (service != null) {
+        try {
+          if (enc instanceof GeoServerPBEPasswordEncoder) {
+            if (!secMgr.getKeyStoreProvider().hasUserGroupKey(service.getName())) {
+              continue;
+            }
+          }
+          enc.initializeFor(service);
+        }
+ catch (        IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      encoders.add(enc);
+    }
+  }
+}

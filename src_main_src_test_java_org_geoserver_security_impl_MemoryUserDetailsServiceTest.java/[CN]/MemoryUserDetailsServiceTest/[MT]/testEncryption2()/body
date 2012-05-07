@@ -3,7 +3,7 @@
   config.setConfigPasswordEncrypterName(getPBEPasswordEncoder().getName());
   getSecurityManager().saveSecurityConfig(config);
   String serviceName="testEncrypt2";
-  String prefix=getPBEPasswordEncoder().getPrefix();
+  String prefix=getPBEPasswordEncoder().getPrefix() + GeoServerPasswordEncoder.PREFIX_DELIMTER;
   MemoryRoleServiceConfigImpl roleConfig=getRoleConfig(serviceName);
   MemoryUserGroupServiceConfigImpl ugConfig=getUserGroupConfg(serviceName,getPlainTextPasswordEncoder().getName());
   getSecurityManager().saveRoleService(roleConfig);
@@ -24,15 +24,16 @@
   assertEquals(plainTextRole,roleService.getToBeEncrypted());
   MemoryUserGroupService ugService=(MemoryUserGroupService)getSecurityManager().loadUserGroupService(serviceName);
   assertEquals(plainTextUserGroup,ugService.getToBeEncrypted());
-  config.setConfigPasswordEncrypterName(getNullPasswordEncoder().getName());
+  config.setConfigPasswordEncrypterName(getPlainTextPasswordEncoder().getName());
+  String plainprefix=getPlainTextPasswordEncoder().getPrefix() + GeoServerPasswordEncoder.PREFIX_DELIMTER;
   getSecurityManager().saveSecurityConfig(config);
   getSecurityManager().updateConfigurationFilesWithEncryptedFields();
   ugDoc=DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(ugFile);
   roleDoc=DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(roleFile);
   roleElem=(Element)roleDoc.getDocumentElement().getElementsByTagName("toBeEncrypted").item(0);
   ugElem=(Element)ugDoc.getDocumentElement().getElementsByTagName("toBeEncrypted").item(0);
-  assertEquals(plainTextRole,roleElem.getTextContent());
-  assertEquals(plainTextUserGroup,ugElem.getTextContent());
+  assertEquals(plainprefix + plainTextRole,roleElem.getTextContent());
+  assertEquals(plainprefix + plainTextUserGroup,ugElem.getTextContent());
   roleService=(MemoryRoleService)getSecurityManager().loadRoleService(serviceName);
   assertEquals(plainTextRole,roleService.getToBeEncrypted());
   ugService=(MemoryUserGroupService)getSecurityManager().loadUserGroupService(serviceName);

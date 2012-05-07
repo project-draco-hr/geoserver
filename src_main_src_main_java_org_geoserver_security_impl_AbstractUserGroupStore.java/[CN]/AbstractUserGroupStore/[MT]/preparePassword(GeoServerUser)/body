@@ -1,7 +1,8 @@
 {
+  char[] passwordArray=user.getPassword() != null ? user.getPassword().toCharArray() : null;
+  if (PasswordValidatorImpl.passwordStartsWithEncoderPrefix(passwordArray) != null)   return;
+  getSecurityManager().loadPasswordValidator(getPasswordValidatorName()).validatePassword(passwordArray);
   GeoServerPasswordEncoder enc=getSecurityManager().loadPasswordEncoder(getPasswordEncoderName());
-  if (enc.isResponsibleForEncoding(user.getPassword()))   return;
-  getSecurityManager().loadPasswordValidator(getPasswordValidatorName()).validatePassword(user.getPassword() != null ? user.getPassword().toCharArray() : null);
   enc.initializeFor(this);
   user.setPassword(enc.encodePassword(user.getPassword(),null));
 }

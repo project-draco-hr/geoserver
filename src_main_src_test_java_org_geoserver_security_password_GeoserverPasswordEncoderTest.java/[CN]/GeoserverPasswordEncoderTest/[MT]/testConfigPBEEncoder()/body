@@ -1,5 +1,6 @@
 {
   System.out.println("Strong cryptography enabled: " + getSecurityManager().isStrongEncryptionAvailable());
+  GeoServerMultiplexingPasswordEncoder encoder2=new GeoServerMultiplexingPasswordEncoder(getSecurityManager());
   List<String> encoderNames=getConfigPBEEncoderNames();
   for (  String encoderName : encoderNames) {
     GeoServerPasswordEncoder encoder=(GeoServerPBEPasswordEncoder)GeoServerExtensions.bean(encoderName);
@@ -12,17 +13,31 @@
     assertTrue(encoder.isPasswordValid(enc,testPasswordArray,null));
     assertTrue(encoder.isPasswordValid(enc2,testPassword,null));
     assertTrue(encoder.isPasswordValid(enc2,testPasswordArray,null));
+    assertTrue(encoder2.isPasswordValid(enc,testPassword,null));
+    assertTrue(encoder2.isPasswordValid(enc,testPasswordArray,null));
+    assertTrue(encoder2.isPasswordValid(enc2,testPassword,null));
+    assertTrue(encoder2.isPasswordValid(enc2,testPasswordArray,null));
     assertFalse(encoder.isPasswordValid(enc,"crypt1:blabla",null));
     assertFalse(encoder.isPasswordValid(enc,"crypt1:blabla".toCharArray(),null));
     assertFalse(encoder.isPasswordValid(enc2,"crypt1:blabla",null));
     assertFalse(encoder.isPasswordValid(enc2,"crypt1:blabla".toCharArray(),null));
+    assertFalse(encoder2.isPasswordValid(enc,"crypt1:blabla",null));
+    assertFalse(encoder2.isPasswordValid(enc,"crypt1:blabla".toCharArray(),null));
+    assertFalse(encoder2.isPasswordValid(enc2,"crypt1:blabla",null));
+    assertFalse(encoder2.isPasswordValid(enc2,"crypt1:blabla".toCharArray(),null));
     assertEquals(testPassword,encoder.decode(enc));
     assertTrue(Arrays.equals(testPasswordArray,encoder.decodeToCharArray(enc)));
     assertEquals(testPassword,encoder.decode(enc2));
     assertTrue(Arrays.equals(testPasswordArray,encoder.decodeToCharArray(enc2)));
+    assertEquals(testPassword,encoder2.decode(enc));
+    assertTrue(Arrays.equals(testPasswordArray,encoder2.decodeToCharArray(enc)));
+    assertEquals(testPassword,encoder2.decode(enc2));
+    assertTrue(Arrays.equals(testPasswordArray,encoder2.decodeToCharArray(enc2)));
     enc=encoder.encodePassword("",null);
     assertTrue(encoder.isPasswordValid(enc,"",null));
+    assertTrue(encoder2.isPasswordValid(enc,"",null));
     enc2=encoder.encodePassword(emptyArray,null);
     assertTrue(encoder.isPasswordValid(enc,emptyArray,null));
+    assertTrue(encoder2.isPasswordValid(enc,emptyArray,null));
   }
 }

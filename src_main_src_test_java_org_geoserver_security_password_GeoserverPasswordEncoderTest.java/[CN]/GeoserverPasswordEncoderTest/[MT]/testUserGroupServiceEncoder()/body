@@ -1,10 +1,10 @@
 {
   GeoServerUserGroupService service=getSecurityManager().loadUserGroupService(XMLUserGroupService.DEFAULT_NAME);
-  getPBEPasswordEncoder();
   String password="testpassword";
   char[] passwordArray=password.toCharArray();
   KeyStoreProvider keyStoreProvider=getSecurityManager().getKeyStoreProvider();
   keyStoreProvider.setUserGroupKey(service.getName(),password.toCharArray());
+  GeoServerMultiplexingPasswordEncoder encoder3=new GeoServerMultiplexingPasswordEncoder(getSecurityManager(),service);
   for (  GeoServerPBEPasswordEncoder encoder : getPBEEncoders()) {
     encoder.initializeFor(service);
     assertEquals(PasswordEncodingType.ENCRYPT,encoder.getEncodingType());
@@ -22,7 +22,12 @@
     assertTrue(encoder2.isPasswordValid(encFromArray,password,null));
     assertTrue(encoder2.isPasswordValid(enc,passwordArray,null));
     assertTrue(encoder2.isPasswordValid(encFromArray,passwordArray,null));
+    assertTrue(encoder3.isPasswordValid(enc,password,null));
+    assertTrue(encoder3.isPasswordValid(encFromArray,password,null));
+    assertTrue(encoder3.isPasswordValid(enc,passwordArray,null));
+    assertTrue(encoder3.isPasswordValid(encFromArray,passwordArray,null));
     assertEquals(password,encoder2.decode(enc));
+    assertEquals(password,encoder3.decode(enc));
     assertEquals(password,encoder.decode(enc));
     assertEquals(password,encoder.decode(encFromArray));
     assertTrue(Arrays.equals(passwordArray,encoder.decodeToCharArray(enc)));

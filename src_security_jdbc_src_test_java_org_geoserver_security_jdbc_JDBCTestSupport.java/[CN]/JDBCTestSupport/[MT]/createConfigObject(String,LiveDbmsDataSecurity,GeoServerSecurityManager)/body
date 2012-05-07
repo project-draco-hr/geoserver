@@ -1,0 +1,21 @@
+{
+  JDBCUserGroupServiceConfig config=new JDBCUserGroupServiceConfig();
+  Properties props=Util.loadUniversal(new FileInputStream(data.getFixture()));
+  config.setName(fixtureId);
+  config.setConnectURL(props.getProperty("url"));
+  config.setDriverClassName(props.getProperty("driver"));
+  config.setUserName(props.getProperty("user") == null ? props.getProperty("username") : props.getProperty("user"));
+  config.setPassword(props.getProperty("password"));
+  config.setClassName(JDBCUserGroupService.class.getName());
+  config.setCreatingTables(false);
+  config.setPasswordEncoderName(securityManager.loadPasswordEncoder(GeoServerDigestPasswordEncoder.class).getName());
+  config.setPasswordPolicyName(PasswordValidator.DEFAULT_NAME);
+  if ("mysql".equals(fixtureId)) {
+    config.setPropertyFileNameDDL("usersddl.mysql.xml");
+  }
+ else {
+    config.setPropertyFileNameDDL(JDBCUserGroupService.DEFAULT_DDL_FILE);
+  }
+  config.setPropertyFileNameDML(JDBCUserGroupService.DEFAULT_DML_FILE);
+  return config;
+}

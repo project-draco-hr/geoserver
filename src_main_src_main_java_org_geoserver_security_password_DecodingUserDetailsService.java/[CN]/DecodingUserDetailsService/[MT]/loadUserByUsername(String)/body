@@ -1,6 +1,11 @@
 {
   GeoServerUser user=(GeoServerUser)service.loadUserByUsername(username);
   if (user == null)   return null;
-  if (encoder.isResponsibleForEncoding(user.getPassword()))   return new UserDetailsPasswordWrapper(user,encoder.decode(user.getPassword()));
-  return user;
+  try {
+    String decoded=encoder.decode(user.getPassword());
+    return new UserDetailsPasswordWrapper(user,decoded);
+  }
+ catch (  UnsupportedOperationException ex) {
+    return new UserDetailsPasswordWrapper(user,user.getPassword());
+  }
 }

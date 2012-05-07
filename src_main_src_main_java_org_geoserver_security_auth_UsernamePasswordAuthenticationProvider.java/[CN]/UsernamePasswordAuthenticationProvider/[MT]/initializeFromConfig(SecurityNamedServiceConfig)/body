@@ -7,9 +7,7 @@
   userGroupServiceName=upAuthConfig.getUserGroupServiceName();
   authProvider=new DaoAuthenticationProvider();
   authProvider.setUserDetailsService(ugService);
-  GeoServerPasswordEncoder encoder=getSecurityManager().loadPasswordEncoder(ugService.getPasswordEncoderName());
-  encoder.initializeFor(ugService);
-  authProvider.setPasswordEncoder(encoder);
+  authProvider.setPasswordEncoder(new GeoServerMultiplexingPasswordEncoder(getSecurityManager(),ugService));
   try {
     authProvider.afterPropertiesSet();
   }

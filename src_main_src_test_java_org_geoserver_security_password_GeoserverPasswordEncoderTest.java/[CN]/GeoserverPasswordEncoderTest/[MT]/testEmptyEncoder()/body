@@ -1,20 +1,32 @@
 {
-  GeoServerPasswordEncoder encoder=new GeoServerEmptyPasswordEncoder();
+  GeoServerPasswordEncoder encoder=getSecurityManager().loadPasswordEncoder(GeoServerEmptyPasswordEncoder.class);
   assertEquals(PasswordEncodingType.EMPTY,encoder.getEncodingType());
-  assertNull(encoder.encodePassword((String)null,null));
-  assertNull(encoder.encodePassword((char[])null,null));
-  assertNull(encoder.encodePassword("",null));
-  assertNull(encoder.encodePassword(new char[]{},null));
+  String encodedPassword=encoder.getPrefix() + GeoServerPasswordEncoder.PREFIX_DELIMTER;
+  assertEquals(encodedPassword,encoder.encodePassword((String)null,null));
+  assertEquals(encodedPassword,encoder.encodePassword((char[])null,null));
+  assertEquals(encodedPassword,encoder.encodePassword("",null));
+  assertEquals(encodedPassword,encoder.encodePassword(new char[]{},null));
+  assertEquals(encodedPassword,encoder.encodePassword("blbal",null));
+  assertEquals(encodedPassword,encoder.encodePassword("blbal".toCharArray(),null));
+  assertFalse(encoder.isPasswordValid(encodedPassword,"blabla",null));
+  assertFalse(encoder.isPasswordValid(encodedPassword,"blabla".toCharArray(),null));
+  assertFalse(encoder.isPasswordValid(encodedPassword,"",null));
+  assertFalse(encoder.isPasswordValid(encodedPassword,"".toCharArray(),null));
   try {
-    encoder.encodePassword(testPassword,null);
-    fail("non null/empty password should fail");
+    encoder.decode("");
+    fail("Must fail, empty passwords cannot be decoded");
   }
- catch (  IllegalArgumentException e) {
+ catch (  UnsupportedOperationException ex) {
   }
+  GeoServerMultiplexingPasswordEncoder encoder2=new GeoServerMultiplexingPasswordEncoder(getSecurityManager());
+  assertFalse(encoder2.isPasswordValid(encodedPassword,"blabla",null));
+  assertFalse(encoder2.isPasswordValid(encodedPassword,"blabla".toCharArray(),null));
+  assertFalse(encoder2.isPasswordValid(encodedPassword,"",null));
+  assertFalse(encoder2.isPasswordValid(encodedPassword,"".toCharArray(),null));
   try {
-    encoder.encodePassword(testPassword.toCharArray(),null);
-    fail("non null/empty password should fail");
+    encoder2.decode("");
+    fail("Must fail, empty passwords cannot be decoded");
   }
- catch (  IllegalArgumentException e) {
+ catch (  UnsupportedOperationException ex) {
   }
 }

@@ -1,5 +1,26 @@
 {
   super(id,model);
-  add(new PasswordEncoderChoice("passwordEncoderName"));
+  add(new PasswordEncoderChoice("passwordEncoderName").add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      if (recodeCheckBox.isVisible()) {
+        recodeCheckBox.setEnabled(true);
+        target.addComponent(recodeCheckBox);
+      }
+    }
+  }
+));
+  boolean canCreateStore=false;
+  SecurityUserGroupServiceConfig config=model.getObject();
+  try {
+    GeoServerUserGroupService s=(GeoServerUserGroupService)Class.forName(config.getClassName()).newInstance();
+    canCreateStore=s.canCreateStore();
+  }
+ catch (  Exception e) {
+  }
+  recodeCheckBox=new CheckBox("recodeExistingPasswords",Model.of(false));
+  recodeCheckBox.setOutputMarkupId(true);
+  recodeCheckBox.setVisible(canCreateStore);
+  recodeCheckBox.setEnabled(false);
+  add(recodeCheckBox);
   add(new PasswordPolicyChoice("passwordPolicyName"));
 }
