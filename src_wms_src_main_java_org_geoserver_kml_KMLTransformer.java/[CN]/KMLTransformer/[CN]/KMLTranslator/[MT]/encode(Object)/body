@@ -20,7 +20,8 @@
     }
     sb.setLength(sb.length() - 1);
     start("Document");
-    element("name",sb.toString());
+    String kmltitle=(String)mapContent.getRequest().getFormatOptions().get("kmltitle");
+    element("name",(kmltitle != null ? kmltitle : sb.toString()));
   }
   for (int i=0; i < layers.size(); i++) {
     Layer layer=layers.get(i);
@@ -28,21 +29,21 @@
     Boolean superoverlay=(Boolean)mapContent.getRequest().getFormatOptions().get("superoverlay");
     superoverlay=(superoverlay == null ? Boolean.FALSE : superoverlay);
     if (superoverlay) {
-      encodeSuperOverlayLayer(mapContent,layer);
+      encodeSuperOverlayLayer(mapContent,layer,group);
     }
  else {
       if (layerInfo.getType() != MapLayerInfo.TYPE_RASTER) {
-        encodeVectorLayer(mapContent,layer,lookAtOpts);
+        encodeVectorLayer(mapContent,layer,lookAtOpts,group);
       }
  else {
-        encodeRasterLayer(mapContent,layer,lookAtOpts);
+        encodeRasterLayer(mapContent,layer,lookAtOpts,group);
       }
     }
   }
   if (request.getLegend()) {
     for (int i=0; i < layers.size(); i++) {
       Layer layer=layers.get(i);
-      encodeLegend(mapContent,layer);
+      encodeLegend(mapContent,layer,group);
     }
   }
   if (group) {

@@ -1,0 +1,13 @@
+{
+  WMS wms=mockData.getWMS();
+  KMLNetworkLinkTransformer transformer=new KMLNetworkLinkTransformer(wms,mapContent);
+  transformer.setEncodeAsRegion(false);
+  transformer.setIndentation(2);
+  request.setBbox(new Envelope(-1,1,-10,10));
+  Map<String,Object> formatOptions=new HashMap<String,Object>();
+  formatOptions.put("kmltitle","myCustomLayerTitle");
+  request.setFormatOptions(formatOptions);
+  Document dom=WMSTestSupport.transform(mapContent,transformer);
+  assertXpathEvaluatesTo("1","count(//kml/Folder/name)",dom);
+  assertXpathEvaluatesTo("myCustomLayerTitle","//kml/Folder/name",dom);
+}
