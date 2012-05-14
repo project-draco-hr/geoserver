@@ -122,13 +122,17 @@
       getResponse().setStatus(Status.SUCCESS_CREATED);
       return;
     }
+    Map<String,FeatureTypeInfo> featureTypesByNativeName=new HashMap<String,FeatureTypeInfo>();
+    for (    FeatureTypeInfo ftInfo : catalog.getFeatureTypesByDataStore(info)) {
+      featureTypesByNativeName.put(ftInfo.getNativeName(),ftInfo);
+    }
     String[] featureTypeNames=source.getTypeNames();
     for (int i=0; i < featureTypeNames.length; i++) {
       if (!"all".equalsIgnoreCase(configure) && i > 0) {
         break;
       }
       FeatureSource fs=ds.getFeatureSource(featureTypeNames[i]);
-      FeatureTypeInfo ftinfo=catalog.getFeatureTypeByDataStore(info,featureTypeNames[i]);
+      FeatureTypeInfo ftinfo=featureTypesByNativeName.get(featureTypeNames[i]);
       if (ftinfo == null) {
         ftinfo=builder.buildFeatureType(fs);
         builder.lookupSRS(ftinfo,true);
