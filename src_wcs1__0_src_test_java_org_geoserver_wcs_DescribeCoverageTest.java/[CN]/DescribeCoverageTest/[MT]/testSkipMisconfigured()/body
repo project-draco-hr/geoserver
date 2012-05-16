@@ -1,0 +1,12 @@
+{
+  GeoServerInfo global=getGeoServer().getGlobal();
+  global.setResourceErrorHandling(ResourceErrorHandling.SKIP_MISCONFIGURED_LAYERS);
+  getGeoServer().save(global);
+  CoverageStoreInfo cvInfo=getCatalog().getCoverageStoreByName(MockData.TASMANIA_DEM.getLocalPart());
+  cvInfo.setURL("file:///I/AM/NOT/THERE");
+  getCatalog().save(cvInfo);
+  Document dom=getAsDOM(BASEPATH + "?request=DescribeCoverage&service=WCS&version=1.0.0");
+  checkValidationErrors(dom,WCS10_DESCRIBECOVERAGE_SCHEMA);
+  int count=getCatalog().getCoverages().size();
+  assertEquals(count - 1,dom.getElementsByTagName("wcs:CoverageOffering").getLength());
+}

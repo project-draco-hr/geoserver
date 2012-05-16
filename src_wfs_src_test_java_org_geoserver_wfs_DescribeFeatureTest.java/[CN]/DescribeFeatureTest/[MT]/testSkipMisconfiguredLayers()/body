@@ -1,0 +1,14 @@
+{
+  Document doc=getAsDOM("wfs?service=WFS&request=DescribeFeatureType&version=1.0.0");
+  assertEquals("xsd:schema",doc.getDocumentElement().getNodeName());
+  XMLAssert.assertXpathEvaluatesTo("1","count(//xsd:import[contains(@schemaLocation, 'AggregateGeoFeature')])",doc);
+  GeoServerInfo global=getGeoServer().getGlobal();
+  global.setResourceErrorHandling(ResourceErrorHandling.SKIP_MISCONFIGURED_LAYERS);
+  getGeoServer().save(global);
+  FeatureTypeInfo ftype=getCatalog().getFeatureTypeByName(MockData.AGGREGATEGEOFEATURE.getLocalPart());
+  ftype.setNativeName("NOT ACTUALLY THERE");
+  getCatalog().save(ftype);
+  doc=getAsDOM("wfs?service=WFS&request=DescribeFeatureType&version=1.0.0");
+  assertEquals("xsd:schema",doc.getDocumentElement().getNodeName());
+  XMLAssert.assertXpathEvaluatesTo("0","count(//xsd:import[contains(@schemaLocation, 'AggregateGeoFeature')])",doc);
+}

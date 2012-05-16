@@ -1,0 +1,12 @@
+{
+  GeoServerInfo global=getGeoServer().getGlobal();
+  global.setResourceErrorHandling(ResourceErrorHandling.SKIP_MISCONFIGURED_LAYERS);
+  getGeoServer().save(global);
+  for (  FeatureTypeInfo ft : getCatalog().getFeatureTypes()) {
+    ft.setLatLonBoundingBox(null);
+    getCatalog().save(ft);
+  }
+  Document caps=getAsDOM("wms?service=WMS&request=GetCapabilities&version=1.1.1");
+  assertEquals("WMT_MS_Capabilities",caps.getDocumentElement().getTagName());
+  XMLAssert.assertXpathEvaluatesTo("","//Layer/Name/text()",caps);
+}

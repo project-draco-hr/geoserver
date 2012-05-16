@@ -13,6 +13,21 @@
   Collections.sort(featureTypes,new FeatureTypeInfoTitleComparator());
   for (Iterator i=featureTypes.iterator(); i.hasNext(); ) {
     FeatureTypeInfo featureType=(FeatureTypeInfo)i.next();
-    if (featureType.enabled())     featureType(featureType,crs,srsPrefix);
+    if (featureType.enabled()) {
+      try {
+        mark();
+        featureType(featureType,crs,srsPrefix);
+        commit();
+      }
+ catch (      RuntimeException ex) {
+        if (skipMisconfigured) {
+          reset();
+          LOGGER.log(Level.WARNING,"Couldn't encode WFS capabilities entry for featuretype: " + featureType.getPrefixedName(),ex);
+        }
+ else {
+          throw ex;
+        }
+      }
+    }
   }
 }

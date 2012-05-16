@@ -34,7 +34,20 @@
   Collections.sort(featureTypes,new FeatureTypeInfoTitleComparator());
   for (Iterator it=featureTypes.iterator(); it.hasNext(); ) {
     FeatureTypeInfo ftype=(FeatureTypeInfo)it.next();
-    handleFeatureType(ftype);
+    try {
+      mark();
+      handleFeatureType(ftype);
+      commit();
+    }
+ catch (    RuntimeException e) {
+      if (skipMisconfigured) {
+        reset();
+        LOGGER.log(Level.WARNING,"Couldn't encode WFS Capabilities entry for FeatureType: " + ftype.getPrefixedName(),e);
+      }
+ else {
+        throw e;
+      }
+    }
   }
   end("FeatureTypeList");
 }

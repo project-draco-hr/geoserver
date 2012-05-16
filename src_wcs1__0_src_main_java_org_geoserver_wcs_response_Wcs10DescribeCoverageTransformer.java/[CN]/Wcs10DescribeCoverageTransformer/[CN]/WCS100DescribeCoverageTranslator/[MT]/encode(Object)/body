@@ -17,10 +17,13 @@
   attributes.addAttribute("","version","version","","1.0.0");
   start("wcs:CoverageDescription",attributes);
   List<CoverageInfo> coverages;
+  final boolean skipMisconfiguredThisTime;
   if (request.getCoverage() == null || request.getCoverage().size() == 0) {
+    skipMisconfiguredThisTime=skipMisconfigured;
     coverages=catalog.getCoverages();
   }
  else {
+    skipMisconfiguredThisTime=false;
     coverages=new ArrayList<CoverageInfo>();
     for (Iterator it=request.getCoverage().iterator(); it.hasNext(); ) {
       String coverageId=(String)it.next();
@@ -32,11 +35,19 @@
     }
   }
   for (Iterator it=coverages.iterator(); it.hasNext(); ) {
+    CoverageInfo coverage=(CoverageInfo)it.next();
     try {
-      handleCoverageOffering((CoverageInfo)it.next());
+      mark();
+      handleCoverageOffering(coverage);
+      commit();
     }
  catch (    Exception e) {
-      throw new RuntimeException("Unexpected error occurred during describe coverage xml encoding",e);
+      if (skipMisconfiguredThisTime) {
+        reset();
+      }
+ else {
+        throw new RuntimeException("Unexpected error occurred during describe coverage xml encoding",e);
+      }
     }
   }
   end("wcs:CoverageDescription");

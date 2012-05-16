@@ -7,7 +7,20 @@
   List<CoverageInfo> coverages=catalog.getCoverages();
   Collections.sort(coverages,new CoverageInfoLabelComparator());
   for (  CoverageInfo cvInfo : coverages) {
-    handleCoverageOfferingBrief(cvInfo);
+    try {
+      mark();
+      handleCoverageOfferingBrief(cvInfo);
+      commit();
+    }
+ catch (    Exception e) {
+      if (skipMisconfigured) {
+        reset();
+        LOGGER.log(Level.SEVERE,"Skipping coverage: " + cvInfo.getPrefixedName() + " as its capabilities generation failed",e);
+      }
+ else {
+        throw new RuntimeException("Capabilities document generation failed on coverage " + cvInfo.getPrefixedName(),e);
+      }
+    }
   }
   end("wcs:ContentMetadata");
 }
