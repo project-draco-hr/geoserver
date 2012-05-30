@@ -1,0 +1,17 @@
+{
+  final Catalog catalog=getCatalog();
+  CoverageStoreInfo store=catalog.getFactory().createCoverageStore();
+  new CatalogBuilder(catalog).updateCoverageStore(store,coverageStore);
+  assertNull(store.getId());
+  tester.startPage(new CoverageStoreEditPage(store));
+  tester.assertNoErrorMessage();
+  FormTester form=tester.newFormTester("rasterStoreForm");
+  form.setValue("namePanel:border:paramValue","foo");
+  form.submit();
+  tester.clickLink("rasterStoreForm:save");
+  tester.assertNoErrorMessage();
+  assertNull(store.getId());
+  assertEquals("foo",store.getName());
+  assertNotNull(catalog.getStoreByName(coverageStore.getName(),CoverageStoreInfo.class));
+  assertNull(catalog.getStoreByName("foo",CoverageStoreInfo.class));
+}
