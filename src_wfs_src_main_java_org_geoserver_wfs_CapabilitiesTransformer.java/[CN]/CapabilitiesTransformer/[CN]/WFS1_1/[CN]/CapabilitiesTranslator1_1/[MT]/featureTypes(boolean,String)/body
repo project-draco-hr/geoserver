@@ -1,0 +1,33 @@
+{
+  List featureTypes=new ArrayList(catalog.getFeatureTypes());
+  for (Iterator it=featureTypes.iterator(); it.hasNext(); ) {
+    FeatureTypeInfo ft=(FeatureTypeInfo)it.next();
+    if (!ft.enabled())     it.remove();
+  }
+  if (namespace != null) {
+    for (Iterator it=featureTypes.iterator(); it.hasNext(); ) {
+      FeatureTypeInfo ft=(FeatureTypeInfo)it.next();
+      if (!namespace.equals(ft.getNamespace().getPrefix()))       it.remove();
+    }
+  }
+  Collections.sort(featureTypes,new FeatureTypeInfoTitleComparator());
+  for (Iterator i=featureTypes.iterator(); i.hasNext(); ) {
+    FeatureTypeInfo featureType=(FeatureTypeInfo)i.next();
+    if (featureType.enabled()) {
+      try {
+        mark();
+        featureType(featureType,crs);
+        commit();
+      }
+ catch (      RuntimeException ex) {
+        if (skipMisconfigured) {
+          reset();
+          LOGGER.log(Level.WARNING,"Couldn't encode WFS capabilities entry for featuretype: " + featureType.getPrefixedName(),ex);
+        }
+ else {
+          throw ex;
+        }
+      }
+    }
+  }
+}

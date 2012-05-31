@@ -1,0 +1,27 @@
+{
+  GMLInfo gml=wfs.getGML().get(version);
+  String prefix=featureType.getNamespace().getPrefix();
+  String uri=featureType.getNamespace().getURI();
+  start("FeatureType",attributes(new String[]{"xmlns:" + prefix,uri}));
+  element("Name",featureType.getPrefixedName());
+  element("Title",featureType.getTitle());
+  element("Abstract",featureType.getAbstract());
+  keywords(featureType.getKeywords());
+  String srs=featureType.getSRS();
+  if (srs != null && srs.matches("(?ui)EPSG:[0-9]+")) {
+    srs=gml.getSrsNameStyle().getPrefix() + srs.substring(5);
+  }
+  if (crs) {
+    element("DefaultCRS",srs);
+  }
+ else {
+    element("DefaultSRS",srs);
+  }
+  Envelope bbox=null;
+  bbox=featureType.getLatLonBoundingBox();
+  start("ows:WGS84BoundingBox");
+  element("ows:LowerCorner",bbox.getMinX() + " " + bbox.getMinY());
+  element("ows:UpperCorner",bbox.getMaxX() + " " + bbox.getMaxY());
+  end("ows:WGS84BoundingBox");
+  end("FeatureType");
+}
