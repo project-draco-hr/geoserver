@@ -19,6 +19,9 @@
     if (req.getOutputFormat() == null) {
       req.setOutputFormat(normalize((String)xml.get("outputFormat")));
     }
+    if (req.getNamespace() == null) {
+      req.setNamespace(normalize((String)xml.get("namespace")));
+    }
   }
   String service=req.getService();
   if ((service == null) || (req.getRequest() == null)) {
@@ -36,10 +39,10 @@
   if (service == null) {
     throw new ServiceException("Could not determine service","MissingParameterValue","service");
   }
-  Service serviceDescriptor=findService(service,req.getVersion());
+  Service serviceDescriptor=findService(service,req.getVersion(),req.getNamespace());
   if (serviceDescriptor == null) {
     if (req.getContext() != null) {
-      serviceDescriptor=findService(req.getContext(),req.getVersion());
+      serviceDescriptor=findService(req.getContext(),req.getVersion(),req.getNamespace());
       if (serviceDescriptor != null) {
         if (req.getRequest() == null) {
           req.setRequest(req.getService());
