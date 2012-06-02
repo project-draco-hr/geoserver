@@ -149,6 +149,12 @@
   EnvFunction.setLocalValue("wms_srs",mapContent.getRequest().getSRS());
   EnvFunction.setLocalValue("wms_width",mapContent.getMapWidth());
   EnvFunction.setLocalValue("wms_height",mapContent.getMapHeight());
+  try {
+    EnvFunction.setLocalValue("wms_scale_denominator",RendererUtilities.calculateScale(mapContent.getRenderingArea(),mapContent.getMapWidth(),mapContent.getMapHeight(),null));
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to compute the scale denominator, wms_scale_denominator env variable is unset",e);
+  }
   setupRenderingBuffer(mapContent,layers);
   WebMap map=delegate.produceMap(mapContent);
   if (cachingPossible) {
