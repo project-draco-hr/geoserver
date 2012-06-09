@@ -1,0 +1,13 @@
+{
+  Document doc=getAsDOM("wfs?service=WFS&request=getCapabilities&version=2.0.0");
+  XpathEngine engine=XMLUnit.newXpathEngine();
+  NodeList spatialOperators=engine.getMatchingNodes("//fes:Spatial_Capabilities/fes:SpatialOperators/fes:SpatialOperator/@name",doc);
+  Set<String> ops=new TreeSet<String>();
+  for (int i=0; i < spatialOperators.getLength(); i++) {
+    String format=spatialOperators.item(i).getFirstChild().getNodeValue();
+    ops.add(format);
+  }
+  List<String> expectedSpatialOperators=getSupportedSpatialOperatorsList();
+  assertEquals(expectedSpatialOperators.size(),ops.size());
+  assertTrue(ops.containsAll(expectedSpatialOperators));
+}
