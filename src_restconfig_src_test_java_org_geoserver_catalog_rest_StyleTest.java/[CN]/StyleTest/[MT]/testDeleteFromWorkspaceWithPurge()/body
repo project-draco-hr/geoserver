@@ -1,0 +1,11 @@
+{
+  testPostAsSLDToWorkspace();
+  Catalog cat=getCatalog();
+  assertNotNull(cat.getStyleByName("gs","foo"));
+  GeoServerResourceLoader rl=getResourceLoader();
+  assertNotNull(rl.find("workspaces","gs","styles","foo.sld"));
+  MockHttpServletResponse response=deleteAsServletResponse("/rest/workspaces/gs/styles/foo?purge=true");
+  assertEquals(200,response.getStatusCode());
+  assertNull(cat.getStyleByName("gs","foo"));
+  assertNull(rl.find("workspaces","gs","styles","foo.sld"));
+}

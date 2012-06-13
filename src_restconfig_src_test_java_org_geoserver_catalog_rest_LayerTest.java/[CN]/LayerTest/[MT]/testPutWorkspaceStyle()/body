@@ -1,0 +1,19 @@
+{
+  Catalog cat=getCatalog();
+  assertNull(cat.getStyleByName("foo"));
+  assertNull(cat.getStyleByName("cite","foo"));
+  String xml="<style>" + "<name>foo</name>" + "<filename>foo.sld</filename>"+ "</style>";
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/cite/styles",xml);
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(cat.getStyleByName("cite","foo"));
+  xml="<layer>" + "<defaultStyle>" + "<name>foo</name>"+ "<workspace>cite</workspace>"+ "</defaultStyle>"+ "<enabled>true</enabled>"+ "</layer>";
+  response=putAsServletResponse("/rest/layers/cite:Buildings",xml,"application/xml");
+  assertEquals(200,response.getStatusCode());
+  LayerInfo l=cat.getLayerByName("cite:Buildings");
+  assertNotNull(l.getDefaultStyle());
+  assertEquals("foo",l.getDefaultStyle().getName());
+  assertNotNull(l.getDefaultStyle().getWorkspace());
+  Document dom=getAsDOM("/rest/layers/cite:Buildings.xml");
+  assertXpathExists("/layer/defaultStyle/name[text() = 'foo']",dom);
+  assertXpathEvaluatesTo("http://localhost/geoserver/rest/workspaces/cite/styles/foo.xml","//defaultStyle/atom:link/@href",dom);
+}

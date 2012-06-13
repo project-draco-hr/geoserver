@@ -3,6 +3,7 @@
     InvocationHandler h=Proxy.getInvocationHandler(object);
     if (h instanceof ResolvingProxy) {
       String ref=((ResolvingProxy)h).getRef();
+      String pre=((ResolvingProxy)h).getPrefix();
       if (object instanceof WorkspaceInfo) {
         Object ws=catalog.getWorkspace(ref);
         if (ws == null) {
@@ -44,6 +45,11 @@
       }
       if (object instanceof StyleInfo) {
         Object s=catalog.getStyle(ref);
+        if (s == null) {
+          if (pre != null) {
+            s=catalog.getStyleByName(pre,ref);
+          }
+        }
         if (s == null) {
           s=catalog.getStyleByName(ref);
         }
