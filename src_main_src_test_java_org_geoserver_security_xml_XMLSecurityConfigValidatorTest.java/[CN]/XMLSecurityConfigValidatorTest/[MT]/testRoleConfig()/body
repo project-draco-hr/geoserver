@@ -1,6 +1,6 @@
 {
   super.testRoleConfig();
-  XMLRoleServiceConfig config=(XMLRoleServiceConfig)getRoleConfig(XMLRoleService.DEFAULT_NAME,XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),XMLConstants.FILE_RR);
+  XMLRoleServiceConfig config=(XMLRoleServiceConfig)getRoleConfig(XMLRoleService.DEFAULT_NAME,XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,XMLConstants.FILE_RR);
   boolean fail;
   fail=false;
   try {
@@ -9,7 +9,7 @@
     getSecurityManager().saveRoleService(config);
   }
  catch (  SecurityConfigException ex) {
-    assertEquals(SEC_ERR_100,ex.getErrorId());
+    assertEquals(CHECK_INTERVAL_INVALID,ex.getId());
     assertEquals(0,ex.getArgs().length);
     LOGGER.info(ex.getMessage());
     fail=true;
@@ -21,14 +21,14 @@
     getSecurityManager().saveRoleService(config);
   }
  catch (  SecurityConfigException ex) {
-    assertEquals(SEC_ERR_100,ex.getErrorId());
+    assertEquals(CHECK_INTERVAL_INVALID,ex.getId());
     assertEquals(0,ex.getArgs().length);
     LOGGER.info(ex.getMessage());
     fail=true;
   }
   assertTrue(fail);
   config.setCheckInterval(0);
-  XMLRoleServiceConfig xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test1",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),"test1.xml");
+  XMLRoleServiceConfig xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test1",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"test1.xml");
   try {
     getSecurityManager().saveRoleService(xmlConfig);
     getSecurityManager().removeRoleService(xmlConfig);
@@ -37,7 +37,7 @@
     Assert.fail("Should work");
   }
   fail=false;
-  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test2",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),"test2.xml");
+  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test2",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"test2.xml");
   try {
     getSecurityManager().saveRoleService(xmlConfig);
     GeoServerRoleStore store=getSecurityManager().loadRoleService("test2").createStore();
@@ -46,12 +46,12 @@
     getSecurityManager().removeRoleService(xmlConfig);
   }
  catch (  SecurityConfigException ex) {
-    assertEquals(SEC_ERR_102,ex.getErrorId());
+    assertEquals(ROLE_SERVICE_NOT_EMPTY_$1,ex.getId());
     assertEquals("test2",ex.getArgs()[0]);
     fail=true;
   }
   assertTrue(fail);
-  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test3",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),new File(getSecurityManager().getRoleRoot(),"test3.xml").getAbsolutePath());
+  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test3",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,new File(getSecurityManager().getRoleRoot(),"test3.xml").getAbsolutePath());
   try {
     getSecurityManager().saveRoleService(xmlConfig);
     GeoServerRoleStore store=getSecurityManager().loadRoleService("test3").createStore();
@@ -64,19 +64,19 @@
   }
   if (new XMLSecurityConfigValidator(getSecurityManager()).getTempDir() != null) {
     String invalidPath="abc" + File.separator + "def.xml";
-    xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test4",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),invalidPath);
+    xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test4",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,invalidPath);
     fail=false;
     try {
       getSecurityManager().saveRoleService(xmlConfig);
     }
  catch (    SecurityConfigException ex) {
-      assertEquals(SEC_ERR_101,ex.getErrorId());
+      assertEquals(FILE_CREATE_FAILED_$1,ex.getId());
       assertEquals(invalidPath,ex.getArgs()[0]);
       fail=true;
     }
     assertTrue(fail);
   }
-  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test4",XMLRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority(),"testModify.xml");
+  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test4",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"testModify.xml");
   try {
     getSecurityManager().saveRoleService(xmlConfig);
     xmlConfig.setValidating(true);
@@ -91,7 +91,7 @@
     getSecurityManager().saveRoleService(xmlConfig);
   }
  catch (  SecurityConfigException ex) {
-    assertEquals(SEC_ERR_105,ex.getErrorId());
+    assertEquals(FILENAME_CHANGE_INVALID_$2,ex.getId());
     assertEquals("testModify.xml",ex.getArgs()[0]);
     assertEquals("xyz.xml",ex.getArgs()[1]);
     fail=true;

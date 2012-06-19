@@ -28,7 +28,7 @@
   MasterPasswordConfig mpConfig=new MasterPasswordConfig();
   mpConfig.setProviderName(mpProviderConfig.getName());
   saveMasterPasswordConfig(mpConfig);
-  File serviceFile=new File(getSecurityRoot(),"service.properties");
+  File serviceFile=new File(getSecurityRoot(),"services.properties");
   if (serviceFile.exists() == false) {
     FileUtils.copyURLToFile(Util.class.getResource("serviceTemplate.properties"),serviceFile);
   }
@@ -76,7 +76,8 @@
     gaConfig.setCheckInterval(checkInterval);
     gaConfig.setFileName(XMLConstants.FILE_RR);
     gaConfig.setValidating(true);
-    gaConfig.setAdminRoleName(GeoServerRole.ADMIN_ROLE.getAuthority());
+    gaConfig.setAdminRoleName(XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE);
+    gaConfig.setGroupAdminRoleName(XMLRoleService.DEFAULT_LOCAL_GROUP_ADMIN_ROLE);
     saveRoleService(gaConfig);
     roleService=loadRoleService(XMLRoleService.DEFAULT_NAME);
   }
@@ -216,9 +217,10 @@
         GeoServerUser user=userGroupStore.createUserObject(username,attr.getPassword(),attr.isEnabled());
         userGroupStore.addUser(user);
         for (        GrantedAuthority auth : attr.getAuthorities()) {
-          GeoServerRole role=roleStore.getRoleByName(auth.getAuthority());
+          String roleName=GeoServerRole.ADMIN_ROLE.getAuthority().equals(auth.getAuthority()) ? XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE : auth.getAuthority();
+          GeoServerRole role=roleStore.getRoleByName(roleName);
           if (role == null) {
-            role=roleStore.createRoleObject(auth.getAuthority());
+            role=roleStore.createRoleObject(roleName);
             roleStore.addRole(role);
           }
           roleStore.associateRoleToUser(role,username);
@@ -229,11 +231,29 @@
  else {
     if (userGroupService.getUserByUsername(GeoServerUser.ADMIN_USERNAME) == null) {
       userGroupStore.addUser(GeoServerUser.createDefaultAdmin());
-      roleStore.addRole(GeoServerRole.ADMIN_ROLE);
-      roleStore.associateRoleToUser(GeoServerRole.ADMIN_ROLE,GeoServerUser.ADMIN_USERNAME);
+      GeoServerRole localAdminRole=roleStore.createRoleObject(XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE);
+      roleStore.addRole(localAdminRole);
+      roleStore.associateRoleToUser(localAdminRole,GeoServerUser.ADMIN_USERNAME);
     }
   }
-  serviceFile=new File(getSecurityRoot(),"service.properties");
+  if (roleStore.getRoleByName(XMLRoleService.DEFAULT_LOCAL_GROUP_ADMIN_ROLE) == null) {
+    roleStore.addRole(roleStore.createRoleObject(XMLRoleService.DEFAULT_LOCAL_GROUP_ADMIN_ROLE));
+  }
+  for (  String filename : new String[]{"services.properties","layers.properties","rest.properties"}) {
+    File file=new File(getSecurityRoot(),filename);
+    if (file.exists() == false)     continue;
+    List<String> lines=new ArrayList<String>();
+    BufferedReader reader=new BufferedReader(new FileReader(file));
+    String line;
+    while ((line=reader.readLine()) != null)     lines.add(line.replace(GeoServerRole.ADMIN_ROLE.getAuthority(),XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE));
+    reader.close();
+    PrintWriter writer=new PrintWriter(new FileWriter(file));
+    for (    String s : lines) {
+      writer.println(s);
+    }
+    writer.close();
+  }
+  serviceFile=new File(getSecurityRoot(),"services.properties");
   if (serviceFile.exists()) {
     Properties props=Util.loadPropertyFile(serviceFile);
     for (    Entry<Object,Object> entry : props.entrySet()) {
@@ -246,7 +266,7 @@
       }
     }
   }
-  File dataFile=new File(getSecurityRoot(),"layer.properties");
+  File dataFile=new File(getSecurityRoot(),"layers.properties");
   if (dataFile.exists()) {
     Properties props=Util.loadPropertyFile(dataFile);
     for (    Entry<Object,Object> entry : props.entrySet()) {
@@ -259,9 +279,6 @@
         }
       }
     }
-  }
-  if (roleStore.getRoleByName(GeoServerRole.GROUP_ADMIN_ROLE.getAuthority()) == null) {
-    roleStore.addRole(GeoServerRole.GROUP_ADMIN_ROLE);
   }
   roleStore.store();
   userGroupStore.store();

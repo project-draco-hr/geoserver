@@ -4,7 +4,9 @@
   FilterSecurityInterceptor filter=new FilterSecurityInterceptor();
   filter.setAuthenticationManager(getSecurityManager());
   List<AccessDecisionVoter> voters=new ArrayList<AccessDecisionVoter>();
-  voters.add(new RoleVoter());
+  RoleVoter roleVoter=new RoleVoter();
+  roleVoter.setRolePrefix("");
+  voters.add(roleVoter);
   voters.add(new AuthenticatedVoter());
   AffirmativeBased accessDecisionManager=new AffirmativeBased(voters);
   accessDecisionManager.setAllowIfAllAbstainDecisions(siConfig.isAllowIfAllAbstainDecisions());
@@ -14,7 +16,7 @@
     filter.afterPropertiesSet();
   }
  catch (  Exception e) {
-    throw new RuntimeException();
+    throw new RuntimeException(e);
   }
   getNestedFilters().add(filter);
 }

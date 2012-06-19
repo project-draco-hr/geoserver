@@ -1,0 +1,28 @@
+{
+  boolean failed;
+  RoleStoreValidationWrapper store=createXMLStore("test","admin","groupAdmin");
+  store.addRole(store.createRoleObject("admin"));
+  store.addRole(store.createRoleObject("groupAdmin"));
+  store.addRole(store.createRoleObject("role1"));
+  store.store();
+  store=new RoleStoreValidationWrapper(getSecurityManager().loadRoleService("test").createStore());
+  failed=false;
+  try {
+    store.removeRole(store.createRoleObject("admin"));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ADMIN_ROLE_NOT_REMOVABLE_$1,"admin");
+    failed=true;
+  }
+  assertTrue(failed);
+  failed=false;
+  try {
+    store.removeRole(store.createRoleObject("groupAdmin"));
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,GROUP_ADMIN_ROLE_NOT_REMOVABLE_$1,"groupAdmin");
+    failed=true;
+  }
+  assertTrue(failed);
+  store.removeRole(store.createRoleObject("role1"));
+}

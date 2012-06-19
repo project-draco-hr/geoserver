@@ -8,7 +8,7 @@
   ugStore2.addUser(ugStore1.createUserObject("user2","abc",true));
   ugStore2.addGroup(ugStore1.createGroupObject("group2",true));
   ugStore2.store();
-  RoleStoreValidationWrapper store=createStore("test","role1",ugStore1,ugStore2);
+  RoleStoreValidationWrapper store=createStore("test",null,null,ugStore1,ugStore2);
   GeoServerRole role1=store.createRoleObject("role1");
   store.addRole(role1);
   store.store();
@@ -19,7 +19,7 @@
     store.associateRoleToGroup(role1,"group3");
   }
  catch (  IOException ex) {
-    assertSecurityException(ex,ROLE_ERR_07,"group3");
+    assertSecurityException(ex,GROUPNAME_NOT_FOUND_$1,"group3");
     failed=true;
   }
   assertTrue(failed);
@@ -30,7 +30,7 @@
     store.associateRoleToUser(role1,"user3");
   }
  catch (  IOException ex) {
-    assertSecurityException(ex,ROLE_ERR_06,"user3");
+    assertSecurityException(ex,USERNAME_NOT_FOUND_$1,"user3");
     failed=true;
   }
   assertTrue(failed);
@@ -41,7 +41,7 @@
     store.getRolesForGroup("group3");
   }
  catch (  IOException ex) {
-    assertSecurityException(ex,ROLE_ERR_07,"group3");
+    assertSecurityException(ex,GROUPNAME_NOT_FOUND_$1,"group3");
     failed=true;
   }
   assertTrue(failed);
@@ -50,7 +50,7 @@
     store.getRolesForUser("user3");
   }
  catch (  IOException ex) {
-    assertSecurityException(ex,ROLE_ERR_06,"user3");
+    assertSecurityException(ex,USERNAME_NOT_FOUND_$1,"user3");
     failed=true;
   }
   assertTrue(failed);
@@ -61,7 +61,7 @@
     store.disAssociateRoleFromGroup(role1,"group3");
   }
  catch (  IOException ex) {
-    assertSecurityException(ex,ROLE_ERR_07,"group3");
+    assertSecurityException(ex,GROUPNAME_NOT_FOUND_$1,"group3");
     failed=true;
   }
   assertTrue(failed);
@@ -72,18 +72,9 @@
     store.disAssociateRoleFromUser(role1,"user3");
   }
  catch (  IOException ex) {
-    assertSecurityException(ex,ROLE_ERR_06,"user3");
+    assertSecurityException(ex,USERNAME_NOT_FOUND_$1,"user3");
     failed=true;
   }
   assertTrue(failed);
-  failed=false;
-  try {
-    store.removeRole(role1);
-  }
- catch (  IOException ex) {
-    assertSecurityException(ex,ROLE_ERR_08,"role1");
-    failed=true;
-  }
-  assertTrue(failed);
-  store.removeRole(GeoServerRole.ADMIN_ROLE);
+  store.removeRole(role1);
 }
