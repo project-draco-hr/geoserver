@@ -1,0 +1,35 @@
+{
+  FeatureType ft=super.getFeatureType();
+  if (policy.getLimits() == null) {
+    return ft;
+  }
+ else   if (policy.getLimits() instanceof VectorAccessLimits) {
+    VectorAccessLimits val=(VectorAccessLimits)policy.getLimits();
+    Query query=val.getReadQuery();
+    if (query.getPropertyNames() == Query.ALL_NAMES) {
+      return ft;
+    }
+    if (ft instanceof SimpleFeatureType) {
+      SimpleFeatureType sft=(SimpleFeatureType)ft;
+      Set<String> properties=new HashSet<String>(Arrays.asList(query.getPropertyNames()));
+      SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+      tb.init(sft);
+      for (      AttributeDescriptor at : sft.getAttributeDescriptors()) {
+        String attName=at.getLocalName();
+        if (!properties.contains(attName)) {
+          tb.remove(attName);
+        }
+      }
+      return tb.buildFeatureType();
+    }
+ else {
+      query.setFilter(Filter.EXCLUDE);
+      FeatureSource fs=getFeatureSource(null,null);
+      FeatureCollection fc=fs.getFeatures(query);
+      return fc.getSchema();
+    }
+  }
+ else {
+    throw new IllegalArgumentException("SecureFeatureSources has been fed " + "with unexpected AccessLimits class " + policy.getLimits().getClass());
+  }
+}
