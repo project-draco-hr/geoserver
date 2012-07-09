@@ -1,0 +1,26 @@
+{
+  String inputJson="{'global': {" + "'settings':   {" + "'contact':     {"+ "'contactPerson': 'Claudius Ptolomaeus'"+ "},"+ "'charset': 'UTF-8',"+ "'numDecimals': '10',"+ "'onlineResource': 'http://geoserver2.org',"+ "'verbose': 'false',"+ "'verboseExceptions': 'false'"+ "},"+ "'jai':   {"+ "'allowInterpolation': 'false',"+ "'recycling': 'true',"+ "'tilePriority': '5',"+ "'tileThreads': '7',"+ "'memoryCapacity': '0.5',"+ "'memoryThreshold': '0.75',"+ "'imageIOCache': 'false',"+ "'pngAcceleration': 'true',"+ "'jpegAcceleration': 'true',"+ "'allowNativeMosaic': 'false'"+ "},"+ "'coverageAccess':   {"+ "'maxPoolSize': '5',"+ "'corePoolSize': '5',"+ "'keepAliveTime': '30000',"+ "'queueType': 'UNBOUNDED',"+ "'imageIOCacheThreshold': '10240'"+ "},"+ "'updateSequence': '0',"+ "'featureTypeCacheSize': '0',"+ "'globalServices': 'true',"+ "'xmlPostRequestLogBufferSize': '2048'"+ "}}";
+  MockHttpServletResponse response=putAsServletResponse("/rest/settings/",inputJson,"text/json");
+  assertEquals(200,response.getStatusCode());
+  JSON json=getAsJSON("/rest/settings.json");
+  JSONObject jsonObject=(JSONObject)json;
+  assertNotNull(jsonObject);
+  JSONObject global=jsonObject.getJSONObject("global");
+  assertNotNull(global);
+  assertEquals("true",global.get("globalServices").toString().trim());
+  assertEquals("2048",global.get("xmlPostRequestLogBufferSize").toString().trim());
+  JSONObject settings=global.getJSONObject("settings");
+  assertNotNull(settings);
+  assertEquals("UTF-8",settings.get("charset"));
+  assertEquals("10",settings.get("numDecimals").toString().trim());
+  assertEquals("http://geoserver2.org",settings.get("onlineResource"));
+  JSONObject contact=settings.getJSONObject("contact");
+  assertNotNull(contact);
+  assertEquals("Claudius Ptolomaeus",contact.get("contactPerson"));
+  JSONObject jaiInfo=global.getJSONObject("jai");
+  assertNotNull(jaiInfo);
+  assertEquals("false",jaiInfo.get("allowInterpolation").toString().trim());
+  assertEquals("0.75",jaiInfo.get("memoryThreshold").toString().trim());
+  JSONObject covInfo=global.getJSONObject("coverageAccess");
+  assertEquals("UNBOUNDED",covInfo.get("queueType"));
+}

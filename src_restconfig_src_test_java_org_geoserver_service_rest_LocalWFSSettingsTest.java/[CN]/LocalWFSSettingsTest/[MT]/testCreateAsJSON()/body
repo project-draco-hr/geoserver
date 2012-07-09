@@ -1,0 +1,15 @@
+{
+  removeLocalWorkspace();
+  String input="{'wfs': {'id' : 'wfs', 'name' : 'WFS', 'workspace': {'name': 'sf'},'enabled': 'true'}}";
+  MockHttpServletResponse response=putAsServletResponse("/rest/services/wfs/sf/settings/",input,"text/json");
+  assertEquals(200,response.getStatusCode());
+  JSON json=getAsJSON("/rest/services/wfs/sf/settings.json");
+  JSONObject jsonObject=(JSONObject)json;
+  assertNotNull(jsonObject);
+  JSONObject wmsinfo=(JSONObject)jsonObject.get("wfs");
+  assertEquals("wfs",wmsinfo.get("id"));
+  assertEquals("WFS",wmsinfo.get("name"));
+  JSONObject workspace=(JSONObject)wmsinfo.get("workspace");
+  assertNotNull(workspace);
+  assertEquals("sf",workspace.get("name"));
+}

@@ -1,0 +1,11 @@
+{
+  removeLocalWorkspace();
+  String xml="<wfs>" + "<id>wfs</id>" + "<workspace>"+ "<name>sf</name>"+ "</workspace>"+ "<name>OGC:WFS</name>"+ "<enabled>false</enabled>"+ "</wfs>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/services/wfs/sf/settings",xml,"text/xml");
+  assertEquals(200,response.getStatusCode());
+  Document dom=getAsDOM("/rest/services/wfs/sf/settings.xml");
+  assertEquals("wfs",dom.getDocumentElement().getLocalName());
+  assertXpathEvaluatesTo("false","/wfs/enabled",dom);
+  assertXpathEvaluatesTo("sf","/wfs/workspace/name",dom);
+  assertXpathEvaluatesTo("OGC:WFS","/wfs/name",dom);
+}

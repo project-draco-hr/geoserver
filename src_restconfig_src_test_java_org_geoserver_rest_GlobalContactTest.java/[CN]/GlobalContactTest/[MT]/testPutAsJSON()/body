@@ -1,0 +1,14 @@
+{
+  String inputJson="{'contact':" + "{'id': 'contact'," + "'address': '500 Market Street',"+ "'addressCity': 'Philadelphia',"+ "'addressCountry': 'United States',"+ "'addressPostalCode': '19106',"+ "'addressState': 'PA'"+ "}"+ "}";
+  MockHttpServletResponse response=putAsServletResponse("/rest/settings/contact",inputJson,"text/json");
+  assertEquals(200,response.getStatusCode());
+  JSON jsonMod=getAsJSON("/rest/settings/contact.json");
+  JSONObject jsonObject=(JSONObject)jsonMod;
+  assertNotNull(jsonObject);
+  JSONObject contactInfo=jsonObject.getJSONObject("contact");
+  assertEquals("United States",contactInfo.get("addressCountry"));
+  assertEquals("500 Market Street",contactInfo.get("address"));
+  assertEquals("Philadelphia",contactInfo.get("addressCity"));
+  assertEquals("PA",contactInfo.get("addressState"));
+  assertEquals("19106",contactInfo.get("addressPostalCode").toString());
+}
