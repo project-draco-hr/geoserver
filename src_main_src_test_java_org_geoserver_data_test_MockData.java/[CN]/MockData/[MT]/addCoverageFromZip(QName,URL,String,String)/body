@@ -1,0 +1,21 @@
+{
+  File directory=new File(data,name.getPrefix());
+  if (!directory.exists()) {
+    directory.mkdir();
+  }
+  File f=new File(directory,name.getLocalPart());
+  f.mkdir();
+  File compressedFile=new File(f,name.getLocalPart() + ".zip");
+  IOUtils.copy(coverage.openStream(),compressedFile);
+  IOUtils.decompress(compressedFile,f);
+  final File srcDir=new File(f,name.getLocalPart());
+  srcDir.mkdir();
+  FileUtils.copyDirectory(srcDir,f,true);
+  if (extension != null) {
+    File coverageFile=new File(srcDir,name.getLocalPart() + "." + extension);
+    addCoverageFromPath(name,coverageFile,"file:" + name.getPrefix() + "/"+ name.getLocalPart()+ "/"+ name.getLocalPart()+ "."+ extension,styleName);
+  }
+ else {
+    addCoverageFromPath(name,f,"file:" + name.getPrefix() + "/"+ name.getLocalPart(),styleName);
+  }
+}

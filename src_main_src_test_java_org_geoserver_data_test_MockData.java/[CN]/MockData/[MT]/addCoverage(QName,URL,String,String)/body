@@ -1,27 +1,10 @@
 {
+  if (extension == null)   throw new IllegalArgumentException("Use addCoverageFromZip instead of passing NULL");
   File directory=new File(data,name.getPrefix());
   if (!directory.exists()) {
     directory.mkdir();
   }
-  File f=new File(directory,name.getLocalPart() + (extension != null ? "." + extension : ""));
-  if (extension == null) {
-    f.mkdir();
-  }
-  if (!f.isDirectory())   IOUtils.copy(coverage.openStream(),f);
- else {
-    final File compressedFile=new File(f,name.getLocalPart() + ".zip");
-    IOUtils.copy(coverage.openStream(),compressedFile);
-    IOUtils.decompress(compressedFile,f);
-    final File srcDir=new File(f,name.getLocalPart());
-    srcDir.mkdir();
-    FileUtils.copyDirectory(srcDir,f,true);
-  }
-  coverageInfo(name,f,styleName);
-  AbstractGridFormat format=(AbstractGridFormat)GridFormatFinder.findFormat(f);
-  namespaces.put(name.getPrefix(),name.getNamespaceURI());
-  coverageStoresNamespaces.put(name.getLocalPart(),name.getPrefix());
-  Map params=new HashMap();
-  params.put(CatalogWriter.COVERAGE_TYPE_KEY,format.getName());
-  params.put(CatalogWriter.COVERAGE_URL_KEY,"file:" + name.getPrefix() + "/"+ name.getLocalPart()+ (extension != null ? "." + extension : ""));
-  coverageStores.put(name.getLocalPart(),params);
+  File f=new File(directory,name.getLocalPart() + "." + extension);
+  IOUtils.copy(coverage.openStream(),f);
+  addCoverageFromPath(name,f,"file:" + name.getPrefix() + "/"+ name.getLocalPart()+ "."+ extension,styleName);
 }
