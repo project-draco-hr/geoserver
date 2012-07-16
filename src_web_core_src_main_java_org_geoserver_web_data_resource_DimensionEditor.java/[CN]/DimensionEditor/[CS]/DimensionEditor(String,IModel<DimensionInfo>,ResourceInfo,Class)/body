@@ -63,6 +63,18 @@
       throw new WicketRuntimeException(e);
     }
   }
+  final WebMarkupContainer unitsContainer=new WebMarkupContainer("unitsContainer");
+  configs.add(unitsContainer);
+  IModel<String> uModel=new PropertyModel<String>(model,"units");
+  units=new TextField<String>("units",uModel);
+  unitsContainer.add(units);
+  IModel<String> usModel=new PropertyModel<String>(model,"unitSymbol");
+  unitSymbol=new TextField<String>("unitSymbol",usModel);
+  unitsContainer.add(unitSymbol);
+  if ("elevation".equals(id) && uModel.getObject() == null) {
+    uModel.setObject(DimensionInfo.ELEVATION_UNITS);
+    usModel.setObject(DimensionInfo.ELEVATION_UNIT_SYMBOL);
+  }
   final WebMarkupContainer resContainer=new WebMarkupContainer("resolutionContainer");
   resContainer.setOutputMarkupId(true);
   configs.add(resContainer);
@@ -90,6 +102,7 @@
   if (time) {
     resElevation.setVisible(false);
     resTime.setRequired(true);
+    unitsContainer.setVisible(false);
   }
  else {
     resTime.setVisible(false);

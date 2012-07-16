@@ -1,5 +1,6 @@
 {
   CoverageInfo cvInfo=(CoverageInfo)layer.getResource();
+  if (cvInfo == null)   throw new ServiceException("Unable to acquire coverage resource for layer: " + layer.getName());
   DimensionInfo timeInfo=cvInfo.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
   DimensionInfo elevInfo=cvInfo.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
   boolean hasTime=timeInfo != null && timeInfo.isEnabled();
@@ -7,7 +8,6 @@
   if (!hasTime && !hasElevation) {
     return;
   }
-  if (cvInfo == null)   throw new ServiceException("Unable to acquire coverage resource for layer: " + layer.getName());
   Catalog catalog=cvInfo.getCatalog();
   if (catalog == null)   throw new ServiceException("Unable to acquire catalog resource for layer: " + layer.getName());
   CoverageStoreInfo csinfo=cvInfo.getStore();
@@ -24,7 +24,9 @@
   }
   ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
   if (mode == Mode.WMS11) {
-    declareWMS11Dimensions(hasTime,hasElevation);
+    String elevUnits=hasElevation ? elevInfo.getUnits() : "";
+    String elevUnitSymbol=hasElevation ? elevInfo.getUnitSymbol() : "";
+    declareWMS11Dimensions(hasTime,hasElevation,elevUnits,elevUnitSymbol);
   }
   if (hasTime && dimensions.hasTime()) {
     handleTimeDimensionRaster(timeInfo,dimensions);
