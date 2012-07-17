@@ -1,17 +1,23 @@
 {
   int count=0;
-  for (Iterator i=getDataStores().iterator(); i.hasNext(); ) {
-    DataStoreInfo meta=(DataStoreInfo)i.next();
-    if (!meta.isEnabled()) {
-      continue;
+  CloseableIterator<DataStoreInfo> i=getDataStores();
+  try {
+    for (; i.hasNext(); ) {
+      DataStoreInfo meta=i.next();
+      if (!meta.isEnabled()) {
+        continue;
+      }
+      try {
+        meta.getDataStore(null);
+      }
+ catch (      Throwable notAvailable) {
+        continue;
+      }
+      count+=1;
     }
-    try {
-      meta.getDataStore(null);
-    }
- catch (    Throwable notAvailable) {
-      continue;
-    }
-    count+=1;
+  }
+  finally {
+    i.close();
   }
   return count;
 }
