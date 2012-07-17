@@ -1,0 +1,18 @@
+{
+  final Catalog catalog=getCatalog();
+  final SortParam sort=getSort();
+  final Property<LayerInfo> property=getProperty(sort);
+  SortBy sortOrder=null;
+  if (sort != null) {
+    if (property instanceof BeanProperty) {
+      final String sortProperty=((BeanProperty<LayerInfo>)property).getPropertyPath();
+      sortOrder=sortBy(sortProperty,sort.isAscending());
+    }
+ else     if (property == ENABLED) {
+      sortOrder=sortBy("enabled",sort.isAscending());
+    }
+  }
+  final Filter filter=getFilter();
+  Iterator<LayerInfo> items=catalog.list(LayerInfo.class,filter,first,count,sortOrder);
+  return items;
+}
