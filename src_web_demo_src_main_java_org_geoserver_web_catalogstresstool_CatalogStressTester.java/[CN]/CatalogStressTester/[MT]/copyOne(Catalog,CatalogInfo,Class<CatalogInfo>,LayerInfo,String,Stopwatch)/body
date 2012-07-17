@@ -1,0 +1,53 @@
+{
+  CatalogInfo prototype=prototype(original,catalog);
+  try {
+    OwsUtils.set(prototype,"id",null);
+    OwsUtils.copy(clazz.cast(original),clazz.cast(prototype),clazz);
+    final String newName=OwsUtils.get(prototype,"name") + nameSuffix;
+    OwsUtils.set(prototype,"name",newName);
+    if (prototype instanceof WorkspaceInfo) {
+      sw.start();
+      catalog.add((WorkspaceInfo)prototype);
+      sw.stop();
+      String originalWsName=((WorkspaceInfo)original).getName();
+      NamespaceInfo ns=catalog.getNamespaceByPrefix(originalWsName);
+      NamespaceInfoImpl ns2=new NamespaceInfoImpl();
+      ns2.setPrefix(newName);
+      ns2.setURI(ns.getURI() + newName);
+      sw.start();
+      catalog.add(ns2);
+      sw.stop();
+    }
+ else     if (prototype instanceof StoreInfo) {
+      sw.start();
+      catalog.add((StoreInfo)prototype);
+      sw.stop();
+    }
+ else     if (prototype instanceof ResourceInfo) {
+      ((ResourceInfo)prototype).setNativeName(((ResourceInfo)original).getNativeName());
+      ((ResourceInfo)prototype).setName(newName);
+      sw.start();
+      catalog.add((ResourceInfo)prototype);
+      sw.stop();
+      String id=prototype.getId();
+      if (layer == null) {
+        return;
+      }
+      LayerInfoImpl layerCopy;
+{
+        layerCopy=new LayerInfoImpl();
+        layerCopy.setResource((ResourceInfo)original);
+        OwsUtils.copy(LayerInfo.class.cast(layer),layerCopy,LayerInfo.class);
+        layerCopy.setResource((ResourceInfo)prototype);
+        layerCopy.setId(null);
+      }
+      sw.start();
+      catalog.add(layerCopy);
+      sw.stop();
+    }
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    throw new RuntimeException(e.getMessage(),e);
+  }
+}

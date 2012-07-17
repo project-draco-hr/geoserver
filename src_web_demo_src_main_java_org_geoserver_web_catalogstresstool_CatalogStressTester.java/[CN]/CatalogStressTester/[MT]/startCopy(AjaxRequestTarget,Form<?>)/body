@@ -1,0 +1,54 @@
+{
+  Session.get().getFeedbackMessages().clear();
+  target.addComponent(getFeedbackPanel());
+  final int numCopies=duplicateCount.getModelObject();
+  final String s=sufix.getModelObject();
+  LayerInfo layer=null;
+  CatalogInfo original;
+{
+    Tuple modelObject=resourceAndLayer.getModelObject();
+    if (modelObject != null) {
+      original=getCatalog().getResource(modelObject.id,ResourceInfo.class);
+      List<LayerInfo> layers=getCatalog().getLayers((ResourceInfo)original);
+      if (!layers.isEmpty()) {
+        layer=layers.get(0);
+      }
+    }
+ else {
+      modelObject=store.getModelObject();
+      if (modelObject != null) {
+        original=getCatalog().getStore(modelObject.id,StoreInfo.class);
+      }
+ else {
+        modelObject=workspace.getModelObject();
+        if (modelObject != null) {
+          original=getCatalog().getWorkspace(modelObject.id);
+        }
+ else {
+          throw new IllegalStateException();
+        }
+      }
+    }
+  }
+  System.err.println("Creating " + numCopies + " copies of "+ original+ " with sufix "+ s);
+  final Catalog catalog=getCatalog();
+  final Class<? extends CatalogInfo> clazz=interfaceOf(original);
+  Stopwatch globalTime=new Stopwatch();
+  Stopwatch sw=new Stopwatch();
+  sw.start();
+  final int padLength=(int)Math.ceil(Math.log10(numCopies));
+  for (int curr=0; curr < numCopies; curr++) {
+    String paddedIndex=Strings.padStart(String.valueOf(curr),padLength,'0');
+    String nameSuffix=s + paddedIndex;
+    copyOne(catalog,original,(Class<CatalogInfo>)clazz,layer,nameSuffix,globalTime);
+    if ((curr + 1) % 100 == 0) {
+      sw.stop();
+      System.out.printf("inserted %s so far in %s (last 100 in %s)\n",(curr + 1),globalTime,sw);
+      sw.reset();
+      sw.start();
+    }
+  }
+  System.out.println("added " + numCopies + " copies of "+ original+ " in "+ globalTime);
+  progress.setDefaultModelObject("Inserted " + numCopies + " copies of "+ original+ "in "+ globalTime);
+  target.addComponent(progress);
+}
