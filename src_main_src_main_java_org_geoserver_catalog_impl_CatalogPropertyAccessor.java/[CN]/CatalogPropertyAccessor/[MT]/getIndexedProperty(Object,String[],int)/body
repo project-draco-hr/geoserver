@@ -1,0 +1,25 @@
+{
+  final String indexedPropName=propertyNames[offset];
+  final String colPropName=indexedPropName.substring(0,indexedPropName.indexOf('['));
+  final int index;
+{
+    final int beginIndex=indexedPropName.indexOf('[') + 1;
+    final int endIndex=indexedPropName.length() - 1;
+    final String indexStr=indexedPropName.substring(beginIndex,endIndex);
+    index=Integer.parseInt(indexStr);
+    Preconditions.checkArgument(index > 0,"Illegal indexed property, index shall be > 0: " + indexedPropName);
+  }
+  Collection<Object> col=getCollectionProperty(input,colPropName);
+  if (col == null) {
+    return false;
+  }
+  if (!(col instanceof List)) {
+    throw new RuntimeException("Indexed property access is not valid for property " + colPropName);
+  }
+  List<Object> list=(List<Object>)col;
+  if (index > list.size()) {
+    return null;
+  }
+  Object indexedValue=list.get(index - 1);
+  return getProperty(indexedValue,propertyNames,offset + 1);
+}

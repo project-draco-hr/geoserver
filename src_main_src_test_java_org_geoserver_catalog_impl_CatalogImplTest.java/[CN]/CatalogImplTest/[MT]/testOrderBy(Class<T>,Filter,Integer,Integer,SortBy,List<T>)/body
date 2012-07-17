@@ -1,0 +1,21 @@
+{
+  CatalogPropertyAccessor pe=new CatalogPropertyAccessor();
+  List<Object> props=new ArrayList<Object>();
+  List<Object> actual=new ArrayList<Object>();
+  String sortProperty=sortOrder.getPropertyName().getPropertyName();
+  for (  T info : expected) {
+    Object pval=pe.getProperty(info,sortProperty);
+    props.add(pval);
+  }
+  CloseableIterator<T> it=catalog.list(clazz,filter,offset,limit,sortOrder);
+  try {
+    while (it.hasNext()) {
+      Object property=pe.getProperty(it.next(),sortProperty);
+      actual.add(property);
+    }
+  }
+  finally {
+    it.close();
+  }
+  assertEquals(props,actual);
+}

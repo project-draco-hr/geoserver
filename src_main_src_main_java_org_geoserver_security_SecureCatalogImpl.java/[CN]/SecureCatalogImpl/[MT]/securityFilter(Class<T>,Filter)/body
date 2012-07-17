@@ -1,0 +1,24 @@
+{
+  final Authentication user=user();
+  if (isAdmin(user)) {
+    return filter;
+  }
+  if (StyleInfo.class.isAssignableFrom(infoType) || MapInfo.class.isAssignableFrom(infoType)) {
+    return filter;
+  }
+  org.opengis.filter.expression.Function visible=new InternalVolatileFunction(){
+    /** 
+ * Returns {@code false} if the catalog info shall be hidden, {@code true} otherwise.
+ */
+    @Override public Boolean evaluate(    Object object){
+      WrapperPolicy policy=buildWrapperPolicy(user,(CatalogInfo)object);
+      AccessLevel accessLevel=policy.getAccessLevel();
+      boolean visible=!AccessLevel.HIDDEN.equals(accessLevel);
+      return Boolean.valueOf(visible);
+    }
+  }
+;
+  FilterFactory factory=Predicates.factory;
+  Filter securityFilter=factory.equals(factory.literal(Boolean.TRUE),visible);
+  return Predicates.and(filter,securityFilter);
+}

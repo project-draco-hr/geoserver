@@ -1,0 +1,75 @@
+{
+  addDataStore();
+  addNamespace();
+  FeatureTypeInfo ft1=newFeatureType("ft1",ds);
+  ft1.getKeywords().add(new Keyword("kw1_ft1"));
+  ft1.getKeywords().add(new Keyword("kw2_ft1"));
+  ft1.getKeywords().add(new Keyword("repeatedKw"));
+  FeatureTypeInfo ft2=newFeatureType("ft2",ds);
+  ft2.getKeywords().add(new Keyword("kw1_ft2"));
+  ft2.getKeywords().add(new Keyword("kw2_ft2"));
+  ft2.getKeywords().add(new Keyword("repeatedKw"));
+  catalog.add(ft1);
+  catalog.add(ft2);
+  StyleInfo s1, s2, s3;
+  catalog.add(s1=newStyle("s1","s1Filename"));
+  catalog.add(s2=newStyle("s2","s2Filename"));
+  catalog.add(s3=newStyle("s3","s3Filename"));
+  LayerInfo l1=newLayer(ft1,s1,s2,s3);
+  LayerInfo l2=newLayer(ft2,s2,s1,s3);
+  catalog.add(l1);
+  catalog.add(l2);
+  Filter filter=acceptAll();
+  try {
+    catalog.get(null,filter);
+    fail("Expected precondition validation exception");
+  }
+ catch (  RuntimeException nullCheck) {
+    assertTrue(true);
+  }
+  try {
+    catalog.get(FeatureTypeInfo.class,null);
+    fail("Expected precondition validation exception");
+  }
+ catch (  RuntimeException nullCheck) {
+    assertTrue(true);
+  }
+  try {
+    catalog.get(FeatureTypeInfo.class,filter);
+    fail("Expected IAE on multiple results");
+  }
+ catch (  IllegalArgumentException multipleResults) {
+    assertTrue(true);
+  }
+  filter=equal("id",ft1.getId());
+  FeatureTypeInfo featureTypeInfo=catalog.get(FeatureTypeInfo.class,filter);
+  assertEquals(ft1.getId(),featureTypeInfo.getId());
+  filter=equal("name",ft2.getName());
+  assertEquals(ft2.getName(),catalog.get(ResourceInfo.class,filter).getName());
+  filter=equal("keywords[1].value",ft1.getKeywords().get(0).getValue());
+  assertEquals(ft1.getName(),catalog.get(ResourceInfo.class,filter).getName());
+  filter=equal("keywords[2]",ft2.getKeywords().get(1));
+  assertEquals(ft2.getName(),catalog.get(FeatureTypeInfo.class,filter).getName());
+  filter=equal("keywords[3].value","repeatedKw");
+  try {
+    catalog.get(FeatureTypeInfo.class,filter).getName();
+    fail("Expected IAE on multiple results");
+  }
+ catch (  IllegalArgumentException multipleResults) {
+    assertTrue(true);
+  }
+  filter=equal("defaultStyle.filename","s1Filename");
+  assertEquals(l1.getId(),catalog.get(LayerInfo.class,filter).getId());
+  filter=equal("defaultStyle.name",s2.getName());
+  assertEquals(l2.getId(),catalog.get(LayerInfo.class,filter).getId());
+  filter=equal("styles.id",s2.getId(),MatchAction.ONE);
+  assertEquals(l1.getId(),catalog.get(LayerInfo.class,filter).getId());
+  filter=equal("styles.id",s3.getId(),MatchAction.ANY);
+  try {
+    catalog.get(LayerInfo.class,filter);
+    fail("Expected IAE on multiple results");
+  }
+ catch (  IllegalArgumentException multipleResults) {
+    assertTrue(true);
+  }
+}

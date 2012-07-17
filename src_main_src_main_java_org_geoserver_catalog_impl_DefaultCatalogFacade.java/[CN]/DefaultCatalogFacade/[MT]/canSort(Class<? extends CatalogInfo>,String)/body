@@ -1,0 +1,22 @@
+{
+  final String[] path=propertyName.split("\\.");
+  Class<?> clazz=type;
+  for (int i=0; i < path.length; i++) {
+    String property=path[i];
+    Method getter;
+    try {
+      getter=OwsUtils.getter(clazz,property,null);
+    }
+ catch (    RuntimeException e) {
+      return false;
+    }
+    clazz=getter.getReturnType();
+    if (i == path.length - 1) {
+      boolean primitive=clazz.isPrimitive();
+      boolean comparable=Comparable.class.isAssignableFrom(clazz);
+      boolean canSort=primitive || comparable;
+      return canSort;
+    }
+  }
+  throw new IllegalStateException("empty property name");
+}

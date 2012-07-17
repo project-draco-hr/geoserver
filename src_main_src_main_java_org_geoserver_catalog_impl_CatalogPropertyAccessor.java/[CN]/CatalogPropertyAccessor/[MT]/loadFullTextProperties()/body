@@ -1,0 +1,33 @@
+{
+  if (!FULL_TEXT_PROPERTIES.isEmpty()) {
+    return;
+  }
+  final String resource="CatalogPropertyAccessor_FullTextProperties.properties";
+  Properties properties=new Properties();
+  InputStream stream=CatalogPropertyAccessor.class.getResourceAsStream(resource);
+  try {
+    properties.load(stream);
+  }
+ catch (  IOException e) {
+    throw Throwables.propagate(e);
+  }
+ finally {
+    Closeables.closeQuietly(stream);
+  }
+  Map<String,String> map=Maps.fromProperties(properties);
+  for (  Map.Entry<String,String> e : map.entrySet()) {
+    Class<?> key;
+    try {
+      key=Class.forName(e.getKey());
+    }
+ catch (    ClassNotFoundException e1) {
+      throw propagate(e1);
+    }
+    String[] split=e.getValue().split(",");
+    Set<String> set=Sets.newHashSet();
+    for (    String s : split) {
+      set.add(s.trim());
+    }
+    FULL_TEXT_PROPERTIES.put(key,ImmutableSet.copyOf(set));
+  }
+}

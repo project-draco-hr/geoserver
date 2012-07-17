@@ -1,0 +1,40 @@
+{
+  if (offset < 0 || offset > propertyNames.length) {
+    throw new ArrayIndexOutOfBoundsException("offset: " + offset + ", properties: "+ propertyNames.length);
+  }
+  if (offset == propertyNames.length) {
+    return input;
+  }
+  final String propName=propertyNames[offset];
+  if (null == input) {
+    throw new IllegalArgumentException("Property not found: " + Joiner.on('.').join(Arrays.copyOf(propertyNames,offset + 1)));
+  }
+  if (propName.indexOf('[') > 0 && propName.endsWith("]")) {
+    return getIndexedProperty(input,propertyNames,offset);
+  }
+  if (input instanceof Collection) {
+    @SuppressWarnings("unchecked") Collection<Object> col=(Collection<Object>)input;
+    List<Object> result=new ArrayList<Object>(col.size());
+    for (    Object o : col) {
+      Object value=getProperty(o,propName);
+      result.add(value);
+    }
+    return result;
+  }
+  Object value;
+  if (input instanceof Map) {
+    if (!((Map<?,?>)input).containsKey(propName)) {
+      throw new IllegalArgumentException("Property " + propName + " does not exist in Map property "+ (offset > 0 ? propertyNames[offset - 1] : ""));
+    }
+    value=((Map<?,?>)input).get(propName);
+  }
+ else {
+    try {
+      value=OwsUtils.get(input,propName);
+    }
+ catch (    IllegalArgumentException noSuchProperty) {
+      throw noSuchProperty;
+    }
+  }
+  return getProperty(value,propertyNames,offset + 1);
+}

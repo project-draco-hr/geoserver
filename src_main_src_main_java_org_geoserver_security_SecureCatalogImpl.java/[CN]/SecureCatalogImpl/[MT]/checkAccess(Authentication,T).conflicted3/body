@@ -1,6 +1,18 @@
 {
-  if (ws == null)   return null;
-  WrapperPolicy policy=buildWrapperPolicy(user,ws,ws.getName());
+  if (info == null)   return null;
+  WrapperPolicy policy=buildWrapperPolicy(user,info,info.getName());
   if (policy.level == AccessLevel.HIDDEN)   return null;
- else   return ws;
+ else   if (policy.level == AccessLevel.READ_WRITE && policy.getLimits() == null)   return info;
+  if (info instanceof FeatureTypeInfo) {
+    return (T)new SecuredFeatureTypeInfo((FeatureTypeInfo)info,policy);
+  }
+ else   if (info instanceof CoverageInfo) {
+    return (T)new SecuredCoverageInfo((CoverageInfo)info,policy);
+  }
+ else   if (info instanceof WMSLayerInfo) {
+    return (T)new SecuredWMSLayerInfo((WMSLayerInfo)info,policy);
+  }
+ else {
+    throw new RuntimeException("Unknown resource type " + info.getClass());
+  }
 }

@@ -1,0 +1,21 @@
+{
+  ft.setDescription("FeatureType description");
+  ft.setAbstract("GeoServer OpenSource GIS");
+  cv.setDescription("Coverage description");
+  cv.setAbstract("GeoServer uses GeoTools");
+  l.setResource(ft);
+  addLayer();
+  catalog.add(cs);
+  catalog.add(cv);
+  LayerInfo l2=newLayer(cv,s);
+  catalog.add(l2);
+  Filter filter=Predicates.fullTextSearch("Description");
+  assertEquals(newHashSet(ft,cv),asSet(catalog.list(ResourceInfo.class,filter)));
+  assertEquals(newHashSet(ft),asSet(catalog.list(FeatureTypeInfo.class,filter)));
+  assertEquals(newHashSet(cv),asSet(catalog.list(CoverageInfo.class,filter)));
+  assertEquals(newHashSet(l,l2),asSet(catalog.list(LayerInfo.class,filter)));
+  filter=Predicates.fullTextSearch("opensource");
+  assertEquals(newHashSet(l),asSet(catalog.list(LayerInfo.class,filter)));
+  filter=Predicates.fullTextSearch("geotools");
+  assertEquals(newHashSet(l2),asSet(catalog.list(LayerInfo.class,filter)));
+}

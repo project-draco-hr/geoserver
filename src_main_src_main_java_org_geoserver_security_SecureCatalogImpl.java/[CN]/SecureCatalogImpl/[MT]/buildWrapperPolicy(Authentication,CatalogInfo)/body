@@ -1,0 +1,39 @@
+{
+  Assert.notNull(info);
+  if (info instanceof NamespaceInfo) {
+    WorkspaceInfo ws=delegate.getWorkspaceByName(((NamespaceInfo)info).getPrefix());
+    if (ws == null) {
+      ws=delegate.getFactory().createWorkspace();
+      ws.setName(((NamespaceInfo)info).getPrefix());
+    }
+    return buildWrapperPolicy(user,ws,ws.getName());
+  }
+  if (info instanceof WorkspaceInfo) {
+    return buildWrapperPolicy(user,info,((WorkspaceInfo)info).getName());
+  }
+  if (info instanceof StoreInfo) {
+    return buildWrapperPolicy(user,((StoreInfo)info).getWorkspace(),((StoreInfo)info).getName());
+  }
+  if (info instanceof ResourceInfo) {
+    return buildWrapperPolicy(user,info,((ResourceInfo)info).getName());
+  }
+  if (info instanceof LayerInfo) {
+    return buildWrapperPolicy(user,info,((LayerInfo)info).getName());
+  }
+  if (info instanceof LayerGroupInfo) {
+    WrapperPolicy mostRestrictive=WrapperPolicy.readWrite(null);
+    for (    LayerInfo layer : ((LayerGroupInfo)info).getLayers()) {
+      WrapperPolicy policy=buildWrapperPolicy(user,layer,layer.getName());
+      if (AccessLevel.HIDDEN.equals(policy.getAccessLevel())) {
+        return policy;
+      }
+      int comparison=policy.compareTo(mostRestrictive);
+      boolean thisOneIsMoreRestrictive=comparison < 0;
+      if (thisOneIsMoreRestrictive) {
+        mostRestrictive=policy;
+      }
+    }
+    return mostRestrictive;
+  }
+  throw new IllegalArgumentException("Can't build wrapper policy for objects of type " + info.getClass().getName());
+}
