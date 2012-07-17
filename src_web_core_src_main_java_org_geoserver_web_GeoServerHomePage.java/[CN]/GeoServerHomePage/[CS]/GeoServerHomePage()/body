@@ -1,6 +1,6 @@
 {
   GeoServer gs=getGeoServer();
-  ContactInfo contact=gs.getGlobal().getContact();
+  ContactInfo contact=gs.getGlobal().getSettings().getContact();
   add(new ExternalLink("contactURL",contact.getOnlineResource()).add(new Label("contactName",contact.getContactOrganization())));
 {
     String version=String.valueOf(new ResourceModel("version").getObject());
@@ -14,15 +14,27 @@
   }
   Authentication auth=getSession().getAuthentication();
   if (isAdmin(auth)) {
+    Stopwatch sw=new Stopwatch();
+    sw.start();
     Fragment f=new Fragment("catalogLinks","catalogLinksFragment",this);
     Catalog catalog=getCatalog();
-    f.add(new BookmarkablePageLink("layersLink",LayerPage.class).add(new Label("nlayers","" + catalog.getLayers().size())));
+    NumberFormat numberFormat=NumberFormat.getIntegerInstance(getLocale());
+    numberFormat.setGroupingUsed(true);
+    final Filter allLayers=acceptAll();
+    final Filter allStores=acceptAll();
+    final Filter allWorkspaces=acceptAll();
+    final int layerCount=catalog.count(LayerInfo.class,allLayers);
+    final int storesCount=catalog.count(StoreInfo.class,allStores);
+    final int wsCount=catalog.count(WorkspaceInfo.class,allWorkspaces);
+    f.add(new BookmarkablePageLink("layersLink",LayerPage.class).add(new Label("nlayers",numberFormat.format(layerCount))));
     f.add(new BookmarkablePageLink("addLayerLink",NewLayerPage.class));
-    f.add(new BookmarkablePageLink("storesLink",StorePage.class).add(new Label("nstores","" + catalog.getStores(StoreInfo.class).size())));
+    f.add(new BookmarkablePageLink("storesLink",StorePage.class).add(new Label("nstores",numberFormat.format(storesCount))));
     f.add(new BookmarkablePageLink("addStoreLink",NewDataPage.class));
-    f.add(new BookmarkablePageLink("workspacesLink",WorkspacePage.class).add(new Label("nworkspaces","" + catalog.getWorkspaces().size())));
+    f.add(new BookmarkablePageLink("workspacesLink",WorkspacePage.class).add(new Label("nworkspaces",numberFormat.format(wsCount))));
     f.add(new BookmarkablePageLink("addWorkspaceLink",WorkspaceNewPage.class));
     add(f);
+    sw.stop();
+    System.err.println("Loaded catalogLinks in " + sw.toString());
   }
  else {
     Label placeHolder=new Label("catalogLinks");
