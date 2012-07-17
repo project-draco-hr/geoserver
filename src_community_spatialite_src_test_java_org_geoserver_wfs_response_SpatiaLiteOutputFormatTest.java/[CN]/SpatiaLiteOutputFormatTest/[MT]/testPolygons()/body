@@ -1,5 +1,11 @@
 {
   MockHttpServletResponse resp=getAsServletResponse("wfs?request=GetFeature&typeName=Polygons&outputFormat=spatialite");
-  ByteArrayInputStream responseInput=testBasicResult(resp,"Polygons");
-  checkGeometries(responseInput,new String[]{"Polygons"},new String[]{"polygonProperty"},new String[]{"POLYGON"});
+  DataStore ds=loadData(resp);
+  try {
+    SimpleFeatureCollection fc=ds.getFeatureSource("Polygons").getFeatures();
+    checkFeatures(getFeatureSource(MockData.POLYGONS).getFeatures(),fc);
+  }
+  finally {
+    ds.dispose();
+  }
 }
