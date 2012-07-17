@@ -1,0 +1,52 @@
+{
+  checkArgument(collectionIndex == 0 || prop.isCollectionProperty());
+  final FilterFactory ff=CommonFactoryFinder.getFilterFactory();
+  final Integer targetPropertyTypeId=prop.getPropertyType().getTargetPropertyOid();
+  checkArgument(targetPropertyTypeId != null);
+  final PropertyType targetPropertyType=dbMappings.getPropertyType(targetPropertyTypeId);
+  checkState(targetPropertyType != null);
+  final Class<?> targetType=dbMappings.getType(targetPropertyType.getObjectTypeOid());
+  checkState(targetType != null);
+  final String localPropertyName=prop.getPropertyName();
+  String[] steps=localPropertyName.split("\\.");
+  for (int i=steps.length - 1; i >= 0; i--) {
+    String backPropName=steps[0];
+    for (int j=1; j < i; j++) {
+      backPropName+="." + steps[j];
+    }
+    Object backProp=ff.property(backPropName).evaluate(info);
+    if (backProp != null) {
+      if (prop.isCollectionProperty()) {
+        checkState(backProp instanceof Set || backProp instanceof List);
+        List<?> list;
+        if (backProp instanceof Set) {
+          list=asValueList(backProp);
+          if (list.size() > 0 && list.get(0) != null && targetType.isAssignableFrom(list.get(0).getClass())) {
+            String targetPropertyName=targetPropertyType.getPropertyName();
+            final PropertyName expr=ff.property(targetPropertyName);
+            Collections.sort(list,new Comparator<Object>(){
+              @Override public int compare(              Object o1,              Object o2){
+                Object v1=expr.evaluate(o1);
+                Object v2=expr.evaluate(o2);
+                String m1=marshalValue(v1);
+                String m2=marshalValue(v2);
+                return m1 == null ? (m2 == null ? 0 : -1) : (m2 == null ? 1 : m1.compareTo(m2));
+              }
+            }
+);
+          }
+        }
+ else {
+          list=(List<?>)backProp;
+        }
+        if (collectionIndex <= list.size()) {
+          backProp=list.get(collectionIndex - 1);
+        }
+      }
+      if (targetType.isAssignableFrom(backProp.getClass())) {
+        return (Info)backProp;
+      }
+    }
+  }
+  return null;
+}

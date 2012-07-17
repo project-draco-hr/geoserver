@@ -1,0 +1,18 @@
+{
+  checkNotNull(workspace,"workspace is null. Did you mean CatalogFacade.ANY_WORKSPACE or CatalogFacade.NO_WORKSPACE?");
+  checkNotNull(name,"name");
+  Filter nameFilter=equal("name",name);
+  Filter wsFilter;
+  if (workspace == NO_WORKSPACE) {
+    wsFilter=isNull("workspace.id");
+  }
+ else   if (workspace == ANY_WORKSPACE) {
+    wsFilter=acceptAll();
+  }
+ else {
+    wsFilter=equal("workspace.id",workspace.getId());
+  }
+  Filter filter=and(nameFilter,wsFilter);
+  StyleInfo info=findUnique(StyleInfo.class,filter);
+  return info;
+}

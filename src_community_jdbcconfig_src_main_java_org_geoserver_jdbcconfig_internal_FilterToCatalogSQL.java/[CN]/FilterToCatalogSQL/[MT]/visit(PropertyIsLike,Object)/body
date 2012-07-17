@@ -1,0 +1,14 @@
+{
+  final PropertyName expression1=(PropertyName)filter.getExpression();
+  final String propertyTypesParam=propertyTypesParam(expression1);
+  final String literal=filter.getLiteral();
+  final MatchAction matchAction=filter.getMatchAction();
+  final char esc=filter.getEscape().charAt(0);
+  final char multi=filter.getWildCard().charAt(0);
+  final char single=filter.getSingleChar().charAt(0);
+  final boolean matchCase=filter.isMatchingCase();
+  final String pattern=LikeFilterImpl.convertToSQL92(esc,multi,single,matchCase,literal);
+  String valueCol=matchCase ? "value" : "UPPER(value)";
+  StringBuilder builder=append(extraData,"oid IN (SELECT oid FROM object_property WHERE property_type IN (:",propertyTypesParam,") AND ",valueCol," LIKE '",pattern,"') /* ",filter.toString()," */ \n");
+  return builder;
+}

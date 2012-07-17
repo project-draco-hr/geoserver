@@ -1,0 +1,29 @@
+{
+  checkArgument(queryType.isInterface(),"queryType should be an interface");
+  propertyName=removeIndexes(propertyName);
+  Set<PropertyType> matches=Sets.newHashSet();
+  ClassMappings classMappings;
+  classMappings=ClassMappings.fromInterface((Class<? extends Info>)queryType);
+  checkState(classMappings != null,"ClassMappings not found for " + queryType);
+  Class<? extends Info>[] concreteInterfaces=classMappings.concreteInterfaces();
+  for (  Class<? extends Info> concreteType : concreteInterfaces) {
+    Map<String,PropertyType> propTypes=getPropertyTypes(concreteType);
+    if (null == propTypes) {
+      continue;
+    }
+    if (Predicates.ANY_TEXT.getPropertyName().equals(propertyName)) {
+      for (      PropertyType propertyType : propTypes.values()) {
+        if (propertyType.isText()) {
+          matches.add(propertyType);
+        }
+      }
+    }
+ else {
+      PropertyType propertyType=propTypes.get(propertyName);
+      if (null != propertyType) {
+        matches.add(propertyType);
+      }
+    }
+  }
+  return matches;
+}

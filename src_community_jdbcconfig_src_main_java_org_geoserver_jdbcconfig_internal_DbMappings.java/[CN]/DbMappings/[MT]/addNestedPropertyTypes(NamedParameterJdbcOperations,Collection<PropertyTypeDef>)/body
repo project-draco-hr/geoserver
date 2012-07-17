@@ -1,0 +1,22 @@
+{
+  for (  PropertyTypeDef ptd : nestedPropDefs) {
+    final Class<?> propertyOf=ptd.propertyOf;
+    final String propertyName=ptd.propertyName;
+    final boolean isCollection=ptd.isCollection;
+    final Class<?> targetPropertyOf=ptd.targetPropertyOf;
+    final String targetPropertyName=ptd.targetPropertyName;
+    final Boolean isText=ptd.isText;
+    PropertyType targetPropertyType=null;
+    if (targetPropertyOf != null) {
+      final Integer targetPropId=getTypeId(targetPropertyOf);
+      checkState(null != targetPropId,Joiner.on("").join("Property ",propertyOf.getName(),".",propertyName," references property ",targetPropertyOf.getName(),".",targetPropertyName," but target property typ does not exist"));
+      Map<String,PropertyType> targetPropertyTypes;
+      targetPropertyTypes=this.propertyTypes.get(targetPropId);
+      checkState(targetPropertyTypes != null,"PropertyTypes of target type " + targetPropertyOf.getName() + " not found while adding property "+ propertyName+ " of "+ propertyOf.getName());
+      targetPropertyType=targetPropertyTypes.get(targetPropertyName);
+      checkState(targetPropertyType != null);
+    }
+    boolean text=isText == null ? false : isText.booleanValue();
+    addPropertyType(template,propertyOf,propertyName,targetPropertyType,isCollection,text);
+  }
+}

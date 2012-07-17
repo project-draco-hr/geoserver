@@ -1,0 +1,30 @@
+{
+  Assert.notNull(id,"id");
+  Info info=null;
+  try {
+    final Callable<? extends Info> valueLoader;
+    if (CatalogInfo.class.isAssignableFrom(type)) {
+      valueLoader=new CatalogLoader(id);
+    }
+ else {
+      valueLoader=new ConfigLoader(id);
+    }
+    info=cache.get(id,valueLoader);
+  }
+ catch (  CacheLoader.InvalidCacheLoadException notFound) {
+    return null;
+  }
+catch (  ExecutionException e) {
+    Throwables.propagate(e.getCause());
+  }
+  if (info == null) {
+    return null;
+  }
+  if (info instanceof CatalogInfo) {
+    info=resolveCatalog((CatalogInfo)info);
+  }
+  if (type.isAssignableFrom(info.getClass())) {
+    return ModificationProxy.create(type.cast(info),type);
+  }
+  return null;
+}

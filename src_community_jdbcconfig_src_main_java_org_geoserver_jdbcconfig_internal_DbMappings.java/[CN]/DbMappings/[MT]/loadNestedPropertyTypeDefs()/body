@@ -1,0 +1,43 @@
+{
+  Properties properties=loadTypeDefsFromResource();
+  Multimap<Class<?>,PropertyTypeDef> byTypePropDefs=ArrayListMultimap.create();
+  for (  String classPropName : properties.stringPropertyNames()) {
+    final String propertyName;
+    final Class<?> objectType;
+    final boolean collectionProperty;
+    final Class<?> targetObjectType;
+    final String targetPropertyName;
+    final Boolean textProperty;
+{
+      int classNameSeparatorIndex=classPropName.indexOf('.');
+      String simpleClassName=classPropName.substring(0,classNameSeparatorIndex);
+      objectType=toClass(simpleClassName);
+      propertyName=classPropName.substring(1 + classNameSeparatorIndex);
+      final String propertySpec=properties.getProperty(classPropName);
+      String[] propTarget=propertySpec.split(":");
+      String targetClassPropName=propTarget.length > 0 ? propTarget[0] : null;
+      if (targetClassPropName.trim().length() == 0) {
+        targetObjectType=null;
+        targetPropertyName=null;
+      }
+ else {
+        classNameSeparatorIndex=targetClassPropName.indexOf('.');
+        simpleClassName=targetClassPropName.substring(0,classNameSeparatorIndex);
+        targetObjectType=toClass(simpleClassName);
+        targetPropertyName=targetClassPropName.substring(1 + classNameSeparatorIndex);
+      }
+      String colType=propTarget.length > 1 ? propTarget[1] : null;
+      String textType=propTarget.length > 1 ? (propTarget.length > 2 ? propTarget[1] : propTarget[1]) : null;
+      collectionProperty="list".equalsIgnoreCase(colType) || "set".equalsIgnoreCase(colType);
+      if ("text".equalsIgnoreCase(textType)) {
+        textProperty=Boolean.TRUE;
+      }
+ else {
+        textProperty=null;
+      }
+    }
+    PropertyTypeDef ptd=new PropertyTypeDef(objectType,propertyName,targetObjectType,targetPropertyName,collectionProperty,textProperty);
+    byTypePropDefs.put(objectType,ptd);
+  }
+  return byTypePropDefs;
+}

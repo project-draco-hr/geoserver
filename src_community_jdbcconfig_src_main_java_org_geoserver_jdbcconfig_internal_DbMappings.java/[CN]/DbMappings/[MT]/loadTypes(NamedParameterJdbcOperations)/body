@@ -1,0 +1,21 @@
+{
+  String sql="select oid, typename from type";
+  SqlRowSet rowSet=template.queryForRowSet(sql,params("",""));
+  BiMap<Integer,Class<?>> types=HashBiMap.create();
+  if (rowSet.first()) {
+    do {
+      Number oid=(Number)rowSet.getObject(1);
+      String typeName=rowSet.getString(2);
+      Class<?> clazz;
+      try {
+        clazz=Class.forName(typeName);
+      }
+ catch (      ClassNotFoundException e) {
+        throw Throwables.propagate(e);
+      }
+      types.put(oid.intValue(),clazz);
+    }
+ while (rowSet.next());
+  }
+  return types;
+}

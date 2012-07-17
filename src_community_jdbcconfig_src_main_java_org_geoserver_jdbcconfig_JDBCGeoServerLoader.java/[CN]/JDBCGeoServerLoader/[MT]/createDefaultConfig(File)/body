@@ -1,0 +1,35 @@
+{
+  try {
+    propsFile.createNewFile();
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Can't create file " + new File(resourceLoader.getBaseDirectory(),CONFIG_FILE).getAbsolutePath(),e);
+    return;
+  }
+  try {
+    String classpathResource="/" + CONFIG_FILE;
+    File baseDirectory=resourceLoader.getBaseDirectory();
+    Properties configProps=new Properties();
+    configProps.load(getClass().getResourceAsStream(classpathResource));
+    for (    Entry<Object,Object> entry : configProps.entrySet()) {
+      String key=(String)entry.getKey();
+      String value=(String)entry.getValue();
+      if (value.contains("${GEOSERVER_DATA_DIR}")) {
+        value=value.replace("${GEOSERVER_DATA_DIR}",baseDirectory.getAbsolutePath());
+        configProps.put(key,value);
+      }
+    }
+    OutputStream out=new FileOutputStream(propsFile);
+    try {
+      configProps.store(out,"Default GeoServer JDBC config driver and connection pool options. " + "Edit as appropriate");
+    }
+  finally {
+      out.close();
+    }
+    LOGGER.info("Default jdbc config properties copied to data directory at " + propsFile.getAbsolutePath());
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error copying default jdbc config properties to file " + propsFile.getAbsolutePath(),e);
+    propsFile.delete();
+  }
+}

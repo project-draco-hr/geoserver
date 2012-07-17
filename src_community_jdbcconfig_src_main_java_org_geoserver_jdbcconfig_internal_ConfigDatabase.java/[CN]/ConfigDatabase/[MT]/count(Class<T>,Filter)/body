@@ -1,0 +1,28 @@
+{
+  QueryBuilder<T> sqlBuilder=QueryBuilder.forCount(of,dbMappings).filter(filter);
+  final StringBuilder sql=sqlBuilder.build();
+  final Filter unsupportedFilter=sqlBuilder.getUnsupportedFilter();
+  final boolean fullySupported=Filter.INCLUDE.equals(unsupportedFilter);
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer("Original filter: " + filter);
+    LOGGER.finer("Supported filter: " + sqlBuilder.getSupportedFilter());
+    LOGGER.finer("Unsupported filter: " + sqlBuilder.getUnsupportedFilter());
+  }
+  final int count;
+  if (fullySupported) {
+    final Map<String,Object> namedParameters=sqlBuilder.getNamedParameters();
+    logStatement(sql,namedParameters);
+    count=template.queryForInt(sql.toString(),namedParameters);
+  }
+ else {
+    LOGGER.fine("Filter is not fully supported, doing scan of supported part to return the number of matches");
+    CloseableIterator<T> iterator=query(of,filter,null,null,null);
+    try {
+      return Iterators.size(iterator);
+    }
+  finally {
+      iterator.close();
+    }
+  }
+  return count;
+}

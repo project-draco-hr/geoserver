@@ -1,0 +1,26 @@
+{
+  Info info;
+  try {
+    info=template.queryForObject("select blob from object where id = :id",ImmutableMap.of("id",id),configRowMapper);
+  }
+ catch (  EmptyResultDataAccessException noSuchObject) {
+    return null;
+  }
+  OwsUtils.resolveCollections(info);
+  if (info instanceof GeoServerInfo) {
+    GeoServerInfoImpl global=(GeoServerInfoImpl)info;
+    if (global.getMetadata() == null) {
+      global.setMetadata(new MetadataMap());
+    }
+    if (global.getClientProperties() == null) {
+      global.setClientProperties(new HashMap<Object,Object>());
+    }
+    if (global.getCoverageAccess() == null) {
+      global.setCoverageAccess(new CoverageAccessInfoImpl());
+    }
+    if (global.getJAI() == null) {
+      global.setJAI(new JAIInfoImpl());
+    }
+  }
+  return info;
+}

@@ -1,0 +1,16 @@
+{
+  final Integer oid=findObjectId(info);
+  if (oid == null) {
+    return;
+  }
+  cache.invalidate(info.getId());
+  String deleteObject="delete from object where id = :id";
+  String deleteRelatedProperties="delete from object_property where related_oid = :oid";
+  int updateCount=template.update(deleteObject,ImmutableMap.of("id",info.getId()));
+  if (updateCount != 1) {
+    LOGGER.warning("Requested to delete " + info + " ("+ info.getId()+ ") but nothing happened on the database.");
+  }
+  final int relatedPropCount=template.update(deleteRelatedProperties,params("oid",oid));
+  LOGGER.fine("Removed " + relatedPropCount + " related properties of "+ info.getId());
+  cache.invalidate(info.getId());
+}

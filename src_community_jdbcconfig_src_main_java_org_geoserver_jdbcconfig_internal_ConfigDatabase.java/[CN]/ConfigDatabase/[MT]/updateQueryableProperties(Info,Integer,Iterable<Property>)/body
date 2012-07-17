@@ -1,0 +1,51 @@
+{
+  Map<String,?> params;
+  final Integer oid=objectId;
+  Integer propertyType;
+  Integer relatedOid;
+  Integer relatedPropertyType;
+  Integer colIndex;
+  String storedValue;
+  for (  Property changedProp : changedProperties) {
+    LOGGER.finer("Updating property " + changedProp);
+    final boolean isRelationship=changedProp.isRelationship();
+    propertyType=changedProp.getPropertyType().getOid();
+    final List<?> values=valueList(changedProp);
+    for (int i=0; i < values.size(); i++) {
+      final Object rawValue=values.get(i);
+      storedValue=marshalValue(rawValue);
+      checkArgument(changedProp.isCollectionProperty() || values.size() == 1,"Got a multivalued value for a non collection property " + changedProp.getPropertyName() + "="+ values);
+      colIndex=changedProp.isCollectionProperty() ? (i + 1) : 0;
+      if (isRelationship) {
+        final Info relatedObject=lookUpRelatedObject(info,changedProp,colIndex);
+        relatedOid=relatedObject == null ? null : findObjectId(relatedObject);
+        relatedPropertyType=changedProp.getPropertyType().getTargetPropertyOid();
+      }
+ else {
+        relatedOid=null;
+        relatedPropertyType=null;
+      }
+      String sql="update object_property set " + "related_oid = :related_oid, " + "related_property_type = :related_property_type, "+ "value = :value "+ "where oid = :oid and property_type = :property_type and colindex = :colindex";
+      params=params("related_oid",relatedOid,"related_property_type",relatedPropertyType,"value",storedValue,"oid",oid,"property_type",propertyType,"colindex",colIndex);
+      logStatement(sql,params);
+      final int updateCnt=template.update(sql,params);
+      if (updateCnt == 0) {
+        addAttribute(info,oid,changedProp,colIndex,storedValue);
+      }
+ else {
+        String updateRelated="update object_property set value = :value " + "where related_oid = :oid and related_property_type = :property_type and colindex = :colindex";
+        params=params("oid",oid,"property_type",propertyType,"colindex",colIndex,"value",storedValue);
+        logStatement(updateRelated,params);
+        int relatedUpdateCnt=template.update(updateRelated,params);
+        if (LOGGER.isLoggable(Level.FINER)) {
+          LOGGER.finer("Updated " + relatedUpdateCnt + " back pointer properties to "+ changedProp.getPropertyName()+ " of "+ info.getClass().getSimpleName()+ "["+ info.getId()+ "]");
+        }
+      }
+    }
+    if (changedProp.isCollectionProperty()) {
+      String sql="delete from object_property where oid=:oid and property_type=:property_type " + "and colindex > :maxIndex";
+      Integer maxIndex=Integer.valueOf(values.size());
+      template.update(sql,params("oid",oid,"property_type",propertyType,"maxIndex",maxIndex));
+    }
+  }
+}

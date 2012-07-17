@@ -1,0 +1,41 @@
+{
+  if (LOGGER.isLoggable(Level.FINER)) {
+    StringBuilder sb=new StringBuilder(sql);
+    for (    Entry<String,?> e : namedParameters.entrySet()) {
+      Object value=e.getValue();
+      String sval;
+      if (value instanceof Collection) {
+        Collection<?> c=(Collection<?>)value;
+        StringBuilder cv=new StringBuilder();
+        for (Iterator<?> it=c.iterator(); it.hasNext(); ) {
+          Object v=it.next();
+          if (v == null) {
+            cv.append("null");
+          }
+ else           if (v instanceof Number) {
+            cv.append(v);
+          }
+ else {
+            cv.append("'").append(String.valueOf(v)).append("'");
+          }
+          if (it.hasNext()) {
+            cv.append(", ");
+          }
+        }
+        sval=cv.toString();
+      }
+ else {
+        sval=value == null ? "null" : (value instanceof Number ? String.valueOf(value) : "'" + String.valueOf(value) + "'");
+      }
+      String paramName=":" + e.getKey();
+      int idx;
+      while ((idx=sb.indexOf(paramName)) > -1) {
+        sb.replace(idx,idx + paramName.length(),sval);
+      }
+    }
+    LOGGER.finer(sb.toString());
+  }
+ else   if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("querying " + sql + "\n with values: "+ namedParameters);
+  }
+}

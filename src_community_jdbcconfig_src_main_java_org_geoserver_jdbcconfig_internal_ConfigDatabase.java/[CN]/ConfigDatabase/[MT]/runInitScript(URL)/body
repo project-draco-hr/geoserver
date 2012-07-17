@@ -1,0 +1,20 @@
+{
+  LOGGER.info("------------- Running catalog database init script " + initScript + " ------------");
+  InputStream stream=initScript.openStream();
+  List<String> lines;
+  try {
+    lines=org.apache.commons.io.IOUtils.readLines(stream);
+  }
+  finally {
+    stream.close();
+  }
+  String[] sql=lines.toArray(new String[lines.size()]);
+  for (  String statement : sql) {
+    if (statement.trim().length() == 0) {
+      continue;
+    }
+    LOGGER.info("Running: " + statement);
+    template.getJdbcOperations().update(statement);
+  }
+  LOGGER.info("Initialization SQL script run sucessfully");
+}

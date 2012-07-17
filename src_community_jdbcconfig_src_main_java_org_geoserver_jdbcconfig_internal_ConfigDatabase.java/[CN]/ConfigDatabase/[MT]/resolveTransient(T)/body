@@ -1,0 +1,30 @@
+{
+  if (null == real) {
+    return;
+  }
+  real=ModificationProxy.unwrap(real);
+  if (real instanceof StyleInfoImpl || real instanceof StoreInfoImpl || real instanceof ResourceInfoImpl) {
+    OwsUtils.set(real,"catalog",catalog);
+  }
+  if (real instanceof ResourceInfoImpl) {
+    resolveTransient(((ResourceInfoImpl)real).getStore());
+  }
+ else   if (real instanceof LayerInfo) {
+    LayerInfo layer=(LayerInfo)real;
+    resolveTransient(layer.getDefaultStyle());
+    if (!layer.getStyles().isEmpty()) {
+      for (      StyleInfo s : layer.getStyles()) {
+        resolveTransient(s);
+      }
+    }
+    resolveTransient(layer.getResource());
+  }
+ else   if (real instanceof LayerGroupInfo) {
+    for (    LayerInfo l : ((LayerGroupInfo)real).getLayers()) {
+      resolveTransient(l);
+    }
+    for (    StyleInfo s : ((LayerGroupInfo)real).getStyles()) {
+      resolveTransient(s);
+    }
+  }
+}

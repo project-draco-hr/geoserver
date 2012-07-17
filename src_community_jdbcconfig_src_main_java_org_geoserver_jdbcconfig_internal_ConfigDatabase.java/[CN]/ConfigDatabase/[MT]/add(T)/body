@@ -1,0 +1,23 @@
+{
+  checkNotNull(info);
+  checkNotNull(info.getId(),"Object has no id");
+  checkArgument(!(info instanceof Proxy),"Added object shall not be a dynamic proxy");
+  final String id=info.getId();
+  byte[] value=binding.objectToEntry(info);
+  final String blob=new String(value);
+  final Class<T> interf=ClassMappings.fromImpl(info.getClass()).getInterface();
+  final Integer typeId=dbMappings.getTypeId(interf);
+  Map<String,?> params=params("type_id",typeId,"id",id,"blob",blob);
+  final String statement="insert into object (type_id, id, blob) values (:type_id, :id, :blob)";
+  logStatement(statement,params);
+  KeyHolder keyHolder=new GeneratedKeyHolder();
+  int updateCount=template.update(statement,new MapSqlParameterSource(params),keyHolder);
+  checkState(updateCount == 1,"Insert statement failed");
+  Number key=(Number)keyHolder.getKeys().get("oid");
+  if (key == null) {
+    key=keyHolder.getKey();
+  }
+  addAttributes(info,key);
+  cache.put(id,info);
+  return getById(id,interf);
+}

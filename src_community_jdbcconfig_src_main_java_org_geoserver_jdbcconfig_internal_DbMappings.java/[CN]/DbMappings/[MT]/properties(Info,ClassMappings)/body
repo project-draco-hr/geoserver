@@ -1,0 +1,23 @@
+{
+  final Class<? extends Info> type=classMappings.getInterface();
+  final Integer typeId=getTypeId(type);
+  final FilterFactory ff=CommonFactoryFinder.getFilterFactory();
+  final ImmutableList<PropertyType> typeProperties=getTypeProperties(typeId);
+  ImmutableSet.Builder<Property> builder=ImmutableSet.builder();
+  for (  PropertyType pt : typeProperties) {
+    String propertyName=pt.getPropertyName();
+    Object value;
+    if (object instanceof NamespaceInfo && "name".equalsIgnoreCase(propertyName)) {
+      value=((NamespaceInfo)object).getPrefix();
+    }
+ else     if (object instanceof LayerInfo && "name".equalsIgnoreCase(propertyName)) {
+      value=((LayerInfo)object).getResource().getName();
+    }
+ else {
+      value=ff.property(propertyName).evaluate(object);
+    }
+    Property prop=new Property(pt,value);
+    builder.add(prop);
+  }
+  return builder.build();
+}

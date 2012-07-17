@@ -1,0 +1,32 @@
+{
+  final String query="select oid, target_property, type_id, name, collection, text from property_type";
+  RowMapper<PropertyType> rowMapper=new RowMapper<PropertyType>(){
+    @Override public PropertyType mapRow(    ResultSet rs,    int rowNum) throws SQLException {
+      Integer oid=rs.getInt(1);
+      Integer targetPropertyOid=(Integer)rs.getObject(2);
+      Integer objectTypeOid=rs.getInt(3);
+      String propertyName=rs.getString(4);
+      Boolean collectionProperty=rs.getBoolean(5);
+      Boolean textProperty=rs.getBoolean(6);
+      PropertyType pt=new PropertyType(oid,targetPropertyOid,objectTypeOid,propertyName,collectionProperty,textProperty);
+      return pt;
+    }
+  }
+;
+  final List<PropertyType> propertyTypes;
+{
+    final Map<String,?> params=Collections.emptyMap();
+    propertyTypes=template.query(query,params,rowMapper);
+  }
+  Map<Integer,Map<String,PropertyType>> perTypeProps=Maps.newHashMap();
+  for (  PropertyType pt : propertyTypes) {
+    Integer objectType=pt.getObjectTypeOid();
+    Map<String,PropertyType> typeProperties=perTypeProps.get(objectType);
+    if (typeProperties == null) {
+      typeProperties=Maps.newHashMap();
+      perTypeProps.put(objectType,typeProperties);
+    }
+    typeProperties.put(pt.getPropertyName(),pt);
+  }
+  return perTypeProps;
+}

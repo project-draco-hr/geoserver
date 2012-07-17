@@ -1,0 +1,21 @@
+{
+  PropertyName expression1=(PropertyName)filter.getExpression1();
+  Literal expression2=(Literal)filter.getExpression2();
+  MatchAction matchAction=filter.getMatchAction();
+  boolean matchingCase=filter.isMatchingCase();
+  final String propertyTypesParam=propertyTypesParam(expression1);
+  final String expectedValue=expression2.evaluate(null,String.class);
+  String valueParam=newParam("value",expectedValue);
+switch (matchAction) {
+case ALL:
+    break;
+case ANY:
+  break;
+case ONE:
+break;
+default :
+throw new IllegalArgumentException("MatchAction: " + matchAction);
+}
+StringBuilder builder=append(extraData,"oid IN (SELECT oid FROM object_property WHERE property_type IN (:",propertyTypesParam,") AND value = :",valueParam,") /* ",filter.toString()," */ \n");
+return builder;
+}

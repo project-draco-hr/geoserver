@@ -1,0 +1,21 @@
+{
+  final String id=info.getId();
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer("Storing properties of " + id + " with pk "+ infoPk);
+  }
+  final Iterable<Property> properties=dbMappings.properties(info);
+  for (  Property prop : properties) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("Adding property " + prop.getPropertyName() + "='"+ prop.getValue()+ "'");
+    }
+    final List<?> values=valueList(prop);
+    Object propValue;
+    Integer colIndex;
+    for (int index=0; index < values.size(); index++) {
+      colIndex=prop.isCollectionProperty() ? (index + 1) : 0;
+      propValue=values.get(index);
+      final String storedValue=marshalValue(propValue);
+      addAttribute(info,infoPk,prop,colIndex,storedValue);
+    }
+  }
+}

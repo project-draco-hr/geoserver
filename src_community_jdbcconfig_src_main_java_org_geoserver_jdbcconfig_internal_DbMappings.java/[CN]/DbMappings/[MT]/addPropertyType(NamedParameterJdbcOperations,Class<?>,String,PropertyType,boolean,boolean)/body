@@ -1,0 +1,43 @@
+{
+  checkNotNull(template);
+  checkNotNull(infoClazz);
+  checkNotNull(propertyName);
+  final Integer typeId=getTypeId(infoClazz);
+  if (null == typeId) {
+    throw new IllegalStateException("Unknown type id for " + infoClazz.getName());
+  }
+  Map<String,?> params;
+  log("Checking for ",propertyName);
+  String query="select count(*) from property_type " + "where type_id = :objectType and name = :propName";
+  params=params("objectType",typeId,"propName",propertyName);
+  logStatement(query,params);
+  final int exists=template.queryForInt(query,params);
+  PropertyType pType;
+  if (exists == 0) {
+    log("Adding ",propertyName);
+    Integer targetPropertyOid=targetProperty == null ? null : targetProperty.getOid();
+    String insert="insert into property_type (target_property, type_id, name, collection, text) " + "values (:target, :type, :name, :collection, :isText)";
+    params=params("target",targetPropertyOid,"type",typeId,"name",propertyName,"collection",isCollection,"isText",isText);
+    logStatement(insert,params);
+    KeyHolder keyHolder=new GeneratedKeyHolder();
+    template.update(insert,new MapSqlParameterSource(params),keyHolder);
+    Number pTypeKey=(Number)keyHolder.getKeys().get("oid");
+    if (pTypeKey == null) {
+      pTypeKey=keyHolder.getKey();
+    }
+    pType=new PropertyType(pTypeKey.intValue(),targetPropertyOid,typeId,propertyName,isCollection,isText);
+  }
+ else {
+    log("Not adding property type ",infoClazz.getSimpleName(),".",propertyName," as it already exists");
+    pType=null;
+  }
+  if (pType != null) {
+    Map<String,PropertyType> map=this.propertyTypes.get(typeId);
+    if (map == null) {
+      map=Maps.newHashMap();
+      this.propertyTypes.put(typeId,map);
+    }
+    map.put(pType.getPropertyName(),pType);
+  }
+  return pType;
+}

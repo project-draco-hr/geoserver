@@ -1,0 +1,13 @@
+{
+  final Object newValue=info.getName();
+  Filter filter=Predicates.equal("resource.id",info.getId());
+  List<LayerInfo> resourceLayers;
+  resourceLayers=this.queryAsList(LayerInfo.class,filter,null,null,null);
+  for (  LayerInfo layer : resourceLayers) {
+    Set<PropertyType> propertyTypes=dbMappings.getPropertyTypes(LayerInfo.class,"name");
+    PropertyType propertyType=propertyTypes.iterator().next();
+    Property changedProperty=new Property(propertyType,newValue);
+    Integer layerOid=findObjectId(layer);
+    updateQueryableProperties(layer,layerOid,ImmutableSet.of(changedProperty));
+  }
+}

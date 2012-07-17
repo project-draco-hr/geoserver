@@ -1,0 +1,29 @@
+{
+  LOGGER.info("Initializing Catalog and Config database");
+  ClassMappings[] classMsappings=ClassMappings.values();
+{
+    BiMap<Integer,Class<?>> existingTypes=loadTypes(template);
+    for (    ClassMappings cm : classMsappings) {
+      Class<? extends Info> clazz=cm.getInterface();
+      if (!existingTypes.containsValue(clazz)) {
+        createType(clazz,template);
+      }
+    }
+    this.types=loadTypes(template);
+    this.typeIds=this.types.inverse();
+  }
+  this.propertyTypes=loadPropertyTypes(template);
+  for (  ClassMappings cm : classMsappings) {
+    Class<? extends Info> clazz=cm.getInterface();
+    addDirectPropertyTypes(clazz,template);
+  }
+  final Multimap<Class<?>,PropertyTypeDef> nestedPropertyTypeDefs=loadNestedPropertyTypeDefs();
+  for (  ClassMappings cm : classMsappings) {
+    Class<? extends Info> clazz=cm.getInterface();
+    Collection<PropertyTypeDef> nestedPropDefs=nestedPropertyTypeDefs.get(clazz);
+    if (!nestedPropDefs.isEmpty()) {
+      addNestedPropertyTypes(template,nestedPropDefs);
+    }
+  }
+  this.propertyTypes=ImmutableMap.copyOf(this.propertyTypes);
+}

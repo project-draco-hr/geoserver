@@ -1,0 +1,45 @@
+{
+  checkNotNull(of);
+  checkNotNull(filter);
+  checkArgument(offset == null || offset.intValue() >= 0);
+  checkArgument(limit == null || limit.intValue() >= 0);
+  QueryBuilder<T> sqlBuilder=QueryBuilder.forIds(of,dbMappings).filter(filter).offset(offset).limit(limit).sortOrder(sortOrder);
+  final StringBuilder sql=sqlBuilder.build();
+  final Map<String,Object> namedParameters=sqlBuilder.getNamedParameters();
+  final Filter unsupportedFilter=sqlBuilder.getUnsupportedFilter();
+  final boolean fullySupported=Filter.INCLUDE.equals(unsupportedFilter);
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer("Original filter: " + filter);
+    LOGGER.finer("Supported filter: " + sqlBuilder.getSupportedFilter());
+    LOGGER.finer("Unsupported filter: " + sqlBuilder.getUnsupportedFilter());
+  }
+  logStatement(sql,namedParameters);
+  Stopwatch sw=new Stopwatch().start();
+  List<String> ids=template.queryForList(sql.toString(),namedParameters,String.class);
+  sw.stop();
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine(Joiner.on("").join("query returned ",ids.size()," records in ",sw.toString()));
+  }
+  List<T> lazyTransformed=Lists.transform(ids,new Function<String,T>(){
+    @Override public T apply(    String id){
+      return getById(id,of);
+    }
+  }
+);
+  CloseableIterator<T> result;
+  if (fullySupported) {
+    Iterator<T> iterator=lazyTransformed.iterator();
+    result=new CloseableIteratorAdapter<T>(iterator);
+  }
+ else {
+    Iterator<T> iterator=lazyTransformed.iterator();
+    if (offset != null) {
+      Iterators.skip(iterator,offset.intValue());
+    }
+    if (limit != null) {
+      iterator=Iterators.limit(iterator,limit.intValue());
+    }
+    result=CloseableIteratorAdapter.filter(iterator,filter);
+  }
+  return result;
+}

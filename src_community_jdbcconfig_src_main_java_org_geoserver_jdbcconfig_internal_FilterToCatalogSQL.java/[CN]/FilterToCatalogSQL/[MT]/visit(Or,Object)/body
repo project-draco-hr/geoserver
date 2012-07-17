@@ -1,0 +1,15 @@
+{
+  StringBuilder sql=(StringBuilder)extraData;
+  List<Filter> children=filter.getChildren();
+  checkArgument(children.size() > 0);
+  sql.append("(");
+  for (Iterator<Filter> it=children.iterator(); it.hasNext(); ) {
+    Filter child=it.next();
+    sql=(StringBuilder)child.accept(this,sql);
+    if (it.hasNext()) {
+      sql=append(extraData,"\tOR\n\t");
+    }
+  }
+  sql.append(")");
+  return sql;
+}

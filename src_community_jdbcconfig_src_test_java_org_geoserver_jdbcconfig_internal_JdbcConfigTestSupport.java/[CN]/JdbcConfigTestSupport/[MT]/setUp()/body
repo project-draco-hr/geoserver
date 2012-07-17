@@ -1,0 +1,35 @@
+{
+  ConfigDatabase.LOGGER.setLevel(Level.FINER);
+  WebApplicationContext applicationContext=Mockito.mock(WebApplicationContext.class);
+  new GeoServerExtensions().setApplicationContext(applicationContext);
+  when(applicationContext.getBeansOfType((Class)anyObject())).thenReturn(Collections.EMPTY_MAP);
+  when(applicationContext.getBeanNamesForType((Class)anyObject())).thenReturn(new String[]{});
+  final File testDbDir=new File("target","jdbcconfig");
+  FileUtils.deleteDirectory(testDbDir);
+  testDbDir.mkdirs();
+  dataSource=new BasicDataSource();
+  dataSource.setDriverClassName(driver);
+  dataSource.setUrl(connectionUrl);
+  dataSource.setUsername("postgres");
+  dataSource.setPassword("geo123");
+  dataSource.setMinIdle(3);
+  dataSource.setMaxActive(10);
+  try {
+    Connection connection=dataSource.getConnection();
+    connection.close();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  try {
+    dropDb(dataSource);
+  }
+ catch (  Exception ignored) {
+  }
+  initDb(dataSource);
+  XStreamInfoSerialBinding binding=new XStreamInfoSerialBinding(new XStreamPersisterFactory());
+  catalog=new CatalogImpl();
+  configDb=new ConfigDatabase(dataSource,binding);
+  configDb.setCatalog(catalog);
+  configDb.initDb(null);
+}

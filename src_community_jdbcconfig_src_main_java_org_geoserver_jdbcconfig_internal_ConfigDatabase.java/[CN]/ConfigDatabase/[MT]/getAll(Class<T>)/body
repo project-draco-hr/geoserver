@@ -1,0 +1,12 @@
+{
+  Map<String,?> params=params("types",typesParam(clazz));
+  final String sql="select id from object where type_id in ( :types ) order by id";
+  List<String> ids=template.queryForList(sql,params,String.class);
+  List<T> transformed=Lists.transform(ids,new Function<String,T>(){
+    @Override public T apply(    String input){
+      return getById(input,clazz);
+    }
+  }
+);
+  return Collections.unmodifiableList(transformed);
+}

@@ -1,0 +1,35 @@
+{
+  checkNotNull(info);
+  final String id=info.getId();
+  checkNotNull(id,"Can't modify an object with no id");
+  final ModificationProxy modificationProxy=ModificationProxy.handler(info);
+  Preconditions.checkNotNull(modificationProxy,"Not a modification proxy: ",info);
+  final Info oldObject=(Info)modificationProxy.getProxyObject();
+  cache.invalidate(id);
+  final Iterable<Property> changedProperties=dbMappings.changedProperties(oldObject,info);
+  final boolean updateResouceLayersName=info instanceof ResourceInfo && modificationProxy.getPropertyNames().contains("name");
+  modificationProxy.commit();
+  Map<String,?> params;
+  final Integer objectId=findObjectId(info);
+  final String blob;
+  try {
+    byte[] value=binding.objectToEntry(info);
+    blob=new String(value,"UTF-8");
+  }
+ catch (  UnsupportedEncodingException e) {
+    throw Throwables.propagate(e);
+  }
+  String updateStatement="update object set blob = :blob where oid = :oid";
+  params=params("blob",blob,"oid",objectId);
+  logStatement(updateStatement,params);
+  template.update(updateStatement,params);
+  updateQueryableProperties(oldObject,objectId,changedProperties);
+  cache.invalidate(id);
+  Class<T> clazz=ClassMappings.fromImpl(oldObject.getClass()).getInterface();
+  if (info instanceof ResourceInfo) {
+    if (updateResouceLayersName) {
+      updateResourceLayerName((ResourceInfo)info);
+    }
+  }
+  return getById(id,clazz);
+}

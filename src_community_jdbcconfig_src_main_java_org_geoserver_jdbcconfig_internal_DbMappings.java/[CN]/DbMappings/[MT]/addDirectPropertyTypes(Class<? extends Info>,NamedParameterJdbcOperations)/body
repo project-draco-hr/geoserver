@@ -1,0 +1,24 @@
+{
+  log("Creating property mappings for " + clazz.getName());
+  final ClassProperties classProperties=new ClassProperties(clazz);
+  List<String> properties=Lists.newArrayList(classProperties.properties());
+  Collections.sort(properties);
+  for (  String propertyName : properties) {
+    propertyName=fixCase(propertyName);
+    Method getter=classProperties.getter(propertyName,null);
+    if (getter == null) {
+      continue;
+    }
+    Class<?> returnType=getter.getReturnType();
+    if (returnType.isPrimitive() || returnType.isEnum() || INDEXABLE_TYPES.contains(returnType)) {
+      final Class<?> componentType=returnType.isArray() ? returnType.getComponentType() : returnType;
+      boolean isText=componentType.isEnum() || CharSequence.class.isAssignableFrom(componentType);
+      isText&=!"id".equals(propertyName);
+      addPropertyType(template,clazz,propertyName,null,false,isText);
+    }
+ else {
+      log("Ignoring property " + propertyName + ":"+ returnType.getSimpleName());
+    }
+  }
+  log("----------------------");
+}
