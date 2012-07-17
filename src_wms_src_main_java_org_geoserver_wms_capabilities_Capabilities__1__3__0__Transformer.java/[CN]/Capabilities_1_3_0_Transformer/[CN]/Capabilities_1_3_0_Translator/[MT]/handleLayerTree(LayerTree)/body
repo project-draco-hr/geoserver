@@ -8,19 +8,8 @@
   }
 );
   for (  LayerInfo layer : data) {
-    boolean wmsExposable=false;
-    if (layer.getType() == Type.RASTER || layer.getType() == Type.WMS) {
-      wmsExposable=true;
-    }
- else {
-      try {
-        wmsExposable=layer.getType() == Type.VECTOR && ((FeatureTypeInfo)layer.getResource()).getFeatureType().getGeometryDescriptor() != null;
-      }
- catch (      Exception e) {
-        LOGGER.log(Level.SEVERE,"An error occurred trying to determine if" + " the layer is geometryless",e);
-      }
-    }
-    if (layer.enabled() && wmsExposable) {
+    boolean wmsExposable=isExposable(layer);
+    if (wmsExposable) {
       try {
         mark();
         handleLayer(layer);

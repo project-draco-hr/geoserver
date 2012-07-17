@@ -1,0 +1,21 @@
+{
+  LayerTree nestedLayers=new LayerTree();
+  while (layers.hasNext()) {
+    LayerInfo layer=layers.next();
+    if (!isExposable(layer)) {
+      continue;
+    }
+    final String path=layer.getPath();
+    if (path != null && path.length() > 0 && !"/".equals(path)) {
+      nestedLayers.add(layer);
+      continue;
+    }
+    try {
+      handleLayer(layer);
+    }
+ catch (    Exception e) {
+      throw new ServiceException("Error occurred trying to write out metadata for layer: " + layer.getName(),e);
+    }
+  }
+  handleLayerTree(nestedLayers);
+}

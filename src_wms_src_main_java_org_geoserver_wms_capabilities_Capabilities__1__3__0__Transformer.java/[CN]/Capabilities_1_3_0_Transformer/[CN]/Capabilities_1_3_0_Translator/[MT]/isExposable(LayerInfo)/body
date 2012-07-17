@@ -1,0 +1,18 @@
+{
+  if (!layer.enabled()) {
+    return false;
+  }
+  boolean wmsExposable=false;
+  if (layer.getType() == Type.RASTER || layer.getType() == Type.WMS) {
+    wmsExposable=true;
+  }
+ else {
+    try {
+      wmsExposable=layer.getType() == Type.VECTOR && ((FeatureTypeInfo)layer.getResource()).getFeatureType().getGeometryDescriptor() != null;
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"An error occurred trying to determine if" + " the layer is geometryless",e);
+    }
+  }
+  return wmsExposable;
+}

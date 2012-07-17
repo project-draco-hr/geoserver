@@ -1,11 +1,16 @@
 {
+  final Envelope world=new Envelope(-180,180,-90,90);
   Envelope latlonBbox=new Envelope();
   Envelope layerBbox=null;
   LOGGER.finer("Collecting summarized latlonbbox and common SRS...");
-  for (  LayerInfo layer : layers) {
+  while (layers.hasNext()) {
+    LayerInfo layer=layers.next();
     ResourceInfo resource=layer.getResource();
     layerBbox=resource.getLatLonBoundingBox();
-    if (layerBbox != null)     latlonBbox.expandToInclude(layerBbox);
+    latlonBbox.expandToInclude(layerBbox);
+    if (latlonBbox.contains(world)) {
+      break;
+    }
   }
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Summarized LatLonBBox is " + latlonBbox);
