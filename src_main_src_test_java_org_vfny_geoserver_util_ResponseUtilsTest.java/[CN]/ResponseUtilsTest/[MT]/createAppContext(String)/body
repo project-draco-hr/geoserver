@@ -1,0 +1,14 @@
+{
+  SettingsInfo settings=createNiceMock(SettingsInfo.class);
+  expect(settings.getProxyBaseUrl()).andReturn(proxyBaseUrl).anyTimes();
+  replay(settings);
+  GeoServer geoServer=createNiceMock(GeoServer.class);
+  expect(geoServer.getSettings()).andReturn(settings).anyTimes();
+  replay(geoServer);
+  ProxifyingURLMangler mangler=new ProxifyingURLMangler(geoServer);
+  ApplicationContext appContext=createNiceMock(ApplicationContext.class);
+  expect(appContext.getBeanNamesForType(URLMangler.class)).andReturn(new String[]{"mangler"});
+  expect(appContext.getBean("mangler")).andReturn(mangler).anyTimes();
+  replay(appContext);
+  new GeoServerExtensions().setApplicationContext(appContext);
+}
