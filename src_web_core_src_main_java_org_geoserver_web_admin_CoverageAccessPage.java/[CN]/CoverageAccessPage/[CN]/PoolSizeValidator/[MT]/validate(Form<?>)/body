@@ -1,0 +1,32 @@
+{
+  if (form.findSubmittingButton() != form.get("submit")) {
+    return;
+  }
+  final Component maxPoolComponent=form.get("maxPoolSize");
+  final Component corePoolComponent=form.get("corePoolSize");
+  int maxPool;
+  int corePool;
+  if (maxPoolComponent != null && maxPoolComponent instanceof TextField<?> && corePoolComponent != null && corePoolComponent instanceof TextField<?>) {
+    final TextField maxPoolField=(TextField)maxPoolComponent;
+    final TextField corePoolField=(TextField)corePoolComponent;
+    final String mp=maxPoolField.getValue();
+    final String cp=corePoolField.getValue();
+    if (!(mp == null || cp == null || mp.trim().isEmpty() || cp.trim().isEmpty())) {
+      try {
+        maxPool=Integer.valueOf(mp);
+      }
+ catch (      NumberFormatException nfe) {
+        return;
+      }
+      try {
+        corePool=Integer.valueOf(cp);
+      }
+ catch (      NumberFormatException nfe) {
+        return;
+      }
+      if (maxPool >= 1 && corePool >= 1 && maxPool < corePool) {
+        form.error(new ParamResourceModel("poolSizeCheck",getPage()).getString());
+      }
+    }
+  }
+}
