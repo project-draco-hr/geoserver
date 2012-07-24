@@ -2,23 +2,18 @@
   setHeaderPanel(headerPanel());
   GWC gwc=GWC.get();
   final GWCConfig gwcConfig=gwc.getConfig().clone();
-  Map<String,Serializable> formData=new HashMap<String,Serializable>();
-  formData.put("gwcConfig",gwcConfig);
-  formModel=new MapModel<String,Serializable>(formData);
-  final Form<Map<String,Serializable>> form;
-  form=new Form<Map<String,Serializable>>("form",formModel);
+  IModel<GWCConfig> formModel=new Model<GWCConfig>(gwcConfig);
+  final Form<GWCConfig> form=new Form<GWCConfig>("form",formModel);
   add(form);
-  final IModel<GWCConfig> gwcConfigModel=new PropertyModel<GWCConfig>(formModel,"gwcConfig");
-  final GWCServicesPanel gwcServicesPanel=new GWCServicesPanel("gwcServicesPanel",gwcConfigModel);
-  final CachingOptionsPanel defaultCachingOptionsPanel=new CachingOptionsPanel("cachingOptionsPanel",gwcConfigModel);
+  final GWCServicesPanel gwcServicesPanel=new GWCServicesPanel("gwcServicesPanel",formModel);
+  final CachingOptionsPanel defaultCachingOptionsPanel=new CachingOptionsPanel("cachingOptionsPanel",formModel);
   form.add(gwcServicesPanel);
   form.add(defaultCachingOptionsPanel);
   form.add(new Button("submit"){
     private static final long serialVersionUID=1L;
     @Override public void onSubmit(){
       GWC gwc=GWC.get();
-      final IModel formModel=form.getModel();
-      final IModel<GWCConfig> gwcConfigModel=new PropertyModel<GWCConfig>(formModel,"gwcConfig");
+      final IModel<GWCConfig> gwcConfigModel=form.getModel();
       GWCConfig gwcConfig=gwcConfigModel.getObject();
       try {
         gwc.saveConfig(gwcConfig);
@@ -34,7 +29,7 @@
 );
   form.add(new GeoServerAjaxFormLink("cancel"){
     private static final long serialVersionUID=1L;
-    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+    @Override protected void onClick(    AjaxRequestTarget target,    @SuppressWarnings("rawtypes") Form form){
       doReturn();
     }
   }

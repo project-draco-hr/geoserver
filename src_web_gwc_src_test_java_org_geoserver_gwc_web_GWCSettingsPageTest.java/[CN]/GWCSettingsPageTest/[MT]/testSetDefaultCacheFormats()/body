@@ -1,0 +1,24 @@
+{
+  GWC gwc=GWC.get();
+  GWCConfig config=gwc.getConfig();
+  config.setCacheLayersByDefault(true);
+  gwc.saveConfig(config);
+  GWCSettingsPage page=new GWCSettingsPage();
+  tester.startPage(page);
+  tester.assertRenderedPage(GWCSettingsPage.class);
+  final List<String> formats=newArrayList("image/png","image/png8","image/jpeg","image/gif");
+  tester.assertListView("form:cachingOptionsPanel:container:configs:vectorFormatsGroup:vectorFromats",formats);
+  tester.assertListView("form:cachingOptionsPanel:container:configs:rasterFormatsGroup:rasterFromats",formats);
+  tester.assertListView("form:cachingOptionsPanel:container:configs:otherFormatsGroup:otherFromats",formats);
+  FormTester form=tester.newFormTester("form");
+  final boolean replace=true;
+  form.selectMultiple("cachingOptionsPanel:container:configs:vectorFormatsGroup",new int[]{1,3},replace);
+  form.selectMultiple("cachingOptionsPanel:container:configs:rasterFormatsGroup",new int[]{1,3},replace);
+  form.selectMultiple("cachingOptionsPanel:container:configs:otherFormatsGroup",new int[]{1,3},replace);
+  form.submit("submit");
+  tester.assertRenderedPage(GeoServerHomePage.class);
+  Set<String> expected=newHashSet(formats.get(1),formats.get(3));
+  assertEquals(expected,gwc.getConfig().getDefaultVectorCacheFormats());
+  assertEquals(expected,gwc.getConfig().getDefaultCoverageCacheFormats());
+  assertEquals(expected,gwc.getConfig().getDefaultOtherCacheFormats());
+}
