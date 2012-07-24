@@ -1,0 +1,16 @@
+{
+  final String url="gwc/rest/layers.xml";
+  MockHttpServletResponse sr=getAsServletResponse(url);
+  assertEquals(200,sr.getErrorCode());
+  assertTrue(sr.getContentType(),sr.getContentType().startsWith("text/xml"));
+  Document dom=getAsDOM(url);
+  ArrayList<String> tileLayerNames=Lists.newArrayList(GWC.get().getTileLayerNames());
+  Collections.sort(tileLayerNames);
+  XMLUnit.setXpathNamespaceContext(new SimpleNamespaceContext(ImmutableMap.of("atom","http://www.w3.org/2005/Atom")));
+  for (  String name : tileLayerNames) {
+    String xpath="//layers/layer/name[text() = '" + name + "']";
+    assertXpathExists(xpath,dom);
+    xpath="//layers/layer/atom:link[@href = 'http://localhost/geoserver/gwc/rest/layers/" + ServletUtils.URLEncode(name) + ".xml']";
+    assertXpathExists(xpath,dom);
+  }
+}
