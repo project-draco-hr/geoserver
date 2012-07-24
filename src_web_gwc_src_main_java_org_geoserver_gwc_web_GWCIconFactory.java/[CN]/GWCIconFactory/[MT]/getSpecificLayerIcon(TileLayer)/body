@@ -1,15 +1,14 @@
 {
-  final TYPE type=getType(layer);
-switch (type) {
-case RASTER:
-    return RASTER_ICON;
-case VECTOR:
-  return VECTOR_ICON;
-case LAYERGROUP:
-return GROUP_ICON;
-case WMS:
-return MAP_ICON;
-default :
-return UNKNOWN_ICON;
-}
+  if (layer instanceof GeoServerTileLayer) {
+    GeoServerTileLayer gsTileLayer=(GeoServerTileLayer)layer;
+    LayerInfo layerInfo=gsTileLayer.getLayerInfo();
+    if (layerInfo != null) {
+      return CatalogIconFactory.get().getSpecificLayerIcon(layerInfo);
+    }
+    return CatalogIconFactory.GROUP_ICON;
+  }
+  if (layer instanceof WMSLayer) {
+    return GWC;
+  }
+  return UNKNOWN_ICON;
 }

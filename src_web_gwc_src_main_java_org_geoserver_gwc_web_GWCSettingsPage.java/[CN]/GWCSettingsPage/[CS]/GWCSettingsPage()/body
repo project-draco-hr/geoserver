@@ -1,38 +1,22 @@
 {
   setHeaderPanel(headerPanel());
-  GWC gwc=getGWC();
-  final boolean diskQuotaModuleDisabled=gwc.getDiskQuotaConfig() == null;
-  final DiskQuotaConfig diskQuotaConfig;
-  if (diskQuotaModuleDisabled) {
-    diskQuotaConfig=new DiskQuotaConfig();
-    diskQuotaConfig.setDefaults();
-  }
- else {
-    diskQuotaConfig=gwc.getDiskQuotaConfig().clone();
-  }
+  GWC gwc=GWC.get();
   final GWCConfig gwcConfig=gwc.getConfig().clone();
   Map<String,Serializable> formData=new HashMap<String,Serializable>();
-  formData.put("diskQuotaConfig",diskQuotaConfig);
   formData.put("gwcConfig",gwcConfig);
   formModel=new MapModel<String,Serializable>(formData);
   final Form<Map<String,Serializable>> form;
   form=new Form<Map<String,Serializable>>("form",formModel);
   add(form);
   final IModel<GWCConfig> gwcConfigModel=new PropertyModel<GWCConfig>(formModel,"gwcConfig");
-  final IModel<DiskQuotaConfig> diskQuotaModel=new PropertyModel<DiskQuotaConfig>(formModel,"diskQuotaConfig");
   final GWCServicesPanel gwcServicesPanel=new GWCServicesPanel("gwcServicesPanel",gwcConfigModel);
   final CachingOptionsPanel defaultCachingOptionsPanel=new CachingOptionsPanel("cachingOptionsPanel",gwcConfigModel);
-  final DiskQuotaConfigPanel diskQuotaConfigPanel=new DiskQuotaConfigPanel("diskQuotaPanel",diskQuotaModel);
-  if (diskQuotaModuleDisabled) {
-    diskQuotaConfigPanel.setVisible(false);
-  }
   form.add(gwcServicesPanel);
   form.add(defaultCachingOptionsPanel);
-  form.add(diskQuotaConfigPanel);
   form.add(new Button("submit"){
     private static final long serialVersionUID=1L;
     @Override public void onSubmit(){
-      GWC gwc=getGWC();
+      GWC gwc=GWC.get();
       final IModel formModel=form.getModel();
       final IModel<GWCConfig> gwcConfigModel=new PropertyModel<GWCConfig>(formModel,"gwcConfig");
       GWCConfig gwcConfig=gwcConfigModel.getObject();
@@ -43,25 +27,6 @@
         LOGGER.log(Level.WARNING,"Error saving GWC config",e);
         form.error("Error saving GWC config: " + e.getMessage());
         return;
-      }
-      if (!diskQuotaModuleDisabled) {
-        StorageUnit chosenUnit=diskQuotaConfigPanel.getStorageUnit();
-        String chosenQuotaStr=String.valueOf(diskQuotaConfigPanel.getQuotaValue());
-        Double chosenQuota;
-        try {
-          chosenQuota=Double.valueOf(chosenQuotaStr);
-        }
- catch (        NumberFormatException e) {
-          form.error(chosenQuotaStr + " is not a valid floating point number");
-          return;
-        }
-        if (chosenQuota.doubleValue() <= 0D) {
-          form.error("Quota has to be > 0");
-          return;
-        }
-        DiskQuotaConfig dqConfig=diskQuotaModel.getObject();
-        dqConfig.getGlobalQuota().setValue(chosenQuota.doubleValue(),chosenUnit);
-        gwc.saveDiskQuotaConfig(dqConfig);
       }
       doReturn();
     }
