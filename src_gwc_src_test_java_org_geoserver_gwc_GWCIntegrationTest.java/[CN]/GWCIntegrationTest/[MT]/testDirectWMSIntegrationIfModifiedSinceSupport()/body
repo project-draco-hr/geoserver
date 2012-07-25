@@ -1,0 +1,28 @@
+{
+  final GWC gwc=GWC.get();
+  gwc.getConfig().setDirectWMSIntegrationEnabled(true);
+  final String layerName=BASIC_POLYGONS.getPrefix() + ":" + BASIC_POLYGONS.getLocalPart();
+  final String path=buildGetMap(true,layerName,"EPSG:4326",null) + "&tiled=true";
+  MockHttpServletResponse response=getAsServletResponse(path);
+  assertEquals(200,response.getStatusCode());
+  assertEquals("image/png",response.getContentType());
+  String lastModifiedHeader=response.getHeader("Last-Modified");
+  assertNotNull(lastModifiedHeader);
+  Date lastModified=DateUtil.parseDate(lastModifiedHeader);
+  MockHttpServletRequest httpReq=createRequest(path);
+  httpReq.setMethod("GET");
+  httpReq.setBodyContent(new byte[]{});
+  httpReq.setHeader("If-Modified-Since",lastModifiedHeader);
+  response=dispatch(httpReq,"UTF-8");
+  assertEquals(HttpServletResponse.SC_NOT_MODIFIED,response.getErrorCode());
+  Date past=new Date(lastModified.getTime() - 5000);
+  String ifModifiedSince=DateUtil.formatDate(past);
+  httpReq.setHeader("If-Modified-Since",ifModifiedSince);
+  response=dispatch(httpReq,"UTF-8");
+  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  Date future=new Date(lastModified.getTime() + 5000);
+  ifModifiedSince=DateUtil.formatDate(future);
+  httpReq.setHeader("If-Modified-Since",ifModifiedSince);
+  response=dispatch(httpReq,"UTF-8");
+  assertEquals(HttpServletResponse.SC_NOT_MODIFIED,response.getErrorCode());
+}
