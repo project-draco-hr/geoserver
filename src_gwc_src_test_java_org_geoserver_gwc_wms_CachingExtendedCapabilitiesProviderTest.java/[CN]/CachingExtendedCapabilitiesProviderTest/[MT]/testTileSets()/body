@@ -3,8 +3,13 @@
   final int numCRSs=2;
   final int numFormats=2;
   final int numTileSets=numLayers * numCRSs * numFormats;
-  Document dom=dom(get("wms?request=getCapabilities&version=1.1.1&tiled=true"),false);
   String tileSetPath="/WMT_MS_Capabilities/Capability/VendorSpecificCapabilities/TileSet";
+  GWC.get().getConfig().setDirectWMSIntegrationEnabled(false);
+  Document dom=dom(get("wms?request=getCapabilities&version=1.1.1&tiled=true"),false);
+  assertXpathNotExists(tileSetPath,dom);
+  GWC.get().getConfig().setDirectWMSIntegrationEnabled(true);
+  dom=dom(get("wms?request=getCapabilities&version=1.1.1&tiled=true"),false);
+  assertXpathExists(tileSetPath,dom);
   assertXpathEvaluatesTo(String.valueOf(numTileSets),"count(" + tileSetPath + ")",dom);
   assertXpathExists(tileSetPath + "[1]/SRS",dom);
   assertXpathExists(tileSetPath + "[1]/BoundingBox",dom);

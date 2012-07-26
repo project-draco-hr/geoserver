@@ -1,4 +1,7 @@
 {
+  if (!gwc.getConfig().isDirectWMSIntegrationEnabled()) {
+    return;
+  }
   Version version=WMS.version(request.getVersion(),true);
   if (!WMS.VERSION_1_1_1.equals(version) || !isTiled(request)) {
     return;
@@ -6,11 +9,28 @@
   final String namespacePrefixFilter=request.getNamespace();
   Iterable<? extends TileLayer> tileLayers;
   tileLayers=gwc.getTileLayersByNamespacePrefix(namespacePrefixFilter);
+  final String nsPrefix;
+{
+    final WorkspaceInfo localWorkspace=LocalWorkspace.get();
+    if (localWorkspace == null) {
+      nsPrefix=null;
+    }
+ else {
+      nsPrefix=localWorkspace.getName() + ":";
+    }
+  }
   for (  TileLayer layer : tileLayers) {
+    String advertisedName=layer.getName();
+    if (nsPrefix != null) {
+      if (!advertisedName.startsWith(nsPrefix)) {
+        continue;
+      }
+      advertisedName=advertisedName.substring(nsPrefix.length());
+    }
     for (    String gridSetId : layer.getGridSubsets()) {
       GridSubset grid=layer.getGridSubset(gridSetId);
       for (      MimeType mime : layer.getMimeTypes()) {
-        vendorSpecificTileset(tx,layer,grid,mime.getFormat());
+        vendorSpecificTileset(tx,layer,advertisedName,grid,mime.getFormat());
       }
     }
   }

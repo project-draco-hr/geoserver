@@ -1,0 +1,14 @@
+{
+  final GWC gwc=GWC.get();
+  gwc.getConfig().setDirectWMSIntegrationEnabled(true);
+  final String qualifiedName=super.getLayerId(BASIC_POLYGONS);
+  final String localName=BASIC_POLYGONS.getLocalPart();
+  final TileLayer tileLayer=gwc.getTileLayerByName(qualifiedName);
+  assertNotNull(tileLayer);
+  boolean directWMSIntegrationEndpoint=true;
+  String request=MockData.CDF_PREFIX + "/" + buildGetMap(directWMSIntegrationEndpoint,localName,"EPSG:4326",null,tileLayer)+ "&tiled=true";
+  MockHttpServletResponse response=getAsServletResponse(request);
+  assertEquals(200,response.getStatusCode());
+  assertTrue(response.getContentType(),response.getContentType().startsWith("application/vnd.ogc.se_xml"));
+  assertTrue(response.getOutputStreamContent(),response.getOutputStreamContent().contains("Could not find layer cdf:BasicPolygons"));
+}

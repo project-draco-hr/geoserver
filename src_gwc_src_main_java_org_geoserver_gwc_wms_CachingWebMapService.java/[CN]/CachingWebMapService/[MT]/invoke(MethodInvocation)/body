@@ -1,6 +1,6 @@
 {
   GWCConfig config=gwc.getConfig();
-  if (!(config.isWMSCEnabled() && config.isDirectWMSIntegrationEnabled())) {
+  if (!config.isDirectWMSIntegrationEnabled()) {
     return (WebMap)invocation.proceed();
   }
   final GetMapRequest request=getRequest(invocation);
@@ -45,7 +45,7 @@
   RawMap map=new RawMap(null,tileBytes,mimeType);
   map.setResponseHeader("Cache-Control","no-cache");
   map.setResponseHeader("ETag",etag);
-  map.setContentDispositionHeader(null,"." + cachedTile.getMimeType().getFileExtension());
+  map.setContentDispositionHeader(null,"." + cachedTile.getMimeType().getFileExtension(),false);
   final long tileTimeStamp=cachedTile.getTSCreated();
   final String ifModSinceHeader=request.getHttpRequestHeader("If-Modified-Since");
   final String lastModified=org.apache.commons.httpclient.util.DateUtil.formatDate(new Date(tileTimeStamp));
@@ -71,6 +71,7 @@
   GridSubset gridSubset=layer.getGridSubset(cachedTile.getGridSetId());
   BoundingBox tileBounds=gridSubset.boundsFromIndex(tileIndex);
   String cacheResultHeader=cacheResult == null ? "UNKNOWN" : cacheResult.toString();
+  map.setResponseHeader("geowebcache-layer",layer.getName());
   map.setResponseHeader("geowebcache-cache-result",cacheResultHeader);
   map.setResponseHeader("geowebcache-tile-index",Arrays.toString(tileIndex));
   map.setResponseHeader("geowebcache-tile-bounds",tileBounds.toString());
