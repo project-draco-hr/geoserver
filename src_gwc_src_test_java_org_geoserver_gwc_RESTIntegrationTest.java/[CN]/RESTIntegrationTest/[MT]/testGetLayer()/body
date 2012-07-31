@@ -1,0 +1,17 @@
+{
+  final String layerName=getLayerId(MockData.BASIC_POLYGONS);
+  final String url="gwc/rest/layers/" + layerName + ".xml";
+  final String id=getCatalog().getLayerByName(layerName).getId();
+  MockHttpServletResponse sr=getAsServletResponse(url);
+  assertEquals(200,sr.getErrorCode());
+  assertTrue(sr.getContentType(),sr.getContentType().startsWith("text/xml"));
+  Document dom=getAsDOM(url);
+  print(dom);
+  assertXpathExists("/GeoServerLayer",dom);
+  assertXpathEvaluatesTo(id,"/GeoServerLayer/id",dom);
+  assertXpathEvaluatesTo(layerName,"/GeoServerLayer/name",dom);
+  assertXpathEvaluatesTo("true","/GeoServerLayer/enabled",dom);
+  assertXpathEvaluatesTo("image/png","/GeoServerLayer/mimeFormats/string[1]",dom);
+  assertXpathEvaluatesTo("image/jpeg","/GeoServerLayer/mimeFormats/string[2]",dom);
+  assertXpathEvaluatesTo("EPSG:900913","/GeoServerLayer/gridSubsets/gridSubset[1]/gridSetName",dom);
+}

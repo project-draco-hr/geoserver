@@ -1,0 +1,12 @@
+{
+  final String layerName=getLayerId(MockData.FORESTS);
+  final String id=getCatalog().getLayerByName(layerName).getId();
+  final GWC mediator=GWC.get();
+  assertTrue(mediator.tileLayerExists(layerName));
+  mediator.removeTileLayers(Lists.newArrayList(layerName));
+  assertFalse(mediator.tileLayerExists(layerName));
+  final String url="gwc/rest/layers/" + layerName + ".xml";
+  MockHttpServletResponse response=putLayer(url,id,layerName);
+  assertEquals(HttpServletResponse.SC_OK,response.getStatusCode());
+  assertTrue(mediator.tileLayerExists(layerName));
+}

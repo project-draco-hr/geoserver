@@ -1,13 +1,17 @@
 {
   String xml="<wfs:GetFeature " + "service=\"WFS\" " + "version=\"1.1.0\" "+ "xmlns:cdf=\"http://www.opengis.net/cite/data\" "+ "xmlns:ogc=\"http://www.opengis.net/ogc\" "+ "xmlns:wfs=\"http://www.opengis.net/wfs\" "+ "xmlns:gml=\"http://www.opengis.net/gml\" "+ "xmlns:gsml=\"" + AbstractAppSchemaMockData.GSML_URI + "\" "+ ">"+ "    <wfs:Query typeName=\"gsml:GeologicUnit\">"+ "        <ogc:Filter>"+ "            <ogc:PropertyIsEqualTo>"+ "                <ogc:Literal>Akuna Mudstone (Oba)</ogc:Literal>"+ "                <ogc:PropertyName>gml:name</ogc:PropertyName>"+ "            </ogc:PropertyIsEqualTo>"+ "        </ogc:Filter>"+ "    </wfs:Query> "+ "</wfs:GetFeature>";
   Document doc=postAsDOM("wfs",xml);
-  LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  if (printDoc) {
+    LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  }
   assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
   assertXpathCount(1,"//gsml:GeologicUnit",doc);
   assertXpathEvaluatesTo("gsml.geologicunit.167775491107848330","//gsml:GeologicUnit/@gml:id",doc);
   xml="<wfs:GetFeature " + "service=\"WFS\" " + "version=\"1.1.0\" "+ "xmlns:cdf=\"http://www.opengis.net/cite/data\" "+ "xmlns:ogc=\"http://www.opengis.net/ogc\" "+ "xmlns:wfs=\"http://www.opengis.net/wfs\" "+ "xmlns:gml=\"http://www.opengis.net/gml\" "+ "xmlns:gsml=\"" + AbstractAppSchemaMockData.GSML_URI + "\" "+ ">"+ "    <wfs:Query typeName=\"gsml:GeologicUnit\">"+ "        <ogc:Filter>"+ "            <ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escapeChar=\"!\">>"+ "                <ogc:PropertyName>gml:name</ogc:PropertyName>"+ "                <ogc:Literal>*Creek Granite*</ogc:Literal>"+ "            </ogc:PropertyIsLike>"+ "        </ogc:Filter>"+ "    </wfs:Query> "+ "</wfs:GetFeature>";
   doc=postAsDOM("wfs",xml);
-  LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  if (printDoc) {
+    LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  }
   assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
   assertXpathEvaluatesTo("9","/wfs:FeatureCollection/@numberOfFeatures",doc);
   assertXpathCount(9,"//gsml:GeologicUnit",doc);
@@ -26,7 +30,9 @@
   assertTrue(ids.contains("gsml.geologicunit.16777549126942855"));
   xml="<wfs:GetFeature service=\"WFS\" version=\"1.1.0\" xmlns:cdf=\"http://www.opengis.net/cite/data\" " + "xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:wfs=\"http://www.opengis.net/wfs\" " + "xmlns:gml=\"http://www.opengis.net/gml\" xmlns:gsml=\"" + AbstractAppSchemaMockData.GSML_URI + "\">"+ "<wfs:Query typeName=\"gsml:GeologicUnit\">"+ "    <ogc:Filter>"+ "        <ogc:And>"+ "            <ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escapeChar=\"!\">>"+ "                <ogc:Literal>*Creek Granite*</ogc:Literal>"+ "                <ogc:PropertyName>gml:name</ogc:PropertyName>"+ "            </ogc:PropertyIsLike>"+ "                <ogc:Not>"+ "                    <ogc:PropertyIsEqualTo>"+ "                        <ogc:Literal>mid-crustal</ogc:Literal>"+ "                        <ogc:PropertyName>gsml:geologicHistory/gsml:GeologicEvent/gsml:eventEnvironment/gsml:CGI_TermValue/gsml:value</ogc:PropertyName>"+ "                    </ogc:PropertyIsEqualTo>"+ "                </ogc:Not>"+ "        </ogc:And>"+ "    </ogc:Filter>"+ "</wfs:Query> "+ "</wfs:GetFeature>";
   doc=postAsDOM("wfs",xml);
-  LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  if (printDoc) {
+    LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
+  }
   assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
   assertXpathEvaluatesTo("6","/wfs:FeatureCollection/@numberOfFeatures",doc);
   assertXpathCount(6,"//gsml:GeologicUnit",doc);

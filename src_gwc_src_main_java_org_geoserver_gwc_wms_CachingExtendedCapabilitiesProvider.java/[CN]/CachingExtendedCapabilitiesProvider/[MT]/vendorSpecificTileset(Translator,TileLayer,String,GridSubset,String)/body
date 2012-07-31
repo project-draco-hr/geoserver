@@ -1,0 +1,40 @@
+{
+  String srsStr=grid.getSRS().toString();
+  StringBuilder resolutionsStr=new StringBuilder();
+  double[] res=grid.getResolutions();
+  for (int i=0; i < res.length; i++) {
+    resolutionsStr.append(Double.toString(res[i]) + " ");
+  }
+  String[] bs=boundsPrep(grid.getCoverageBestFitBounds());
+  tx.start("TileSet");
+  tx.start("SRS");
+  tx.chars(srsStr);
+  tx.end("SRS");
+  AttributesImpl atts;
+  atts=new AttributesImpl();
+  atts.addAttribute("","SRS","SRS","",srsStr);
+  atts.addAttribute("","minx","minx","",bs[0]);
+  atts.addAttribute("","miny","miny","",bs[1]);
+  atts.addAttribute("","maxx","maxx","",bs[2]);
+  atts.addAttribute("","maxy","maxy","",bs[3]);
+  tx.start("BoundingBox",atts);
+  tx.end("BoundingBox");
+  tx.start("Resolutions");
+  tx.chars(resolutionsStr.toString());
+  tx.end("Resolutions");
+  tx.start("Width");
+  tx.chars(String.valueOf(grid.getTileWidth()));
+  tx.end("Width");
+  tx.start("Height");
+  tx.chars(String.valueOf(grid.getTileHeight()));
+  tx.end("Height");
+  tx.start("Format");
+  tx.chars(format);
+  tx.end("Format");
+  tx.start("Layers");
+  tx.chars(advertisedLayerName);
+  tx.end("Layers");
+  tx.start("Styles");
+  tx.end("Styles");
+  tx.end("TileSet");
+}

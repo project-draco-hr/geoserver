@@ -1,5 +1,11 @@
 {
   MockHttpServletResponse resp=getAsServletResponse("wfs?request=GetFeature&typeName=MLines&outputFormat=spatialite");
-  ByteArrayInputStream responseInput=testBasicResult(resp,"MLines");
-  checkGeometries(responseInput,new String[]{"MLines"},new String[]{"multiLineStringProperty"},new String[]{"MULTILINESTRING"});
+  DataStore ds=loadData(resp);
+  try {
+    SimpleFeatureCollection fc=ds.getFeatureSource("MLines").getFeatures();
+    checkFeatures(getFeatureSource(MockData.MLINES).getFeatures(),fc);
+  }
+  finally {
+    ds.dispose();
+  }
 }

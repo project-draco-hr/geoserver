@@ -1,21 +1,5 @@
 {
   final GWC gwc=GWC.get();
   final TileLayer tileLayer=gwc.getTileLayerByName(layerName);
-  final GridSubset gridSubset=tileLayer.getGridSubset(gridsetId);
-  long[] coverage=gridSubset.getCoverage(0);
-  long[] tileIndex={coverage[0],coverage[1],coverage[4]};
-  BoundingBox bounds=gridSubset.boundsFromIndex(tileIndex);
-  final String endpoint=directWMSIntegrationEndpoint ? "wms" : "gwc/service/wms";
-  StringBuilder sb=new StringBuilder(endpoint);
-  sb.append("?service=WMS&request=GetMap&version=1.1.1&format=image/png");
-  sb.append("&layers=").append(layerName);
-  sb.append("&srs=").append(gridSubset.getSRS());
-  sb.append("&width=").append(gridSubset.getGridSet().getTileWidth());
-  sb.append("&height=").append(gridSubset.getGridSet().getTileHeight());
-  sb.append("&styles=");
-  if (styles != null) {
-    sb.append(styles);
-  }
-  sb.append("&bbox=").append(bounds.toString());
-  return sb.toString();
+  return buildGetMap(directWMSIntegrationEndpoint,layerName,gridsetId,styles,tileLayer);
 }
