@@ -1,9 +1,15 @@
 {
   if (SENTINEL.isOutermostRequest()) {
+    runningRequests.decrementAndGet();
     if (REQUEST_CONTROLLERS.get() != null) {
       List<FlowController> fcl=REQUEST_CONTROLLERS.get();
       for (      FlowController flowController : fcl) {
-        flowController.requestComplete(request);
+        try {
+          flowController.requestComplete(request);
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.SEVERE,"Flow controller " + fcl + " failed to mark the request as complete",e);
+        }
       }
     }
     REQUEST_CONTROLLERS.remove();
