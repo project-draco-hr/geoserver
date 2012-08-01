@@ -1,14 +1,15 @@
 {
-  IpFlowController controller=new IpFlowController(1);
+  IpFlowController ipController=new IpFlowController(1);
+  UserFlowController userController=new UserFlowController(1);
   String ipAddress="127.0.0.1";
   Request firstRequest=buildRequest(ipAddress,"");
-  FlowControllerTestingThread tSample=new FlowControllerTestingThread(firstRequest,0,0,controller);
+  FlowControllerTestingThread tSample=new FlowControllerTestingThread(firstRequest,0,0,userController,ipController);
   tSample.start();
   waitTerminated(tSample,MAX_WAIT);
   assertEquals(ThreadState.COMPLETE,tSample.state);
   String ip=firstRequest.getHttpRequest().getRemoteAddr();
-  FlowControllerTestingThread t1=new FlowControllerTestingThread(buildRequest(ip,""),0,Long.MAX_VALUE,controller);
-  FlowControllerTestingThread t2=new FlowControllerTestingThread(buildRequest(ip,""),0,Long.MAX_VALUE,controller);
+  FlowControllerTestingThread t1=new FlowControllerTestingThread(buildRequest(ip,""),0,Long.MAX_VALUE,ipController);
+  FlowControllerTestingThread t2=new FlowControllerTestingThread(buildRequest(ip,""),0,Long.MAX_VALUE,ipController);
   try {
     t1.start();
     waitBlocked(t1,MAX_WAIT);
@@ -21,6 +22,8 @@
     assertEquals(ThreadState.COMPLETE,t1.state);
     assertEquals(ThreadState.PROCESSING,t2.state);
     t2.interrupt();
+    waitTerminated(t2,MAX_WAIT);
+    assertEquals(ThreadState.COMPLETE,t2.state);
   }
  catch (  Exception e) {
     System.out.println(e.getMessage());
