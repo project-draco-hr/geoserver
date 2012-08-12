@@ -1,0 +1,53 @@
+{
+  Map<String,String> candidates=new HashMap<String,String>();
+  String defaultPasswordAsString=new String(MASTER_PASSWD_DEFAULT);
+  if (props != null) {
+    UserAttributeEditor configAttribEd=new UserAttributeEditor();
+    for (Iterator<Object> iter=props.keySet().iterator(); iter.hasNext(); ) {
+      String username=(String)iter.next();
+      configAttribEd.setAsText(props.getProperty(username));
+      UserAttribute attr=(UserAttribute)configAttribEd.getValue();
+      if (attr == null)       continue;
+      if (attr.getPassword() == null || attr.getPassword().length() < 8)       continue;
+      if (defaultPasswordAsString.equals(attr.getPassword()))       continue;
+      if (GeoServerUser.ADMIN_USERNAME.equals(username)) {
+        candidates.put(GeoServerUser.ADMIN_USERNAME,attr.getPassword());
+        continue;
+      }
+      if (attr.getAuthorities().contains(GeoServerRole.ADMIN_ROLE)) {
+        candidates.put(username,attr.getPassword());
+      }
+    }
+  }
+  String username=GeoServerUser.ADMIN_USERNAME;
+  String masterPW=candidates.get(username);
+  if (masterPW == null && candidates.size() > 0) {
+    username=candidates.keySet().iterator().next();
+    masterPW=candidates.get(username);
+  }
+  String message=null;
+  if (masterPW != null) {
+    message="Master password is identical to the password of user: " + username;
+  }
+ else {
+    masterPW=new String(getRandomPassworddProvider().getRandomPassword(8));
+    message="The generated master password is: " + masterPW;
+  }
+  File info=new File(getSecurityRoot(),MASTER_PASSWD_INFO_FILENAME);
+  BufferedWriter w=new BufferedWriter(new OutputStreamWriter(new FileOutputStream(info)));
+  DateFormat dateFormat=new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+  w.write("This file was created at " + dateFormat.format(new Date()));
+  w.newLine();
+  w.newLine();
+  w.write(message);
+  w.newLine();
+  w.newLine();
+  w.write("Test the master password by logging in as user \"root\"");
+  w.newLine();
+  w.newLine();
+  w.write("This file should be removed after reading !!!.");
+  w.newLine();
+  w.close();
+  LOGGER.info("Information regarding the master password is in: " + info.getCanonicalPath());
+  return masterPW.toCharArray();
+}

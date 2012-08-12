@@ -23,7 +23,10 @@
     ((URLMasterPasswordProviderConfig)mpProviderConfig).setEncrypting(true);
     saveMasterPasswordProviderConfig(mpProviderConfig,false);
     MasterPasswordProvider mpProvider=loadMasterPasswordProvider(mpProviderConfig.getName());
-    mpProvider.setMasterPassword(MASTER_PASSWD_DEFAULT);
+    File propFile=new File(getSecurityRoot(),"users.properties");
+    Properties userprops=null;
+    if (propFile.exists())     userprops=Util.loadPropertyFile(propFile);
+    mpProvider.setMasterPassword(extractMasterPasswordForMigration(userprops));
   }
   MasterPasswordConfig mpConfig=new MasterPasswordConfig();
   mpConfig.setProviderName(mpProviderConfig.getName());

@@ -1,0 +1,38 @@
+{
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  char[] generatedPW=secMgr.extractMasterPasswordForMigration(null);
+  assertTrue(generatedPW.length == 8);
+  assertTrue(masterPWInfoFileContains(new String(generatedPW)));
+  Properties props=new Properties();
+  String adminUser="user1";
+  String noAdminUser="user2";
+  String defaultMasterePassword=new String(GeoServerSecurityManager.MASTER_PASSWD_DEFAULT);
+  props.put(GeoServerUser.ADMIN_USERNAME,defaultMasterePassword + "," + GeoServerRole.ADMIN_ROLE);
+  props.put(adminUser,defaultMasterePassword + "," + GeoServerRole.ADMIN_ROLE);
+  props.put(noAdminUser,defaultMasterePassword + ",ROLE_WFS");
+  generatedPW=secMgr.extractMasterPasswordForMigration(props);
+  assertTrue(generatedPW.length == 8);
+  assertTrue(masterPWInfoFileContains(new String(generatedPW)));
+  assertFalse(masterPWInfoFileContains(GeoServerUser.ADMIN_USERNAME));
+  assertFalse(masterPWInfoFileContains(adminUser));
+  assertFalse(masterPWInfoFileContains(noAdminUser));
+  props.put(noAdminUser,"validPassword" + ",ROLE_WFS");
+  generatedPW=secMgr.extractMasterPasswordForMigration(props);
+  assertTrue(generatedPW.length == 8);
+  assertTrue(masterPWInfoFileContains(new String(generatedPW)));
+  props.put(adminUser,"abc" + "," + GeoServerRole.ADMIN_ROLE);
+  generatedPW=secMgr.extractMasterPasswordForMigration(props);
+  assertTrue(generatedPW.length == 8);
+  assertTrue(masterPWInfoFileContains(new String(generatedPW)));
+  String validPassword="validPassword";
+  props.put(adminUser,validPassword + "," + GeoServerRole.ADMIN_ROLE);
+  generatedPW=secMgr.extractMasterPasswordForMigration(props);
+  assertEquals(validPassword,new String(generatedPW));
+  assertFalse(masterPWInfoFileContains(validPassword));
+  assertTrue(masterPWInfoFileContains(adminUser));
+  props.put(GeoServerUser.ADMIN_USERNAME,validPassword + "," + GeoServerRole.ADMIN_ROLE);
+  generatedPW=secMgr.extractMasterPasswordForMigration(props);
+  assertEquals(validPassword,new String(generatedPW));
+  assertFalse(masterPWInfoFileContains(validPassword));
+  assertTrue(masterPWInfoFileContains(GeoServerUser.ADMIN_USERNAME));
+}
