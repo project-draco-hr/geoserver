@@ -1,0 +1,22 @@
+{
+  StringBuilder requestBuilder=new StringBuilder("wfs");
+  requestBuilder.append("?version=2.0.0");
+  requestBuilder.append("&request=GetFeature");
+  requestBuilder.append("&typenames=");
+  requestBuilder.append(TYPE_NAME);
+  if (requestSrsName != null) {
+    requestBuilder.append("&srsname=");
+    requestBuilder.append(encodeSrsName(requestSrsName));
+  }
+  if (requestBbox != null) {
+    requestBuilder.append("&bbox=");
+    requestBuilder.append(encodeSrsName(requestBbox));
+  }
+  Document response=getAsDOM(requestBuilder.toString());
+  XMLAssert.assertXpathEvaluatesTo(Integer.toString(expectedNumberReturned),NUMBER_RETURNED_XPATH,response);
+  if (expectedNumberReturned > 0) {
+    XMLAssert.assertXpathEvaluatesTo(GML_ID,GML_ID_XPATH,response);
+    XMLAssert.assertXpathEvaluatesTo(expectedSrsName,SRSNAME_XPATH,response);
+    XMLAssert.assertXpathEvaluatesTo(expectedData,DATA_XPATH,response);
+  }
+}
