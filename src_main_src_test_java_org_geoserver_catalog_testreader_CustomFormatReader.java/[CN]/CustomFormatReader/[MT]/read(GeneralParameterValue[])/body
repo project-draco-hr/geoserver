@@ -1,0 +1,26 @@
+{
+  boolean haveDimension=false;
+  for (  GeneralParameterValue p : params) {
+    if (p.getDescriptor().getName().toString().equalsIgnoreCase(CustomFormat.CUSTOM_DIMENSION_NAME)) {
+      System.out.println("CustomFormatReader.read: " + p);
+      haveDimension=true;
+      final String value=String.valueOf(extractValue(p));
+      for (      String filename : this.dataDirectory.list()) {
+        if (isDataFile(filename)) {
+          final String dimValue=getDimensionValue(filename);
+          if (dimValue.equalsIgnoreCase(value)) {
+            return createCoverage(filename);
+          }
+        }
+      }
+    }
+  }
+  if (!haveDimension) {
+    for (    String filename : this.dataDirectory.list()) {
+      if (isDataFile(filename)) {
+        return createCoverage(filename);
+      }
+    }
+  }
+  return null;
+}

@@ -1,18 +1,39 @@
 {
   CoverageInfo cvInfo=(CoverageInfo)layer.getResource();
   if (cvInfo == null)   throw new ServiceException("Unable to acquire coverage resource for layer: " + layer.getName());
-  DimensionInfo timeInfo=cvInfo.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
-  DimensionInfo elevInfo=cvInfo.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
+  DimensionInfo timeInfo=null;
+  DimensionInfo elevInfo=null;
+  Map<String,DimensionInfo> customDimensions=null;
+  AbstractGridCoverage2DReader reader=null;
+  for (  Map.Entry<String,Serializable> e : cvInfo.getMetadata().entrySet()) {
+    String key=e.getKey();
+    Object value=e.getValue();
+    if (key.equals(ResourceInfo.TIME)) {
+      timeInfo=Converters.convert(value,DimensionInfo.class);
+    }
+ else     if (key.equals(ResourceInfo.ELEVATION)) {
+      elevInfo=Converters.convert(value,DimensionInfo.class);
+    }
+ else     if (value instanceof DimensionInfo) {
+      DimensionInfo dimInfo=(DimensionInfo)value;
+      if (dimInfo.isEnabled()) {
+        if (customDimensions == null) {
+          customDimensions=new HashMap<String,DimensionInfo>();
+        }
+        customDimensions.put(key,dimInfo);
+      }
+    }
+  }
   boolean hasTime=timeInfo != null && timeInfo.isEnabled();
   boolean hasElevation=elevInfo != null && elevInfo.isEnabled();
-  if (!hasTime && !hasElevation) {
+  boolean hasCustomDimensions=customDimensions != null;
+  if (!hasTime && !hasElevation && !hasCustomDimensions) {
     return;
   }
   Catalog catalog=cvInfo.getCatalog();
   if (catalog == null)   throw new ServiceException("Unable to acquire catalog resource for layer: " + layer.getName());
   CoverageStoreInfo csinfo=cvInfo.getStore();
   if (csinfo == null)   throw new ServiceException("Unable to acquire coverage store resource for layer: " + layer.getName());
-  AbstractGridCoverage2DReader reader=null;
   try {
     reader=(AbstractGridCoverage2DReader)catalog.getResourcePool().getGridCoverageReader(csinfo,GeoTools.getDefaultHints());
   }
@@ -23,6 +44,11 @@
     throw new ServiceException("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
   }
   ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
+  if (hasCustomDimensions) {
+    for (    String key : customDimensions.keySet()) {
+      if (!dimensions.hasDomain(key))       customDimensions.remove(key);
+    }
+  }
   if (mode == Mode.WMS11) {
     String elevUnits=hasElevation ? elevInfo.getUnits() : "";
     String elevUnitSymbol=hasElevation ? elevInfo.getUnitSymbol() : "";
@@ -33,5 +59,10 @@
   }
   if (hasElevation && dimensions.hasElevation()) {
     handleElevationDimensionRaster(elevInfo,dimensions);
+  }
+  if (hasCustomDimensions) {
+    for (    String key : customDimensions.keySet()) {
+      handleCustomDimensionRaster(key,dimensions);
+    }
   }
 }
