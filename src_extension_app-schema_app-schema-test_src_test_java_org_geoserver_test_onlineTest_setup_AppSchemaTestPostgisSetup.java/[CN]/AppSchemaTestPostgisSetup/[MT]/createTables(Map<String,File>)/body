@@ -49,7 +49,7 @@
       int srid=getSrid(geom.getType());
       buf.append(srid).append(", ");
       buf.append("'GEOMETRY'").append(", ");
-      buf.append(2);
+      buf.append(geom.getType().getCoordinateReferenceSystem().getCoordinateSystem().getDimension());
       buf.append(");\n");
     }
     SimpleFeature feature;
@@ -66,6 +66,10 @@
       int valueIndex=0;
       for (      Property prop : properties) {
         Object value=prop.getValue();
+        if (value instanceof Geometry) {
+          Geometry geom=(Geometry)value;
+          value=new WKTWriter(geom.getCoordinate().z == Double.NaN ? 2 : 3).write(geom);
+        }
         if (value == null || value.toString().equalsIgnoreCase("null")) {
           values[valueIndex]="null";
         }
