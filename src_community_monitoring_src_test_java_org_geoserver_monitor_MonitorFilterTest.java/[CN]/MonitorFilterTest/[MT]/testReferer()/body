@@ -1,20 +1,9 @@
 {
-  DummyMonitorDAO dao=new DummyMonitorDAO();
-  MonitorFilter filter=new MonitorFilter(new Monitor(dao),new MonitorRequestFilter());
-  MockFilterChain chain=new MockFilterChain();
   HttpServletRequest req=request("GET","/foo/bar","12.34.56.78",null,"http://testhost/testpath");
   filter.doFilter(req,response(),chain);
   RequestData data=dao.getLast();
   assertEquals("GET",data.getHttpMethod());
   assertEquals("/foo/bar",data.getPath());
   assertEquals("12.34.56.78",data.getRemoteAddr());
-  assertEquals("http://testhost/testpath",data.getReferer());
-  req=request("POST","/bar/foo","78.56.34.12",null,null);
-  ((MockHttpServletRequest)req).setHeader("Referrer","http://testhost/testpath");
-  filter.doFilter(req,response(),chain);
-  data=dao.getLast();
-  assertEquals("POST",data.getHttpMethod());
-  assertEquals("/bar/foo",data.getPath());
-  assertEquals("78.56.34.12",data.getRemoteAddr());
   assertEquals("http://testhost/testpath",data.getReferer());
 }
