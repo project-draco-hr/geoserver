@@ -2,4 +2,11 @@
   dao=new DummyMonitorDAO();
   filter=new MonitorFilter(new Monitor(dao),new MonitorRequestFilter());
   chain=new MockFilterChain();
+  chain.setServlet(new HttpServlet(){
+    @Override public void service(    ServletRequest req,    ServletResponse res) throws ServletException, IOException {
+      req.getInputStream().read(new byte[LONG_BODY_SIZE]);
+      res.getOutputStream().write(new byte[0]);
+    }
+  }
+);
 }

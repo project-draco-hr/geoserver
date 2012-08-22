@@ -1,0 +1,23 @@
+{
+  chain.setServlet(new HttpServlet(){
+    @Override public void service(    ServletRequest req,    ServletResponse res) throws ServletException, IOException {
+      req.getInputStream().read(new byte[LONG_BODY_SIZE]);
+      res.getOutputStream().write("hello".getBytes());
+    }
+  }
+);
+  StringBuilder b=new StringBuilder();
+  for (int i=0; i < MAX_BODY_SIZE; i++) {
+    b.append('b');
+  }
+  String wanted_body=b.toString();
+  for (int i=MAX_BODY_SIZE; i < LONG_BODY_SIZE; i++) {
+    b.append('b');
+  }
+  String given_body=b.toString();
+  HttpServletRequest req=request("POST","/bar/foo","78.56.34.12",given_body,null);
+  filter.doFilter(req,response(),chain);
+  RequestData data=dao.getLast();
+  assertEquals(wanted_body,new String(data.getBody()));
+  assertEquals(LONG_BODY_SIZE,data.getBodyContentLength());
+}
