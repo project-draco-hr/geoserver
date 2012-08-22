@@ -1,0 +1,23 @@
+{
+  Catalog catalog=getCatalog();
+  final String layerId=getLayerId(TASMANIA_BM);
+  CoverageInfo ci=catalog.getCoverageByName(layerId);
+  ci.getResponseSRS().add("EPSG:3857");
+  catalog.save(ci);
+  Map<String,Object> raw=baseMap();
+  raw.put("identifier",layerId);
+  raw.put("format","image/geotiff");
+  raw.put("BoundingBox","-80,-180,80,180,urn:ogc:def:crs:EPSG:6.6:4326");
+  raw.put("GridBaseCRS","EPSG:3857");
+  GridCoverage[] coverages=executeGetCoverageKvp(raw);
+  Envelope envelope=coverages[0].getEnvelope();
+  System.out.println(envelope);
+  CoordinateReferenceSystem targetCRS=CRS.decode("EPSG:3857");
+  assertEquals(targetCRS,envelope.getCoordinateReferenceSystem());
+  ReferencedEnvelope nativeBounds=ci.getNativeBoundingBox();
+  ReferencedEnvelope expected=nativeBounds.transform(targetCRS,true);
+  assertEquals(expected.getMinimum(0),envelope.getMinimum(0));
+  assertEquals(expected.getMaximum(0),envelope.getMaximum(0));
+  assertEquals(expected.getMinimum(1),envelope.getMinimum(1));
+  assertEquals(expected.getMaximum(1),envelope.getMaximum(1));
+}

@@ -19,9 +19,8 @@
     final GeneralEnvelope originalEnvelope=reader.getOriginalEnvelope();
     final BoundingBoxType bbox=request.getDomainSubset().getBoundingBox();
     final CoordinateReferenceSystem nativeCRS=originalEnvelope.getCoordinateReferenceSystem();
-    final GeneralEnvelope requestedEnvelopeInSourceCRS;
+    final GeneralEnvelope requestedEnvelopeInNativeCRS;
     final GeneralEnvelope requestedEnvelope;
-    MathTransform bboxToNativeTx=null;
     if (bbox != null) {
       double[] lowerCorner=new double[bbox.getLowerCorner().size()];
       double[] upperCorner=new double[bbox.getUpperCorner().size()];
@@ -32,30 +31,38 @@
       requestedEnvelope=new GeneralEnvelope(lowerCorner,upperCorner);
       if (bbox.getCrs() == null) {
         requestedEnvelope.setCoordinateReferenceSystem(nativeCRS);
-        requestedEnvelopeInSourceCRS=requestedEnvelope;
+        requestedEnvelopeInNativeCRS=requestedEnvelope;
       }
  else {
         final CoordinateReferenceSystem bboxCRS=CRS.decode(bbox.getCrs());
         requestedEnvelope.setCoordinateReferenceSystem(bboxCRS);
-        bboxToNativeTx=CRS.findMathTransform(bboxCRS,nativeCRS,true);
-        if (!bboxToNativeTx.isIdentity()) {
-          requestedEnvelopeInSourceCRS=CRS.transform(bboxToNativeTx,requestedEnvelope);
-          requestedEnvelopeInSourceCRS.setCoordinateReferenceSystem(nativeCRS);
+        if (!CRS.equalsIgnoreMetadata(bboxCRS,nativeCRS)) {
+          CoordinateOperationFactory of=CRS.getCoordinateOperationFactory(true);
+          CoordinateOperation co=of.createOperation(bboxCRS,nativeCRS);
+          requestedEnvelopeInNativeCRS=CRS.transform(co,requestedEnvelope);
         }
- else         requestedEnvelopeInSourceCRS=new GeneralEnvelope(requestedEnvelope);
+ else {
+          requestedEnvelopeInNativeCRS=new GeneralEnvelope(requestedEnvelope);
+        }
       }
     }
  else {
-      requestedEnvelopeInSourceCRS=reader.getOriginalEnvelope();
-      requestedEnvelope=requestedEnvelopeInSourceCRS;
+      requestedEnvelopeInNativeCRS=reader.getOriginalEnvelope();
+      requestedEnvelope=requestedEnvelopeInNativeCRS;
     }
     final GridCrsType gridCRS=request.getOutput().getGridCRS();
     final CoordinateReferenceSystem targetCRS;
-    if (gridCRS == null)     targetCRS=reader.getOriginalEnvelope().getCoordinateReferenceSystem();
- else     targetCRS=CRS.decode(gridCRS.getGridBaseCRS());
+    if (gridCRS == null) {
+      targetCRS=reader.getOriginalEnvelope().getCoordinateReferenceSystem();
+    }
+ else {
+      targetCRS=CRS.decode(gridCRS.getGridBaseCRS());
+    }
     int elevationLevels=0;
     double[] elevations=null;
     MathTransform gridToCRS=reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER);
+    double pixelSizeX=1;
+    double pixelSizeY=1;
     if (gridCRS != null) {
       Double[] origin=(Double[])gridCRS.getGridOrigin();
       Double[] offsets=(Double[])gridCRS.getGridOffsets();
@@ -96,6 +103,8 @@
           }
         }
       }
+      pixelSizeX=Math.abs(tx.getScaleX());
+      pixelSizeY=Math.abs(tx.getScaleY());
       gridToCRS=new AffineTransform2D(tx);
     }
     final List<Date> timeValues=new LinkedList<Date>();
@@ -115,10 +124,8 @@
         timeValues.add(ending);
       }
     }
-    final GeneralEnvelope intersectionEnvelopeInSourceCRS=new GeneralEnvelope(requestedEnvelopeInSourceCRS);
+    final GeneralEnvelope intersectionEnvelopeInSourceCRS=new GeneralEnvelope(requestedEnvelopeInNativeCRS);
     intersectionEnvelopeInSourceCRS.intersect(originalEnvelope);
-    final GeneralEnvelope intersectionEnvelope=bboxToNativeTx.isIdentity() ? new GeneralEnvelope(intersectionEnvelopeInSourceCRS) : CRS.transform(bboxToNativeTx.inverse(),intersectionEnvelopeInSourceCRS);
-    intersectionEnvelope.setCoordinateReferenceSystem(targetCRS);
     final GridGeometry2D requestedGridGeometry=new GridGeometry2D(PixelInCell.CELL_CORNER,gridToCRS,intersectionEnvelopeInSourceCRS,null);
     final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
     GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,meta.getParameters());
@@ -160,6 +167,9 @@
       throw new IOException("The requested coverage could not be found.");
     }
     WCSUtils.checkInputLimits(wcs,coverage);
+    if (!intersectionEnvelopeInSourceCRS.contains(coverage.getEnvelope2D(),true)) {
+      coverage=WCSUtils.crop(coverage,intersectionEnvelopeInSourceCRS);
+    }
     GridCoverage2D bandSelectedCoverage=coverage;
     String interpolationType=null;
     if (request.getRangeSubset() != null) {
@@ -207,9 +217,28 @@
         interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
       }
     }
-    final GridGeometry2D destinationGridGeometry=new GridGeometry2D(PixelInCell.CELL_CORNER,gridToCRS,intersectionEnvelope,null);
+    final GeneralEnvelope intersectionEnvelope;
+    boolean reprojectionNeeded=!CRS.equalsIgnoreMetadata(nativeCRS,targetCRS);
+    if (reprojectionNeeded) {
+      CoordinateOperationFactory of=CRS.getCoordinateOperationFactory(true);
+      CoordinateOperation co=of.createOperation(nativeCRS,targetCRS);
+      intersectionEnvelope=CRS.transform(co,intersectionEnvelopeInSourceCRS);
+    }
+ else {
+      intersectionEnvelope=intersectionEnvelopeInSourceCRS;
+    }
+    if (intersectionEnvelope.getSpan(0) < Math.abs(pixelSizeX)) {
+      double minX=intersectionEnvelope.getMinimum(0);
+      intersectionEnvelope.setRange(0,minX,minX + pixelSizeX);
+    }
+    if (intersectionEnvelope.getSpan(1) < Math.abs(pixelSizeY)) {
+      double minY=intersectionEnvelope.getMinimum(1);
+      intersectionEnvelope.setRange(1,minY,minY + pixelSizeY);
+    }
+    final GridGeometry2D destinationGridGeometry=new GridGeometry2D(PixelInCell.CELL_CENTER,gridToCRS,intersectionEnvelope,null);
     WCSUtils.checkOutputLimits(wcs,destinationGridGeometry.getGridRange2D(),bandSelectedCoverage.getRenderedImage().getSampleModel());
-    if (!CRS.equalsIgnoreMetadata(nativeCRS,targetCRS) || !bandSelectedCoverage.getGridGeometry().equals(destinationGridGeometry)) {
+    boolean sameGridGeometry=bandSelectedCoverage.getGridGeometry().equals(destinationGridGeometry);
+    if (reprojectionNeeded || !sameGridGeometry) {
       final GridCoverage2D reprojectedCoverage=WCSUtils.resample(bandSelectedCoverage,nativeCRS,targetCRS,destinationGridGeometry,interpolation);
       return new GridCoverage[]{reprojectedCoverage};
     }
