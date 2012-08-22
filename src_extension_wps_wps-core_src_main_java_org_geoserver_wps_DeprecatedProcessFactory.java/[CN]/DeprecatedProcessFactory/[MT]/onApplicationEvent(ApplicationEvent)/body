@@ -1,0 +1,20 @@
+{
+  if (event instanceof ContextLoadedEvent) {
+    geoServer=GeoServerExtensions.bean(GeoServer.class,((ContextLoadedEvent)event).getApplicationContext());
+    listener=new ConfigurationListenerAdapter(){
+      @Override public void handleServiceChange(      ServiceInfo service,      List<String> propertyNames,      List<Object> oldValues,      List<Object> newValues){
+        if (service instanceof WPSInfo) {
+          resetProcessMappings();
+        }
+      }
+    }
+;
+    geoServer.addListener(listener);
+  }
+  if (event instanceof ContextRefreshedEvent) {
+    Processors.addProcessFactory(this);
+  }
+ else   if (event instanceof ContextClosedEvent) {
+    Processors.removeProcessFactory(this);
+  }
+}
