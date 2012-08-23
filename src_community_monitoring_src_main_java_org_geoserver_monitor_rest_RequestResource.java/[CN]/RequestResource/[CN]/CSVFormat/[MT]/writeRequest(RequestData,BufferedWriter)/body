@@ -1,12 +1,19 @@
 {
   StringBuffer sb=new StringBuffer();
+  Pattern escapeRequired=Pattern.compile("[\\,\r\\n\\s\"]");
   for (  String fld : fields) {
     Object val=OwsUtils.get(data,fld);
     if (val instanceof Date) {
       val=DateUtil.serializeDateTime((Date)val);
     }
     if (val != null) {
-      val=val.toString().replaceAll(","," ").replaceAll("\n"," ");
+      String string=val.toString();
+      Matcher match=escapeRequired.matcher(string);
+      if (match.find()) {
+        string=string.replaceAll("\"","\"\"");
+        string=String.format("\"%s\"",string);
+      }
+      val=string;
     }
     sb.append(val).append(",");
   }
