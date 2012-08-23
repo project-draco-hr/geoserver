@@ -26,7 +26,18 @@
     readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,fixedElevations,"ELEVATION","Elevation");
   }
   if (layerFilter != null) {
-    readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,layerFilter,"FILTER","Filter");
+    for (int i=0; i < readParameters.length; i++) {
+      GeneralParameterValue param=readParameters[i];
+      GeneralParameterDescriptor pd=param.getDescriptor();
+      if (pd.getName().getCode().equalsIgnoreCase("FILTER")) {
+        final ParameterValue pv=(ParameterValue)pd.createValue();
+        if (layerFilter != Filter.INCLUDE) {
+          pv.setValue(layerFilter);
+          readParameters[i]=pv;
+        }
+        break;
+      }
+    }
   }
   return readParameters;
 }
