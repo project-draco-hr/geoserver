@@ -60,9 +60,9 @@
     }
     int elevationLevels=0;
     double[] elevations=null;
-    MathTransform gridToCRS=reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER);
-    double pixelSizeX=1;
-    double pixelSizeY=1;
+    MathTransform gridToCRS=reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER);
+    double pixelSizeX;
+    double pixelSizeY;
     if (gridCRS != null) {
       Double[] origin=(Double[])gridCRS.getGridOrigin();
       Double[] offsets=(Double[])gridCRS.getGridOffsets();
@@ -107,6 +107,11 @@
       pixelSizeY=Math.abs(tx.getScaleY());
       gridToCRS=new AffineTransform2D(tx);
     }
+ else {
+      AffineTransform2D at=(AffineTransform2D)gridToCRS;
+      pixelSizeX=Math.abs(at.getScaleX());
+      pixelSizeY=Math.abs(at.getScaleY());
+    }
     final List<Date> timeValues=new LinkedList<Date>();
     TimeSequenceType temporalSubset=request.getDomainSubset().getTemporalSubset();
     if (temporalSubset != null && temporalSubset.getTimePosition() != null && temporalSubset.getTimePosition().size() > 0) {
@@ -126,7 +131,7 @@
     }
     final GeneralEnvelope intersectionEnvelopeInSourceCRS=new GeneralEnvelope(requestedEnvelopeInNativeCRS);
     intersectionEnvelopeInSourceCRS.intersect(originalEnvelope);
-    final GridGeometry2D requestedGridGeometry=new GridGeometry2D(PixelInCell.CELL_CORNER,gridToCRS,intersectionEnvelopeInSourceCRS,null);
+    final GridGeometry2D requestedGridGeometry=new GridGeometry2D(PixelInCell.CELL_CENTER,gridToCRS,intersectionEnvelopeInSourceCRS,null);
     final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
     GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,meta.getParameters());
     readParameters=(readParameters != null ? readParameters : new GeneralParameterValue[0]);
