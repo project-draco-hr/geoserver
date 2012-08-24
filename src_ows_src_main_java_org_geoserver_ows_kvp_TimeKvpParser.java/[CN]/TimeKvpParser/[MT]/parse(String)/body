@@ -28,20 +28,26 @@
   String[] listDates=value.split(",");
   for (  String date : listDates) {
     if (date.indexOf("/") <= 0) {
-      addDate(result,getDate(date));
+      Object o=getFuzzyDate(date);
+      if (o instanceof Date) {
+        addDate(result,(Date)o);
+      }
+ else {
+        addPeriod(result,(DateRange)o);
+      }
     }
  else {
       String[] period=date.split("/");
       if (period.length == 3) {
-        final Date begin=getDate(period[0]);
-        final Date end=getDate(period[1]);
+        final Date begin=beginning(getFuzzyDate(period[0]));
+        final Date end=end(getFuzzyDate(period[1]));
         final long millisIncrement=parsePeriod(period[2]);
         final long startTime=begin.getTime();
         final long endTime=end.getTime();
         long time;
         int j=0;
         while ((time=j * millisIncrement + startTime) <= endTime) {
-          final Calendar calendar=Calendar.getInstance(UTC_TZ);
+          final Calendar calendar=new GregorianCalendar(UTC_TZ);
           calendar.setTimeInMillis(time);
           addDate(result,calendar.getTime());
           j++;
@@ -52,8 +58,8 @@
         }
       }
  else       if (period.length == 2) {
-        final Date begin=getDate(period[0]);
-        final Date end=getDate(period[1]);
+        final Date begin=beginning(getFuzzyDate(period[0]));
+        final Date end=end(getFuzzyDate(period[1]));
         addPeriod(result,new DateRange(begin,end));
       }
  else {

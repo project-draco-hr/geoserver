@@ -1,0 +1,19 @@
+{
+  if (value.equalsIgnoreCase("current") || value.equalsIgnoreCase("now")) {
+    return null;
+  }
+  for (  FormatAndPrecision f : FormatAndPrecision.values()) {
+    ParsePosition pos=new ParsePosition(0);
+    Date time=f.format.parse(value,pos);
+    if (pos.getIndex() == value.length()) {
+      DateRange range=f.expand(time);
+      if (range.getMinValue().equals(range.getMaxValue())) {
+        return range.getMinValue();
+      }
+ else {
+        return range;
+      }
+    }
+  }
+  throw new ParseException("Invalid date: " + value,0);
+}
