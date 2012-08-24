@@ -28,22 +28,22 @@
   String[] listDates=value.split(",");
   for (  String date : listDates) {
     if (date.indexOf("/") <= 0) {
-      addPeriod(result,getFuzzyDate(date));
+      addDate(result,getDate(date));
     }
  else {
       String[] period=date.split("/");
       if (period.length == 3) {
-        final Date begin=getFuzzyDate(period[0]).getMinValue();
-        final Date end=getFuzzyDate(period[1]).getMaxValue();
+        final Date begin=getDate(period[0]);
+        final Date end=getDate(period[1]);
         final long millisIncrement=parsePeriod(period[2]);
         final long startTime=begin.getTime();
         final long endTime=end.getTime();
         long time;
         int j=0;
         while ((time=j * millisIncrement + startTime) <= endTime) {
-          final Calendar calendar=new GregorianCalendar(UTC_TZ);
+          final Calendar calendar=Calendar.getInstance(UTC_TZ);
           calendar.setTimeInMillis(time);
-          addPeriod(result,new DateRange(calendar.getTime(),calendar.getTime()));
+          addDate(result,calendar.getTime());
           j++;
           if (j >= MAX_ELEMENTS_TIMES_KVP) {
             if (LOGGER.isLoggable(Level.INFO))             LOGGER.info("Lmiting number of elements in this periodo to " + MAX_ELEMENTS_TIMES_KVP);
@@ -52,8 +52,8 @@
         }
       }
  else       if (period.length == 2) {
-        final Date begin=getFuzzyDate(period[0]).getMinValue();
-        final Date end=getFuzzyDate(period[1]).getMaxValue();
+        final Date begin=getDate(period[0]);
+        final Date end=getDate(period[1]);
         addPeriod(result,new DateRange(begin,end));
       }
  else {
