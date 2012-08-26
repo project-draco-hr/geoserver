@@ -2,9 +2,11 @@
   state=ThreadState.STARTED;
   try {
     System.out.println(this + " calling requestIncoming");
-    if (!controller.requestIncoming(request,timeout)) {
-      state=ThreadState.TIMED_OUT;
-      return;
+    for (    FlowController controller : controllers) {
+      if (!controller.requestIncoming(request,timeout)) {
+        state=ThreadState.TIMED_OUT;
+        return;
+      }
     }
   }
  catch (  Throwable t) {
@@ -21,7 +23,9 @@
   }
   try {
     System.out.println(this + " calling requestComplete");
-    controller.requestComplete(request);
+    for (    FlowController controller : controllers) {
+      controller.requestComplete(request);
+    }
   }
  catch (  Throwable t) {
     this.error=t;

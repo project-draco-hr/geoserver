@@ -1,0 +1,18 @@
+{
+  geoServer.remove(geoServer.getSettings(geoServer.getCatalog().getWorkspaceByName("sf")));
+  String xml="<settings>" + "<workspace><name>sf</name></workspace>" + "<contact>"+ "<addressCity>Alexandria</addressCity>"+ "<addressCountry>Egypt</addressCountry>"+ "<addressType>Work</addressType>"+ "<contactEmail>claudius.ptolomaeus@gmail.com</contactEmail>"+ "<contactOrganization>The ancient geographes INC</contactOrganization>"+ "<contactPerson>Claudius Ptolomaeus</contactPerson>"+ "<contactPosition>Chief geographer</contactPosition>"+ "</contact>"+ "<charset>UTF-8</charset>"+ "<numDecimals>8</numDecimals>"+ "<onlineResource>http://geoserver.org</onlineResource>"+ "<proxyBaseUrl>http://proxy.url</proxyBaseUrl>"+ "<verbose>false</verbose>"+ "<verboseExceptions>false</verboseExceptions>"+ "</settings>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/sf/settings",xml,"text/xml");
+  assertEquals(200,response.getStatusCode());
+  Document dom=getAsDOM("/rest/workspaces/sf/settings.xml");
+  assertEquals("settings",dom.getDocumentElement().getLocalName());
+  assertXpathEvaluatesTo("sf","/settings/workspace/name",dom);
+  assertXpathEvaluatesTo("false","/settings/verbose",dom);
+  assertXpathEvaluatesTo("false","/settings/verboseExceptions",dom);
+  assertXpathEvaluatesTo("http://geoserver.org","/settings/onlineResource",dom);
+  assertXpathEvaluatesTo("http://proxy.url","/settings/proxyBaseUrl",dom);
+  assertXpathEvaluatesTo("Claudius Ptolomaeus","/settings/contact/contactPerson",dom);
+  assertXpathEvaluatesTo("claudius.ptolomaeus@gmail.com","/settings/contact/contactEmail",dom);
+  assertXpathEvaluatesTo("Chief geographer","/settings/contact/contactPosition",dom);
+  assertXpathEvaluatesTo("The ancient geographes INC","/settings/contact/contactOrganization",dom);
+  assertXpathEvaluatesTo("Egypt","/settings/contact/addressCountry",dom);
+}

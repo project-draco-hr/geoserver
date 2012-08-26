@@ -1,0 +1,58 @@
+{
+  Form form=new Form("form");
+  add(form);
+  ExecuteRequest execRequest=new ExecuteRequest();
+  if (procName != null)   execRequest.processName=procName;
+  builder=new WPSRequestBuilderPanel("requestBuilder",execRequest);
+  form.add(builder);
+  final ModalWindow xmlWindow=new ModalWindow("xmlWindow");
+  add(xmlWindow);
+  xmlWindow.setPageCreator(new ModalWindow.PageCreator(){
+    public Page createPage(){
+      return new PlainCodePage(xmlWindow,responseWindow,getRequestXML());
+    }
+  }
+);
+  responseWindow=new ModalWindow("responseWindow");
+  add(responseWindow);
+  responseWindow.setPageMapName("demoResponse");
+  responseWindow.setCookieName("demoResponse");
+  responseWindow.setPageCreator(new ModalWindow.PageCreator(){
+    @SuppressWarnings("unchecked") public Page createPage(){
+      DemoRequest request=new DemoRequest(null);
+      HttpServletRequest http=((WebRequest)WPSRequestBuilder.this.getRequest()).getHttpServletRequest();
+      String url=ResponseUtils.buildURL(ResponseUtils.baseURL(http),"ows",Collections.singletonMap("strict","true"),URLType.SERVICE);
+      request.setRequestUrl(url);
+      request.setRequestBody((String)responseWindow.getDefaultModelObject());
+      return new DemoRequestResponse(new Model(request));
+    }
+  }
+);
+  form.add(new AjaxSubmitLink("execute"){
+    @SuppressWarnings("unchecked") @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      responseWindow.setDefaultModel(new Model(getRequestXML()));
+      responseWindow.show(target);
+    }
+    @Override protected void onError(    AjaxRequestTarget target,    Form form){
+      super.onError(target,form);
+      target.addComponent(builder.getFeedbackPanel());
+    }
+  }
+);
+  form.add(new AjaxSubmitLink("executeXML"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      try {
+        getRequestXML();
+        xmlWindow.show(target);
+      }
+ catch (      Exception e) {
+        error(e.getMessage());
+        target.addComponent(getFeedbackPanel());
+      }
+    }
+    @Override protected void onError(    AjaxRequestTarget target,    Form form){
+      target.addComponent(getFeedbackPanel());
+    }
+  }
+);
+}

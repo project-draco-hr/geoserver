@@ -1,0 +1,16 @@
+{
+  String xml="<contact>" + "<address>1600 Pennsylvania Avenue</address>" + "<addressCity>Washington</addressCity>"+ "<addressCountry>United States</addressCountry>"+ "<addressPostalCode>20001</addressPostalCode>"+ "<addressState>DC</addressState>"+ "<addressType>Avenue</addressType>"+ "<contactEmail>chief.geographer@mail.com</contactEmail>"+ "<contactOrganization>GeoServer</contactOrganization>"+ "<contactPerson>ContactPerson</contactPerson>"+ "<contactPosition>Chief Geographer</contactPosition>"+ "</contact>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/settings/contact",xml,"text/xml");
+  assertEquals(200,response.getStatusCode());
+  JSON json=getAsJSON("/rest/settings/contact.json");
+  JSONObject jsonObject=(JSONObject)json;
+  assertNotNull(jsonObject);
+  JSONObject contactInfo=jsonObject.getJSONObject("contact");
+  assertEquals("United States",contactInfo.get("addressCountry"));
+  assertEquals("1600 Pennsylvania Avenue",contactInfo.get("address"));
+  assertEquals("Washington",contactInfo.get("addressCity"));
+  assertEquals("DC",contactInfo.get("addressState"));
+  assertEquals("20001",contactInfo.get("addressPostalCode").toString());
+  assertEquals("Chief Geographer",contactInfo.get("contactPosition").toString());
+  assertEquals("ContactPerson",contactInfo.get("contactPerson").toString());
+}

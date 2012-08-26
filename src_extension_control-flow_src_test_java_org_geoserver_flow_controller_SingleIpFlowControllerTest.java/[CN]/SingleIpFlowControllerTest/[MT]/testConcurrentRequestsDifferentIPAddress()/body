@@ -2,13 +2,13 @@
   SingleIpFlowController controller=new SingleIpFlowController(1,"192.168.1.8");
   String ipAddress="127.0.0.1";
   Request firstRequest=buildRequest(ipAddress,"");
-  FlowControllerTestingThread tSample=new FlowControllerTestingThread(controller,firstRequest,0,0);
+  FlowControllerTestingThread tSample=new FlowControllerTestingThread(firstRequest,0,0,controller);
   tSample.start();
   waitTerminated(tSample,MAX_WAIT);
   assertEquals(ThreadState.COMPLETE,tSample.state);
   String ip=firstRequest.getHttpRequest().getRemoteAddr();
-  FlowControllerTestingThread t1=new FlowControllerTestingThread(controller,buildRequest(ip,""),0,Long.MAX_VALUE);
-  FlowControllerTestingThread t2=new FlowControllerTestingThread(controller,buildRequest(ip,""),0,Long.MAX_VALUE);
+  FlowControllerTestingThread t1=new FlowControllerTestingThread(buildRequest(ip,""),0,Long.MAX_VALUE,controller);
+  FlowControllerTestingThread t2=new FlowControllerTestingThread(buildRequest(ip,""),0,Long.MAX_VALUE,controller);
   try {
     t1.start();
     waitBlocked(t1,MAX_WAIT);

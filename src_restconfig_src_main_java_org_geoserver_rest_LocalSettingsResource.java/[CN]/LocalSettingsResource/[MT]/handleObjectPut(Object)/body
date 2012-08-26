@@ -1,0 +1,18 @@
+{
+  String workspace=getAttribute("workspace");
+  if (workspace != null) {
+    WorkspaceInfo workspaceInfo=catalog.getWorkspaceByName(workspace);
+    SettingsInfo settingsInfo=(SettingsInfo)obj;
+    SettingsInfo original=geoServer.getSettings(workspaceInfo);
+    if (original == null) {
+      settingsInfo.setWorkspace(workspaceInfo);
+      geoServer.add(settingsInfo);
+      geoServer.save(geoServer.getSettings(workspaceInfo));
+    }
+ else {
+      OwsUtils.copy(settingsInfo,original,SettingsInfo.class);
+      original.setWorkspace(workspaceInfo);
+      geoServer.save(original);
+    }
+  }
+}

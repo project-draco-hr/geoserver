@@ -1,0 +1,22 @@
+{
+  geoServer.remove(geoServer.getSettings(geoServer.getCatalog().getWorkspaceByName("sf")));
+  String json="{'settings':{'workspace':{'name':'sf'}," + "'contact':{'addressCity':'Alexandria','addressCountry':'Egypt','addressType':'Work'," + "'contactEmail':'claudius.ptolomaeus@gmail.com','contactOrganization':'The ancient geographes INC',"+ "'contactPerson':'Claudius Ptolomaeus','contactPosition':'Chief geographer'},"+ "'charset':'UTF-8','numDecimals':10,'onlineResource':'http://geoserver.org',"+ "'proxyBaseUrl':'http://proxy.url','verbose':false,'verboseExceptions':'true'}}";
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/sf/settings",json,"text/json");
+  assertEquals(200,response.getStatusCode());
+  JSON jsonMod=getAsJSON("/rest/workspaces/sf/settings.json");
+  JSONObject jsonObject=(JSONObject)jsonMod;
+  assertNotNull(jsonObject);
+  JSONObject settings=jsonObject.getJSONObject("settings");
+  assertNotNull(settings);
+  JSONObject workspace=settings.getJSONObject("workspace");
+  assertNotNull(workspace);
+  assertEquals("sf",workspace.get("name"));
+  assertEquals("10",settings.get("numDecimals").toString().trim());
+  assertEquals("http://geoserver.org",settings.get("onlineResource"));
+  assertEquals("http://proxy.url",settings.get("proxyBaseUrl"));
+  JSONObject contact=settings.getJSONObject("contact");
+  assertEquals("Claudius Ptolomaeus",contact.get("contactPerson"));
+  assertEquals("The ancient geographes INC",contact.get("contactOrganization"));
+  assertEquals("Work",contact.get("addressType"));
+  assertEquals("claudius.ptolomaeus@gmail.com",contact.get("contactEmail"));
+}

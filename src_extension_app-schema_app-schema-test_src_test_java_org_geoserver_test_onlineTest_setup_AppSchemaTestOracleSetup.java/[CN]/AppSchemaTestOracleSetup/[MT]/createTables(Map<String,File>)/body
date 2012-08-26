@@ -1,4 +1,8 @@
 {
+  String parser=System.getProperty("wktparser");
+  if (parser == null) {
+    parser="SDO_GEOMETRY";
+  }
   StringBuffer buf=new StringBuffer();
   StringBuffer spatialIndex=new StringBuffer();
   buf.append("CREATE OR REPLACE PROCEDURE DROP_TABLE_OR_VIEW(TabName in Varchar2) IS ").append("temp number:=0;").append(" tes VARCHAR2 (200) := TabName;").append(" drp_stmt VARCHAR2 (200):=null;").append("BEGIN select count(*) into temp from user_tables where TABLE_NAME = tes;").append("if temp = 1 then drp_stmt := 'Drop Table '||tes;").append("EXECUTE IMMEDIATE drp_stmt;").append("else select count(*) into temp from user_views where VIEW_NAME = tes;").append("if temp = 1 then drp_stmt := 'Drop VIEW '||tes;").append("EXECUTE IMMEDIATE drp_stmt;end if;end if;").append("EXCEPTION WHEN OTHERS THEN ").append("raise_application_error(-20001,'An error was encountered - '||SQLCODE||' -ERROR- '||SQLERRM);").append("END DROP_TABLE_OR_VIEW;\n");
@@ -22,7 +26,7 @@
         type="SDO_GEOMETRY";
         int srid=getSrid(((GeometryType)desc.getType()));
         spatialIndex.append("DELETE FROM user_sdo_geom_metadata WHERE table_name = '").append(tableName).append("'\n");
-        spatialIndex.append("Insert into user_sdo_geom_metadata ").append("(TABLE_NAME,COLUMN_NAME,DIMINFO,SRID)").append("values ('").append(tableName).append("','").append(field).append("',MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('X',140.962,144.909,0.00001),").append("MDSYS.SDO_DIM_ELEMENT('Y',-38.858,-33.98,0.00001)),").append(srid).append(")\n");
+        spatialIndex.append("Insert into user_sdo_geom_metadata ").append("(TABLE_NAME,COLUMN_NAME,DIMINFO,SRID)").append("values ('").append(tableName).append("','").append(field).append("',MDSYS.SDO_DIM_ARRAY(MDSYS.SDO_DIM_ELEMENT('X',140.962,144.909,0.00001),").append("MDSYS.SDO_DIM_ELEMENT('Y',-38.858,-33.98,0.00001)").append(((GeometryDescriptor)desc).getCoordinateReferenceSystem().getCoordinateSystem().getDimension() == 3 ? ", MDSYS.SDO_DIM_ELEMENT('Z',-100000, 100000, 1) )," : "),").append(srid).append(")\n");
         String indexName=(tableName.length() <= 26 ? tableName : tableName.substring(0,26)) + "_IDX";
         if (spatialIndexCounter > 0) {
           indexName+=spatialIndexCounter;
@@ -66,12 +70,16 @@
       int valueIndex=0;
       for (      Property prop : properties) {
         Object value=prop.getValue();
+        if (value instanceof Geometry) {
+          Geometry geom=(Geometry)value;
+          value=new WKTWriter(geom.getCoordinate().z == Double.NaN ? 2 : 3).write(geom);
+        }
         if (value == null || value.toString().equalsIgnoreCase("null")) {
           values[valueIndex]="null";
         }
  else         if (prop.getType() instanceof GeometryType) {
           int srid=getSrid(((GeometryType)prop.getType()));
-          StringBuffer geomValue=new StringBuffer("SDO_GEOMETRY('");
+          StringBuffer geomValue=new StringBuffer(parser + "('");
           geomValue.append(value).append("'");
           if (srid > -1) {
             geomValue.append(", ").append(srid);

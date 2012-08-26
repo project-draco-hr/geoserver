@@ -1,0 +1,31 @@
+{
+  processBlacklist.clear();
+  for (  ProcessFactory pf : Processors.getProcessFactories()) {
+    int count=0;
+    for (    Name name : pf.getNames()) {
+      try {
+        for (        Parameter<?> p : pf.getParameterInfo(name).values()) {
+          List<ProcessParameterIO> ppios=ProcessParameterIO.findAll(p,context);
+          if (ppios.isEmpty()) {
+            LOGGER.log(Level.INFO,"Blacklisting process " + name.getURI() + " as the input "+ p.key+ " of type "+ p.type+ " cannot be handled");
+            processBlacklist.add(name);
+          }
+        }
+        for (        Parameter<?> p : pf.getResultInfo(name,null).values()) {
+          List<ProcessParameterIO> ppios=ProcessParameterIO.findAll(p,context);
+          if (ppios.isEmpty()) {
+            LOGGER.log(Level.INFO,"Blacklisting process " + name.getURI() + " as the output "+ p.key+ " of type "+ p.type+ " cannot be handled");
+            processBlacklist.add(name);
+          }
+        }
+      }
+ catch (      Throwable t) {
+        processBlacklist.add(name);
+      }
+      if (!processBlacklist.contains(name)) {
+        count++;
+      }
+    }
+    LOGGER.info("Found " + count + " bindable processes in "+ pf.getTitle());
+  }
+}

@@ -1,0 +1,26 @@
+{
+  String workspace=getAttribute("workspace");
+  File root=resourceLoader.find("");
+  if (workspace != null) {
+    WorkspaceInfo ws=geoServer.getCatalog().getWorkspaceByName(workspace);
+    if (geoServer.getService(ws,clazz) == null) {
+      throw new RestletException("Service for workspace " + workspace + " does not exist",Status.CLIENT_ERROR_NOT_FOUND);
+    }
+    File workspaces=resourceLoader.find("workspaces");
+    File workspaceDir=resourceLoader.find(workspaces + "/" + ws.getName());
+    for (    XStreamServiceLoader<ServiceInfo> loader : loaders) {
+      if (loader.getFilename().equals(serviceXmlFileName)) {
+        return loader.load(geoServer,workspaceDir);
+      }
+    }
+  }
+  if (geoServer.getService(clazz) == null) {
+    throw new RestletException("Service for workspace " + workspace + " does not exist",Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  for (  XStreamServiceLoader<ServiceInfo> loader : loaders) {
+    if (loader.getFilename().equals(serviceXmlFileName)) {
+      return loader.load(geoServer,root);
+    }
+  }
+  return (ServiceInfo)geoServer.getService(clazz);
+}

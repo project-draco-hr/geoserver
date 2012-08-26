@@ -2,23 +2,17 @@
   super(id);
   setOutputMarkupId(true);
   this.execute=executeRequest;
-  boolean existingProcess=executeRequest.processName != null;
-  final DropDownChoice processChoice=new DropDownChoice("process",new PropertyModel(execute,"processName"),buildProcessList());
+  final DropDownChoice<String> processChoice=new DropDownChoice<String>("process",new PropertyModel<String>(execute,"processName"),buildProcessList());
   add(processChoice);
-  final WebMarkupContainer descriptionContainer=new WebMarkupContainer("descriptionContainer");
-  descriptionContainer.setVisible(existingProcess);
+  descriptionContainer=new WebMarkupContainer("descriptionContainer");
+  descriptionContainer.setVisible(false);
   add(descriptionContainer);
   final Label descriptionLabel=new Label("processDescription",new PropertyModel(this,"description"));
   descriptionContainer.add(descriptionLabel);
-  if (existingProcess) {
-    Name name=Ows11Util.name(execute.processName);
-    ProcessFactory pf=Processors.createProcessFactory(name);
-    description=pf.getDescription(name).toString(Locale.ENGLISH);
-  }
-  final WebMarkupContainer inputContainer=new WebMarkupContainer("inputContainer");
-  inputContainer.setVisible(existingProcess);
+  inputContainer=new WebMarkupContainer("inputContainer");
+  inputContainer.setVisible(false);
   add(inputContainer);
-  final ListView inputView=new ListView("inputs",new PropertyModel(execute,"inputs")){
+  inputView=new ListView<InputParameterValues>("inputs",new PropertyModel(execute,"inputs")){
     @Override protected void populateItem(    ListItem item){
       InputParameterValues pv=(InputParameterValues)item.getModelObject();
       Parameter p=pv.getParameter();
@@ -46,7 +40,7 @@
         Fragment f=new Fragment("paramValue","literal",WPSRequestBuilderPanel.this);
         FormComponent literal=new TextField("literalValue",property);
         literal.setRequired(p.minOccurs > 0);
-        literal.setLabel(new Model(p.key));
+        literal.setLabel(new Model<String>(p.key));
         f.add(literal);
         item.add(f);
       }
@@ -55,14 +49,14 @@
 ;
   inputView.setReuseItems(true);
   inputContainer.add(inputView);
-  final WebMarkupContainer outputContainer=new WebMarkupContainer("outputContainer");
-  outputContainer.setVisible(existingProcess);
+  outputContainer=new WebMarkupContainer("outputContainer");
+  outputContainer.setVisible(false);
   add(outputContainer);
-  final ListView outputView=new ListView("outputs",new PropertyModel(execute,"outputs")){
+  outputView=new ListView("outputs",new PropertyModel(execute,"outputs")){
     @Override protected void populateItem(    ListItem item){
       OutputParameter pv=(OutputParameter)item.getModelObject();
       Parameter p=pv.getParameter();
-      item.add(new CheckBox("include",new PropertyModel(pv,"include")));
+      item.add(new CheckBox("include",new PropertyModel<Boolean>(pv,"include")));
       item.add(new Label("param",buildParamSpec(p)));
       item.add(new Label("paramDescription",p.description.toString(Locale.ENGLISH)));
       if (pv.isComplex()) {
@@ -88,7 +82,7 @@
       String url=ResponseUtils.buildURL(ResponseUtils.baseURL(http),"ows",Collections.singletonMap("strict","true"),URLType.SERVICE);
       request.setRequestUrl(url);
       request.setRequestBody((String)responseWindow.getDefaultModelObject());
-      return new DemoRequestResponse(new Model(request));
+      return new DemoRequestResponse(new Model<DemoRequest>(request));
     }
   }
 );
@@ -96,7 +90,7 @@
     @Override protected void onClick(    AjaxRequestTarget target,    Form form){
       processChoice.processInput();
       if (execute.processName != null) {
-        responseWindow.setDefaultModel(new Model(getDescribeXML(execute.processName)));
+        responseWindow.setDefaultModel(new Model<String>(getDescribeXML(execute.processName)));
         responseWindow.show(target);
       }
     }
@@ -108,26 +102,14 @@
   add(feedback);
   processChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
-      Name name=Ows11Util.name(execute.processName);
-      ProcessFactory pf=Processors.createProcessFactory(name);
-      if (pf == null) {
-        error("No such process: " + execute.processName);
-        descriptionContainer.setVisible(false);
-        inputContainer.setVisible(false);
-        outputContainer.setVisible(false);
-      }
- else {
-        description=pf.getDescription(name).toString(Locale.ENGLISH);
-        execute.inputs=buildInputParameters(pf,name);
-        execute.outputs=buildOutputParameters(pf,name);
-        inputView.removeAll();
-        outputView.removeAll();
-        descriptionContainer.setVisible(true);
-        inputContainer.setVisible(true);
-        outputContainer.setVisible(true);
-      }
+      initProcessView();
       target.addComponent(WPSRequestBuilderPanel.this);
+      WebPage page=getWebPage();
+      if (page instanceof GeoServerBasePage) {
+        target.addComponent(((GeoServerBasePage)page).getFeedbackPanel());
+      }
     }
   }
 );
+  if (execute.processName != null)   initProcessView();
 }
