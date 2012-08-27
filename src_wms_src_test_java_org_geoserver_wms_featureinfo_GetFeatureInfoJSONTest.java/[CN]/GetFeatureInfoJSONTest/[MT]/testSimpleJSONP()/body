@@ -1,0 +1,16 @@
+{
+  String layer=getLayerId(MockData.FORESTS);
+  String request="wms?version=1.1.1&bbox=-0.002,-0.002,0.002,0.002&styles=&format=jpeg" + "&info_format=text/javascript&request=GetFeatureInfo&layers=" + layer + "&query_layers="+ layer+ "&width=20&height=20&x=10&y=10";
+  String result=getAsString(request);
+  assertNotNull(result);
+  assertTrue(result.startsWith(JSONType.CALLBACK_FUNCTION));
+  assertTrue(result.endsWith(")\n"));
+  assertTrue(result.indexOf("Green Forest") > 0);
+  result=result.substring(0,result.length() - 2);
+  result=result.substring(JSONType.CALLBACK_FUNCTION.length() + 1,result.length());
+  JSONObject rootObject=JSONObject.fromObject(result);
+  assertEquals(rootObject.get("type"),"FeatureCollection");
+  JSONArray featureCol=rootObject.getJSONArray("features");
+  JSONObject aFeature=featureCol.getJSONObject(0);
+  assertEquals(aFeature.getString("geometry_name"),"the_geom");
+}

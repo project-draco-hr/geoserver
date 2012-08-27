@@ -1,17 +1,20 @@
 {
-  Assert.isTrue(value instanceof DescribeLayerTransformer);
   Assert.notNull(operation.getParameters());
   Assert.isTrue(operation.getParameters()[0] instanceof DescribeLayerRequest);
-  DescribeLayerTransformer transformer=(DescribeLayerTransformer)value;
-  DescribeLayerRequest request=(DescribeLayerRequest)operation.getParameters()[0];
-  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  final DescribeLayerRequest request=(DescribeLayerRequest)operation.getParameters()[0];
+  Assert.isTrue(value instanceof DescribeLayerModel);
+  final DescribeLayerModel results=(DescribeLayerModel)value;
   try {
-    transformer.transform(request,out);
-    out.flush();
+    write(results,request,output);
   }
- catch (  TransformerException e) {
-    throw new ServiceException(e);
+  finally {
+    if (output != null) {
+      try {
+        output.flush();
+      }
+ catch (      IOException ioe) {
+      }
+      IOUtils.closeQuietly(output);
+    }
   }
-  output.write(out.toByteArray());
-  output.flush();
 }

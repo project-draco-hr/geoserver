@@ -1,0 +1,30 @@
+{
+  try {
+    final JsonWriter jsonWriter=new JsonWriter(outWriter);
+    final List<LayerDescription> layers=description.getLayerDescriptions();
+    jsonWriter.startNode("WMS_DescribeLayerResponse",String.class);
+    jsonWriter.startNode("version",String.class);
+    jsonWriter.setValue(description.getVersion());
+    jsonWriter.endNode();
+    for (    LayerDescription layer : layers) {
+      jsonWriter.startNode("LayerDescription",LayerDescription.class);
+      jsonWriter.startNode("name",String.class);
+      jsonWriter.setValue(layer.getName());
+      jsonWriter.endNode();
+      jsonWriter.startNode("owsURL",URL.class);
+      URL url=layer.getOwsURL();
+      jsonWriter.setValue(url != null ? url.toString() : "");
+      jsonWriter.endNode();
+      jsonWriter.startNode("owsType",String.class);
+      jsonWriter.setValue(layer.getOwsType());
+      jsonWriter.endNode();
+      jsonWriter.endNode();
+    }
+    jsonWriter.endNode();
+  }
+ catch (  JSONException jsonException) {
+    ServiceException serviceException=new ServiceException("Error: " + jsonException.getMessage());
+    serviceException.initCause(jsonException);
+    throw serviceException;
+  }
+}
