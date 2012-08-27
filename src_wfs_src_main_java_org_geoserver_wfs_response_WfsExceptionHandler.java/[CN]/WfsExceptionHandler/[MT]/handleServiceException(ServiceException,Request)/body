@@ -1,9 +1,25 @@
 {
-  verboseExceptions=getInfo().getGeoServer().getSettings().isVerboseExceptions();
-  if ("1.0.0".equals(request.getVersion())) {
-    handle1_0(e,request.getHttpResponse());
+  boolean verbose=gs.getSettings().isVerboseExceptions();
+  String charset=gs.getSettings().getCharset();
+  final String exceptions;
+  try {
+    exceptions=(String)request.getKvp().get("EXCEPTIONS");
+    if (exceptions == null) {
+      handleDefault(exception,request,charset,verbose);
+      return;
+    }
+  }
+ catch (  Exception e) {
+    handleDefault(exception,request,charset,verbose);
+    return;
+  }
+  if (JSONType.isJsonMimeType(exceptions)) {
+    JSONType.handleJsonException(LOGGER,exception,request,charset,verbose,false);
+  }
+ else   if (JSONType.isJsonpMimeType(exceptions)) {
+    JSONType.handleJsonException(LOGGER,exception,request,charset,verbose,true);
   }
  else {
-    super.handleServiceException(e,request);
+    handleDefault(exception,request,charset,verbose);
   }
 }
