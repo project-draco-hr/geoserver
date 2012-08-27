@@ -1,6 +1,5 @@
 {
   StringBuffer sb=new StringBuffer();
-  Pattern escapeRequired=Pattern.compile("[\\,\r\\n\\s\"]");
   for (  String fld : fields) {
     Object val=OwsUtils.get(data,fld);
     if (val instanceof Date) {
@@ -11,11 +10,15 @@
       Matcher match=escapeRequired.matcher(string);
       if (match.find()) {
         string=string.replaceAll("\"","\"\"");
-        string=String.format("\"%s\"",string);
+        sb.append("\"");
+        sb.append(string);
+        sb.append("\"");
       }
-      val=string;
+ else {
+        sb.append(string);
+      }
     }
-    sb.append(val).append(",");
+    sb.append(",");
   }
   sb.setLength(sb.length() - 1);
   sb.append("\n");
