@@ -1,0 +1,19 @@
+{
+  chain.setServlet(new HttpServlet(){
+    @Override public void service(    ServletRequest req,    ServletResponse res) throws ServletException, IOException {
+      req.getInputStream().read(new byte[LONG_BODY_SIZE]);
+      res.getOutputStream().write("hello".getBytes());
+    }
+  }
+);
+  HttpServletRequest req=request("POST","/bar/foo","78.56.34.12","baz",null);
+  filter.doFilter(req,response(),chain);
+  RequestData data=dao.getLast();
+  assertEquals("POST",data.getHttpMethod());
+  assertEquals("/bar/foo",data.getPath());
+  assertEquals("78.56.34.12",data.getRemoteAddr());
+  assertNull(data.getHttpReferer());
+  assertEquals(new String(data.getBody()),"baz");
+  assertEquals(3,data.getBodyContentLength());
+  assertEquals(5,data.getResponseLength());
+}

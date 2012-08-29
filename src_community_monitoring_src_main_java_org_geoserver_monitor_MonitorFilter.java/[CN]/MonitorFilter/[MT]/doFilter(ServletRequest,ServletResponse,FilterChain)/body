@@ -29,6 +29,7 @@
   data.setInternalHost(InternalHostname.get());
   data.setRemoteAddr(getRemoteAddr(req));
   data.setStatus(Status.RUNNING);
+  data.setHttpReferer(getHttpReferer(req));
   if (SecurityContextHolder.getContext() != null && SecurityContextHolder.getContext().getAuthentication() != null) {
     Authentication auth=SecurityContextHolder.getContext().getAuthentication();
     if (auth.getPrincipal() != null && auth.getPrincipal() instanceof User) {
@@ -47,7 +48,7 @@
     error=t;
   }
   data=monitor.current();
-  data.setBody(((MonitorServletRequest)request).getBodyContent());
+  data.setBody(getBody((MonitorServletRequest)request));
   data.setBodyContentLength(((MonitorServletRequest)request).getBytesRead());
   data.setResponseContentType(response.getContentType());
   data.setResponseLength(((MonitorServletResponse)response).getContentLength());
