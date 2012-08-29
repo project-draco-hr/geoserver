@@ -1,0 +1,21 @@
+{
+  Parser parser=new Parser(configuration);
+  parser.setValidating(true);
+  parser.setFailOnValidationError(true);
+  parser.setStrict(true);
+  Object parsed;
+  try {
+    parsed=parser.parse(reader);
+  }
+ catch (  Exception e) {
+    throw new ServiceException("Could not parse XML request.",e);
+  }
+  if (!parser.getValidationErrors().isEmpty()) {
+    ServiceException exception=new ServiceException("Invalid request","InvalidParameterValue");
+    for (    Exception error : (List<Exception>)parser.getValidationErrors()) {
+      LOGGER.warning(error.getLocalizedMessage());
+      exception.getExceptionText().add(error.getLocalizedMessage());
+    }
+  }
+  return parsed;
+}
