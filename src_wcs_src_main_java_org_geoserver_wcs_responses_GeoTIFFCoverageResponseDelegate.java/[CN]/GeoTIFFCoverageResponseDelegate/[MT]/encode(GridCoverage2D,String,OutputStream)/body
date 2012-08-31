@@ -1,0 +1,25 @@
+{
+  if (sourceCoverage == null) {
+    throw new IllegalStateException("It seems prepare() has not been called" + " or has not succeed");
+  }
+  final GeoTiffWriteParams wp=new GeoTiffWriteParams();
+  wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+  wp.setCompressionType("LZW");
+  wp.setCompressionQuality(0.75F);
+  wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
+  wp.setTiling(256,256);
+  final ParameterValueGroup writerParams=format.getWriteParameters();
+  writerParams.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+  GeoTiffWriter writer=(GeoTiffWriter)format.getWriter(output);
+  try {
+    if (writer != null)     writer.write(sourceCoverage,(GeneralParameterValue[])writerParams.values().toArray(new GeneralParameterValue[1]));
+  }
+  finally {
+    try {
+      if (writer != null)       writer.dispose();
+    }
+ catch (    Throwable e) {
+    }
+    sourceCoverage.dispose(false);
+  }
+}

@@ -1,0 +1,25 @@
+{
+  PrintStream ps=new PrintStream(output);
+  ps.println("Grid bounds: " + coverage.getEnvelope());
+  ps.println("Grid CRS: " + coverage.getCoordinateReferenceSystem());
+  ps.println("Grid range: " + coverage.getGridGeometry().getGridRange());
+  ps.println("Grid to world: " + coverage.getGridGeometry().getGridToCRS());
+  ps.println("Contents:");
+  RenderedImage ri=coverage.getRenderedImage();
+  Raster raster=ri.getData();
+  for (int band=0; band < raster.getNumBands(); band++) {
+    ps.println("Band " + band + ":");
+    for (int j=raster.getMinY(); j < (raster.getMinY() + raster.getHeight()); j++) {
+      for (int i=raster.getMinX(); i < (raster.getMinX() + raster.getWidth()); i++) {
+        if (raster.getTransferType() == DataBuffer.TYPE_DOUBLE)         ps.print(raster.getSampleDouble(i,j,band));
+ else         if (raster.getTransferType() == DataBuffer.TYPE_FLOAT)         ps.print(raster.getSampleFloat(i,j,band));
+ else         ps.print(raster.getSample(i,j,band));
+        if (i < (raster.getMinX() + raster.getWidth() - 1))         ;
+        ps.print(" ");
+      }
+      ps.println();
+    }
+  }
+  ps.flush();
+  coverage.dispose(false);
+}

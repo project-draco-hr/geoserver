@@ -2,7 +2,7 @@
   GridCoverage[] coverages=(GridCoverage[])value;
   GetCoverageType request=(GetCoverageType)operation.getParameters()[0];
   String outputFormat=request.getOutput().getFormat();
-  CoverageResponseDelegate delegate=CoverageResponseDelegateFactory.encoderFor(outputFormat);
+  CoverageResponseDelegate delegate=responseFactory.encoderFor(outputFormat);
   if (delegate == null)   throw new WcsException("Could not find encoder for output format " + outputFormat);
   final GridCoverage2D coverage=(GridCoverage2D)coverages[0];
   CoverageInfo coverageInfo=catalog.getCoverageByName(request.getIdentifier().getValue());
@@ -14,10 +14,10 @@
     coveragesPart.setHeader("Content-Type","text/xml");
     multipart.addBodyPart(coveragesPart);
     BodyPart coveragePart=new MimeBodyPart();
-    delegate.prepare(outputFormat,coverage);
-    coveragePart.setDataHandler(new DataHandler(delegate,"geoserver/coverageDelegate"));
+    CoverageEncoder encoder=new CoverageEncoder(delegate,coverage,outputFormat);
+    coveragePart.setDataHandler(new DataHandler(encoder,"geoserver/coverageDelegate"));
     coveragePart.setHeader("Content-ID","<theCoverage>");
-    coveragePart.setHeader("Content-Type",delegate.getContentType());
+    coveragePart.setHeader("Content-Type",delegate.getMimeType(outputFormat));
     coveragePart.setHeader("Content-Transfer-Encoding","base64");
     multipart.addBodyPart(coveragePart);
     MimeMessage message=new GeoServerMimeMessage();

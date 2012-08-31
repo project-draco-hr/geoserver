@@ -2,7 +2,7 @@
   GridCoverage[] coverages=(GridCoverage[])value;
   GetCoverageType request=(GetCoverageType)operation.getParameters()[0];
   String outputFormat=request.getOutput().getFormat();
-  CoverageResponseDelegate delegate=CoverageResponseDelegateFactory.encoderFor(outputFormat);
+  CoverageResponseDelegate delegate=responseFactory.encoderFor(outputFormat);
   if (delegate == null)   throw new WcsException("Could not find encoder for output format " + outputFormat);
   final GridCoverage2D coverage=(GridCoverage2D)coverages[0];
   CoverageInfo coverageInfo=catalog.getCoverageByName(request.getIdentifier().getValue());
@@ -17,14 +17,13 @@
   }
   File coverageFile=null;
   while (true) {
-    coverageFile=new File(wcsStore,coverageInfo.getName().replace(':','_') + "_" + System.nanoTime()+ "."+ delegate.getFileExtension());
+    coverageFile=new File(wcsStore,coverageInfo.getName().replace(':','_') + "_" + System.nanoTime()+ "."+ delegate.getFileExtension(outputFormat));
     if (!coverageFile.exists())     break;
   }
   OutputStream os=null;
   try {
     os=new BufferedOutputStream(new FileOutputStream(coverageFile));
-    delegate.prepare(outputFormat,coverage);
-    delegate.encode(os);
+    delegate.encode(coverage,outputFormat,os);
     os.flush();
   }
   finally {
