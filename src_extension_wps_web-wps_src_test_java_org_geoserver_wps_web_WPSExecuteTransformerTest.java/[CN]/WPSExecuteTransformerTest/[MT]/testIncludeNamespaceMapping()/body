@@ -1,0 +1,21 @@
+{
+  Name centroidName=new NameImpl("gs","Centroid");
+  InputParameterValues inputValues=new InputParameterValues(centroidName,"features");
+  VectorLayerConfiguration layer=new VectorLayerConfiguration();
+  layer.setLayerName("foo:myLayer");
+  ParameterValue features=inputValues.values.get(0);
+  features.setType(ParameterType.VECTOR_LAYER);
+  features.setValue(layer);
+  OutputParameter output=new OutputParameter(centroidName,"result");
+  ExecuteRequest execute=new ExecuteRequest(centroidName.getURI(),Arrays.asList(inputValues),Arrays.asList(output));
+  NamespaceInfo fooNs=EasyMock.createNiceMock(NamespaceInfo.class);
+  expect(fooNs.getURI()).andReturn("http://foo.org");
+  replay(fooNs);
+  Catalog cat=createNiceMock(Catalog.class);
+  expect(cat.getNamespaceByPrefix("foo")).andReturn(fooNs);
+  replay(cat);
+  WPSExecuteTransformer tx=new WPSExecuteTransformer(cat);
+  tx.setIndentation(2);
+  String xml=tx.transform(execute);
+  assertTrue(xml.contains("xmlns:foo=\"http://foo.org\""));
+}
