@@ -1,0 +1,21 @@
+{
+  FeatureCollection records=store.getRecords(Query.ALL,Transaction.AUTO_COMMIT);
+  int fileCount=root.list(new RegexFileFilter("Record_.*\\.xml")).length;
+  assertEquals(fileCount,records.size());
+  FeatureIterator<Feature> fi=records.features();
+  try {
+    while (fi.hasNext()) {
+      Feature f=fi.next();
+      ComplexAttribute ida=(ComplexAttribute)f.getProperty("identifier");
+      String id=(String)ida.getProperty("value").getValue();
+      assertNotNull(id);
+      assertTrue(id.matches("urn:uuid:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"));
+      Attribute type=(Attribute)f.getProperty("type");
+      assertNotNull(type);
+      assertNotNull(type.getValue());
+    }
+  }
+  finally {
+    fi.close();
+  }
+}

@@ -1,3 +1,27 @@
 {
+  Geometry geom=null;
+  for (  ReferencedEnvelope env : boxes) {
+    try {
+      env=env.transform(DefaultGeographicCRS.WGS84,true);
+      Polygon poly=JTS.toGeometry(env);
+      poly.setUserData(DefaultGeographicCRS.WGS84);
+      if (geom == null) {
+        geom=poly;
+      }
+ else {
+        geom=geom.union(poly);
+      }
+    }
+ catch (    Exception e) {
+      throw new IllegalArgumentException("Failed to reproject one of the bounding boxes to WGS84, " + "this should never happen with valid coordinates",e);
+    }
+  }
+  if (geom instanceof Polygon) {
+    geom=geom.getFactory().createMultiPolygon(new Polygon[]{(Polygon)geom});
+  }
+  ab.setDescriptor(CSWRecordTypes.RECORD_GEOMETRY_DESCRIPTOR);
+  Attribute element=ab.buildSimple(null,geom);
+  fb.append(CSWRecordTypes.RECORD_GEOMETRY_NAME,element);
+  boxes.clear();
   return fb.buildFeature(id);
 }

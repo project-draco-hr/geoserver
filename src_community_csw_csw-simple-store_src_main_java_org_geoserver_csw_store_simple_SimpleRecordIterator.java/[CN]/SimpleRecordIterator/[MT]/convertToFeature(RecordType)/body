@@ -1,0 +1,29 @@
+{
+  String id=null;
+  for (  SimpleLiteral sl : r.getDCElement()) {
+    Object value=sl.getValue();
+    String name=sl.getName();
+    if (value != null && sl.getName() != null) {
+      builder.addElement(name,value.toString());
+      if ("identifier".equals(name)) {
+        id=value.toString();
+      }
+    }
+  }
+  for (  BoundingBoxType bbox : r.getBoundingBox()) {
+    if (bbox != null) {
+      CoordinateReferenceSystem crs=DefaultGeographicCRS.WGS84;
+      if (bbox.getCrs() != null) {
+        try {
+          crs=CRS.decode(bbox.getCrs());
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.INFO,"Failed to parse original record bbox");
+        }
+      }
+      ReferencedEnvelope re=new ReferencedEnvelope((Double)bbox.getLowerCorner().get(0),(Double)bbox.getUpperCorner().get(0),(Double)bbox.getLowerCorner().get(1),(Double)bbox.getUpperCorner().get(1),crs);
+      builder.addBoundingBox(re);
+    }
+  }
+  return builder.build(id);
+}
