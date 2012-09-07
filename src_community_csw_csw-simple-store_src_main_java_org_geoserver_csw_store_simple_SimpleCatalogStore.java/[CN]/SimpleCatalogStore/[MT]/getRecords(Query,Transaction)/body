@@ -5,6 +5,16 @@
   if (q.getNamespace() != null && !q.getNamespace().toString().equals(CSWRecordTypes.RECORD.getName().getNamespaceURI())) {
     throw new IOException(q.getNamespace() + ":" + q.getTypeName()+ " is not a supported type");
   }
-  FeatureCollection records=new RecordsFeatureCollection(root);
+  int startIndex=0;
+  if (q.getStartIndex() != null) {
+    startIndex=q.getStartIndex();
+  }
+  FeatureCollection records=new RecordsFeatureCollection(root,startIndex);
+  if (q.getFilter() != Filter.INCLUDE) {
+    records=new FilteringFeatureCollection<FeatureType,Feature>(records,q.getFilter());
+  }
+  if (q.getMaxFeatures() < Query.DEFAULT_MAX) {
+    records=new MaxFeaturesFeatureCollection<FeatureType,Feature>(records,q.getMaxFeatures());
+  }
   return records;
 }
