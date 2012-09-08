@@ -1,6 +1,11 @@
 {
-  String path="wfs/?service=wfs" + "&version=1.1.0" + "&request=DescribeFeatureType"+ "&typeName=foobar"+ "&EXCEPTIONS=" + JSONType.jsonp + "&format_options=callback:myMethod";
-  MockHttpServletResponse response=getAsServletResponse(path);
+  String path="wfs/?service=wfs" + "&version=1.1.0" + "&request=DescribeFeatureType"+ "&typeName=foobar"+ "&format_options=callback:myMethod";
+  MockHttpServletResponse response=getAsServletResponse(path + "&EXCEPTIONS=" + JSONType.jsonp);
+  assertEquals(JSONType.jsonp,response.getContentType());
   String content=response.getOutputStreamContent();
   testJson(testJsonP(content));
+  response=getAsServletResponse(path + "&EXCEPTIONS=" + JSONType.json);
+  assertEquals(JSONType.json,response.getContentType());
+  content=response.getOutputStreamContent();
+  testJson(content);
 }
