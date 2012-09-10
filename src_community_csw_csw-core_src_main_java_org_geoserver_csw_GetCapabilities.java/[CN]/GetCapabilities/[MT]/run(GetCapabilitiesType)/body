@@ -1,0 +1,119 @@
+{
+  SectionsType sections=null;
+  List<String> provided=Collections.singletonList("2.0.2");
+  List<String> accepted=null;
+  if (request.getAcceptVersions() != null)   accepted=request.getAcceptVersions().getVersion();
+  String version=RequestUtils.getVersionOws11(provided,accepted);
+  if (!"2.0.2".equals(version)) {
+    throw new CSWException("Could not understand version:" + version);
+  }
+  if (request.getSections() != null) {
+    sections=request.getSections();
+  }
+  Csw20Factory cswf=Csw20Factory.eINSTANCE;
+  Ows10Factory owsf=Ows10Factory.eINSTANCE;
+  Fes20Factory fesf=Fes20Factory.eINSTANCE;
+  CapabilitiesType caps=cswf.createCapabilitiesType();
+  caps.setVersion("2.0.2");
+  if (sections == null || requestedSection("ServiceIdentification",sections)) {
+    ServiceIdentificationType si=owsf.createServiceIdentificationType();
+    caps.setServiceIdentification(si);
+    si.setTitle(csw.getTitle());
+    si.setAbstract(csw.getAbstract());
+    KeywordsType kw=null;
+    List<KeywordInfo> keywords=csw.getKeywords();
+    if (keywords != null && keywords.size() > 0) {
+      kw=owsf.createKeywordsType();
+      for (      KeywordInfo keyword : keywords) {
+        kw.getKeyword().add(keyword.getValue());
+      }
+    }
+    if (kw != null) {
+      si.getKeywords().add(kw);
+    }
+    CodeType CSW=owsf.createCodeType();
+    CSW.setValue("CSW");
+    si.setServiceType(CSW);
+    si.setServiceTypeVersion("2.0.2");
+    si.setFees(csw.getFees());
+    if (csw.getAccessConstraints() != null) {
+      si.setAccessConstraints(csw.getAccessConstraints());
+    }
+  }
+  if (sections == null || requestedSection("ServiceProvider",sections)) {
+    ServiceProviderType sp=owsf.createServiceProviderType();
+    caps.setServiceProvider(sp);
+    final ContactInfo contact=csw.getGeoServer().getGlobal().getSettings().getContact();
+    sp.setProviderName(contact.getContactOrganization());
+    OnlineResourceType providerSite=owsf.createOnlineResourceType();
+    sp.setProviderSite(providerSite);
+    providerSite.setHref(csw.getOnlineResource());
+    ResponsiblePartySubsetType serviceContact=owsf.createResponsiblePartySubsetType();
+    sp.setServiceContact(serviceContact);
+    serviceContact.setIndividualName(contact.getContactPerson());
+    serviceContact.setPositionName(contact.getContactPosition());
+    ContactType contactInfo=owsf.createContactType();
+    serviceContact.setContactInfo(contactInfo);
+    AddressType address=owsf.createAddressType();
+    contactInfo.setAddress(address);
+    address.setAdministrativeArea(contact.getAddressState());
+    address.setCity(contact.getAddressCity());
+    address.setCountry(contact.getAddressCountry());
+    address.setDeliveryPoint(null);
+    address.setElectronicMailAddress(contact.getContactEmail());
+    address.setPostalCode(contact.getAddressPostalCode());
+    contactInfo.setContactInstructions(null);
+    contactInfo.setHoursOfService(null);
+    OnlineResourceType onlineResource=owsf.createOnlineResourceType();
+    contactInfo.setOnlineResource(onlineResource);
+    onlineResource.setHref(contact.getOnlineResource());
+    TelephoneType telephone=owsf.createTelephoneType();
+    contactInfo.setPhone(telephone);
+    telephone.setFacsimile(contact.getContactFacsimile());
+    telephone.setVoice(contact.getContactVoice());
+    serviceContact.setRole(null);
+  }
+  if (sections == null || requestedSection("OperationsMetadata",sections)) {
+    final String baseUrl=(String)EMFUtils.get(request,"baseUrl");
+    if (baseUrl == null) {
+      throw new IllegalArgumentException("Request object" + request + " has no 'baseUrl' property.");
+    }
+    OperationsMetadataType operationsMetadata=owsf.createOperationsMetadataType();
+    caps.setOperationsMetadata(operationsMetadata);
+    OperationMetadata_GetCapabilities(owsf,baseUrl,operationsMetadata);
+    OperationMetadata_DescribeRecord(owsf,baseUrl,operationsMetadata);
+    OperationMetadata_GetDomain(owsf,baseUrl,operationsMetadata);
+    OperationMetadata_GetRecords(owsf,baseUrl,operationsMetadata);
+    OperationMetadata_GetRecordById(owsf,baseUrl,operationsMetadata);
+    if (isTransactional) {
+      OperationMetadata_Transaction(owsf,baseUrl,operationsMetadata);
+    }
+    DomainType opMetadataParam1=owsf.createDomainType();
+    DomainType opMetadataParam2=owsf.createDomainType();
+    opMetadataParam1.setName("service");
+    opMetadataParam1.getValue().add("http://www.opengis.net/cat/csw/2.0.2");
+    opMetadataParam2.setName("version");
+    opMetadataParam2.getValue().add(version);
+    operationsMetadata.getParameter().add(opMetadataParam1);
+    operationsMetadata.getParameter().add(opMetadataParam2);
+    DomainType opMetadataConstraint1=owsf.createDomainType();
+    opMetadataConstraint1.setName("PostEncoding");
+    opMetadataConstraint1.getValue().add("XML");
+    operationsMetadata.getConstraint().add(opMetadataConstraint1);
+  }
+  if (sections == null || requestedSection("OperationsMetadata",sections)) {
+    final FilterFactory ffFactory=CommonFactoryFinder.getFilterFactory(null);
+    GeometryOperand[] geometryOperands=new GeometryOperand[]{GeometryOperand.Envelope,GeometryOperand.Point,GeometryOperand.LineString,GeometryOperand.Polygon};
+    SpatialOperator[] spatialOperators=new SpatialOperator[]{ffFactory.spatialOperator("BBOX",new GeometryOperand[]{}),ffFactory.spatialOperator("Equals",new GeometryOperand[]{}),ffFactory.spatialOperator("Overlaps",new GeometryOperand[]{}),ffFactory.spatialOperator("Disjoint",new GeometryOperand[]{}),ffFactory.spatialOperator("Intersects",new GeometryOperand[]{}),ffFactory.spatialOperator("Touches",new GeometryOperand[]{}),ffFactory.spatialOperator("Crosses",new GeometryOperand[]{}),ffFactory.spatialOperator("Within",new GeometryOperand[]{}),ffFactory.spatialOperator("Contains",new GeometryOperand[]{}),ffFactory.spatialOperator("Beyond",new GeometryOperand[]{}),ffFactory.spatialOperator("DWithin",new GeometryOperand[]{})};
+    SpatialOperators spatialOperands=ffFactory.spatialOperators(spatialOperators);
+    SpatialCapabilities spatialCapabilities=ffFactory.spatialCapabilities(geometryOperands,spatialOperands);
+    Operator[] operators=new Operator[]{ffFactory.operator("EqualTo"),ffFactory.operator("Like"),ffFactory.operator("LessThan"),ffFactory.operator("GreaterThan"),ffFactory.operator("LessThanEqualTo"),ffFactory.operator("GreaterThanEqualTo"),ffFactory.operator("NotEqualTo"),ffFactory.operator("Between"),ffFactory.operator("NullCheck")};
+    ComparisonOperators comparisonOperators=ffFactory.comparisonOperators(operators);
+    ArithmeticOperators arithmeticOperators=null;
+    ScalarCapabilities scalarCapabilities=ffFactory.scalarCapabilities(comparisonOperators,arithmeticOperators,logicalOperators);
+    IdCapabilities id=ffFactory.idCapabilities(eid,fid);
+    FilterCapabilities filterCapabilities=ffFactory.capabilities(version,scalarCapabilities,spatialCapabilities,id);
+    caps.setFilterCapabilities(filterCapabilities);
+  }
+  return caps;
+}
