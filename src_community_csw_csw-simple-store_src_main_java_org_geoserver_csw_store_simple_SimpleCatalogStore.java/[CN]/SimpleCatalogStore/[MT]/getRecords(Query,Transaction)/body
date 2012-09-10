@@ -13,8 +13,17 @@
   if (q.getFilter() != Filter.INCLUDE) {
     records=new FilteringFeatureCollection<FeatureType,Feature>(records,q.getFilter());
   }
+  if (q.getSortBy() != null && q.getSortBy().length > 0) {
+    Feature[] features=(Feature[])records.toArray(new Feature[records.size()]);
+    Comparator<Feature> comparator=ComplexComparatorFactory.buildComparator(q.getSortBy());
+    Arrays.sort(features,comparator);
+    records=new MemoryFeatureCollection(records.getSchema(),Arrays.asList(features));
+  }
   if (q.getMaxFeatures() < Query.DEFAULT_MAX) {
     records=new MaxFeaturesFeatureCollection<FeatureType,Feature>(records,q.getMaxFeatures());
+  }
+  if (q.getProperties() != null && q.getProperties().size() > 0) {
+    records=new RetypingFeatureCollection(records,q.getProperties());
   }
   return records;
 }

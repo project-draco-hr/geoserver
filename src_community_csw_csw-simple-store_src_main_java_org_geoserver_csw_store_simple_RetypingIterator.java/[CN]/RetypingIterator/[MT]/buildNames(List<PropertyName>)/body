@@ -1,0 +1,24 @@
+{
+  Set result=new HashSet();
+  for (  PropertyName pn : properties) {
+    String fullName=pn.getPropertyName();
+    if (fullName.indexOf('@') != -1 || fullName.indexOf('/') != -1) {
+      throw new IllegalArgumentException("Invalid property " + fullName + ", this code can only handle properties with the 'name' or 'prefix:name' structure");
+    }
+    String name=fullName;
+    String prefix=null;
+    int idx=fullName.indexOf(':');
+    if (idx > 0) {
+      prefix=fullName.substring(0,idx);
+      name=fullName.substring(idx + 1);
+    }
+    if (prefix != null && pn.getNamespaceContext() != null) {
+      String ns=pn.getNamespaceContext().getURI(prefix);
+      result.add(new NameImpl(ns,name));
+    }
+ else {
+      result.add(name);
+    }
+  }
+  return result;
+}

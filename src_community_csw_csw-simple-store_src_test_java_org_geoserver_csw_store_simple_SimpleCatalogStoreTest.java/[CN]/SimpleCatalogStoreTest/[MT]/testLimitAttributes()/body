@@ -1,0 +1,23 @@
+{
+  Query query=new Query("Record");
+  Filter typeDataset=FF.equals(FF.property("dc:type/dc:value",CSWRecordTypes.NAMESPACES),FF.literal("http://purl.org/dc/dcmitype/Dataset"));
+  query.setFilter(typeDataset);
+  query.setSortBy(new SortBy[]{new SortByImpl(FF.property("dc:subject/dc:value",CSWRecordTypes.NAMESPACES),SortOrder.ASCENDING)});
+  query.setProperties(Arrays.asList(FF.property("dc:identifier",CSWRecordTypes.NAMESPACES)));
+  FeatureCollection records=store.getRecords(query,Transaction.AUTO_COMMIT);
+  assertEquals(3,records.size());
+  final List<String> values=new ArrayList<String>();
+  records.accepts(new FeatureVisitor(){
+    @Override public void visit(    Feature feature){
+      ComplexAttribute id=(ComplexAttribute)feature.getProperty("identifier");
+      assertNotNull(id);
+      String value=(String)id.getProperty("value").getValue();
+      values.add(value);
+      assertEquals(1,feature.getProperties().size());
+    }
+  }
+,null);
+  assertEquals("urn:uuid:9a669547-b69b-469f-a11f-2d875366bbdc",values.get(0));
+  assertEquals("urn:uuid:88247b56-4cbc-4df9-9860-db3f8042e357",values.get(1));
+  assertEquals("urn:uuid:94bc9c83-97f6-4b40-9eb8-a8e8787a5c63",values.get(2));
+}
