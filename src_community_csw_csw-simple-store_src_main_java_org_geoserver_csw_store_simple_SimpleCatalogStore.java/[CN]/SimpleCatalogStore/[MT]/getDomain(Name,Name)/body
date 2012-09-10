@@ -1,3 +1,28 @@
 {
-  return null;
+  AttributeDescriptor ad=CSWRecordTypes.getDescriptor(attributeName.getLocalPart());
+  if (ad == null) {
+    return new CloseableIteratorAdapter<String>(new ArrayList<String>().iterator());
+  }
+  Query q=new Query(typeName.getLocalPart());
+  FilterFactory2 FF=CommonFactoryFinder.getFilterFactory2();
+  String xpath;
+  if (ad.getName().getNamespaceURI().equals(DC.NAMESPACE)) {
+    xpath="dc:" + ad.getLocalName();
+  }
+ else {
+    xpath="dct:" + ad.getLocalName();
+  }
+  q.setProperties(Arrays.asList(FF.property(xpath,CSWRecordTypes.NAMESPACES)));
+  FeatureIterator<Feature> fi=null;
+  final Set<String> values=new HashSet<String>();
+  getRecords(q,Transaction.AUTO_COMMIT).accepts(new FeatureVisitor(){
+    @Override public void visit(    Feature feature){
+      ComplexAttribute att=(ComplexAttribute)feature.getProperty(attributeName.getLocalPart());
+      values.add((String)att.getProperty("value").getValue());
+    }
+  }
+,null);
+  List<String> result=new ArrayList(values);
+  Collections.sort(result);
+  return new CloseableIteratorAdapter<String>(result.iterator());
 }
