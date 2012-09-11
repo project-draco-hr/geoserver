@@ -1,0 +1,15 @@
+{
+  try {
+    CSWInfo csw=getGeoServer().getService(CSWInfo.class);
+    csw.setCanonicalSchemaLocation(true);
+    getGeoServer().save(csw);
+    Document dom=getAsDOM("csw?service=CSW&version=2.0.2&request=DescribeRecord");
+    checkValidationErrors(dom);
+    assertCswRecordSchema(dom,true);
+  }
+  finally {
+    CSWInfo csw=getGeoServer().getService(CSWInfo.class);
+    csw.setCanonicalSchemaLocation(false);
+    getGeoServer().save(csw);
+  }
+}
