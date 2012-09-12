@@ -1,4 +1,8 @@
 {
   checkStore();
-  return new GetCapabilities(this.csw,context).run(request);
+  CapabilitiesType caps=new GetCapabilities(this.csw,context).run(request);
+  for (  CapabilitiesDecorator decorator : GeoServerExtensions.extensions(CapabilitiesDecorator.class)) {
+    caps=decorator.decorate(caps,this.store);
+  }
+  return caps;
 }

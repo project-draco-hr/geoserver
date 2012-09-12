@@ -1,0 +1,43 @@
+{
+synchronized (geometryOperands) {
+    if (geometryOperands == null || geometryOperands.isEmpty()) {
+      for (      GeometryOperand operator : geometryOpertors) {
+        geometryOperands.add(operator);
+      }
+      Collections.sort(geometryOperands,new Comparator<GeometryOperand>(){
+        @Override public int compare(        GeometryOperand o1,        GeometryOperand o2){
+          if (o2.getLocalPart().contains("Envelope")) {
+            return -1;
+          }
+          if (o2.getLocalPart().contains("Point")) {
+            if (o1.getLocalPart().contains("Envelope")) {
+              return -1;
+            }
+ else {
+              return 1;
+            }
+          }
+          if (o2.getLocalPart().contains("LineString")) {
+            if (o1.getLocalPart().contains("Point")) {
+              return -1;
+            }
+ else {
+              return 1;
+            }
+          }
+          if (o2.getLocalPart().contains("Polygon")) {
+            if (o1.getLocalPart().contains("LineString")) {
+              return -1;
+            }
+ else {
+              return 1;
+            }
+          }
+          return 0;
+        }
+      }
+);
+    }
+  }
+  return geometryOperands;
+}

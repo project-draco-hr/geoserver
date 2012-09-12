@@ -43,10 +43,10 @@
     ServiceProviderType sp=owsf.createServiceProviderType();
     caps.setServiceProvider(sp);
     final ContactInfo contact=csw.getGeoServer().getGlobal().getSettings().getContact();
-    sp.setProviderName(contact.getContactOrganization());
+    sp.setProviderName((contact.getContactOrganization() != null ? contact.getContactOrganization() : ""));
     OnlineResourceType providerSite=owsf.createOnlineResourceType();
     sp.setProviderSite(providerSite);
-    providerSite.setHref(csw.getOnlineResource());
+    providerSite.setHref((csw.getOnlineResource() != null ? csw.getOnlineResource() : ""));
     ResponsiblePartySubsetType serviceContact=owsf.createResponsiblePartySubsetType();
     sp.setServiceContact(serviceContact);
     serviceContact.setIndividualName(contact.getContactPerson());
@@ -101,17 +101,18 @@
     operationsMetadata.getConstraint().add(opMetadataConstraint1);
   }
   if (sections == null || requestedSection("OperationsMetadata",sections)) {
-    final FilterFactory ffFactory=CommonFactoryFinder.getFilterFactory(null);
-    GeometryOperand[] geometryOperands=new GeometryOperand[]{GeometryOperand.Envelope,GeometryOperand.Point,GeometryOperand.LineString,GeometryOperand.Polygon};
-    SpatialOperator[] spatialOperators=new SpatialOperator[]{ffFactory.spatialOperator("BBOX",new GeometryOperand[]{}),ffFactory.spatialOperator("Equals",new GeometryOperand[]{}),ffFactory.spatialOperator("Overlaps",new GeometryOperand[]{}),ffFactory.spatialOperator("Disjoint",new GeometryOperand[]{}),ffFactory.spatialOperator("Intersects",new GeometryOperand[]{}),ffFactory.spatialOperator("Touches",new GeometryOperand[]{}),ffFactory.spatialOperator("Crosses",new GeometryOperand[]{}),ffFactory.spatialOperator("Within",new GeometryOperand[]{}),ffFactory.spatialOperator("Contains",new GeometryOperand[]{}),ffFactory.spatialOperator("Beyond",new GeometryOperand[]{}),ffFactory.spatialOperator("DWithin",new GeometryOperand[]{})};
-    SpatialOperators spatialOperands=ffFactory.spatialOperators(spatialOperators);
-    SpatialCapabilities spatialCapabilities=ffFactory.spatialCapabilities(geometryOperands,spatialOperands);
+    final FilterFactory2 ffFactory=CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
+    SpatialCapabilities spatialCapabilities=new CSWSpatialCapabilities();
     Operator[] operators=new Operator[]{ffFactory.operator("EqualTo"),ffFactory.operator("Like"),ffFactory.operator("LessThan"),ffFactory.operator("GreaterThan"),ffFactory.operator("LessThanEqualTo"),ffFactory.operator("GreaterThanEqualTo"),ffFactory.operator("NotEqualTo"),ffFactory.operator("Between"),ffFactory.operator("NullCheck")};
     ComparisonOperators comparisonOperators=ffFactory.comparisonOperators(operators);
-    ArithmeticOperators arithmeticOperators=null;
+    ArithmeticOperators arithmeticOperators=ffFactory.arithmeticOperators(true,null);
     ScalarCapabilities scalarCapabilities=ffFactory.scalarCapabilities(comparisonOperators,arithmeticOperators,logicalOperators);
+    ((ScalarCapabilitiesImpl)scalarCapabilities).setArithmeticOperators(null);
     IdCapabilities id=ffFactory.idCapabilities(eid,fid);
-    FilterCapabilities filterCapabilities=ffFactory.capabilities(version,scalarCapabilities,spatialCapabilities,id);
+    FilterCapabilities filterCapabilities=ffFactory.capabilities("1.1.0",scalarCapabilities,spatialCapabilities,id);
+    ((FilterCapabilitiesImpl)filterCapabilities).setScalar(scalarCapabilities);
+    ((FilterCapabilitiesImpl)filterCapabilities).setSpatial(spatialCapabilities);
+    ((FilterCapabilitiesImpl)filterCapabilities).setId(id);
     caps.setFilterCapabilities(filterCapabilities);
   }
   return caps;
