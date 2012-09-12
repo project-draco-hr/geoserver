@@ -1,26 +1,4 @@
 {
   checkStore();
-  try {
-    if (request.getTypeName() == null || request.getTypeName().isEmpty()) {
-      return store.getRecordSchemas();
-    }
- else {
-      List<FeatureType> result=new ArrayList<FeatureType>();
-      Set<QName> requested=new HashSet(request.getTypeName());
-      FeatureType[] schemas=store.getRecordSchemas();
-      for (      FeatureType featureType : schemas) {
-        QName typeName=new QName(featureType.getName().getNamespaceURI(),featureType.getName().getLocalPart());
-        if (requested.remove(typeName)) {
-          result.add(featureType);
-        }
-      }
-      if (requested.size() != 0) {
-        throw new ServiceException("Failed to find feature types: " + requested,ServiceException.INVALID_PARAMETER_VALUE,"typeName");
-      }
-      return (FeatureType[])result.toArray(new FeatureType[result.size()]);
-    }
-  }
- catch (  IOException e) {
-    throw new ServiceException("Failed to retrieve the feature type schemas",ServiceException.NO_APPLICABLE_CODE);
-  }
+  return new DescribeRecord(this.csw,store).run(request);
 }
