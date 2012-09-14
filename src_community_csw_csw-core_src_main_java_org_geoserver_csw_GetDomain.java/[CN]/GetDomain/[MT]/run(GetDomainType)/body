@@ -1,0 +1,27 @@
+{
+  try {
+    List<String> result=new ArrayList<String>();
+    if (request.getParameterName() != null && !request.getParameterName().isEmpty()) {
+      String parameterName=request.getParameterName();
+      if (parameterName.indexOf(".") > 0) {
+        final String operation=parameterName.split("\\.")[0];
+        final String parameter=parameterName.split("\\.")[1];
+        if (store.getCapabilities().operationParameters.get(operation) != null) {
+          for (          DomainType param : store.getCapabilities().operationParameters.get(operation)) {
+            if (param.getName().equalsIgnoreCase(parameter)) {
+              for (              Object value : param.getValue()) {
+                result.add((String)value);
+              }
+            }
+          }
+        }
+      }
+    }
+    if (request.getPropertyName() != null && !request.getPropertyName().isEmpty()) {
+    }
+    return new CloseableIteratorAdapter<String>(result.iterator());
+  }
+ catch (  Exception e) {
+    throw new ServiceException(e,"Failed to retrieve the domain values",ServiceException.NO_APPLICABLE_CODE);
+  }
+}

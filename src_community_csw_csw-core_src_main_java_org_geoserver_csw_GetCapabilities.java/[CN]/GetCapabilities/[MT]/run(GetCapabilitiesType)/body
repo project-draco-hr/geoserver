@@ -1,19 +1,17 @@
 {
   SectionsType sections=null;
-  List<String> provided=Collections.singletonList("2.0.2");
+  List<String> provided=Collections.singletonList(CatalogCapabilities.getVersion());
   List<String> accepted=null;
   if (request.getAcceptVersions() != null)   accepted=request.getAcceptVersions().getVersion();
   String version=RequestUtils.getVersionOws11(provided,accepted);
-  if (!"2.0.2".equals(version)) {
+  if (!CatalogCapabilities.getVersion().equals(version)) {
     throw new CSWException("Could not understand version:" + version);
   }
   if (request.getSections() != null) {
     sections=request.getSections();
   }
-  Csw20Factory cswf=Csw20Factory.eINSTANCE;
-  Ows10Factory owsf=Ows10Factory.eINSTANCE;
   CapabilitiesType caps=cswf.createCapabilitiesType();
-  caps.setVersion("2.0.2");
+  caps.setVersion(CatalogCapabilities.getVersion());
   if (sections == null || requestedSection("ServiceIdentification",sections)) {
     ServiceIdentificationType si=owsf.createServiceIdentificationType();
     caps.setServiceIdentification(si);
@@ -33,7 +31,7 @@
     CodeType CSW=owsf.createCodeType();
     CSW.setValue("CSW");
     si.setServiceType(CSW);
-    si.setServiceTypeVersion("2.0.2");
+    si.setServiceTypeVersion(CatalogCapabilities.getVersion());
     si.setFees(csw.getFees());
     if (csw.getAccessConstraints() != null) {
       si.setAccessConstraints(csw.getAccessConstraints());
@@ -84,21 +82,15 @@
     OperationMetadata_GetDomain(owsf,baseUrl,operationsMetadata);
     OperationMetadata_GetRecords(owsf,baseUrl,operationsMetadata);
     OperationMetadata_GetRecordById(owsf,baseUrl,operationsMetadata);
-    if (isTransactional) {
+    if (store.getCapabilities().supportsTransactions()) {
       OperationMetadata_Transaction(owsf,baseUrl,operationsMetadata);
     }
-    DomainType opMetadataParam1=owsf.createDomainType();
-    DomainType opMetadataParam2=owsf.createDomainType();
-    opMetadataParam1.setName("service");
-    opMetadataParam1.getValue().add("http://www.opengis.net/cat/csw/2.0.2");
-    opMetadataParam2.setName("version");
-    opMetadataParam2.getValue().add(version);
-    operationsMetadata.getParameter().add(opMetadataParam1);
-    operationsMetadata.getParameter().add(opMetadataParam2);
-    DomainType opMetadataConstraint1=owsf.createDomainType();
-    opMetadataConstraint1.setName("PostEncoding");
-    opMetadataConstraint1.getValue().add("XML");
-    operationsMetadata.getConstraint().add(opMetadataConstraint1);
+    for (    DomainType param : CatalogCapabilities.operationParameters.get("OperationsMetadata")) {
+      operationsMetadata.getParameter().add(param);
+    }
+    for (    DomainType constraint : CatalogCapabilities.operationConstraints.get("OperationsMetadata")) {
+      operationsMetadata.getConstraint().add(constraint);
+    }
   }
   if (sections == null || requestedSection("OperationsMetadata",sections)) {
     final FilterFactory2 ffFactory=CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
