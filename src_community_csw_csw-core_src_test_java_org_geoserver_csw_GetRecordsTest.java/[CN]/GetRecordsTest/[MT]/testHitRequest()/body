@@ -1,0 +1,17 @@
+{
+  String request="csw?service=CSW&version=2.0.2&request=GetRecords&typeNames=csw:Record";
+  Document d=getAsDOM(request);
+  assertXpathEvaluatesTo("1","count(/csw:GetRecordsResponse)",d);
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  String timestampPath="/csw:GetRecordsResponse/csw:GetSearchStatus/@timestamp";
+  String timeStamp=xpath.evaluate(timestampPath,d);
+  assertNotNull(timeStamp);
+  Calendar cal=new XmlConverterFactory().createConverter(String.class,Calendar.class,null).convert(timeStamp,Calendar.class);
+  assertNotNull(cal);
+  assertEquals(TimeZone.getTimeZone("GMT"),cal.getTimeZone());
+  assertXpathEvaluatesTo("summary","//csw:SearchResults/@elementSet",d);
+  assertXpathEvaluatesTo("12","//csw:SearchResults/@numberOfRecordsMatched",d);
+  assertXpathEvaluatesTo("10","//csw:SearchResults/@numberOfRecordsReturned",d);
+  assertXpathEvaluatesTo("11","//csw:SearchResults/@nextRecord",d);
+  assertXpathEvaluatesTo("0","count(//csw:SearchResults/*)",d);
+}

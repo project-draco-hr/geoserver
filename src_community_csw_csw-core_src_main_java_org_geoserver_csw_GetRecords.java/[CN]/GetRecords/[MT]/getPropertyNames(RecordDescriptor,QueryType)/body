@@ -1,6 +1,18 @@
 {
-  if (query.getElementSetName() != null) {
-    Set<Name> properties=rd.getPropertiesForElementSet(query.getElementSetName().getValue());
+  if (query.getElementName() != null && !query.getElementName().isEmpty()) {
+    NamespaceSupport namespaces=rd.getNamespaceSupport();
+    List<PropertyName> result=new ArrayList<PropertyName>();
+    for (    QName qn : query.getElementName()) {
+      String ns=qn.getNamespaceURI();
+      String localName=qn.getLocalPart();
+      PropertyName property=buildPropertyName(rd,namespaces,ns,localName);
+      result.add(property);
+    }
+    return result;
+  }
+ else {
+    ElementSetType elementSet=getElementSet(query);
+    Set<Name> properties=rd.getPropertiesForElementSet(elementSet);
     if (properties != null) {
       NamespaceSupport namespaces=rd.getNamespaceSupport();
       List<PropertyName> result=new ArrayList<PropertyName>();
@@ -15,19 +27,5 @@
  else {
       return null;
     }
-  }
- else   if (query.getElementName() != null) {
-    NamespaceSupport namespaces=rd.getNamespaceSupport();
-    List<PropertyName> result=new ArrayList<PropertyName>();
-    for (    QName qn : query.getElementName()) {
-      String ns=qn.getNamespaceURI();
-      String localName=qn.getLocalPart();
-      PropertyName property=buildPropertyName(rd,namespaces,ns,localName);
-      result.add(property);
-    }
-    return result;
-  }
- else {
-    return null;
   }
 }

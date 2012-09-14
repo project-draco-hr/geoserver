@@ -11,6 +11,10 @@
  else {
       maxRecords=request.getMaxRecords();
     }
+    int offset=request.getStartPosition() == null ? 0 : request.getStartPosition();
+    if (offset <= 0) {
+      throw new ServiceException("startPosition must be a positive number",ServiceException.INVALID_PARAMETER_VALUE,"startPosition");
+    }
     ResultType resultType=request.getResultType();
     if (maxRecords == 0 && resultType == ResultType.RESULTS) {
       resultType=ResultType.HITS;
@@ -25,14 +29,13 @@
     int nextRecord=0;
     FeatureCollection records=null;
     if (resultType != ResultType.VALIDATE) {
-      int offset=request.getStartPosition() == null ? 0 : request.getStartPosition();
       if (numberOfRecordsMatched - offset <= maxRecords) {
         numberOfRecordsReturned=numberOfRecordsMatched - offset;
         nextRecord=-1;
       }
  else {
         numberOfRecordsReturned=maxRecords;
-        nextRecord=offset + numberOfRecordsMatched + 1;
+        nextRecord=offset + numberOfRecordsReturned;
       }
       if (resultType == ResultType.RESULTS) {
         if (resultType != resultType.HITS) {
@@ -67,7 +70,8 @@
         }
       }
     }
-    CSWRecordsResult result=new CSWRecordsResult(cswQuery.getElementSetName().getValue(),request.getOutputSchema(),numberOfRecordsMatched,numberOfRecordsReturned,nextRecord,timestamp,records);
+    ElementSetType elementSet=getElementSet(cswQuery);
+    CSWRecordsResult result=new CSWRecordsResult(elementSet,request.getOutputSchema(),numberOfRecordsMatched,numberOfRecordsReturned,nextRecord,timestamp,records);
     return result;
   }
  catch (  IOException e) {
