@@ -1,0 +1,16 @@
+{
+  Filter filter=query.getConstraint().getFilter();
+  Set<Name> supportedTypes=getSupportedTypes();
+  List<Query> result=new ArrayList<Query>();
+  for (  QName qName : query.getTypeNames()) {
+    Name typeName=new NameImpl(qName);
+    if (!supportedTypes.contains(typeName)) {
+      throw new ServiceException("Unsupported record type " + typeName,ServiceException.INVALID_PARAMETER_VALUE,"typeNames");
+    }
+    Query q=new Query(typeName.getLocalPart());
+    q.setFilter(filter);
+    q.setProperties(getPropertyNames(rd,query));
+    q.setSortBy(query.getSortBy());
+  }
+  return result;
+}

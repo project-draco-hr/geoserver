@@ -1,0 +1,76 @@
+{
+  Date timestamp=new Date();
+  try {
+    RecordDescriptor rd=getRecordDescriptor(request);
+    QueryType cswQuery=(QueryType)request.getQuery();
+    List<Query> queries=toGtQueries(rd,cswQuery);
+    int maxRecords;
+    if (request.getMaxRecords() == null) {
+      maxRecords=10;
+    }
+ else {
+      maxRecords=request.getMaxRecords();
+    }
+    ResultType resultType=request.getResultType();
+    if (maxRecords == 0 && resultType == ResultType.RESULTS) {
+      resultType=ResultType.HITS;
+    }
+    int numberOfRecordsMatched=0;
+    int[] counts=new int[queries.size()];
+    for (int i=0; i < queries.size(); i++) {
+      counts[i]=store.getRecordsCount(queries.get(i),Transaction.AUTO_COMMIT);
+      numberOfRecordsMatched+=counts[i];
+    }
+    int numberOfRecordsReturned=0;
+    int nextRecord=0;
+    FeatureCollection records=null;
+    if (resultType != ResultType.VALIDATE) {
+      int offset=request.getStartPosition() == null ? 0 : request.getStartPosition();
+      if (numberOfRecordsMatched - offset <= maxRecords) {
+        numberOfRecordsReturned=numberOfRecordsMatched - offset;
+        nextRecord=-1;
+      }
+ else {
+        numberOfRecordsReturned=maxRecords;
+        nextRecord=offset + numberOfRecordsMatched + 1;
+      }
+      if (resultType == ResultType.RESULTS) {
+        if (resultType != resultType.HITS) {
+          List<FeatureCollection> results=new ArrayList<FeatureCollection>();
+          for (int i=0; i < queries.size() && maxRecords > 0; i++) {
+            Query q=queries.get(i);
+            if (offset > 0) {
+              if (offset > counts[i]) {
+                offset-=counts[i];
+                continue;
+              }
+ else {
+                q.setStartIndex(offset);
+                offset=0;
+              }
+            }
+            if (maxRecords > 0) {
+              q.setMaxFeatures(maxRecords);
+              maxRecords-=counts[i];
+            }
+ else {
+              continue;
+            }
+            results.add(store.getRecords(q,Transaction.AUTO_COMMIT));
+          }
+          if (results.size() == 1) {
+            records=results.get(0);
+          }
+ else           if (results.size() > 1) {
+            records=new CompositeFeatureCollection(results);
+          }
+        }
+      }
+    }
+    CSWRecordsResult result=new CSWRecordsResult(cswQuery.getElementSetName().getValue(),request.getOutputSchema(),numberOfRecordsMatched,numberOfRecordsReturned,nextRecord,timestamp,records);
+    return result;
+  }
+ catch (  IOException e) {
+    throw new ServiceException("Request failed due to: " + e.getMessage(),e);
+  }
+}
