@@ -1,0 +1,23 @@
+{
+  CSWRecordsResult response=getCSWResponse();
+  response.setElementSet(null);
+  GetRecordsType request=getCSWRequest();
+  CSWRecordTransformer tx=new CSWRecordTransformer(request,true);
+  tx.setIndentation(2);
+  StringWriter sw=new StringWriter();
+  tx.transform(response,sw);
+  Document dom=XMLUnit.buildControlDocument(sw.toString());
+  assertXpathEvaluatesTo("1","count(/csw:GetRecordsResponse)",dom);
+  assertXpathEvaluatesTo("http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/record.xsd","/csw:GetRecordsResponse/@xsi:schemaLocation",dom);
+  assertXpathEvaluatesTo("2012-07-10T15:00:00Z","//csw:GetSearchStatus/@timestamp",dom);
+  assertXpathEvaluatesTo("full","//csw:SearchResults/@elementSet",dom);
+  assertXpathEvaluatesTo("12","count(//csw:Record)",dom);
+  String xpathBase="//csw:Record[dc:identifier = 'urn:uuid:784e2afd-a9fd-44a6-9a92-a3848371c8ec']/";
+  assertXpathEvaluatesTo("7","count(" + xpathBase + "*)",dom);
+  assertXpathEvaluatesTo("http://purl.org/dc/dcmitype/Text",xpathBase + "dc:type",dom);
+  assertXpathEvaluatesTo("Aliquam fermentum purus quis arcu",xpathBase + "dc:title",dom);
+  assertXpathEvaluatesTo("Hydrography--Dictionaries",xpathBase + "dc:subject",dom);
+  assertXpathEvaluatesTo("application/pdf",xpathBase + "dc:format",dom);
+  assertXpathEvaluatesTo("2006-05-12Z",xpathBase + "dc:date",dom);
+  assertXpathEvaluatesTo("Vestibulum quis ipsum sit amet metus imperdiet vehicula. Nulla scelerisque cursus mi.",xpathBase + "dct:abstract",dom);
+}

@@ -1,0 +1,20 @@
+{
+  CSWRecordsResult response=getCSWResponse();
+  response.setElementSet(ElementSetType.SUMMARY);
+  GetRecordsType request=getCSWRequest();
+  CSWRecordTransformer tx=new CSWRecordTransformer(request,true);
+  tx.setIndentation(2);
+  StringWriter sw=new StringWriter();
+  tx.transform(response,sw);
+  Document dom=XMLUnit.buildControlDocument(sw.toString());
+  assertXpathEvaluatesTo("1","count(/csw:GetRecordsResponse)",dom);
+  assertXpathEvaluatesTo("http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/record.xsd","/csw:GetRecordsResponse/@xsi:schemaLocation",dom);
+  assertXpathEvaluatesTo("2012-07-10T15:00:00Z","//csw:GetSearchStatus/@timestamp",dom);
+  assertXpathEvaluatesTo("summary","//csw:SearchResults/@elementSet",dom);
+  assertXpathEvaluatesTo("12","count(//csw:SummaryRecord)",dom);
+  assertXpathEvaluatesTo("4","count(//csw:SummaryRecord[dc:identifier = 'urn:uuid:1ef30a8b-876d-4828-9246-c37ab4510bbd']/*)",dom);
+  assertXpathEvaluatesTo("http://purl.org/dc/dcmitype/Service","//csw:SummaryRecord[dc:identifier = 'urn:uuid:1ef30a8b-876d-4828-9246-c37ab4510bbd']/dc:type",dom);
+  assertXpathEvaluatesTo("Proin sit amet justo. In justo. Aenean adipiscing nulla id tellus.","//csw:SummaryRecord[dc:identifier = 'urn:uuid:1ef30a8b-876d-4828-9246-c37ab4510bbd']/dct:abstract",dom);
+  assertXpathEvaluatesTo("13.754 60.042","//csw:SummaryRecord[dc:identifier = 'urn:uuid:1ef30a8b-876d-4828-9246-c37ab4510bbd']/ows:WGS84BoundingBox/ows:LowerCorner",dom);
+  assertXpathEvaluatesTo("17.92 68.41","//csw:SummaryRecord[dc:identifier = 'urn:uuid:1ef30a8b-876d-4828-9246-c37ab4510bbd']/ows:WGS84BoundingBox/ows:UpperCorner",dom);
+}

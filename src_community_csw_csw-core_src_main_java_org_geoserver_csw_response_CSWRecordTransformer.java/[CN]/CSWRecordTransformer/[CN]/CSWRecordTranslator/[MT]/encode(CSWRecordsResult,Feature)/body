@@ -1,0 +1,55 @@
+{
+  String element="csw:" + getRecordElement(response);
+  start(element);
+  Set<Name> elements=getElements(response);
+  for (  Property p : f.getProperties()) {
+    if (elements == null || elements.contains(p.getName())) {
+      if (p.getType() == CSWRecordTypes.SIMPLE_LITERAL) {
+        ComplexAttribute sl=(ComplexAttribute)p;
+        String scheme=(String)sl.getProperty("scheme").getValue();
+        String value=(String)sl.getProperty("value").getValue();
+        Name dn=p.getDescriptor().getName();
+        String name=dn.getLocalPart();
+        String prefix=CSWRecordTypes.NAMESPACES.getPrefix(dn.getNamespaceURI());
+        if (scheme == null) {
+          element(prefix + ":" + name,value);
+        }
+ else {
+          AttributesImpl attributes=new AttributesImpl();
+          addAttribute(attributes,"scheme",scheme);
+          element(prefix + ":" + name,value,attributes);
+        }
+      }
+ else       if (CSWRecordTypes.RECORD_BBOX_NAME.equals(p.getName())) {
+      }
+ else       if (CSWRecordTypes.RECORD_GEOMETRY_NAME.equals(p.getName())) {
+      }
+ else {
+        throw new IllegalArgumentException("Don't know how to encode property " + p + " in record "+ f);
+      }
+    }
+  }
+  if (elements == null || elements.contains(CSWRecordTypes.RECORD_BBOX_NAME)) {
+    Collection<Property> bboxes=f.getProperties(CSWRecordTypes.RECORD_BBOX_NAME);
+    if (bboxes != null) {
+      for (      Property p : bboxes) {
+        try {
+          ReferencedEnvelope re=(ReferencedEnvelope)p.getValue();
+          ReferencedEnvelope wgs84re=re.transform(CRS.decode("EPSG:4326",true),true);
+          String minx=String.valueOf(wgs84re.getMinX());
+          String miny=String.valueOf(wgs84re.getMinY());
+          String maxx=String.valueOf(wgs84re.getMaxX());
+          String maxy=String.valueOf(wgs84re.getMaxY());
+          start("ows:WGS84BoundingBox");
+          element("ows:LowerCorner",minx + " " + miny);
+          element("ows:UpperCorner",maxx + " " + maxy);
+          end("ows:WGS84BoundingBox");
+        }
+ catch (        Exception e) {
+          throw new ServiceException("Failed to encode the current record: " + f,e);
+        }
+      }
+    }
+  }
+  end(element);
+}
