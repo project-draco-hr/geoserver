@@ -6,7 +6,9 @@
     GeoServerSecurityFilter authFilter=getSecurityManager().loadFilter(authConfig.getAuthenticationFilterName());
     ep.setEntryEntryPoint(authFilter.getAuthenticationEntryPoint());
   }
-  ExceptionTranslationFilter filter=new ExceptionTranslationFilter(ep);
+  HttpSessionRequestCache cache=new HttpSessionRequestCache();
+  cache.setCreateSessionAllowed(false);
+  ExceptionTranslationFilter filter=new ExceptionTranslationFilter(ep,cache);
   if (StringUtils.hasLength(authConfig.getAccessDeniedErrorPage())) {
     AccessDeniedHandlerImpl accessDeniedHandler=new AccessDeniedHandlerImpl();
     accessDeniedHandler.setErrorPage(authConfig.getAccessDeniedErrorPage());
