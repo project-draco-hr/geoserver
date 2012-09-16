@@ -2,6 +2,9 @@
   Csw20Factory factory=Csw20Factory.eINSTANCE;
   QueryType query=factory.createQueryType();
   String typeNamesString=(String)kvp.get("typeNames");
+  if (typeNamesString == null) {
+    throw new ServiceException("Mandatory parameter typeNames is missing",ServiceException.MISSING_PARAMETER_VALUE,"typeNames");
+  }
   NamespaceSupport namespaces=(NamespaceSupport)kvp.get("namespace");
   if (namespaces == null) {
     namespaces=CSWRecordDescriptor.NAMESPACES;
@@ -15,7 +18,7 @@
     esn.setTypeNames(typeNames);
     query.setElementSetName(esn);
   }
-  String elementNamesString=(String)kvp.remove("elementName");
+  String elementNamesString=(String)kvp.remove("ELEMENTNAME");
   if (elementNamesString != null) {
     List<QName> elementNames=resolver.parseQNames(elementNamesString,namespaces);
     query.getElementName().addAll(elementNames);
@@ -57,16 +60,8 @@
       throw new ServiceException("Invalid constraint language: " + language + ", valid values are "+ CQL_TEXT+ " and "+ FILTER,ServiceException.INVALID_PARAMETER_VALUE,CONSTRAINTLANGUAGE);
     }
   }
-  if (query.getConstraint() != null && query.getConstraint().getFilter() != null) {
-    for (    QName typeName : typeNames) {
-      RecordDescriptor rd=descriptors.get(typeName);
-      if (rd != null) {
-        Filter filter=query.getConstraint().getFilter();
-        Filter adapted=rd.adaptFilter(filter);
-        query.getConstraint().setFilter(adapted);
-        break;
-      }
-    }
+  if (kvp.get("SORTBY") != null) {
+    query.setSortBy((SortBy[])kvp.get("SORTBY"));
   }
   return query;
 }

@@ -1,5 +1,8 @@
 {
   try {
+    if (request.getSchemaLanguage() != null && !SUPPORTED_SCHEMA_LANGUAGES.contains(request.getSchemaLanguage())) {
+      throw new ServiceException("Unsupported schema language " + request.getSchemaLanguage(),ServiceException.INVALID_PARAMETER_VALUE,"schemaLanguage");
+    }
     if (request.getTypeName() == null || request.getTypeName().isEmpty()) {
       return store.getRecordSchemas();
     }
@@ -14,7 +17,7 @@
         }
       }
       if (requested.size() != 0) {
-        throw new ServiceException("Failed to find feature types: " + requested,ServiceException.INVALID_PARAMETER_VALUE,"typename");
+        LOGGER.log(Level.FINE,"Failed to locate feature types " + requested + ", ignoring them");
       }
       return (FeatureType[])result.toArray(new FeatureType[result.size()]);
     }

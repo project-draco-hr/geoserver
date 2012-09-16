@@ -1,0 +1,24 @@
+{
+  Filter filter=query.getFilter();
+  if (filter != null && !Filter.INCLUDE.equals(filter)) {
+    Filter qualified=(Filter)filter.accept(NSS_QUALIFIER,null);
+    Filter extended=(Filter)qualified.accept(PATH_EXTENDER,null);
+    Filter defaulted=(Filter)extended.accept(CRS_DEFAULTER,null);
+    Filter reprojected=(Filter)defaulted.accept(CRS_REPROJECTOR,null);
+    query.setFilter(extended);
+  }
+  SortBy[] sortBy=query.getSortBy();
+  if (sortBy != null && sortBy.length > 0) {
+    CSWPropertyPathExtender extender=new CSWPropertyPathExtender();
+    for (int i=0; i < sortBy.length; i++) {
+      SortBy sb=sortBy[i];
+      if (!SortBy.NATURAL_ORDER.equals(sb) && !SortBy.REVERSE_ORDER.equals(sb)) {
+        PropertyName name=sb.getPropertyName();
+        PropertyName extended=extender.extendProperty(name,FF,NAMESPACES);
+        sortBy[i]=new SortByImpl(extended,sb.getSortOrder());
+      }
+    }
+    query.setSortBy(sortBy);
+  }
+  return query;
+}

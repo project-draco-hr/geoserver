@@ -2,30 +2,23 @@
   String element="csw:" + getRecordElement(response);
   start(element);
   Set<Name> elements=getElements(response);
-  for (  Property p : f.getProperties()) {
-    if (elements == null || elements.contains(p.getName())) {
-      if (p.getType() == CSWRecordDescriptor.SIMPLE_LITERAL) {
-        ComplexAttribute sl=(ComplexAttribute)p;
-        String scheme=(String)sl.getProperty("scheme").getValue();
-        String value=(String)sl.getProperty("value").getValue();
-        Name dn=p.getDescriptor().getName();
-        String name=dn.getLocalPart();
-        String prefix=CSWRecordDescriptor.NAMESPACES.getPrefix(dn.getNamespaceURI());
-        if (scheme == null) {
-          element(prefix + ":" + name,value);
-        }
- else {
-          AttributesImpl attributes=new AttributesImpl();
-          addAttribute(attributes,"scheme",scheme);
-          element(prefix + ":" + name,value,attributes);
+  if (elements != null && !element.isEmpty()) {
+    for (    Name name : elements) {
+      Collection<Property> properties=f.getProperties(name);
+      if (properties != null && !properties.isEmpty()) {
+        for (        Property p : properties) {
+          encodProperty(f,p);
         }
       }
- else       if (CSWRecordDescriptor.RECORD_BBOX_NAME.equals(p.getName())) {
+ else       if (DC_TITLE.getName().equals(name)) {
+        element("dc:title",null);
       }
- else       if (CSWRecordDescriptor.RECORD_GEOMETRY_NAME.equals(p.getName())) {
-      }
+    }
+  }
  else {
-        throw new IllegalArgumentException("Don't know how to encode property " + p + " in record "+ f);
+    for (    Property p : f.getProperties()) {
+      if (elements == null || elements.contains(p.getName())) {
+        encodProperty(f,p);
       }
     }
   }
@@ -35,15 +28,17 @@
       for (      Property p : bboxes) {
         try {
           ReferencedEnvelope re=(ReferencedEnvelope)p.getValue();
-          ReferencedEnvelope wgs84re=re.transform(CRS.decode("EPSG:4326",true),true);
+          ReferencedEnvelope wgs84re=re.transform(CRS.decode(CSWRecordDescriptor.DEFAULT_CRS_NAME),true);
           String minx=String.valueOf(wgs84re.getMinX());
           String miny=String.valueOf(wgs84re.getMinY());
           String maxx=String.valueOf(wgs84re.getMaxX());
           String maxy=String.valueOf(wgs84re.getMaxY());
-          start("ows:WGS84BoundingBox");
+          AttributesImpl attributes=new AttributesImpl();
+          addAttribute(attributes,"crs",CSWRecordDescriptor.DEFAULT_CRS_NAME);
+          start("ows:BoundingBox");
           element("ows:LowerCorner",minx + " " + miny);
           element("ows:UpperCorner",maxx + " " + maxy);
-          end("ows:WGS84BoundingBox");
+          end("ows:BoundingBox");
         }
  catch (        Exception e) {
           throw new ServiceException("Failed to encode the current record: " + f,e);

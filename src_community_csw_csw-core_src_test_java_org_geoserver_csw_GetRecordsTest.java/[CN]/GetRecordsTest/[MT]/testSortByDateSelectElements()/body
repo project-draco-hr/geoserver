@@ -1,0 +1,19 @@
+{
+  String request="csw?service=CSW&version=2.0.2&request=GetRecords&typeNames=csw:Record&resultType=results&elementName=dc:identifier,dc:type,dc:date&sortBy=dc:date:A";
+  Document d=getAsDOM(request);
+  checkValidationErrors(d,new CSWConfiguration());
+  assertXpathEvaluatesTo("full","//csw:SearchResults/@elementSet",d);
+  assertXpathEvaluatesTo("12","//csw:SearchResults/@numberOfRecordsMatched",d);
+  assertXpathEvaluatesTo("10","//csw:SearchResults/@numberOfRecordsReturned",d);
+  assertXpathEvaluatesTo("11","//csw:SearchResults/@nextRecord",d);
+  assertXpathEvaluatesTo("10","count(//csw:SearchResults/*)",d);
+  List<String> dates=new ArrayList<String>();
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  for (int i=1; i < 11; i++) {
+    String id=xpath.evaluate("//csw:Record[" + i + "]/dc:date",d);
+    dates.add(id);
+  }
+  List<String> sorted=new ArrayList<String>(dates);
+  Collections.sort(sorted);
+  assertEquals(sorted,dates);
+}
