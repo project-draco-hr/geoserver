@@ -18,6 +18,21 @@
       }
     }
     if (request.getPropertyName() != null && !request.getPropertyName().isEmpty()) {
+      final String propertyName=request.getPropertyName();
+      String nameSpace=null;
+      String localPart=null;
+      if (propertyName.indexOf(":") > 0) {
+        nameSpace=propertyName.split(":")[0];
+        localPart=propertyName.split(":")[1];
+      }
+ else {
+        localPart=propertyName;
+      }
+      Name typeName=(nameSpace != null ? new NameImpl(CSWRecordDescriptor.NAMESPACES.getURI(nameSpace),localPart) : new NameImpl(localPart));
+      List<Name> domainQueriables=store.getCapabilities().getDomainQueriables(typeName);
+      if (domainQueriables != null && domainQueriables.size() > 0) {
+        return this.store.getDomain(new NameImpl(CSW.NAMESPACE,"Record"),typeName);
+      }
     }
     return new CloseableIteratorAdapter<String>(result.iterator());
   }
