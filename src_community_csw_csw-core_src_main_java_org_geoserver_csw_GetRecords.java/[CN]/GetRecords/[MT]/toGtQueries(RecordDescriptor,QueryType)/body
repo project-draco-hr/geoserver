@@ -1,6 +1,9 @@
 {
   Filter filter=query.getConstraint() != null ? query.getConstraint().getFilter() : null;
   Set<Name> supportedTypes=getSupportedTypes();
+  if (filter != null) {
+    filter=(Filter)filter.accept(new CaseInsenstiveFilterTransformer(),null);
+  }
   List<Query> result=new ArrayList<Query>();
   for (  QName qName : query.getTypeNames()) {
     Name typeName=new NameImpl(qName);
@@ -12,6 +15,9 @@
     q.setProperties(getPropertyNames(rd,query));
     q.setSortBy(query.getSortBy());
     Query adapted=rd.adaptQuery(q);
+    if (q.getFilter() != null) {
+      q.getFilter().accept(new SpatialFilterChecker(rd.getFeatureType()),null);
+    }
     result.add(adapted);
   }
   return result;

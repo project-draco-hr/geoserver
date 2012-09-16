@@ -7,7 +7,7 @@
       Collection<Property> properties=f.getProperties(name);
       if (properties != null && !properties.isEmpty()) {
         for (        Property p : properties) {
-          encodProperty(f,p);
+          encodeProperty(f,p);
         }
       }
  else       if (DC_TITLE.getName().equals(name)) {
@@ -18,16 +18,16 @@
  else {
     for (    Property p : f.getProperties()) {
       if (elements == null || elements.contains(p.getName())) {
-        encodProperty(f,p);
+        encodeProperty(f,p);
       }
     }
   }
   if (elements == null || elements.contains(CSWRecordDescriptor.RECORD_BBOX_NAME)) {
-    Collection<Property> bboxes=f.getProperties(CSWRecordDescriptor.RECORD_BBOX_NAME);
+    Property bboxes=f.getProperty(CSWRecordDescriptor.RECORD_BBOX_NAME);
     if (bboxes != null) {
-      for (      Property p : bboxes) {
+      List<ReferencedEnvelope> originalBoxes=(List<ReferencedEnvelope>)bboxes.getUserData().get(CSWRecordDescriptor.ORIGINAL_BBOXES);
+      for (      ReferencedEnvelope re : originalBoxes) {
         try {
-          ReferencedEnvelope re=(ReferencedEnvelope)p.getValue();
           ReferencedEnvelope wgs84re=re.transform(CRS.decode(CSWRecordDescriptor.DEFAULT_CRS_NAME),true);
           String minx=String.valueOf(wgs84re.getMinX());
           String miny=String.valueOf(wgs84re.getMinY());
@@ -35,7 +35,7 @@
           String maxy=String.valueOf(wgs84re.getMaxY());
           AttributesImpl attributes=new AttributesImpl();
           addAttribute(attributes,"crs",CSWRecordDescriptor.DEFAULT_CRS_NAME);
-          start("ows:BoundingBox");
+          start("ows:BoundingBox",attributes);
           element("ows:LowerCorner",minx + " " + miny);
           element("ows:UpperCorner",maxx + " " + maxy);
           end("ows:BoundingBox");

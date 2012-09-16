@@ -1,0 +1,17 @@
+{
+  if (expression instanceof PropertyName) {
+    PropertyName pn=((PropertyName)expression);
+    String path=pn.getPropertyName();
+    if (path.startsWith("/")) {
+      path=path.substring(1);
+    }
+    if (path.endsWith("/dc:value")) {
+      path=path.substring(0,path.length() - "/dc:value".length());
+    }
+    QName qualified=resolver.parseQName(path,pn.getNamespaceContext());
+    Name name=new NameImpl(qualified);
+    if (!geometryProperties.contains(name)) {
+      throw new ServiceException("Invalid spatial filter, property " + path + " is not a geometry");
+    }
+  }
+}

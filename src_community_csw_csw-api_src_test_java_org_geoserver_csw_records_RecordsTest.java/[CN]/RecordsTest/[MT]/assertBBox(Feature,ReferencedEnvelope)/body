@@ -1,12 +1,11 @@
 {
-  Collection<Property> propertyList=f.getProperties(CSWRecordDescriptor.RECORD_BBOX_NAME);
-  Property[] properties=(Property[])propertyList.toArray(new Property[propertyList.size()]);
-  assertEquals(properties.length,envelopes.length);
+  Property p=f.getProperty(CSWRecordDescriptor.RECORD_BBOX_NAME);
+  MultiPolygon geometry=(MultiPolygon)p.getValue();
+  List<ReferencedEnvelope> featureEnvelopes=(List<ReferencedEnvelope>)p.getUserData().get(CSWRecordDescriptor.ORIGINAL_BBOXES);
   ReferencedEnvelope total=null;
-  for (int i=0; i < properties.length; i++) {
-    Attribute at=(Attribute)properties[i];
-    assertEquals(envelopes[i],at.getValue());
-    ReferencedEnvelope re=envelopes[i].transform(DefaultGeographicCRS.WGS84,true);
+  for (int i=0; i < envelopes.length; i++) {
+    assertEquals(envelopes[i],featureEnvelopes.get(i));
+    ReferencedEnvelope re=envelopes[i].transform(CSWRecordDescriptor.DEFAULT_CRS,true);
     if (total == null) {
       total=re;
     }
@@ -14,6 +13,5 @@
       total.expandToInclude(re);
     }
   }
-  Geometry geometry=(Geometry)f.getDefaultGeometryProperty().getValue();
   assertTrue(total.contains(geometry.getEnvelopeInternal()));
 }
