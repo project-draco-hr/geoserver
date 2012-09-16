@@ -11,7 +11,10 @@
   }
   FeatureCollection records=new RecordsFeatureCollection(root,startIndex);
   if (q.getFilter() != null && q.getFilter() != Filter.INCLUDE) {
-    records=new FilteringFeatureCollection<FeatureType,Feature>(records,q.getFilter());
+    Filter filter=q.getFilter();
+    OWSAnyExpander expander=new OWSAnyExpander();
+    Filter expanded=(Filter)filter.accept(expander,null);
+    records=new FilteringFeatureCollection<FeatureType,Feature>(records,expanded);
   }
   if (q.getSortBy() != null && q.getSortBy().length > 0) {
     Feature[] features=(Feature[])records.toArray(new Feature[records.size()]);

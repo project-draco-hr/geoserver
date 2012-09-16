@@ -2,9 +2,9 @@
   Csw20Factory factory=Csw20Factory.eINSTANCE;
   QueryType query=factory.createQueryType();
   String typeNamesString=(String)kvp.get("typeNames");
-  NamespaceSupport namespaces=(NamespaceSupport)kvp.get("namespaces");
+  NamespaceSupport namespaces=(NamespaceSupport)kvp.get("namespace");
   if (namespaces == null) {
-    namespaces=new NamespaceSupport();
+    namespaces=CSWRecordDescriptor.NAMESPACES;
   }
   List<QName> typeNames=resolver.parseQNames(typeNamesString,namespaces);
   query.setTypeNames(typeNames);
@@ -55,6 +55,17 @@
     }
  else {
       throw new ServiceException("Invalid constraint language: " + language + ", valid values are "+ CQL_TEXT+ " and "+ FILTER,ServiceException.INVALID_PARAMETER_VALUE,CONSTRAINTLANGUAGE);
+    }
+  }
+  if (query.getConstraint() != null && query.getConstraint().getFilter() != null) {
+    for (    QName typeName : typeNames) {
+      RecordDescriptor rd=descriptors.get(typeName);
+      if (rd != null) {
+        Filter filter=query.getConstraint().getFilter();
+        Filter adapted=rd.adaptFilter(filter);
+        query.getConstraint().setFilter(adapted);
+        break;
+      }
     }
   }
   return query;
