@@ -1,0 +1,9 @@
+{
+  String request="csw?service=CSW&version=2.0.2&request=GetRecords&typeNames=csw:Record&resultType=validate";
+  Document d=getAsDOM(request);
+  checkValidationErrors(d,new CSWConfiguration());
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  assertXpathEvaluatesTo("http://localhost/geoserver/" + request,"/csw:Acknowledgement/csw:EchoedRequest/ows:Get/@xlink:href",d);
+  String timeStamp=xpath.evaluate("/csw:Acknowledgement/@timeStamp",d);
+  assertGMLTimestamp(timeStamp);
+}

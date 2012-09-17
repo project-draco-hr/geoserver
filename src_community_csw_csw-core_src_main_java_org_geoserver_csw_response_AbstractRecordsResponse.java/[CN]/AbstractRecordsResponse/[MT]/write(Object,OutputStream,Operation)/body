@@ -1,6 +1,6 @@
 {
   CSWRecordsResult result=(CSWRecordsResult)value;
-  RequestBaseType request=(RequestBaseType)operation.getParameters()[0];
+  GetRecordsType request=(GetRecordsType)operation.getParameters()[0];
   CSWInfo csw=gs.getService(CSWInfo.class);
   if (result.getRecords() != null) {
     FeatureType recordSchema=result.getRecords().getSchema();
@@ -8,5 +8,10 @@
       throw new IllegalArgumentException("Cannot encode this kind of record " + recordSchema.getName() + " into schema "+ schema);
     }
   }
-  transformResponse(output,result,request,csw);
+  if (request.getResultType() == ResultType.VALIDATE) {
+    transformAcknowledgement(output,request,csw);
+  }
+ else {
+    transformResponse(output,result,request,csw);
+  }
 }

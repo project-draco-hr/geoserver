@@ -18,7 +18,12 @@
   getRecords(q,Transaction.AUTO_COMMIT).accepts(new FeatureVisitor(){
     @Override public void visit(    Feature feature){
       ComplexAttribute att=(ComplexAttribute)feature.getProperty(attributeName.getLocalPart());
-      values.add((String)att.getProperty("value").getValue());
+      if (att != null && att.getProperty("value") != null)       try {
+        values.add(new String(((String)att.getProperty("value").getValue()).getBytes("ISO-8859-1"),"UTF-8"));
+      }
+ catch (      UnsupportedEncodingException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 ,null);
