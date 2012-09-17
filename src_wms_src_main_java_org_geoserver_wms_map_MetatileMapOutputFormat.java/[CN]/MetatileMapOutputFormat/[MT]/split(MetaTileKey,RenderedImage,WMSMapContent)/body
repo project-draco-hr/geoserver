@@ -9,6 +9,12 @@
  else   if (metaTile instanceof BufferedImage) {
     type=2;
   }
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer("Metatile type " + type);
+  }
+  if (DEBUG) {
+    writeRenderedImage(metaTile,"metaTile");
+  }
   for (int i=0; i < metaFactor; i++) {
     for (int j=0; j < metaFactor; j++) {
       int x=j * tileSize;
@@ -16,11 +22,15 @@
       RenderedImage tile;
 switch (type) {
 case 0:
-        RenderedOp cropped=GTCropDescriptor.create(metaTile,Float.valueOf(x),Float.valueOf(y),Float.valueOf(tileSize),Float.valueOf(tileSize),NO_CACHE_HINTS);
-      RasterCleaner.addImage(cropped);
-    tile=cropped.getAsBufferedImage();
-  break;
+        if (LOGGER.isLoggable(Level.FINER)) {
+          LOGGER.finer("Metatile split on RenderedImage");
+        }
+      metaTile=PlanarImage.wrapRenderedImage(metaTile);
+    RasterCleaner.addImage(metaTile);
 case 1:
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer("Metatile split on PlanarImage");
+  }
 final PlanarImage pImage=(PlanarImage)metaTile;
 final WritableRaster wTile=WritableRaster.createWritableRaster(pImage.getSampleModel().createCompatibleSampleModel(tileSize,tileSize),new Point(x,y));
 Rectangle sourceArea=new Rectangle(x,y,tileSize,tileSize);
@@ -34,6 +44,9 @@ tile=new BufferedImage(pImage.getColorModel(),wTile,pImage.getColorModel().isAlp
 }
 break;
 case 2:
+if (LOGGER.isLoggable(Level.FINER)) {
+LOGGER.finer("Metatile split on BufferedImage");
+}
 final BufferedImage image=(BufferedImage)metaTile;
 tile=image.getSubimage(x,y,tileSize,tileSize);
 break;
@@ -41,6 +54,9 @@ default :
 throw new IllegalStateException(Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2,"metaTile class",metaTile.getClass().toString()));
 }
 tiles[(i * key.getMetaFactor()) + j]=tile;
+if (DEBUG) {
+writeRenderedImage(tile,"tile" + i + "-"+ j);
+}
 }
 }
 RasterCleaner.addImage(metaTile);

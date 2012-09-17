@@ -1,26 +1,82 @@
 {
+  if (LOGGER.isLoggable(Level.FINER)) {
+    LOGGER.finer("Method forceIndexed8Bitmask called ");
+    LOGGER.finer("invColorMap is null? " + (invColorMap == null));
+    String type="RI";
+    if (originalImage instanceof PlanarImage) {
+      type="PI";
+    }
+ else     if (originalImage instanceof BufferedImage) {
+      type="BI";
+    }
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("OriginalImage type " + type);
+      LOGGER.finer("OriginalImage info: " + originalImage.toString());
+    }
+  }
   final ColorModel cm=originalImage.getColorModel();
   final boolean dataTypeByte=originalImage.getSampleModel().getDataType() == DataBuffer.TYPE_BYTE;
   RenderedImage image;
   if ((cm instanceof IndexColorModel) && dataTypeByte) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("Image has IndexColorModel and type byte!");
+    }
     final IndexColorModel icm=(IndexColorModel)cm;
     if (icm.getTransparency() != Transparency.TRANSLUCENT) {
       image=originalImage;
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Image has Transparency  != TRANSLUCENT, do nothing");
+      }
     }
  else {
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Image has Transparency TRANSLUCENT, forceBitmaskIndexColorModel");
+      }
       image=new ImageWorker(originalImage).forceBitmaskIndexColorModel().getRenderedImage();
+      if (DEBUG) {
+        writeRenderedImage(image,"indexed8translucent");
+      }
     }
   }
  else {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("Image has generic color model and/or type");
+    }
     image=new ImageWorker(originalImage).rescaleToBytes().getRenderedImage();
     if (invColorMap != null) {
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("We have an invColorMap");
+      }
       image=invColorMap.filterRenderedImage(image);
+      if (DEBUG) {
+        writeRenderedImage(image,"invColorMap");
+      }
     }
  else {
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("We do not have an invColorMap");
+      }
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Making sure we start from a componentcolormodel");
+      }
       image=new ImageWorker(image).forceComponentColorModel().getRenderedImage();
+      if (DEBUG) {
+        writeRenderedImage(image,"forceComponentColorModel");
+      }
       int subsx=1 + (int)(Math.log(image.getWidth()) / Math.log(32));
       int subsy=1 + (int)(Math.log(image.getHeight()) / Math.log(32));
-      image=new CustomPaletteBuilder(image,256,subsx,subsy,1).buildPalette().getIndexedImage();
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("CustomPaletteBuilder[subsx=" + subsx + ",subsy="+ subsy+ "]");
+        LOGGER.finer("InputImage is:" + image.toString());
+      }
+      CustomPaletteBuilder cpb=new CustomPaletteBuilder(image,256,subsx,subsy,1).buildPalette();
+      image=cpb.getIndexedImage();
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Computed Palette:" + paletteRepresentation(cpb.getIndexColorModel()));
+      }
+      if (DEBUG) {
+        writeRenderedImage(image,"buildPalette");
+      }
     }
   }
   return image;
