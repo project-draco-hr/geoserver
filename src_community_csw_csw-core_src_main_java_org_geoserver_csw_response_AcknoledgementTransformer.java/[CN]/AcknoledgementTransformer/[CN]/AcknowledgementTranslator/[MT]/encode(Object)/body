@@ -1,0 +1,24 @@
+{
+  AttributesImpl attributes=new AttributesImpl();
+  addAttribute(attributes,"xmlns:csw",CSW.NAMESPACE);
+  addAttribute(attributes,"xmlns:ows",OWS.NAMESPACE);
+  addAttribute(attributes,"xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance");
+  addAttribute(attributes,"xmlns:xlink",XLINK.NAMESPACE);
+  String locationAtt="xsi:schemaLocation";
+  StringBuilder locationDef=new StringBuilder();
+  locationDef.append(CSW.NAMESPACE).append(" ");
+  locationDef.append(cswSchemaLocation("record.xsd"));
+  addAttribute(attributes,locationAtt,locationDef.toString());
+  addAttribute(attributes,"timeStamp",Converters.convert(new Date(),String.class));
+  start("csw:Acknowledgement",attributes);
+  start("csw:EchoedRequest");
+  Request request=Dispatcher.REQUEST.get();
+  if (request.isGet()) {
+    encodeGetEcho(request);
+  }
+ else {
+    encodePostEcho();
+  }
+  end("csw:EchoedRequest");
+  end("csw:Acknowledgement");
+}
