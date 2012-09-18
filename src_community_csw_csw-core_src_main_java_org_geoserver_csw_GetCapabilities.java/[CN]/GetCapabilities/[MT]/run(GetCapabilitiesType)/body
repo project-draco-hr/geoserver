@@ -1,17 +1,17 @@
 {
   SectionsType sections=null;
-  List<String> provided=Collections.singletonList(CatalogCapabilities.getVersion());
+  List<String> provided=Collections.singletonList(CSW_VERSION);
   List<String> accepted=null;
   if (request.getAcceptVersions() != null)   accepted=request.getAcceptVersions().getVersion();
   String version=RequestUtils.getVersionOws11(provided,accepted);
-  if (!CatalogCapabilities.getVersion().equals(version)) {
+  if (!CSW_VERSION.equals(version)) {
     throw new CSWException("Could not understand version:" + version);
   }
   if (request.getSections() != null) {
     sections=request.getSections();
   }
   CapabilitiesType caps=cswf.createCapabilitiesType();
-  caps.setVersion(CatalogCapabilities.getVersion());
+  caps.setVersion(CSW_VERSION);
   if (sections == null || requestedSection("ServiceIdentification",sections)) {
     ServiceIdentificationType si=owsf.createServiceIdentificationType();
     caps.setServiceIdentification(si);
@@ -31,7 +31,7 @@
     CodeType CSW=owsf.createCodeType();
     CSW.setValue("CSW");
     si.setServiceType(CSW);
-    si.setServiceTypeVersion(CatalogCapabilities.getVersion());
+    si.setServiceTypeVersion(CSW_VERSION);
     si.setFees(csw.getFees());
     if (csw.getAccessConstraints() != null) {
       si.setAccessConstraints(csw.getAccessConstraints());
@@ -85,10 +85,10 @@
     if (store.getCapabilities().supportsTransactions()) {
       OperationMetadata_Transaction(owsf,baseUrl,operationsMetadata);
     }
-    for (    DomainType param : CatalogCapabilities.operationParameters.get("OperationsMetadata")) {
+    for (    DomainType param : operationParameters.get("OperationsMetadata")) {
       operationsMetadata.getParameter().add(param);
     }
-    for (    DomainType constraint : CatalogCapabilities.operationConstraints.get("OperationsMetadata")) {
+    for (    DomainType constraint : operationConstraints.get("OperationsMetadata")) {
       operationsMetadata.getConstraint().add(constraint);
     }
   }
