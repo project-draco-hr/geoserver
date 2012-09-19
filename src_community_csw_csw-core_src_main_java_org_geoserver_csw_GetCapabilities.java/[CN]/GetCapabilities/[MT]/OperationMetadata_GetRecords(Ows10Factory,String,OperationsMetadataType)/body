@@ -23,4 +23,24 @@
   for (  DomainType constraint : operationConstraints.get("GetRecords")) {
     getRecords.getConstraint().add(constraint);
   }
+  try {
+    for (    FeatureType ft : store.getRecordSchemas()) {
+      if (ft.equals(CSWRecordDescriptor.RECORD)) {
+        List<Name> queriables=store.getCapabilities().getQueriables(ft.getName());
+        if (queriables != null && queriables.size() > 0) {
+          DomainType dt=owsf.createDomainType();
+          dt.setName("SupportedDublinCoreQueryables");
+          for (          Name q : queriables) {
+            NamespaceSupport nss=CSWRecordDescriptor.NAMESPACES;
+            String prefix=nss.getPrefix(q.getNamespaceURI());
+            dt.getValue().add(prefix + ":" + q.getLocalPart());
+          }
+          getRecords.getConstraint().add(dt);
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Failed to encode getRecords additional queriables",e);
+  }
 }
