@@ -6,14 +6,20 @@
     buff.append(line);
   }
   in.close();
-  MockHttpServletRequest request=createRequest("/j_spring_cas_security_check");
+  MockHttpServletRequest request=createRequest(service);
   request.setMethod("POST");
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   String paramValue=URLDecoder.decode(buff.toString(),"utf-8");
   request.setupAddParameter("logoutRequest",paramValue.substring(paramValue.indexOf("=") + 1));
   try {
-    getProxy().doFilter(request,response,chain);
+    GeoServerSecurityFilterChainProxy proxy=getProxy();
+    System.out.println("SERVCIE: " + service);
+    System.out.println("URL: " + request.getRequestURL().toString());
+    for (    SecurityFilterChain c : proxy.getFilterChains()) {
+      System.out.println(c.toString());
+    }
+    proxy.doFilter(request,response,chain);
   }
  catch (  ServletException e) {
     throw new RuntimeException(e);

@@ -1,0 +1,14 @@
+{
+  final List proxies=XmlUtils.getTextForElements(response,"proxy");
+  final String[] proxiedList=(String[])proxies.toArray(new String[proxies.size()]);
+  if (proxiedList.length > 0) {
+    assertion.getAttributes().put(GeoServerCasConstants.CAS_PROXYLIST_KEY,proxiedList);
+  }
+  if (proxies == null || proxies.isEmpty() || this.acceptAnyProxy) {
+    return;
+  }
+  if (allowedProxyChains.contains(proxiedList)) {
+    return;
+  }
+  throw new InvalidProxyChainTicketValidationException("Invalid proxy chain: " + proxies.toString());
+}

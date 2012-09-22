@@ -1,0 +1,15 @@
+{
+  HttpServletRequest httpReq=(HttpServletRequest)req;
+  HttpServletResponse httpRes=(HttpServletResponse)res;
+  if (httpReq.getSession(false) != null) {
+    SingleSignOutHandler handler=getHandler();
+    if (handler.isLogoutRequest(httpReq)) {
+      handler.destroySession(httpReq);
+      RememberMeServices rms=securityManager.getRememberMeService();
+      Authentication auth=SecurityContextHolder.getContext().getAuthentication();
+      if (auth != null)       ((LogoutHandler)rms).logout(httpReq,httpRes,auth);
+      return;
+    }
+  }
+  super.doFilter(req,res,chain);
+}

@@ -12,10 +12,11 @@
   exConfig.setAccessDeniedErrorPage("/denied.jsp");
   exConfig.setAuthenticationFilterName(casFilterName);
   getSecurityManager().saveFilter(exConfig);
-  prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER,CAS_EXCEPTION_TRANSLATION_FILTER,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
   prepareFilterChain("/j_spring_cas_security_check",GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER,casFilterName);
+  pattern="/web/**";
+  prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER,CAS_EXCEPTION_TRANSLATION_FILTER,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
   SecurityContextHolder.getContext().setAuthentication(null);
-  MockHttpServletRequest request=createRequest("/foo/bar");
+  MockHttpServletRequest request=createRequest("web");
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
@@ -28,8 +29,8 @@
   String password=username;
   CasFormAuthenticationHelper helper=new CasFormAuthenticationHelper(casServerURLPrefix,username,password);
   helper.ssoLogin();
-  String ticket=helper.getServiceTicket(serviceUrl);
   request=createRequest("/j_spring_cas_security_check");
+  String ticket=helper.getServiceTicket(new URL(request.getRequestURL().toString()));
   request.setQueryString("ticket=" + ticket);
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
@@ -57,7 +58,7 @@
   request=createRequest("/j_spring_cas_security_check");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  ticket=helper.getServiceTicket(serviceUrl);
+  ticket=helper.getServiceTicket(new URL(request.getRequestURL().toString()));
   request.setupAddParameter("ticket",ticket);
   request.setQueryString("ticket=" + ticket);
   getProxy().doFilter(request,response,chain);
@@ -79,7 +80,7 @@
   request=createRequest("/j_spring_cas_security_check");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  ticket=helper.getServiceTicket(serviceUrl);
+  ticket=helper.getServiceTicket(new URL(request.getRequestURL().toString()));
   request.setupAddParameter("ticket",ticket);
   request.setQueryString("ticket=" + ticket);
   getProxy().doFilter(request,response,chain);
@@ -103,7 +104,7 @@
   request=createRequest("/j_spring_cas_security_check");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  ticket=helper.getServiceTicket(serviceUrl);
+  ticket=helper.getServiceTicket(new URL(request.getRequestURL().toString()));
   request.setupAddParameter("ticket",ticket);
   request.setQueryString("ticket=" + ticket);
   getProxy().doFilter(request,response,chain);
@@ -132,8 +133,8 @@
   request=createRequest("/j_spring_cas_security_check");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  ticket=helper.getServiceTicket(serviceUrl);
-  ticket+="A";
+  ticket=helper.getServiceTicket(new URL(request.getRequestURL().toString()));
+  ticket+="ST-A";
   request.setupAddParameter("ticket",ticket);
   request.setQueryString("ticket=" + ticket);
   getProxy().doFilter(request,response,chain);
@@ -156,7 +157,7 @@
   request=createRequest("/j_spring_cas_security_check");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  ticket=helper.getServiceTicket(serviceUrl);
+  ticket=helper.getServiceTicket(new URL(request.getRequestURL().toString()));
   request.setupAddParameter("ticket",ticket);
   request.setQueryString("ticket=" + ticket);
   getProxy().doFilter(request,response,chain);
