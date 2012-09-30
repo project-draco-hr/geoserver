@@ -1,147 +1,115 @@
 {
-  SecurityUserGroupServiceConfig config=getUGConfig(XMLUserGroupService.DEFAULT_NAME,MemoryUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME);
-  boolean fail;
-  fail=false;
+  SecurityUserGroupServiceConfig config=createUGConfig(XMLUserGroupService.DEFAULT_NAME,MemoryUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME);
+  SecurityConfigValidator validator=new SecurityConfigValidator(getSecurityManager());
   try {
     config.setName("default2");
     config.setPasswordEncoderName("xxx");
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("invalid config password encoder should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(INVALID_CONFIG_PASSWORD_ENCODER_$1,ex.getId());
     assertEquals("xxx",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  if (getSecurityManager().isStrongEncryptionAvailable() == false) {
+  if (!getSecurityManager().isStrongEncryptionAvailable()) {
     config.setPasswordEncoderName(getStrongPBEPasswordEncoder().getName());
-    fail=false;
     try {
-      getSecurityManager().saveUserGroupService(config);
+      validator.validateAddUserGroupService(config);
+      fail("invalid strong password encoder should fail");
     }
  catch (    SecurityConfigException ex) {
       assertEquals(INVALID_STRONG_PASSWORD_ENCODER,ex.getId());
-      LOGGER.info(ex.getMessage());
-      fail=true;
     }
-    assertTrue(fail);
   }
-  fail=false;
   try {
     config.setName("other");
     config.setPasswordEncoderName("xxx");
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("invalid config password encoder should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(INVALID_CONFIG_PASSWORD_ENCODER_$1,ex.getId());
     assertEquals("xxx",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName("default2");
     config.setPasswordEncoderName("");
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("no password encoder should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_ENCODER_REQUIRED_$1,ex.getId());
     assertEquals("default2",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName("default3");
     config.setPasswordEncoderName(null);
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("no password encoder should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_ENCODER_REQUIRED_$1,ex.getId());
     assertEquals("default3",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
   config.setPasswordEncoderName(getPlainTextPasswordEncoder().getName());
-  fail=false;
   try {
     config.setName("default2");
     config.setPasswordPolicyName("default2");
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("unknown password policy should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_POLICY_NOT_FOUND_$1,ex.getId());
     assertEquals("default2",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName("default3");
     config.setPasswordPolicyName("default2");
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("unkonwn password policy encoder should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_POLICY_NOT_FOUND_$1,ex.getId());
     assertEquals("default2",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName("default2");
     config.setPasswordPolicyName("");
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("no password policy should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_POLICY_REQUIRED_$1,ex.getId());
     assertEquals("default2",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName("default3");
     config.setPasswordPolicyName(null);
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("invalidate password policy should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_POLICY_REQUIRED_$1,ex.getId());
     assertEquals("default3",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName(null);
+    validator.validateRemoveUserGroupService(config);
+    fail("no name should fail");
     getSecurityManager().removeUserGroupService(config);
   }
  catch (  SecurityConfigException ex) {
     assertEquals(NAME_REQUIRED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName(XMLUserGroupService.DEFAULT_NAME);
-    getSecurityManager().removeUserGroupService(config);
+    validator.validateRemoveUserGroupService(config);
+    fail("active user group service should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(USERGROUP_SERVICE_ACTIVE_$2,ex.getId());
     assertEquals(XMLUserGroupService.DEFAULT_NAME,ex.getArgs()[0]);
     assertEquals(GeoServerAuthenticationProvider.DEFAULT_NAME,ex.getArgs()[1]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
 }

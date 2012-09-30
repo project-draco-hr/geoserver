@@ -1,9 +1,20 @@
 {
-  List<WorkspaceInfo> workspaces=getCatalog().getWorkspaces();
-  workspaces.remove(getCatalog().getDefaultWorkspace());
-  WorkspaceInfo newDefault=workspaces.get(0);
-  getCatalog().setDefaultWorkspace(newDefault);
-  NamespaceInfo ns=getCatalog().getDefaultNamespace();
-  assertNotNull(ns);
-  assertEquals(newDefault.getName(),ns.getPrefix());
+  Catalog cat=createMock(Catalog.class);
+  cat.addListener((CatalogListener)anyObject());
+  expectLastCall();
+  NamespaceInfo def=createNiceMock(NamespaceInfo.class);
+  expect(cat.getDefaultNamespace()).andReturn(def);
+  NamespaceInfo ns=createNiceMock(NamespaceInfo.class);
+  expect(cat.getNamespaceByPrefix("abcd")).andReturn(ns);
+  cat.setDefaultNamespace(ns);
+  expectLastCall();
+  WorkspaceInfo ws=createNiceMock(WorkspaceInfo.class);
+  expect(ws.getName()).andReturn("abcd");
+  CatalogModifyEvent e=createNiceMock(CatalogModifyEvent.class);
+  expect(e.getSource()).andReturn(cat).anyTimes();
+  expect(e.getPropertyNames()).andReturn(Arrays.asList("defaultWorkspace"));
+  expect(e.getNewValues()).andReturn((List)Arrays.asList(ws));
+  replay(ns,ws,e,cat);
+  new NamespaceWorkspaceConsistencyListener(cat).handleModifyEvent(e);
+  verify(ns,ws,cat);
 }

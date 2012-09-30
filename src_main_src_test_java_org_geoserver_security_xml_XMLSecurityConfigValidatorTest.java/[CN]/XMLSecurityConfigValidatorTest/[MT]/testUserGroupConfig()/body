@@ -1,119 +1,119 @@
 {
   super.testUserGroupConfig();
-  XMLUserGroupServiceConfig config=(XMLUserGroupServiceConfig)getUGConfig(XMLUserGroupService.DEFAULT_NAME,XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,XMLConstants.FILE_UR);
-  boolean fail;
-  fail=false;
+  XMLUserGroupServiceConfig config=(XMLUserGroupServiceConfig)createUGConfig(XMLUserGroupService.DEFAULT_NAME,XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,XMLConstants.FILE_UR);
+  XMLSecurityConfigValidator validator=new XMLSecurityConfigValidator(getSecurityManager());
   try {
     config.setName("default2");
     config.setCheckInterval(-1l);
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("invalid check interval should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(CHECK_INTERVAL_INVALID,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setCheckInterval(999l);
-    getSecurityManager().saveUserGroupService(config);
+    validator.validateAddUserGroupService(config);
+    fail("invalid check interval should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(CHECK_INTERVAL_INVALID,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
   config.setCheckInterval(0);
-  XMLUserGroupServiceConfig xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test1",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"test1.xml");
+  XMLUserGroupServiceConfig xmlConfig=(XMLUserGroupServiceConfig)createUGConfig("test1",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"test1.xml");
   GeoServerUserGroup group=new GeoServerUserGroup("testgroup");
   try {
-    getSecurityManager().saveUserGroupService(xmlConfig);
-    getSecurityManager().removeUserGroupService(xmlConfig);
+    validator.validateAddUserGroupService(xmlConfig);
   }
  catch (  SecurityConfigException ex) {
-    Assert.fail("Should work");
+    Assert.fail("Should work but got: " + ex.getMessage());
   }
-  fail=false;
-  xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test2",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"test2.xml");
+  XMLUserGroupServiceConfig xmlConfig5=(XMLUserGroupServiceConfig)createUGConfig("test5",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"abc.xml");
   try {
-    getSecurityManager().saveUserGroupService(xmlConfig);
-    GeoServerUserGroupStore store=getSecurityManager().loadUserGroupService("test2").createStore();
-    store.addGroup(group);
-    store.store();
-    getSecurityManager().removeUserGroupService(xmlConfig);
+    validator.validateAddUserGroupService(xmlConfig5);
   }
  catch (  SecurityConfigException ex) {
-    assertEquals(USERGROUP_SERVICE_NOT_EMPTY_$1,ex.getId());
-    assertEquals("test2",ex.getArgs()[0]);
-    fail=true;
+    Assert.fail("Should work but got: " + ex.getMessage());
   }
-  assertTrue(fail);
-  xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test3",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,new File(getSecurityManager().getUserGroupRoot(),"test3.xml").getAbsolutePath());
   try {
-    getSecurityManager().saveUserGroupService(xmlConfig);
-    GeoServerUserGroupStore store=getSecurityManager().loadUserGroupService("test3").createStore();
-    store.addGroup(group);
-    store.store();
-    getSecurityManager().removeUserGroupService(xmlConfig);
-  }
- catch (  SecurityConfigException ex) {
-    Assert.fail("Should work");
-  }
-  if (new XMLSecurityConfigValidator(getSecurityManager()).getTempDir() != null) {
-    String invalidPath="abc" + File.separator + "def.xml";
-    xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test4",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,invalidPath);
-    fail=false;
-    try {
-      getSecurityManager().saveUserGroupService(xmlConfig);
-    }
- catch (    SecurityConfigException ex) {
-      assertEquals(FILE_CREATE_FAILED_$1,ex.getId());
-      assertEquals(invalidPath,ex.getArgs()[0]);
-      fail=true;
-    }
-    assertTrue(fail);
-  }
-  xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("test5",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"abc.xml");
-  try {
-    getSecurityManager().saveUserGroupService(xmlConfig);
-  }
- catch (  SecurityConfigException ex) {
-    Assert.fail("Should work");
-  }
-  fail=false;
-  try {
-    xmlConfig.setFileName("");
-    getSecurityManager().saveUserGroupService(xmlConfig);
+    xmlConfig5.setFileName("");
+    validator.validateAddUserGroupService(xmlConfig5);
+    fail("empty file name should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(FILENAME_REQUIRED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    fail=true;
   }
-  assertTrue(fail);
-  xmlConfig=(XMLUserGroupServiceConfig)getUGConfig("testModify",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"testModify.xml");
+  if (new XMLSecurityConfigValidator(getSecurityManager()).getTempDir() != null) {
+    String invalidPath="abc" + File.separator + "def.xml";
+    XMLUserGroupServiceConfig xmlConfig4=(XMLUserGroupServiceConfig)createUGConfig("test4",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,invalidPath);
+    try {
+      validator.validateAddUserGroupService(xmlConfig4);
+      fail("file creation should fail");
+    }
+ catch (    SecurityConfigException ex) {
+      assertEquals(FILE_CREATE_FAILED_$1,ex.getId());
+      assertEquals(invalidPath,ex.getArgs()[0]);
+    }
+  }
+  GeoServerSecurityManager secMgr=createNiceMock(GeoServerSecurityManager.class);
+  expect(secMgr.listAuthenticationProviders()).andReturn(new TreeSet<String>()).anyTimes();
+  GeoServerUserGroupService ugService1=createNiceMock(GeoServerUserGroupService.class);
+  expect(ugService1.getName()).andReturn("test1").anyTimes();
+  expect(secMgr.loadUserGroupService("test1")).andReturn(ugService1).anyTimes();
+  GeoServerUserGroupService ugService2=createNiceMock(GeoServerUserGroupService.class);
+  expect(ugService2.getName()).andReturn("test2").anyTimes();
+  expect(ugService2.getGroupCount()).andReturn(1).anyTimes();
+  expect(secMgr.loadUserGroupService("test2")).andReturn(ugService2).anyTimes();
+  GeoServerUserGroupService ugServiceModify=createNiceMock(GeoServerUserGroupService.class);
+  expect(ugServiceModify.getName()).andReturn("testModify").anyTimes();
+  expect(secMgr.loadUserGroupService("testModify")).andReturn(ugService2).anyTimes();
+  expect(secMgr.listUserGroupServices()).andReturn(new TreeSet<String>(Arrays.asList("test1","test2","testModify"))).anyTimes();
+  expect(secMgr.loadPasswordEncoder(getPlainTextPasswordEncoder().getName())).andReturn(getPlainTextPasswordEncoder()).anyTimes();
+  expect(secMgr.listPasswordValidators()).andReturn(new TreeSet<String>(Arrays.asList(PasswordValidator.DEFAULT_NAME))).anyTimes();
+  replay(ugService1,ugService2,ugServiceModify,secMgr);
+  validator=new XMLSecurityConfigValidator(secMgr);
   try {
-    getSecurityManager().saveUserGroupService(xmlConfig);
-    xmlConfig.setValidating(true);
-    getSecurityManager().saveUserGroupService(xmlConfig);
+    validator.validateRemoveUserGroupService(xmlConfig);
   }
  catch (  SecurityConfigException ex) {
-    Assert.fail("Should work");
+    fail("Should work but got: " + ex.getMessage());
   }
-  fail=false;
+  xmlConfig=(XMLUserGroupServiceConfig)createUGConfig("test2",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"test2.xml");
+  try {
+    validator.validateRemoveUserGroupService(xmlConfig);
+    fail("non empty ug service should fail");
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(USERGROUP_SERVICE_NOT_EMPTY_$1,ex.getId());
+    assertEquals("test2",ex.getArgs()[0]);
+  }
+  xmlConfig=(XMLUserGroupServiceConfig)createUGConfig("test3",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,new File(getSecurityManager().getUserGroupRoot(),"test3.xml").getAbsolutePath());
+  try {
+    validator.validateRemoveUserGroupService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work but got: " + ex.getMessage());
+  }
+  xmlConfig=(XMLUserGroupServiceConfig)createUGConfig("testModify",XMLUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME,"testModify.xml");
+  XMLUserGroupServiceConfig oldXmlConfig=new XMLUserGroupServiceConfig(xmlConfig);
+  try {
+    xmlConfig.setValidating(true);
+    validator.validateModifiedUserGroupService(xmlConfig,oldXmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    Assert.fail("Should work but got: " + ex.getMessage());
+  }
   try {
     xmlConfig.setFileName("xyz.xml");
-    getSecurityManager().saveUserGroupService(xmlConfig);
+    validator.validateModifiedUserGroupService(xmlConfig,oldXmlConfig);
+    fail("invalid file name change should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(FILENAME_CHANGE_INVALID_$2,ex.getId());
     assertEquals("testModify.xml",ex.getArgs()[0]);
     assertEquals("xyz.xml",ex.getArgs()[1]);
-    fail=true;
   }
-  assertTrue(fail);
 }

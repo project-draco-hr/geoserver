@@ -1,0 +1,32 @@
+{
+  Catalog cat=getCatalog();
+  DataStoreInfo ds=cat.getFactory().createDataStore();
+  ds.setName("foo");
+  ds.setWorkspace(cat.getDefaultWorkspace());
+  Map params=ds.getConnectionParameters();
+  params.put("dbtype","h2");
+  params.put("database",getTestData().getDataDirectoryRoot().getAbsolutePath());
+  cat.add(ds);
+  FeatureSource fs1=getFeatureSource(SystemTestData.FIFTEEN);
+  FeatureSource fs2=getFeatureSource(SystemTestData.SEVEN);
+  DataStore store=(DataStore)ds.getDataStore(null);
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.init((SimpleFeatureType)fs1.getSchema());
+  tb.add("num",Integer.class);
+  tb.remove("boundedBy");
+  store.createSchema(tb.buildFeatureType());
+  tb.init((SimpleFeatureType)fs2.getSchema());
+  tb.add("num",Integer.class);
+  tb.remove("boundedBy");
+  store.createSchema(tb.buildFeatureType());
+  CatalogBuilder cb=new CatalogBuilder(cat);
+  cb.setStore(ds);
+  FeatureStore fs=(FeatureStore)store.getFeatureSource("Fifteen");
+  addFeatures(fs,fs1.getFeatures());
+  FeatureTypeInfo ft=cb.buildFeatureType(fs);
+  cat.add(ft);
+  fs=(FeatureStore)store.getFeatureSource("Seven");
+  addFeatures(fs,fs2.getFeatures());
+  ft=cb.buildFeatureType(fs);
+  cat.add(ft);
+}

@@ -1,0 +1,27 @@
+{
+  Catalog catalog=geoServer.getCatalog();
+  List<XStreamServiceLoader> loaders=GeoServerExtensions.extensions(XStreamServiceLoader.class);
+  for (  XStreamServiceLoader loader : loaders) {
+    if (serviceClass.equals(loader.getServiceClass())) {
+      T created=(T)loader.create(geoServer);
+      T old=null;
+      WorkspaceInfo ws=null;
+      if (workspace != null) {
+        ws=catalog.getWorkspaceByName(workspace);
+        old=geoServer.getService(ws,serviceClass);
+      }
+ else {
+        old=geoServer.getService(serviceClass);
+      }
+      if (old != null) {
+        OwsUtils.copy(created,old,serviceClass);
+        geoServer.save(old);
+      }
+ else {
+        created.setWorkspace(ws);
+        geoServer.add(created);
+      }
+      break;
+    }
+  }
+}

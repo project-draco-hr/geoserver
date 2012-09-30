@@ -1,0 +1,37 @@
+{
+  String dsId=newId();
+  final WorkspaceInfo ws=workspaces.peekLast();
+  final NamespaceInfo ns=namespaces.peekLast();
+  final DataStoreInfo ds=createNiceMock(DataStoreInfo.class);
+  dataStores.add(ds);
+  initStore(ds,DataStoreInfo.class,dsId,name,ws);
+  final File propDir=new File(dataDirRoot,name);
+  HashMap cxParams=new HashMap();
+  cxParams.put(PropertyDataStoreFactory.DIRECTORY.key,propDir);
+  cxParams.put(PropertyDataStoreFactory.NAMESPACE.key,ns.getURI());
+  expect(ds.getConnectionParameters()).andReturn(cxParams).anyTimes();
+  try {
+    expect(ds.getDataStore(null)).andAnswer((IAnswer)new IAnswer<DataAccess>(){
+      @Override public DataAccess answer() throws Throwable {
+        return new PropertyDataStore(propDir,ns.getURI());
+      }
+    }
+).anyTimes();
+  }
+ catch (  IOException e) {
+  }
+  expect(catalog.getDataStore(dsId)).andReturn(ds).anyTimes();
+  expect(catalog.getDataStoreByName(name)).andReturn(ds).anyTimes();
+  expect(catalog.getDataStoreByName(ws.getName(),name)).andReturn(ds).anyTimes();
+  expect(catalog.getDataStoreByName(ws,name)).andReturn(ds).anyTimes();
+  ds.accept((CatalogVisitor)anyObject());
+  expectLastCall().andAnswer(new VisitAnswer(){
+    @Override protected void doVisit(    CatalogVisitor visitor){
+      visitor.visit(ds);
+    }
+  }
+).anyTimes();
+  callback.onStore(name,ds,ws,this);
+  replay(ds);
+  return this;
+}

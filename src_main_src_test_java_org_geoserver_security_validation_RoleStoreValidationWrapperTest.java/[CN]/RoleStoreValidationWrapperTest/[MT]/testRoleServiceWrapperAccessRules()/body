@@ -1,0 +1,33 @@
+{
+  setMockCreator(new MockCreator(){
+    @Override public GeoServerSecurityManager createSecurityManager(    MockTestData testData) throws Exception {
+      GeoServerSecurityManager secMgr=createNiceMock(GeoServerSecurityManager.class);
+      GeoServerRoleStore roleStore=createRoleStore("test",secMgr,"role1","parent1");
+      expect(roleStore.removeRole(new GeoServerRole("unused"))).andReturn(true);
+      DataAccessRule dataAccessRule=createNiceMock(DataAccessRule.class);
+      expect(dataAccessRule.getKey()).andReturn("foo").anyTimes();
+      expect(dataAccessRule.getRoles()).andReturn(new TreeSet<String>(Arrays.asList("role1"))).anyTimes();
+      DataAccessRuleDAO dataAccessDAO=createNiceMock(DataAccessRuleDAO.class);
+      expect(dataAccessDAO.getRulesAssociatedWithRole("role1")).andReturn(new TreeSet<DataAccessRule>(Arrays.asList(dataAccessRule))).anyTimes();
+      expect(dataAccessDAO.getRulesAssociatedWithRole("parent1")).andReturn(new TreeSet<DataAccessRule>()).anyTimes();
+      expect(secMgr.getDataAccessRuleDAO()).andReturn(dataAccessDAO).anyTimes();
+      ServiceAccessRuleDAO serviceAccessDAO=createNiceMock(ServiceAccessRuleDAO.class);
+      expect(serviceAccessDAO.getRulesAssociatedWithRole((String)anyObject())).andReturn(new TreeSet<ServiceAccessRule>()).anyTimes();
+      expect(secMgr.getServiceAccessRuleDAO()).andReturn(serviceAccessDAO).anyTimes();
+      replay(dataAccessRule,dataAccessDAO,serviceAccessDAO,roleStore,secMgr);
+      return secMgr;
+    }
+  }
+);
+  RoleStoreValidationWrapper store=new RoleStoreValidationWrapper((GeoServerRoleStore)getSecurityManager().loadRoleService("test"),true);
+  GeoServerRole role=store.getRoleByName("role1");
+  GeoServerRole parent=store.getRoleByName("parent1");
+  store.removeRole(parent);
+  try {
+    store.removeRole(role);
+    fail("used role should throw exception");
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,ROLE_IN_USE_$2,role.getAuthority(),"foo");
+  }
+}

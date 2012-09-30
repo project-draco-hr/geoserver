@@ -1,0 +1,37 @@
+{
+  String wsId=newId();
+  String nsId=newId();
+  final WorkspaceInfo ws=createNiceMock(WorkspaceInfo.class);
+  workspaces.add(ws);
+  expect(ws.getId()).andReturn(wsId).anyTimes();
+  expect(ws.getName()).andReturn(name).anyTimes();
+  expect(ws.getMetadata()).andReturn(new MetadataMap()).anyTimes();
+  expect(catalog.getWorkspace(wsId)).andReturn(ws).anyTimes();
+  expect(catalog.getWorkspaceByName(name)).andReturn(ws).anyTimes();
+  final NamespaceInfo ns=createNiceMock(NamespaceInfo.class);
+  namespaces.add(ns);
+  expect(ns.getId()).andReturn(nsId).anyTimes();
+  expect(ns.getName()).andReturn(name).anyTimes();
+  expect(ns.getPrefix()).andReturn(name).anyTimes();
+  expect(ns.getMetadata()).andReturn(new MetadataMap()).anyTimes();
+  expect(catalog.getNamespace(nsId)).andReturn(ns).anyTimes();
+  expect(catalog.getNamespaceByPrefix(name)).andReturn(ns).anyTimes();
+  expect(catalog.getNamespaceByURI(uri)).andReturn(ns).anyTimes();
+  ws.accept((CatalogVisitor)anyObject());
+  expectLastCall().andAnswer(new VisitAnswer(){
+    @Override protected void doVisit(    CatalogVisitor visitor){
+      visitor.visit(ws);
+    }
+  }
+).anyTimes();
+  ns.accept((CatalogVisitor)anyObject());
+  expectLastCall().andAnswer(new VisitAnswer(){
+    @Override protected void doVisit(    CatalogVisitor visitor){
+      visitor.visit(ns);
+    }
+  }
+).anyTimes();
+  callback.onWorkspace(name,ws,this);
+  replay(ws,ns);
+  return this;
+}

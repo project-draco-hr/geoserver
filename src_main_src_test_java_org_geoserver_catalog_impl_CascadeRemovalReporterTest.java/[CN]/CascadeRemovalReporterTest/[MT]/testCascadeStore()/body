@@ -1,4 +1,6 @@
 {
+  Catalog catalog=getCatalog();
+  CascadeRemovalReporter visitor=new CascadeRemovalReporter(catalog);
   String citeStore=MockData.CITE_PREFIX;
   StoreInfo store=catalog.getStoreByName(citeStore,StoreInfo.class);
   String buildings=getLayerId(MockData.BUILDINGS);
@@ -7,7 +9,7 @@
   ResourceInfo br=catalog.getResourceByName(buildings,ResourceInfo.class);
   LayerInfo ll=catalog.getLayerByName(lakes);
   ResourceInfo lr=catalog.getResourceByName(lakes,ResourceInfo.class);
-  store.accept(visitor);
+  visitor.visit((DataStoreInfo)store);
   assertEquals(store,visitor.getObjects(StoreInfo.class,ModificationType.DELETE).get(0));
   List<LayerInfo> layers=visitor.getObjects(LayerInfo.class,ModificationType.DELETE);
   assertTrue(layers.contains(bl));

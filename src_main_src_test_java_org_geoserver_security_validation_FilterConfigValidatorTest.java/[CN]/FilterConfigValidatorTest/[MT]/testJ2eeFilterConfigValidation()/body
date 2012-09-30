@@ -3,18 +3,16 @@
   config.setClassName(GeoServerJ2eeAuthenticationFilter.class.getName());
   config.setName("testJ2ee");
   config.setRoleServiceName("blabla");
-  boolean failed=false;
+  FilterConfigValidator validator=new FilterConfigValidator(getSecurityManager());
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("unknown role service should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.UNKNOWN_ROLE_SERVICE,ex.getId());
     assertEquals(1,ex.getArgs().length);
     assertEquals("blabla",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setRoleServiceName(XMLRoleService.DEFAULT_NAME);
-  getSecurityManager().saveFilter(config);
+  validator.validateFilterConfig(config);
 }

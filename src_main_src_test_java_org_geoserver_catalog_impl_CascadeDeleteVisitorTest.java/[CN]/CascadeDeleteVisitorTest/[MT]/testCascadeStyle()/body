@@ -1,16 +1,31 @@
 {
-  String styleName=MockData.LAKES.getLocalPart();
-  String layerName=getLayerId(MockData.LAKES);
-  StyleInfo style=catalog.getStyleByName(styleName);
-  assertNotNull(style);
-  LayerInfo buildings=catalog.getLayerByName(getLayerId(MockData.BUILDINGS));
-  buildings.getStyles().add(style);
+  Catalog catalog=createMock(Catalog.class);
+  String styleName=LAKES.getLocalPart();
+  StyleInfo style=createMock(StyleInfo.class);
+  expect(style.getName()).andReturn(styleName).anyTimes();
+  expect(catalog.getStyleByName(styleName)).andReturn(style).anyTimes();
+  LayerInfo lakes=createMock(LayerInfo.class);
+  expect(lakes.getDefaultStyle()).andReturn(style).anyTimes();
+  expect(lakes.getStyles()).andReturn(new HashSet()).anyTimes();
+  FeatureTypeInfo lakesFt=createNiceMock(FeatureTypeInfo.class);
+  expect(lakes.getResource()).andReturn(lakesFt).anyTimes();
+  lakes.setDefaultStyle((StyleInfo)anyObject());
+  expectLastCall();
+  catalog.save(lakes);
+  expectLastCall();
+  LayerInfo buildings=createMock(LayerInfo.class);
+  expect(buildings.getDefaultStyle()).andReturn(null).anyTimes();
+  expect(buildings.getStyles()).andReturn(new HashSet<StyleInfo>(Arrays.asList(style))).anyTimes();
   catalog.save(buildings);
-  buildings=catalog.getLayerByName(getLayerId(MockData.BUILDINGS));
-  assertTrue(buildings.getStyles().contains(style));
-  style.accept(visitor);
-  assertNull(catalog.getStyleByName(styleName));
-  assertEquals(StyleInfo.DEFAULT_POLYGON,catalog.getLayerByName(layerName).getDefaultStyle().getName());
-  buildings=catalog.getLayerByName(getLayerId(MockData.BUILDINGS));
-  assertFalse(buildings.getStyles().contains(style));
+  expectLastCall();
+  expect(catalog.getLayers()).andReturn(Arrays.asList(lakes,buildings)).anyTimes();
+  expect(catalog.getLayerGroups()).andReturn(new ArrayList());
+  catalog.remove(style);
+  expectLastCall();
+  replay(style,lakesFt,lakes,buildings,catalog);
+  new CascadeDeleteVisitor(catalog).visit(style);
+  for (  LayerInfo l : catalog.getLayers()) {
+    verify(l);
+  }
+  verify(catalog);
 }

@@ -1,0 +1,13 @@
+{
+  super.onSetUp(testData);
+  addUser("cite_readfilter","cite",null,Arrays.asList("ROLE_DUMMY"));
+  addUser("cite_readatts","cite",null,Arrays.asList("ROLE_DUMMY"));
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  TestResourceAccessManager tam=(TestResourceAccessManager)applicationContext.getBean("testResourceAccessManager");
+  Catalog catalog=getCatalog();
+  FeatureTypeInfo gu=catalog.getFeatureTypeByName("gsml:GeologicUnit");
+  Filter f=ff.equal(ff.property("purpose"),ff.literal("instance"),false);
+  tam.putLimits("cite_readfilter",gu,new VectorAccessLimits(CatalogMode.HIDE,null,f,null,null));
+  List<PropertyName> readAtts=Arrays.asList(ff.property("composition"),ff.property("outcropCharacter"));
+  tam.putLimits("cite_readatts",gu,new VectorAccessLimits(CatalogMode.HIDE,readAtts,f,null,null));
+}

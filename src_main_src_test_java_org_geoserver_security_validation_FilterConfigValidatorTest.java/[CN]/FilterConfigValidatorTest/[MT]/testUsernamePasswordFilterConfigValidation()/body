@@ -2,30 +2,24 @@
   UsernamePasswordAuthenticationFilterConfig config=new UsernamePasswordAuthenticationFilterConfig();
   config.setClassName(GeoServerUserNamePasswordAuthenticationFilter.class.getName());
   config.setName("testUsernamePassword");
-  boolean failed=false;
+  FilterConfigValidator validator=new FilterConfigValidator(getSecurityManager());
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("no user should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.USER_PARAMETER_NAME_NEEDED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setUsernameParameterName("user");
-  failed=false;
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("no password should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.PASSWORD_PARAMETER_NAME_NEEDED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setPasswordParameterName("password");
-  getSecurityManager().saveFilter(config);
+  validator.validateFilterConfig(config);
 }

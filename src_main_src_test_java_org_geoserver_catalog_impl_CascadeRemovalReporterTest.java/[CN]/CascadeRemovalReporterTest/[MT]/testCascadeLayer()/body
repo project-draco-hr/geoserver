@@ -1,8 +1,10 @@
 {
+  Catalog catalog=getCatalog();
+  CascadeRemovalReporter visitor=new CascadeRemovalReporter(catalog);
   String name=getLayerId(MockData.LAKES);
   LayerInfo layer=catalog.getLayerByName(name);
   assertNotNull(layer);
-  layer.accept(visitor);
+  visitor.visit(layer);
   assertEquals(3,visitor.getObjects(null).size());
   assertEquals(catalog.getLayerByName(name),visitor.getObjects(LayerInfo.class,ModificationType.DELETE).get(0));
   assertEquals(catalog.getResourceByName(name,ResourceInfo.class),visitor.getObjects(ResourceInfo.class,ModificationType.DELETE).get(0));

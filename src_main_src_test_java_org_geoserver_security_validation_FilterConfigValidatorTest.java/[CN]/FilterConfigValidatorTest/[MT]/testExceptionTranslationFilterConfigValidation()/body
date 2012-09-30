@@ -2,57 +2,46 @@
   ExceptionTranslationFilterConfig config=new ExceptionTranslationFilterConfig();
   config.setClassName(GeoServerExceptionTranslationFilter.class.getName());
   config.setName("testEx");
-  boolean failed=false;
+  FilterConfigValidator validator=new FilterConfigValidator(getSecurityManager());
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("no access denied page should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.ACCESS_DENIED_PAGE_NEEDED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setAccessDeniedErrorPage("blabla");
   config.setAuthenticationFilterName("unknown");
-  failed=false;
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("no access denied page prefix should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.ACCESS_DENIED_PAGE_PREFIX,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setAccessDeniedErrorPage("/denied.jsp");
   config.setAuthenticationFilterName("unknown");
-  failed=false;
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("invalid entry point should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.INVALID_ENTRY_POINT,ex.getId());
     assertEquals(1,ex.getArgs().length);
     assertEquals("unknown",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setAuthenticationFilterName(GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
-  failed=false;
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("no auth entry point should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.NO_AUTH_ENTRY_POINT,ex.getId());
     assertEquals(1,ex.getArgs().length);
     assertEquals(GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR,ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setAuthenticationFilterName(null);
-  getSecurityManager().saveFilter(config);
+  validator.validateFilterConfig(config);
 }

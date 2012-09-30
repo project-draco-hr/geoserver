@@ -1,4 +1,14 @@
 {
+  if (securityManager.listUserGroupServices().contains(serviceName)) {
+    GeoServerUserGroupService service=securityManager.loadUserGroupService(serviceName);
+    if (service.canCreateStore()) {
+      GeoServerUserGroupStore store=service.createStore();
+      store.clear();
+      store.store();
+    }
+    SecurityUserGroupServiceConfig old=securityManager.loadUserGroupServiceConfig(serviceName);
+    securityManager.removeUserGroupService(old);
+  }
   securityManager.saveUserGroupService(createConfigObjectH2(serviceName,securityManager));
   return securityManager.loadUserGroupService(serviceName);
 }

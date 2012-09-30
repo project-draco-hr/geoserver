@@ -1,0 +1,23 @@
+{
+  File mosaic=new File("./target/smallMosaic");
+  try {
+    createTimeMosaic(mosaic,4);
+    Catalog cat=getCatalog();
+    CatalogBuilder cb=new CatalogBuilder(cat);
+    CoverageStoreInfo store=cb.buildCoverageStore("smallMosaic");
+    store.setURL(mosaic.getAbsolutePath());
+    store.setType("ImageMosaic");
+    cat.add(store);
+    cb.setStore(store);
+    CoverageInfo ci=cb.buildCoverage();
+    cat.add(ci);
+    assertEquals(String.valueOf(-1),ci.getParameters().get(ImageMosaicFormat.MAX_ALLOWED_TILES.getName().toString()));
+    assertEquals("",ci.getParameters().get(ImageMosaicFormat.FILTER.getName().toString()));
+    cat.getResourcePool().dispose();
+  }
+  finally {
+    if (mosaic.exists() && mosaic.isDirectory()) {
+      FileUtils.deleteDirectory(mosaic);
+    }
+  }
+}

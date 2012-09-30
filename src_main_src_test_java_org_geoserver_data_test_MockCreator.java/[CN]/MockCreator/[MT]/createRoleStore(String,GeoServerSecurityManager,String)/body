@@ -1,0 +1,14 @@
+{
+  GeoServerRoleStore roleStore=createNiceMock(GeoServerRoleStore.class);
+  expect(roleStore.getSecurityManager()).andReturn(secMgr).anyTimes();
+  expect(roleStore.getName()).andReturn(name).anyTimes();
+  for (  String roleName : roleNames) {
+    expect(roleStore.getRoleByName(roleName)).andReturn(new GeoServerRole(roleName)).anyTimes();
+  }
+  for (  GeoServerRole role : GeoServerRole.SystemRoles) {
+    String roleName=role.getAuthority();
+    expect(roleStore.createRoleObject(roleName)).andReturn(new GeoServerRole(roleName)).anyTimes();
+  }
+  expect(secMgr.loadRoleService(name)).andReturn(roleStore).anyTimes();
+  return roleStore;
+}

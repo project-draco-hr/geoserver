@@ -1,163 +1,120 @@
 {
-  boolean failed;
-  RoleStoreValidationWrapper store=createStore("test",null,"");
-  RoleStoreValidationWrapper store1=createXMLStore("test1",null,"");
-  failed=false;
+  setMockCreator(new MockCreator(){
+    @Override public GeoServerSecurityManager createSecurityManager(    MockTestData testData) throws Exception {
+      GeoServerSecurityManager secMgr=createMock(GeoServerSecurityManager.class);
+      GeoServerRoleStore roleStore1=createRoleStore("test",secMgr,"role1","parent1");
+      addRolesToCreate(roleStore1,"","duplicated","xxx");
+      GeoServerRoleStore roleStore2=createRoleStore("test1",secMgr,"duplicated");
+      expect(secMgr.listRoleServices()).andReturn(new TreeSet<String>(Arrays.asList("test","test1"))).anyTimes();
+      replay(roleStore1,roleStore2,secMgr);
+      return secMgr;
+    }
+  }
+);
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  GeoServerRoleStore roleStore=(GeoServerRoleStore)secMgr.loadRoleService("test");
+  RoleStoreValidationWrapper store=new RoleStoreValidationWrapper(roleStore);
   try {
     store.addRole(store.createRoleObject(""));
+    fail("empty role name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,NAME_REQUIRED);
-    failed=true;
   }
-  assertTrue(failed);
-  store.addRole(store.createRoleObject("role1"));
-  assertEquals(1,store.getRoles().size());
-  assertEquals(1,store.getRoleCount());
+  try {
+    store.addRole(store.createRoleObject(""));
+    fail("empty role name should throw exception");
+  }
+ catch (  IOException ex) {
+    assertSecurityException(ex,NAME_REQUIRED);
+  }
   GeoServerRole role1=store.getRoleByName("role1");
-  failed=false;
   try {
     store.addRole(role1);
+    fail("already existing role name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,ALREADY_EXISTS,"role1");
-    failed=true;
   }
-  assertTrue(failed);
   for (  GeoServerRole srole : GeoServerRole.SystemRoles) {
-    failed=false;
     try {
       store.addRole(store.createRoleObject(srole.getAuthority()));
+      fail("reserved role name should throw exception");
     }
  catch (    IOException ex) {
       assertSecurityException(ex,RESERVED_NAME,srole.getAuthority());
-      failed=true;
     }
-    assertTrue(failed);
   }
-  store1.addRole(store.createRoleObject("duplicated"));
-  store1.store();
-  failed=false;
+  GeoServerRoleStore roleStore1=(GeoServerRoleStore)secMgr.loadRoleService("test1");
+  RoleStoreValidationWrapper store1=new RoleStoreValidationWrapper(roleStore1);
   try {
     store.addRole(store.createRoleObject("duplicated"));
+    fail("reserved role name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,ALREADY_EXISTS_IN,"duplicated",store1.getName());
-    failed=true;
   }
-  assertTrue(failed);
-  failed=false;
   try {
-    store.addRole(store.createRoleObject(GeoServerRole.AUTHENTICATED_ROLE.getAuthority()));
+    String authRole=GeoServerRole.AUTHENTICATED_ROLE.getAuthority();
+    store.addRole(store.createRoleObject(authRole));
+    fail(authRole + " is reserved and should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,RESERVED_NAME,GeoServerRole.AUTHENTICATED_ROLE.getAuthority());
-    failed=true;
   }
-  assertTrue(failed);
-  failed=false;
   try {
     store.updateRole(store.createRoleObject("xxx"));
+    fail("update role object that does not exist should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,NOT_FOUND,"xxx");
-    failed=true;
   }
-  assertTrue(failed);
-  store.addRole(store.createRoleObject("parent1"));
-  GeoServerRole parent1=store.getRoleByName("parent1");
-  assertNotNull(parent1);
-  failed=false;
   try {
     store.setParentRole(role1,store.createRoleObject("xxx"));
   }
  catch (  IOException ex) {
     assertSecurityException(ex,NOT_FOUND,"xxx");
-    failed=true;
   }
-  assertTrue(failed);
-  store.setParentRole(role1,parent1);
-  store.setParentRole(role1,null);
-  failed=false;
   try {
     store.associateRoleToGroup(role1,"");
+    fail("empty group name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,GROUPNAME_REQUIRED);
-    failed=true;
   }
-  assertTrue(failed);
-  failed=false;
   try {
     store.disAssociateRoleFromGroup(role1,"");
+    fail("empty group name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,GROUPNAME_REQUIRED);
-    failed=true;
   }
-  assertTrue(failed);
-  failed=false;
   try {
     store.associateRoleToUser(role1,"");
+    fail("empty user name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,USERNAME_REQUIRED);
-    failed=true;
   }
-  assertTrue(failed);
-  failed=false;
   try {
     store.disAssociateRoleFromUser(role1,"");
+    fail("empty user name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,USERNAME_REQUIRED);
-    failed=true;
   }
-  assertTrue(failed);
-  store.associateRoleToGroup(role1,"group1");
-  store.associateRoleToUser(role1,"user1");
-  failed=false;
   try {
     store.getRolesForUser(null);
+    fail("null user name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,USERNAME_REQUIRED);
-    failed=true;
   }
-  assertTrue(failed);
-  failed=false;
   try {
     store.getRolesForGroup(null);
+    fail("null group name should throw exception");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,GROUPNAME_REQUIRED);
-    failed=true;
   }
-  assertTrue(failed);
-  assertEquals(1,store.getRolesForGroup("group1").size());
-  assertEquals(1,store.getRolesForUser("user1").size());
-  store.disAssociateRoleFromGroup(role1,"group1");
-  store.disAssociateRoleFromUser(role1,"user1");
-  DataAccessRuleDAO dao=DataAccessRuleDAO.get();
-  DataAccessRule newRule=new DataAccessRule();
-  newRule.setAccessMode(AccessMode.READ);
-  newRule.setWorkspace(DataAccessRule.ANY);
-  newRule.setLayer(DataAccessRule.ANY);
-  newRule.getRoles().add(role1.getAuthority());
-  dao.addRule(newRule);
-  dao.storeRules();
-  RoleStoreValidationWrapper store2=new RoleStoreValidationWrapper((GeoServerRoleStore)store.getWrappedService(),true);
-  failed=false;
-  try {
-    store2.removeRole(parent1);
-    store2.removeRole(role1);
-  }
- catch (  IOException ex) {
-    assertSecurityException(ex,ROLE_IN_USE_$2,role1.getAuthority(),newRule.getKey());
-    failed=true;
-  }
-  assertTrue(failed);
-  dao.removeRule(newRule);
-  dao.storeRules();
-  store2.removeRole(role1);
 }

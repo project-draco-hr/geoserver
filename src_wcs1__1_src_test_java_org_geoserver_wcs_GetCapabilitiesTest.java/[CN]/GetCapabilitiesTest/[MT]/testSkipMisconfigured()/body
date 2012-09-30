@@ -3,10 +3,17 @@
   global.setResourceErrorHandling(ResourceErrorHandling.SKIP_MISCONFIGURED_LAYERS);
   getGeoServer().save(global);
   CoverageInfo cvInfo=getCatalog().getCoverageByName(getLayerId(MockData.TASMANIA_DEM));
-  cvInfo.setLatLonBoundingBox(null);
-  getCatalog().save(cvInfo);
-  Document dom=getAsDOM(BASEPATH + "?request=GetCapabilities&service=WCS&version=1.1.1");
-  checkValidationErrors(dom,WCS11_SCHEMA);
-  int count=getCatalog().getCoverages().size();
-  assertEquals(count - 1,dom.getElementsByTagName("wcs:CoverageSummary").getLength());
+  ReferencedEnvelope BBox=cvInfo.getLatLonBoundingBox();
+  try {
+    cvInfo.setLatLonBoundingBox(null);
+    getCatalog().save(cvInfo);
+    Document dom=getAsDOM(BASEPATH + "?request=GetCapabilities&service=WCS&version=1.1.1");
+    checkValidationErrors(dom,WCS11_SCHEMA);
+    int count=getCatalog().getCoverages().size();
+    assertEquals(count - 2,dom.getElementsByTagName("wcs:CoverageSummary").getLength());
+  }
+  finally {
+    cvInfo.setLatLonBoundingBox(BBox);
+    getCatalog().save(cvInfo);
+  }
 }

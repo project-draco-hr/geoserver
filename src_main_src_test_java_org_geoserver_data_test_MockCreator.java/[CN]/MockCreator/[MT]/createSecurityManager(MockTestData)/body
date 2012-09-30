@@ -1,0 +1,124 @@
+{
+  final GeoServerSecurityManager secMgr=createNiceMock(GeoServerSecurityManager.class);
+  ApplicationContext appContext=createNiceMock(ApplicationContext.class);
+  expect(secMgr.getApplicationContext()).andReturn(appContext).anyTimes();
+  MasterPasswordProvider masterPasswdProvider=createNiceMock(MasterPasswordProvider.class);
+  expect(masterPasswdProvider.getName()).andReturn(MasterPasswordProvider.DEFAULT_NAME).anyTimes();
+  expect(secMgr.listMasterPasswordProviders()).andReturn(new TreeSet<String>(Arrays.asList(MasterPasswordProvider.DEFAULT_NAME))).anyTimes();
+  PasswordValidator passwdValidator=createNiceMock(PasswordValidator.class);
+  expect(secMgr.loadPasswordValidator(PasswordValidator.DEFAULT_NAME)).andReturn(passwdValidator).anyTimes();
+  PasswordPolicyConfig masterPasswdPolicyConfig=createNiceMock(PasswordPolicyConfig.class);
+  expect(masterPasswdPolicyConfig.getMinLength()).andReturn(8).anyTimes();
+  expect(masterPasswdPolicyConfig.getMaxLength()).andReturn(-1).anyTimes();
+  PasswordValidatorImpl masterPasswdValidator=new PasswordValidatorImpl(secMgr);
+  masterPasswdValidator.setConfig(masterPasswdPolicyConfig);
+  expect(secMgr.loadPasswordValidator(PasswordValidator.MASTERPASSWORD_NAME)).andReturn(masterPasswdValidator).anyTimes();
+  expect(secMgr.listPasswordValidators()).andReturn(new TreeSet<String>(Arrays.asList(PasswordValidator.DEFAULT_NAME,PasswordValidator.MASTERPASSWORD_NAME))).anyTimes();
+  ;
+  GeoServerUserGroupStore ugStore=createUserGroupStore(XMLUserGroupService.DEFAULT_NAME,secMgr);
+  expect(secMgr.listUserGroupServices()).andReturn(new TreeSet<String>(Arrays.asList(XMLUserGroupService.DEFAULT_NAME))).anyTimes();
+  SecurityUserGroupServiceConfig ugConfig=createNiceMock(SecurityUserGroupServiceConfig.class);
+  expect(ugConfig.getName()).andReturn(XMLUserGroupService.DEFAULT_NAME).anyTimes();
+  expect(ugConfig.getPasswordPolicyName()).andReturn(PasswordValidator.DEFAULT_NAME).anyTimes();
+  expect(secMgr.loadUserGroupServiceConfig(XMLUserGroupService.DEFAULT_NAME)).andReturn(ugConfig).anyTimes();
+  GeoServerRoleStore roleStore=createRoleStore(XMLRoleService.DEFAULT_NAME,secMgr);
+  expect(secMgr.listRoleServices()).andReturn(new TreeSet<String>(Arrays.asList(XMLRoleService.DEFAULT_NAME))).anyTimes();
+  expect(secMgr.getActiveRoleService()).andReturn(roleStore).anyTimes();
+  SecurityAuthProviderConfig authProviderConfig=createNiceMock(SecurityAuthProviderConfig.class);
+  expect(authProviderConfig.getName()).andReturn(GeoServerAuthenticationProvider.DEFAULT_NAME).anyTimes();
+  expect(authProviderConfig.getUserGroupServiceName()).andReturn(XMLUserGroupService.DEFAULT_NAME).anyTimes();
+  expect(secMgr.loadAuthenticationProviderConfig(GeoServerAuthenticationProvider.DEFAULT_NAME)).andReturn(authProviderConfig).anyTimes();
+  GeoServerAuthenticationProvider authProvider=createNiceMock(GeoServerAuthenticationProvider.class);
+  expect(authProvider.getName()).andReturn(GeoServerAuthenticationProvider.DEFAULT_NAME).anyTimes();
+  expect(secMgr.loadAuthenticationProvider(GeoServerAuthenticationProvider.DEFAULT_NAME)).andReturn(authProvider).anyTimes();
+  expect(secMgr.listAuthenticationProviders()).andReturn(new TreeSet<String>(Arrays.asList(GeoServerAuthenticationProvider.DEFAULT_NAME))).anyTimes();
+  expect(secMgr.getAuthenticationProviders()).andReturn(Arrays.asList(authProvider)).anyTimes();
+  SecurityFilterConfig filterConfig=createNiceMock(SecurityFilterConfig.class);
+  expect(secMgr.loadFilterConfig(GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR)).andReturn(filterConfig).anyTimes();
+  expect(secMgr.loadPasswordEncoder(GeoServerEmptyPasswordEncoder.class)).andAnswer(new IAnswer<GeoServerEmptyPasswordEncoder>(){
+    @Override public GeoServerEmptyPasswordEncoder answer() throws Throwable {
+      return createEmptyPasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder("emptyPasswordEncoder")).andAnswer(new IAnswer<GeoServerPasswordEncoder>(){
+    @Override public GeoServerPasswordEncoder answer() throws Throwable {
+      return createEmptyPasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder(GeoServerPlainTextPasswordEncoder.class)).andAnswer(new IAnswer<GeoServerPlainTextPasswordEncoder>(){
+    @Override public GeoServerPlainTextPasswordEncoder answer() throws Throwable {
+      return createPlainTextPasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder("plainTextPasswordEncoder")).andAnswer(new IAnswer<GeoServerPasswordEncoder>(){
+    @Override public GeoServerPasswordEncoder answer() throws Throwable {
+      return createPlainTextPasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder(GeoServerPBEPasswordEncoder.class,null,false)).andAnswer(new IAnswer<GeoServerPBEPasswordEncoder>(){
+    @Override public GeoServerPBEPasswordEncoder answer() throws Throwable {
+      return createPbePasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder("pbePasswordEncoder")).andAnswer(new IAnswer<GeoServerPasswordEncoder>(){
+    @Override public GeoServerPasswordEncoder answer() throws Throwable {
+      return createPbePasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder(GeoServerPBEPasswordEncoder.class,null,true)).andAnswer(new IAnswer<GeoServerPBEPasswordEncoder>(){
+    @Override public GeoServerPBEPasswordEncoder answer() throws Throwable {
+      return createStrongPbePasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder("strongPbePasswordEncoder")).andAnswer(new IAnswer<GeoServerPasswordEncoder>(){
+    @Override public GeoServerPasswordEncoder answer() throws Throwable {
+      return createStrongPbePasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder(GeoServerDigestPasswordEncoder.class,null,true)).andAnswer(new IAnswer<GeoServerDigestPasswordEncoder>(){
+    @Override public GeoServerDigestPasswordEncoder answer() throws Throwable {
+      return createDigestPasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder(GeoServerDigestPasswordEncoder.class)).andAnswer(new IAnswer<GeoServerDigestPasswordEncoder>(){
+    @Override public GeoServerDigestPasswordEncoder answer() throws Throwable {
+      return createDigestPasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoder("digestPasswordEncoder")).andAnswer(new IAnswer<GeoServerPasswordEncoder>(){
+    @Override public GeoServerPasswordEncoder answer() throws Throwable {
+      return createDigestPasswordEncoder(secMgr);
+    }
+  }
+).anyTimes();
+  expect(secMgr.loadPasswordEncoders()).andAnswer(new IAnswer<List<GeoServerPasswordEncoder>>(){
+    @Override public List<GeoServerPasswordEncoder> answer() throws Throwable {
+      return (List)Arrays.asList(createEmptyPasswordEncoder(secMgr),createPlainTextPasswordEncoder(secMgr),createPbePasswordEncoder(secMgr),createStrongPbePasswordEncoder(secMgr),createDigestPasswordEncoder(secMgr));
+    }
+  }
+).anyTimes();
+  KeyStoreProvider keyStoreProvider=createNiceMock(KeyStoreProvider.class);
+  expect(keyStoreProvider.isKeyStorePassword(aryEq("geoserver".toCharArray()))).andReturn(true).anyTimes();
+  expect(keyStoreProvider.containsAlias(KeyStoreProviderImpl.CONFIGPASSWORDKEY)).andReturn(true).anyTimes();
+  ;
+  expect(keyStoreProvider.getSecretKey(KeyStoreProviderImpl.CONFIGPASSWORDKEY)).andReturn(new SecretKeySpec(toBytes("geoserver".toCharArray()),"PBE")).anyTimes();
+  expect(keyStoreProvider.hasUserGroupKey(XMLUserGroupService.DEFAULT_NAME)).andReturn(true).anyTimes();
+  String alias="ugServiceAlias";
+  expect(keyStoreProvider.aliasForGroupService(XMLUserGroupService.DEFAULT_NAME)).andReturn(alias).anyTimes();
+  expect(keyStoreProvider.containsAlias(alias)).andReturn(true).anyTimes();
+  ;
+  expect(keyStoreProvider.getSecretKey(alias)).andReturn(new SecretKeySpec(toBytes("geoserver".toCharArray()),"PBE")).anyTimes();
+  expect(secMgr.getKeyStoreProvider()).andReturn(keyStoreProvider).anyTimes();
+  replay(keyStoreProvider,masterPasswdProvider,ugStore,ugConfig,roleStore,authProvider,authProviderConfig,filterConfig,passwdValidator,masterPasswdPolicyConfig,appContext,secMgr);
+  return secMgr;
+}

@@ -1,28 +1,30 @@
 {
-  boolean failed;
-  RoleStoreValidationWrapper store=createXMLStore("test","admin","groupAdmin");
-  store.addRole(store.createRoleObject("admin"));
-  store.addRole(store.createRoleObject("groupAdmin"));
-  store.addRole(store.createRoleObject("role1"));
-  store.store();
-  store=new RoleStoreValidationWrapper(getSecurityManager().loadRoleService("test").createStore());
-  failed=false;
+  setMockCreator(new MockCreator(){
+    @Override public GeoServerSecurityManager createSecurityManager(    MockTestData testData) throws Exception {
+      GeoServerSecurityManager secMgr=createNiceMock(GeoServerSecurityManager.class);
+      GeoServerRoleStore roleStore=createRoleStore("test",secMgr,"admin","groupAdmin","role1");
+      addRolesToCreate(roleStore,"admin","groupAdmin");
+      expect(roleStore.getAdminRole()).andReturn(new GeoServerRole("admin")).anyTimes();
+      expect(roleStore.getGroupAdminRole()).andReturn(new GeoServerRole("groupAdmin")).anyTimes();
+      replay(roleStore,secMgr);
+      return secMgr;
+    }
+  }
+);
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  RoleStoreValidationWrapper store=new RoleStoreValidationWrapper((GeoServerRoleStore)secMgr.loadRoleService("test"));
   try {
     store.removeRole(store.createRoleObject("admin"));
+    fail("removing admin role should fail");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,ADMIN_ROLE_NOT_REMOVABLE_$1,"admin");
-    failed=true;
   }
-  assertTrue(failed);
-  failed=false;
   try {
     store.removeRole(store.createRoleObject("groupAdmin"));
+    fail("removing group admin role should fail");
   }
  catch (  IOException ex) {
     assertSecurityException(ex,GROUP_ADMIN_ROLE_NOT_REMOVABLE_$1,"groupAdmin");
-    failed=true;
   }
-  assertTrue(failed);
-  store.removeRole(store.createRoleObject("role1"));
 }

@@ -1,4 +1,18 @@
 {
+  if (securityManager.listRoleServices().contains(serviceName)) {
+    if (securityManager.getActiveRoleService().getName().equals(serviceName)) {
+      GeoServerRoleService roleService=securityManager.loadRoleService("default");
+      securityManager.setActiveRoleService(roleService);
+    }
+    GeoServerRoleService service=securityManager.loadRoleService(serviceName);
+    if (service.canCreateStore()) {
+      GeoServerRoleStore store=service.createStore();
+      store.clear();
+      store.store();
+    }
+    SecurityRoleServiceConfig old=securityManager.loadRoleServiceConfig(serviceName);
+    securityManager.removeRoleService(old);
+  }
   JDBCRoleServiceConfig config=new JDBCRoleServiceConfig();
   config.setName(serviceName);
   config.setConnectURL("jdbc:h2:target/h2/security");

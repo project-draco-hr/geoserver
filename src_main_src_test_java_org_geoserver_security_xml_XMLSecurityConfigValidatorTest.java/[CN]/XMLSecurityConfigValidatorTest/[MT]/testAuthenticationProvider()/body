@@ -1,14 +1,13 @@
 {
   super.testAuthenticationProvider();
-  SecurityAuthProviderConfig config=getAuthConfig("default2",UsernamePasswordAuthenticationProvider.class,null);
-  boolean fail=false;
+  SecurityAuthProviderConfig config=createAuthConfig("default2",UsernamePasswordAuthenticationProvider.class,null);
+  XMLSecurityConfigValidator validator=new XMLSecurityConfigValidator(getSecurityManager());
   try {
-    getSecurityManager().saveAuthenticationProvider(config);
+    validator.validateAddAuthProvider(config);
+    fail("no user group service should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(USERGROUP_SERVICE_REQUIRED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    fail=true;
   }
-  assertTrue(fail);
 }

@@ -1,0 +1,50 @@
+{
+  String ftId=newId();
+  final DataStoreInfo ds=dataStores.peekLast();
+  NamespaceInfo ns=namespaces.peekLast();
+  final FeatureTypeInfo ft=createNiceMock(FeatureTypeInfo.class);
+  featureTypes.add(ft);
+  initResource(ft,FeatureTypeInfo.class,ftId,name,ds,ns,srs,projPolicy,envelope,latLonEnvelope);
+  expect(ft.getNumDecimals()).andReturn(8);
+  File propDir=new File(dataDirRoot,ds.getName());
+  propDir.mkdirs();
+  String fileName=name + ".properties";
+  try {
+    IOUtils.copy(getClass().getResourceAsStream(fileName),new File(propDir,fileName));
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  try {
+    expect(ft.getFeatureType()).andAnswer(new IAnswer<FeatureType>(){
+      @Override public FeatureType answer() throws Throwable {
+        return ((DataStore)ds.getDataStore(null)).getSchema(name);
+      }
+    }
+).anyTimes();
+    expect(ft.getFeatureSource(null,null)).andAnswer((IAnswer)new IAnswer<FeatureSource>(){
+      @Override public FeatureSource answer() throws Throwable {
+        return ((DataStore)ds.getDataStore(null)).getFeatureSource(name);
+      }
+    }
+).anyTimes();
+  }
+ catch (  IOException e) {
+  }
+  expect(catalog.getFeatureTypeByName(or(eq(name),eq(ns.getPrefix() + ":" + name)))).andReturn(ft).anyTimes();
+  expect(catalog.getFeatureTypeByName(or(eq(new NameImpl(ns.getPrefix(),name)),eq(new NameImpl(ns.getURI(),name))))).andReturn(ft).anyTimes();
+  expect(catalog.getFeatureTypeByName(ns,name)).andReturn(ft).anyTimes();
+  expect(catalog.getFeatureTypeByName(ns.getPrefix(),name)).andReturn(ft).anyTimes();
+  expect(catalog.getFeatureTypeByStore(ds,name)).andReturn(ft).anyTimes();
+  expect(catalog.getFeatureTypeByDataStore(ds,name)).andReturn(ft).anyTimes();
+  ft.accept((CatalogVisitor)anyObject());
+  expectLastCall().andAnswer(new VisitAnswer(){
+    @Override protected void doVisit(    CatalogVisitor visitor){
+      visitor.visit(ft);
+    }
+  }
+).anyTimes();
+  callback.onResource(name,ft,ds,this);
+  replay(ft,createLayer(ft,name,ns));
+  return this;
+}

@@ -1,8 +1,19 @@
 {
-  assertNull(tl.findTemplateSource("dummy.ftl"));
-  FeatureTypeInfo ft=cat.getFeatureTypeByName("PrimitiveGeoFeature");
+  GeoServerDataDirectory dd=createDataDirectoryMock();
+  replay(dd);
+  GeoServerTemplateLoader tl=new GeoServerTemplateLoader(getClass(),dd);
+  Object source=tl.findTemplateSource("dummy.ftl");
+  assertNull(source);
+  reset(dd);
+  DataStoreInfo s=createNiceMock(DataStoreInfo.class);
+  FeatureTypeInfo ft=createNiceMock(FeatureTypeInfo.class);
+  expect(ft.getStore()).andReturn(s).anyTimes();
   tl.setFeatureType(ft);
+  replay(ft,s,dd);
   assertNull(tl.findTemplateSource("dummy.ftl"));
-  dd.copyToStoreDir(ft.getStore(),template(),"dummy.ftl");
+  reset(dd);
+  expect(dd.findSuppStoreFile(s,"dummy.ftl")).andReturn(new File("foo")).once();
+  replay(dd);
   assertNotNull(tl.findTemplateSource("dummy.ftl"));
+  verify(dd);
 }

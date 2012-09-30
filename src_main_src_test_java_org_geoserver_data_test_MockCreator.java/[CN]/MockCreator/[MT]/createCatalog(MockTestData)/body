@@ -1,0 +1,31 @@
+{
+  File data=testData.getDataDirectoryRoot();
+  GeoServerResourceLoader loader=new GeoServerResourceLoader(data);
+  GeoserverDataDirectory.setResourceLoader(loader);
+  final Catalog catalog=createMock(Catalog.class);
+  expect(catalog.getFactory()).andReturn(new CatalogFactoryImpl(catalog)).anyTimes();
+  expect(catalog.getResourceLoader()).andReturn(loader).anyTimes();
+  catalog.addListener((CatalogListener)EasyMock.anyObject());
+  expectLastCall().anyTimes();
+  expect(catalog.getResourcePool()).andAnswer(new IAnswer<ResourcePool>(){
+    @Override public ResourcePool answer() throws Throwable {
+      return new ResourcePool(catalog);
+    }
+  }
+).anyTimes();
+  MockCatalogBuilder b=new MockCatalogBuilder(catalog,data);
+  b.setCallback(this);
+  b.style(DEFAULT_VECTOR_STYLE);
+  createWorkspace(DEFAULT_PREFIX,DEFAULT_URI,null,b);
+  createWorkspace(CGF_PREFIX,CGF_URI,CGF_TYPENAMES,b);
+  createWorkspace(CDF_PREFIX,CDF_URI,CDF_TYPENAMES,b);
+  createWorkspace(SF_PREFIX,SF_URI,SF_TYPENAMES,b);
+  createWorkspace(CITE_PREFIX,CITE_URI,CITE_TYPENAMES,b);
+  if (testData.isInludeRaster()) {
+    b.style(DEFAULT_RASTER_STYLE);
+    createWorkspace(WCS_PREFIX,WCS_URI,null,WCS_TYPENAMES,b);
+  }
+  addToCatalog(catalog,b);
+  b.commit();
+  return catalog;
+}

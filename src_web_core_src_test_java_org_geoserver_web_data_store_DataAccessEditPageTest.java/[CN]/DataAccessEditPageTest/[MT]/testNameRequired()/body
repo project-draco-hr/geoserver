@@ -1,7 +1,15 @@
 {
   FormTester form=tester.newFormTester("dataStoreForm");
   form.setValue("dataStoreNamePanel:border:paramValue",null);
+  form.setValue("workspacePanel:border:paramValue","cite");
   form.submit();
+  tester.debugComponentTrees();
   tester.assertRenderedPage(DataAccessEditPage.class);
-  tester.assertErrorMessages(new String[]{"Field 'Data Source Name' is required."});
+  List<String> l=Lists.transform(tester.getMessages(FeedbackMessage.ERROR),new Function<Serializable,String>(){
+    @Override public String apply(    Serializable input){
+      return input.toString();
+    }
+  }
+);
+  assertTrue(l.contains("Field 'Data Source Name' is required."));
 }

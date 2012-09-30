@@ -1,0 +1,19 @@
+{
+  super.onSetUp(testData);
+  GeoServerInfo global=getGeoServer().getGlobal();
+  global.getSettings().setProxyBaseUrl("src/test/resources/geoserver");
+  getGeoServer().save(global);
+  WMSInfo wms=getGeoServer().getService(WMSInfo.class);
+  wms.getSRS().add("EPSG:4326");
+  getGeoServer().save(wms);
+  Map map=new HashMap();
+  map.put(MockData.KEY_STYLE,"TimeElevation");
+  Catalog catalog=getCatalog();
+  testData.addStyle("TimeElevation","TimeElevation.sld",WMSDimensionsTestSupport.class,catalog);
+  testData.addVectorLayer(V_TIME_ELEVATION,map,"TimeElevation.properties",WMSDimensionsTestSupport.class,catalog);
+  testData.addVectorLayer(V_TIME_ELEVATION_EMPTY,map,"TimeElevationEmpty.properties",WMSDimensionsTestSupport.class,catalog);
+  testData.addStyle("temperature","../temperature.sld",getClass(),catalog);
+  Map propertyMap=new HashMap();
+  propertyMap.put(LayerProperty.STYLE,"temperature");
+  testData.addRasterLayer(WATTEMP,"watertemp.zip",null,propertyMap,SystemTestData.class,catalog);
+}

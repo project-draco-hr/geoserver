@@ -1,0 +1,28 @@
+{
+  String lId=newId();
+  StyleInfo s=styles.peekLast();
+  final LayerInfo l=createNiceMock(LayerInfo.class);
+  layers.add(l);
+  expect(l.getId()).andReturn(lId).anyTimes();
+  expect(l.getName()).andReturn(name).anyTimes();
+  expect(l.getType()).andReturn(LayerInfo.Type.VECTOR).anyTimes();
+  expect(l.getResource()).andReturn(r).anyTimes();
+  expect(l.getDefaultStyle()).andReturn(s).anyTimes();
+  expect(l.isEnabled()).andReturn(true).anyTimes();
+  expect(l.isAdvertised()).andReturn(true).anyTimes();
+  expect(catalog.getLayer(lId)).andReturn(l).anyTimes();
+  expect(catalog.getLayerByName(name)).andReturn(l).anyTimes();
+  expect(catalog.getLayerByName(ns.getPrefix() + ":" + name)).andReturn(l).anyTimes();
+  expect(catalog.getLayerByName(new NameImpl(ns.getPrefix(),name))).andReturn(l).anyTimes();
+  expect(catalog.getLayerByName(new NameImpl(ns.getURI(),name))).andReturn(l).anyTimes();
+  expect(catalog.getLayers(r)).andReturn(Arrays.asList(l)).anyTimes();
+  l.accept((CatalogVisitor)anyObject());
+  expectLastCall().andAnswer(new VisitAnswer(){
+    @Override protected void doVisit(    CatalogVisitor visitor){
+      visitor.visit(l);
+    }
+  }
+).anyTimes();
+  callback.onLayer(name,l,this);
+  return l;
+}

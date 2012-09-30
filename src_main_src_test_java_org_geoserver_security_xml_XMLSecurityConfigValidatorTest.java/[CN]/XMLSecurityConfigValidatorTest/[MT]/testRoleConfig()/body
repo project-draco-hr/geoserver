@@ -1,100 +1,104 @@
 {
   super.testRoleConfig();
-  XMLRoleServiceConfig config=(XMLRoleServiceConfig)getRoleConfig(XMLRoleService.DEFAULT_NAME,XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,XMLConstants.FILE_RR);
-  boolean fail;
-  fail=false;
+  XMLRoleServiceConfig config=(XMLRoleServiceConfig)createRoleConfig(XMLRoleService.DEFAULT_NAME,XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,XMLConstants.FILE_RR);
+  XMLSecurityConfigValidator validator=new XMLSecurityConfigValidator(getSecurityManager());
   try {
     config.setName("default2");
     config.setCheckInterval(-1l);
-    getSecurityManager().saveRoleService(config);
+    validator.validateAddRoleService(config);
+    fail("invalid interval should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(CHECK_INTERVAL_INVALID,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setCheckInterval(999l);
-    getSecurityManager().saveRoleService(config);
+    validator.validateAddRoleService(config);
+    fail("invalid interval should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(CHECK_INTERVAL_INVALID,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
   config.setCheckInterval(0);
-  XMLRoleServiceConfig xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test1",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"test1.xml");
+  XMLRoleServiceConfig xmlConfig=(XMLRoleServiceConfig)createRoleConfig("test1",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"test1.xml");
   try {
-    getSecurityManager().saveRoleService(xmlConfig);
-    getSecurityManager().removeRoleService(xmlConfig);
+    validator.validateAddRoleService(xmlConfig);
   }
  catch (  SecurityConfigException ex) {
-    Assert.fail("Should work");
-  }
-  fail=false;
-  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test2",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"test2.xml");
-  try {
-    getSecurityManager().saveRoleService(xmlConfig);
-    GeoServerRoleStore store=getSecurityManager().loadRoleService("test2").createStore();
-    store.addRole(GeoServerRole.ADMIN_ROLE);
-    store.store();
-    getSecurityManager().removeRoleService(xmlConfig);
-  }
- catch (  SecurityConfigException ex) {
-    assertEquals(ROLE_SERVICE_NOT_EMPTY_$1,ex.getId());
-    assertEquals("test2",ex.getArgs()[0]);
-    fail=true;
-  }
-  assertTrue(fail);
-  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test3",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,new File(getSecurityManager().getRoleRoot(),"test3.xml").getAbsolutePath());
-  try {
-    getSecurityManager().saveRoleService(xmlConfig);
-    GeoServerRoleStore store=getSecurityManager().loadRoleService("test3").createStore();
-    store.addRole(GeoServerRole.ADMIN_ROLE);
-    store.store();
-    getSecurityManager().removeRoleService(xmlConfig);
-  }
- catch (  SecurityConfigException ex) {
-    Assert.fail("Should work");
+    fail("Should work but got: " + ex.getMessage());
   }
   if (new XMLSecurityConfigValidator(getSecurityManager()).getTempDir() != null) {
     String invalidPath="abc" + File.separator + "def.xml";
-    xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test4",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,invalidPath);
-    fail=false;
+    XMLRoleServiceConfig xmlConfig4=(XMLRoleServiceConfig)createRoleConfig("test4",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,invalidPath);
     try {
-      getSecurityManager().saveRoleService(xmlConfig);
+      validator.validateAddRoleService(xmlConfig4);
+      fail("file creation failure should occur");
     }
  catch (    SecurityConfigException ex) {
       assertEquals(FILE_CREATE_FAILED_$1,ex.getId());
       assertEquals(invalidPath,ex.getArgs()[0]);
-      fail=true;
     }
-    assertTrue(fail);
   }
-  xmlConfig=(XMLRoleServiceConfig)getRoleConfig("test4",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"testModify.xml");
+  GeoServerSecurityManager secMgr=createNiceMock(GeoServerSecurityManager.class);
+  GeoServerRoleService roleService1=createNiceMock(GeoServerRoleService.class);
+  expect(roleService1.getRoleCount()).andReturn(0).anyTimes();
+  expect(secMgr.loadRoleService("test1")).andReturn(roleService1).anyTimes();
+  GeoServerRoleService roleService2=createNiceMock(GeoServerRoleService.class);
+  expect(roleService2.getRoleCount()).andReturn(1).anyTimes();
+  expect(secMgr.loadRoleService("test2")).andReturn(roleService2).anyTimes();
+  GeoServerRoleService roleService3=createNiceMock(GeoServerRoleService.class);
+  expect(roleService3.getRoleCount()).andReturn(1).anyTimes();
+  expect(secMgr.loadRoleService("test3")).andReturn(roleService3).anyTimes();
+  GeoServerRoleService roleService4=createNiceMock(GeoServerRoleService.class);
+  expect(roleService4.getRoleCount()).andReturn(1).anyTimes();
+  expect(secMgr.loadRoleService("test4")).andReturn(roleService4).anyTimes();
+  GeoServerRoleService activeRoleService=createNiceMock(GeoServerRoleService.class);
+  expect(activeRoleService.getName()).andReturn("foo").anyTimes();
+  expect(secMgr.getActiveRoleService()).andReturn(activeRoleService).anyTimes();
+  expect(secMgr.listRoleServices()).andReturn(new TreeSet<String>(Arrays.asList("test1","test2","test3","test4"))).anyTimes();
+  replay(roleService1,roleService2,roleService3,roleService4,activeRoleService,secMgr);
+  validator=new XMLSecurityConfigValidator(secMgr);
   try {
-    getSecurityManager().saveRoleService(xmlConfig);
+    validator.validateRemoveRoleService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    fail("Should work but got: " + ex.getMessage());
+  }
+  xmlConfig=(XMLRoleServiceConfig)createRoleConfig("test2",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"test2.xml");
+  try {
+    validator.validateRemoveRoleService(xmlConfig);
+    fail("non empty role service should fail");
+  }
+ catch (  SecurityConfigException ex) {
+    assertEquals(ROLE_SERVICE_NOT_EMPTY_$1,ex.getId());
+    assertEquals("test2",ex.getArgs()[0]);
+  }
+  xmlConfig=(XMLRoleServiceConfig)createRoleConfig("test3",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,new File(getSecurityManager().getRoleRoot(),"test3.xml").getAbsolutePath());
+  try {
+    validator.validateRemoveRoleService(xmlConfig);
+  }
+ catch (  SecurityConfigException ex) {
+    fail("Should work");
+  }
+  xmlConfig=(XMLRoleServiceConfig)createRoleConfig("test4",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,"testModify.xml");
+  XMLRoleServiceConfig oldXmlConfig=new XMLRoleServiceConfig(xmlConfig);
+  try {
     xmlConfig.setValidating(true);
-    getSecurityManager().saveRoleService(xmlConfig);
+    validator.validateModifiedRoleService(xmlConfig,xmlConfig);
   }
  catch (  SecurityConfigException ex) {
     Assert.fail("Should work");
   }
-  fail=false;
   try {
     xmlConfig.setFileName("xyz.xml");
-    getSecurityManager().saveRoleService(xmlConfig);
+    validator.validateModifiedRoleService(xmlConfig,oldXmlConfig);
+    fail("invalid filename change should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(FILENAME_CHANGE_INVALID_$2,ex.getId());
     assertEquals("testModify.xml",ex.getArgs()[0]);
     assertEquals("xyz.xml",ex.getArgs()[1]);
-    fail=true;
   }
-  assertTrue(fail);
 }

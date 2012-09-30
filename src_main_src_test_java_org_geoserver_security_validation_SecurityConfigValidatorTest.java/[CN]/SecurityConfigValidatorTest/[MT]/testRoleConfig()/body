@@ -1,57 +1,45 @@
 {
-  SecurityRoleServiceConfig config=getRoleConfig(XMLRoleService.DEFAULT_NAME,MemoryRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority());
-  boolean fail;
-  fail=false;
+  SecurityRoleServiceConfig config=createRoleConfig(XMLRoleService.DEFAULT_NAME,MemoryRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority());
+  SecurityConfigValidator validator=new SecurityConfigValidator(getSecurityManager());
   try {
     config.setName(null);
-    getSecurityManager().removeRoleService(config);
+    validator.validateRemoveRoleService(config);
+    fail("no name should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(NAME_REQUIRED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
   config.setName("abcd");
   for (  GeoServerRole role : GeoServerRole.SystemRoles) {
-    fail=false;
     config.setAdminRoleName(role.getAuthority());
     try {
-      getSecurityManager().saveRoleService(config);
+      validator.validateAddRoleService(config);
+      fail("reserved role name should fail");
     }
  catch (    SecurityConfigException ex) {
       assertEquals(RESERVED_ROLE_NAME,ex.getId());
       assertEquals(role.getAuthority(),ex.getArgs()[0]);
-      LOGGER.info(ex.getMessage());
-      fail=true;
     }
-    assertTrue(fail);
   }
   for (  GeoServerRole role : GeoServerRole.SystemRoles) {
-    fail=false;
     config.setGroupAdminRoleName(role.getAuthority());
     try {
-      getSecurityManager().saveRoleService(config);
+      validator.validateAddRoleService(config);
+      fail("resoerved role name should fail");
     }
  catch (    SecurityConfigException ex) {
       assertEquals(RESERVED_ROLE_NAME,ex.getId());
       assertEquals(role.getAuthority(),ex.getArgs()[0]);
-      LOGGER.info(ex.getMessage());
-      fail=true;
     }
-    assertTrue(fail);
   }
-  fail=false;
   try {
     config.setName(XMLRoleService.DEFAULT_NAME);
-    getSecurityManager().removeRoleService(config);
+    validator.validateRemoveRoleService(config);
+    fail("role service active should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(ROLE_SERVICE_ACTIVE_$1,ex.getId());
     assertEquals(XMLRoleService.DEFAULT_NAME,ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
 }

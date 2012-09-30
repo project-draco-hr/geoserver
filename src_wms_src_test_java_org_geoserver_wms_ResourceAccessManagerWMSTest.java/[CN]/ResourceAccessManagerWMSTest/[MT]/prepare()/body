@@ -1,0 +1,28 @@
+{
+  Catalog catalog=getCatalog();
+  TestResourceAccessManager tam=(TestResourceAccessManager)applicationContext.getBean("testResourceAccessManager");
+  CoverageInfo coverage=catalog.getCoverageByName("sf:mosaic");
+  Filter green=CQL.toFilter("location like 'green%'");
+  tam.putLimits("cite_mosaic1",coverage,new CoverageAccessLimits(CatalogMode.HIDE,green,null,null));
+  WKTReader wkt=new WKTReader();
+  MultiPolygon cropper=(MultiPolygon)wkt.read("MULTIPOLYGON(((0 0, 0.5 0, 0.5 0.5, 0 0.5, 0 0)))");
+  tam.putLimits("cite_mosaic2",coverage,new CoverageAccessLimits(CatalogMode.HIDE,green,cropper,null));
+  if (!RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    return;
+  }
+  CatalogBuilder cb=new CatalogBuilder(catalog);
+  WMSStoreInfo wms=cb.buildWMSStore("demo");
+  wms.setCapabilitiesURL(RemoteOWSTestSupport.WMS_SERVER_URL + "service=WMS&request=GetCapabilities");
+  catalog.save(wms);
+  cb.setStore(wms);
+  WMSLayerInfo states=cb.buildWMSLayer("topp:states");
+  states.setName("rstates");
+  catalog.add(states);
+  LayerInfo layer=cb.buildLayer(states);
+  catalog.add(layer);
+  tam.putLimits("cite_nostates",states,new WMSAccessLimits(CatalogMode.HIDE,Filter.EXCLUDE,null,false));
+  tam.putLimits("cite_noinfo",states,new WMSAccessLimits(CatalogMode.HIDE,Filter.INCLUDE,null,false));
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  Filter texas=ff.equal(ff.property("STATE_NAME"),ff.literal("Texas"),false);
+  tam.putLimits("cite_texas",states,new WMSAccessLimits(CatalogMode.HIDE,texas,null,true));
+}

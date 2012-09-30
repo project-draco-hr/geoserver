@@ -1,9 +1,10 @@
 {
-  String xml="<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope'> " + " <soap:Header/> " + " <soap:Body>"+ "<wfs:DescribeFeatureType service='WFS' version='2.0.0' "+ "xmlns:wfs='http://www.opengis.net/wfs/2.0' "+ "xmlns:sf='" + MockData.PRIMITIVEGEOFEATURE.getNamespaceURI() + "'>"+ " <wfs:TypeName>"+ getLayerId(MockData.PRIMITIVEGEOFEATURE)+ "</wfs:TypeName>"+ "</wfs:DescribeFeatureType>"+ " </soap:Body> "+ "</soap:Envelope> ";
+  String xml="<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope'> " + " <soap:Header/> " + " <soap:Body>"+ "<wfs:DescribeFeatureType service='WFS' version='2.0.0' "+ "xmlns:wfs='http://www.opengis.net/wfs/2.0' "+ "xmlns:sf='" + CiteTestData.PRIMITIVEGEOFEATURE.getNamespaceURI() + "'>"+ " <wfs:TypeName>"+ getLayerId(CiteTestData.PRIMITIVEGEOFEATURE)+ "</wfs:TypeName>"+ "</wfs:DescribeFeatureType>"+ " </soap:Body> "+ "</soap:Envelope> ";
   MockHttpServletResponse resp=postAsServletResponse("wfs",xml,"application/soap+xml");
   assertEquals("application/soap+xml",resp.getContentType());
   Document dom=dom(new ByteArrayInputStream(resp.getOutputStreamContent().getBytes()));
   assertEquals("soap:Envelope",dom.getDocumentElement().getNodeName());
+  print(dom);
   XMLAssert.assertXpathEvaluatesTo("xsd:base64","//soap:Body/@type",dom);
   assertEquals(1,dom.getElementsByTagName("wfs:DescribeFeatureTypeResponse").getLength());
   String base64=dom.getElementsByTagName("wfs:DescribeFeatureTypeResponse").item(0).getFirstChild().getNodeValue();

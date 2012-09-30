@@ -1,0 +1,34 @@
+{
+  super.onSetUp(testData);
+  Logging.getLogger("org.geoserver.ows").setLevel(Level.OFF);
+  WMSInfo wmsInfo=getGeoServer().getService(WMSInfo.class);
+  wmsInfo.setMaxBuffer(50);
+  getGeoServer().save(wmsInfo);
+  WFSInfo wfsInfo=getGeoServer().getService(WFSInfo.class);
+  wfsInfo.setFeatureBounding(true);
+  getGeoServer().save(wfsInfo);
+  if (RemoteOWSTestSupport.isRemoteWMSStatesAvailable(LOGGER)) {
+    CatalogBuilder cb=new CatalogBuilder(getCatalog());
+    WMSStoreInfo wms=cb.buildWMSStore("demo");
+    wms.setCapabilitiesURL(RemoteOWSTestSupport.WMS_SERVER_URL + "service=WMS&request=GetCapabilities");
+    getCatalog().save(wms);
+    cb.setStore(wms);
+    WMSLayerInfo states=cb.buildWMSLayer("topp:states");
+    states.setName("rstates");
+    getCatalog().add(states);
+    LayerInfo layer=cb.buildLayer(states);
+    getCatalog().add(layer);
+  }
+  Catalog catalog=getCatalog();
+  testData.addStyle("thickStroke","thickStroke.sld",GetFeatureInfoTest.class,catalog);
+  testData.addStyle("paramStroke","paramStroke.sld",GetFeatureInfoTest.class,catalog);
+  testData.addStyle("raster","raster.sld",GetFeatureInfoTest.class,catalog);
+  testData.addStyle("rasterScales","rasterScales.sld",GetFeatureInfoTest.class,catalog);
+  testData.addStyle("squares","squares.sld",GetFeatureInfoTest.class,catalog);
+  testData.addVectorLayer(SQUARES,Collections.EMPTY_MAP,"squares.properties",GetFeatureInfoTest.class,catalog);
+  Map propertyMap=new HashMap();
+  propertyMap.put(LayerProperty.STYLE,"raster");
+  testData.addRasterLayer(TASMANIA_BM,"tazbm.tiff","tiff",propertyMap,SystemTestData.class,catalog);
+  testData.addRasterLayer(new QName(MockData.SF_URI,"mosaic",MockData.SF_PREFIX),"raster-filter-test.zip",null,propertyMap,SystemTestData.class,catalog);
+  testData.addRasterLayer(CUSTOM,"custom.zip",null,propertyMap,GetFeatureInfoTest.class,catalog);
+}

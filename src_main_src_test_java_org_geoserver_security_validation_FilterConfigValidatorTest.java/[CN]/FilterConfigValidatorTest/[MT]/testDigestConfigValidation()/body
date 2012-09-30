@@ -2,43 +2,36 @@
   DigestAuthenticationFilterConfig config=new DigestAuthenticationFilterConfig();
   config.setClassName(GeoServerDigestAuthenticationFilter.class.getName());
   config.setName("testDigest");
-  boolean failed=false;
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  FilterConfigValidator validator=new FilterConfigValidator(secMgr);
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("no user group service should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.USER_GROUP_SERVICE_NEEDED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setUserGroupServiceName("blabla");
-  failed=false;
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("unknown user group service should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.UNKNOWN_USER_GROUP_SERVICE,ex.getId());
     assertEquals(1,ex.getArgs().length);
     assertEquals("blabla",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setUserGroupServiceName(XMLUserGroupService.DEFAULT_NAME);
   config.setNonceValiditySeconds(-1);
-  failed=false;
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("invalid nonce should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.INVALID_SECONDS,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setNonceValiditySeconds(100);
-  getSecurityManager().saveFilter(config);
+  validator.validateFilterConfig(config);
 }

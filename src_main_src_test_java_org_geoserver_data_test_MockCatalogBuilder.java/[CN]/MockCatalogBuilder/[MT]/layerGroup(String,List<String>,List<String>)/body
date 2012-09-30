@@ -1,0 +1,46 @@
+{
+  final LayerGroupInfo lg=createMock(LayerGroupInfo.class);
+  layerGroups.add(lg);
+  expect(lg.getId()).andReturn(newId()).anyTimes();
+  expect(lg.getName()).andReturn(name).anyTimes();
+  List<LayerInfo> grpLayers=new ArrayList<LayerInfo>();
+  List<StyleInfo> grpStyles=new ArrayList<StyleInfo>();
+  for (int i=0; i < layerNames.size(); i++) {
+    String layerName=layerNames.get(i);
+    LayerInfo l=null;
+    for (    LayerInfo layer : layers) {
+      if (layerName.equals(layer.getName())) {
+        l=layer;
+        break;
+      }
+    }
+    if (l == null) {
+      throw new RuntimeException("No such layer: " + layerName);
+    }
+    grpLayers.add(l);
+    StyleInfo s=null;
+    if (styleNames != null) {
+      String styleName=styleNames.get(i);
+      for (      StyleInfo style : styles) {
+        if (styleName.equals(style.getName())) {
+          s=style;
+          break;
+        }
+      }
+    }
+    grpStyles.add(s);
+  }
+  expect(lg.getLayers()).andReturn(grpLayers).anyTimes();
+  expect(lg.getStyles()).andReturn(grpStyles).anyTimes();
+  lg.accept((CatalogVisitor)anyObject());
+  expectLastCall().andAnswer(new VisitAnswer(){
+    @Override protected void doVisit(    CatalogVisitor visitor){
+      visitor.visit(lg);
+    }
+  }
+).anyTimes();
+  expect(catalog.getLayerGroupByName(name)).andReturn(lg).anyTimes();
+  callback.onLayerGroup(name,lg,this);
+  replay(lg);
+  return this;
+}

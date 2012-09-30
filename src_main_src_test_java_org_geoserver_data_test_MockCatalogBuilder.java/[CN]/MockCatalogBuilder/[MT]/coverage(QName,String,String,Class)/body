@@ -1,0 +1,60 @@
+{
+  scope=scope != null ? scope : getClass();
+  String cId=newId();
+  final CoverageStoreInfo cs=coverageStores.peekLast();
+  NamespaceInfo ns=namespaces.peekLast();
+  final String name=qName.getLocalPart();
+  File dir=new File(dataDirRoot,name);
+  dir.mkdir();
+  try {
+    IOUtils.copy(scope.getResourceAsStream(fileName),new File(dir,fileName));
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  CatalogBuilder cb=new CatalogBuilder(new CatalogImpl());
+  cb.setStore(cs);
+  AbstractGridCoverage2DReader reader=cs.getFormat().getReader(cs.getURL());
+  if (reader == null) {
+    throw new RuntimeException("No reader for " + cs.getURL());
+  }
+  CoverageInfo real=null;
+  try {
+    real=cb.buildCoverage(reader,null);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  final CoverageInfo c=createNiceMock(CoverageInfo.class);
+  coverages.add(c);
+  if (srs == null) {
+    srs=real.getSRS();
+  }
+  initResource(c,CoverageInfo.class,cId,name,cs,ns,srs,real.getProjectionPolicy(),real.getNativeBoundingBox(),real.getLatLonBoundingBox());
+  expect(c.getDefaultInterpolationMethod()).andReturn(real.getDefaultInterpolationMethod()).anyTimes();
+  expect(c.getDimensions()).andReturn(real.getDimensions()).anyTimes();
+  expect(c.getGrid()).andReturn(real.getGrid()).anyTimes();
+  expect(c.getInterpolationMethods()).andReturn(real.getInterpolationMethods()).anyTimes();
+  expect(c.getRequestSRS()).andReturn(real.getRequestSRS()).anyTimes();
+  expect(c.getResponseSRS()).andReturn(real.getResponseSRS()).anyTimes();
+  try {
+    expect(c.getGridCoverageReader(null,null)).andReturn(reader).anyTimes();
+  }
+ catch (  IOException e) {
+  }
+  expect(catalog.getCoverageByName(or(eq(name),eq(ns.getPrefix() + ":" + name)))).andReturn(c).anyTimes();
+  expect(catalog.getCoverageByName(or(eq(new NameImpl(ns.getPrefix(),name)),eq(new NameImpl(ns.getURI(),name))))).andReturn(c).anyTimes();
+  expect(catalog.getCoverageByName(ns,name)).andReturn(c).anyTimes();
+  expect(catalog.getCoverageByName(ns.getPrefix(),name)).andReturn(c).anyTimes();
+  expect(catalog.getCoverageByCoverageStore(cs,name)).andReturn(c).anyTimes();
+  c.accept((CatalogVisitor)anyObject());
+  expectLastCall().andAnswer(new VisitAnswer(){
+    @Override protected void doVisit(    CatalogVisitor visitor){
+      visitor.visit(c);
+    }
+  }
+).anyTimes();
+  callback.onResource(name,c,cs,this);
+  replay(c,createLayer(c,name,ns));
+  return this;
+}

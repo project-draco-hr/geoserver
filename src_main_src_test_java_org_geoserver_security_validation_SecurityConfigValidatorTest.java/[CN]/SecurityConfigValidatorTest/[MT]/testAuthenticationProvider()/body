@@ -1,52 +1,40 @@
 {
-  SecurityAuthProviderConfig config=getAuthConfig(GeoServerAuthenticationProvider.DEFAULT_NAME,UsernamePasswordAuthenticationProvider.class,"default2");
-  boolean fail;
-  fail=false;
+  SecurityAuthProviderConfig config=createAuthConfig(GeoServerAuthenticationProvider.DEFAULT_NAME,UsernamePasswordAuthenticationProvider.class,"default2");
+  SecurityConfigValidator validator=new SecurityConfigValidator(getSecurityManager());
   try {
     config.setName("default2");
-    getSecurityManager().saveAuthenticationProvider(config);
+    validator.validateAddAuthProvider(config);
+    fail("user group service not found should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(USERGROUP_SERVICE_NOT_FOUND_$1,ex.getId());
     assertEquals("default2",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName("other");
-    getSecurityManager().saveAuthenticationProvider(config);
+    validator.validateAddAuthProvider(config);
+    fail("user group service not found should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(USERGROUP_SERVICE_NOT_FOUND_$1,ex.getId());
     assertEquals("default2",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName("");
-    getSecurityManager().removeAuthenticationProvider(config);
+    validator.validateRemoveAuthProvider(config);
+    fail("no name should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(NAME_REQUIRED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName(GeoServerAuthenticationProvider.DEFAULT_NAME);
-    getSecurityManager().removeAuthenticationProvider(config);
+    validator.validateRemoveAuthProvider(config);
+    fail("active auth provieder should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(AUTH_PROVIDER_ACTIVE_$1,ex.getId());
     assertEquals(GeoServerAuthenticationProvider.DEFAULT_NAME,ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
 }

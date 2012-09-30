@@ -1,0 +1,91 @@
+{
+  String prefix=qName.getPrefix();
+  String name=qName.getLocalPart();
+  String uri=qName.getNamespaceURI();
+  if (catalog.getWorkspaceByName(prefix) == null) {
+    addWorkspace(prefix,uri,catalog);
+  }
+  File storeDir=catalog.getResourceLoader().findOrCreateDirectory(prefix);
+  DataStoreInfo store=catalog.getDataStoreByName(prefix);
+  if (store == null) {
+    store=catalog.getFactory().createDataStore();
+    store.setName(prefix);
+    store.setWorkspace(catalog.getWorkspaceByName(prefix));
+    store.setEnabled(true);
+    store.getConnectionParameters().put(PropertyDataStoreFactory.DIRECTORY.key,storeDir);
+    store.getConnectionParameters().put(PropertyDataStoreFactory.NAMESPACE.key,uri);
+    catalog.add(store);
+  }
+  catalog.getResourceLoader().copyFromClassPath(filename,new File(storeDir,filename),scope);
+  FeatureTypeInfo featureType=catalog.getFactory().createFeatureType();
+  featureType.setStore(store);
+  featureType.setNamespace(catalog.getNamespaceByPrefix(prefix));
+  featureType.setName(LayerProperty.NAME.get(props,name));
+  featureType.setNativeName(FilenameUtils.getBaseName(filename));
+  featureType.setTitle(name);
+  featureType.setAbstract("abstract about " + name);
+  Integer srs=LayerProperty.SRS.get(props,SRS.get(qName));
+  if (srs == null) {
+    srs=4326;
+  }
+  featureType.setSRS("EPSG:" + srs);
+  try {
+    featureType.setNativeCRS(CRS.decode("EPSG:" + srs));
+  }
+ catch (  Exception e) {
+    LOGGER.warning("Failed to decode EPSG:" + srs + ", setting the native SRS to null");
+  }
+  featureType.setNumDecimals(8);
+  featureType.getKeywords().add(new Keyword(name));
+  featureType.setEnabled(true);
+  featureType.setProjectionPolicy(LayerProperty.PROJECTION_POLICY.get(props,ProjectionPolicy.NONE));
+  featureType.setLatLonBoundingBox(LayerProperty.LATLON_ENVELOPE.get(props,DEFAULT_LATLON_ENVELOPE));
+  featureType.setNativeBoundingBox(LayerProperty.ENVELOPE.get(props,null));
+  FeatureTypeInfo ft=catalog.getFeatureTypeByDataStore(store,name);
+  LayerInfo layer=catalog.getLayerByName(new NameImpl(prefix,name));
+  if (ft == null) {
+    ft=featureType;
+    catalog.add(featureType);
+  }
+ else {
+    if (layer == null) {
+      catalog.remove(ft);
+      ft=featureType;
+      catalog.add(featureType);
+    }
+ else {
+      new CatalogBuilder(catalog).updateFeatureType(ft,featureType);
+      catalog.save(ft);
+    }
+  }
+  if (layer == null || !layer.getResource().getNamespace().equals(catalog.getNamespaceByPrefix(prefix))) {
+    layer=catalog.getFactory().createLayer();
+  }
+  layer.setResource(ft);
+  StyleInfo defaultStyle=null;
+  if (LayerProperty.STYLE.get(props,null) != null) {
+    defaultStyle=catalog.getStyleByName(LayerProperty.STYLE.get(props,null));
+  }
+ else {
+    defaultStyle=catalog.getStyleByName(name);
+    if (defaultStyle == null) {
+      if (getClass().getResource(name + ".sld") != null) {
+        addStyle(name,catalog);
+        defaultStyle=catalog.getStyleByName(name);
+      }
+    }
+  }
+  if (defaultStyle == null) {
+    defaultStyle=catalog.getStyleByName(DEFAULT_VECTOR_STYLE);
+  }
+  layer.getStyles().clear();
+  layer.setDefaultStyle(defaultStyle);
+  layer.setType(LayerInfo.Type.VECTOR);
+  layer.setEnabled(true);
+  if (layer.getId() == null) {
+    catalog.add(layer);
+  }
+ else {
+    catalog.save(layer);
+  }
+}

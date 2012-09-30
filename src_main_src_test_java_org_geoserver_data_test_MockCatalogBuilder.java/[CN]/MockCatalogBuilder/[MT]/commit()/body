@@ -1,0 +1,78 @@
+{
+  if (!featureTypes.isEmpty() || !coverages.isEmpty()) {
+    if (!featureTypes.isEmpty()) {
+      DataStoreInfo ds=dataStores.peekLast();
+      expect(catalog.getResourcesByStore(ds,FeatureTypeInfo.class)).andReturn(featureTypes).anyTimes();
+      expect(catalog.getResourcesByStore(ds,ResourceInfo.class)).andReturn((List)featureTypes).anyTimes();
+      expect(catalog.getFeatureTypesByDataStore(ds)).andReturn(featureTypes).anyTimes();
+    }
+    if (!coverages.isEmpty()) {
+      CoverageStoreInfo cs=coverageStores.peekLast();
+      expect(catalog.getResourcesByStore(cs,CoverageInfo.class)).andReturn(coverages).anyTimes();
+      expect(catalog.getResourcesByStore(cs,ResourceInfo.class)).andReturn((List)coverages).anyTimes();
+      expect(catalog.getCoveragesByCoverageStore(cs)).andReturn(coverages).anyTimes();
+    }
+    featureTypesByNamespace.addAll(featureTypes);
+    featureTypes=new LinkedList<FeatureTypeInfo>();
+    coveragesByNamespace.addAll(coverages);
+    coverages=new LinkedList<CoverageInfo>();
+  }
+ else   if (!dataStores.isEmpty() || !coverageStores.isEmpty()) {
+    WorkspaceInfo ws=workspaces.peekLast();
+    NamespaceInfo ns=namespaces.peekLast();
+    expect(catalog.getStoresByWorkspace(ws.getName(),DataStoreInfo.class)).andReturn(dataStores).anyTimes();
+    expect(catalog.getStoresByWorkspace(ws,DataStoreInfo.class)).andReturn(dataStores).anyTimes();
+    expect(catalog.getDataStoresByWorkspace(ws.getName())).andReturn(dataStores).anyTimes();
+    expect(catalog.getDataStoresByWorkspace(ws)).andReturn(dataStores).anyTimes();
+    expect(catalog.getStoresByWorkspace(ws.getName(),CoverageStoreInfo.class)).andReturn(coverageStores).anyTimes();
+    expect(catalog.getStoresByWorkspace(ws,CoverageStoreInfo.class)).andReturn(coverageStores).anyTimes();
+    expect(catalog.getCoverageStoresByWorkspace(ws.getName())).andReturn(coverageStores).anyTimes();
+    expect(catalog.getCoverageStoresByWorkspace(ws)).andReturn(coverageStores).anyTimes();
+    List<StoreInfo> l=new LinkedList<StoreInfo>(dataStores);
+    l.addAll(coverageStores);
+    expect(catalog.getStoresByWorkspace(ws.getName(),StoreInfo.class)).andReturn(l).anyTimes();
+    expect(catalog.getStoresByWorkspace(ws,StoreInfo.class)).andReturn(l).anyTimes();
+    List<ResourceInfo> m=new LinkedList(featureTypesByNamespace);
+    m.addAll(coveragesByNamespace);
+    expect(catalog.getResourcesByNamespace(ns,ResourceInfo.class)).andReturn(m).anyTimes();
+    expect(catalog.getResourcesByNamespace(ns,FeatureTypeInfo.class)).andReturn(featureTypesByNamespace).anyTimes();
+    expect(catalog.getResourcesByNamespace(ns,CoverageInfo.class)).andReturn(coveragesByNamespace).anyTimes();
+    dataStoresAll.addAll(dataStores);
+    dataStores=new LinkedList();
+    coverageStoresAll.addAll(coverageStores);
+    coverageStores=new LinkedList();
+    featureTypesAll.addAll(featureTypesByNamespace);
+    featureTypesByNamespace=new LinkedList();
+    coveragesAll.addAll(coveragesByNamespace);
+    coveragesByNamespace=new LinkedList();
+  }
+ else   if (!workspaces.isEmpty()) {
+    List<ResourceInfo> l=new LinkedList<ResourceInfo>(featureTypesAll);
+    l.addAll(coveragesAll);
+    expect(catalog.getResources(ResourceInfo.class)).andReturn(l).anyTimes();
+    expect(catalog.getResources(FeatureTypeInfo.class)).andReturn(featureTypesAll).anyTimes();
+    expect(catalog.getResources(CoverageInfo.class)).andReturn(coverages).anyTimes();
+    expect(catalog.getFeatureTypes()).andReturn(featureTypesAll).anyTimes();
+    expect(catalog.getCoverages()).andReturn(coveragesAll).anyTimes();
+    List<StoreInfo> m=new LinkedList<StoreInfo>(dataStoresAll);
+    m.addAll(coverageStoresAll);
+    expect(catalog.getStores(StoreInfo.class)).andReturn(m).anyTimes();
+    expect(catalog.getStores(DataStoreInfo.class)).andReturn(dataStoresAll).anyTimes();
+    expect(catalog.getStores(CoverageStoreInfo.class)).andReturn(coverageStoresAll).anyTimes();
+    expect(catalog.getStyles()).andReturn(styles).anyTimes();
+    expect(catalog.getLayerGroups()).andReturn(layerGroups).anyTimes();
+    expect(catalog.getWorkspaces()).andReturn(workspaces).anyTimes();
+    expect(catalog.getNamespaces()).andReturn(namespaces).anyTimes();
+    expect(catalog.getDefaultWorkspace()).andReturn(workspaces.peekFirst()).anyTimes();
+    expect(catalog.getDefaultNamespace()).andReturn(namespaces.peekFirst()).anyTimes();
+    replay(catalog);
+    featureTypesAll=new LinkedList();
+    coveragesAll=new LinkedList();
+    dataStoresAll=new LinkedList();
+    coverageStoresAll=new LinkedList();
+    styles=new LinkedList();
+    workspaces=new LinkedList();
+    namespaces=new LinkedList();
+  }
+  return this;
+}

@@ -1,0 +1,38 @@
+{
+  String csId=newId();
+  WorkspaceInfo ws=workspaces.peekLast();
+  NamespaceInfo ns=namespaces.peekLast();
+  final CoverageStoreInfo cs=createNiceMock(CoverageStoreInfo.class);
+  coverageStores.add(cs);
+  initStore(cs,CoverageStoreInfo.class,csId,name,ws);
+  File covDir=new File(dataDirRoot,name);
+  final File covFile=new File(covDir,filename);
+  expect(cs.getURL()).andReturn(DataUtilities.fileToURL(covFile).toString()).anyTimes();
+  expect(cs.getType()).andAnswer(new IAnswer<String>(){
+    @Override public String answer() throws Throwable {
+      return lookupGridFormat(covFile).getName();
+    }
+  }
+).anyTimes();
+  expect(cs.getFormat()).andAnswer(new IAnswer<AbstractGridFormat>(){
+    @Override public AbstractGridFormat answer() throws Throwable {
+      return lookupGridFormat(covFile);
+    }
+  }
+).anyTimes();
+  expect(cs.getConnectionParameters()).andReturn(new HashMap()).anyTimes();
+  expect(catalog.getCoverageStore(csId)).andReturn(cs).anyTimes();
+  expect(catalog.getCoverageStoreByName(name)).andReturn(cs).anyTimes();
+  expect(catalog.getCoverageStoreByName(ws.getName(),name)).andReturn(cs).anyTimes();
+  expect(catalog.getCoverageStoreByName(ws,name)).andReturn(cs).anyTimes();
+  cs.accept((CatalogVisitor)anyObject());
+  expectLastCall().andAnswer(new VisitAnswer(){
+    @Override protected void doVisit(    CatalogVisitor visitor){
+      visitor.visit(cs);
+    }
+  }
+).anyTimes();
+  callback.onStore(name,cs,ws,this);
+  replay(cs);
+  return this;
+}

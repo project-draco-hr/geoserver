@@ -1,146 +1,109 @@
 {
-  boolean fail;
   SecurityConfigValidator validator=new SecurityConfigValidator(getSecurityManager());
   Class<?>[] extensionPoints=new Class<?>[]{GeoServerUserGroupService.class,GeoServerRoleService.class,PasswordValidator.class,GeoServerAuthenticationProvider.class,GeoServerSecurityFilter.class};
   for (  Class<?> ep : extensionPoints) {
-    fail=false;
     try {
       validator.checkExtensionPont(ep,"a.b.c");
+      fail("unknown class should fail");
     }
  catch (    SecurityConfigException ex) {
       assertEquals(ex.getId(),CLASS_NOT_FOUND_$1);
       assertEquals(ex.getArgs()[0],"a.b.c");
-      LOGGER.info(ex.getMessage());
-      fail=true;
     }
-    assertTrue(fail);
-    fail=false;
     try {
       validator.checkExtensionPont(ep,"java.lang.String");
+      fail("wrong class should fail");
     }
  catch (    SecurityConfigException ex) {
       assertEquals(ex.getId(),CLASS_WRONG_TYPE_$2);
       assertEquals(ex.getArgs()[0],ep);
       assertEquals(ex.getArgs()[1],"java.lang.String");
-      LOGGER.info(ex.getMessage());
-      fail=true;
     }
-    assertTrue(fail);
-    fail=false;
     String className=ep == GeoServerUserGroupService.class ? null : "";
     try {
       validator.checkExtensionPont(ep,className);
+      fail("no class should fail");
     }
  catch (    SecurityConfigException ex) {
       assertEquals(ex.getId(),CLASSNAME_REQUIRED);
       assertEquals(0,ex.getArgs().length);
-      LOGGER.info(ex.getMessage());
-      fail=true;
     }
-    assertTrue(fail);
-    fail=false;
     String name=ep == GeoServerUserGroupService.class ? null : "";
     try {
       validator.checkServiceName(ep,name);
+      fail("no name should fail");
     }
  catch (    SecurityConfigException ex) {
       assertEquals(ex.getId(),NAME_REQUIRED);
       assertEquals(0,ex.getArgs().length);
-      LOGGER.info(ex.getMessage());
-      fail=true;
     }
-    assertTrue(fail);
   }
-  fail=false;
   try {
-    validator.validateAddPasswordPolicy(getPolicyConfig(PasswordValidator.DEFAULT_NAME,PasswordValidatorImpl.class,1,10));
+    validator.validateAddPasswordPolicy(createPolicyConfig(PasswordValidator.DEFAULT_NAME,PasswordValidatorImpl.class,1,10));
+    fail("passwd policy already exists should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_POLICY_ALREADY_EXISTS_$1,ex.getId());
     assertEquals(ex.getArgs()[0],PasswordValidator.DEFAULT_NAME);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  PasswordPolicyConfig pwConfig=getPolicyConfig("default2",PasswordValidatorImpl.class,1,10);
-  fail=false;
+  PasswordPolicyConfig pwConfig=createPolicyConfig("default2",PasswordValidatorImpl.class,1,10);
   try {
     validator.validateModifiedPasswordPolicy(pwConfig,pwConfig);
+    fail("unknown passwd policy should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_POLICY_NOT_FOUND_$1,ex.getId());
     assertEquals(ex.getArgs()[0],"default2");
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
-    validator.validateAddUserGroupService(getUGConfig(XMLUserGroupService.DEFAULT_NAME,GeoServerUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME));
+    validator.validateAddUserGroupService(createUGConfig(XMLUserGroupService.DEFAULT_NAME,GeoServerUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME));
+    fail("user group service already exists should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(ex.getId(),USERGROUP_SERVICE_ALREADY_EXISTS_$1);
     assertEquals(ex.getArgs()[0],XMLUserGroupService.DEFAULT_NAME);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  SecurityUserGroupServiceConfig ugConfig=getUGConfig("default2",GeoServerUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME);
-  fail=false;
+  SecurityUserGroupServiceConfig ugConfig=createUGConfig("default2",GeoServerUserGroupService.class,getPlainTextPasswordEncoder().getName(),PasswordValidator.DEFAULT_NAME);
   try {
     validator.validateModifiedUserGroupService(ugConfig,ugConfig);
+    fail("unknown user group service should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(ex.getId(),USERGROUP_SERVICE_NOT_FOUND_$1);
     assertEquals(ex.getArgs()[0],"default2");
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
-    validator.validateAddRoleService(getRoleConfig(XMLRoleService.DEFAULT_NAME,GeoServerRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority()));
+    validator.validateAddRoleService(createRoleConfig(XMLRoleService.DEFAULT_NAME,GeoServerRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority()));
+    fail("role service already exists should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(ex.getId(),ROLE_SERVICE_ALREADY_EXISTS_$1);
     assertEquals(ex.getArgs()[0],XMLRoleService.DEFAULT_NAME);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
-  SecurityRoleServiceConfig config=getRoleConfig("default2",GeoServerRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority());
+  SecurityRoleServiceConfig config=createRoleConfig("default2",GeoServerRoleService.class,GeoServerRole.ADMIN_ROLE.getAuthority());
   try {
     validator.validateModifiedRoleService(config,config);
+    fail("unknown role service should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(ex.getId(),ROLE_SERVICE_NOT_FOUND_$1);
     assertEquals(ex.getArgs()[0],"default2");
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
-    validator.validateAddAuthProvider(getAuthConfig(GeoServerAuthenticationProvider.DEFAULT_NAME,UsernamePasswordAuthenticationProvider.class,XMLUserGroupService.DEFAULT_NAME));
+    validator.validateAddAuthProvider(createAuthConfig(GeoServerAuthenticationProvider.DEFAULT_NAME,UsernamePasswordAuthenticationProvider.class,XMLUserGroupService.DEFAULT_NAME));
+    fail("auth provider already exists should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(ex.getId(),AUTH_PROVIDER_ALREADY_EXISTS_$1);
     assertEquals(ex.getArgs()[0],GeoServerAuthenticationProvider.DEFAULT_NAME);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
-  SecurityAuthProviderConfig aConfig=getAuthConfig("default2",UsernamePasswordAuthenticationProvider.class,XMLUserGroupService.DEFAULT_NAME);
+  SecurityAuthProviderConfig aConfig=createAuthConfig("default2",UsernamePasswordAuthenticationProvider.class,XMLUserGroupService.DEFAULT_NAME);
   try {
     validator.validateModifiedAuthProvider(aConfig,aConfig);
+    fail("unknown auth provider should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(ex.getId(),AUTH_PROVIDER_NOT_FOUND_$1);
     assertEquals(ex.getArgs()[0],"default2");
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
 }

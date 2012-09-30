@@ -1,0 +1,25 @@
+{
+  MockHttpServletRequest request=new GeoServerMockHttpServletRequest();
+  request.setScheme("http");
+  request.setServerName("localhost");
+  request.setContextPath("/geoserver");
+  request.setRequestURI(ResponseUtils.stripQueryString(ResponseUtils.appendPath("/geoserver/",path)));
+  request.setRequestURL(ResponseUtils.appendPath("http://localhost/geoserver",path));
+  request.setQueryString(ResponseUtils.getQueryString(path));
+  request.setRemoteAddr("127.0.0.1");
+  request.setServletPath(ResponseUtils.makePathAbsolute(ResponseUtils.stripRemainingPath(path)));
+  request.setPathInfo(ResponseUtils.makePathAbsolute(ResponseUtils.stripBeginningPath(path)));
+  if (username != null) {
+    String token=username + ":";
+    if (password != null) {
+      token+=password;
+    }
+    request.addHeader("Authorization","Basic " + new String(Base64.encodeBase64(token.getBytes())));
+  }
+  kvp(request,path);
+  MockHttpSession session=new MockHttpSession();
+  session.setupServletContext(new MockServletContext());
+  request.setSession(session);
+  request.setUserPrincipal(null);
+  return request;
+}

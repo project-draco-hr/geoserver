@@ -1,0 +1,26 @@
+{
+  super.onSetUp(testData);
+  Map<String,String> namespaces=new HashMap<String,String>();
+  namespaces.put("xlink","http://www.w3.org/1999/xlink");
+  namespaces.put("xsi","http://www.w3.org/2001/XMLSchema-instance");
+  namespaces.put("wms","http://www.opengis.net/wms");
+  namespaces.put("ows","http://www.opengis.net/ows");
+  namespaces.put("ogc","http://www.opengis.net/ogc");
+  NamespaceContext ctx=new SimpleNamespaceContext(namespaces);
+  XMLUnit.setXpathNamespaceContext(ctx);
+  GeoServerInfo global=getGeoServer().getGlobal();
+  global.getSettings().setProxyBaseUrl("src/test/resources/geoserver");
+  getGeoServer().save(global);
+  LayerInfo layer=getCatalog().getLayerByName(MockData.POINTS.getLocalPart());
+  MetadataLinkInfo mdlink=getCatalog().getFactory().createMetadataLink();
+  mdlink.setMetadataType("FGDC");
+  mdlink.setContent("http://geoserver.org");
+  mdlink.setType("text/xml");
+  ResourceInfo resource=layer.getResource();
+  resource.getMetadataLinks().add(mdlink);
+  getCatalog().save(resource);
+  Catalog catalog=getCatalog();
+  DataStoreInfo info=catalog.getDataStoreByName(MockData.SF_PREFIX);
+  info.setEnabled(false);
+  catalog.save(info);
+}

@@ -1,14 +1,22 @@
 {
-  WorkspaceInfo ws=getCatalog().getStores(DataStoreInfo.class).get(0).getWorkspace();
-  NamespaceInfo ns=getCatalog().getNamespaceByPrefix(ws.getName());
-  ns.setURI("http://www.geoserver.org/newNamespace");
-  getCatalog().save(ns);
-  List<DataStoreInfo> stores=getCatalog().getDataStoresByWorkspace(ws);
-  assertTrue(stores.size() > 0);
-  for (  DataStoreInfo ds : stores) {
-    String nsURI=(String)ds.getConnectionParameters().get("namespace");
-    if (nsURI != null) {
-      assertEquals(ns.getURI(),nsURI);
-    }
-  }
+  Catalog cat=createMock(Catalog.class);
+  cat.addListener((CatalogListener)anyObject());
+  expectLastCall();
+  NamespaceInfo ns=createNiceMock(NamespaceInfo.class);
+  expect(ns.getPrefix()).andReturn("foo");
+  expect(ns.getURI()).andReturn("http://foo.org");
+  WorkspaceInfo ws=createNiceMock(WorkspaceInfo.class);
+  expect(cat.getWorkspaceByName("foo")).andReturn(ws);
+  DataStoreInfo ds=createNiceMock(DataStoreInfo.class);
+  expect(cat.getDataStoresByWorkspace(ws)).andReturn(Arrays.asList(ds));
+  HashMap params=new HashMap();
+  params.put("namespace","http://bar.org");
+  expect(ds.getConnectionParameters()).andReturn(params).anyTimes();
+  cat.save(hasNamespace("http://foo.org"));
+  expectLastCall();
+  CatalogPostModifyEvent e=createNiceMock(CatalogPostModifyEvent.class);
+  expect(e.getSource()).andReturn(ns).anyTimes();
+  replay(ds,ws,ns,e,cat);
+  new NamespaceWorkspaceConsistencyListener(cat).handlePostModifyEvent(e);
+  verify(cat);
 }

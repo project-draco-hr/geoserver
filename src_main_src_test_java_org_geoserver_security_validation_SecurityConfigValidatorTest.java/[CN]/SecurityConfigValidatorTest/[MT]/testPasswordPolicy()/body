@@ -1,89 +1,69 @@
 {
-  PasswordPolicyConfig config=getPolicyConfig(PasswordValidator.DEFAULT_NAME,PasswordValidatorImpl.class,-1,10);
-  boolean fail;
-  fail=false;
+  SecurityConfigValidator validator=new SecurityConfigValidator(getSecurityManager());
+  PasswordPolicyConfig config=createPolicyConfig(PasswordValidator.DEFAULT_NAME,PasswordValidatorImpl.class,-1,10);
   try {
     config.setName("default2");
-    getSecurityManager().savePasswordPolicy(config);
+    validator.validateAddPasswordPolicy(config);
+    fail("invalid min length should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(INVALID_MIN_LENGTH,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
-    getSecurityManager().savePasswordPolicy(config);
+    validator.validateAddPasswordPolicy(config);
+    fail("invalid min length should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(INVALID_MIN_LENGTH,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
   config.setMinLength(1);
   config.setMaxLength(0);
-  fail=false;
   try {
+    validator.validateAddPasswordPolicy(config);
+    fail("invalid max length should fail");
     getSecurityManager().savePasswordPolicy(config);
   }
  catch (  SecurityConfigException ex) {
     assertEquals(INVALID_MAX_LENGTH,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
-    getSecurityManager().savePasswordPolicy(config);
+    validator.validateAddPasswordPolicy(config);
+    fail("invalid max length should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(INVALID_MAX_LENGTH,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
   config.setMaxLength(-1);
-  fail=false;
   try {
     config.setName("");
-    getSecurityManager().removePasswordValidator(config);
+    validator.validateRemovePasswordPolicy(config);
+    fail("no name should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(NAME_REQUIRED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName(PasswordValidator.DEFAULT_NAME);
-    getSecurityManager().removePasswordValidator(config);
+    validator.validateRemovePasswordPolicy(config);
+    fail("remove active should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_POLICY_ACTIVE_$2,ex.getId());
     assertEquals(PasswordValidator.DEFAULT_NAME,ex.getArgs()[0]);
     assertEquals(XMLUserGroupService.DEFAULT_NAME,ex.getArgs()[1]);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
-  fail=false;
   try {
     config.setName(PasswordValidator.MASTERPASSWORD_NAME);
-    getSecurityManager().removePasswordValidator(config);
+    validator.validateRemovePasswordPolicy(config);
+    fail("remove master should fail");
   }
  catch (  SecurityConfigException ex) {
     assertEquals(PASSWD_POLICY_MASTER_DELETE,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    fail=true;
   }
-  assertTrue(fail);
 }

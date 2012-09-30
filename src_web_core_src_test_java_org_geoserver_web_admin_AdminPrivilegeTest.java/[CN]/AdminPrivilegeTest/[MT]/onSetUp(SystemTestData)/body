@@ -1,0 +1,37 @@
+{
+  super.onSetUp(testData);
+  addUser("cite","cite",null,Arrays.asList("ROLE_CITE_ADMIN"));
+  addUser("sf","sf",null,Arrays.asList("ROLE_SF_ADMIN"));
+  addLayerAccessRule("*","*",AccessMode.READ,"*");
+  addLayerAccessRule("*","*",AccessMode.WRITE,"*");
+  addLayerAccessRule("*","*",AccessMode.ADMIN,"ROLE_ADMINISTRATOR");
+  addLayerAccessRule("cite","*",AccessMode.ADMIN,"ROLE_CITE_ADMIN");
+  addLayerAccessRule("sf","*",AccessMode.ADMIN,"ROLE_SF_ADMIN");
+  Catalog cat=getCatalog();
+  LayerGroupInfo lg=cat.getFactory().createLayerGroup();
+  lg.setName("cite_local");
+  lg.setWorkspace(cat.getWorkspaceByName("cite"));
+  lg.getLayers().add(cat.getLayerByName(getLayerId(MockData.LAKES)));
+  lg.getLayers().add(cat.getLayerByName(getLayerId(MockData.FORESTS)));
+  new CatalogBuilder(cat).calculateLayerGroupBounds(lg);
+  cat.add(lg);
+  lg=cat.getFactory().createLayerGroup();
+  lg.setName("sf_local");
+  lg.setWorkspace(cat.getWorkspaceByName("sf"));
+  lg.getLayers().add(cat.getLayerByName(getLayerId(MockData.PRIMITIVEGEOFEATURE)));
+  lg.getLayers().add(cat.getLayerByName(getLayerId(MockData.AGGREGATEGEOFEATURE)));
+  new CatalogBuilder(cat).calculateLayerGroupBounds(lg);
+  cat.add(lg);
+  lg=cat.getFactory().createLayerGroup();
+  lg.setName("cite_global");
+  lg.getLayers().add(cat.getLayerByName(getLayerId(MockData.LAKES)));
+  lg.getLayers().add(cat.getLayerByName(getLayerId(MockData.FORESTS)));
+  new CatalogBuilder(cat).calculateLayerGroupBounds(lg);
+  cat.add(lg);
+  lg=cat.getFactory().createLayerGroup();
+  lg.setName("sf_global");
+  lg.getLayers().add(cat.getLayerByName(getLayerId(MockData.PRIMITIVEGEOFEATURE)));
+  lg.getLayers().add(cat.getLayerByName(getLayerId(MockData.AGGREGATEGEOFEATURE)));
+  new CatalogBuilder(cat).calculateLayerGroupBounds(lg);
+  cat.add(lg);
+}

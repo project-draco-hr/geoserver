@@ -1,0 +1,31 @@
+{
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  GeoServerUserGroupService ugService=secMgr.loadUserGroupService("default");
+  GeoServerUserGroupStore ugStore=ugService.createStore();
+  GeoServerUser user=ugStore.createUserObject(username,password,true);
+  ugStore.addUser(user);
+  if (groups != null && !groups.isEmpty()) {
+    for (    String groupName : groups) {
+      GeoServerUserGroup group=ugStore.getGroupByGroupname(groupName);
+      if (group == null) {
+        group=ugStore.createGroupObject(groupName,true);
+        ugStore.addGroup(group);
+      }
+      ugStore.associateUserToGroup(user,group);
+    }
+  }
+  ugStore.store();
+  if (roles != null && !roles.isEmpty()) {
+    GeoServerRoleService roleService=secMgr.getActiveRoleService();
+    GeoServerRoleStore roleStore=roleService.createStore();
+    for (    String roleName : roles) {
+      GeoServerRole role=roleStore.getRoleByName(roleName);
+      if (role == null) {
+        role=roleStore.createRoleObject(roleName);
+        roleStore.addRole(role);
+      }
+      roleStore.associateRoleToUser(role,username);
+    }
+    roleStore.store();
+  }
+}

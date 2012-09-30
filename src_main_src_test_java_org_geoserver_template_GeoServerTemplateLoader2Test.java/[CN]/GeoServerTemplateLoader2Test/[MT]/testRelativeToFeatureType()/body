@@ -1,9 +1,15 @@
 {
+  GeoServerDataDirectory dd=createDataDirectoryMock();
+  replay(dd);
+  GeoServerTemplateLoader tl=new GeoServerTemplateLoader(getClass(),dd);
   Object source=tl.findTemplateSource("dummy.ftl");
   assertNull(source);
-  FeatureTypeInfo ft=cat.getFeatureTypeByName("PrimitiveGeoFeature");
-  dd.copyToResourceDir(ft,template(),"dummy.ftl");
+  reset(dd);
+  FeatureTypeInfo ft=createMock(FeatureTypeInfo.class);
+  expect(dd.findSuppResourceFile(ft,"dummy.ftl")).andReturn(new File("foo")).once();
+  replay(ft,dd);
   tl.setFeatureType(ft);
   source=tl.findTemplateSource("dummy.ftl");
   assertNotNull(source);
+  verify(ft,dd);
 }

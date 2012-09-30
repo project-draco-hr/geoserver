@@ -1,0 +1,40 @@
+{
+  final DispatcherServlet dispatcher=getDispatcher();
+  MockFilterChain chain=new MockFilterChain();
+  List<Filter> filters=getFilters();
+  if (filters != null) {
+    for (    Filter filter : filters) {
+      chain.addFilter(filter);
+    }
+  }
+  chain.setServlet(new HttpServlet(){
+    @Override protected void service(    HttpServletRequest request,    HttpServletResponse response) throws ServletException, IOException {
+      try {
+        Collection interceptors=GeoServerExtensions.extensions(HandlerInterceptor.class,applicationContext);
+        for (Iterator i=interceptors.iterator(); i.hasNext(); ) {
+          HandlerInterceptor interceptor=(HandlerInterceptor)i.next();
+          interceptor.preHandle(request,response,dispatcher);
+        }
+        dispatcher.service(request,response);
+        for (Iterator i=interceptors.iterator(); i.hasNext(); ) {
+          HandlerInterceptor interceptor=(HandlerInterceptor)i.next();
+          interceptor.postHandle(request,response,dispatcher,null);
+        }
+      }
+ catch (      RuntimeException e) {
+        throw e;
+      }
+catch (      IOException e) {
+        throw e;
+      }
+catch (      ServletException e) {
+        throw e;
+      }
+catch (      Exception e) {
+        throw (IOException)new IOException("Failed to handle the request").initCause(e);
+      }
+    }
+  }
+);
+  chain.doFilter(request,response);
+}

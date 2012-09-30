@@ -1,9 +1,6 @@
 {
-  System.out.println("Strong cryptography enabled: " + getSecurityManager().isStrongEncryptionAvailable());
   GeoServerMultiplexingPasswordEncoder encoder2=new GeoServerMultiplexingPasswordEncoder(getSecurityManager());
-  List<String> encoderNames=getConfigPBEEncoderNames();
-  for (  String encoderName : encoderNames) {
-    GeoServerPasswordEncoder encoder=(GeoServerPBEPasswordEncoder)GeoServerExtensions.bean(encoderName);
+  for (  GeoServerPasswordEncoder encoder : getConfigPBEEncoders()) {
     encoder.initialize(getSecurityManager());
     assertEquals(PasswordEncodingType.ENCRYPT,encoder.getEncodingType());
     assertTrue(encoder.encodePassword(testPassword,null).startsWith(encoder.getPrefix() + AbstractGeoserverPasswordEncoder.PREFIX_DELIMTER));

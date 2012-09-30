@@ -1,0 +1,23 @@
+{
+  super.onSetUp(testData);
+  GeoServerUserGroupService ugService=createUserGroupService("gaugs");
+  GeoServerRoleService roleService=createRoleService("gars");
+  getSecurityManager().setActiveRoleService(roleService);
+  GeoServerUserGroupStore ugStore=createStore(ugService);
+  GeoServerUser bob=ugStore.createUserObject("bob","foobar",true);
+  GroupAdminProperty.set(bob.getProperties(),new String[]{"users"});
+  ugStore.addUser(bob);
+  GeoServerUser alice=ugStore.createUserObject("alice","foobar",true);
+  ugStore.addUser(alice);
+  GeoServerUserGroup users=ugStore.createGroupObject("users",true);
+  ugStore.addGroup(users);
+  GeoServerUserGroup admins=ugStore.createGroupObject("admins",true);
+  ugStore.addGroup(admins);
+  ugStore.store();
+  GeoServerRole groupAdminRole=null;
+  GeoServerRoleStore roleStore=createStore(roleService);
+  roleStore.addRole(roleStore.createRoleObject("adminRole"));
+  roleStore.addRole(groupAdminRole=roleStore.createRoleObject("groupAdminRole"));
+  roleStore.associateRoleToUser(groupAdminRole,bob.getUsername());
+  roleStore.store();
+}

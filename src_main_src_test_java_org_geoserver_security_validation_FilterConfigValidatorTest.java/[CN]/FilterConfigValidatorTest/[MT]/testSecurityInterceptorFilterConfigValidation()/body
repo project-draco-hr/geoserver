@@ -2,28 +2,24 @@
   SecurityInterceptorFilterConfig config=new SecurityInterceptorFilterConfig();
   config.setClassName(GeoServerSecurityInterceptorFilter.class.getName());
   config.setName("testInterceptFilter");
-  boolean failed=false;
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  FilterConfigValidator validator=new FilterConfigValidator(secMgr);
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("no metadata source should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.SECURITY_METADATA_SOURCE_NEEDED,ex.getId());
     assertEquals(0,ex.getArgs().length);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
   config.setSecurityMetadataSource("unknown");
-  failed=false;
   try {
-    getSecurityManager().saveFilter(config);
+    validator.validateFilterConfig(config);
+    fail("unknown metadata source should fail");
   }
  catch (  FilterConfigException ex) {
     assertEquals(FilterConfigException.UNKNOWN_SECURITY_METADATA_SOURCE,ex.getId());
     assertEquals(1,ex.getArgs().length);
     assertEquals("unknown",ex.getArgs()[0]);
-    LOGGER.info(ex.getMessage());
-    failed=true;
   }
-  assertTrue(failed);
 }
