@@ -24,12 +24,10 @@
       wmsStore.setReadTimeout(readTimeout != null && readTimeout.intValue() > 0 ? readTimeout : WMSStoreInfoImpl.DEFAULT_READ_TIMEOUT);
     }
   }
-  GeoServerSecurityManager secMgr=getSecurityManager();
+  GeoServerSecurityManager secMgr=encryptPasswordFields ? getSecurityManager() : null;
   if (secMgr != null) {
     secMgr.getConfigPasswordEncryptionHelper().decode(store);
   }
-  if (LOGGER.isLoggable(Level.INFO) && forceLevel.intValue() <= Level.INFO.intValue()) {
-    LOGGER.info("Loaded store '" + store.getName() + "', "+ (store.isEnabled() ? "enabled" : "disabled"));
-  }
+  log(Level.INFO,"Loaded store '" + store.getName() + "', "+ (store.isEnabled() ? "enabled" : "disabled"));
   return store;
 }
