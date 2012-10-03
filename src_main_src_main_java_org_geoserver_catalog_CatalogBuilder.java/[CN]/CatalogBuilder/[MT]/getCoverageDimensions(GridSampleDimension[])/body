@@ -11,14 +11,20 @@
       parseUOM(label,uom);
       label.append(")".intern());
     }
+    GridSampleDimension sd=sampleDimensions[i];
     label.append("[".intern());
-    label.append(sampleDimensions[i].getMinimumValue());
+    label.append(sd.getMinimumValue());
     label.append(",".intern());
-    label.append(sampleDimensions[i].getMaximumValue());
+    label.append(sd.getMaximumValue());
     label.append("]".intern());
     dim.setDescription(label.toString());
-    dim.setRange(sampleDimensions[i].getRange());
-    final List<Category> categories=sampleDimensions[i].getCategories();
+    if (sd.getRange() != null) {
+      dim.setRange(sd.getRange());
+    }
+ else {
+      dim.setRange(NumberRange.create(sd.getMinimumValue(),sd.getMaximumValue()));
+    }
+    final List<Category> categories=sd.getCategories();
     if (categories != null) {
       for (      Category cat : categories) {
         if ((cat != null) && cat.getName().toString().equalsIgnoreCase("no data")) {
