@@ -1,0 +1,18 @@
+{
+  engine.eval("import inspect");
+  PyList args=(PyList)engine.eval("inspect.getargspec(run.func_closure[0].cell_contents)[0]");
+  PyDictionary inputs=(PyDictionary)process(engine).__getattr__("inputs");
+  if (args.size() != inputs.size()) {
+    throw new RuntimeException(String.format("process function specified %d arguments but" + " describes %d inputs",args.size(),inputs.size()));
+  }
+  Map<String,Parameter<?>> map=new TreeMap<String,Parameter<?>>();
+  for (int i=0; i < args.size(); i++) {
+    String arg=args.get(i).toString();
+    PyObject input=(PyObject)inputs.get(arg);
+    if (input == null) {
+      throw new RuntimeException(String.format("process function specified argument %s" + " but does not specify it as an input",arg));
+    }
+    map.put(arg,parameter(arg,input.__getitem__(0),input.__getitem__(1)));
+  }
+  return map;
+}

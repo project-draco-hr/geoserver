@@ -1,0 +1,42 @@
+{
+  response.setStatus(new Status(status));
+  Form responseHeaders=(Form)response.getAttributes().get("org.restlet.http.headers");
+  if (responseHeaders == null) {
+    responseHeaders=new Form();
+    response.getAttributes().put("org.restlet.http.headers",responseHeaders);
+  }
+  if (headers != null) {
+    for (    Object id : headers.getIds()) {
+      String name=id.toString();
+      String value=headers.get(name,headers).toString();
+      if (!name.equalsIgnoreCase("content-type")) {
+        responseHeaders.add(name,value);
+      }
+    }
+  }
+  MediaType mediaType;
+  String type=responseHeaders.getFirstValue("content-type",true);
+  if (type == null) {
+    mediaType=MediaType.TEXT_PLAIN;
+  }
+ else {
+    mediaType=new MediaType(type);
+  }
+  final Method writeMethod=getClass().getDeclaredMethod("write",Context.class,Scriptable.class,Object[].class,Function.class);
+  response.setEntity(new OutputRepresentation(mediaType){
+    @Override public void write(    OutputStream outputStream) throws IOException {
+      Context cx=CommonJSEngine.enterContext();
+      FunctionObject writeFunc=new FunctionObject("bodyWriter",writeMethod,scope);
+      BoundFunction boundWrite=new BoundFunction(cx,scope,writeFunc,body,new Object[]{outputStream});
+      Object[] args={boundWrite};
+      try {
+        forEach.call(cx,scope,body,args);
+      }
+  finally {
+        Context.exit();
+        outputStream.close();
+      }
+    }
+  }
+);
+}

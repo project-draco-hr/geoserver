@@ -1,0 +1,11 @@
+{
+  String ext=(String)getRequest().getAttributes().get("ext");
+  ScriptSession session=scriptMgr.createNewSession(ext);
+  if (session == null) {
+    throw new RestletException("Unable to create session",Status.SERVER_ERROR_INTERNAL);
+  }
+  PageInfo page=(PageInfo)getRequest().getAttributes().get(PageInfo.KEY);
+  getResponse().redirectSeeOther(page.pageURI(String.valueOf(session.getId())));
+  getResponse().setEntity(new StringRepresentation(String.valueOf(session.getId())));
+  getResponse().setStatus(Status.SUCCESS_CREATED);
+}

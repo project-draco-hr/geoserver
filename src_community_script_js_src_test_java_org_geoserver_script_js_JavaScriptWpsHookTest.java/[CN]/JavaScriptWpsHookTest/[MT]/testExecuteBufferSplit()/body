@@ -1,0 +1,17 @@
+{
+  ScriptProcess process=createProcess("bufferSplit");
+  WKTReader wktReader=new WKTReader();
+  Map<String,Object> input=new HashMap<String,Object>();
+  input.put("geom",wktReader.read("POINT (0 0)"));
+  input.put("distance",0.5);
+  input.put("line",wktReader.read("LINESTRING (-1 -1, 1 1)"));
+  Map<String,Object> output=process.execute(input,null);
+  assertNotNull("output",output);
+  assertTrue("result in outputs",output.containsKey("result"));
+  Object obj=output.get("result");
+  assertTrue("result type",obj instanceof GeometryCollection);
+  GeometryCollection geom=(GeometryCollection)obj;
+  assertEquals(2,geom.getNumGeometries());
+  assertEquals(0.39,geom.getGeometryN(0).getArea(),0.01);
+  assertEquals(0.39,geom.getGeometryN(1).getArea(),0.01);
+}

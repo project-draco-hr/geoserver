@@ -1,0 +1,22 @@
+{
+  String filename=(String)get(ScriptEngine.FILENAME);
+  if (filename == null) {
+    filename="<Unknown Source>";
+  }
+  Object result;
+  EngineScope scope=getRuntimeScope(context);
+  Context cx=enterContext();
+  try {
+    result=cx.evaluateReader(scope,reader,filename,1,null);
+  }
+ catch (  EcmaError e) {
+    throw new ScriptException(e.getMessage(),e.sourceName(),e.lineNumber(),e.columnNumber());
+  }
+catch (  Exception e) {
+    throw new ScriptException(e);
+  }
+ finally {
+    Context.exit();
+  }
+  return result;
+}

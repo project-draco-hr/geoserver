@@ -1,0 +1,19 @@
+{
+  testPost();
+  testPost();
+  JSONObject result=(JSONObject)getAsJSON("/script/sessions");
+  assertTrue(result.has("sessions"));
+  JSONArray sessions=result.getJSONArray("sessions");
+  assertEquals(2,sessions.size());
+  JSONObject session=sessions.getJSONObject(0);
+  assertTrue(session.has("id"));
+  assertTrue(session.has("engine"));
+  assertTrue(session.has("self"));
+  int sid=session.getInt("id");
+  assertTrue(session.getString("self").endsWith("/sessions/js/" + sid));
+  session=(JSONObject)getAsJSON("/script/sessions/js/" + sid);
+  assertTrue(session.has("id"));
+  assertTrue(session.has("engine"));
+  assertTrue(session.has("self"));
+  assertEquals(sid,session.getInt("id"));
+}

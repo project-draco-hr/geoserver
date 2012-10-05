@@ -1,0 +1,27 @@
+{
+  ScriptProcess process=createProcess("buffer");
+  Map<String,Parameter<?>> inputs=process.getInputs();
+  assertTrue("geom in inputs",inputs.containsKey("geom"));
+  Parameter<?> geomParam=inputs.get("geom");
+  assertEquals("geom title","Input Geometry",geomParam.getTitle().toString());
+  assertEquals("geom description","The target geometry.",geomParam.getDescription().toString());
+  assertEquals("geom type",Geometry.class,geomParam.getType());
+  assertTrue("distance in inputs",inputs.containsKey("distance"));
+  Parameter<?> distance=inputs.get("distance");
+  assertEquals("distance title","Buffer Distance",distance.getTitle().toString());
+  assertEquals("distance description","The distance by which to buffer the geometry.",distance.getDescription().toString());
+  assertEquals("distance type",Double.class,distance.getType());
+  WKTReader wktReader=new WKTReader();
+  Geometry point=wktReader.read("POINT(1 1)");
+  Map<String,Object> input=new HashMap<String,Object>();
+  input.put("geom",point);
+  input.put("distance",4.0);
+  Map<String,Object> result=process.execute(input,null);
+  assertNotNull("buffer result",result);
+  assertTrue("result in results",result.containsKey("result"));
+  Object obj=result.get("result");
+  assertTrue("got back a geometry",obj instanceof Geometry);
+  Geometry geom=(Geometry)obj;
+  Double exp=Math.PI * 16;
+  assertEquals("correct sum",exp,geom.getArea(),1.0);
+}

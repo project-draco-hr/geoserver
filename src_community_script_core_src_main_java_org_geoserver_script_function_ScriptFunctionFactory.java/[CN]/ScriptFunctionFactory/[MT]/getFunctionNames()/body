@@ -1,0 +1,21 @@
+{
+  LOGGER.fine("Performing filter lookup");
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+  ScriptManager scriptMgr=scriptMgr();
+  List<FunctionName> names=new ArrayList<FunctionName>();
+  try {
+    File filterRoot=scriptMgr.getFunctionRoot();
+    for (    String file : filterRoot.list()) {
+      File f=new File(filterRoot,file);
+      FunctionHook hook=scriptMgr.lookupFilterHook(f);
+      if (hook == null) {
+        LOGGER.fine("Skipping " + f.getName() + ", no hook found");
+      }
+      names.add(ff.functionName(new NameImpl(getExtension(f.getName()),getBaseName(f.getName())),-1));
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Error looking up filters",e);
+  }
+  return names;
+}

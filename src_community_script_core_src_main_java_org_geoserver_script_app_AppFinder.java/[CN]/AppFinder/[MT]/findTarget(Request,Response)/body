@@ -1,0 +1,27 @@
+{
+  String app=(String)request.getAttributes().get("app");
+  if (app == null) {
+    return new AppListResource(scriptMgr,request,response);
+  }
+  File appDir;
+  try {
+    appDir=scriptMgr.findAppDir(app);
+  }
+ catch (  IOException e) {
+    throw new RestletException(format("Error looking up app directory %s",app),Status.SERVER_ERROR_INTERNAL,e);
+  }
+  if (appDir == null) {
+    throw new RestletException(format("No such app %s",app),Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  File main=null;
+  for (  File f : appDir.listFiles()) {
+    if ("main".equals(FilenameUtils.getBaseName(f.getName()))) {
+      main=f;
+      break;
+    }
+  }
+  if (main == null) {
+    throw new RestletException(format("No main file for app %s",app),Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  return new AppResource(main,scriptMgr,request,response);
+}

@@ -1,0 +1,7 @@
+{
+  String sld="<StyledLayerDescriptor xmlns:ogc='http://www.opengis.net/ogc'>" + " <UserLayer> " + "  <Name>BasicPolygons</Name>"+ "  <UserStyle> "+ "   <Name>UserSelection</Name> "+ "   <FeatureTypeStyle> "+ "    <Rule> "+ " <PolygonSymbolizer>"+ "    <Geometry>"+ "       <ogc:Function name='sld'>"+ "         <ogc:PropertyName>the_geom</ogc:PropertyName>"+ "       </ogc:Function>"+ "    </Geometry>"+ "    <Fill>"+ "      <CssParameter name='fill'>#777777</CssParameter>"+ "    </Fill>"+ "    <Stroke>"+ "     <CssParameter name='stroke'>#000000</CssParameter>"+ "     <CssParameter name='stroke-width'>2</CssParameter>"+ "   </Stroke>"+ "  </PolygonSymbolizer>"+ "    </Rule> "+ "   </FeatureTypeStyle> "+ "  </UserStyle> "+ " </UserLayer> "+ "</StyledLayerDescriptor>";
+  MockHttpServletResponse response=getAsServletResponse("wms?request=GetMap&version=1.1.1" + "&bbox=-10,-10,10,10&format=image/png&&width=500&height=500&srs=EPSG:4326" + "&SLD_BODY="+ sld.replaceAll("=","%3D"));
+  assertEquals("image/png",response.getContentType());
+  BufferedImage img=ImageIO.read(getBinaryInputStream(response));
+  WMSTestSupport.showImage("test",img);
+}

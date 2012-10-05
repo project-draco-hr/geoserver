@@ -1,0 +1,38 @@
+import base64, code, httplib, logging, optparse
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError as e:
+        print e
+        exit('Install simplejson or run on Python 2.6+')
+logging.basicConfig(format='%(levelname)s - %(message)s')
+logger = logging.getLogger('session')
+if (__name__ == '__main__'):
+    p = optparse.OptionParser('Usage: %prog [options] host [list|connect]')
+    p.add_option('-p', '--port', dest='port', type='int', default=8080, help='server port, default is 8080')
+    p.add_option('-u', '--user', dest='user', default='admin', help='username, default is admin')
+    p.add_option('-w', '--password', dest='passwd', default='geoserver', help='password, default is geoserver')
+    p.add_option('-c', '--context', dest='context', default='geoserver', help='context, default is geoserver')
+    p.add_option('-s', '--session', dest='session', type=int, help='session identifier')
+    (opts, args) = p.parse_args()
+    if (len(args) == 0):
+        p.error('host is required')
+    opts = vars(opts)
+    cmds = ('list', 'connect')
+    cmd = (args[1] if (len(args) > 1) else cmds[0])
+    if (cmd not in cmds):
+        p.error(("unrecognized command '%s'" % cmd))
+    if ((cmd == 'connect') and (not opts.has_key('session'))):
+        p.error('connect command requires session option')
+    try:
+        sid = opts['session']
+        del opts['session']
+    except KeyError:
+        sid = None
+    c = SessionClient(args[0], **opts)
+    if (cmd == 'list'):
+        print c.list()
+    elif (cmd == 'connect'):
+        c.connect(sid)

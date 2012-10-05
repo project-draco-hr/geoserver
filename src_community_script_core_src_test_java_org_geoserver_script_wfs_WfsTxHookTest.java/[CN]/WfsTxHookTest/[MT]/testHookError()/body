@@ -1,0 +1,16 @@
+{
+  File script=copyOverFile("tx-error");
+  TransactionRequest tx=new TransactionRequest.WFS11(null);
+  TransactionResponse res=new TransactionResponse.WFS11(null);
+  Map context=new HashMap();
+  ScriptEngine eng=scriptMgr.createNewEngine(script);
+  eng.eval(new FileReader(script));
+  WfsTxHook hook=getScriptManager().lookupWfsTxHook(script);
+  try {
+    hook.handleBefore(eng,tx,context);
+    fail("exected WFS exception");
+  }
+ catch (  WFSException e) {
+    assertEquals("before exception",e.getMessage());
+  }
+}

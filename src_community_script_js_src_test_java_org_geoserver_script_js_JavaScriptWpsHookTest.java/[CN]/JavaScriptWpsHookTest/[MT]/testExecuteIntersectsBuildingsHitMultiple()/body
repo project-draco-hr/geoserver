@@ -1,0 +1,14 @@
+{
+  ScriptProcess process=createProcess("intersects");
+  WKTReader wktReader=new WKTReader();
+  Map<String,Object> input=new HashMap<String,Object>();
+  input.put("geometry",wktReader.read("LINESTRING (0.00216 0.00084, 0.001 0.00054)"));
+  input.put("features",getFeatures("http://www.opengis.net/cite","Buildings"));
+  Map<String,Object> result=process.execute(input,null);
+  assertNotNull("intersects result",result);
+  assertTrue("intersects in results",result.containsKey("intersects"));
+  Object obj=result.get("intersects");
+  assertTrue("got back a boolean",obj instanceof Boolean);
+  assertTrue("intersects",(Boolean)obj);
+  assertEquals("intersects one",2.0,result.get("count"));
+}

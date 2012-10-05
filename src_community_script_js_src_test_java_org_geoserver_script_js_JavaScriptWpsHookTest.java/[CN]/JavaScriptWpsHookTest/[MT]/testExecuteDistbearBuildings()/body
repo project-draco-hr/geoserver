@@ -1,0 +1,19 @@
+{
+  ScriptProcess process=createProcess("distbear");
+  WKTReader wktReader=new WKTReader();
+  Map<String,Object> input=new HashMap<String,Object>();
+  input.put("origin",wktReader.read("POINT (10 0.00084)"));
+  input.put("features",getFeatures("http://www.opengis.net/cite","Buildings"));
+  Map<String,Object> output=process.execute(input,null);
+  assertNotNull("distbear output",output);
+  assertTrue("result in outputs",output.containsKey("result"));
+  Object obj=output.get("result");
+  assertTrue("result type",obj instanceof SimpleFeatureCollection);
+  SimpleFeatureCollection features=(SimpleFeatureCollection)obj;
+  assertEquals("result size",2,features.size());
+  SimpleFeatureType schema=features.getSchema();
+  GeometryType geomType=schema.getGeometryDescriptor().getType();
+  assertEquals("geometry type",MultiPolygon.class,geomType.getBinding());
+  assertNotNull("distance attribute",schema.getDescriptor("distance"));
+  assertNotNull("bearing attribute",schema.getDescriptor("bearing"));
+}

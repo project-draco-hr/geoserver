@@ -1,0 +1,17 @@
+{
+  try {
+    Map context=request.getExtendedProperties();
+    ScriptEngine eng=fw.read();
+    TransactionRequest txReq=TransactionRequest.adapt(request);
+    TransactionResponse txRes=TransactionResponse.adapt(result);
+    if (committed) {
+      hook.handlePostCommit(eng,txReq,txRes,context);
+    }
+ else {
+      hook.handleAbort(eng,txReq,txRes,context);
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error occured in post commit hook",e);
+  }
+}

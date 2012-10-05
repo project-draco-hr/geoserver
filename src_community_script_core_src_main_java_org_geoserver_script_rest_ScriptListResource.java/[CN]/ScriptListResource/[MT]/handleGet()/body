@@ -1,0 +1,31 @@
+{
+  final String type=(String)getRequest().getAttributes().get("type");
+  File dir=null;
+  try {
+    dir=scriptMgr.findScriptDir(path);
+  }
+ catch (  IOException e) {
+    throw new RestletException(format("Error looking up script dir %s",path),Status.SERVER_ERROR_INTERNAL,e);
+  }
+  JSONArray arr=new JSONArray();
+  if (dir != null) {
+    FileFilter filter=type != null ? new FileFilter(){
+      @Override public boolean accept(      File pathname){
+        return type.equalsIgnoreCase(FilenameUtils.getExtension(pathname.getName()));
+      }
+    }
+ : new FileFilter(){
+      @Override public boolean accept(      File pathname){
+        return true;
+      }
+    }
+;
+    for (    File f : dir.listFiles(filter)) {
+      arr.add(f.getName());
+    }
+  }
+ else {
+  }
+  getResponse().setEntity(new StringRepresentation(arr.toString()));
+  getResponse().setStatus(Status.SUCCESS_OK);
+}

@@ -1,0 +1,20 @@
+{
+  if (request.getAttributes().containsKey("ext")) {
+    String ext=(String)request.getAttributes().get("ext");
+    if (!scriptMgr.hasEngineForExtension(ext)) {
+      throw new RestletException("Unsupported language: " + ext,Status.CLIENT_ERROR_NOT_FOUND);
+    }
+  }
+  if (request.getAttributes().containsKey("sessson")) {
+    try {
+      long session=Long.valueOf((String)request.getAttributes().get("session"));
+      if (scriptMgr.findSession(session) == null) {
+        throw new RestletException("No such session: " + session,Status.CLIENT_ERROR_NOT_FOUND);
+      }
+    }
+ catch (    NumberFormatException e) {
+      throw new RestletException("Session must be numeric",Status.CLIENT_ERROR_NOT_FOUND,e);
+    }
+  }
+  return new SessionResource(scriptMgr,request,response);
+}

@@ -1,0 +1,18 @@
+def process(inputs, outputs, title=None, description=None):
+
+    def wrap(f):
+
+        def wrapped(*args, **kwargs):
+            args = (core.map(a) for a in args)
+            for k in kwargs:
+                kwargs[k] = core.map(kwargs[k])
+            result = f(*args, **kwargs)
+            if isinstance(result, types.GeneratorType):
+                return PyFeatureCollection(result)
+            return core.unmap(result, FeatureCollection)
+        wrapped.title = title
+        wrapped.description = description
+        wrapped.inputs = dict(((k, _unmap(v, FeatureCollection)) for (k, v) in inputs.iteritems()))
+        wrapped.outputs = dict(((k, _unmap(v, FeatureCollection)) for (k, v) in outputs.iteritems()))
+        return wrapped
+    return wrap

@@ -1,0 +1,17 @@
+{
+  ScriptProcess process=createProcess("bufferedUnion");
+  WKTReader wktReader=new WKTReader();
+  Map<String,Object> input=new HashMap<String,Object>();
+  ArrayList<Geometry> geoms=new ArrayList<Geometry>(2);
+  geoms.add(wktReader.read("POINT (0 0)"));
+  geoms.add(wktReader.read("POINT (1 0)"));
+  input.put("geom",geoms);
+  input.put("distance",2);
+  Map<String,Object> output=process.execute(input,null);
+  assertNotNull("output",output);
+  assertTrue("result in outputs",output.containsKey("result"));
+  Object obj=output.get("result");
+  assertTrue("result type",obj instanceof Polygon);
+  Polygon geom=(Polygon)obj;
+  assertEquals(16.43,geom.getArea(),0.01);
+}

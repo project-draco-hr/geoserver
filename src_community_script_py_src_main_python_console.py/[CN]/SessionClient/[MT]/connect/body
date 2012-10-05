@@ -1,0 +1,26 @@
+def connect(self, sid=None):
+    if (sid == None):
+        r = self._request('POST', 'sessions/py')
+        if self._check(r, 201, 'POST new session failed'):
+            sid = int(r.read())
+        else:
+            return False
+    r = self._request('GET', ('sessions/py/%d' % sid))
+    if self._check(r, 200, 'GET session failed'):
+        while True:
+            buf = raw_input('>>> ')
+            try:
+                while (not code.compile_command(buf)):
+                    buf = ((buf + '\n') + raw_input('... '))
+                if ('exit()' == buf):
+                    self.close()
+                    break
+                r = self._request('PUT', ('sessions/py/%d' % sid), buf)
+                self._check(r, 200, 'PUT statement failed')
+                result = r.read()
+                if (result and (len(result.strip()) > 0)):
+                    print result,
+                    if (not (result[(-1)] == '\n')):
+                        print 
+            except SyntaxError as e:
+                print e

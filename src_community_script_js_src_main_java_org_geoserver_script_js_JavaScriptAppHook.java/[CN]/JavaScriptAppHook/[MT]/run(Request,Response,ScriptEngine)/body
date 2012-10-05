@@ -1,0 +1,40 @@
+{
+  Invocable invocable=(Invocable)engine;
+  Object exportsObj=engine.get("exports");
+  Scriptable exports=null;
+  if (exportsObj instanceof Scriptable) {
+    exports=(Scriptable)exportsObj;
+  }
+ else {
+    throw new ScriptException("Couldn't get exports for app.");
+  }
+  Scriptable scope=exports.getParentScope();
+  Context cx=CommonJSEngine.enterContext();
+  Scriptable jsgiRequest=null;
+  try {
+    jsgiRequest=new JsgiRequest(request,response,cx,scope);
+  }
+ catch (  Exception e) {
+    throw new ScriptException(e);
+  }
+ finally {
+    Context.exit();
+  }
+  Object appReturn=null;
+  try {
+    appReturn=invocable.invokeMethod(exports,"app",jsgiRequest);
+  }
+ catch (  NoSuchMethodException e) {
+    throw new ScriptException(e);
+  }
+  if (!(appReturn instanceof Scriptable)) {
+    throw new ScriptException("bad return from JSGI app");
+  }
+  JsgiResponse jsgiResponse=new JsgiResponse((Scriptable)appReturn,scope);
+  try {
+    jsgiResponse.commit(response,scope);
+  }
+ catch (  Exception e) {
+    throw new ScriptException("Failed to write response: " + e.getMessage());
+  }
+}

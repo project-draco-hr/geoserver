@@ -1,0 +1,18 @@
+{
+  String s=(String)getRequest().getAttributes().get("session");
+  String ext=(String)getRequest().getAttributes().get("ext");
+  JSONObject obj=null;
+  if (s != null) {
+    obj=toJSON(scriptMgr.findSession(Long.valueOf(s)));
+  }
+ else {
+    JSONArray array=new JSONArray();
+    for (    ScriptSession session : scriptMgr.findSessions(ext)) {
+      array.add(toJSON(session));
+    }
+    obj=new JSONObject();
+    obj.put("sessions",array);
+  }
+  getResponse().setEntity(new StringRepresentation(obj.toString(2),MediaType.APPLICATION_JSON));
+  getResponse().setStatus(Status.SUCCESS_OK);
+}

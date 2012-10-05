@@ -1,0 +1,38 @@
+{
+  ScriptFunction function=functions.get(name);
+  if (function == null) {
+synchronized (this) {
+      function=functions.get(name);
+      if (function == null) {
+        try {
+          ScriptManager scriptMgr=scriptMgr();
+          File filterRoot=scriptMgr.getFunctionRoot();
+          File f=null;
+          if (name.getNamespaceURI() != null) {
+            f=new File(filterRoot,name.getLocalPart() + "." + name.getNamespaceURI());
+          }
+ else {
+            for (            String filename : filterRoot.list()) {
+              if (name.getLocalPart().equals(getBaseName(filename))) {
+                f=new File(filterRoot,filename);
+                break;
+              }
+            }
+          }
+          if (f == null) {
+            return null;
+          }
+          if (!f.exists()) {
+            throw new FileNotFoundException(f.getPath());
+          }
+          function=new ScriptFunction(f,scriptMgr);
+        }
+ catch (        IOException e) {
+          throw new RuntimeException(e);
+        }
+        functions.put(name,function);
+      }
+    }
+  }
+  return function;
+}

@@ -1,0 +1,30 @@
+{
+  if (requireBuilder == null) {
+synchronized (this) {
+      if (requireBuilder == null) {
+        requireBuilder=new RequireBuilder();
+        requireBuilder.setSandboxed(false);
+        List<URI> uris=new ArrayList<URI>();
+        if (modulePaths != null) {
+          for (          String path : modulePaths) {
+            try {
+              URI uri=new URI(path);
+              if (!uri.isAbsolute()) {
+                uri=new File(path).toURI().resolve("");
+              }
+              if (!uri.toString().endsWith("/")) {
+                uri=new URI(uri + "/");
+              }
+              uris.add(uri);
+            }
+ catch (            URISyntaxException usx) {
+              throw new RuntimeException(usx);
+            }
+          }
+        }
+        requireBuilder.setModuleScriptProvider(new SoftCachingModuleScriptProvider(new UrlModuleSourceProvider(uris,null)));
+      }
+    }
+  }
+  return requireBuilder;
+}

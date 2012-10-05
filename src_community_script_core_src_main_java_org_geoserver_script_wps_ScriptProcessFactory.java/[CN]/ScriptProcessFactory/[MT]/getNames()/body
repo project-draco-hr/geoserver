@@ -1,0 +1,25 @@
+{
+  LOGGER.fine("Performing process lookup");
+  ScriptManager scriptMgr=scriptMgr();
+  Set<Name> names=new TreeSet<Name>();
+  try {
+    File wpsRoot=scriptMgr.getWpsRoot();
+    for (    String file : wpsRoot.list()) {
+      File f=new File(wpsRoot,file);
+      if (f.isHidden()) {
+        continue;
+      }
+      WpsHook hook=scriptMgr.lookupWpsHook(f);
+      if (hook == null) {
+        LOGGER.fine("Skipping " + f.getName() + ", no hook found");
+      }
+ else {
+        names.add(new NameImpl(getExtension(f.getName()),getBaseName(f.getName())));
+      }
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Error looking up processes",e);
+  }
+  return names;
+}

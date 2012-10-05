@@ -1,0 +1,40 @@
+{
+  Object statusObj=obj.get("status",obj);
+  if (statusObj instanceof Integer) {
+    status=(Integer)statusObj;
+  }
+  Object headersObj=obj.get("headers",obj);
+  if (headersObj instanceof ScriptableObject) {
+    headers=(ScriptableObject)headersObj;
+  }
+  Object bodyObj=obj.get("body",obj);
+  if (bodyObj instanceof String) {
+    Object[] array={(String)bodyObj};
+    Context cx=CommonJSEngine.enterContext();
+    try {
+      bodyObj=cx.newArray(scope,array);
+    }
+  finally {
+      Context.exit();
+    }
+  }
+  if (bodyObj instanceof Scriptable) {
+    body=(Scriptable)bodyObj;
+    Object forEachObj=body.get("forEach",body);
+    if (forEachObj instanceof Function) {
+      forEach=(Function)forEachObj;
+    }
+ else {
+      NativeArray bodyArray=null;
+      if (body instanceof NativeArray) {
+        bodyArray=(NativeArray)body;
+      }
+      if (bodyArray != null) {
+        forEach=(Function)bodyArray.getPrototype().get("forEach",bodyArray);
+      }
+    }
+  }
+  if (forEach == null) {
+    throw new RuntimeException("JSGI app must return an object with a 'body' member that has a 'forEach' function.");
+  }
+}

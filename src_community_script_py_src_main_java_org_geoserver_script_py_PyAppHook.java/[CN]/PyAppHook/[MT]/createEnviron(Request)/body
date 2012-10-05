@@ -1,0 +1,20 @@
+{
+  PyDictionary environ=new PyDictionary();
+  environ.put("REQUEST_METHOD",request.getMethod().toString());
+  Reference ref=request.getResourceRef();
+  environ.put("SCRIPT_NAME",ref.getLastSegment());
+  environ.put("SERVER_NAME",new PyString(ref.getHostDomain()));
+  environ.put("SERVER_PORT",String.valueOf(ref.getHostPort()));
+  List<String> seg=new ArrayList(ref.getSegments().subList(4,ref.getSegments().size()));
+  seg.add(0,"");
+  environ.put("PATH_INFO",StringUtils.join(seg.toArray(),"/"));
+  environ.put("QUERY_STRING",request.getResourceRef().getQuery());
+  environ.put("wsgi.version",new PyTuple(new PyInteger(0),new PyInteger(1)));
+  environ.put("wsgi.url_scheme",ref.getScheme());
+  environ.put("wsgi.input",new PyFile(request.getEntity().getStream()));
+  environ.put("wsgi.errors",new PyFile(System.err));
+  environ.put("wsgi.multithread",true);
+  environ.put("wsgi.multitprocess",false);
+  environ.put("wsgi.run_once",false);
+  return environ;
+}

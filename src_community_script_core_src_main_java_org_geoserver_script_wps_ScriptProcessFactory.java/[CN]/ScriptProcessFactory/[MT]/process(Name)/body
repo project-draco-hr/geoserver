@@ -1,0 +1,23 @@
+{
+  ScriptProcess process=processes.get(name);
+  if (process == null) {
+synchronized (this) {
+      process=processes.get(name);
+      if (process == null) {
+        try {
+          ScriptManager scriptMgr=scriptMgr();
+          File f=new File(scriptMgr.getWpsRoot(),name.getLocalPart() + "." + name.getNamespaceURI());
+          if (!f.exists()) {
+            throw new FileNotFoundException(f.getPath());
+          }
+          process=new ScriptProcess(name,f,scriptMgr);
+        }
+ catch (        IOException e) {
+          throw new RuntimeException(e);
+        }
+        processes.put(name,process);
+      }
+    }
+  }
+  return process;
+}

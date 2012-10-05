@@ -1,0 +1,28 @@
+{
+  PyObject run=process(engine);
+  List<PyObject> args=new ArrayList();
+  List<String> kw=new ArrayList();
+  for (  Map.Entry<String,Object> input : inputs.entrySet()) {
+    args.add(Py.java2py(input.getValue()));
+    kw.add(input.getKey());
+  }
+  PyObject r=run.__call__(args.toArray(new PyObject[args.size()]),kw.toArray(new String[kw.size()]));
+  Collection result=null;
+  if (r instanceof Collection) {
+    result=(Collection)r;
+  }
+ else {
+    result=new ArrayList();
+    result.add(r);
+  }
+  Map<String,Parameter<?>> outputs=getOutputs(engine);
+  if (result.size() != outputs.size()) {
+    throw new IllegalStateException(String.format("Process returned %d values, should have " + "returned %d",result.size(),outputs.size()));
+  }
+  Map<String,Object> results=new LinkedHashMap<String,Object>();
+  Iterator it=result.iterator();
+  for (  Parameter output : outputs.values()) {
+    results.put(output.key,((PyObject)it.next()).__tojava__(output.type));
+  }
+  return results;
+}

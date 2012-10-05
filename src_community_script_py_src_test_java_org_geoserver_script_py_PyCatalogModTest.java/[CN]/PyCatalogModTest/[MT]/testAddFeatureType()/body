@@ -1,0 +1,20 @@
+{
+  testAddStore();
+  DataStoreInfo ds=cat.getDataStoreByName("foo","bar");
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.setName("baz");
+  tb.add("x",Integer.class);
+  tb.add("y",String.class);
+  ((DataStore)ds.getDataStore(null)).createSchema(tb.buildFeatureType());
+  assertNull(cat.getFeatureTypeByDataStore(ds,"baz"));
+  e.eval("from geoserver.catalog import Catalog");
+  e.eval("from geoserver.catalog import Layer");
+  e.eval("cat = Catalog()");
+  e.eval("st = cat['foo']['bar']");
+  e.eval("l = Layer('baz', st)");
+  e.eval("l.save()");
+  FeatureTypeInfo ft=cat.getFeatureTypeByDataStore(ds,"baz");
+  assertNotNull(ft);
+  assertNotNull(ft.getFeatureType());
+  assertNotNull(ft.getFeatureSource(null,null));
+}

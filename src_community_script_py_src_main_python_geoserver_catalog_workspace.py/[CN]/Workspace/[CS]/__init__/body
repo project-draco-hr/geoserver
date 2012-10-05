@@ -1,0 +1,24 @@
+def __init__(self, workspace=None, catalog=None):
+    if (not catalog):
+        from geoserver.catalog import Catalog
+        catalog = Catalog()
+    self.catalog = catalog
+    self._nsinfo = None
+    if isinstance(workspace, WorkspaceInfo):
+        self._info = workspace
+    elif isinstance(workspace, (str, unicode)):
+        ws = catalog._catalog.getWorkspaceByName(workspace)
+        if (not ws):
+            ws = catalog._catalog.getFactory().createWorkspace()
+            ws.setName(workspace)
+            ns = catalog._catalog.getFactory().createNamespace()
+            ns.setPrefix(workspace)
+            ns.setURI(workspace)
+            self._nsinfo = ns
+        self._info = ws
+    elif (not workspace):
+        self._info = catalog._catalog.getDefaultWorkspace()
+    else:
+        self._info = workspace
+    if (not self._nsinfo):
+        self._nsinfo = catalog._catalog.getNamespaceByPrefix(self._info.name)

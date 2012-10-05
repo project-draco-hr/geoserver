@@ -1,0 +1,23 @@
+{
+  String filename=(String)engine.get(ScriptEngine.FILENAME);
+  if (filename == null) {
+    filename="<Unknown Source>";
+  }
+  Object exportsObj=engine.get("exports");
+  Scriptable exports=null;
+  if (exportsObj instanceof Scriptable) {
+    exports=(Scriptable)exportsObj;
+  }
+ else {
+    throw new RuntimeException("Couldn't get exports for process in " + filename);
+  }
+  Object processObj=exports.get("process",exports);
+  MetaProcess process=null;
+  if (processObj instanceof Wrapper) {
+    process=(MetaProcess)((Wrapper)processObj).unwrap();
+  }
+ else {
+    throw new RuntimeException("Missing 'process' exports from " + filename);
+  }
+  return process;
+}

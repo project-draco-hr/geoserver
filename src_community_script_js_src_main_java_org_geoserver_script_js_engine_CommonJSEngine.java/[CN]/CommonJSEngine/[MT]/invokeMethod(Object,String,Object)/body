@@ -1,0 +1,32 @@
+{
+  if (name == null) {
+    throw new NullPointerException("Method name is null");
+  }
+  EngineScope engineScope=getRuntimeScope(context);
+  if (thisObj == null) {
+    thisObj=engineScope;
+  }
+ else {
+    if (!(thisObj instanceof Scriptable)) {
+      thisObj=Context.toObject(thisObj,getGlobal());
+    }
+  }
+  Object methodObj=ScriptableObject.getProperty((Scriptable)thisObj,name);
+  if (!(methodObj instanceof Function)) {
+    throw new NoSuchMethodException("No such method: " + name);
+  }
+  Function method=(Function)methodObj;
+  Scriptable scope=method.getParentScope();
+  if (scope == null) {
+    scope=engineScope;
+  }
+  Context cx=enterContext();
+  Object result;
+  try {
+    result=method.call(cx,scope,(Scriptable)thisObj,args);
+  }
+  finally {
+    Context.exit();
+  }
+  return result;
+}

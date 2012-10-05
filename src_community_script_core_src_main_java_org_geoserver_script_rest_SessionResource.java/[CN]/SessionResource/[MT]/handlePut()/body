@@ -1,0 +1,38 @@
+{
+  long sid=Long.valueOf((String)getRequest().getAttributes().get("session"));
+  ScriptSession session=scriptMgr.findSession(sid);
+  ScriptEngine engine=session.getEngine();
+  final ByteArrayOutputStream output=new ByteArrayOutputStream();
+  Writer w=new PrintWriter(output);
+  engine.getContext().setWriter(w);
+  engine.getContext().setErrorWriter(w);
+  try {
+    try {
+      Object result=engine.eval(new InputStreamReader(getRequest().getEntity().getStream()));
+      if (result != null) {
+        w.write(result.toString());
+      }
+    }
+ catch (    ScriptException e) {
+      Throwable t=e;
+      if (t.getCause() != null) {
+        t=t.getCause();
+      }
+      t.printStackTrace(new PrintWriter(w));
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Script error",e);
+      }
+    }
+    w.flush();
+  }
+ catch (  IOException e) {
+    throw new RestletException("i/o error",Status.SERVER_ERROR_INTERNAL,e);
+  }
+  getResponse().setEntity(new OutputRepresentation(MediaType.TEXT_PLAIN){
+    @Override public void write(    OutputStream outputStream) throws IOException {
+      outputStream.write(output.toByteArray());
+    }
+  }
+);
+  getResponse().setStatus(Status.SUCCESS_OK);
+}

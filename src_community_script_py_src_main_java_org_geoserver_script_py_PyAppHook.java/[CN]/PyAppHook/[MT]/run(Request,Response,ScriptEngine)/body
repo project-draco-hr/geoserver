@@ -1,0 +1,71 @@
+{
+  Object obj=engine.get("app");
+  if (obj == null) {
+    throw new RuntimeException("No 'app' function defined");
+  }
+  if (!(obj instanceof PyObject)) {
+    throw new RuntimeException("'app not callable, found a " + obj.toString());
+  }
+  PyObject app=(PyObject)obj;
+  WSGIResponse wr=new WSGIResponse();
+  RESPONSE.set(wr);
+  try {
+    Object ret=app.__call__(new PyObject[]{createEnviron(request),createStartResponse()});
+    if (ret != null) {
+      String contentType=wr.headers.get("content-type");
+      if (contentType == null) {
+        contentType="text/plain";
+      }
+      MediaType mediaType=new MediaType(contentType);
+      if (ret instanceof PyString) {
+        response.setEntity(ret.toString(),mediaType);
+      }
+ else       if (ret instanceof PyList) {
+        final PyList list=(PyList)ret;
+        response.setEntity(new OutputRepresentation(mediaType){
+          @Override public void write(          OutputStream outputStream) throws IOException {
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+              outputStream.write(i.next().toString().getBytes());
+              if (i.hasNext()) {
+                outputStream.write('\n');
+              }
+            }
+          }
+        }
+);
+      }
+ else       if (ret instanceof PyIterator) {
+        final PyIterator iter=(PyIterator)ret;
+        response.setEntity(new OutputRepresentation(mediaType){
+          @Override public void write(          OutputStream outputStream) throws IOException {
+            for (Iterator i=iter.iterator(); i.hasNext(); ) {
+              outputStream.write(i.next().toString().getBytes());
+              outputStream.write('\n');
+            }
+          }
+        }
+);
+      }
+ else       if (ret instanceof PyObjectDerived) {
+        final PyObjectDerived iter=(PyObjectDerived)ret;
+        response.setEntity(new OutputRepresentation(mediaType){
+          @Override public void write(          OutputStream outputStream) throws IOException {
+            PyObject next=null;
+            while ((next=iter.__iternext__()) != null) {
+              outputStream.write(next.toString().getBytes());
+              outputStream.write('\n');
+            }
+          }
+        }
+);
+      }
+ else {
+        LOGGER.warning("Unsure how to handle " + ret + ". Resorting to outputing string "+ "representation.");
+        response.setEntity(ret.toString(),mediaType);
+      }
+    }
+  }
+  finally {
+    RESPONSE.remove();
+  }
+}
