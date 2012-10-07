@@ -1,13 +1,14 @@
 {
   pattern="/wms/**";
+  String casProxyFilterName="testCasProxyFilter2";
   CasProxiedAuthenticationFilterConfig pconfig1=new CasProxiedAuthenticationFilterConfig();
   pconfig1.setClassName(GeoServerCasProxiedAuthenticationFilter.class.getName());
-  pconfig1.setName(casProxyFilterName1);
+  pconfig1.setName(casProxyFilterName);
   pconfig1.setCasServerUrlPrefix(casServerURLPrefix.toString());
   pconfig1.setRoleSource(RoleSource.UserGroupService);
   pconfig1.setUserGroupServiceName("ug1");
   getSecurityManager().saveFilter(pconfig1);
-  prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_NO_ASC_FILTER,casProxyFilterName1,GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
+  prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_NO_ASC_FILTER,casProxyFilterName,GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
   SecurityContextHolder.getContext().setAuthentication(null);
   MockHttpServletRequest request=createRequest("wms");
   MockHttpServletResponse response=new MockHttpServletResponse();
@@ -32,7 +33,7 @@
     getProxy().doFilter(request,response,chain);
     assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
     TestingAuthenticationCache cache=getCache();
-    Authentication casAuth=cache.get(casProxyFilterName1,username);
+    Authentication casAuth=cache.get(casProxyFilterName,username);
     assertNotNull(casAuth);
     checkForAuthenticatedRole(casAuth);
     assertEquals(username,casAuth.getPrincipal());
@@ -57,7 +58,7 @@
     getProxy().doFilter(request,response,chain);
     assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
     TestingAuthenticationCache cache=getCache();
-    Authentication casAuth=cache.get(casProxyFilterName1,username);
+    Authentication casAuth=cache.get(casProxyFilterName,username);
     assertNotNull(casAuth);
     checkForAuthenticatedRole(casAuth);
     assertEquals(username,casAuth.getPrincipal());
@@ -81,7 +82,7 @@
   getProxy().doFilter(request,response,chain);
   assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getErrorCode());
   TestingAuthenticationCache cache=getCache();
-  Authentication casAuth=cache.get(casProxyFilterName1,proxyTicket);
+  Authentication casAuth=cache.get(casProxyFilterName,proxyTicket);
   assertNull(casAuth);
   assertNull(request.getAttribute(GeoServerCasConstants.CAS_ASSERTION_KEY));
   assertNull(request.getSession(false));
@@ -109,7 +110,7 @@
   getProxy().doFilter(request,response,chain);
   assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
   cache=getCache();
-  casAuth=cache.get(casProxyFilterName1,username);
+  casAuth=cache.get(casProxyFilterName,username);
   assertNotNull(casAuth);
   checkForAuthenticatedRole(casAuth);
   assertEquals(username,casAuth.getPrincipal());
