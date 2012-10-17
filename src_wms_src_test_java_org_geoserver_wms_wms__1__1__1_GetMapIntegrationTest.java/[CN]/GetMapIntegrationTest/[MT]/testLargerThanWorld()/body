@@ -1,0 +1,19 @@
+{
+  org.apache.log4j.Logger l4jLogger=getLog4JLogger(GetMap.class,"LOGGER");
+  l4jLogger.addAppender(new AppenderSkeleton(){
+    @Override public boolean requiresLayout(){
+      return false;
+    }
+    @Override public void close(){
+    }
+    @Override protected void append(    LoggingEvent event){
+      if (event.getMessage() != null && event.getMessage().toString().startsWith("Failed to compute the scale denominator")) {
+        fail("The error message is still there!");
+      }
+    }
+  }
+);
+  MockHttpServletResponse response=getAsServletResponse("wms?bbox=-9.6450076761637E7,-3.9566251818225E7,9.6450076761637E7,3.9566251818225E7" + "&styles=&layers=" + layers + "&Format=image/png"+ "&request=GetMap"+ "&width=550"+ "&height=250"+ "&srs=EPSG:900913");
+  assertEquals("image/png",response.getContentType());
+  assertEquals("inline; filename=sf-states.png",response.getHeader("Content-Disposition"));
+}
