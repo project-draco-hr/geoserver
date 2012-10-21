@@ -2,7 +2,14 @@
   super.initializeFromConfig(config);
   SecurityContextPersistenceFilterConfig pConfig=(SecurityContextPersistenceFilterConfig)config;
   HttpSessionSecurityContextRepository repo=new HttpSessionSecurityContextRepository();
-  SecurityContextPersistenceFilter filter=new SecurityContextPersistenceFilter(repo);
+  SecurityContextPersistenceFilter filter=new SecurityContextPersistenceFilter(repo){
+    @Override public void doFilter(    ServletRequest req,    ServletResponse res,    FilterChain chain) throws IOException, ServletException {
+      req.setAttribute(ALLOWSESSIONCREATION_ATTR,isAllowSessionCreation);
+      super.doFilter(req,res,chain);
+    }
+  }
+;
+  isAllowSessionCreation=pConfig.isAllowSessionCreation();
   repo.setAllowSessionCreation(pConfig.isAllowSessionCreation());
   filter.setForceEagerSessionCreation(false);
   try {

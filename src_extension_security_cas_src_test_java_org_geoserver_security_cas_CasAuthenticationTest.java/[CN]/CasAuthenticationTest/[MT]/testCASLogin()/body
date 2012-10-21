@@ -16,7 +16,8 @@
   getSecurityManager().saveFilter(exConfig);
   prepareFilterChain("/j_spring_cas_security_check",GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER,casFilterName);
   pattern="/web/**";
-  prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER,casExceptionTranslationFilter,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
+  prepareFilterChain(pattern,casExceptionTranslationFilter);
+  modifyChain(pattern,false,true,null);
   SecurityContextHolder.getContext().setAuthentication(null);
   MockHttpServletRequest request=createRequest("web");
   MockHttpServletResponse response=new MockHttpServletResponse();
@@ -121,7 +122,7 @@
   assertNull(GeoServerCasAuthenticationFilter.getHandler().getSessionMappingStorage().removeSessionByMappingId(ticket));
   updateUser("ug1",username,true);
   helper.ssoLogout();
-  insertAnonymousFilter(casExceptionTranslationFilter);
+  insertAnonymousFilter();
   request=createRequest("foo/bar");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();

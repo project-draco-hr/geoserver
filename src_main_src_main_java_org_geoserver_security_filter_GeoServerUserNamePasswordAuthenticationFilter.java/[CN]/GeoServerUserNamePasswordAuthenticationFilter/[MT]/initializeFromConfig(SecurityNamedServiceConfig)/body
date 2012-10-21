@@ -1,5 +1,6 @@
 {
   super.initializeFromConfig(config);
+  pathInfos=GeoServerSecurityFilterChain.FORM_LOGIN_CHAIN.split(",");
   UsernamePasswordAuthenticationFilterConfig upConfig=(UsernamePasswordAuthenticationFilterConfig)config;
   aep=new LoginUrlAuthenticationEntryPoint(URL_LOGIN_FORM);
   aep.setForceHttps(false);
@@ -10,7 +11,15 @@
     throw new IOException(e2);
   }
   RememberMeServices rms=securityManager.getRememberMeService();
-  UsernamePasswordAuthenticationFilter filter=new UsernamePasswordAuthenticationFilter();
+  UsernamePasswordAuthenticationFilter filter=new UsernamePasswordAuthenticationFilter(){
+    @Override protected boolean requiresAuthentication(    HttpServletRequest request,    HttpServletResponse response){
+      for (      String pathInfo : pathInfos) {
+        if (getRequestPath(request).startsWith(pathInfo))         return true;
+      }
+      return false;
+    }
+  }
+;
   filter.setPasswordParameter(upConfig.getPasswordParameterName());
   filter.setUsernameParameter(upConfig.getUsernameParameterName());
   filter.setAuthenticationManager(getSecurityManager());
@@ -18,13 +27,11 @@
   GeoServerWebAuthenticationDetailsSource s=new GeoServerWebAuthenticationDetailsSource();
   filter.setAuthenticationDetailsSource(s);
   filter.setAllowSessionCreation(false);
-  filter.setFilterProcessesUrl(URL_FOR_LOGIN);
   SimpleUrlAuthenticationSuccessHandler successHandler=new SimpleUrlAuthenticationSuccessHandler();
   successHandler.setDefaultTargetUrl(URL_LOGIN_SUCCCESS);
   filter.setAuthenticationSuccessHandler(successHandler);
   SimpleUrlAuthenticationFailureHandler failureHandler=new SimpleUrlAuthenticationFailureHandler();
   failureHandler.setDefaultFailureUrl(URL_LOGIN_FAILURE);
   filter.setAuthenticationFailureHandler(failureHandler);
-  filter.afterPropertiesSet();
   getNestedFilters().add(filter);
 }

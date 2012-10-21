@@ -4,7 +4,8 @@
   config.setName(testFilterName3);
   config.setRoleServiceName("rs1");
   getSecurityManager().saveFilter(config);
-  prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER,testFilterName3,GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
+  prepareFilterChain(pattern,testFilterName3);
+  modifyChain(pattern,false,true,null);
   SecurityContextHolder.getContext().setAuthentication(null);
   MockHttpServletRequest request=createRequest("/foo/bar");
   MockHttpServletResponse response=new MockHttpServletResponse();
@@ -79,7 +80,7 @@
   assertEquals(testUserName,auth.getPrincipal());
   assertTrue(auth.getAuthorities().contains(new GeoServerRole(rootRole)));
   assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
-  insertAnonymousFilter(GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER);
+  insertAnonymousFilter();
   request=createRequest("/foo/bar");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();

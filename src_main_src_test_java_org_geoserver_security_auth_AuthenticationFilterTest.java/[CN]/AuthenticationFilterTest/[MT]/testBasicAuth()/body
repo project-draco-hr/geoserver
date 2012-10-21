@@ -1,5 +1,6 @@
 {
-  prepareFilterChain(pattern,GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER,testFilterName,GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER,GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
+  prepareFilterChain(pattern,testFilterName);
+  modifyChain(pattern,false,true,null);
   SecurityContextHolder.getContext().setAuthentication(null);
   MockHttpServletRequest request=createRequest("/foo/bar");
   MockHttpServletResponse response=new MockHttpServletResponse();
@@ -13,6 +14,7 @@
   SecurityContext ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
+  modifyChain(pattern,false,true,GeoServerSecurityFilterChain.ROLE_FILTER);
   request=createRequest("/foo/bar");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
@@ -28,6 +30,14 @@
   assertEquals(testUserName,((UserDetails)auth.getPrincipal()).getUsername());
   assertTrue(auth.getAuthorities().contains(new GeoServerRole(rootRole)));
   assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
+  String roleString=response.getHeader(GeoServerRoleFilter.DEFAULT_HEADER_ATTRIBUTE);
+  assertNotNull(roleString);
+  String[] roles=roleString.split(";");
+  assertEquals(3,roles.length);
+  List<String> roleList=Arrays.asList(roles);
+  assertTrue(roleList.contains(GeoServerRole.AUTHENTICATED_ROLE.getAuthority()));
+  assertTrue(roleList.contains(rootRole));
+  assertTrue(roleList.contains(derivedRole));
   request=createRequest("/foo/bar");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
@@ -96,7 +106,7 @@
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
   updateUser("ug1",testUserName,true);
-  insertAnonymousFilter(GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER);
+  insertAnonymousFilter();
   request=createRequest("/foo/bar");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();

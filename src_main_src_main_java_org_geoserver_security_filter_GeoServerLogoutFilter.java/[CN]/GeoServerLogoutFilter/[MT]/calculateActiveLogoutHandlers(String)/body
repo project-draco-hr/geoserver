@@ -1,0 +1,16 @@
+{
+  List<LogoutHandler> result=new ArrayList<LogoutHandler>();
+  SortedSet<String> logoutFilterNames=getSecurityManager().listFilters(LogoutHandler.class);
+  logoutFilterNames.removeAll(Arrays.asList(skipHandlerName));
+  Set<String> handlerNames=new HashSet<String>();
+  GeoServerSecurityFilterChain chain=getSecurityManager().getSecurityConfig().getFilterChain();
+  for (  RequestFilterChain requestChain : chain.getRequestChains()) {
+    for (    String filterName : requestChain.getFilterNames()) {
+      if (logoutFilterNames.contains(filterName))       handlerNames.add(filterName);
+    }
+  }
+  for (  String handlerName : handlerNames) {
+    result.add((LogoutHandler)getSecurityManager().loadFilter(handlerName));
+  }
+  return result;
+}
