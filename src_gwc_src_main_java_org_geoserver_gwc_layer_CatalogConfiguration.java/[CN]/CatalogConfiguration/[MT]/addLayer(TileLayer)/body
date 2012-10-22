@@ -6,6 +6,11 @@
   checkNotNull(tileLayer.getInfo().getId(),"id is null");
   checkNotNull(tileLayer.getInfo().getName(),"name is null");
   GeoServerTileLayerInfo info=tileLayer.getInfo();
+  LayerInfo layerInfo=tileLayer.getLayerInfo();
+  if (layerInfo != null && !isLayerExposable(layerInfo)) {
+    LOGGER.warning("Requested layer " + layerInfo.getName() + " has no geometry. Won't create TileLayer");
+    return;
+  }
   lock.writeLock().lock();
   try {
     boolean pending=pendingModications.containsKey(info.getId());
