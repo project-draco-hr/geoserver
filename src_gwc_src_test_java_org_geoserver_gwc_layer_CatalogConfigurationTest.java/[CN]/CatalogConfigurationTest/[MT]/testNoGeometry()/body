@@ -1,0 +1,20 @@
+{
+  org.opengis.feature.type.FeatureType featureTypeWithNoGeometry=mock(org.opengis.feature.type.FeatureType.class);
+  when(featureTypeWithNoGeometry.getGeometryDescriptor()).thenReturn(null);
+  org.geoserver.catalog.FeatureTypeInfo resourceWithNoGeometry=mock(org.geoserver.catalog.FeatureTypeInfo.class);
+  when(resourceWithNoGeometry.getFeatureType()).thenReturn(featureTypeWithNoGeometry);
+  LayerInfo layerWithNoGeometry=mockLayer("layerWithNoGeometry",new String[]{},LayerInfo.Type.VECTOR);
+  layerWithNoGeometry.setResource(resourceWithNoGeometry);
+  GeoServerTileLayer tl=mock(GeoServerTileLayer.class);
+  GeoServerTileLayerInfo info=new GeoServerTileLayerInfoImpl();
+  info.setId("layerWithNoGeometry");
+  info.setName("layerWithNoGeometry");
+  when(tl.getId()).thenReturn("layerWithNoGeometry");
+  when(tl.getInfo()).thenReturn(info);
+  when(tl.getLayerInfo()).thenReturn(layerWithNoGeometry);
+  when(catalog.getLayer(layerWithNoGeometry.getId())).thenReturn(layerWithNoGeometry);
+  when(catalog.getLayerByName(eq(tileLayerName(layerWithNoGeometry)))).thenReturn(layerWithNoGeometry);
+  config.addLayer(tl);
+  config.save();
+  verify(this.tileLayerCatalog,never()).save(info);
+}
