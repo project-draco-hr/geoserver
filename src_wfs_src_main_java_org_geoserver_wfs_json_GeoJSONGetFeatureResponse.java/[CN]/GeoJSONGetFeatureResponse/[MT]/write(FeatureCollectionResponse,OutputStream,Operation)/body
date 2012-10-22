@@ -1,0 +1,132 @@
+{
+  if (LOGGER.isLoggable(Level.INFO))   LOGGER.info("about to encode JSON");
+  WFSInfo wfs=getInfo();
+  boolean featureBounding=wfs.isFeatureBounding();
+  OutputStreamWriter osw=null;
+  Writer outWriter=null;
+  boolean hasGeom=false;
+  try {
+    osw=new OutputStreamWriter(output,gs.getSettings().getCharset());
+    outWriter=new BufferedWriter(osw);
+    if (jsonp) {
+      outWriter.write(getCallbackFunction() + "(");
+    }
+    final GeoJSONBuilder jsonWriter=new GeoJSONBuilder(outWriter);
+    jsonWriter.object().key("type").value("FeatureCollection");
+    jsonWriter.key("features");
+    jsonWriter.array();
+    List resultsList=featureCollection.getFeature();
+    CoordinateReferenceSystem crs=null;
+    for (int i=0; i < resultsList.size(); i++) {
+      FeatureCollection collection=(FeatureCollection)resultsList.get(i);
+      FeatureIterator iterator=collection.features();
+      try {
+        SimpleFeatureType fType;
+        List<AttributeDescriptor> types;
+        while (iterator.hasNext()) {
+          SimpleFeature feature=(SimpleFeature)iterator.next();
+          jsonWriter.object();
+          jsonWriter.key("type").value("Feature");
+          jsonWriter.key("id").value(feature.getID());
+          fType=feature.getFeatureType();
+          types=fType.getAttributeDescriptors();
+          GeometryDescriptor defaultGeomType=fType.getGeometryDescriptor();
+          if (crs == null && defaultGeomType != null)           crs=fType.getGeometryDescriptor().getCoordinateReferenceSystem();
+          jsonWriter.key("geometry");
+          Geometry aGeom=(Geometry)feature.getDefaultGeometry();
+          if (aGeom == null) {
+            for (int j=0; j < types.size() && aGeom == null; j++) {
+              Object value=feature.getAttribute(j);
+              if (value != null && value instanceof Geometry) {
+                aGeom=(Geometry)value;
+              }
+            }
+          }
+          if (aGeom != null) {
+            jsonWriter.writeGeom(aGeom);
+            hasGeom=true;
+          }
+ else {
+            jsonWriter.value(null);
+          }
+          if (defaultGeomType != null)           jsonWriter.key("geometry_name").value(defaultGeomType.getLocalName());
+          jsonWriter.key("properties");
+          jsonWriter.object();
+          for (int j=0; j < types.size(); j++) {
+            Object value=feature.getAttribute(j);
+            AttributeDescriptor ad=types.get(j);
+            if (value != null) {
+              if (value instanceof Geometry) {
+                if (ad.equals(defaultGeomType)) {
+                }
+ else {
+                  jsonWriter.key(ad.getLocalName());
+                  jsonWriter.writeGeom((Geometry)value);
+                }
+              }
+ else {
+                jsonWriter.key(ad.getLocalName());
+                jsonWriter.value(value);
+              }
+            }
+ else {
+              jsonWriter.key(ad.getLocalName());
+              jsonWriter.value(null);
+            }
+          }
+          ReferencedEnvelope refenv=new ReferencedEnvelope(feature.getBounds());
+          if (featureBounding && !refenv.isEmpty())           jsonWriter.writeBoundingBox(refenv);
+          jsonWriter.endObject();
+          jsonWriter.endObject();
+        }
+      }
+  finally {
+        collection.close(iterator);
+      }
+    }
+    jsonWriter.endArray();
+    if (crs != null) {
+      Set<ReferenceIdentifier> ids=crs.getIdentifiers();
+      if (ids != null && ids.size() > 0) {
+        NamedIdentifier namedIdent=(NamedIdentifier)ids.iterator().next();
+        String csStr=namedIdent.getCodeSpace().toUpperCase();
+        if (csStr.equals("EPSG")) {
+          jsonWriter.key("crs");
+          jsonWriter.object();
+          jsonWriter.key("type").value(csStr);
+          jsonWriter.key("properties");
+          jsonWriter.object();
+          jsonWriter.key("code");
+          jsonWriter.value(namedIdent.getCode());
+          jsonWriter.endObject();
+          jsonWriter.endObject();
+        }
+      }
+    }
+    if (hasGeom && featureBounding) {
+      ReferencedEnvelope e=null;
+      for (int i=0; i < resultsList.size(); i++) {
+        FeatureCollection collection=(FeatureCollection)resultsList.get(i);
+        if (e == null) {
+          e=collection.getBounds();
+        }
+ else {
+          e.expandToInclude(collection.getBounds());
+        }
+      }
+      if (e != null) {
+        jsonWriter.writeBoundingBox(e);
+      }
+    }
+    jsonWriter.endObject();
+    if (jsonp) {
+      outWriter.write(")");
+    }
+    outWriter.flush();
+  }
+ catch (  JSONException jsonException) {
+    ServiceException serviceException=new ServiceException("Error: " + jsonException.getMessage());
+    serviceException.initCause(jsonException);
+    throw serviceException;
+  }
+}

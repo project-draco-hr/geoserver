@@ -1,0 +1,26 @@
+{
+  try {
+    JSONBuilder json=new JSONBuilder(outWriter);
+    final List<LayerDescription> layers=description.getLayerDescriptions();
+    json.object();
+    json.key("version").value(description.getVersion());
+    json.key("layerDescriptions");
+    json.array();
+    for (    LayerDescription layer : layers) {
+      json.object();
+      json.key("layerName").value(layer.getName());
+      URL url=layer.getOwsURL();
+      json.key("owsURL").value(url != null ? url.toString() : "");
+      json.key("owsType").value(layer.getOwsType());
+      json.key("typeName").value(layer.getName());
+      json.endObject();
+    }
+    json.endArray();
+    json.endObject();
+  }
+ catch (  JSONException jsonException) {
+    ServiceException serviceException=new ServiceException("Error: " + jsonException.getMessage());
+    serviceException.initCause(jsonException);
+    throw serviceException;
+  }
+}
