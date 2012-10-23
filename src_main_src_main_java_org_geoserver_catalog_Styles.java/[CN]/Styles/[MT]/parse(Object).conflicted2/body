@@ -1,13 +1,10 @@
 {
-  SLDParser p=parser(input);
-  StyledLayerDescriptor sld=p.parseSLD();
-  if (sld.getStyledLayers().length == 0) {
-    Style[] style=p.readDOM();
-    if (style.length > 0) {
-      NamedLayer l=styleFactory.createNamedLayer();
-      l.addStyle(style[0]);
-      sld.addStyledLayer(l);
-    }
+  SLDConfiguration sld=new SLDConfiguration();
+  try {
+    return (StyledLayerDescriptor)new Parser(sld).parse(toReader(input));
   }
-  return sld;
+ catch (  Exception e) {
+    if (e instanceof IOException)     throw (IOException)e;
+    throw (IOException)new IOException().initCause(e);
+  }
 }

@@ -46,13 +46,13 @@
     }
   }
   try {
-    OutputFormat of=new OutputFormat("XML","UTF-8",true);
-    XMLSerializer serializer=new XMLSerializer();
-    serializer.setOutputFormat(of);
+    Transformer tx=TransformerFactory.newInstance().newTransformer();
+    tx.setOutputProperty(OutputKeys.METHOD,"XML");
+    tx.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
+    tx.setOutputProperty(OutputKeys.INDENT,"yes");
     OutputStream out=new BufferedOutputStream(new FileOutputStream(userFile));
     try {
-      serializer.setOutputByteStream(out);
-      serializer.serialize(doc);
+      tx.transform(new DOMSource(doc),new StreamResult(out));
       out.flush();
     }
   finally {
