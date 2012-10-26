@@ -1,0 +1,17 @@
+{
+  File dataDir=new File("./target/repository-test");
+  if (dataDir.exists()) {
+    FileUtils.deleteDirectory(dataDir);
+  }
+  assertTrue(dataDir.mkdirs());
+  Catalog catalog=EasyMock.createNiceMock(Catalog.class);
+  ft1=new FeatureTypeInfoImpl(catalog);
+  ft1.setId("ft1-id");
+  ft2=new FeatureTypeInfoImpl(catalog);
+  ft2.setId("ft2-id");
+  expect(catalog.getFeatureType("ft1-id")).andReturn(ft1).anyTimes();
+  expect(catalog.getFeatureType("ft2-id")).andReturn(ft2).anyTimes();
+  replay(catalog);
+  repo=new TransformRepository(new GeoServerDataDirectory(dataDir),catalog);
+  testRoot=new File(new File(dataDir,"wfs"),"transform");
+}
