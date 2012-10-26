@@ -1,0 +1,18 @@
+{
+  LayerInfo geometryless=getCatalog().getLayerByName(super.getLayerId(MockData.GEOMETRYLESS));
+  assertFalse(CatalogConfiguration.isLayerExposable(geometryless));
+  assertNull(GWC.get().getTileLayer(geometryless));
+  layerModel=new Model<LayerInfo>(geometryless);
+  final GWCConfig saneDefaults=GWC.get().getConfig().saneConfig();
+  GeoServerTileLayerInfoImpl tileLayerInfo=TileLayerInfoUtil.loadOrCreate(geometryless,saneDefaults);
+  tileLayerModel=new GeoServerTileLayerInfoModel(tileLayerInfo,false);
+  tester.startPage(new FormTestPage(new ComponentBuilder(){
+    private static final long serialVersionUID=-5907648151984337786L;
+    public Component buildComponent(    final String id){
+      return new LayerCacheOptionsTabPanel(id,layerModel,tileLayerModel);
+    }
+  }
+));
+  tester.assertComponent("form:panel",LayerCacheOptionsTabPanel.class);
+  tester.assertComponent("form:panel:tileLayerEditor",Label.class);
+}
