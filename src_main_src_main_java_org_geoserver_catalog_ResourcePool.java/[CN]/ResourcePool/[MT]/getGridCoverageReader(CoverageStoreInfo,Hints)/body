@@ -22,7 +22,9 @@
   }
  else {
     key=info.getId();
-    reader=(GridCoverageReader)coverageReaderCache.get(key);
+    if (key != null) {
+      reader=(GridCoverageReader)coverageReaderCache.get(key);
+    }
   }
   if (reader != null) {
     return reader;
@@ -39,11 +41,13 @@ synchronized (hints != null ? hintCoverageReaderCache : coverageReaderCache) {
     if (reader == null) {
       final File obj=GeoserverDataDirectory.findDataFile(info.getURL());
       reader=gridFormat.getReader(obj,hints);
-      if (hints != null) {
-        hintCoverageReaderCache.put((CoverageHintReaderKey)key,reader);
-      }
+      if (key != null) {
+        if (hints != null) {
+          hintCoverageReaderCache.put((CoverageHintReaderKey)key,reader);
+        }
  else {
-        coverageReaderCache.put((String)key,reader);
+          coverageReaderCache.put((String)key,reader);
+        }
       }
     }
   }
