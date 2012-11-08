@@ -1,0 +1,271 @@
+{
+  WorkspaceInfo ws;
+  if (workspace != null) {
+    ws=catalog.getWorkspaceByName(workspace);
+    if (ws == null) {
+      throw new ProcessException("Could not find workspace " + workspace);
+    }
+  }
+ else {
+    ws=catalog.getDefaultWorkspace();
+    if (ws == null) {
+      throw new ProcessException("The catalog is empty, could not find a default workspace");
+    }
+  }
+  CatalogBuilder cb=new CatalogBuilder(catalog);
+  cb.setWorkspace(ws);
+  StoreInfo storeInfo=null;
+  boolean add=false;
+  if (store != null) {
+    if (features != null) {
+      storeInfo=catalog.getDataStoreByName(ws.getName(),store);
+    }
+ else     if (coverage != null) {
+      storeInfo=catalog.getCoverageStoreByName(ws.getName(),store);
+    }
+    if (storeInfo == null) {
+      throw new ProcessException("Could not find store " + store + " in workspace "+ workspace);
+    }
+  }
+ else   if (features != null) {
+    storeInfo=catalog.getDefaultDataStore(ws);
+    if (storeInfo == null) {
+      throw new ProcessException("Could not find a default store in workspace " + ws.getName());
+    }
+  }
+ else   if (coverage != null) {
+    LOGGER.info("Auto-configuring coverage store: " + (name != null ? name : coverage.getName().toString()));
+    storeInfo=cb.buildCoverageStore((name != null ? name : coverage.getName().toString()));
+    add=true;
+    store=(name != null ? name : coverage.getName().toString());
+    if (storeInfo == null) {
+      throw new ProcessException("Could not find a default store in workspace " + ws.getName());
+    }
+  }
+  StyleInfo targetStyle=null;
+  if (styleName != null) {
+    targetStyle=catalog.getStyleByName(styleName);
+    if (targetStyle == null) {
+      throw new ProcessException("Could not find style " + styleName);
+    }
+  }
+  if (features != null) {
+    String tentativeTargetName=null;
+    if (name != null) {
+      tentativeTargetName=ws.getName() + ":" + name;
+    }
+ else {
+      tentativeTargetName=ws.getName() + ":" + features.getSchema().getTypeName();
+    }
+    if (catalog.getLayer(tentativeTargetName) != null) {
+      throw new ProcessException("Target layer " + tentativeTargetName + " already exists");
+    }
+    String targetSRSCode=null;
+    if (srs != null) {
+      try {
+        Integer code=CRS.lookupEpsgCode(srs,true);
+        if (code == null) {
+          throw new WPSException("Could not find a EPSG code for " + srs);
+        }
+        targetSRSCode="EPSG:" + code;
+      }
+ catch (      Exception e) {
+        throw new ProcessException("Could not lookup the EPSG code for the provided srs",e);
+      }
+    }
+ else {
+      GeometryDescriptor gd=features.getSchema().getGeometryDescriptor();
+      if (gd == null) {
+        targetSRSCode="EPSG:4326";
+        srsHandling=ProjectionPolicy.FORCE_DECLARED;
+      }
+ else {
+        CoordinateReferenceSystem nativeCrs=gd.getCoordinateReferenceSystem();
+        if (nativeCrs == null) {
+          throw new ProcessException("The original data has no native CRS, " + "you need to specify the srs parameter");
+        }
+ else {
+          try {
+            Integer code=CRS.lookupEpsgCode(nativeCrs,true);
+            if (code == null) {
+              throw new ProcessException("Could not find an EPSG code for data " + "native spatial reference system: " + nativeCrs);
+            }
+ else {
+              targetSRSCode="EPSG:" + code;
+            }
+          }
+ catch (          Exception e) {
+            throw new ProcessException("Failed to loookup an official EPSG code for " + "the source data native " + "spatial reference system",e);
+          }
+        }
+      }
+    }
+    SimpleFeatureType targetType;
+    try {
+      targetType=importDataIntoStore(features,name,(DataStoreInfo)storeInfo);
+    }
+ catch (    IOException e) {
+      throw new ProcessException("Failed to import data into the target store",e);
+    }
+    try {
+      cb.setStore(storeInfo);
+      FeatureTypeInfo typeInfo=cb.buildFeatureType(targetType.getName());
+      if (targetSRSCode != null) {
+        typeInfo.setSRS(targetSRSCode);
+      }
+      if (srsHandling != null) {
+        typeInfo.setProjectionPolicy(srsHandling);
+      }
+      cb.setupBounds(typeInfo);
+      LayerInfo layerInfo=cb.buildLayer(typeInfo);
+      if (targetStyle != null) {
+        layerInfo.setDefaultStyle(targetStyle);
+      }
+      catalog.add(typeInfo);
+      catalog.add(layerInfo);
+      return layerInfo.prefixedName();
+    }
+ catch (    Exception e) {
+      throw new ProcessException("Failed to complete the import inside the GeoServer catalog",e);
+    }
+  }
+ else   if (coverage != null) {
+    try {
+      final File directory=catalog.getResourceLoader().findOrCreateDirectory("data",workspace,store);
+      final File file=File.createTempFile(store,".tif",directory);
+      ((CoverageStoreInfo)storeInfo).setURL(file.toURL().toExternalForm());
+      ((CoverageStoreInfo)storeInfo).setType("GeoTIFF");
+      CoordinateReferenceSystem cvCrs=coverage.getCoordinateReferenceSystem();
+      String targetSRSCode=null;
+      if (srs != null) {
+        try {
+          Integer code=CRS.lookupEpsgCode(srs,true);
+          if (code == null) {
+            throw new WPSException("Could not find a EPSG code for " + srs);
+          }
+          targetSRSCode="EPSG:" + code;
+        }
+ catch (        Exception e) {
+          throw new ProcessException("Could not lookup the EPSG code for the provided srs",e);
+        }
+      }
+ else {
+        if (cvCrs == null) {
+          targetSRSCode="EPSG:4326";
+          srsHandling=ProjectionPolicy.FORCE_DECLARED;
+          srs=DefaultGeographicCRS.WGS84;
+        }
+ else {
+          CoordinateReferenceSystem nativeCrs=cvCrs;
+          if (nativeCrs == null) {
+            throw new ProcessException("The original data has no native CRS, " + "you need to specify the srs parameter");
+          }
+ else {
+            try {
+              Integer code=CRS.lookupEpsgCode(nativeCrs,true);
+              if (code == null) {
+                throw new ProcessException("Could not find an EPSG code for data " + "native spatial reference system: " + nativeCrs);
+              }
+ else {
+                targetSRSCode="EPSG:" + code;
+                srs=CRS.decode(targetSRSCode,true);
+              }
+            }
+ catch (            Exception e) {
+              throw new ProcessException("Failed to loookup an official EPSG code for " + "the source data native " + "spatial reference system",e);
+            }
+          }
+        }
+      }
+      MathTransform tx=CRS.findMathTransform(cvCrs,srs);
+      if (!tx.isIdentity() || !CRS.equalsIgnoreMetadata(cvCrs,srs)) {
+        coverage=WCSUtils.resample(coverage,cvCrs,srs,null,Interpolation.getInstance(Interpolation.INTERP_NEAREST));
+      }
+      GeoTiffWriter writer=new GeoTiffWriter(file);
+      final ParameterValueGroup params=new GeoTiffFormat().getWriteParameters();
+      params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(DEFAULT_WRITE_PARAMS);
+      final GeneralParameterValue[] wps=(GeneralParameterValue[])params.values().toArray(new GeneralParameterValue[1]);
+      try {
+        writer.write(coverage,wps);
+      }
+  finally {
+        try {
+          writer.dispose();
+        }
+ catch (        Exception e) {
+        }
+      }
+      if (add) {
+        catalog.add((CoverageStoreInfo)storeInfo);
+      }
+ else {
+        catalog.save((CoverageStoreInfo)storeInfo);
+      }
+      cb.setStore((CoverageStoreInfo)storeInfo);
+      AbstractGridCoverage2DReader reader=new GeoTiffReader(file);
+      if (reader == null) {
+        throw new ProcessException("Could not aquire reader for coverage.");
+      }
+      final Map customParameters=new HashMap();
+      CoverageInfo cinfo=cb.buildCoverage(reader,customParameters);
+      if (name != null) {
+        cinfo.setName(name);
+      }
+      if (!add) {
+        CoverageInfo existing=catalog.getCoverageByCoverageStore((CoverageStoreInfo)storeInfo,name != null ? name : coverage.getName().toString());
+        if (existing == null) {
+          List<CoverageInfo> coverages=catalog.getCoveragesByCoverageStore((CoverageStoreInfo)storeInfo);
+          if (coverages.size() == 1) {
+            existing=coverages.get(0);
+          }
+          if (coverages.size() == 0) {
+            add=true;
+          }
+ else {
+            throw new ProcessException("Unable to determine coverage to configure.");
+          }
+        }
+        if (existing != null) {
+          cb.updateCoverage(existing,cinfo);
+          catalog.save(existing);
+          cinfo=existing;
+        }
+      }
+      if ("UNKNOWN".equals(cinfo.getSRS())) {
+        cinfo.setSRS("EPSG:4326");
+      }
+      if (add) {
+        catalog.add(cinfo);
+        LayerInfo layerInfo=cb.buildLayer(cinfo);
+        boolean valid=true;
+        try {
+          if (!catalog.validate(layerInfo,true).isEmpty()) {
+            valid=false;
+          }
+        }
+ catch (        Exception e) {
+          valid=false;
+        }
+        layerInfo.setEnabled(valid);
+        catalog.add(layerInfo);
+        return layerInfo.prefixedName();
+      }
+ else {
+        catalog.save(cinfo);
+        LayerInfo layerInfo=catalog.getLayerByName(cinfo.getName());
+        return layerInfo.prefixedName();
+      }
+    }
+ catch (    MalformedURLException e) {
+      throw new ProcessException("URL Error",e);
+    }
+catch (    IOException e) {
+      throw new ProcessException("I/O Exception",e);
+    }
+catch (    Exception e) {
+      e.printStackTrace();
+      throw new ProcessException("Exception",e);
+    }
+  }
+  return null;
+}
