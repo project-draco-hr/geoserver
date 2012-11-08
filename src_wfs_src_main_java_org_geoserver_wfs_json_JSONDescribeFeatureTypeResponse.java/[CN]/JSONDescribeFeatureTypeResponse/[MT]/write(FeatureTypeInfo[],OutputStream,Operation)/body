@@ -1,0 +1,54 @@
+{
+  if (featureTypeInfos.length == 0) {
+    throw new IOException("Unable to write an empty feature info array.");
+  }
+  OutputStreamWriter osw=null;
+  Writer outWriter=null;
+  try {
+    osw=new OutputStreamWriter(output,gs.getSettings().getCharset());
+    outWriter=new BufferedWriter(osw);
+    final boolean jsonp=JSONType.useJsonp(getMimeType(featureTypeInfos,describeFeatureType));
+    if (jsonp) {
+      outWriter.write(getCallbackFunction() + "(");
+    }
+    GeoJSONBuilder jw=new GeoJSONBuilder(outWriter);
+    jw.object();
+    jw.key("elementFormDefault");
+    jw.value("qualified");
+    jw.key("targetNamespace");
+    NamespaceInfo nsInfo=featureTypeInfos[0].getNamespace();
+    jw.value(nsInfo.getURI());
+    jw.key("targetPrefix");
+    jw.value(nsInfo.getName());
+    jw.key("featureTypes");
+    jw.array();
+    for (int i=0; i < featureTypeInfos.length; i++) {
+      FeatureTypeInfo ft=featureTypeInfos[i];
+      jw.object();
+      jw.key("typeName").value(ft.getName());
+      SimpleFeatureType schema=(SimpleFeatureType)ft.getFeatureType();
+      jw.key("properties");
+      jw.array();
+      for (      AttributeDescriptor ad : schema.getAttributeDescriptors()) {
+        if (ad == schema.getGeometryDescriptor()) {
+          describeProperty(ad.getLocalName(),ad,jw,true);
+        }
+ else {
+          describeProperty(ad.getLocalName(),ad,jw,false);
+        }
+      }
+      jw.endArray();
+      jw.endObject();
+    }
+    jw.endArray();
+    jw.endObject();
+    if (jsonp) {
+      outWriter.write(")");
+    }
+    outWriter.flush();
+  }
+  finally {
+    IOUtils.closeQuietly(osw);
+    IOUtils.closeQuietly(outWriter);
+  }
+}
