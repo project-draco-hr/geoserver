@@ -2,12 +2,13 @@
   String xslt=FileUtils.readFileToString(new File("src/test/resources/org/geoserver/wfs/xslt/general2.xslt"));
   MockHttpServletResponse response=postAsServletResponse("rest/services/wfs/transforms?name=general2",xslt,"application/xslt+xml");
   assertEquals(400,response.getStatusCode());
-  response=postAsServletResponse("rest/services/wfs/transforms?name=general2&sourceFormat=gml&outputFormat=text/html",xslt,"application/xslt+xml");
+  response=postAsServletResponse("rest/services/wfs/transforms?name=general2&sourceFormat=gml&outputFormat=HTML&outputMimeType=text/html",xslt,"application/xslt+xml");
   assertEquals(201,response.getStatusCode());
   assertNotNull(response.getHeader("Location"));
   assertTrue(response.getHeader("Location").endsWith("/rest/services/wfs/transforms/general2"));
   TransformInfo info=repository.getTransformInfo("general2");
   assertNotNull(info);
   assertEquals("gml",info.getSourceFormat());
-  assertEquals("text/html",info.getOutputFormat());
+  assertEquals("HTML",info.getOutputFormat());
+  assertEquals("text/html",info.getOutputMimeType());
 }
