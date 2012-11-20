@@ -1,28 +1,3 @@
 {
-  FeatureStore fs=createNiceMock(FeatureStore.class);
-  replay(fs);
-  DataStore dstore=createNiceMock(DataStore.class);
-  replay(dstore);
-  StoreInfo store;
-  if (resourceClass.equals(CoverageInfo.class)) {
-    store=createNiceMock(CoverageStoreInfo.class);
-  }
- else {
-    store=createNiceMock(DataStoreInfo.class);
-    expect((DataStore)((DataStoreInfo)store).getDataStore(null)).andReturn(dstore);
-  }
-  expect(store.getWorkspace()).andReturn(ws).anyTimes();
-  replay(store);
-  ResourceInfo resource=createNiceMock(resourceClass);
-  expect(resource.getStore()).andReturn(store).anyTimes();
-  expect(resource.getName()).andReturn(name).anyTimes();
-  if (resource instanceof FeatureTypeInfo) {
-    expect(((FeatureTypeInfo)resource).getFeatureSource((ProgressListener)anyObject(),(Hints)anyObject())).andReturn(fs).anyTimes();
-  }
-  replay(resource);
-  LayerInfo layer=createNiceMock(LayerInfo.class);
-  expect(layer.getName()).andReturn(name).anyTimes();
-  expect(layer.getResource()).andReturn(resource).anyTimes();
-  replay(layer);
-  return layer;
+  return buildLayer(name,ws,resourceClass,true);
 }
