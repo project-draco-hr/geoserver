@@ -5,18 +5,24 @@
   Form f=request.getResourceRef().getQueryAsForm();
   String url=f.getFirstValue("url");
   try {
+    Boolean isPutOrPost=request.getMethod().equals(Method.PUT) || request.getMethod().equals(Method.POST);
     URL resolved=new URL(url);
     final HttpURLConnection connection=(HttpURLConnection)resolved.openConnection();
-    ;
-    if (request.getMethod().equals(Method.PUT) || request.getMethod().equals(Method.POST)) {
+    if (isPutOrPost) {
       connection.setDoOutput(true);
+      connection.setChunkedStreamingMode(4096);
     }
     connection.setRequestMethod(request.getMethod().toString());
+    if (isPutOrPost) {
+      String contentType=request.getEntity().getMediaType().toString();
+      if (checkPermission(resolved,contentType) != true) {
+        throw new RestletException("Nonpermitted hostname or request body with nonpermitted content type",Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+      connection.addRequestProperty("Content-Type",contentType);
+      copyStream(request.getEntity().getStream(),connection.getOutputStream());
+    }
     if (checkPermission(resolved,connection.getContentType()) != true) {
       throw new RestletException("Request for nonpermitted content type or hostname",Status.CLIENT_ERROR_BAD_REQUEST);
-    }
-    if (request.getMethod().equals(Method.PUT) || request.getMethod().equals(Method.POST)) {
-      copyStream(request.getEntity().getStream(),connection.getOutputStream());
     }
     response.setEntity(new StreamRepresentation(new MediaType(connection.getContentType())){
       @Override public void write(      OutputStream out) throws IOException {
