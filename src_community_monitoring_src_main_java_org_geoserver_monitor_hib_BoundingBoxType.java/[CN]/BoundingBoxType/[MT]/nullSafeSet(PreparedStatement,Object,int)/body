@@ -1,0 +1,32 @@
+{
+  BoundingBox box=(BoundingBox)value;
+  if (box == null) {
+    st.setDouble(index,1);
+    st.setDouble(index + 1,1);
+    st.setDouble(index + 2,-1);
+    st.setDouble(index + 3,-1);
+    st.setNull(index + 4,Types.VARCHAR);
+    return;
+  }
+  st.setDouble(index,box.getMinX());
+  st.setDouble(index + 1,box.getMinY());
+  st.setDouble(index + 2,box.getMaxX());
+  st.setDouble(index + 3,box.getMaxY());
+  if (box.getCoordinateReferenceSystem() != null) {
+    CoordinateReferenceSystem crs=box.getCoordinateReferenceSystem();
+    if (storeCRSAsWKT) {
+      st.setString(index + 4,crs.toWKT());
+    }
+ else {
+      try {
+        st.setString(index + 4,"EPSG:" + CRS.lookupEpsgCode(crs,true));
+      }
+ catch (      FactoryException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+ else {
+    st.setNull(index + 4,Types.VARCHAR);
+  }
+}

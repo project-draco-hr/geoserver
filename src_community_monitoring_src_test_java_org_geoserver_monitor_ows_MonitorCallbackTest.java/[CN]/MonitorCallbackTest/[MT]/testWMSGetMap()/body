@@ -1,6 +1,12 @@
 {
   GetMapRequest gm=new GetMapRequest();
   gm.setLayers(Arrays.asList(createMapLayer("foo","acme")));
+  Envelope env=new Envelope(100,110,70,80);
+  CoordinateReferenceSystem crs=CRS.decode("EPSG:4326",true);
+  CoordinateReferenceSystem logCrs=CRS.decode("EPSG:4326");
+  gm.setBbox(env);
+  gm.setCrs(crs);
   callback.operationDispatched(new Request(),op("GetMap","WMS","1.1.1",gm));
   assertEquals("acme:foo",data.getResources().get(0));
+  BBoxAsserts.assertEqualsBbox(new ReferencedEnvelope(env,crs).toBounds(logCrs),data.getBbox(),0.1);
 }
