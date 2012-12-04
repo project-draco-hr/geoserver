@@ -1,0 +1,24 @@
+{
+  AboutModel resources=ManifestLoader.getResources();
+  ManifestModel mm=resources.getManifests().first();
+  if (mm == null) {
+    LOGGER.log(Level.WARNING,"Unable to test with this resource name: " + resourceName + "\nNo resource found.");
+    return;
+  }
+  Iterator<Entry<String,String>> it=mm.getEntries().entrySet().iterator();
+  if (!it.hasNext()) {
+    LOGGER.log(Level.WARNING,"Unable to test with this resource name which does not has properties.");
+    return;
+  }
+  Entry<String,String> entry=it.next();
+  String propertyKey=entry.getKey();
+  String propertyVal=entry.getValue();
+  AboutModel filtered=resources.filterPropertyByKeyValue(propertyKey,propertyVal);
+  Iterator<ManifestModel> mit=filtered.getManifests().iterator();
+  while (mit.hasNext()) {
+    final ManifestModel model=mit.next();
+    Assert.isTrue(model.getEntries().containsKey(propertyKey));
+    String value=model.getEntries().get(propertyKey);
+    Assert.isTrue(value.equals(propertyVal));
+  }
+}

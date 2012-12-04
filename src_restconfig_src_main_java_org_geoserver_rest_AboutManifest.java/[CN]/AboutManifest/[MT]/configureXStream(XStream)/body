@@ -1,0 +1,39 @@
+{
+  xs.processAnnotations(AboutModel.class);
+  xs.addImplicitCollection(AboutModel.class,"manifests");
+  xs.alias("about",AboutModel.class);
+  xs.registerConverter(new Converter(){
+    @Override public boolean canConvert(    Class type){
+      return type.equals(ManifestModel.class);
+    }
+    @Override public void marshal(    Object source,    HierarchicalStreamWriter writer,    MarshallingContext context){
+      ManifestModel model=(ManifestModel)source;
+      writer.addAttribute("name",model.getName());
+      for (      java.util.Map.Entry<String,String> entry : model.getEntries().entrySet())       context.convertAnother(entry,new Converter(){
+        @Override public boolean canConvert(        Class type){
+          if (java.util.Map.Entry.class.isAssignableFrom(type))           return true;
+          return false;
+        }
+        @Override public void marshal(        Object source,        HierarchicalStreamWriter writer,        MarshallingContext context){
+          @SuppressWarnings("unchecked") Entry<String,String> e=(Entry<String,String>)source;
+          writer.startNode(e.getKey());
+          writer.setValue(e.getValue());
+          writer.endNode();
+        }
+        @Override public Object unmarshal(        HierarchicalStreamReader reader,        UnmarshallingContext context){
+          throw new NotImplementedError("Not implemented");
+        }
+      }
+);
+    }
+    @Override public Object unmarshal(    HierarchicalStreamReader reader,    UnmarshallingContext context){
+      throw new NotImplementedError("Not implemented");
+    }
+  }
+);
+  xs.alias("resource",ManifestModel.class);
+  xs.addImplicitCollection(ManifestModel.class,"entries");
+  xs.useAttributeFor(ManifestModel.class,"name");
+  xs.alias("property",Entry.class);
+  xs.autodetectAnnotations(true);
+}

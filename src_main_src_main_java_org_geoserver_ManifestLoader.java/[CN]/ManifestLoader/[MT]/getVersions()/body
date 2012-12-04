@@ -1,0 +1,41 @@
+{
+  if (classLoader == null) {
+    throw new IllegalArgumentException("Unable to run with null classLoader");
+  }
+  Map<String,Manifest> manifests=ManifestLoader.loadManifest(classLoader);
+  AboutModel model=new AboutModel();
+  try {
+    String geoserverPath=GeoServer.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString();
+    geoserverPath=geoserverPath + "!/META-INF/MANIFEST.MF";
+    Manifest manifest=manifests.get(geoserverPath);
+    if (manifest != null) {
+      model.add(ManifestModel.parseManifest("GeoServer",manifest,new ManifestModel.IncludeAttributeFilter(versionAttributeInclusions)));
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.FINE,"Error looking up geoserver package",e);
+  }
+  try {
+    String path=GeoTools.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString();
+    path=path + "!/META-INF/MANIFEST.MF";
+    Manifest manifest=manifests.get(path);
+    if (manifest != null) {
+      model.add(ManifestModel.parseManifest("GeoTools",manifest,new ManifestModel.IncludeAttributeFilter(versionAttributeInclusions)));
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.FINE,"Error looking up geoserver package",e);
+  }
+  try {
+    String path=GeoWebCache.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString();
+    path=path + "!/META-INF/MANIFEST.MF";
+    Manifest manifest=manifests.get(path);
+    if (manifest != null) {
+      model.add(ManifestModel.parseManifest("GeoWebCache",manifest,new ManifestModel.IncludeAttributeFilter(versionAttributeInclusions)));
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.FINE,"Error looking up org.geowebcache package",e);
+  }
+  return model;
+}

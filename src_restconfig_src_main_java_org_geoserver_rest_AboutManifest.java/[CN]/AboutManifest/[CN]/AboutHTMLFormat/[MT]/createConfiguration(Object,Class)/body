@@ -1,0 +1,29 @@
+{
+  final Configuration cfg=super.createConfiguration(data,clazz);
+  cfg.setClassForTemplateLoading(getClass(),"templates");
+  cfg.setObjectWrapper(new ObjectToMapWrapper<AboutModel>(AboutModel.class){
+    @Override protected void wrapInternal(    Map properties,    SimpleHash model,    AboutModel object){
+      final List<Map<String,Object>> manifests=new ArrayList<Map<String,Object>>();
+      final Iterator<ManifestModel> it=object.getManifests().iterator();
+      while (it.hasNext()) {
+        final ManifestModel manifest=it.next();
+        final Map<String,Object> map=new HashMap<String,Object>();
+        map.put("name",manifest.getName());
+        final List<String> props=new ArrayList<String>();
+        map.put("properties",props);
+        final List<String> values=new ArrayList<String>();
+        map.put("valuez",values);
+        final Iterator<String> innerIt=manifest.getEntries().keySet().iterator();
+        while (innerIt.hasNext()) {
+          String key=innerIt.next();
+          props.add(key);
+          values.add(manifest.getEntries().get(key));
+        }
+        manifests.add(map);
+      }
+      properties.put("manifests",manifests);
+    }
+  }
+);
+  return cfg;
+}
