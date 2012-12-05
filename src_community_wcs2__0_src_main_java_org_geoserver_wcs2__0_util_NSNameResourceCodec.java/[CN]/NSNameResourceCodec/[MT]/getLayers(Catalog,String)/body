@@ -1,0 +1,19 @@
+{
+  List<MapEntry<String,String>> decodedList=decode(encodedResourceId);
+  if (decodedList.isEmpty()) {
+    LOGGER.info("Could not decode id '" + encodedResourceId + "'");
+    return null;
+  }
+  List<LayerInfo> ret=new ArrayList<LayerInfo>();
+  for (  MapEntry<String,String> mapEntry : decodedList) {
+    String namespace=mapEntry.getKey();
+    String covName=mapEntry.getValue();
+    NamespaceInfo nsInfo=catalog.getNamespaceByPrefix(namespace);
+    if (nsInfo != null) {
+      LayerInfo layer=catalog.getLayerByName(namespace + ":" + covName);
+      if (layer != null)       ret.add(layer);
+    }
+  }
+  LOGGER.info("Could not find layer with id '" + encodedResourceId + "'");
+  return ret;
+}
