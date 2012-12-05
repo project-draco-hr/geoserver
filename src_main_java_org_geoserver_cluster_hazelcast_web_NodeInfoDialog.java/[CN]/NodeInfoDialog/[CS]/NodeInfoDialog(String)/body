@@ -1,0 +1,21 @@
+{
+  super(id);
+  HazelcastInstance hz=getHazelcast();
+  Member m=hz.getCluster().getLocalMember();
+  InetSocketAddress address=m.getInetSocketAddress();
+  add(new Label("ip",address.getAddress().getHostAddress()));
+  add(new Label("host",address.getHostName()));
+  add(new Label("port",new Model(address.getPort())));
+  Cluster c=hz.getCluster();
+  List<Member> members=new ArrayList(Collections2.filter(c.getMembers(),not(equalTo(c.getLocalMember()))));
+  add(new WebMarkupContainer("cluster").add(new ListView<Member>("members",members){
+    @Override protected void populateItem(    ListItem<Member> item){
+      Member m=item.getModelObject();
+      InetSocketAddress address=m.getInetSocketAddress();
+      String ip=address.getAddress().getHostAddress();
+      int port=address.getPort();
+      item.add(new Label("label",String.format("%s:%d",ip,port)));
+    }
+  }
+));
+}

@@ -1,0 +1,25 @@
+{
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Message recieved: " + message);
+  }
+  queue.add(message.getMessageObject());
+  executor.schedule(new Runnable(){
+    @Override public void run(){
+      if (queue.isEmpty()) {
+        return;
+      }
+      reloadLock.lock();
+      try {
+        queue.clear();
+        gs.reload();
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Reload failed",e);
+      }
+ finally {
+        reloadLock.unlock();
+      }
+    }
+  }
+,1,TimeUnit.SECONDS);
+}
