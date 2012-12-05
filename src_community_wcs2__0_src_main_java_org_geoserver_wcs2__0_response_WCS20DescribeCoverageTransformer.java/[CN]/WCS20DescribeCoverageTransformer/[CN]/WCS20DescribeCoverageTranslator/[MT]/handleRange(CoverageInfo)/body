@@ -1,0 +1,25 @@
+{
+  start("wcs:Range");
+  start("wcs:Field");
+  List<CoverageDimensionInfo> dimensions=ci.getDimensions();
+  element("wcs:Identifier","contents");
+  start("wcs:Definition");
+  NumberRange range=getCoverageRange(dimensions);
+  if (range == null || range.isEmpty()) {
+    element("ows:AnyValue","");
+  }
+ else {
+    start("ows:AllowedValues");
+    start("ows:Range");
+    element("ows:MinimumValue",Double.toString(range.getMinimum()));
+    element("ows:MaximumValue",Double.toString(range.getMaximum()));
+    end("ows:Range");
+    end("ows:AllowedValues");
+  }
+  end("wcs:Definition");
+  handleNullValues(dimensions);
+  handleInterpolationMethods(ci);
+  handleAxis(ci);
+  end("wcs:Field");
+  end("wcs:Range");
+}
