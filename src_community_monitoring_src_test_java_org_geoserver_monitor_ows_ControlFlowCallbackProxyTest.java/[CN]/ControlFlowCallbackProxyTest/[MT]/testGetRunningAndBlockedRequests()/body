@@ -1,6 +1,11 @@
 {
-  final RequestData data=monitor.start();
   DispatcherCallback callback=new DispatcherCallback(){
+    public long getRunningRequests(){
+      return 10;
+    }
+    public long getBlockedRequests(){
+      return 2;
+    }
     public Service serviceDispatched(    Request request,    Service service) throws ServiceException {
       return null;
     }
@@ -11,8 +16,7 @@
       return null;
     }
     public Operation operationDispatched(    Request request,    Operation operation){
-      assertEquals(Status.WAITING,data.getStatus());
-      return operation;
+      return null;
     }
     public Request init(    Request request){
       return null;
@@ -22,6 +26,8 @@
   }
 ;
   callback=createProxy(callback);
-  callback.operationDispatched(new Request(),new Operation("foo",new Service("bar",null,null,null),null,null));
-  assertEquals(Status.RUNNING,data.getStatus());
+  ControlFlowCallbackProxy proxy=(ControlFlowCallbackProxy)Proxy.getInvocationHandler(callback);
+  assertNotNull(proxy);
+  assertEquals(10l,proxy.getRunningRequests());
+  assertEquals(2l,proxy.getBlockedRequests());
 }
