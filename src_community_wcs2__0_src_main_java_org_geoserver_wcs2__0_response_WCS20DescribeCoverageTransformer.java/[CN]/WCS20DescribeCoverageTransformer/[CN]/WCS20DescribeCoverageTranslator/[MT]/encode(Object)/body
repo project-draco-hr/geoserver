@@ -4,14 +4,23 @@
   }
   this.request=(DescribeCoverageType)o;
   final AttributesImpl attributes=WCS20Const.getDefaultNamespaces();
-  final String locationDef=buildSchemaURL(request.getBaseUrl(),"wcs/2.0/wcsDescribeCoverage.xsd");
-  attributes.addAttribute("","xsi:schemaLocation","xsi:schemaLocation","",locationDef);
-  start("wcs:CoverageDescriptions",attributes);
-  for (  String encodedCoverageId : (List<String>)request.getIdentifier()) {
-    LayerInfo layer=getLayer(encodedCoverageId);
-    if (layer.getType() != LayerInfo.Type.RASTER) {
-      throw new WCS20Exception("Could not find the requested coverage: " + encodedCoverageId,WCS20Exception.WCSExceptionCode.NoSuchCoverage,encodedCoverageId);
+  List<String> badCoverageIds=new ArrayList<String>();
+  List<LayerInfo> coverages=new ArrayList<LayerInfo>();
+  for (  String encodedCoverageId : (List<String>)request.getCoverageId()) {
+    LayerInfo layer=getCoverage(encodedCoverageId);
+    if (layer != null) {
+      coverages.add(layer);
     }
+ else {
+      badCoverageIds.add(encodedCoverageId);
+    }
+  }
+  if (!badCoverageIds.isEmpty()) {
+    String mergedIds=StringUtils.merge(badCoverageIds);
+    throw new WCS20Exception("Could not find the requested coverage(s): " + mergedIds,WCS20Exception.WCSExceptionCode.NoSuchCoverage,mergedIds);
+  }
+  start("wcs:CoverageDescriptions",attributes);
+  for (  LayerInfo layer : coverages) {
     CoverageInfo ci=catalog.getCoverageByName(layer.prefixedName());
     try {
       handleCoverageDescription(ci);
