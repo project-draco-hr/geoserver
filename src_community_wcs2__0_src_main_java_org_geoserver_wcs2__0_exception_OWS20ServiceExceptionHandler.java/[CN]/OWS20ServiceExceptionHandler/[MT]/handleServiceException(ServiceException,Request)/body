@@ -1,5 +1,4 @@
 {
-  Ows20Factory factory=Ows20Factory.eINSTANCE;
   String version=null;
   if (useServiceVersion && request.getServiceDescriptor() != null) {
     version=request.getServiceDescriptor().getVersion().toString();
@@ -28,10 +27,10 @@
   String schemaLocation=buildSchemaURL(baseURL(request.getHttpRequest()),"ows/2.0/owsAll.xsd");
   encoder.setSchemaLocation(OWS.NAMESPACE,schemaLocation);
   try {
-    if (ows2ex != null && ows2ex.getHttpCode() != null) {
-      response.sendError(ows2ex.getHttpCode(),encoder.encodeAsString(report,OWS.ExceptionReport));
-    }
- else {
+    if (ows2ex != null) {
+      if (ows2ex.getHttpCode() != null) {
+        response.setStatus(ows2ex.getHttpCode());
+      }
       encoder.encode(report,OWS.ExceptionReport,response.getOutputStream());
     }
   }
