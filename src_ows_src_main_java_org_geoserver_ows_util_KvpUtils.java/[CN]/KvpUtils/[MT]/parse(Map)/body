@@ -21,10 +21,8 @@
   for (Iterator itr=kvp.entrySet().iterator(); itr.hasNext(); ) {
     Map.Entry entry=(Map.Entry)itr.next();
     String key=(String)entry.getKey();
-    String value=(String)entry.getValue();
-    Object parsed=null;
     KvpParser parser=null;
-    for (Iterator pitr=parsers.iterator(); pitr.hasNext() && parsed == null; ) {
+    for (Iterator pitr=parsers.iterator(); pitr.hasNext(); ) {
       KvpParser candidate=(KvpParser)pitr.next();
       if (key.equalsIgnoreCase(candidate.getKey())) {
         if (parser == null) {
@@ -57,9 +55,21 @@
         }
       }
     }
+    Object parsed=null;
     if (parser != null) {
       try {
-        parsed=parser.parse(value);
+        if (entry.getValue() instanceof String) {
+          String value=(String)entry.getValue();
+          parsed=parser.parse(value);
+        }
+ else {
+          String[] values=(String[])entry.getValue();
+          List result=new ArrayList();
+          for (          String v : values) {
+            result.add(parser.parse(v));
+          }
+          parsed=result;
+        }
       }
  catch (      Throwable t) {
         errors.add(t);
