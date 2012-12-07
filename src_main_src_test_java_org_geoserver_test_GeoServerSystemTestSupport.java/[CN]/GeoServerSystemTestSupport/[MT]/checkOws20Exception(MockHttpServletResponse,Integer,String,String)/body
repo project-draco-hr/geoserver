@@ -1,0 +1,21 @@
+{
+  assertEquals("application/xml",response.getContentType());
+  if (status != null) {
+    assertEquals(status.intValue(),response.getStatusCode());
+  }
+  Document dom=dom(new ByteArrayInputStream(response.getOutputStreamContent().getBytes()));
+  Element root=dom.getDocumentElement();
+  assertEquals("ows:ExceptionReport",root.getNodeName());
+  assertEquals("2.0.0",root.getAttribute("version"));
+  assertEquals("http://www.opengis.net/ows/2.0",root.getAttribute("xmlns:ows"));
+  assertEquals(1,dom.getElementsByTagName("ows:Exception").getLength());
+  Element ex=(Element)dom.getElementsByTagName("ows:Exception").item(0);
+  if (exceptionCode != null) {
+    assertEquals(exceptionCode,ex.getAttribute("exceptionCode"));
+  }
+  if (locator != null) {
+    assertEquals(locator,ex.getAttribute("locator"));
+  }
+  assertEquals(1,dom.getElementsByTagName("ows:ExceptionText").getLength());
+  return dom.getElementsByTagName("ows:ExceptionText").item(0).getTextContent();
+}
