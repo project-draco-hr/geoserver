@@ -1,0 +1,29 @@
+{
+  Catalog catalog=getCatalog();
+  NamespaceInfo ns=catalog.getNamespaceByPrefix(MockData.CITE_PREFIX);
+  String newName="XYWZ1234";
+  ns.setPrefix(newName);
+  catalog.save(ns);
+  assertNotNull(catalog.getWorkspaceByName(newName));
+  assertNotNull(catalog.getNamespaceByPrefix(newName));
+  int listenersBefore=catalog.getListeners().size();
+  getGeoServer().reload();
+  int listenersAfter=catalog.getListeners().size();
+  assertEquals(listenersBefore,listenersAfter);
+  ns=catalog.getNamespaceByPrefix(newName);
+  ns.setPrefix(MockData.CITE_PREFIX);
+  catalog.save(ns);
+  assertNotNull(catalog.getWorkspaceByName(MockData.CITE_PREFIX));
+  int countCleaner=0;
+  int countPersister=0;
+  for (  CatalogListener listener : catalog.getListeners()) {
+    if (listener instanceof ResourcePool.CacheClearingListener) {
+      countCleaner++;
+    }
+ else     if (listener instanceof GeoServerPersister) {
+      countPersister++;
+    }
+  }
+  assertEquals(1,countCleaner);
+  assertEquals(1,countPersister);
+}

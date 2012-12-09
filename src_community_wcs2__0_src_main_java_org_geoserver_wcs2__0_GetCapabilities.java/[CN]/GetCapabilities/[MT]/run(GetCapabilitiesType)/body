@@ -1,0 +1,18 @@
+{
+  List<String> acceptedVersions=request.getAcceptVersions() == null ? null : request.getAcceptVersions().getVersion();
+  String negotiatedVersion=RequestUtils.getVersionOws20(PROVIDED_VERSIONS,acceptedVersions);
+  if (WCS20Const.V110.equals(negotiatedVersion) || WCS20Const.V111.equals(negotiatedVersion)) {
+    LOGGER.warning("GetCapa2.0 Dispatching to 1.1");
+    WCSCapsTransformer capsTransformer=new WCSCapsTransformer(wcs.getGeoServer());
+    capsTransformer.setEncoding(Charset.forName((wcs.getGeoServer().getSettings().getCharset())));
+    return capsTransformer;
+  }
+ else   if (WCS20Const.V20.equals(negotiatedVersion) || WCS20Const.V20x.equals(negotiatedVersion)) {
+    WCS20GetCapabilitiesTransformer capsTransformer=new WCS20GetCapabilitiesTransformer(wcs.getGeoServer());
+    capsTransformer.setEncoding(Charset.forName((wcs.getGeoServer().getSettings().getCharset())));
+    return capsTransformer;
+  }
+ else {
+    throw new WCS20Exception("Internal error: Could not understand version:" + negotiatedVersion,OWS20Exception.OWSExceptionCode.VersionNegotiationFailed,negotiatedVersion);
+  }
+}

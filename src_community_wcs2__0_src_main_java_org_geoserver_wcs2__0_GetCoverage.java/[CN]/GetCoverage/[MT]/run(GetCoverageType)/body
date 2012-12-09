@@ -1,0 +1,22 @@
+{
+  LayerInfo linfo=NCNameResourceCodec.getCoverage(catalog,request.getCoverageId());
+  if (linfo == null) {
+    throw new WCS20Exception("Could not locate coverage " + request.getCoverageId(),WCS20Exception.WCSExceptionCode.NoSuchCoverage,"coverageId");
+  }
+  CoverageInfo cinfo=(CoverageInfo)linfo.getResource();
+  GridCoverage coverage=null;
+  try {
+    GridCoverageReader reader=cinfo.getGridCoverageReader(null,null);
+    boolean subsample=wcs.isSubsamplingEnabled();
+    coverage=reader.read(null);
+  }
+ catch (  IOException e) {
+    throw new WcsException("Failed to read the coverage " + request.getCoverageId(),e);
+  }
+ finally {
+    if (coverage != null) {
+      CoverageCleanerCallback.addCoverages(coverage);
+    }
+  }
+  return coverage;
+}

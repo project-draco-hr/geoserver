@@ -1,0 +1,29 @@
+{
+  final GeoServer gs=wcs.getGeoServer();
+  start("ows:ServiceContact");
+  ContactInfo contact=gs.getSettings().getContact();
+  elementIfNotEmpty("ows:IndividualName",contact.getContactPerson());
+  elementIfNotEmpty("ows:PositionName",contact.getContactPosition());
+  start("ows:ContactInfo");
+  start("ows:Phone");
+  elementIfNotEmpty("ows:Voice",contact.getContactVoice());
+  elementIfNotEmpty("ows:Facsimile",contact.getContactFacsimile());
+  end("ows:Phone");
+  start("ows:Address");
+  elementIfNotEmpty("ows:DeliveryPoint",contact.getAddress());
+  elementIfNotEmpty("ows:City",contact.getAddressCity());
+  elementIfNotEmpty("ows:AdministrativeArea",contact.getAddressState());
+  elementIfNotEmpty("ows:PostalCode",contact.getAddressPostalCode());
+  elementIfNotEmpty("ows:Country",contact.getAddressCountry());
+  elementIfNotEmpty("ows:ElectronicMailAddress",contact.getContactEmail());
+  end("ows:Address");
+  String or=gs.getSettings().getOnlineResource();
+  if (isNotBlank(or)) {
+    AttributesImpl attributes=new AttributesImpl();
+    attributes.addAttribute("","xlink:href","xlink:href","",or);
+    start("ows:OnlineResource",attributes);
+    end("OnlineResource");
+  }
+  end("ows:ContactInfo");
+  end("ows:ServiceContact");
+}

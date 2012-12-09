@@ -1,13 +1,20 @@
 {
   GetFeatureType gf=WfsFactory.eINSTANCE.createGetFeatureType();
+  org.opengis.filter.Filter f1=parseFilter("BBOX(the_geom, 40, -90, 45, -60)");
+  org.opengis.filter.Filter f2=parseFilter("BBOX(the_geom, 5988504.35,851278.90, 7585113.55,1950872.01)");
   QueryType q=WfsFactory.eINSTANCE.createQueryType();
   q.setTypeName(Arrays.asList(new QName("http://acme.org","foo","acme")));
+  q.setFilter(f1);
   gf.getQuery().add(q);
   q=WfsFactory.eINSTANCE.createQueryType();
   q.setTypeName(Arrays.asList(new QName("http://acme.org","bar","acme")));
   gf.getQuery().add(q);
+  getClass();
+  q.setFilter(f2);
   Operation op=op("GetFeature","WFS","1.0.0",gf);
   callback.operationDispatched(new Request(),op);
   assertEquals("acme:foo",data.getResources().get(0));
   assertEquals("acme:bar",data.getResources().get(1));
+  BoundingBox expected=new ReferencedEnvelope(53.73,40,-60,-95.1193,CRS.decode("EPSG:4326"));
+  BBoxAsserts.assertEqualsBbox(expected,data.getBbox(),0.01);
 }

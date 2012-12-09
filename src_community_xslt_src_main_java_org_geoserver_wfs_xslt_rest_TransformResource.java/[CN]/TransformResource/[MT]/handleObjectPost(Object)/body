@@ -1,0 +1,34 @@
+{
+  String transform=getQueryStringValue("name");
+  String sourceFormat=getQueryStringValue("sourceFormat");
+  String outputFormat=getQueryStringValue("outputFormat");
+  String outputMimeType=getQueryStringValue("outputMimeType");
+  String fileExtension=getQueryStringValue("fileExtension");
+  TransformInfo info;
+  if (object instanceof TransformInfo) {
+    info=(TransformInfo)object;
+    if (transform != null) {
+      info.setName(transform);
+    }
+    validate(info);
+    repository.putTransformInfo(info);
+    return info.getName();
+  }
+ else {
+    String xslt=(String)object;
+    info=repository.getTransformInfo(transform);
+    if (info == null) {
+      info=new TransformInfo();
+      info.setName(transform);
+      info.setSourceFormat(sourceFormat);
+      info.setOutputFormat(outputFormat);
+      info.setOutputMimeType(outputMimeType);
+      info.setFileExtension(fileExtension);
+      info.setXslt(transform + ".xslt");
+      validate(info);
+      repository.putTransformInfo(info);
+    }
+    repository.putTransformSheet(info,new ByteArrayInputStream(xslt.getBytes()));
+  }
+  return info.getName();
+}

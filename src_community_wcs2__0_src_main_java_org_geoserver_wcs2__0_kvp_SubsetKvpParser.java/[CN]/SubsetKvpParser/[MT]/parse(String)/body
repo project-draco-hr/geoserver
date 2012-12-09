@@ -1,0 +1,46 @@
+{
+  value=value.trim();
+  int openIdx=value.indexOf("(");
+  int closeIdx=value.indexOf(")");
+  if (openIdx == -1 || closeIdx == -1 || closeIdx < value.length() - 1) {
+    throw new OWS20Exception("Invalid syntax, dimension [ , crs ] ( intervalOrPoint ) is expected",WCSExceptionCode.InvalidEncodingSyntax,"subset");
+  }
+  String dimension=null;
+  String crs=null;
+  String dimensionCrs=value.substring(0,openIdx);
+  String[] dcElements=dimensionCrs.split("\\s*,\\s*");
+  if (dcElements.length == 1) {
+    dimension=dcElements[0];
+    crs=null;
+  }
+ else   if (dcElements.length == 2) {
+    dimension=dcElements[0];
+    crs=dcElements[1];
+  }
+ else {
+    throw new OWS20Exception("Invalid syntax, dimension [ , crs ] ( intervalOrPoint ) is expected",WCSExceptionCode.InvalidEncodingSyntax,"subset");
+  }
+  String valuePoint=value.substring(openIdx + 1,closeIdx);
+  String[] vpElements=valuePoint.split(",\\s*(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+  if (vpElements.length == 1) {
+    String point=parsePoint(vpElements[0],false);
+    DimensionSliceType slice=Wcs20Factory.eINSTANCE.createDimensionSliceType();
+    slice.setDimension(dimension);
+    slice.setCRS(crs);
+    slice.setSlicePoint(point);
+    return slice;
+  }
+ else   if (vpElements.length == 2) {
+    String low=parsePoint(vpElements[0],true);
+    String high=parsePoint(vpElements[1],true);
+    DimensionTrimType trim=Wcs20Factory.eINSTANCE.createDimensionTrimType();
+    trim.setDimension(dimension);
+    trim.setCRS(crs);
+    trim.setTrimLow(low);
+    trim.setTrimHigh(high);
+    return trim;
+  }
+ else {
+    throw new OWS20Exception("Invalid syntax, dimension [ , crs ] ( intervalOrPoint ) " + "where interval or point has either 1 or two elements",WCSExceptionCode.InvalidEncodingSyntax,"subset");
+  }
+}

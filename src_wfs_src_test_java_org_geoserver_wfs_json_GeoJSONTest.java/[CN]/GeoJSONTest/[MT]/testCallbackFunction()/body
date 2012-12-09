@@ -1,0 +1,15 @@
+{
+  JSONType.setJsonpEnabled(true);
+  MockHttpServletResponse resp=getAsServletResponse("wfs?request=GetFeature&version=1.0.0&typename=sf:PrimitiveGeoFeature&maxfeatures=1&outputformat=" + JSONType.jsonp + "&format_options="+ JSONType.CALLBACK_FUNCTION_KEY+ ":myFunc");
+  JSONType.setJsonpEnabled(false);
+  String out=resp.getOutputStreamContent();
+  assertEquals(JSONType.jsonp,resp.getContentType());
+  assertTrue(out.startsWith("myFunc("));
+  assertTrue(out.endsWith(")"));
+  out=out.substring(7,out.length() - 1);
+  JSONObject rootObject=JSONObject.fromObject(out);
+  assertEquals(rootObject.get("type"),"FeatureCollection");
+  JSONArray featureCol=rootObject.getJSONArray("features");
+  JSONObject aFeature=featureCol.getJSONObject(0);
+  assertEquals(aFeature.getString("geometry_name"),"surfaceProperty");
+}

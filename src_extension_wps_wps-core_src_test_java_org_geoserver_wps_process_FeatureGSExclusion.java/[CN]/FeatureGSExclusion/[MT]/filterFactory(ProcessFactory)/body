@@ -1,6 +1,15 @@
 {
-  if (pf instanceof FeatureGSProcessFactory || (pf instanceof DelegatingProcessFactory && ((DelegatingProcessFactory)pf).getInnermostDelegate() instanceof FeatureGSProcessFactory)) {
+  if (pf instanceof VectorProcessFactory || (pf instanceof DelegatingProcessFactory && ((DelegatingProcessFactory)pf).getInnermostDelegate() instanceof VectorProcessFactory)) {
     return null;
+  }
+  if (pf instanceof DeprecatedProcessFactory) {
+    Set<Name> disabled=new HashSet();
+    for (    Name n : pf.getNames()) {
+      if ("gs".equals(n.getNamespaceURI())) {
+        disabled.add(n);
+      }
+    }
+    return new SelectingProcessFactory(pf,new DisabledProcessesSelector(disabled));
   }
   return pf;
 }

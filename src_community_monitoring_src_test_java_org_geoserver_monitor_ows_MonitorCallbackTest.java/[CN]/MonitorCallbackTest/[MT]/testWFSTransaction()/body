@@ -1,13 +1,19 @@
 {
   TransactionType t=WfsFactory.eINSTANCE.createTransactionType();
+  org.opengis.filter.Filter f1=parseFilter("BBOX(the_geom, 40, -90, 45, -60)");
+  org.opengis.filter.Filter f2=parseFilter("BBOX(the_geom, 5988504.35,851278.90, 7585113.55,1950872.01)");
   UpdateElementType ue=WfsFactory.eINSTANCE.createUpdateElementType();
   ue.setTypeName(new QName("http://acme.org","foo","acme"));
+  ue.setFilter(f1);
   t.getUpdate().add(ue);
   DeleteElementType de=WfsFactory.eINSTANCE.createDeleteElementType();
   de.setTypeName(new QName("http://acme.org","bar","acme"));
+  de.setFilter(f2);
   t.getDelete().add(de);
-  Operation op=op("Transaction","WFS","1.0.0",t);
+  Operation op=op("Transaction","WFS","1.1.0",t);
   callback.operationDispatched(new Request(),op);
   assertEquals("acme:foo",data.getResources().get(0));
   assertEquals("acme:bar",data.getResources().get(1));
+  BoundingBox expected=new ReferencedEnvelope(53.73,40,-60,-95.1193,CRS.decode("EPSG:4326"));
+  BBoxAsserts.assertEqualsBbox(expected,data.getBbox(),0.01);
 }

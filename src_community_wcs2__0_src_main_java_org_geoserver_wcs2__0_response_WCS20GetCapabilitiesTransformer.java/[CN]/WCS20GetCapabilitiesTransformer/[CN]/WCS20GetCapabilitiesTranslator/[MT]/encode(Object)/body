@@ -1,0 +1,44 @@
+{
+  if (!(o instanceof GetCapabilitiesType)) {
+    throw new IllegalArgumentException(new StringBuffer("Not a GetCapabilitiesType: ").append(o).toString());
+  }
+  this.request=(GetCapabilitiesType)o;
+  final long updateSequence=wcs.getGeoServer().getGlobal().getUpdateSequence();
+  long requestedUpdateSequence=-1;
+  if (request.getUpdateSequence() != null) {
+    try {
+      requestedUpdateSequence=Long.parseLong(request.getUpdateSequence());
+    }
+ catch (    NumberFormatException e) {
+      throw new WcsException("Invalid update sequence number format, " + "should be an integer",WcsException.WcsExceptionCode.InvalidUpdateSequence,"updateSequence");
+    }
+    if (requestedUpdateSequence > updateSequence) {
+      throw new WcsException("Invalid update sequence value, it's higher " + "than the current value, " + updateSequence,WcsException.WcsExceptionCode.InvalidUpdateSequence,"updateSequence");
+    }
+  }
+  boolean allSections;
+  List<String> sections;
+  if (request.getSections() == null) {
+    sections=Collections.emptyList();
+    allSections=true;
+  }
+ else {
+    sections=request.getSections().getSection();
+    allSections=sections.contains(SECTIONS.All.name());
+    for (    String section : sections) {
+      if (!SECTIONS.names.contains(section))       throw new WcsException("Unknown section " + section,WcsException.WcsExceptionCode.InvalidParameterValue,"Sections");
+    }
+  }
+  final AttributesImpl attributes=WCS20Const.getDefaultNamespaces();
+  attributes.addAttribute("","version","version","",CUR_VERSION);
+  attributes.addAttribute("","updateSequence","updateSequence","",String.valueOf(updateSequence));
+  start("wcs:Capabilities",attributes);
+  if (requestedUpdateSequence < updateSequence) {
+    if (allSections || sections.contains(SECTIONS.ServiceIdentification.name()))     handleServiceIdentification();
+    if (allSections || sections.contains(SECTIONS.ServiceProvider.name()))     handleServiceProvider();
+    if (allSections || sections.contains(SECTIONS.OperationsMetadata.name()))     handleOperationsMetadata();
+    if (allSections || sections.contains(SECTIONS.Contents.name()))     handleContents();
+    if (allSections || sections.contains(SECTIONS.Languages.name()))     handleLanguages();
+  }
+  end("wcs:Capabilities");
+}

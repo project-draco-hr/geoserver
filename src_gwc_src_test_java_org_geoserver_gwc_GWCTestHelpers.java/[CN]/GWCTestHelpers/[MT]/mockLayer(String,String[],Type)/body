@@ -1,0 +1,34 @@
+{
+  StoreInfo store=new DataStoreInfoImpl(null);
+  store.setName(resourceName + "-store");
+  store.setEnabled(true);
+  NamespaceInfoImpl ns=new NamespaceInfoImpl();
+  ns.setPrefix("test");
+  ns.setURI("http://example.com");
+  FeatureTypeInfoImpl resource=new FeatureTypeInfoImpl(null);
+  resource.setName(resourceName);
+  resource.setNamespace(ns);
+  ReferencedEnvelope box=new ReferencedEnvelope(-180,0,0,90,DefaultGeographicCRS.WGS84);
+  resource.setLatLonBoundingBox(box);
+  resource.setNativeBoundingBox(box);
+  resource.setEnabled(true);
+  resource.setStore(store);
+  LayerInfoImpl layer=new LayerInfoImpl();
+  layer.setId("id-" + resource.prefixedName());
+  layer.setResource(resource);
+  layer.setEnabled(true);
+  StyleInfoImpl defaultStyle=new StyleInfoImpl(null);
+  defaultStyle.setName("default");
+  layer.setDefaultStyle(defaultStyle);
+  if (extraStyles != null) {
+    Set styles=new HashSet();
+    for (    String name : extraStyles) {
+      StyleInfoImpl extra=new StyleInfoImpl(null);
+      extra.setName(name);
+      styles.add(extra);
+    }
+    layer.setStyles(styles);
+  }
+  layer.setType(type);
+  return layer;
+}

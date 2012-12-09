@@ -1,0 +1,21 @@
+{
+  File infoFile=getTransformInfoFile(info.getName());
+  boolean result=infoFile.delete();
+  File xsltFile=getTransformFile(info);
+  infoCache.removeItem(infoFile);
+  boolean shared=false;
+  if (xsltFile.exists()) {
+    for (    TransformInfo ti : getAllTransforms()) {
+      File curr=getTransformFile(ti);
+      if (curr.equals(xsltFile)) {
+        shared=true;
+        break;
+      }
+    }
+  }
+  if (!shared) {
+    result=result && xsltFile.delete();
+    transformCache.removeItem(xsltFile);
+  }
+  return result;
+}

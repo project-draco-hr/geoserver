@@ -1,0 +1,18 @@
+{
+  String xml1="<transform>\n" + "  <sourceFormat>application/xml</sourceFormat>\n" + "  <outputFormat>text/plain</outputFormat>\n"+ "  <fileExtension>txt</fileExtension>\n"+ "  <xslt>test-tx.xslt</xslt>\n"+ "</transform>";
+  testRoot.mkdirs();
+  File file=new File(testRoot,"test.xml");
+  FileUtils.writeStringToFile(file,xml1);
+  TransformInfo info1=repo.getTransformInfo("test");
+  assertNotNull(info1);
+  Thread.sleep((long)(CacheItem.MIN_INTERVALS_CHECK * 1.1));
+  String xml2="<transform>\n" + "  <sourceFormat>text/xml; subtype=gml/2.1.2</sourceFormat>\n" + "  <outputFormat>application/json</outputFormat>\n"+ "  <fileExtension>json</fileExtension>\n"+ "  <xslt>json-tx.xslt</xslt>\n"+ "</transform>";
+  FileUtils.writeStringToFile(file,xml2);
+  TransformInfo info2=repo.getTransformInfo("test");
+  assertNotNull(info2);
+  assertEquals("test",info2.getName());
+  assertEquals("text/xml; subtype=gml/2.1.2",info2.getSourceFormat());
+  assertEquals("application/json",info2.getOutputFormat());
+  assertEquals("json",info2.getFileExtension());
+  assertEquals("json-tx.xslt",info2.getXslt());
+}

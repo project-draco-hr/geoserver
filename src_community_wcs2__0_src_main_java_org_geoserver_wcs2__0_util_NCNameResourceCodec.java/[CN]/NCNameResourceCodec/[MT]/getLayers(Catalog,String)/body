@@ -1,0 +1,30 @@
+{
+  List<MapEntry<String,String>> decodedList=decode(encodedResourceId);
+  if (decodedList.isEmpty()) {
+    LOGGER.info("Could not decode id '" + encodedResourceId + "'");
+    return null;
+  }
+  List<LayerInfo> ret=new ArrayList<LayerInfo>();
+  LOGGER.info(" Examining encoded name " + encodedResourceId);
+  for (  MapEntry<String,String> mapEntry : decodedList) {
+    String namespace=mapEntry.getKey();
+    String covName=mapEntry.getValue();
+    LOGGER.info(" Checking pair " + namespace + " : "+ covName);
+    NamespaceInfo nsInfo=catalog.getNamespaceByPrefix(namespace);
+    if (nsInfo != null) {
+      LOGGER.info(" - Namespace found " + namespace);
+      LayerInfo layer=catalog.getLayerByName(namespace + ":" + covName);
+      if (layer != null) {
+        LOGGER.info(" - Collecting layer " + layer.prefixedName());
+        ret.add(layer);
+      }
+ else {
+        LOGGER.info(" - Ignoring layer " + layer.prefixedName());
+      }
+    }
+ else {
+      LOGGER.info(" - Namespace not found " + namespace);
+    }
+  }
+  return ret;
+}

@@ -1,0 +1,31 @@
+{
+  Double[] offsets;
+  if (!(gridToCRS instanceof AffineTransform2D) && !(gridToCRS instanceof IdentityTransform))   throw new WcsException("Internal error, the coverage we're playing with does not have an affine transform...");
+  if (!reprojectionNeeded) {
+    if (gridCRS != null) {
+      if (gridToCRS instanceof IdentityTransform) {
+        if (gridCRS.getGridType().equals(GridType.GT2dSimpleGrid.getXmlConstant()) || gridCRS.getGridType().equals(GridType.GT2dGridIn2dCrs.getXmlConstant()))         offsets=new Double[]{1.0,-1.0};
+ else         offsets=new Double[]{1.0,0.0,0.0,0.0,-1.0,0.0};
+      }
+ else {
+        AffineTransform2D affine=(AffineTransform2D)gridToCRS;
+        if (gridCRS.getGridType().equals(GridType.GT2dSimpleGrid.getXmlConstant()) || gridCRS.getGridType().equals(GridType.GT2dGridIn2dCrs.getXmlConstant()))         offsets=new Double[]{affine.getScaleX(),affine.getScaleY()};
+ else         offsets=new Double[]{affine.getScaleX(),affine.getShearX(),affine.getShearY(),affine.getScaleY()};
+      }
+    }
+ else {
+      AffineTransform2D at=(AffineTransform2D)gridToCRS;
+      offsets=new Double[]{at.getScaleX(),at.getScaleY()};
+    }
+  }
+ else {
+    double teWidth=intersectionEnvelope.getSpan(0);
+    double teHeight=intersectionEnvelope.getSpan(1);
+    double targetRatio=teWidth / teHeight;
+    GridEnvelope gr=reader.getOriginalGridRange();
+    int targetRasterWidth=gr.getSpan(0);
+    int targetRasterHeight=(int)Math.ceil(targetRasterWidth / targetRatio);
+    offsets=new Double[]{teWidth / targetRasterWidth,-teHeight / targetRasterHeight};
+  }
+  return offsets;
+}

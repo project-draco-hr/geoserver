@@ -1,0 +1,13 @@
+{
+  GetMapRequest gm=new GetMapRequest();
+  gm.setLayers(Arrays.asList(createMapLayer("foo","acme")));
+  Envelope env=new Envelope(5988504.35,7585113.55,851278.90,1950872.01);
+  CoordinateReferenceSystem crs=CRS.decode("EPSG:3348",true);
+  gm.setBbox(env);
+  gm.setCrs(crs);
+  callback.operationDispatched(new Request(),op("GetMap","WMS","1.1.1",gm));
+  CoordinateReferenceSystem logCrs=CRS.decode("EPSG:4326",false);
+  BoundingBox bbox=new ReferencedEnvelope(42.2802,53.73,-95.1193,-71.295,logCrs);
+  assertEquals("acme:foo",data.getResources().get(0));
+  BBoxAsserts.assertEqualsBbox(bbox,data.getBbox(),0.1);
+}
