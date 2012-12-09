@@ -1,0 +1,22 @@
+{
+  String request="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<wcs:GetCoverage\n" + "  xmlns:wcs=\"http://www.opengis.net/wcs/2.0\"\n"+ "  xmlns:wcsgeotiff=\"http://www.opengis.net/wcs/geotiff/1.0\"\n"+ "  xmlns:gml=\"http://www.opengis.net/gml/3.2\"\n"+ "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"+ "  xsi:schemaLocation=\"http://www.opengis.net/wcs/2.0 \n"+ "  http://schemas.opengis.net/wcs/2.0/wcsAll.xsd \n"+ "  http://www.opengis.net/wcs/geotiff/1.0 \n"+ "  http://schemas.opengis.net/wcs/geotiff/1.0/wcsGeotiff.xsd\"\n"+ "  service=\"WCS\"\n"+ "  version=\"2.0.1\">\n"+ "  <wcs:Extension>\n"+ "    <wcsgeotiff:compression>Huffman</wcsgeotiff:compression>\n"+ "  </wcs:Extension>\n"+ "  <wcs:CoverageId>wcs__BlueMarble</wcs:CoverageId>\n"+ "  <wcs:format>image/tiff</wcs:format>\n"+ "</wcs:GetCoverage>";
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  final TIFFImageReader reader=(TIFFImageReader)new TIFFImageReaderSpi().createReaderInstance();
+  reader.setInput(new FileImageInputStream(file));
+  final TIFFImageMetadata metadata=(TIFFImageMetadata)reader.getImageMetadata(0);
+  assertNotNull(metadata);
+  IIOMetadataNode root=(IIOMetadataNode)reader.getImageMetadata(0).getAsTree(TIFFImageMetadata.nativeMetadataFormatName);
+  IIOMetadataNode field=getTiffField(root,BaselineTIFFTagSet.TAG_COMPRESSION);
+  assertNotNull(field);
+  assertEquals("Deflate",field.getFirstChild().getFirstChild().getAttributes().item(1).getNodeValue());
+  assertEquals("32946",field.getFirstChild().getFirstChild().getAttributes().item(0).getNodeValue());
+  IIOMetadataNode node=metadata.getStandardDataNode();
+  assertNotNull(node);
+  assertEquals("PlanarConfiguration",node.getFirstChild().getNodeName());
+  assertEquals("PixelInterleaved",node.getFirstChild().getAttributes().item(0).getNodeValue());
+  reader.dispose();
+}

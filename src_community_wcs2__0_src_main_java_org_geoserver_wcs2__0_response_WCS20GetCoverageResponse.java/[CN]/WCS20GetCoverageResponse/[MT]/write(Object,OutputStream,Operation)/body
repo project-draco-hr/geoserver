@@ -5,6 +5,14 @@
   if (format == null) {
     format="image/tiff;subtype=\"geotiff\"";
   }
+  final Map<String,String> encodingParameters=new HashMap<String,String>();
+  final ExtensionType extension=getCoverage.getExtension();
+  if (extension != null) {
+    final EList<ExtensionItemType> extensions=extension.getContents();
+    for (    ExtensionItemType ext : extensions) {
+      encodingParameters.put(ext.getName(),ext.getSimpleContent());
+    }
+  }
   CoverageResponseDelegate delegate=responseFactory.encoderFor(format);
-  delegate.encode(coverage,format,output);
+  delegate.encode(coverage,format,encodingParameters,output);
 }
