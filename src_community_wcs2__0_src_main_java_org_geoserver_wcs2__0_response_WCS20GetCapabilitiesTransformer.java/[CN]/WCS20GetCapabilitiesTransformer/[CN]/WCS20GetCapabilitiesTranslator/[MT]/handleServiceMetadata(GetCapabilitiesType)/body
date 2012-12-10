@@ -1,0 +1,20 @@
+{
+  start("wcs:ServiceMetadata");
+  if (ct.getAcceptVersions() == null || ct.getAcceptVersions().getVersion() == null || ct.getAcceptVersions().getVersion().isEmpty() || ct.getAcceptVersions().getVersion().contains("2.0.1")) {
+    Set<String> formats=new TreeSet<String>();
+    for (    String format : responseFactory.getOutputFormats()) {
+      CoverageResponseDelegate delegate=responseFactory.encoderFor(format);
+      String mime=delegate.getMimeType(format);
+      try {
+        new URI(mime);
+        formats.add(mime);
+      }
+ catch (      URISyntaxException e) {
+      }
+    }
+    for (    String format : formats) {
+      element("wcs:formatSupported",format);
+    }
+  }
+  end("wcs:ServiceMetadata");
+}
