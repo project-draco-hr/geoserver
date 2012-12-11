@@ -1,0 +1,31 @@
+{
+  double minx=rs.getDouble(names[0]);
+  double miny=rs.getDouble(names[1]);
+  double maxx=rs.getDouble(names[2]);
+  double maxy=rs.getDouble(names[3]);
+  String s=rs.getString(names[4]);
+  CoordinateReferenceSystem crs=null;
+  if (s != null) {
+    try {
+      if (storeCRSAsWKT) {
+        crs=CRS.parseWKT(s);
+      }
+ else {
+        crs=CRS.decode(s);
+      }
+    }
+ catch (    Exception e) {
+      String msg="Unable to create crs from wkt: " + s;
+      throw new HibernateException(msg,e);
+    }
+    try {
+    }
+ catch (    Exception e) {
+    }
+  }
+  ReferencedEnvelope re=new ReferencedEnvelope(minx,maxx,miny,maxy,crs);
+  if (minx > maxx) {
+    return null;
+  }
+  return re;
+}

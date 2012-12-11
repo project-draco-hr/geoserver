@@ -1,0 +1,28 @@
+{
+  start("wcs:Contents");
+  List<CoverageInfo> coverages=new ArrayList<CoverageInfo>(wcs.getGeoServer().getCatalog().getCoverages());
+  for (Iterator<CoverageInfo> it=coverages.iterator(); it.hasNext(); ) {
+    CoverageInfo cv=(CoverageInfo)it.next();
+    if (!cv.enabled()) {
+      it.remove();
+    }
+  }
+  Collections.sort(coverages,new CoverageInfoLabelComparator());
+  for (  CoverageInfo cv : coverages) {
+    try {
+      mark();
+      handleCoverageSummary(cv);
+      commit();
+    }
+ catch (    Exception e) {
+      if (skipMisconfigured) {
+        reset();
+        LOGGER.log(Level.SEVERE,"Skipping coverage " + cv.prefixedName() + " as its capabilities generation failed",e);
+      }
+ else {
+        throw new RuntimeException("Capabilities document generation failed on coverage " + cv.prefixedName(),e);
+      }
+    }
+  }
+  end("wcs:Contents");
+}

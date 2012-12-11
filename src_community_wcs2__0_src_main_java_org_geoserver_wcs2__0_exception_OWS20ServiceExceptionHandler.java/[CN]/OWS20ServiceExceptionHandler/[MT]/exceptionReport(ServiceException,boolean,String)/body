@@ -1,0 +1,26 @@
+{
+  ExceptionType e=Ows20Factory.eINSTANCE.createExceptionType();
+  if (exception.getCode() != null) {
+    e.setExceptionCode(exception.getCode());
+  }
+ else {
+    e.setExceptionCode("NoApplicableCode");
+  }
+  e.setLocator(exception.getLocator());
+  StringBuffer sb=new StringBuffer();
+  OwsUtils.dumpExceptionMessages(exception,sb,true);
+  sb.append("\n");
+  sb.append(exception.getExceptionText());
+  if (verboseExceptions) {
+    sb.append("\nDetails:\n");
+    ByteArrayOutputStream trace=new ByteArrayOutputStream();
+    exception.printStackTrace(new PrintStream(trace));
+    sb.append(new String(trace.toByteArray()));
+  }
+  e.setExceptionText(sb.toString());
+  ExceptionReportType report=Ows20Factory.eINSTANCE.createExceptionReportType();
+  version=version != null ? version : "2.0.0";
+  report.setVersion(version);
+  report.getException().add(e);
+  return report;
+}

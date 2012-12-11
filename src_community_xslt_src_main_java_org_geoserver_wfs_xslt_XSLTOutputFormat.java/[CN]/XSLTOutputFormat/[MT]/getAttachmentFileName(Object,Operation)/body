@@ -1,0 +1,25 @@
+{
+  try {
+    FeatureCollectionResponse featureCollections=(FeatureCollectionResponse)value;
+    TransformInfo info=locateTransformation(featureCollections,operation);
+    StringBuilder sb=new StringBuilder();
+    for (    FeatureCollection<FeatureType,Feature> fc : featureCollections.getFeatures()) {
+      sb.append(fc.getSchema().getName().getLocalPart());
+      sb.append("_");
+    }
+    sb.setLength(sb.length() - 1);
+    String extension=info.getFileExtension();
+    if (extension == null) {
+      extension=".txt";
+      sb.append(extension);
+    }
+    if (!extension.startsWith(".")) {
+      sb.append(".");
+    }
+    sb.append(extension);
+    return sb.toString();
+  }
+ catch (  IOException e) {
+    throw new WFSException("Failed to locate the XSLT transformation",e);
+  }
+}

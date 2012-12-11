@@ -1,4 +1,7 @@
 {
+  catalog.removeListeners(ResourcePool.CacheClearingListener.class);
+  catalog.removeListeners(GeoServerPersister.class);
+  List<CatalogListener> listeners=new ArrayList<CatalogListener>(catalog.getListeners());
   File f=resourceLoader.find("catalog.xml");
   if (f == null) {
     CatalogImpl catalog2=(CatalogImpl)readCatalog(xp);
@@ -7,5 +10,8 @@
  else {
     CatalogImpl catalog2=(CatalogImpl)readLegacyCatalog(f,xp);
     ((CatalogImpl)catalog).sync(catalog2);
+  }
+  for (  CatalogListener listener : listeners) {
+    catalog.addListener(listener);
   }
 }

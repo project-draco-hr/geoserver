@@ -1,0 +1,15 @@
+{
+  String transform=RESTUtils.getAttribute(request,"transform");
+  if (transform == null && request.getMethod() == Method.GET) {
+    return new TransformListResource(getContext(),request,response,repository);
+  }
+  try {
+    if (transform != null && repository.getTransformInfo(transform) == null) {
+      throw new RestletException("No such transform: " + transform,Status.CLIENT_ERROR_NOT_FOUND);
+    }
+  }
+ catch (  IOException e) {
+    throw new RestletException("An error occurred while trying to locate the transform: " + transform,Status.SERVER_ERROR_INTERNAL,e);
+  }
+  return new TransformResource(null,request,response,repository,catalog);
+}

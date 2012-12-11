@@ -1,0 +1,15 @@
+{
+  Catalog cat=getCatalog();
+  TileLayerDispatcher tld=GeoWebCacheExtensions.bean(TileLayerDispatcher.class);
+  LayerInfo li=cat.getLayerByName(super.getLayerId(MockData.MPOINTS));
+  String layerName=tileLayerName(li);
+  assertNotNull(tld.getTileLayer(layerName));
+  getGeoServer().reload();
+  cat.remove(li);
+  try {
+    tld.getTileLayer(layerName);
+    fail("Layer should not exist");
+  }
+ catch (  GeoWebCacheException gwce) {
+  }
+}

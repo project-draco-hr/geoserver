@@ -1,0 +1,24 @@
+{
+  ResourceAccessManager manager=buildManager("lockedLayerInLayerGroup.properties");
+  SecureCatalogImpl sc=new SecureCatalogImpl(catalog,manager);
+  SecurityContextHolder.getContext().setAuthentication(rwUser);
+  assertSame(states,sc.getFeatureTypeByName("topp:states"));
+  assertSame(roads,sc.getFeatureTypeByName("topp:roads"));
+  LayerGroupInfo layerGroup=sc.getLayerGroupByName("topp","layerGroupWithSomeLockedLayer");
+  assertSame(layerGroupWithSomeLockedLayer,layerGroup);
+  assertEquals(2,layerGroup.getLayers().size());
+  SecurityContextHolder.getContext().setAuthentication(roUser);
+  assertNull(sc.getFeatureTypeByName("topp:states"));
+  assertSame(roads,sc.getFeatureTypeByName("topp:roads"));
+  layerGroup=sc.getLayerGroupByName("topp","layerGroupWithSomeLockedLayer");
+  assertNotNull(layerGroup);
+  assertTrue(layerGroup instanceof SecuredLayerGroupInfo);
+  assertEquals(1,layerGroup.getLayers().size());
+  SecurityContextHolder.getContext().setAuthentication(anonymous);
+  assertNull(sc.getFeatureTypeByName("topp:states"));
+  assertNull(sc.getFeatureTypeByName("topp:roads"));
+  layerGroup=sc.getLayerGroupByName("topp","layerGroupWithSomeLockedLayer");
+  assertNotNull(layerGroup);
+  assertTrue(layerGroup instanceof SecuredLayerGroupInfo);
+  assertEquals(0,layerGroup.getLayers().size());
+}

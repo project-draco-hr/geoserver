@@ -1,0 +1,19 @@
+{
+  TransformInfo info=new TransformInfo();
+  info.setName("test");
+  info.setSourceFormat("application/xml");
+  info.setOutputFormat("text/plain");
+  info.setFileExtension("txt");
+  info.setXslt("test-tx.xslt");
+  repo.putTransformInfo(info);
+  repo.putTransformSheet(info,getClass().getResourceAsStream("test.xslt"));
+  Transformer transformer=repo.getTransformer(info);
+  InputStream is=getClass().getResourceAsStream("sample.xml");
+  StreamSource source=new StreamSource(is);
+  DOMResult result=new DOMResult();
+  transformer.transform(source,result);
+  Document dom=(Document)result.getNode();
+  XMLAssert.assertXpathEvaluatesTo("12","count(/html/body/table/tr/td)",dom);
+  XMLAssert.assertXpathEvaluatesTo("1","count(/html/body/table/tr[td='museum'])",dom);
+  XMLAssert.assertXpathEvaluatesTo("1","count(/html/body/table/tr[td='-74.0104611,40.70758763'])",dom);
+}

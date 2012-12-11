@@ -1,0 +1,28 @@
+{
+  if (!ResourceInfo.class.isAssignableFrom(infoType) && !LayerInfo.class.isAssignableFrom(infoType) && !LayerGroupInfo.class.isAssignableFrom(infoType)) {
+    return filter;
+  }
+  org.opengis.filter.expression.Function visible=new InternalVolatileFunction(){
+    /** 
+ * Returns {@code false} if the catalog info shall be hidden, {@code true} otherwise.
+ */
+    @Override public Boolean evaluate(    Object info){
+      if (info instanceof ResourceInfo) {
+        return !hideResource((ResourceInfo)info);
+      }
+ else       if (info instanceof LayerInfo) {
+        return !hideLayer((LayerInfo)info);
+      }
+ else       if (info instanceof LayerGroupInfo) {
+        return checkAccess((LayerGroupInfo)info) != null;
+      }
+ else {
+        throw new IllegalArgumentException("Can't build filter for objects of type " + info.getClass().getName());
+      }
+    }
+  }
+;
+  FilterFactory factory=Predicates.factory;
+  Filter securityFilter=factory.equals(factory.literal(Boolean.TRUE),visible);
+  return Predicates.and(filter,securityFilter);
+}

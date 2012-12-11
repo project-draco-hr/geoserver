@@ -1,0 +1,50 @@
+{
+  TransformInfo info=locateTransformation(featureCollection,operation);
+  Transformer transformer=repository.getTransformer(info);
+  if (transformer.getOutputProperties() != null && "yes".equals(transformer.getOutputProperties().getProperty("indent"))) {
+    try {
+      transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount","2");
+    }
+ catch (    IllegalArgumentException e) {
+      LOGGER.log(Level.FINE,"Could not set indent amount",e);
+    }
+  }
+  final Operation sourceOperation=buildSourceOperation(operation,info);
+  final Response sourceResponse=findSourceResponse(sourceOperation,info);
+  if (sourceResponse == null) {
+    throw new WFSException("Could not locate a response that can generate the desired source format '" + info.getSourceFormat() + "' for transformation '"+ info.getName()+ "'");
+  }
+  PipedInputStream pis=new PipedInputStream();
+  final PipedOutputStream pos=new PipedOutputStream(pis);
+  Future<Void> future=executor.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      try {
+        sourceResponse.write(featureCollection,pos,sourceOperation);
+      }
+  finally {
+        pos.close();
+      }
+      return null;
+    }
+  }
+);
+  TransformerException transformerException=null;
+  try {
+    transformer.transform(new StreamSource(pis),new StreamResult(output));
+  }
+ catch (  TransformerException e) {
+    transformerException=e;
+  }
+ finally {
+    pis.close();
+  }
+  try {
+    future.get();
+  }
+ catch (  Exception e) {
+    throw new WFSException("Failed to run the output format generating the source for the XSTL transformation",e);
+  }
+  if (transformerException != null) {
+    throw new WFSException("Failed to run the the XSTL transformation",transformerException);
+  }
+}

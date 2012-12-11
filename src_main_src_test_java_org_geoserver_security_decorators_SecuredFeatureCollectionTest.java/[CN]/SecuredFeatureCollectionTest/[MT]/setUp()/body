@@ -1,17 +1,19 @@
 {
-  feature=createNiceMock(Feature.class);
-  replay(feature);
-  Iterator it=createNiceMock(Iterator.class);
-  replay(it);
-  sort=createNiceMock(SortBy.class);
-  replay(sort);
   SimpleFeatureType schema=createNiceMock(SimpleFeatureType.class);
   expect(schema.getTypeName()).andReturn("testSchema").anyTimes();
+  expect(schema.getName()).andReturn(new NameImpl("testSchema")).anyTimes();
   replay(schema);
-  fc=createNiceMock(FeatureCollection.class);
-  expect(fc.iterator()).andReturn(it).anyTimes();
-  expect(fc.sort(sort)).andReturn(fc).anyTimes();
-  expect(fc.subCollection(Filter.INCLUDE)).andReturn(fc).anyTimes();
-  expect(fc.getSchema()).andReturn(schema).anyTimes();
-  replay(fc);
+  feature=createNiceMock(SimpleFeature.class);
+  expect(feature.getID()).andReturn("testSchema.1").anyTimes();
+  expect(feature.getType()).andReturn(schema).anyTimes();
+  expect(feature.getFeatureType()).andReturn(schema).anyTimes();
+  replay(feature);
+  DefaultFeatureCollection fc=new DefaultFeatureCollection();
+  fc.add(feature);
+  store=createNiceMock(FeatureStore.class);
+  expect(store.getSchema()).andReturn(schema).anyTimes();
+  expect(store.getFeatures()).andReturn(fc).anyTimes();
+  expect(store.getFeatures((Filter)anyObject())).andReturn(fc).anyTimes();
+  expect(store.getFeatures((Query)anyObject())).andReturn(fc).anyTimes();
+  replay(store);
 }

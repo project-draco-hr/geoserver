@@ -1,0 +1,21 @@
+{
+  TreeSet<Version> provided=new TreeSet<Version>();
+  for (  String v : providedList) {
+    provided.add(new Version(v));
+  }
+  if (acceptedList == null || acceptedList.isEmpty())   return provided.last().toString();
+  List<Version> accepted=new ArrayList<Version>();
+  for (  String v : acceptedList) {
+    checkVersionNumber20(v,"AcceptVersions");
+    accepted.add(new Version(v));
+  }
+  Version negotiated=null;
+  for (  Version version : accepted) {
+    if (provided.contains(version)) {
+      negotiated=version;
+      break;
+    }
+  }
+  if (negotiated == null)   throw new OWS20Exception("Could not find any matching version",OWS20Exception.OWSExceptionCode.VersionNegotiationFailed);
+  return negotiated.toString();
+}
