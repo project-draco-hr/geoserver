@@ -3,7 +3,7 @@
   if (cvInfo == null)   throw new ServiceException("Unable to acquire coverage resource for layer: " + layer.getName());
   DimensionInfo timeInfo=null;
   DimensionInfo elevInfo=null;
-  Map<String,DimensionInfo> customDimensions=null;
+  Map<String,DimensionInfo> customDimensions=new HashMap<String,DimensionInfo>();
   AbstractGridCoverage2DReader reader=null;
   for (  Map.Entry<String,Serializable> e : cvInfo.getMetadata().entrySet()) {
     String key=e.getKey();
@@ -17,16 +17,13 @@
  else     if (value instanceof DimensionInfo) {
       DimensionInfo dimInfo=(DimensionInfo)value;
       if (dimInfo.isEnabled()) {
-        if (customDimensions == null) {
-          customDimensions=new HashMap<String,DimensionInfo>();
-        }
         customDimensions.put(key,dimInfo);
       }
     }
   }
   boolean hasTime=timeInfo != null && timeInfo.isEnabled();
   boolean hasElevation=elevInfo != null && elevInfo.isEnabled();
-  boolean hasCustomDimensions=customDimensions != null;
+  boolean hasCustomDimensions=!customDimensions.isEmpty();
   if (!hasTime && !hasElevation && !hasCustomDimensions) {
     return;
   }
@@ -62,7 +59,8 @@
   }
   if (hasCustomDimensions) {
     for (    String key : customDimensions.keySet()) {
-      handleCustomDimensionRaster(key,dimensions);
+      DimensionInfo dimensionInfo=customDimensions.get(key);
+      handleCustomDimensionRaster(key,dimensionInfo,dimensions);
     }
   }
 }
