@@ -1,4 +1,5 @@
 {
+  LOGGER.warning("OWS20SEH: handling " + exception);
   String version=null;
   if (useServiceVersion && request.getServiceDescriptor() != null) {
     version=request.getServiceDescriptor().getVersion().toString();
@@ -16,7 +17,14 @@
     ows2ex=(OWS20Exception)exception.getCause();
   }
  else {
-    ows2ex=null;
+    String code=exception.getCode();
+    OWSExceptionCode exCode=OWS20Exception.OWSExceptionCode.getByCode(code);
+    if (exCode != null) {
+      ows2ex=new OWS20Exception(exception.getMessage(),exception,exCode,exception.getLocator());
+    }
+ else {
+      ows2ex=new OWS20Exception(exception.getMessage(),exception,OWSExceptionCode.NoApplicableCode,exception.getLocator());
+    }
   }
   OWSConfiguration configuration=new OWSConfiguration();
   Encoder encoder=new Encoder(configuration,configuration.schema());
@@ -27,12 +35,11 @@
   String schemaLocation="http://schemas.opengis.net/ows/2.0/owsExceptionReport.xsd";
   encoder.setSchemaLocation(OWS.NAMESPACE,schemaLocation);
   try {
-    if (ows2ex != null) {
-      if (ows2ex.getHttpCode() != null) {
-        response.setStatus(ows2ex.getHttpCode());
-      }
-      encoder.encode(report,OWS.ExceptionReport,response.getOutputStream());
+    if (ows2ex.getHttpCode() != null) {
+      response.setStatus(ows2ex.getHttpCode());
     }
+    if (force200httpcode)     response.setStatus(200);
+    encoder.encode(report,OWS.ExceptionReport,response.getOutputStream());
   }
  catch (  Exception ex) {
     LOGGER.log(Level.INFO,"Problem writing exception information back to calling client:",ex);
