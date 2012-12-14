@@ -1,11 +1,18 @@
 {
-  if (ns == null)   return null;
-  WorkspaceInfo ws=delegate.getWorkspaceByName(ns.getPrefix());
-  if (ws == null) {
-    ws=delegate.getFactory().createWorkspace();
-    ws.setName(ns.getPrefix());
+  if (store == null)   return null;
+  WrapperPolicy policy=buildWrapperPolicy(user,store.getWorkspace(),store.getName());
+  if (policy.level == AccessLevel.HIDDEN)   return null;
+ else   if (policy.level == AccessLevel.READ_WRITE || (policy.level == AccessLevel.READ_ONLY && store instanceof CoverageStoreInfo))   return store;
+  if (store instanceof DataStoreInfo) {
+    return (T)new SecuredDataStoreInfo((DataStoreInfo)store,policy);
   }
-  WorkspaceInfo info=checkAccess(user,ws);
-  if (info == null)   return null;
- else   return ns;
+ else   if (store instanceof CoverageStoreInfo) {
+    return (T)new SecuredCoverageStoreInfo((CoverageStoreInfo)store,policy);
+  }
+ else   if (store instanceof WMSStoreInfo) {
+    return store;
+  }
+ else {
+    throw new RuntimeException("Unknown store type " + store.getClass());
+  }
 }

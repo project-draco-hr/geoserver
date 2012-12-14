@@ -1,0 +1,26 @@
+{
+  setupVectorDimension(ResourceInfo.TIME,"time",DimensionPresentation.CONTINUOUS_INTERVAL,null,null,null);
+  LayerInfo rootLayer=getCatalog().getLayerByName("TimeElevation");
+  LayerGroupInfo eoProduct=new LayerGroupInfoImpl();
+  eoProduct.setName("EO Sample");
+  eoProduct.setMode(LayerGroupInfo.Mode.EO);
+  eoProduct.setRootLayer(rootLayer);
+  eoProduct.setRootLayerStyle(rootLayer.getDefaultStyle());
+  CatalogBuilder catBuilder=new CatalogBuilder(getCatalog());
+  catBuilder.calculateLayerGroupBounds(eoProduct);
+  eoProduct.getLayers().add(rootLayer);
+  getCatalog().add(eoProduct);
+  try {
+    Document dom=dom(get("wms?request=getCapabilities&version=1.1.1"),false);
+    assertXpathEvaluatesTo("1","count(//Layer[Name[text() = 'EO Sample']]/Dimension)",dom);
+    assertXpathEvaluatesTo("time","//Layer[Name[text() = 'EO Sample']]/Dimension/@name",dom);
+    assertXpathEvaluatesTo("ISO8601","//Layer[Name[text() = 'EO Sample']]/Dimension/@units",dom);
+    assertXpathEvaluatesTo("1","count(//Layer[Name[text() = 'EO Sample']]/Extent)",dom);
+    assertXpathEvaluatesTo("time","//Layer[Name[text() = 'EO Sample']]/Extent/@name",dom);
+    assertXpathEvaluatesTo("current","//Layer[Name[text() = 'EO Sample']]/Extent/@default",dom);
+    assertXpathEvaluatesTo("2011-05-01T00:00:00.000Z/2011-05-04T00:00:00.000Z/P3D","//Layer[Name[text() = 'EO Sample']]/Extent",dom);
+  }
+  finally {
+    getCatalog().remove(eoProduct);
+  }
+}

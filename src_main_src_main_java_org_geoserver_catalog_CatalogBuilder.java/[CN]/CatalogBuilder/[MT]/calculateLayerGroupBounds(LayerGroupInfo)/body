@@ -1,8 +1,13 @@
 {
-  if (lg.getLayers().isEmpty()) {
+  List<LayerInfo> layers=layerGroup.getLayers();
+  if (layerGroup.getRootLayer() != null) {
+    layers=new ArrayList<LayerInfo>(layers);
+    layers.add(layerGroup.getRootLayer());
+  }
+  if (layers.isEmpty()) {
     return;
   }
-  LayerInfo l=lg.getLayers().get(0);
+  LayerInfo l=layers.get(0);
   ReferencedEnvelope bounds=l.getResource().boundingBox();
   boolean latlon=false;
   if (bounds == null) {
@@ -12,8 +17,8 @@
   if (bounds == null) {
     throw new IllegalArgumentException("Could not calculate bounds from layer with no bounds, " + l.getName());
   }
-  for (int i=1; i < lg.getLayers().size(); i++) {
-    l=lg.getLayers().get(i);
+  for (int i=1; i < layers.size(); i++) {
+    l=layers.get(i);
     ReferencedEnvelope re;
     if (latlon) {
       re=l.getResource().getLatLonBoundingBox();
@@ -27,5 +32,5 @@
     }
     bounds.expandToInclude(re);
   }
-  lg.setBounds(bounds);
+  layerGroup.setBounds(bounds);
 }

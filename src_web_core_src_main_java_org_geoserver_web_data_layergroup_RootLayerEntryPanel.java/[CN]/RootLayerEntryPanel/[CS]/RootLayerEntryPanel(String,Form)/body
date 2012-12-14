@@ -1,0 +1,41 @@
+{
+  super(id);
+  setOutputMarkupId(true);
+  final TextField<LayerInfo> rootLayerField=new TextField<LayerInfo>("rootLayer"){
+    @Override public IConverter getConverter(    Class<?> type){
+      return form.getConverter(type);
+    }
+  }
+;
+  rootLayerField.setOutputMarkupId(true);
+  rootLayerField.setRequired(true);
+  add(rootLayerField);
+  List<StyleInfo> styles=GeoServerApplication.get().getCatalog().getStyles();
+  DropDownChoice<StyleInfo> styleField=new DropDownChoice<StyleInfo>("rootLayerStyle",styles){
+    @Override public IConverter getConverter(    Class<?> type){
+      return form.getConverter(type);
+    }
+  }
+;
+  styleField.setNullValid(true);
+  add(styleField);
+  final ModalWindow popupWindow=new ModalWindow("popup");
+  add(popupWindow);
+  add(new AjaxLink("add"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      popupWindow.setInitialHeight(375);
+      popupWindow.setInitialWidth(525);
+      popupWindow.setTitle(new ParamResourceModel("chooseLayer",this));
+      popupWindow.setContent(new LayerListPanel(popupWindow.getContentId()){
+        @Override protected void handleLayer(        LayerInfo layer,        AjaxRequestTarget target){
+          popupWindow.close(target);
+          ((LayerGroupInfo)form.getModelObject()).setRootLayer(layer);
+          target.addComponent(rootLayerField);
+        }
+      }
+);
+      popupWindow.show(target);
+    }
+  }
+);
+}

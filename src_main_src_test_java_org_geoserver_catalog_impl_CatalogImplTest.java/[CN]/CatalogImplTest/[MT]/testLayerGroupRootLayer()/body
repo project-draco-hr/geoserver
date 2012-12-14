@@ -1,0 +1,56 @@
+{
+  LayerGroupInfo lg2=catalog.getFactory().createLayerGroup();
+  lg2.setWorkspace(catalog.getDefaultWorkspace());
+  lg2.setName("layerGroup2");
+  lg2.getLayers().add(l);
+  lg2.getStyles().add(s);
+  lg2.setRootLayer(l);
+  lg2.setMode(LayerGroupInfo.Mode.SINGLE);
+  try {
+    catalog.add(lg2);
+    fail("only EO layer groups can have a root layer");
+  }
+ catch (  IllegalArgumentException e) {
+    assertTrue(true);
+  }
+  lg2.setMode(LayerGroupInfo.Mode.NAMED);
+  try {
+    catalog.add(lg2);
+    fail("only EO layer groups can have a root layer");
+  }
+ catch (  IllegalArgumentException e) {
+    assertTrue(true);
+  }
+  lg2.setMode(LayerGroupInfo.Mode.CONTAINER);
+  try {
+    catalog.add(lg2);
+    fail("only EO layer groups can have a root layer");
+  }
+ catch (  IllegalArgumentException e) {
+    assertTrue(true);
+  }
+  lg2.setMode(LayerGroupInfo.Mode.EO);
+  lg2.setRootLayer(null);
+  try {
+    catalog.add(lg2);
+    fail("EO layer groups must have a root layer");
+  }
+ catch (  IllegalArgumentException e) {
+    assertTrue(true);
+  }
+  lg2.setRootLayer(l);
+  try {
+    catalog.add(lg2);
+    fail("EO layer groups must have a root layer style");
+  }
+ catch (  IllegalArgumentException e) {
+    assertTrue(true);
+  }
+  lg2.setRootLayerStyle(s);
+  catalog.add(lg2);
+  assertEquals(1,catalog.getLayerGroups().size());
+  lg2=catalog.getLayerGroupByName("layerGroup2");
+  assertEquals(LayerGroupInfo.Mode.EO,lg2.getMode());
+  assertEquals(l,lg2.getRootLayer());
+  assertEquals(s,lg2.getRootLayerStyle());
+}
