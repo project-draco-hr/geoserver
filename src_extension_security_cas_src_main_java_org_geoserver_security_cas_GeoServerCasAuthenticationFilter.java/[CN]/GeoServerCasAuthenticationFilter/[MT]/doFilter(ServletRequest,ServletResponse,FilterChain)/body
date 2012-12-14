@@ -1,32 +1,27 @@
 {
   HttpServletRequest httpReq=(HttpServletRequest)req;
   HttpServletResponse httpRes=(HttpServletResponse)res;
-  String booleanString=httpReq.getParameter(LOGOUT_PARAM);
-  if (StringUtils.hasLength(booleanString)) {
-    Boolean blogout=Boolean.parseBoolean(booleanString);
-    if (blogout) {
-      httpRes.sendRedirect(casLogoutURL);
-      return;
-    }
-  }
   SingleSignOutHandler handler=getHandler();
   if (handler.isLogoutRequest(httpReq)) {
-    handler.destroySession(httpReq);
-    RememberMeServices rms=securityManager.getRememberMeService();
-    Authentication auth=SecurityContextHolder.getContext().getAuthentication();
-    if (auth != null)     ((LogoutHandler)rms).logout(httpReq,httpRes,auth);
+    if (singleSignOut) {
+      LOGGER.info("Single Sign Out received from CAS server --> starting log out");
+      handler.destroySession(httpReq);
+      LogoutFilterChain logOutChain=(LogoutFilterChain)getSecurityManager().getSecurityConfig().getFilterChain().getRequestChainByName("webLogout");
+      logOutChain.doLogout(getSecurityManager(),httpReq,httpRes,getName());
+    }
+ else     LOGGER.info("Single Sign Out received from CAS server --> ignoring");
     return;
   }
-  if (SecurityContextHolder.getContext().getAuthentication() == null) {
-    doAuthenticate((HttpServletRequest)req,(HttpServletResponse)res);
-    if (SecurityContextHolder.getContext().getAuthentication() == null) {
-      aep.commence(httpReq,httpRes,null);
+  super.doFilter(req,res,chain);
+  if (SecurityContextHolder.getContext().getAuthentication() != null) {
+    HttpSession session=httpReq.getSession(false);
+    if (session == null && Boolean.TRUE.equals(httpReq.getAttribute(GeoServerSecurityContextPersistenceFilter.ALLOWSESSIONCREATION_ATTR))) {
+      session=httpReq.getSession();
+      LOGGER.info("Http session created by CAS");
     }
- else {
-      handler.recordSession(httpReq);
-      successHandler.onAuthenticationSuccess(httpReq,httpRes,SecurityContextHolder.getContext().getAuthentication());
+    if (session != null && session.getAttribute(GeoServerCasConstants.CAS_ASSERTION_KEY) != null && singleSignOut) {
+      getHandler().recordSession(httpReq);
+      if (LOGGER.isLoggable(Level.INFO))       LOGGER.info("Record HTTP Session " + session.getId() + " for CAS single sign out");
     }
   }
-  req.setAttribute(GeoServerSecurityFilter.AUTHENTICATION_ENTRY_POINT_HEADER,aep);
-  chain.doFilter(req,res);
 }

@@ -1,0 +1,295 @@
+{
+  if (getRoleRoot(false) != null) {
+    File oldUserFile=new File(getSecurityRoot(),"users.properties.old");
+    if (oldUserFile.exists()) {
+      LOGGER.warning(oldUserFile.getCanonicalPath() + " could be removed manually");
+    }
+    return false;
+  }
+  LOGGER.info("Start security migration");
+  getRoleRoot();
+  getUserGroupRoot();
+  getAuthRoot();
+  getPasswordPolicyRoot();
+  getFilterRoot();
+  getMasterPasswordProviderRoot();
+  MasterPasswordProviderConfig mpProviderConfig=loadMasterPassswordProviderConfig("default");
+  if (mpProviderConfig == null) {
+    mpProviderConfig=new URLMasterPasswordProviderConfig();
+    mpProviderConfig.setName("default");
+    mpProviderConfig.setClassName(URLMasterPasswordProvider.class.getCanonicalName());
+    mpProviderConfig.setReadOnly(false);
+    ((URLMasterPasswordProviderConfig)mpProviderConfig).setURL(new URL("file:passwd"));
+    ((URLMasterPasswordProviderConfig)mpProviderConfig).setEncrypting(true);
+    saveMasterPasswordProviderConfig(mpProviderConfig,false);
+    MasterPasswordProvider mpProvider=loadMasterPasswordProvider(mpProviderConfig.getName());
+    File propFile=new File(getSecurityRoot(),"users.properties");
+    Properties userprops=null;
+    if (propFile.exists())     userprops=Util.loadPropertyFile(propFile);
+    mpProvider.setMasterPassword(extractMasterPasswordForMigration(userprops));
+  }
+  MasterPasswordConfig mpConfig=new MasterPasswordConfig();
+  mpConfig.setProviderName(mpProviderConfig.getName());
+  saveMasterPasswordConfig(mpConfig);
+  File serviceFile=new File(getSecurityRoot(),"services.properties");
+  if (serviceFile.exists() == false) {
+    FileUtils.copyURLToFile(Util.class.getResource("serviceTemplate.properties"),serviceFile);
+  }
+  long checkInterval=10000;
+  GeoServerUserGroupService userGroupService=loadUserGroupService(XMLUserGroupService.DEFAULT_NAME);
+  KeyStoreProvider keyStoreProvider=getKeyStoreProvider();
+  keyStoreProvider.reloadKeyStore();
+  keyStoreProvider.setUserGroupKey(XMLUserGroupService.DEFAULT_NAME,randomPasswdProvider.getRandomPassword(32));
+  keyStoreProvider.storeKeyStore();
+  PasswordValidator validator=loadPasswordValidator(PasswordValidator.DEFAULT_NAME);
+  if (validator == null) {
+    PasswordPolicyConfig pwpconfig=new PasswordPolicyConfig();
+    pwpconfig.setName(PasswordValidator.DEFAULT_NAME);
+    pwpconfig.setClassName(PasswordValidatorImpl.class.getName());
+    pwpconfig.setMinLength(0);
+    savePasswordPolicy(pwpconfig);
+    validator=loadPasswordValidator(PasswordValidator.DEFAULT_NAME);
+  }
+  validator=loadPasswordValidator(PasswordValidator.MASTERPASSWORD_NAME);
+  if (validator == null) {
+    PasswordPolicyConfig pwpconfig=new PasswordPolicyConfig();
+    pwpconfig.setName(PasswordValidator.MASTERPASSWORD_NAME);
+    pwpconfig.setClassName(PasswordValidatorImpl.class.getName());
+    pwpconfig.setMinLength(8);
+    savePasswordPolicy(pwpconfig);
+    validator=loadPasswordValidator(PasswordValidator.MASTERPASSWORD_NAME);
+  }
+  if (userGroupService == null) {
+    XMLUserGroupServiceConfig ugConfig=new XMLUserGroupServiceConfig();
+    ugConfig.setName(XMLUserGroupService.DEFAULT_NAME);
+    ugConfig.setClassName(XMLUserGroupService.class.getName());
+    ugConfig.setCheckInterval(checkInterval);
+    ugConfig.setFileName(XMLConstants.FILE_UR);
+    ugConfig.setValidating(true);
+    ugConfig.setPasswordEncoderName(loadPasswordEncoder(GeoServerPBEPasswordEncoder.class,null,false).getName());
+    ugConfig.setPasswordPolicyName(PasswordValidator.DEFAULT_NAME);
+    saveUserGroupService(ugConfig);
+    userGroupService=loadUserGroupService(XMLUserGroupService.DEFAULT_NAME);
+  }
+  GeoServerRoleService roleService=loadRoleService(XMLRoleService.DEFAULT_NAME);
+  if (roleService == null) {
+    XMLRoleServiceConfig gaConfig=new XMLRoleServiceConfig();
+    gaConfig.setName(XMLRoleService.DEFAULT_NAME);
+    gaConfig.setClassName(XMLRoleService.class.getName());
+    gaConfig.setCheckInterval(checkInterval);
+    gaConfig.setFileName(XMLConstants.FILE_RR);
+    gaConfig.setValidating(true);
+    gaConfig.setAdminRoleName(XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE);
+    gaConfig.setGroupAdminRoleName(XMLRoleService.DEFAULT_LOCAL_GROUP_ADMIN_ROLE);
+    saveRoleService(gaConfig);
+    roleService=loadRoleService(XMLRoleService.DEFAULT_NAME);
+  }
+  String filterName=GeoServerSecurityFilterChain.BASIC_AUTH_FILTER;
+  GeoServerSecurityFilter filter=loadFilter(filterName);
+  if (filter == null) {
+    BasicAuthenticationFilterConfig bfConfig=new BasicAuthenticationFilterConfig();
+    bfConfig.setName(filterName);
+    bfConfig.setClassName(GeoServerBasicAuthenticationFilter.class.getName());
+    bfConfig.setUseRememberMe(true);
+    saveFilter(bfConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.FORM_LOGIN_FILTER;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    UsernamePasswordAuthenticationFilterConfig upConfig=new UsernamePasswordAuthenticationFilterConfig();
+    upConfig.setClassName(GeoServerUserNamePasswordAuthenticationFilter.class.getName());
+    upConfig.setName(filterName);
+    upConfig.setUsernameParameterName(UsernamePasswordAuthenticationFilterConfig.DEFAULT_USERNAME_PARAM);
+    upConfig.setPasswordParameterName(UsernamePasswordAuthenticationFilterConfig.DEFAULT_PASSWORD_PARAM);
+    saveFilter(upConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    SecurityContextPersistenceFilterConfig pConfig=new SecurityContextPersistenceFilterConfig();
+    pConfig.setClassName(GeoServerSecurityContextPersistenceFilter.class.getName());
+    pConfig.setName(filterName);
+    pConfig.setAllowSessionCreation(true);
+    saveFilter(pConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.SECURITY_CONTEXT_NO_ASC_FILTER;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    SecurityContextPersistenceFilterConfig pConfig=new SecurityContextPersistenceFilterConfig();
+    pConfig.setClassName(GeoServerSecurityContextPersistenceFilter.class.getName());
+    pConfig.setName(filterName);
+    pConfig.setAllowSessionCreation(false);
+    saveFilter(pConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.ANONYMOUS_FILTER;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    AnonymousAuthenticationFilterConfig aConfig=new AnonymousAuthenticationFilterConfig();
+    aConfig.setClassName(GeoServerAnonymousAuthenticationFilter.class.getName());
+    aConfig.setName(filterName);
+    saveFilter(aConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.REMEMBER_ME_FILTER;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    RememberMeAuthenticationFilterConfig rConfig=new RememberMeAuthenticationFilterConfig();
+    rConfig.setClassName(GeoServerRememberMeAuthenticationFilter.class.getName());
+    rConfig.setName(filterName);
+    saveFilter(rConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    SecurityInterceptorFilterConfig siConfig=new SecurityInterceptorFilterConfig();
+    siConfig.setClassName(GeoServerSecurityInterceptorFilter.class.getName());
+    siConfig.setName(filterName);
+    siConfig.setAllowIfAllAbstainDecisions(false);
+    siConfig.setSecurityMetadataSource("geoserverMetadataSource");
+    saveFilter(siConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.FILTER_SECURITY_REST_INTERCEPTOR;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    SecurityInterceptorFilterConfig siConfig=new SecurityInterceptorFilterConfig();
+    siConfig.setClassName(GeoServerSecurityInterceptorFilter.class.getName());
+    siConfig.setName(filterName);
+    siConfig.setAllowIfAllAbstainDecisions(false);
+    siConfig.setSecurityMetadataSource("restFilterDefinitionMap");
+    saveFilter(siConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    LogoutFilterConfig loConfig=new LogoutFilterConfig();
+    loConfig.setClassName(GeoServerLogoutFilter.class.getName());
+    loConfig.setName(filterName);
+    saveFilter(loConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    ExceptionTranslationFilterConfig bfConfig=new ExceptionTranslationFilterConfig();
+    bfConfig.setClassName(GeoServerExceptionTranslationFilter.class.getName());
+    bfConfig.setName(filterName);
+    bfConfig.setAuthenticationFilterName(null);
+    bfConfig.setAccessDeniedErrorPage("/accessDenied.jsp");
+    saveFilter(bfConfig);
+  }
+  filterName=GeoServerSecurityFilterChain.GUI_EXCEPTION_TRANSLATION_FILTER;
+  filter=loadFilter(filterName);
+  if (filter == null) {
+    ExceptionTranslationFilterConfig bfConfig=new ExceptionTranslationFilterConfig();
+    bfConfig.setClassName(GeoServerExceptionTranslationFilter.class.getName());
+    bfConfig.setName(filterName);
+    bfConfig.setAuthenticationFilterName(GeoServerSecurityFilterChain.FORM_LOGIN_FILTER);
+    bfConfig.setAccessDeniedErrorPage("/accessDenied.jsp");
+    saveFilter(bfConfig);
+  }
+  GeoServerAuthenticationProvider authProvider=(GeoServerAuthenticationProvider)loadAuthenticationProvider(GeoServerAuthenticationProvider.DEFAULT_NAME);
+  if (authProvider == null) {
+    UsernamePasswordAuthenticationProviderConfig upAuthConfig=new UsernamePasswordAuthenticationProviderConfig();
+    upAuthConfig.setName(GeoServerAuthenticationProvider.DEFAULT_NAME);
+    upAuthConfig.setClassName(UsernamePasswordAuthenticationProvider.class.getName());
+    upAuthConfig.setUserGroupServiceName(userGroupService.getName());
+    saveAuthenticationProvider(upAuthConfig);
+    authProvider=loadAuthenticationProvider(GeoServerAuthenticationProvider.DEFAULT_NAME);
+  }
+  SecurityManagerConfig config=new SecurityManagerConfig();
+  config.setRoleServiceName(roleService.getName());
+  config.getAuthProviderNames().add(authProvider.getName());
+  config.setEncryptingUrlParams(false);
+  config.setConfigPasswordEncrypterName(loadPasswordEncoder(GeoServerPBEPasswordEncoder.class,true,false).getName());
+  RememberMeServicesConfig rememberMeConfig=new RememberMeServicesConfig();
+  rememberMeConfig.setClassName(GeoServerTokenBasedRememberMeServices.class.getName());
+  config.setRememberMeService(rememberMeConfig);
+  config.setFilterChain(GeoServerSecurityFilterChain.createInitialChain());
+  saveSecurityConfig(config);
+  userGroupService.setSecurityManager(this);
+  roleService.setSecurityManager(this);
+  GeoServerUserGroupStore userGroupStore=userGroupService.createStore();
+  GeoServerRoleStore roleStore=roleService.createStore();
+  File usersFile=new File(getSecurityRoot(),"users.properties");
+  if (usersFile.exists()) {
+    Properties props=Util.loadPropertyFile(usersFile);
+    UserAttributeEditor configAttribEd=new UserAttributeEditor();
+    for (Iterator<Object> iter=props.keySet().iterator(); iter.hasNext(); ) {
+      String username=(String)iter.next();
+      configAttribEd.setAsText(props.getProperty(username));
+      UserAttribute attr=(UserAttribute)configAttribEd.getValue();
+      if (attr != null) {
+        GeoServerUser user=userGroupStore.createUserObject(username,attr.getPassword(),attr.isEnabled());
+        userGroupStore.addUser(user);
+        for (        GrantedAuthority auth : attr.getAuthorities()) {
+          String roleName=GeoServerRole.ADMIN_ROLE.getAuthority().equals(auth.getAuthority()) ? XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE : auth.getAuthority();
+          GeoServerRole role=roleStore.getRoleByName(roleName);
+          if (role == null) {
+            role=roleStore.createRoleObject(roleName);
+            roleStore.addRole(role);
+          }
+          roleStore.associateRoleToUser(role,username);
+        }
+      }
+    }
+  }
+ else {
+    if (userGroupService.getUserByUsername(GeoServerUser.ADMIN_USERNAME) == null) {
+      userGroupStore.addUser(GeoServerUser.createDefaultAdmin());
+      GeoServerRole localAdminRole=roleStore.createRoleObject(XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE);
+      roleStore.addRole(localAdminRole);
+      roleStore.associateRoleToUser(localAdminRole,GeoServerUser.ADMIN_USERNAME);
+    }
+  }
+  if (roleStore.getRoleByName(XMLRoleService.DEFAULT_LOCAL_GROUP_ADMIN_ROLE) == null) {
+    roleStore.addRole(roleStore.createRoleObject(XMLRoleService.DEFAULT_LOCAL_GROUP_ADMIN_ROLE));
+  }
+  for (  String filename : new String[]{"services.properties","layers.properties","rest.properties"}) {
+    File file=new File(getSecurityRoot(),filename);
+    if (file.exists() == false)     continue;
+    List<String> lines=new ArrayList<String>();
+    BufferedReader reader=new BufferedReader(new FileReader(file));
+    String line;
+    while ((line=reader.readLine()) != null)     lines.add(line.replace(GeoServerRole.ADMIN_ROLE.getAuthority(),XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE));
+    reader.close();
+    PrintWriter writer=new PrintWriter(new FileWriter(file));
+    for (    String s : lines) {
+      writer.println(s);
+    }
+    writer.close();
+  }
+  serviceFile=new File(getSecurityRoot(),"services.properties");
+  if (serviceFile.exists()) {
+    Properties props=Util.loadPropertyFile(serviceFile);
+    for (    Entry<Object,Object> entry : props.entrySet()) {
+      StringTokenizer tokenizer=new StringTokenizer((String)entry.getValue(),",");
+      while (tokenizer.hasMoreTokens()) {
+        String roleName=tokenizer.nextToken().trim();
+        if (roleName.length() > 0) {
+          if (roleStore.getRoleByName(roleName) == null)           roleStore.addRole(roleStore.createRoleObject(roleName));
+        }
+      }
+    }
+  }
+  File dataFile=new File(getSecurityRoot(),"layers.properties");
+  if (dataFile.exists()) {
+    Properties props=Util.loadPropertyFile(dataFile);
+    for (    Entry<Object,Object> entry : props.entrySet()) {
+      if ("mode".equals(entry.getKey().toString()))       continue;
+      StringTokenizer tokenizer=new StringTokenizer((String)entry.getValue(),",");
+      while (tokenizer.hasMoreTokens()) {
+        String roleName=tokenizer.nextToken().trim();
+        if (roleName.length() > 0 && roleName.equals("*") == false) {
+          if (roleStore.getRoleByName(roleName) == null)           roleStore.addRole(roleStore.createRoleObject(roleName));
+        }
+      }
+    }
+  }
+  roleStore.store();
+  userGroupStore.store();
+  if (usersFile.exists()) {
+    File oldUserFile=new File(usersFile.getCanonicalPath() + ".old");
+    usersFile.renameTo(oldUserFile);
+    LOGGER.info("Renamed " + usersFile.getCanonicalPath() + " to "+ oldUserFile.getCanonicalPath());
+  }
+  LOGGER.info("End security migration");
+  return true;
+}

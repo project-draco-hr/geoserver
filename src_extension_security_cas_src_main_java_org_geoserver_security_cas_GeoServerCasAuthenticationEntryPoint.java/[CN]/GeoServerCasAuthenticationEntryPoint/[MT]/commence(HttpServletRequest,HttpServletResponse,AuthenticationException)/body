@@ -1,0 +1,31 @@
+{
+  String value=request.getParameter(CAS_REDIRECT);
+  if (value != null && "false".equalsIgnoreCase(value)) {
+    sendUnauthorized(response);
+    return;
+  }
+  value=request.getHeader(CAS_REDIRECT);
+  if (value != null && "false".equalsIgnoreCase(value)) {
+    sendUnauthorized(response);
+    return;
+  }
+  ServiceProperties sp=new ServiceProperties();
+  sp.setSendRenew(authConfig.isSendRenew());
+  sp.setService(GeoServerCasAuthenticationFilter.retrieveService(request));
+  try {
+    sp.afterPropertiesSet();
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+  CasAuthenticationEntryPoint aep=new CasAuthenticationEntryPoint();
+  aep.setLoginUrl(authConfig.getCasServerUrlPrefix() + GeoServerCasConstants.LOGIN_URI);
+  aep.setServiceProperties(sp);
+  try {
+    aep.afterPropertiesSet();
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+  aep.commence(request,response,authException);
+}

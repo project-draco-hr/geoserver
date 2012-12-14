@@ -1,35 +1,13 @@
 {
   super.initializeFromConfig(config);
   CasAuthenticationFilterConfig authConfig=(CasAuthenticationFilterConfig)config;
-  ServiceProperties sp=new ServiceProperties();
-  sp.setSendRenew(authConfig.isSendRenew());
-  sp.setService(authConfig.getService());
-  try {
-    sp.afterPropertiesSet();
-  }
- catch (  Exception e) {
-    throw new IOException(e);
-  }
-  aep=new CasAuthenticationEntryPoint();
-  aep.setLoginUrl(authConfig.getCasServerUrlPrefix() + GeoServerCasConstants.LOGIN_URI);
-  aep.setServiceProperties(sp);
-  try {
-    aep.afterPropertiesSet();
-  }
- catch (  Exception e) {
-    throw new IOException(e);
-  }
-  validator=new Cas20ProxyTicketValidator(authConfig.getCasServerUrlPrefix());
+  validator=new GeoServerCas20ProxyTicketValidator(authConfig.getCasServerUrlPrefix());
   validator.setAcceptAnyProxy(true);
   validator.setProxyGrantingTicketStorage(pgtStorageFilter);
   validator.setRenew(authConfig.isSendRenew());
   if (StringUtils.hasLength(authConfig.getProxyCallbackUrlPrefix()))   validator.setProxyCallbackUrl(GeoServerCasConstants.createProxyCallBackURl(authConfig.getProxyCallbackUrlPrefix()));
-  userGroupServiceName=authConfig.getUserGroupServiceName();
-  urlInCasLogoutPage=authConfig.getUrlInCasLogoutPage();
   casLogoutURL=GeoServerCasConstants.createCasURl(authConfig.getCasServerUrlPrefix(),GeoServerCasConstants.LOGOUT_URI);
-  if (StringUtils.hasLength(urlInCasLogoutPage)) {
-    casLogoutURL+="?" + GeoServerCasConstants.LOGOUT_URL_PARAM + "="+ urlInCasLogoutPage;
-  }
-  successHandler=new SimpleUrlAuthenticationSuccessHandler();
-  successHandler.setDefaultTargetUrl(GeoServerUserNamePasswordAuthenticationFilter.URL_LOGIN_SUCCCESS);
+  if (StringUtils.hasLength(authConfig.getUrlInCasLogoutPage()))   casLogoutURL+=GeoServerCasConstants.LOGOUT_URL_PARAM + "=" + URLEncoder.encode(authConfig.getUrlInCasLogoutPage(),"utf-8");
+  singleSignOut=authConfig.isSingleSignOut();
+  aep=new GeoServerCasAuthenticationEntryPoint(authConfig);
 }

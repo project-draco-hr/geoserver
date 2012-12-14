@@ -12,7 +12,14 @@
     if (requestChain.getName() != null) {
       writer.addAttribute("name",requestChain.getName());
     }
+    writer.addAttribute("class",requestChain.getClass().getName());
+    if (requestChain instanceof VariableFilterChain) {
+      if (StringUtils.hasLength(((VariableFilterChain)requestChain).getRoleFilterName()))       writer.addAttribute("roleFilterName",((VariableFilterChain)requestChain).getRoleFilterName());
+      if (StringUtils.hasLength(((VariableFilterChain)requestChain).getInterceptorName()))       writer.addAttribute("interceptorName",((VariableFilterChain)requestChain).getInterceptorName());
+    }
     writer.addAttribute("path",sb.toString());
+    writer.addAttribute("disabled",Boolean.toString(requestChain.isDisabled()));
+    writer.addAttribute("allowSessionCreation",Boolean.toString(requestChain.isAllowSessionCreation()));
     for (    String filterName : requestChain.getFilterNames()) {
       writer.startNode("filter");
       writer.setValue(filterName);

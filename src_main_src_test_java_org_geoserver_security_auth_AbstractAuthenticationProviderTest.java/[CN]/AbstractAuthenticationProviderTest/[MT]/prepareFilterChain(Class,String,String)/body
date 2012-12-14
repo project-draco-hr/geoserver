@@ -1,0 +1,13 @@
+{
+  SecurityManagerConfig config=getSecurityManager().getSecurityConfig();
+  GeoServerSecurityFilterChain filterChain=config.getFilterChain();
+  filterChain.removeForPattern(pattern);
+  Constructor<?> cons=filterChainClass.getConstructor(new Class[]{String[].class});
+  String[] args=new String[]{pattern};
+  RequestFilterChain requestChain=(RequestFilterChain)cons.newInstance(new Object[]{args});
+  requestChain=new HtmlLoginFilterChain(pattern);
+  requestChain.setName("testChain");
+  requestChain.setFilterNames(filterNames);
+  filterChain.getRequestChains().add(filterChain.getRequestChains().size() - 2,requestChain);
+  getSecurityManager().saveSecurityConfig(config);
+}

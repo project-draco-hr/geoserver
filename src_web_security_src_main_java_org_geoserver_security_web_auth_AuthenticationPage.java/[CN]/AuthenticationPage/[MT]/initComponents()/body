@@ -1,6 +1,24 @@
 {
-  Form<SecurityManagerConfig> form=new Form("form",new CompoundPropertyModel<SecurityManagerConfig>(getSecurityManager().getSecurityConfig()));
+  SecurityManagerConfig config=getSecurityManager().getSecurityConfig();
+  List<RequestFilterChain> clones=new ArrayList<RequestFilterChain>();
+  for (  RequestFilterChain chain : config.getFilterChain().getRequestChains()) {
+    try {
+      clones.add((RequestFilterChain)chain.clone());
+    }
+ catch (    CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  config.setFilterChain(new GeoServerSecurityFilterChain(clones));
+  form=new Form("form",new CompoundPropertyModel<SecurityManagerConfig>(config));
   add(form);
+  try {
+    logoutFilterConfig=(LogoutFilterConfig)getSecurityManager().loadFilterConfig(GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
+  }
+ catch (  IOException e1) {
+    throw new RuntimeException(e1);
+  }
+  form.add(new TextField<String>("redirectURL",new PropertyModel<String>(this,"logoutFilterConfig.redirectURL")));
   form.add(new AuthenticationFiltersPanel("authFilters"));
   form.add(new HelpLink("authFiltersHelp").setDialog(dialog));
   form.add(new AuthenticationProvidersPanel("authProviders"));
@@ -13,6 +31,7 @@
     @Override public void onSubmit(){
       try {
         getSecurityManager().saveSecurityConfig((SecurityManagerConfig)getForm().getModelObject());
+        getSecurityManager().saveFilter(logoutFilterConfig);
         doReturn();
       }
  catch (      Exception e) {

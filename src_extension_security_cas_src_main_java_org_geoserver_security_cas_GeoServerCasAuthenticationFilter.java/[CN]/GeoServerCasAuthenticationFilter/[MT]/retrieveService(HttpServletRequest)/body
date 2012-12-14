@@ -1,0 +1,25 @@
+{
+  StringBuffer buff=new StringBuffer(request.getRequestURL().toString());
+  if (StringUtils.hasLength(request.getQueryString())) {
+    String query=request.getQueryString();
+    String[] params=query.split("&");
+    boolean firsttime=true;
+    for (    String param : params) {
+      String name=param.split("=")[0];
+      String value=param.split("=")[1];
+      if (GeoServerCasConstants.ARTIFACT_PARAMETER.equals(name.trim()))       continue;
+      if (GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT.equals(name.trim()))       continue;
+      if (firsttime) {
+        buff.append("?");
+        firsttime=false;
+      }
+ else {
+        buff.append("&");
+      }
+      buff.append(name).append("=").append(value);
+    }
+  }
+  String serviceUrl=buff.toString();
+  if (LOGGER.isLoggable(Level.FINE))   LOGGER.fine("CAS Service URL: " + serviceUrl);
+  return serviceUrl;
+}

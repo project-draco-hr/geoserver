@@ -1,0 +1,54 @@
+{
+  String filterName=GeoServerSecurityFilterChain.ROLE_FILTER;
+  GeoServerSecurityFilter filter=loadFilter(filterName);
+  File logoutFilterDir=new File(getFilterRoot(),GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
+  File oldLogoutFilterConfig=new File(logoutFilterDir,"config.xml.2.2.x");
+  File oldSecManagerConfig=new File(getSecurityRoot(),"config.xml.2.2.x");
+  if (filter != null) {
+    if (oldLogoutFilterConfig.exists())     LOGGER.warning(oldLogoutFilterConfig.getCanonicalPath() + " could be removed manually");
+    if (oldSecManagerConfig.exists())     LOGGER.warning(oldSecManagerConfig.getCanonicalPath() + " could be removed manually");
+    return false;
+  }
+  RoleFilterConfig rfConfig=new RoleFilterConfig();
+  rfConfig.setClassName(GeoServerRoleFilter.class.getName());
+  rfConfig.setName(filterName);
+  rfConfig.setHttpResponseHeaderAttrForIncludedRoles(GeoServerRoleFilter.DEFAULT_HEADER_ATTRIBUTE);
+  rfConfig.setRoleConverterName(GeoServerRoleFilter.DEFAULT_ROLE_CONVERTER);
+  saveFilter(rfConfig);
+  if (migratedFrom21 == false)   FileUtils.copyFile(new File(logoutFilterDir,"config.xml"),oldLogoutFilterConfig);
+  LogoutFilterConfig loConfig=(LogoutFilterConfig)loadFilterConfig(GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
+  loConfig.setRedirectURL(GeoServerLogoutFilter.URL_AFTER_LOGOUT);
+  saveFilter(loConfig);
+  if (migratedFrom21 == false)   FileUtils.copyFile(new File(getSecurityRoot(),"config.xml"),oldSecManagerConfig);
+  SecurityManagerConfig config=loadSecurityConfig();
+  for (  RequestFilterChain chain : config.getFilterChain().getRequestChains()) {
+    if (chain.getFilterNames().contains(GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER)) {
+      chain.setAllowSessionCreation(true);
+      chain.getFilterNames().remove(GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER);
+    }
+    if (chain.getFilterNames().contains(GeoServerSecurityFilterChain.SECURITY_CONTEXT_NO_ASC_FILTER)) {
+      chain.setAllowSessionCreation(false);
+      chain.getFilterNames().remove(GeoServerSecurityFilterChain.SECURITY_CONTEXT_NO_ASC_FILTER);
+    }
+    if ("web".equals(chain.getName())) {
+      int index=chain.getFilterNames().indexOf(GeoServerSecurityFilterChain.GUI_EXCEPTION_TRANSLATION_FILTER);
+      if (index != -1)       chain.getFilterNames().set(index,GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER);
+      if (chain.getFilterNames().indexOf(GeoServerSecurityFilterChain.FORM_LOGIN_FILTER) == -1) {
+        index=chain.getFilterNames().indexOf(GeoServerSecurityFilterChain.ANONYMOUS_FILTER);
+        if (index == -1)         index=chain.getFilterNames().indexOf(GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
+        if (index != -1)         chain.getFilterNames().add(index,GeoServerSecurityFilterChain.FORM_LOGIN_FILTER);
+      }
+    }
+    chain.getFilterNames().remove(GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER);
+    chain.getFilterNames().remove(GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR);
+    chain.getFilterNames().remove(GeoServerSecurityFilterChain.FILTER_SECURITY_REST_INTERCEPTOR);
+  }
+  saveSecurityConfig(config);
+  if (migratedFrom21 == false) {
+    for (    String fName : listFilters()) {
+      SecurityFilterConfig fConfig=loadFilterConfig(fName);
+      if (fConfig != null)       saveFilter(fConfig);
+    }
+  }
+  return true;
+}

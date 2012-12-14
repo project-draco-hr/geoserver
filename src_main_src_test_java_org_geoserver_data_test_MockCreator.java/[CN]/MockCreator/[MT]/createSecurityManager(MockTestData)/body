@@ -33,8 +33,20 @@
   expect(secMgr.loadAuthenticationProvider(GeoServerAuthenticationProvider.DEFAULT_NAME)).andReturn(authProvider).anyTimes();
   expect(secMgr.listAuthenticationProviders()).andReturn(new TreeSet<String>(Arrays.asList(GeoServerAuthenticationProvider.DEFAULT_NAME))).anyTimes();
   expect(secMgr.getAuthenticationProviders()).andReturn(Arrays.asList(authProvider)).anyTimes();
-  SecurityFilterConfig filterConfig=createNiceMock(SecurityFilterConfig.class);
+  SecurityInterceptorFilterConfig filterConfig=createNiceMock(SecurityInterceptorFilterConfig.class);
   expect(secMgr.loadFilterConfig(GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR)).andReturn(filterConfig).anyTimes();
+  GeoServerAnonymousAuthenticationFilter authFilter=createNiceMock(GeoServerAnonymousAuthenticationFilter.class);
+  expect(authFilter.applicableForServices()).andReturn(true).anyTimes();
+  expect(authFilter.applicableForHtml()).andReturn(true).anyTimes();
+  expect(secMgr.loadFilter(GeoServerSecurityFilterChain.ANONYMOUS_FILTER)).andReturn(authFilter).anyTimes();
+  GeoServerRoleFilter roleFilter=createNiceMock(GeoServerRoleFilter.class);
+  expect(secMgr.loadFilter(GeoServerSecurityFilterChain.ROLE_FILTER)).andReturn(roleFilter).anyTimes();
+  GeoServerUserNamePasswordAuthenticationFilter formFilter=createNiceMock(GeoServerUserNamePasswordAuthenticationFilter.class);
+  expect(formFilter.applicableForHtml()).andReturn(true).anyTimes();
+  expect(secMgr.loadFilter(GeoServerSecurityFilterChain.FORM_LOGIN_FILTER)).andReturn(formFilter).anyTimes();
+  GeoServerBasicAuthenticationFilter basicFilter=createNiceMock(GeoServerBasicAuthenticationFilter.class);
+  expect(basicFilter.applicableForServices()).andReturn(true).anyTimes();
+  expect(secMgr.loadFilter(GeoServerSecurityFilterChain.BASIC_AUTH_FILTER)).andReturn(basicFilter).anyTimes();
   expect(secMgr.loadPasswordEncoder(GeoServerEmptyPasswordEncoder.class)).andAnswer(new IAnswer<GeoServerEmptyPasswordEncoder>(){
     @Override public GeoServerEmptyPasswordEncoder answer() throws Throwable {
       return createEmptyPasswordEncoder(secMgr);
@@ -119,6 +131,6 @@
   ;
   expect(keyStoreProvider.getSecretKey(alias)).andReturn(new SecretKeySpec(toBytes("geoserver".toCharArray()),"PBE")).anyTimes();
   expect(secMgr.getKeyStoreProvider()).andReturn(keyStoreProvider).anyTimes();
-  replay(keyStoreProvider,masterPasswdProvider,ugStore,ugConfig,roleStore,authProvider,authProviderConfig,filterConfig,passwdValidator,masterPasswdPolicyConfig,appContext,secMgr);
+  replay(keyStoreProvider,masterPasswdProvider,ugStore,ugConfig,roleStore,authProvider,authProviderConfig,filterConfig,passwdValidator,masterPasswdPolicyConfig,appContext,secMgr,roleFilter,formFilter,authFilter,basicFilter);
   return secMgr;
 }

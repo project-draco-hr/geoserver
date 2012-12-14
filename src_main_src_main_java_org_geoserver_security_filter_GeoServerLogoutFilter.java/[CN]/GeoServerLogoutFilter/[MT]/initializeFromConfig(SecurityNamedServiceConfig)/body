@@ -1,13 +1,8 @@
 {
   super.initializeFromConfig(config);
-  RememberMeServices rms=securityManager.getRememberMeService();
-  LogoutFilter logoutFilter=new LogoutFilter(URL_AFTER_LOGOUT,(LogoutHandler)rms,new SecurityContextLogoutHandler());
-  logoutFilter.setFilterProcessesUrl(URL_FOR_LOGOUT);
-  try {
-    logoutFilter.afterPropertiesSet();
-  }
- catch (  ServletException e1) {
-    throw new IOException(e1);
-  }
-  getNestedFilters().add(logoutFilter);
+  logoutHandler=new SecurityContextLogoutHandler();
+  redirectUrl=((LogoutFilterConfig)config).getRedirectURL();
+  logoutSuccessHandler=new SimpleUrlLogoutSuccessHandler();
+  if (StringUtils.hasLength(redirectUrl))   logoutSuccessHandler.setDefaultTargetUrl(redirectUrl);
+  pathInfos=GeoServerSecurityFilterChain.FORM_LOGOUT_CHAIN.split(",");
 }

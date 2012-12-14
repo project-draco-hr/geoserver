@@ -1,40 +1,51 @@
 {
   super(id,model);
-  add(connectionPanel=new CasConnectionPanel<CasAuthenticationFilterConfig>("cas",model));
-  add(new TextField<String>("service"));
-  add(new HelpLink("serviceHelp",this).setDialog(dialog));
-  add(new TextField<String>("urlInCasLogoutPage"));
-  add(new HelpLink("urlInLogoutPageHelp",this).setDialog(dialog));
-  add(new UserGroupServiceChoice("userGroupServiceName"));
-  add(new AjaxSubmitLink("casServiceTest"){
+  dialog=(GeoServerDialog)get("dialog");
+  add(new HelpLink("connectionParametersHelp",this).setDialog(dialog));
+  add(new HelpLink("singleSignOnParametersHelp",this).setDialog(dialog));
+  add(new HelpLink("singleSignOutParametersHelp",this).setDialog(dialog));
+  add(new HelpLink("proxyTicketParametersHelp",this).setDialog(dialog));
+  add(new TextField<String>("casServerUrlPrefix"));
+  add(new CheckBox("sendRenew"));
+  add(new TextField<String>("proxyCallbackUrlPrefix").setRequired(false));
+  add(new AjaxSubmitLink("casServerTest"){
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       try {
-        testURL("service");
-        info(new StringResourceModel("serviceConnectionSuccessful",CasAuthFilterPanel.this,null).getObject());
+        testURL("casServerUrlPrefix",GeoServerCasConstants.LOGOUT_URI);
+        info(new StringResourceModel("casConnectionSuccessful",CasAuthFilterPanel.this,null).getObject());
       }
  catch (      Exception e) {
         error(e);
-        LOGGER.log(Level.WARNING,"Cas connection error ",e);
-      }
- finally {
-        target.addComponent(connectionPanel.getFeedbackPanel());
+        LOGGER.log(Level.WARNING,"CAS connection error ",e);
       }
     }
   }
 .setDefaultFormProcessing(false));
-  add(new AjaxSubmitLink("urlInLogoutPageTest"){
+  add(new AjaxSubmitLink("proxyCallbackTest"){
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       try {
-        testURL("urlInCasLogoutPage");
-        info(new StringResourceModel("urlInLogoutPageSuccessful",CasAuthFilterPanel.this,null).getObject());
+        testURL("proxyCallbackUrlPrefix",null);
+        info(new StringResourceModel("casProxyCallbackSuccessful",CasAuthFilterPanel.this,null).getObject());
       }
  catch (      Exception e) {
         error(e);
-        LOGGER.log(Level.WARNING,"Cas connection error ",e);
+        LOGGER.log(Level.WARNING,"CAS proxy callback  error ",e);
       }
- finally {
-        System.out.println("PageClass: " + getPage().getClass().getName());
-        target.addComponent(connectionPanel.getFeedbackPanel());
+    }
+  }
+.setDefaultFormProcessing(false));
+  CheckBox createSession=new CheckBox("singleSignOut");
+  add(createSession);
+  add(new TextField<String>("urlInCasLogoutPage"));
+  add(new AjaxSubmitLink("urlInCasLogoutPageTest"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      try {
+        testURL("urlInCasLogoutPage",null);
+        info(new StringResourceModel("urlInCasLogoutPageSuccessful",CasAuthFilterPanel.this,null).getObject());
+      }
+ catch (      Exception e) {
+        error(e);
+        LOGGER.log(Level.WARNING,"CAs url in logout page error ",e);
       }
     }
   }
