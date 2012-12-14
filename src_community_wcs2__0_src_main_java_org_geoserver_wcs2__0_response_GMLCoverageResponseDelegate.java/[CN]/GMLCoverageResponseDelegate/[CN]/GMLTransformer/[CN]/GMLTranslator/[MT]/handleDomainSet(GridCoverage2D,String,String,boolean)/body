@@ -1,0 +1,45 @@
+{
+  final GridGeometry2D gg2D=gc2d.getGridGeometry();
+  final String gridId="grid00__" + gcName;
+  final GridEnvelope gridEnvelope=gg2D.getGridRange();
+  final int gridDimension=gc2d.getDimension();
+  final StringBuilder lowSb=new StringBuilder();
+  for (  int i : gridEnvelope.getLow().getCoordinateValues()) {
+    lowSb.append(i).append(' ');
+  }
+  final StringBuilder highSb=new StringBuilder();
+  for (  int i : gridEnvelope.getHigh().getCoordinateValues()) {
+    highSb.append(i).append(' ');
+  }
+  final AttributesImpl gridAttrs=new AttributesImpl();
+  gridAttrs.addAttribute("","gml:id","gml:id","",gridId);
+  gridAttrs.addAttribute("","dimension","dimension","",String.valueOf(gridDimension));
+  start("gml:domainSet");
+  start("gml:RectifiedGrid",gridAttrs);
+  start("gml:limits");
+  start("gml:GridEnvelope");
+  element("gml:low",lowSb.toString().trim());
+  element("gml:high",highSb.toString().trim());
+  end("gml:GridEnvelope");
+  end("gml:limits");
+  element("gml:axisLabels","i j");
+  final MathTransform2D transform=gg2D.getGridToCRS2D(PixelOrientation.UPPER_LEFT);
+  if (!(transform instanceof AffineTransform2D)) {
+    throw new IllegalStateException("Invalid grid to worl provided:" + transform.toString());
+  }
+  final AffineTransform2D g2W=(AffineTransform2D)transform;
+  final AttributesImpl pointAttr=new AttributesImpl();
+  pointAttr.addAttribute("","gml:id","gml:id","","p00_" + gcName);
+  pointAttr.addAttribute("","srsName","srsName","",srsName);
+  start("gml:origin");
+  start("gml:Point",pointAttr);
+  element("gml:pos",axesSwap ? g2W.getTranslateY() + " " + g2W.getTranslateX() : g2W.getTranslateX() + " " + g2W.getTranslateY());
+  end("gml:Point");
+  end("gml:origin");
+  final AttributesImpl offsetAttr=new AttributesImpl();
+  offsetAttr.addAttribute("","srsName","srsName","",srsName);
+  element("gml:offsetVector",Double.valueOf(axesSwap ? g2W.getShearX() : g2W.getScaleX()) + " " + Double.valueOf(axesSwap ? g2W.getScaleX() : g2W.getShearX()),offsetAttr);
+  element("gml:offsetVector",Double.valueOf(axesSwap ? g2W.getScaleY() : g2W.getShearY()) + " " + Double.valueOf(axesSwap ? g2W.getShearY() : g2W.getScaleY()),offsetAttr);
+  end("gml:RectifiedGrid");
+  end("gml:domainSet");
+}

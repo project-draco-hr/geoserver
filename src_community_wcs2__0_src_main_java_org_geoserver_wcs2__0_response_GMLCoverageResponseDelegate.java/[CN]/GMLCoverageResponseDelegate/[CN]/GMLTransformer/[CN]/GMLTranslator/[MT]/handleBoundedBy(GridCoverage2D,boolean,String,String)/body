@@ -1,0 +1,20 @@
+{
+  final GeneralEnvelope envelope=new GeneralEnvelope(gc2d.getEnvelope());
+  final CoordinateReferenceSystem crs=gc2d.getCoordinateReferenceSystem2D();
+  final CoordinateSystem cs=crs.getCoordinateSystem();
+  final String uomLabels=extractUoM(crs,cs.getAxis(axisSwap ? 1 : 0).getUnit()) + " " + extractUoM(crs,cs.getAxis(axisSwap ? 0 : 1).getUnit());
+  final int srsDimension=cs.getDimension();
+  final String lower=new StringBuilder().append(envelope.getLowerCorner().getOrdinate(axisSwap ? 1 : 0)).append(" ").append(envelope.getLowerCorner().getOrdinate(axisSwap ? 0 : 1)).toString();
+  final String upper=new StringBuilder().append(envelope.getUpperCorner().getOrdinate(axisSwap ? 1 : 0)).append(" ").append(envelope.getUpperCorner().getOrdinate(axisSwap ? 0 : 1)).toString();
+  final AttributesImpl envelopeAttrs=new AttributesImpl();
+  envelopeAttrs.addAttribute("","srsName","srsName","",srsName);
+  envelopeAttrs.addAttribute("","axisLabels","axisLabels","",axisLabels);
+  envelopeAttrs.addAttribute("","uomLabels","uomLabels","",uomLabels);
+  envelopeAttrs.addAttribute("","srsDimension","srsDimension","",String.valueOf(srsDimension));
+  start("gml:boundedBy");
+  start("gml:Envelope",envelopeAttrs);
+  element("gml:lowerCorner",lower);
+  element("gml:upperCorner",upper);
+  end("gml:Envelope");
+  end("gml:boundedBy");
+}

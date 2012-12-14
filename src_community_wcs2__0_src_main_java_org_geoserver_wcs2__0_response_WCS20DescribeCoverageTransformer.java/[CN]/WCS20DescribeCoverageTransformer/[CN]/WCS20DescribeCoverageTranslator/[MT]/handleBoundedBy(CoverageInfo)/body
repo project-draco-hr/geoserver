@@ -2,7 +2,15 @@
   final ReferencedEnvelope latLonBoundingBox=ci.getLatLonBoundingBox();
   final CoordinateReferenceSystem crs=latLonBoundingBox.getCoordinateReferenceSystem();
   final String srsName="http://www.opengis.net/def/crs/EPSG/0/4326";
-  final String axisLabels="Lat Long";
+  final List<String> axesNames=envelopeDimensionsMapper.getAxesNames(latLonBoundingBox,true);
+  if (axesNames == null) {
+    throw new WCS20Exception("Unable to map the enveloper for this coverage");
+  }
+  final StringBuilder builder=new StringBuilder();
+  for (  String axisName : axesNames) {
+    builder.append(axisName).append(" ");
+  }
+  final String axisLabels=builder.substring(0,builder.length() - 1);
   final String uomLabels="deg deg";
   final int srsDimension=crs.getCoordinateSystem().getDimension();
   final String lower=new StringBuilder().append(latLonBoundingBox.getLowerCorner().getOrdinate(0)).append(" ").append(latLonBoundingBox.getLowerCorner().getOrdinate(1)).toString();

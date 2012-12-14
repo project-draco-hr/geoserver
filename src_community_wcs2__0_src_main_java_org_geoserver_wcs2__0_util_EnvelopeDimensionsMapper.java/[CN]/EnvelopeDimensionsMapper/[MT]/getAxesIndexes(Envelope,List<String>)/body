@@ -1,0 +1,24 @@
+{
+  Utilities.ensureNonNull("envelope",envelope);
+  Utilities.ensureNonNull("dimensionNames",axesAbbreviations);
+  final CoordinateReferenceSystem crs=envelope.getCoordinateReferenceSystem();
+  final CoordinateSystem cs=crs.getCoordinateSystem();
+  final int crsDimension=cs.getDimension();
+  final int dimension=axesAbbreviations.size();
+  final int[] retValue=new int[dimension];
+  for (int i=0; i < dimension; i++) {
+    final String axisAbbreviation=axesAbbreviations.get(i);
+    int pos=-1;
+    for (int j=0; j < crsDimension; j++) {
+      if (cs.getAxis(j).getAbbreviation().equals(axisAbbreviation)) {
+        pos=j;
+        break;
+      }
+    }
+    if (pos < 0) {
+      return null;
+    }
+    retValue[i]=pos;
+  }
+  return retValue;
+}

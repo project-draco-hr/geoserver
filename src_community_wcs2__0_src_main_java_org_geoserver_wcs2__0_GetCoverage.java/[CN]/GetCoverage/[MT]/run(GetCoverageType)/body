@@ -4,11 +4,15 @@
     throw new WCS20Exception("Could not locate coverage " + request.getCoverageId(),WCS20Exception.WCSExceptionCode.NoSuchCoverage,"coverageId");
   }
   CoverageInfo cinfo=(CoverageInfo)linfo.getResource();
-  GridCoverage coverage=null;
+  GridCoverage2D coverage=null;
   try {
     GridCoverageReader reader=cinfo.getGridCoverageReader(null,null);
     boolean subsample=wcs.isSubsamplingEnabled();
-    coverage=reader.read(null);
+    coverage=(GridCoverage2D)reader.read(null);
+    coverage=handleRangeSubsettingExtension(coverage,request);
+    coverage=handleSubsettingExtension(coverage,request);
+    coverage=handleScaling(coverage,request);
+    coverage=handleReprojection(coverage,request);
   }
  catch (  IOException e) {
     throw new WcsException("Failed to read the coverage " + request.getCoverageId(),e);
