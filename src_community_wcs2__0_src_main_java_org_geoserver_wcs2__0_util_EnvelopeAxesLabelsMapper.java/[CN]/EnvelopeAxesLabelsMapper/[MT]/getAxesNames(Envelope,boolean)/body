@@ -1,0 +1,28 @@
+{
+  Utilities.ensureNonNull("envelope",envelope);
+  final CoordinateReferenceSystem crs=envelope.getCoordinateReferenceSystem();
+  final boolean axesSwitch=crs instanceof GeographicCRS && swapAxes;
+  final CoordinateSystem cs=crs.getCoordinateSystem();
+  final int dimension=cs.getDimension();
+  final ArrayList<String> retValue=new ArrayList<String>();
+  if (!axesSwitch) {
+    for (int i=0; i < dimension; i++) {
+      retValue.add(cs.getAxis(i).getAbbreviation());
+    }
+  }
+ else {
+    int northing=-1, easting=-1;
+    for (int i=0; i < dimension; i++) {
+      final CoordinateSystemAxis axis=cs.getAxis(i);
+      if (Math.abs(DefaultCoordinateSystemAxis.getAngle(axis.getDirection(),DefaultCoordinateSystemAxis.LONGITUDE.getDirection())) < 1E-6) {
+        easting=i;
+      }
+ else       if (Math.abs(DefaultCoordinateSystemAxis.getAngle(axis.getDirection(),DefaultCoordinateSystemAxis.LATITUDE.getDirection())) < 1E-6) {
+        northing=i;
+      }
+      retValue.add(axis.getAbbreviation());
+    }
+    retValue.add(northing,retValue.remove(easting));
+  }
+  return retValue;
+}

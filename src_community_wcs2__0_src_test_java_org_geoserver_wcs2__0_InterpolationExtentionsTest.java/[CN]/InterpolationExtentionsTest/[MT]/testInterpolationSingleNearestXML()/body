@@ -1,0 +1,14 @@
+{
+  final File xml=new File("./src/test/resources/requestGetCoverageInterpolationNearest.xml");
+  final String request=FileUtils.readFileToString(xml);
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  final TIFFImageReader reader=(TIFFImageReader)new TIFFImageReaderSpi().createReaderInstance();
+  reader.setInput(new FileImageInputStream(file));
+  assertEquals(360,reader.getWidth(0));
+  assertEquals(360,reader.getHeight(0));
+  reader.dispose();
+}
