@@ -1,0 +1,31 @@
+{
+  RangeSubsetType result=Wcs20Factory.eINSTANCE.createRangeSubsetType();
+  value=value.trim();
+  if (value.matches(".*,\\s*,.*")) {
+    throwInvalidSyntaxException();
+  }
+ else   if (value.startsWith(",") || value.endsWith(",")) {
+    throwInvalidSyntaxException();
+  }
+  String[] components=value.split("\\s*,\\s*");
+  for (  String component : components) {
+    if (component.contains(":")) {
+      String[] lowHigh=component.split(":");
+      if (lowHigh.length != 2) {
+        throwInvalidSyntaxException();
+      }
+      RangeIntervalType ri=Wcs20Factory.eINSTANCE.createRangeIntervalType();
+      ri.setStartComponent(lowHigh[0]);
+      ri.setEndComponent(lowHigh[1]);
+      RangeItemType item=Wcs20Factory.eINSTANCE.createRangeItemType();
+      item.setRangeInterval(ri);
+      result.getRangeItems().add(item);
+    }
+ else {
+      RangeItemType item=Wcs20Factory.eINSTANCE.createRangeItemType();
+      item.setRangeComponent(component);
+      result.getRangeItems().add(item);
+    }
+  }
+  return result;
+}
