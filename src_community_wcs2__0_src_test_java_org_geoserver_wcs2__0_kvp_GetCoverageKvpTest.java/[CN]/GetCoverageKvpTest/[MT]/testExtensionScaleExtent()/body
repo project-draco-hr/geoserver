@@ -1,0 +1,16 @@
+{
+  GetCoverageType gc=parse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=theCoverage&scaleextent=http://www.opengis.net/def/axis/OGC/1/i(10,20),http://www.opengis.net/def/axis/OGC/1/j(20,30)");
+  Map<String,Object> extensions=getExtensionsMap(gc);
+  assertEquals(1,extensions.size());
+  ScalingType scaling=(ScalingType)extensions.get(Scaling.NAMESPACE + ":Scaling");
+  ScaleToExtentType ste=scaling.getScaleToExtent();
+  assertEquals(2,ste.getTargetAxisExtent().size());
+  TargetAxisExtentType tax=ste.getTargetAxisExtent().get(0);
+  assertEquals("http://www.opengis.net/def/axis/OGC/1/i",tax.getAxis());
+  assertEquals(10.0,tax.getLow(),0d);
+  assertEquals(20.0,tax.getHigh(),0d);
+  tax=ste.getTargetAxisExtent().get(1);
+  assertEquals("http://www.opengis.net/def/axis/OGC/1/j",tax.getAxis());
+  assertEquals(20.0,tax.getLow(),0d);
+  assertEquals(30.0,tax.getHigh(),0d);
+}

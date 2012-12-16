@@ -1,0 +1,55 @@
+{
+  value=value.trim();
+  ScaleToExtentType se=Wcs20Factory.eINSTANCE.createScaleToExtentType();
+  int base=0;
+  for (; ; ) {
+    int idxOpen=value.indexOf("(",base);
+    if (idxOpen == -1) {
+      throw new WCS20Exception("Invalid ScaleExtent syntax, expecting a comma separate list of axisName(min,max)*",WCS20Exception.WCSExceptionCode.InvalidEncodingSyntax,"scaleExtent");
+    }
+    int idxNextOpen=value.indexOf("(",idxOpen + 1);
+    int idxClosed=value.indexOf(")",idxOpen);
+    if (idxClosed == -1 || (idxNextOpen > 0 && idxClosed > idxNextOpen)) {
+      throw new WCS20Exception("Invalid ScaleExtent syntax, expecting a comma separate list of axisName(min,max)*",WCS20Exception.WCSExceptionCode.InvalidEncodingSyntax,"scaleExtent");
+    }
+    int idxNextClosed=value.indexOf(")",idxClosed + 1);
+    int idxMid=value.indexOf(",",base);
+    if (idxMid == -1 || idxMid >= idxClosed - 1 || idxMid <= idxOpen + 1) {
+      throw new WCS20Exception("Invalid ScaleExtent syntax, expecting a comma separate list of axisName(min,max)*",WCS20Exception.WCSExceptionCode.InvalidEncodingSyntax,"scaleExtent");
+    }
+    int idxNextMid=value.indexOf(",",idxMid + 1);
+    if (idxNextMid != -1 && idxNextMid < idxClosed) {
+      throw new WCS20Exception("Invalid ScaleExtent syntax, expecting a comma separate list of axisName(min,max)*",WCS20Exception.WCSExceptionCode.InvalidEncodingSyntax,"scaleExtent");
+    }
+    String axisName=value.substring(base,idxOpen);
+    String low=value.substring(idxOpen + 1,idxMid);
+    String high=value.substring(idxMid + 1,idxClosed);
+    try {
+      TargetAxisExtentType te=Wcs20Factory.eINSTANCE.createTargetAxisExtentType();
+      te.setAxis(axisName.trim());
+      te.setLow(Double.valueOf(low));
+      te.setHigh(Double.valueOf(high));
+      se.getTargetAxisExtent().add(te);
+    }
+ catch (    NumberFormatException e) {
+      WCS20Exception ex=new WCS20Exception("Invalid ScaleExtent syntax, expecting a comma separate list of axisName(min,max)*",WCS20Exception.WCSExceptionCode.InvalidEncodingSyntax,"scaleExtent");
+      ex.initCause(e);
+      throw ex;
+    }
+    int idxSeparator=value.indexOf(",",idxClosed);
+    if (idxSeparator == -1) {
+      if (idxClosed == value.length() - 1) {
+        return se;
+      }
+ else {
+        throw new WCS20Exception("Invalid ScaleExtent syntax, expecting a comma separate list of axisName(min,max)*",WCS20Exception.WCSExceptionCode.InvalidEncodingSyntax,"scaleExtent");
+      }
+    }
+ else {
+      if (idxSeparator > idxNextClosed) {
+        throw new WCS20Exception("Invalid ScaleExtent syntax, expecting a comma separate list of axisName(min,max)*",WCS20Exception.WCSExceptionCode.InvalidEncodingSyntax,"scaleExtent");
+      }
+      base=idxSeparator + 1;
+    }
+  }
+}
