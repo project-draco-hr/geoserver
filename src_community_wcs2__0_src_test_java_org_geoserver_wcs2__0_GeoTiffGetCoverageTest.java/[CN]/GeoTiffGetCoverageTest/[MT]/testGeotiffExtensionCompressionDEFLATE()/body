@@ -10,7 +10,7 @@
   TIFFImageMetadata metadata=(TIFFImageMetadata)reader.getImageMetadata(0);
   assertNotNull(metadata);
   IIOMetadataNode root=(IIOMetadataNode)reader.getImageMetadata(0).getAsTree(TIFFImageMetadata.nativeMetadataFormatName);
-  IIOMetadataNode field=getTiffField(root,BaselineTIFFTagSet.TAG_COMPRESSION);
+  IIOMetadataNode field=WCSTestSupport.getTiffField(root,BaselineTIFFTagSet.TAG_COMPRESSION);
   assertNotNull(field);
   assertEquals("Deflate",field.getFirstChild().getFirstChild().getAttributes().item(1).getNodeValue());
   assertEquals("32946",field.getFirstChild().getFirstChild().getAttributes().item(0).getNodeValue());
@@ -19,4 +19,14 @@
   assertEquals("PlanarConfiguration",node.getFirstChild().getNodeName());
   assertEquals("PixelInterleaved",node.getFirstChild().getAttributes().item(0).getNodeValue());
   reader.dispose();
+  final GeoTiffReader readerGT=new GeoTiffReader(file);
+  Assert.assertTrue(CRS.equalsIgnoreMetadata(readerGT.getCrs(),CRS.decode("EPSG:4326",true)));
+  assertEquals(360,readerGT.getOriginalGridRange().getSpan(0));
+  assertEquals(360,readerGT.getOriginalGridRange().getSpan(1));
+  final GridCoverage2D coverage=readerGT.read(null);
+  final GridCoverage2D sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+  assertEnvelopeEquals(sourceCoverage,coverage);
+  readerGT.dispose();
+  scheduleForCleaning(coverage);
+  scheduleForCleaning(sourceCoverage);
 }

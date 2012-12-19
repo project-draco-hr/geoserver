@@ -11,4 +11,14 @@
   assertEquals(360,reader.getWidth(0));
   assertEquals(360,reader.getHeight(0));
   reader.dispose();
+  final GeoTiffReader readerGT=new GeoTiffReader(file);
+  Assert.assertTrue(CRS.equalsIgnoreMetadata(readerGT.getCrs(),CRS.decode("EPSG:4326",true)));
+  assertEquals(360,readerGT.getOriginalGridRange().getSpan(0));
+  assertEquals(360,readerGT.getOriginalGridRange().getSpan(1));
+  final GridCoverage2D coverage=readerGT.read(null);
+  final GridCoverage2D sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+  assertEnvelopeEquals(sourceCoverage,coverage);
+  readerGT.dispose();
+  scheduleForCleaning(coverage);
+  scheduleForCleaning(sourceCoverage);
 }
