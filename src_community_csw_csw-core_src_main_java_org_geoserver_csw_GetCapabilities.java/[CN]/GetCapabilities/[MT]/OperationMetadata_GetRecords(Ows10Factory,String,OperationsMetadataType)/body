@@ -24,21 +24,23 @@
     getRecords.getConstraint().add(constraint);
   }
   try {
-    for (    FeatureType ft : store.getRecordSchemas()) {
-      if (ft.equals(CSWRecordDescriptor.RECORD)) {
-        List<Name> queriables=store.getCapabilities().getQueriables(ft.getName());
-        if (queriables != null && queriables.size() > 0) {
-          DomainType dt=owsf.createDomainType();
-          dt.setName("SupportedDublinCoreQueryables");
-          for (          Name q : queriables) {
-            NamespaceSupport nss=CSWRecordDescriptor.NAMESPACES;
-            String prefix=nss.getPrefix(q.getNamespaceURI());
-            dt.getValue().add(prefix + ":" + q.getLocalPart());
-          }
-          getRecords.getConstraint().add(dt);
+    for (    RecordDescriptor rd : store.getRecordDescriptors()) {
+      List<Name> queriables=store.getCapabilities().getQueriables(rd.getFeatureDescriptor().getName());
+      if (queriables != null && queriables.size() > 0) {
+        DomainType dt=owsf.createDomainType();
+        dt.setName(rd.getQueryablesDescription());
+        NamespaceSupport nss=rd.getNamespaceSupport();
+        for (        Name q : queriables) {
+          String prefix=nss.getPrefix(q.getNamespaceURI());
+          dt.getValue().add(prefix == null ? q.getLocalPart() : prefix + ":" + q.getLocalPart());
         }
+        getRecords.getConstraint().add(dt);
       }
     }
+    DomainType dt=owsf.createDomainType();
+    dt.setName("XPathQueryables");
+    dt.getValue().add("allowed");
+    getRecords.getConstraint().add(dt);
   }
  catch (  IOException e) {
     LOGGER.log(Level.WARNING,"Failed to encode getRecords additional queriables",e);

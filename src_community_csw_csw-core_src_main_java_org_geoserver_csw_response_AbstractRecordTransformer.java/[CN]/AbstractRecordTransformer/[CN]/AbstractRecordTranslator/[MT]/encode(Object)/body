@@ -1,10 +1,12 @@
 {
   final CSWRecordsResult response=(CSWRecordsResult)o;
   AttributesImpl attributes=new AttributesImpl();
-  addAttribute(attributes,"xmlns:csw",CSW.NAMESPACE);
-  addAttribute(attributes,"xmlns:dc",DC.NAMESPACE);
-  addAttribute(attributes,"xmlns:dct",DCT.NAMESPACE);
-  addAttribute(attributes,"xmlns:ows",OWS.NAMESPACE);
+  Enumeration declaredPrefixes=ns.getDeclaredPrefixes();
+  while (declaredPrefixes.hasMoreElements()) {
+    String prefix=(String)declaredPrefixes.nextElement();
+    String uri=ns.getURI(prefix);
+    addAttribute(attributes,prefix == "" ? "xmlns" : "xmlns:" + prefix,uri);
+  }
   addAttribute(attributes,"xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance");
   if (request instanceof GetRecordByIdType) {
     String locationAtt="xsi:schemaLocation";

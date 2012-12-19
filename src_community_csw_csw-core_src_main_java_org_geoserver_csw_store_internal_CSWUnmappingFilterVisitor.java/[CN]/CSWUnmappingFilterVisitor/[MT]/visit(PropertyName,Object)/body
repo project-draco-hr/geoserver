@@ -1,0 +1,15 @@
+{
+  XPathUtil.StepList steps=XPathUtil.steps(rd.getFeatureDescriptor(),expression.getPropertyName(),rd.getNamespaceSupport());
+  if (steps.size() == 1 && steps.get(0).getName().getLocalPart().equalsIgnoreCase("AnyText")) {
+    return new RecordTextFunction(mapping);
+  }
+  String path=CatalogStoreMapping.toDotPath(steps);
+  if (path.equalsIgnoreCase(rd.getBoundingBoxPropertyName())) {
+    return ff.property("boundingBox");
+  }
+  CatalogStoreMappingElement element=mapping.getElement(path);
+  if (element == null) {
+    throw new IllegalArgumentException("Unknown field in mapping: " + expression);
+  }
+  return element.getContent();
+}

@@ -4,22 +4,25 @@
       throw new ServiceException("Unsupported schema language " + request.getSchemaLanguage(),ServiceException.INVALID_PARAMETER_VALUE,"schemaLanguage");
     }
     if (request.getTypeName() == null || request.getTypeName().isEmpty()) {
-      return store.getRecordSchemas();
+      return getFeatureDescriptors(store.getRecordDescriptors());
     }
  else {
-      List<FeatureType> result=new ArrayList<FeatureType>();
-      Set<QName> requested=new HashSet(request.getTypeName());
-      FeatureType[] schemas=store.getRecordSchemas();
-      for (      FeatureType featureType : schemas) {
-        QName typeName=new QName(featureType.getName().getNamespaceURI(),featureType.getName().getLocalPart());
+      List<AttributeDescriptor> result=new ArrayList<AttributeDescriptor>();
+      Set<String> requested=new HashSet();
+      for (      QName name : request.getTypeName()) {
+        requested.add(name.getLocalPart());
+      }
+      AttributeDescriptor[] descriptors=getFeatureDescriptors(store.getRecordDescriptors());
+      for (      AttributeDescriptor descriptor : descriptors) {
+        String typeName=descriptor.getName().getLocalPart();
         if (requested.remove(typeName)) {
-          result.add(featureType);
+          result.add(descriptor);
         }
       }
       if (requested.size() != 0) {
         LOGGER.log(Level.FINE,"Failed to locate feature types " + requested + ", ignoring them");
       }
-      return (FeatureType[])result.toArray(new FeatureType[result.size()]);
+      return result.toArray(new AttributeDescriptor[result.size()]);
     }
   }
  catch (  IOException e) {

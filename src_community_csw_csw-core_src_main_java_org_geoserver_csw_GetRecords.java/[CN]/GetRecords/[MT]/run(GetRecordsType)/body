@@ -25,6 +25,7 @@
       counts[i]=store.getRecordsCount(queries.get(i),Transaction.AUTO_COMMIT);
       numberOfRecordsMatched+=counts[i];
     }
+    ElementSetType elementSet=getElementSet(cswQuery);
     int numberOfRecordsReturned=0;
     int nextRecord=0;
     FeatureCollection records=null;
@@ -38,7 +39,7 @@
         nextRecord=offset + numberOfRecordsReturned + 1;
       }
       if (resultType == ResultType.RESULTS) {
-        if (resultType != resultType.HITS) {
+        if (resultType != ResultType.HITS) {
           List<FeatureCollection> results=new ArrayList<FeatureCollection>();
           for (int i=0; i < queries.size() && maxRecords > 0; i++) {
             Query q=queries.get(i);
@@ -59,7 +60,7 @@
  else {
               continue;
             }
-            results.add(store.getRecords(q,Transaction.AUTO_COMMIT));
+            results.add(store.getRecords(q,Transaction.AUTO_COMMIT,elementSet));
           }
           if (results.size() == 1) {
             records=results.get(0);
@@ -73,7 +74,6 @@
     if (resultType == ResultType.HITS) {
       numberOfRecordsReturned=0;
     }
-    ElementSetType elementSet=getElementSet(cswQuery);
     CSWRecordsResult result=new CSWRecordsResult(elementSet,request.getOutputSchema(),numberOfRecordsMatched,numberOfRecordsReturned,nextRecord,timestamp,records);
     return result;
   }

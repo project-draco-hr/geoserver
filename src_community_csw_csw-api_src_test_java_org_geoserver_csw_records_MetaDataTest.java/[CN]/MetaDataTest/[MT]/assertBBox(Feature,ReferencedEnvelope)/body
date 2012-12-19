@@ -1,0 +1,18 @@
+{
+  PropertyName bbox=ff.property("gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent/gmd:EX_Extent/gmd:geographicElement/gmd:EX_GeographicBoundingBox",MetaDataDescriptor.NAMESPACES);
+  Property p=(Property)bbox.evaluate(f);
+  MultiPolygon geometry=(MultiPolygon)p.getValue();
+  List<ReferencedEnvelope> featureEnvelopes=(List<ReferencedEnvelope>)p.getUserData().get(GenericRecordBuilder.ORIGINAL_BBOXES);
+  ReferencedEnvelope total=null;
+  for (int i=0; i < envelopes.length; i++) {
+    assertEquals(envelopes[i],featureEnvelopes.get(i));
+    ReferencedEnvelope re=envelopes[i].transform(CSWRecordDescriptor.DEFAULT_CRS,true);
+    if (total == null) {
+      total=re;
+    }
+ else {
+      total.expandToInclude(re);
+    }
+  }
+  assertTrue(total.contains(geometry.getEnvelopeInternal()));
+}

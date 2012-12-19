@@ -19,7 +19,7 @@
     }
     if (request.getPropertyName() != null && !request.getPropertyName().isEmpty()) {
       final String propertyName=request.getPropertyName();
-      String nameSpace=null;
+      String nameSpace="";
       String localPart=null;
       if (propertyName.indexOf(":") > 0) {
         nameSpace=propertyName.split(":")[0];
@@ -27,14 +27,14 @@
       }
  else {
         if (propertyName.equalsIgnoreCase("anyText")) {
-          nameSpace=CSWRecordDescriptor.NAMESPACES.getURI("csw");
+          nameSpace=ns.getURI("csw");
         }
         localPart=propertyName;
       }
-      Name typeName=(nameSpace != null ? new NameImpl(CSWRecordDescriptor.NAMESPACES.getURI(nameSpace),localPart) : new NameImpl(localPart));
-      List<Name> domainQueriables=store.getCapabilities().getDomainQueriables(typeName);
-      if (domainQueriables != null && domainQueriables.size() > 0) {
-        return this.store.getDomain(new NameImpl(CSW.NAMESPACE,"Record"),typeName);
+      Name attName=new NameImpl(ns.getURI(nameSpace),localPart);
+      Name typeName=attributeTypeMap.get(attName);
+      if (typeName != null) {
+        return this.store.getDomain(typeName,attName);
       }
     }
     return new CloseableIteratorAdapter<String>(result.iterator());

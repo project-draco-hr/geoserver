@@ -1,0 +1,17 @@
+{
+  Filter filter=query.getFilter();
+  if (filter != null && !Filter.INCLUDE.equals(filter)) {
+    query.setFilter((Filter)filter.accept(new MDQueryableFilterVisitor(),null));
+  }
+  SortBy[] sortBy=query.getSortBy();
+  if (sortBy != null && sortBy.length > 0) {
+    for (int i=0; i < sortBy.length; i++) {
+      SortBy sb=sortBy[i];
+      if (!SortBy.NATURAL_ORDER.equals(sb) && !SortBy.REVERSE_ORDER.equals(sb)) {
+        sortBy[i]=new SortByImpl(MDQueryableFilterVisitor.property(sb.getPropertyName()),sb.getSortOrder());
+      }
+    }
+    query.setSortBy(sortBy);
+  }
+  return query;
+}

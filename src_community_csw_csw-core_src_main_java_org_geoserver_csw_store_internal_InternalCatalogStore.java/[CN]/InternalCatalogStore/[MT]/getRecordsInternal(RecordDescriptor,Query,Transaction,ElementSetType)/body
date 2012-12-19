@@ -1,0 +1,18 @@
+{
+  CatalogStoreMapping mapping=mappings.get(q.getTypeName());
+  int startIndex=0;
+  if (q.getStartIndex() != null) {
+    startIndex=q.getStartIndex();
+  }
+  Filter unmapped=Filter.INCLUDE;
+  if (q.getFilter() != null && q.getFilter() != Filter.INCLUDE) {
+    Filter filter=q.getFilter();
+    CSWUnmappingFilterVisitor unmapper=new CSWUnmappingFilterVisitor(mapping,rd);
+    unmapped=(Filter)filter.accept(unmapper,null);
+  }
+  if (q.getProperties() != null && q.getProperties().size() > 0) {
+    mapping=mapping.subMapping(q.getProperties(),rd);
+  }
+  FeatureCollection records=new CatalogStoreFeatureCollection(startIndex,q.getMaxFeatures(),q.getSortBy(),unmapped,catalog,mapping,rd);
+  return records;
+}

@@ -22,13 +22,13 @@
   }
   try {
     Set<String> summary=new HashSet<String>();
-    for (    FeatureType ft : store.getRecordSchemas()) {
-      List<Name> queriables=store.getCapabilities().getDomainQueriables(ft.getName());
+    for (    RecordDescriptor rd : store.getRecordDescriptors()) {
+      List<Name> queriables=store.getCapabilities().getDomainQueriables(rd.getFeatureDescriptor().getName());
       if (queriables != null && queriables.size() > 0) {
+        NamespaceSupport nss=rd.getNamespaceSupport();
         for (        Name q : queriables) {
-          NamespaceSupport nss=CSWRecordDescriptor.NAMESPACES;
           String prefix=nss.getPrefix(q.getNamespaceURI());
-          summary.add(prefix + ":" + q.getLocalPart());
+          summary.add(prefix == null ? q.getLocalPart() : prefix + ":" + q.getLocalPart());
         }
       }
     }
