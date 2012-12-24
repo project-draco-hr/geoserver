@@ -15,7 +15,7 @@
     }
  else {
       AffineTransform2D at=(AffineTransform2D)gridToCRS;
-      offsets=new Double[]{at.getScaleX(),at.getScaleY()};
+      offsets=new Double[]{at.getScaleX(),at.getShearX(),0d,at.getShearY(),at.getScaleY(),0d};
     }
   }
  else {
@@ -25,7 +25,14 @@
     GridEnvelope gr=reader.getOriginalGridRange();
     int targetRasterWidth=gr.getSpan(0);
     int targetRasterHeight=(int)Math.ceil(targetRasterWidth / targetRatio);
-    offsets=new Double[]{teWidth / targetRasterWidth,-teHeight / targetRasterHeight};
+    double scaleX=teWidth / targetRasterWidth;
+    double scaleY=-teHeight / targetRasterHeight;
+    if (gridCRS == null || gridCRS.getGridType().equals(GridType.GT2dSimpleGrid.getXmlConstant()) || gridCRS.getGridType().equals(GridType.GT2dGridIn2dCrs.getXmlConstant())) {
+      offsets=new Double[]{scaleX,scaleY};
+    }
+ else {
+      offsets=new Double[]{scaleX,0.0,0.0,0.0,scaleY,0.0};
+    }
   }
   return offsets;
 }
