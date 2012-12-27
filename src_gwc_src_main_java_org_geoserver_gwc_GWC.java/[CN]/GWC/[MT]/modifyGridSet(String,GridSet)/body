@@ -12,11 +12,12 @@
     log.info("### New gridset: " + newGridSet);
   }
   Map<TileLayer,GridSubset> affectedLayers=new HashMap<TileLayer,GridSubset>();
+  Lock lock=null;
   try {
+    lock=lockProvider.getLock(GLOBAL_LOCK_KEY);
     for (    TileLayer layer : getTileLayers()) {
       GridSubset gridSubet;
       if (null != (gridSubet=layer.getGridSubset(oldGridSetName))) {
-        layer.acquireLayerLock();
         affectedLayers.put(layer,gridSubet);
         layer.removeGridSubset(oldGridSetName);
         if (needsTruncate) {
@@ -60,8 +61,8 @@
     }
   }
   finally {
-    for (    TileLayer layer : affectedLayers.keySet()) {
-      layer.releaseLayerLock();
+    if (lock != null) {
+      lock.release();
     }
   }
 }
