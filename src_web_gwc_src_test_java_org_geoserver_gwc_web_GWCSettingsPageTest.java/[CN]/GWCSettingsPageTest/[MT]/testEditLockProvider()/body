@@ -1,0 +1,24 @@
+{
+  GWC gwc=GWC.get();
+  ConfigurableLockProvider lockProvider=(ConfigurableLockProvider)gwc.getLockProvider();
+  assertTrue(lockProvider.getDelegate() instanceof MemoryLockProvider);
+  GWCSettingsPage page=new GWCSettingsPage();
+  tester.startPage(page);
+  tester.assertRenderedPage(GWCSettingsPage.class);
+  DropDownChoice lockDropDown=(DropDownChoice)tester.getComponentFromLastRenderedPage("form:cachingOptionsPanel:container:configs:lockProvider");
+  List choices=lockDropDown.getChoices();
+  int nioLockIndex=-1;
+  for (int i=0; i < choices.size(); i++) {
+    if ("nioLock".equals(choices.get(i))) {
+      nioLockIndex=i;
+      break;
+    }
+  }
+  assertTrue(nioLockIndex >= 0);
+  FormTester form=tester.newFormTester("form");
+  form.select("cachingOptionsPanel:container:configs:lockProvider",nioLockIndex);
+  form.submit("submit");
+  tester.assertNoErrorMessage();
+  lockProvider=(ConfigurableLockProvider)gwc.getLockProvider();
+  assertTrue(lockProvider.getDelegate() instanceof NIOLockProvider);
+}
