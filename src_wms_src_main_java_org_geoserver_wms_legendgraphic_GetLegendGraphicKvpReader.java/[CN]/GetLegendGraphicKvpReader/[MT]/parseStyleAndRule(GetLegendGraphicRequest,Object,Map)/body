@@ -1,0 +1,60 @@
+{
+  String listOfStyles=(String)rawKvp.get("STYLE");
+  if (listOfStyles == null) {
+    listOfStyles="";
+  }
+  List<String> styleNames=KvpUtils.readFlat(listOfStyles);
+  String sldUrl=(String)rawKvp.get("SLD");
+  String sldBody=(String)rawKvp.get("SLD_BODY");
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine(new StringBuffer("looking for styles ").append(listOfStyles).toString());
+  }
+  List<Style> sldStyles=new ArrayList<Style>();
+  if (sldUrl != null) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("taking style from SLD parameter");
+    }
+    addStylesFrom(sldStyles,styleNames,loadRemoteStyle(sldUrl));
+  }
+ else   if (sldBody != null) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("taking style from SLD_BODY parameter");
+    }
+    addStylesFrom(sldStyles,styleNames,parseSldBody(sldBody));
+  }
+ else   if (styleNames.size() > 0) {
+    if (LOGGER.isLoggable(Level.FINER)) {
+      LOGGER.finer("taking style from STYLE parameter");
+    }
+    int pos=0;
+    for (    String styleName : styleNames) {
+      if (styleName.equals("") && infoObj instanceof LayerGroupInfo) {
+        LayerGroupInfo layerGroupInfo=(LayerGroupInfo)infoObj;
+        if (pos < layerGroupInfo.getLayers().size()) {
+          sldStyles.add(getStyleFromLayer(layerGroupInfo.getLayers().get(pos)));
+        }
+      }
+ else {
+        sldStyles.add(wms.getStyleByName(styleName));
+      }
+      pos++;
+    }
+  }
+ else {
+    if (infoObj instanceof LayerInfo) {
+      sldStyles.add(getStyleFromLayer((LayerInfo)infoObj));
+    }
+ else     if (infoObj instanceof LayerGroupInfo) {
+      LayerGroupInfo layerGroupInfo=(LayerGroupInfo)infoObj;
+      for (      LayerInfo layerInfo : layerGroupInfo.getLayers()) {
+        sldStyles.add(getStyleFromLayer(layerInfo));
+      }
+    }
+  }
+  req.setStyles(sldStyles);
+  String rule=(String)rawKvp.get("RULE");
+  if (rule != null) {
+    List<String> ruleNames=KvpUtils.readFlat(rule);
+    req.setRules(ruleNames);
+  }
+}

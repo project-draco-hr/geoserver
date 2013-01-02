@@ -1,0 +1,27 @@
+{
+  int titleHeight=16;
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(MockData.ROAD_SEGMENTS.getNamespaceURI(),MockData.ROAD_SEGMENTS.getLocalPart());
+  List<FeatureType> layers=new ArrayList<FeatureType>();
+  layers.add(ftInfo.getFeatureType());
+  req.setLayers(layers);
+  Style style=getCatalog().getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle();
+  req.setStyle(style);
+  this.legendProducer.buildLegendGraphic(req);
+  BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+  assertNotBlank("testMultipleLayers",image,LegendUtils.DEFAULT_BG_COLOR);
+  int height=image.getHeight();
+  layers.add(ftInfo.getFeatureType());
+  this.legendProducer.buildLegendGraphic(req);
+  image=this.legendProducer.buildLegendGraphic(req);
+  assertNotBlank("testMultipleLayers",image,LegendUtils.DEFAULT_BG_COLOR);
+  assertEquals(2 * (height + titleHeight),image.getHeight());
+  assertPixel(image,1,titleHeight / 2,new Color(0,0,0));
+  assertPixel(image,10,10 + titleHeight,new Color(192,160,0));
+  assertPixel(image,10,30 + titleHeight,new Color(0,0,0));
+  assertPixel(image,10,50 + titleHeight,new Color(224,64,0));
+  assertPixel(image,1,60 + titleHeight + titleHeight / 2,new Color(0,0,0));
+  assertPixel(image,10,70 + titleHeight * 2,new Color(192,160,0));
+  assertPixel(image,10,90 + titleHeight * 2,new Color(0,0,0));
+  assertPixel(image,10,110 + titleHeight * 2,new Color(224,64,0));
+}

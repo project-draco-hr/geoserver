@@ -1,83 +1,120 @@
 {
-  Style gt2Style=request.getStyle();
-  if (gt2Style == null) {
-    throw new NullPointerException("request.getStyle()");
-  }
-  int w=request.getWidth();
-  int h=request.getHeight();
-  double dpi=RendererUtilities.getDpi(request.getLegendOptions());
-  double standardDpi=RendererUtilities.getDpi(Collections.emptyMap());
-  if (dpi != standardDpi) {
-    double scaleFactor=dpi / standardDpi;
-    w=(int)Math.round(w * scaleFactor);
-    h=(int)Math.round(h * scaleFactor);
-    DpiRescaleStyleVisitor dpiVisitor=new DpiRescaleStyleVisitor(scaleFactor);
-    dpiVisitor.visit(gt2Style);
-    gt2Style=(Style)dpiVisitor.getCopy();
-  }
-  if (request.getScale() > 0) {
-    double pixelsPerMeters=RendererUtilities.calculatePixelsPerMeterRatio(request.getScale(),request.getLegendOptions());
-    UomRescaleStyleVisitor rescaleVisitor=new UomRescaleStyleVisitor(pixelsPerMeters);
-    rescaleVisitor.visit(gt2Style);
-    gt2Style=(Style)rescaleVisitor.getCopy();
-  }
-  final FeatureType layer=request.getLayer();
-  boolean strict=request.isStrict();
-  final boolean buildRasterLegend=(!strict && layer == null && LegendUtils.checkRasterSymbolizer(gt2Style)) || LegendUtils.checkGridLayer(layer);
-  if (buildRasterLegend) {
-    final RasterLayerLegendHelper rasterLegendHelper=new RasterLayerLegendHelper(request);
-    final BufferedImage image=rasterLegendHelper.getLegend();
-    return image;
-  }
-  final Feature sampleFeature;
-  if (layer == null) {
-    sampleFeature=createSampleFeature();
-  }
- else {
-    sampleFeature=createSampleFeature(layer);
-  }
-  final FeatureTypeStyle[] ftStyles=gt2Style.featureTypeStyles().toArray(new FeatureTypeStyle[0]);
-  final double scaleDenominator=request.getScale();
-  final Rule[] applicableRules;
-  String ruleName=request.getRule();
-  if (ruleName != null) {
-    Rule rule=LegendUtils.getRule(ftStyles,ruleName);
-    if (rule == null) {
-      throw new ServiceException("Specified style does not contains a rule named " + ruleName);
+  List<RenderedImage> layersImages=new ArrayList<RenderedImage>();
+  List<FeatureType> layers=request.getLayers();
+  List<Style> styles=request.getStyles();
+  List<String> rules=request.getRules();
+  boolean forceLabelsOn=false;
+  boolean forceLabelsOff=false;
+  if (request.getLegendOptions().get("forceLabels") instanceof String) {
+    String forceLabelsOpt=(String)request.getLegendOptions().get("forceLabels");
+    if (forceLabelsOpt.equalsIgnoreCase("on")) {
+      forceLabelsOn=true;
     }
-    applicableRules=new Rule[]{rule};
+ else     if (forceLabelsOpt.equalsIgnoreCase("off")) {
+      forceLabelsOff=true;
+    }
   }
+  for (int pos=0; pos < layers.size(); pos++) {
+    FeatureType layer=layers.get(pos);
+    Style gt2Style=null;
+    String ruleName=null;
+    if (pos < styles.size()) {
+      gt2Style=styles.get(pos);
+    }
  else {
-    applicableRules=LegendUtils.getApplicableRules(ftStyles,scaleDenominator);
-  }
-  final NumberRange<Double> scaleRange=NumberRange.create(scaleDenominator,scaleDenominator);
-  final int ruleCount=applicableRules.length;
-  final List<RenderedImage> legendsStack=new ArrayList<RenderedImage>(ruleCount);
-  final SLDStyleFactory styleFactory=new SLDStyleFactory();
-  final Color bgColor=LegendUtils.getBackgroundColor(request);
-  for (int i=0; i < ruleCount; i++) {
-    final Symbolizer[] symbolizers=applicableRules[i].getSymbolizers();
+      gt2Style=styles.get(styles.size() - 1);
+    }
+    if (gt2Style == null) {
+      throw new NullPointerException("request.getStyle()");
+    }
+    if (pos < rules.size()) {
+      ruleName=rules.get(pos);
+    }
+ else     if (rules.size() > 0) {
+      ruleName=rules.get(rules.size() - 1);
+    }
+    if (ruleName != null && ruleName.equals("")) {
+      ruleName=null;
+    }
+    int w=request.getWidth();
+    int h=request.getHeight();
+    double dpi=RendererUtilities.getDpi(request.getLegendOptions());
+    double standardDpi=RendererUtilities.getDpi(Collections.emptyMap());
+    if (dpi != standardDpi) {
+      double scaleFactor=dpi / standardDpi;
+      w=(int)Math.round(w * scaleFactor);
+      h=(int)Math.round(h * scaleFactor);
+      DpiRescaleStyleVisitor dpiVisitor=new DpiRescaleStyleVisitor(scaleFactor);
+      dpiVisitor.visit(gt2Style);
+      gt2Style=(Style)dpiVisitor.getCopy();
+    }
+    if (request.getScale() > 0) {
+      double pixelsPerMeters=RendererUtilities.calculatePixelsPerMeterRatio(request.getScale(),request.getLegendOptions());
+      UomRescaleStyleVisitor rescaleVisitor=new UomRescaleStyleVisitor(pixelsPerMeters);
+      rescaleVisitor.visit(gt2Style);
+      gt2Style=(Style)rescaleVisitor.getCopy();
+    }
+    boolean strict=request.isStrict();
     final boolean transparent=request.isTransparent();
-    final RenderedImage image=ImageUtils.createImage(w,h,(IndexColorModel)null,transparent);
-    final Map<RenderingHints.Key,Object> hintsMap=new HashMap<RenderingHints.Key,Object>();
-    final Graphics2D graphics=ImageUtils.prepareTransparency(transparent,bgColor,image,hintsMap);
-    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-    for (int sIdx=0; sIdx < symbolizers.length; sIdx++) {
-      final Symbolizer symbolizer=symbolizers[sIdx];
-      if (symbolizer instanceof RasterSymbolizer) {
-        throw new IllegalStateException("It is not legal to have a RasterSymbolizer here");
+    if (layers.size() > 1 && !forceLabelsOff) {
+      layersImages.add(getLayerTitle(layer,w,h,transparent,request));
+    }
+    final boolean buildRasterLegend=(!strict && layer == null && LegendUtils.checkRasterSymbolizer(gt2Style)) || LegendUtils.checkGridLayer(layer);
+    if (buildRasterLegend) {
+      final RasterLayerLegendHelper rasterLegendHelper=new RasterLayerLegendHelper(request,gt2Style,ruleName);
+      final BufferedImage image=rasterLegendHelper.getLegend();
+      layersImages.add(image);
+    }
+ else {
+      final Feature sampleFeature;
+      if (layer == null) {
+        sampleFeature=createSampleFeature();
       }
  else {
-        Style2D style2d=styleFactory.createStyle(sampleFeature,symbolizer,scaleRange);
-        LiteShape2 shape=getSampleShape(symbolizer,w,h);
-        if (style2d != null) {
-          shapePainter.paint(graphics,shape,style2d,scaleDenominator);
-        }
+        sampleFeature=createSampleFeature(layer);
       }
+      final FeatureTypeStyle[] ftStyles=gt2Style.featureTypeStyles().toArray(new FeatureTypeStyle[0]);
+      final double scaleDenominator=request.getScale();
+      final Rule[] applicableRules;
+      if (ruleName != null) {
+        Rule rule=LegendUtils.getRule(ftStyles,ruleName);
+        if (rule == null) {
+          throw new ServiceException("Specified style does not contains a rule named " + ruleName);
+        }
+        applicableRules=new Rule[]{rule};
+      }
+ else {
+        applicableRules=LegendUtils.getApplicableRules(ftStyles,scaleDenominator);
+      }
+      final NumberRange<Double> scaleRange=NumberRange.create(scaleDenominator,scaleDenominator);
+      final int ruleCount=applicableRules.length;
+      final List<RenderedImage> legendsStack=new ArrayList<RenderedImage>(ruleCount);
+      final SLDStyleFactory styleFactory=new SLDStyleFactory();
+      for (int i=0; i < ruleCount; i++) {
+        final Symbolizer[] symbolizers=applicableRules[i].getSymbolizers();
+        final RenderedImage image=ImageUtils.createImage(w,h,(IndexColorModel)null,transparent);
+        final Map<RenderingHints.Key,Object> hintsMap=new HashMap<RenderingHints.Key,Object>();
+        final Graphics2D graphics=ImageUtils.prepareTransparency(transparent,LegendUtils.getBackgroundColor(request),image,hintsMap);
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        for (int sIdx=0; sIdx < symbolizers.length; sIdx++) {
+          final Symbolizer symbolizer=symbolizers[sIdx];
+          if (symbolizer instanceof RasterSymbolizer) {
+            throw new IllegalStateException("It is not legal to have a RasterSymbolizer here");
+          }
+ else {
+            Style2D style2d=styleFactory.createStyle(sampleFeature,symbolizer,scaleRange);
+            LiteShape2 shape=getSampleShape(symbolizer,w,h);
+            if (style2d != null) {
+              shapePainter.paint(graphics,shape,style2d,scaleDenominator);
+            }
+          }
+        }
+        legendsStack.add(image);
+        graphics.dispose();
+      }
+      BufferedImage image=mergeLegends(legendsStack,applicableRules,request,forceLabelsOn,forceLabelsOff);
+      layersImages.add(image);
     }
-    legendsStack.add(image);
-    graphics.dispose();
   }
-  BufferedImage image=mergeLegends(legendsStack,applicableRules,request);
-  return image;
+  return mergeLegends(layersImages,null,request,forceLabelsOn,forceLabelsOff);
 }

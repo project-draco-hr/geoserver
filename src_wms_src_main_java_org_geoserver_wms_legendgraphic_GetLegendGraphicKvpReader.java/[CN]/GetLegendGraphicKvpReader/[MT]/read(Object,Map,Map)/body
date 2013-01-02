@@ -17,26 +17,28 @@
   if (strict && request.getFormat() == null) {
     throw new ServiceException("Missing FORMAT parameter for GetLegendGraphic","MissingFormat");
   }
-  MapLayerInfo mli=null;
+  Object infoObject=null;
+  List<FeatureType> layers=new ArrayList<FeatureType>();
   if (layer != null) {
-    LayerInfo layerInfo=wms.getLayerByName(layer);
-    if (layerInfo == null) {
-      throw new ServiceException(layer + " layer does not exist.");
-    }
-    mli=new MapLayerInfo(layerInfo);
     try {
-      if (layerInfo.getType() == Type.VECTOR) {
-        FeatureType featureType=mli.getFeature().getFeatureType();
-        request.setLayer(featureType);
+      LayerInfo layerInfo=wms.getLayerByName(layer);
+      if (layerInfo != null) {
+        addLayer(layers,layerInfo,request);
+        infoObject=layerInfo;
       }
- else       if (layerInfo.getType() == Type.RASTER) {
-        CoverageInfo coverageInfo=mli.getCoverage();
-        final AbstractGridCoverage2DReader reader;
-        reader=(AbstractGridCoverage2DReader)coverageInfo.getGridCoverageReader(new NullProgressListener(),GeoTools.getDefaultHints());
-        final SimpleFeatureCollection feature;
-        feature=FeatureUtilities.wrapGridCoverageReader(reader,null);
-        request.setLayer(feature.getSchema());
+ else {
+        LayerGroupInfo layerGroupInfo=wms.getLayerGroupByName(layer);
+        if (layerGroupInfo != null) {
+          for (          LayerInfo singleLayer : layerGroupInfo.getLayers()) {
+            addLayer(layers,singleLayer,request);
+          }
+          infoObject=layerGroupInfo;
+        }
+ else {
+          throw new ServiceException(layer + " layer does not exist.");
+        }
       }
+      request.setLayers(layers);
     }
  catch (    IOException e) {
       throw new ServiceException(e);
@@ -55,7 +57,7 @@ catch (    Exception te) {
     throw new ServiceException(new StringBuffer("Invalid graphic format: ").append(request.getFormat()).toString(),"InvalidFormat");
   }
   try {
-    parseOptionalParameters(request,mli,rawKvp);
+    parseOptionalParameters(request,infoObject,rawKvp);
   }
  catch (  IOException e) {
     throw new ServiceException(e);
