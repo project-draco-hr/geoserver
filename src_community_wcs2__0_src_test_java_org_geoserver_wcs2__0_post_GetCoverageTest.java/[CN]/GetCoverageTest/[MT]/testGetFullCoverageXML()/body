@@ -1,0 +1,35 @@
+{
+  final File xml=new File("./src/test/resources/requestGetFullCoverage.xml");
+  final String request=FileUtils.readFileToString(xml);
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  GeoTiffReader readerTarget=new GeoTiffReader(file);
+  GridCoverage2D targetCoverage=null, sourceCoverage=null;
+  try {
+    targetCoverage=readerTarget.read(null);
+    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+    assertEquals(sourceCoverage.getGridGeometry().getGridRange(),targetCoverage.getGridGeometry().getGridRange());
+    assertEquals(sourceCoverage.getCoordinateReferenceSystem(),targetCoverage.getCoordinateReferenceSystem());
+    assertEquals(sourceCoverage.getEnvelope(),targetCoverage.getEnvelope());
+  }
+  finally {
+    try {
+      readerTarget.dispose();
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(sourceCoverage);
+    }
+ catch (    Exception e) {
+    }
+  }
+}

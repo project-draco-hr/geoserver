@@ -1,0 +1,34 @@
+{
+  final File xml=new File("./src/test/resources/requestGetCoverageSlicingLongitudeNativeCRSXML.xml");
+  final String request=FileUtils.readFileToString(xml);
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  GeoTiffReader readerTarget=new GeoTiffReader(file);
+  GridCoverage2D targetCoverage=null;
+  try {
+    targetCoverage=readerTarget.read(null);
+    final GridEnvelope gridRange=targetCoverage.getGridGeometry().getGridRange();
+    final GeneralEnvelope expectedEnvelope=new GeneralEnvelope(new double[]{146.5,-44.49999999999784},new double[]{146.50416666666143,-42.99999999999787});
+    expectedEnvelope.setCoordinateReferenceSystem(CRS.decode("EPSG:4326",true));
+    final double scale=getScale(targetCoverage);
+    assertEnvelopeEquals(expectedEnvelope,scale,(GeneralEnvelope)targetCoverage.getEnvelope(),scale);
+    Assert.assertTrue(CRS.equalsIgnoreMetadata(targetCoverage.getCoordinateReferenceSystem(),expectedEnvelope.getCoordinateReferenceSystem()));
+    assertEquals(gridRange.getSpan(0),1);
+    assertEquals(gridRange.getSpan(1),360);
+  }
+  finally {
+    try {
+      readerTarget.dispose();
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+    }
+  }
+}

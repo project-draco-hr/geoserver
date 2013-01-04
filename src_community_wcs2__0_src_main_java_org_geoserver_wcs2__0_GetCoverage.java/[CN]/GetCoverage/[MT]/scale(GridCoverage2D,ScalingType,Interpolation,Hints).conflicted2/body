@@ -1,32 +1,6 @@
 {
   Utilities.ensureNonNull("sourceGC",sourceGC);
   Utilities.ensureNonNull("ScalingType",scaling);
-  final ScaleByFactorType scaleByFactorType=scaling.getScaleByFactor();
-  double scaleFactor=scaleByFactorType.getScaleFactor();
-  if (scaleFactor < 0) {
-    throw new WCS20Exception("Invalid scale factor",WCS20Exception.WCS20ExceptionCode.InvalidScaleFactor,String.valueOf(scaleFactor));
-  }
-  if (scaleFactor == 1) {
-    if (interpolation instanceof InterpolationNearest) {
-      return sourceGC;
-    }
- else {
-      final Operation operation=CoverageProcessor.getInstance().getOperation("Warp");
-      final ParameterValueGroup parameters=operation.getParameters();
-      parameters.parameter("Source").setValue(sourceGC);
-      parameters.parameter("warp").setValue(new WarpAffine(AffineTransform.getScaleInstance(1,1)));
-      parameters.parameter("interpolation").setValue(interpolation);
-      parameters.parameter("backgroundValues").setValue(CoverageUtilities.getBackgroundValues(sourceGC));
-      return (GridCoverage2D)CoverageProcessor.getInstance(hints).doOperation(parameters,hints);
-    }
-  }
-  final Operation operation=CoverageProcessor.getInstance().getOperation("Scale");
-  final ParameterValueGroup parameters=operation.getParameters();
-  parameters.parameter("Source").setValue(sourceGC);
-  parameters.parameter("interpolation").setValue(interpolation != null ? interpolation : InterpolationPolicy.getDefaultPolicy().getInterpolation());
-  parameters.parameter("xScale").setValue(scaleFactor);
-  parameters.parameter("yScale").setValue(scaleFactor);
-  parameters.parameter("xTrans").setValue(0.0);
-  parameters.parameter("yTrans").setValue(0.0);
-  return (GridCoverage2D)CoverageProcessor.getInstance(hints).doOperation(parameters,hints);
+  Utilities.ensureNonNull("Interpolation",interpolation);
+  return sourceGC;
 }
