@@ -13,4 +13,15 @@
     log.info("Notifying of TileLayer '" + removedLayerName + "' removed externally");
     layerRemoved(removedLayerName);
   }
+  try {
+    DiskQuotaMonitor monitor=getDiskQuotaMonitor();
+    monitor.reloadConfig();
+    ConfigurableQuotaStoreProvider provider=(ConfigurableQuotaStoreProvider)monitor.getQuotaStoreProvider();
+    provider.reloadQuotaStore();
+    monitor.shutDown(1);
+    monitor.startUp();
+  }
+ catch (  Exception e) {
+    log.log(Level.SEVERE,"Failed to reload the disk quoa configuration",e);
+  }
 }
