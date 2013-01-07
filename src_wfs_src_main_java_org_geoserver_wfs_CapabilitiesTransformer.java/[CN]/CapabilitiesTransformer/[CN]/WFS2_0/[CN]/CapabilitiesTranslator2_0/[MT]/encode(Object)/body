@@ -1,6 +1,22 @@
 {
   request=GetCapabilitiesRequest.adapt(o);
-  AttributesImpl attributes=attributes(new String[]{"version","2.0.0","xmlns:xsi",XSI_URI,"xmlns",WFS20_URI,"xmlns:wfs",WFS20_URI,"xmlns:ows",org.geotools.ows.v1_1.OWS.NAMESPACE,"xmlns:gml",org.geotools.gml3.v3_2.GML.NAMESPACE,"xmlns:fes",FES_URI,"xmlns:xlink",XLINK.NAMESPACE,"xmlns:xs",XS.NAMESPACE,"xsi:schemaLocation",WFS20_URI + " " + (wfs.isCanonicalSchemaLocation() ? org.geotools.wfs.v2_0.WFS.CANONICAL_SCHEMA_LOCATION : (buildSchemaURL(request.getBaseUrl(),"wfs/2.0/wfs.xsd")))});
+  delegate.request=request;
+  StringBuilder schemaLocation=new StringBuilder();
+  schemaLocation.append(WFS20_URI);
+  schemaLocation.append(" ");
+  if (wfs.isCanonicalSchemaLocation()) {
+    schemaLocation.append(org.geotools.wfs.v2_0.WFS.CANONICAL_SCHEMA_LOCATION);
+  }
+ else {
+    schemaLocation.append(buildSchemaURL(request.getBaseUrl(),"wfs/2.0/wfs.xsd"));
+  }
+  delegate.addExtensionSchemaLocation(schemaLocation);
+  AttributesImpl attributes=attributes(new String[]{"version","2.0.0","xmlns:xsi",XSI_URI,"xmlns",WFS20_URI,"xmlns:wfs",WFS20_URI,"xmlns:ows",org.geotools.ows.v1_1.OWS.NAMESPACE,"xmlns:gml",org.geotools.gml3.v3_2.GML.NAMESPACE,"xmlns:fes",FES_URI,"xmlns:xlink",XLINK.NAMESPACE,"xmlns:xs",XS.NAMESPACE,"xsi:schemaLocation",schemaLocation.toString()});
+  @SuppressWarnings("rawtypes") Enumeration prefixes=getNamespaceSupport().getPrefixes();
+  while (prefixes.hasMoreElements()) {
+    String prefix=(String)prefixes.nextElement();
+    attributes.addAttribute(null,null,"xmlns:" + prefix,null,getNamespaceSupport().getURI(prefix));
+  }
   registerNamespaces(attributes);
   updateSequence(attributes);
   start("wfs:WFS_Capabilities",attributes);
