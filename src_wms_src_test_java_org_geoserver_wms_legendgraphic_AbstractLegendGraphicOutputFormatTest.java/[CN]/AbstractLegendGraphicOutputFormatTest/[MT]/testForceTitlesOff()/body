@@ -1,0 +1,27 @@
+{
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  Map<String,String> options=new HashMap<String,String>();
+  options.put("forceTitles","off");
+  req.setLegendOptions(options);
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(MockData.ROAD_SEGMENTS.getNamespaceURI(),MockData.ROAD_SEGMENTS.getLocalPart());
+  List<FeatureType> layers=new ArrayList<FeatureType>();
+  layers.add(ftInfo.getFeatureType());
+  req.setLayers(layers);
+  Style style=getCatalog().getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle();
+  req.setStyle(style);
+  this.legendProducer.buildLegendGraphic(req);
+  BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+  assertNotBlank("testMultipleLayers",image,LegendUtils.DEFAULT_BG_COLOR);
+  int height=image.getHeight();
+  layers.add(ftInfo.getFeatureType());
+  this.legendProducer.buildLegendGraphic(req);
+  image=this.legendProducer.buildLegendGraphic(req);
+  assertNotBlank("testForceTitlesOff",image,LegendUtils.DEFAULT_BG_COLOR);
+  assertEquals(2 * height,image.getHeight());
+  assertPixel(image,10,10,new Color(192,160,0));
+  assertPixel(image,10,30,new Color(0,0,0));
+  assertPixel(image,10,50,new Color(224,64,0));
+  assertPixel(image,10,70,new Color(192,160,0));
+  assertPixel(image,10,90,new Color(0,0,0));
+  assertPixel(image,10,110,new Color(224,64,0));
+}
