@@ -1,11 +1,24 @@
 {
-  Set<String> names=new HashSet<String>(Arrays.asList(reader.getMetadataNames()));
+  String[] nameArray=reader.getMetadataNames();
+  if (nameArray == null || nameArray.length == 0) {
+    return Collections.emptyList();
+  }
+  Set<String> names=new HashSet<String>(Arrays.asList(nameArray));
   TreeSet<String> result=new TreeSet<String>();
   for (  String name : names) {
     if (name.startsWith("HAS_") && name.endsWith("_DOMAIN")) {
       String dimension=name.substring(4,name.length() - 7);
-      if (names.contains(dimension + "_DOMAIN")) {
+      if (names.contains(dimension + "_DOMAIN") && !"TIME".equals(dimension) && !"ELEVATION".equals(dimension)) {
         result.add(dimension);
+      }
+    }
+  }
+  if (reader.getDynamicParameters() != null) {
+    for (    ParameterDescriptor<List> pv : reader.getDynamicParameters()) {
+      String code=pv.getName().getCode();
+      if (result.contains(code.toUpperCase())) {
+        result.remove(code.toUpperCase());
+        result.add(code);
       }
     }
   }

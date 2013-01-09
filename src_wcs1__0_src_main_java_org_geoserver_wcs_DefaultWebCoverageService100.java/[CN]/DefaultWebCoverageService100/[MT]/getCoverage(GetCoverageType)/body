@@ -72,7 +72,9 @@
     System.arraycopy(readParameters,0,tmpArray,0,readParameters.length);
     tmpArray[tmpArray.length - 1]=requestedGridGeometryParam;
     readParameters=tmpArray;
-    final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
+    final List<GeneralParameterDescriptor> parameterDescriptors=new ArrayList<GeneralParameterDescriptor>(readParametersDescriptor.getDescriptor().descriptors());
+    Set<ParameterDescriptor<List>> dynamicParameters=reader.getDynamicParameters();
+    parameterDescriptors.addAll(dynamicParameters);
     ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
     DimensionInfo timeDimension=meta.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
     if (timeDimension != null && timeDimension.isEnabled() && dimensions.hasTime()) {
@@ -151,7 +153,7 @@
               for (int s=0; s < valueCount; s++) {
                 dimValues.add(((TypedLiteralType)axis.getSingleValue().get(s)).getValue());
               }
-              readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,dimValues,axisName.toUpperCase());
+              readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,dimValues,axisName);
             }
           }
         }
