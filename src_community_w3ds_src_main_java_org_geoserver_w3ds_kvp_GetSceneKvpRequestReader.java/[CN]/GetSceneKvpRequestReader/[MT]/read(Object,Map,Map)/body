@@ -1,0 +1,52 @@
+{
+  GetSceneRequest gsr=(GetSceneRequest)super.read(request,kvp,rawKvp);
+  String aux=(String)rawKvp.get("SERVICE");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter SERVICE is missing: " + rawKvp.toString());
+  }
+  String service="W3DS";
+  aux=(String)rawKvp.get("VERSION");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter VERSION is missing: " + rawKvp.toString());
+  }
+  String version="0.4.0";
+  aux=(String)rawKvp.get("REQUEST");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter REQUEST is missing: " + rawKvp.toString());
+  }
+  Operation requestStr=Operation.GETSCENE;
+  aux=(String)rawKvp.get("FORMAT");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter FORMAT is missing: " + rawKvp.toString());
+  }
+  Format format=KVPUtils.parseFormat(aux,gsr);
+  aux=(String)rawKvp.get("CRS");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter CRS is missing: " + rawKvp.toString());
+  }
+  CoordinateReferenceSystem crs=KVPUtils.parseCRS(aux);
+  aux=(String)rawKvp.get("BOUNDINGBOX");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter BOUNDINGBOX is missing: " + rawKvp.toString());
+  }
+  Envelope bbox=KVPUtils.parseBbox(aux,crs,LOGGER);
+  aux=(String)rawKvp.get("LAYERS");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter LAYERS is missing: " + rawKvp.toString());
+  }
+  List<W3DSLayerInfo> layers=KVPUtils.parseLayers(aux,catalog,LOGGER);
+  aux=(String)rawKvp.get("STYLES");
+  if (aux != null) {
+    KVPUtils.parseStyles(layers,aux,catalog);
+  }
+ else {
+    KVPUtils.setDefaultStyles(layers,catalog);
+  }
+  String baseUrl="geoserver/w3ds?";
+  aux=(String)rawKvp.get("OFFSET");
+  Coordinate offset=KVPUtils.parseOffset(aux,bbox);
+  gsr.setMandatoryParameters(service,requestStr,version,baseUrl,rawKvp,crs,bbox,format,layers);
+  gsr.setOffset(offset);
+  gsr.setGeoServer(geoServer);
+  return gsr;
+}

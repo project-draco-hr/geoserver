@@ -1,0 +1,20 @@
+{
+  String type="";
+  Unit<?> unit_str=CRSUtilities.getUnit(crs.getCoordinateSystem());
+  if (unit_str.getStandardUnit().isCompatible(SI.METER)) {
+    coordinatesType=X3DDefinitions.GEOGRAPHIC_METRIC.getCode();
+    return;
+  }
+ else {
+    type="\"GD\" \"WE\" \"longitude_first\"";
+    coordinatesType=X3DDefinitions.GEOGRAPHIC_DEGREES.getCode();
+  }
+  geoSystem=new X3DAttribute("geoSystem",type);
+  X3DNode geoOrigin=new X3DNode("geoOrigin");
+  geoOrigin.addX3DAttribute(geoSystem);
+  geoOrigin.addX3DAttribute("geoCoords",String.valueOf(origin[0]) + " " + String.valueOf(origin[1])+ " "+ String.valueOf(origin[2]));
+  geoOrigin.addX3DAttribute("DEF",X3DDefinitions.GEO_ORIGIN.getDefinition());
+  X3DNode geoOriginGroup=new X3DNode("Group");
+  geoOriginGroup.addX3DNode(geoOrigin);
+  scene.addX3DNode(geoOriginGroup);
+}

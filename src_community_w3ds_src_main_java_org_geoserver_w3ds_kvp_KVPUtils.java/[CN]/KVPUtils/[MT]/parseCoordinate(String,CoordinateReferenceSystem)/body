@@ -1,0 +1,18 @@
+{
+  double[] coordinate=new double[3];
+  List unparsed=KvpUtils.readFlat(coordinatestr,",");
+  if (unparsed.size() == 3) {
+    coordinate[0]=Double.valueOf((String)unparsed.get(0));
+    coordinate[1]=Double.valueOf((String)unparsed.get(1));
+    coordinate[2]=Double.valueOf((String)unparsed.get(2));
+  }
+ else {
+    throw new IllegalArgumentException("Error parsing the parameter COORDINATE (must have three axis): " + coordinatestr);
+  }
+  Coordinate cord=new Coordinate(coordinate[0],coordinate[1],coordinate[2]);
+  ReferencedEnvelope crs_e=new ReferencedEnvelope(CRS.getEnvelope(crs));
+  if (!crs_e.contains(cord)) {
+    throw new IllegalArgumentException("Error coordinate (" + coordinatestr + ") not contained by the crs envelope");
+  }
+  return cord;
+}

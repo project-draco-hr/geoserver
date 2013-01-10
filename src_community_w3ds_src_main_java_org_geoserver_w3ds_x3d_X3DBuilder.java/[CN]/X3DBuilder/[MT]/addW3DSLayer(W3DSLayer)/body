@@ -1,0 +1,30 @@
+{
+  newLayer(layer.getLayerInfo(),layer.getStyles());
+  FeatureCollection<?,?> collection=layer.getFeatures();
+  title.append(layer.getLayerInfo().getRequestName());
+  try {
+    FeatureIterator<?> iterator=collection.features();
+    SimpleFeature feature;
+    SimpleFeatureType fType;
+    List<AttributeDescriptor> types;
+    while (iterator.hasNext()) {
+      feature=(SimpleFeature)iterator.next();
+      fType=feature.getFeatureType();
+      types=fType.getAttributeDescriptors();
+      for (int j=0; j < types.size(); j++) {
+        Object value=feature.getAttribute(j);
+        if (value != null) {
+          if (value instanceof Geometry) {
+            addGeometry((Geometry)value,layer.getLayerInfo().getRequestName() + ":" + getObjectID(layer.getHasObjectID(),layer.getObjectID(),feature),getObjectClass(layer.getHasObjectClass(),layer.getObjectClass(),feature),feature);
+          }
+        }
+      }
+    }
+    iterator.close();
+  }
+ catch (  Exception exception) {
+    ServiceException serviceException=new ServiceException("Error: " + exception.getMessage());
+    serviceException.initCause(exception);
+    throw serviceException;
+  }
+}
