@@ -1,0 +1,34 @@
+{
+  String propUrl=System.getProperty(CONFIG_SYSPROP);
+  if (propUrl == null) {
+    return false;
+  }
+  URL url=null;
+  try {
+    try {
+      url=new URL(propUrl);
+    }
+ catch (    MalformedURLException e) {
+      File f=new File(propUrl);
+      if (f.canRead() && f.exists()) {
+        url=DataUtilities.fileToURL(f);
+      }
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error trying to read " + propUrl,e);
+  }
+  if (url != null) {
+    LOGGER.info("Configuring jdbcconfig from " + url.toString());
+    InputStream in=url.openStream();
+    try {
+      config.load(in);
+    }
+  finally {
+      in.close();
+    }
+    return true;
+  }
+  LOGGER.severe("System property " + CONFIG_SYSPROP + " specified "+ propUrl+ " but could not be read, ignoring.");
+  return false;
+}
