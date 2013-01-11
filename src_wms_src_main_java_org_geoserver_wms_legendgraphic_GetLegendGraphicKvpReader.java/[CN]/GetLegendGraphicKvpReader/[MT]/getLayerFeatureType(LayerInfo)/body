@@ -1,0 +1,16 @@
+{
+  MapLayerInfo mli=new MapLayerInfo(layerInfo);
+  if (layerInfo.getType() == Type.VECTOR) {
+    FeatureType featureType=mli.getFeature().getFeatureType();
+    return featureType;
+  }
+ else   if (layerInfo.getType() == Type.RASTER) {
+    CoverageInfo coverageInfo=mli.getCoverage();
+    final AbstractGridCoverage2DReader reader;
+    reader=(AbstractGridCoverage2DReader)coverageInfo.getGridCoverageReader(new NullProgressListener(),GeoTools.getDefaultHints());
+    final SimpleFeatureCollection feature;
+    feature=FeatureUtilities.wrapGridCoverageReader(reader,null);
+    return feature.getSchema();
+  }
+  return null;
+}
