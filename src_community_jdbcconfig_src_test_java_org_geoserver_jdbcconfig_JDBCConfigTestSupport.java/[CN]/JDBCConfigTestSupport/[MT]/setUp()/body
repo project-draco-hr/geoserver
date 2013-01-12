@@ -1,15 +1,14 @@
 {
   ConfigDatabase.LOGGER.setLevel(Level.FINER);
-  WebApplicationContext applicationContext=Mockito.mock(WebApplicationContext.class);
-  new GeoServerExtensions().setApplicationContext(applicationContext);
-  when(applicationContext.getBeansOfType((Class)anyObject())).thenReturn(Collections.EMPTY_MAP);
-  when(applicationContext.getBeanNamesForType((Class)anyObject())).thenReturn(new String[]{});
-  final File testDbDir=new File("target","jdbcconfig");
-  FileUtils.deleteDirectory(testDbDir);
-  testDbDir.mkdirs();
+  resourceLoader=new GeoServerResourceLoader(createTempDir());
+  GeoserverDataDirectory.loader=resourceLoader;
+  appContext=createNiceMock(WebApplicationContext.class);
+  new GeoServerExtensions().setApplicationContext(appContext);
+  configureAppContext(appContext);
+  replay(appContext);
   dataSource=new BasicDataSource();
   dataSource.setDriverClassName(driver);
-  dataSource.setUrl(connectionUrl);
+  dataSource.setUrl(connectionUrl.replace("${DATA_DIR}",resourceLoader.getBaseDirectory().getAbsolutePath()));
   dataSource.setUsername("postgres");
   dataSource.setPassword("geo123");
   dataSource.setMinIdle(3);
