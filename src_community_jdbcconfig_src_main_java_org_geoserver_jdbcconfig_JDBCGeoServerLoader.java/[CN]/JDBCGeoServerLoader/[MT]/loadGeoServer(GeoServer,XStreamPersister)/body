@@ -10,4 +10,11 @@
   if (geoServer.getLogging() == null) {
     geoServer.setLogging(geoServer.getFactory().createLogging());
   }
+  final List<XStreamServiceLoader> loaders=GeoServerExtensions.extensions(XStreamServiceLoader.class);
+  for (  XStreamServiceLoader l : loaders) {
+    ServiceInfo s=geoServer.getService(l.getServiceClass());
+    if (s == null) {
+      geoServer.add(l.create(geoServer));
+    }
+  }
 }
