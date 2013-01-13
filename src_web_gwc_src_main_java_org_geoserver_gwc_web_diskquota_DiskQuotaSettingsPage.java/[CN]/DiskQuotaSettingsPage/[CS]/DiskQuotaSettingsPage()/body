@@ -1,6 +1,11 @@
 {
   GWC gwc=getGWC();
   final boolean diskQuotaModuleDisabled=gwc.getDiskQuotaConfig() == null;
+  ConfigurableQuotaStoreProvider provider=GeoServerApplication.get().getBeanOfType(ConfigurableQuotaStoreProvider.class);
+  if (provider.getException() != null) {
+    ParamResourceModel rm=new ParamResourceModel("GWC.diskQuotaLoadFailed",null,provider.getException().getMessage());
+    error(rm.getString());
+  }
   final DiskQuotaConfig diskQuotaConfig;
   if (diskQuotaModuleDisabled) {
     diskQuotaConfig=new DiskQuotaConfig();
@@ -61,6 +66,7 @@
  catch (          Exception e) {
             LOGGER.log(Level.SEVERE,"Error instantiating the JDBC configuration",e);
             error("Failure occurred while saving the JDBC configuration" + e.getMessage() + " (see the logs for a full stack trace)");
+            return;
           }
         }
         dqConfig.getGlobalQuota().setValue(chosenQuota.doubleValue(),chosenUnit);
@@ -70,6 +76,7 @@
  catch (        Exception e) {
           LOGGER.log(Level.SEVERE,"Failed to save the JDBC configuration",e);
           error("Failure occurred while saving the JDBC configuration" + e.getMessage() + " (see the logs for a full stack trace)");
+          return;
         }
       }
       doReturn();
