@@ -5,7 +5,7 @@
   final List<GridCoverage> coverageResults=new ArrayList<GridCoverage>();
   try {
     meta=catalog.getCoverageByName(request.getSourceCoverage());
-    if (meta == null)     throw new WcsException("Cannot find sourceCoverage on the catalog!");
+    if (meta == null)     throw new WcsException("Cannot find sourceCoverage " + request.getSourceCoverage() + " in the catalog!");
     checkRangeSubset(meta,request.getRangeSubset());
     checkInterpolationMethod(meta,request.getInterpolationMethod());
     checkOutput(meta,request.getOutput());
@@ -72,7 +72,9 @@
     System.arraycopy(readParameters,0,tmpArray,0,readParameters.length);
     tmpArray[tmpArray.length - 1]=requestedGridGeometryParam;
     readParameters=tmpArray;
-    final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
+    final List<GeneralParameterDescriptor> parameterDescriptors=new ArrayList<GeneralParameterDescriptor>(readParametersDescriptor.getDescriptor().descriptors());
+    Set<ParameterDescriptor<List>> dynamicParameters=reader.getDynamicParameters();
+    parameterDescriptors.addAll(dynamicParameters);
     ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
     DimensionInfo timeDimension=meta.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
     if (timeDimension != null && timeDimension.isEnabled() && dimensions.hasTime()) {
@@ -136,6 +138,27 @@
       }
       readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,elevations,"ELEVATION","Elevation");
     }
+    if (request.getRangeSubset() != null) {
+      EList<?> axisSubset=request.getRangeSubset().getAxisSubset();
+      final int asCount=axisSubset == null ? 0 : axisSubset.size();
+      for (int i=0; i < asCount; i++) {
+        AxisSubsetType axis=(AxisSubsetType)axisSubset.get(i);
+        String axisName=axis.getName();
+        if (!axisName.equalsIgnoreCase(WCSUtils.ELEVATION)) {
+          Object dimInfo=meta.getMetadata().get(ResourceInfo.CUSTOM_DIMENSION_PREFIX + axisName);
+          if (dimInfo instanceof DimensionInfo && dimensions.hasDomain(axisName)) {
+            int valueCount=axis.getSingleValue().size();
+            if (valueCount > 0) {
+              List<String> dimValues=new ArrayList<String>(valueCount);
+              for (int s=0; s < valueCount; s++) {
+                dimValues.add(((TypedLiteralType)axis.getSingleValue().get(s)).getValue());
+              }
+              readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,dimValues,axisName);
+            }
+          }
+        }
+      }
+    }
     Filter filter=WCSUtils.getRequestFilter();
     if (filter != null) {
       readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,filter,"FILTER","Filter");
@@ -143,7 +166,7 @@
     WCSUtils.checkInputLimits(wcs,meta,reader,requestedGridGeometry);
     coverage=(GridCoverage2D)reader.read(readParameters);
     if ((coverage == null) || !(coverage instanceof GridCoverage2D)) {
-      throw new IOException("The requested coverage could not be found.");
+      throw new IOException("No raster data found in the request (it may be that " + "the request bbox is outside of the coverage area, or that the filters used " + "match no portions of it.");
     }
     WCSUtils.checkInputLimits(wcs,coverage);
     GridCoverage2D bandSelectedCoverage=coverage;

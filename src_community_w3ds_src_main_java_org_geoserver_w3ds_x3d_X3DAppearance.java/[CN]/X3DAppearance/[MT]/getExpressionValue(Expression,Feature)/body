@@ -1,0 +1,28 @@
+{
+  if (exp.getClass().isAssignableFrom(LiteralExpressionImpl.class)) {
+    LiteralExpressionImpl v=(LiteralExpressionImpl)exp;
+    byte[] utf8Bytes=null;
+    String result="";
+    try {
+      utf8Bytes=v.toString().getBytes("UTF8");
+      result=new String(utf8Bytes,"UTF8");
+    }
+ catch (    UnsupportedEncodingException e) {
+      return "";
+    }
+    return result;
+  }
+  if (exp.getClass().isAssignableFrom(AttributeExpressionImpl.class)) {
+    AttributeExpressionImpl v=(AttributeExpressionImpl)exp;
+    String property=v.getPropertyName();
+    Property p=feature.getProperty(property);
+    if (p == null) {
+      return "";
+    }
+    Object o=p.getValue();
+    if (o != null) {
+      return o.toString();
+    }
+  }
+  return "";
+}

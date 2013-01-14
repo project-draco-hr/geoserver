@@ -1,0 +1,55 @@
+{
+  if (inIdentifier) {
+    inIdentifier=false;
+    tileSet.setIdentifier(new String(ch,start,length));
+  }
+ else   if (inCRS) {
+    CoordinateReferenceSystem crs=null;
+    try {
+      inCRS=false;
+      crs=CRS.decode(new String(ch,start,length));
+      tileSet.setCrs(crs);
+    }
+ catch (    NoSuchAuthorityCodeException e) {
+      throw new SAXException("CRS " + new String(ch,start,length) + " not reconized.");
+    }
+catch (    Exception e) {
+      throw new SAXException("Error parsing the CRS " + new String(ch,start,length) + ".");
+    }
+  }
+ else   if (inTileSizes) {
+    inTileSizes=false;
+    String[] tilesSizes_str=W3DSUtils.parseStrArray(new String(ch,start,length),"\\s+");
+    if (!(tilesSizes_str.length > 0)) {
+      throw new SAXException("Error parsing the 'TileSizes' tag " + new String(ch,start,length) + ".");
+    }
+    for (    String s : tilesSizes_str) {
+      try {
+        float size=Float.valueOf(s);
+        tileSet.addTileSize(size);
+      }
+ catch (      Exception e) {
+        throw new SAXException("Error parsing the 'size' " + s + ".");
+      }
+    }
+  }
+ else   if (inLowerCorner) {
+    inLowerCorner=false;
+    String[] lowerCorner_str=W3DSUtils.parseStrArray(new String(ch,start,length),"\\s+");
+    if (lowerCorner_str.length != 2) {
+      throw new SAXException("Error parsing the 'LowerCorner' tag " + new String(ch,start,length) + ".");
+    }
+    try {
+      tileSet.setLowerCornerX(Double.valueOf(lowerCorner_str[0]));
+    }
+ catch (    Exception e) {
+      throw new SAXException("Error parsing the 'X LowerCorner' " + lowerCorner_str[0] + ".");
+    }
+    try {
+      tileSet.setLowerCornerY(Double.valueOf(lowerCorner_str[1]));
+    }
+ catch (    Exception e) {
+      throw new SAXException("Error parsing the 'Y LowerCorner' " + lowerCorner_str[1] + ".");
+    }
+  }
+}

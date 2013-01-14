@@ -1,0 +1,15 @@
+{
+  FeatureTypeInfo states=getCatalog().getFeatureTypeByName("states");
+  states.setTitle(null);
+  getCatalog().save(states);
+  File layouts=getDataDirectory().findOrCreateDir("layouts");
+  URL layout=GetMapIntegrationTest.class.getResource("test-layout-sldtitle.xml");
+  FileUtils.copyURLToFile(layout,new File(layouts,"test-layout-sldtitle.xml"));
+  int dpi=90 * 2;
+  int width=550 * 2;
+  int height=250 * 2;
+  BufferedImage image=getAsImage("wms?bbox=" + bbox + "&styles=Population&layers="+ layers+ "&Format=image/png"+ "&request=GetMap"+ "&width="+ width+ "&height="+ height+ "&srs=EPSG:4326&format_options=layout:test-layout-sldtitle;dpi:"+ dpi,"image/png");
+  assertPixel(image,15,67,Color.RED);
+  assertPixel(image,15,107,Color.GREEN);
+  assertPixel(image,15,147,Color.BLUE);
+}

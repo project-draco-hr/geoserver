@@ -1,0 +1,26 @@
+{
+  if (monitorConfig.getBboxMode() != MonitorConfig.BboxMode.FULL) {
+    return null;
+  }
+  List<Object> elements=getElements(request);
+  if (elements == null)   return null;
+  try {
+    BoundingBox result=new ReferencedEnvelope(monitorConfig.getBboxCrs());
+    for (    Object e : elements) {
+      e=unwrapElement(e);
+      CoordinateReferenceSystem defaultCrs=getCrsFromElement(e);
+      if (defaultCrs == null)       return null;
+      Filter f=(Filter)OwsUtils.get(e,"filter");
+      if (f != null) {
+        ReferencedEnvelope startingBbox=new ReferencedEnvelope(defaultCrs);
+        ReferencedEnvelope filterBbox=(ReferencedEnvelope)f.accept(visitor,startingBbox);
+        result.include(filterBbox.toBounds(monitorConfig.getBboxCrs()));
+      }
+    }
+    return result;
+  }
+ catch (  TransformException ex) {
+    LOGGER.warning("Could not Transform bounds to desired CRS");
+    return null;
+  }
+}

@@ -1,0 +1,20 @@
+{
+  Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
+  if (authentication != null) {
+    List<LogoutHandler> logoutHandlers=calculateActiveLogoutHandlers(skipHandlerName);
+    for (    LogoutHandler h : logoutHandlers) {
+      h.logout(request,response,authentication);
+    }
+    RememberMeServices rms=securityManager.getRememberMeService();
+    ((LogoutHandler)rms).logout(request,response,authentication);
+    logoutHandler.logout(request,response,authentication);
+  }
+  String redirectUrl=(String)request.getAttribute(LOGOUT_REDIRECT_ATTR);
+  if (StringUtils.hasLength(redirectUrl)) {
+    SimpleUrlLogoutSuccessHandler h=new SimpleUrlLogoutSuccessHandler();
+    h.setDefaultTargetUrl(redirectUrl);
+    h.onLogoutSuccess(request,response,authentication);
+    return;
+  }
+  logoutSuccessHandler.onLogoutSuccess(request,response,authentication);
+}

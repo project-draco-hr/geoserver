@@ -1,0 +1,62 @@
+{
+  if (econdingParameters.containsKey("compression")) {
+    String compressionS=econdingParameters.get("compression");
+    if (compressionS != null && !compressionS.equalsIgnoreCase("none")) {
+      if (compressionS.equals("LZW")) {
+        wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        wp.setCompressionType("LZW");
+        String predictorS=econdingParameters.get("predictor");
+        if (predictorS != null) {
+          if (predictorS.equals("None")) {
+          }
+ else           if (predictorS.equals("Horizontal")) {
+            wp.setTIFFCompressor(new TIFFLZWCompressor(BaselineTIFFTagSet.PREDICTOR_HORIZONTAL_DIFFERENCING));
+          }
+ else           if (predictorS.equals("Floatingpoint")) {
+            throw new OWS20Exception("Floating Point predictor is not supported",ows20Code(WcsExceptionCode.PredictorNotSupported),predictorS);
+          }
+ else {
+            throw new OWS20Exception("Invalid Predictor provided",ows20Code(WcsExceptionCode.PredictorInvalid),predictorS);
+          }
+        }
+      }
+ else       if (compressionS.equals("JPEG")) {
+        wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        wp.setCompressionType("JPEG");
+        wp.setCompressionQuality(DEFAULT_JPEG_COMPRESSION_QUALITY);
+        if (econdingParameters.containsKey("jpeg_quality")) {
+          final String quality_=econdingParameters.get("jpeg_quality");
+          if (quality_ != null) {
+            try {
+              final int quality=Integer.valueOf(quality_);
+              if (quality > 0 && quality <= 100) {
+                wp.setCompressionQuality(quality / 100.f);
+              }
+ else {
+                throw new OWS20Exception("Provided quality value for the jpeg compression in invalid",ows20Code(WcsExceptionCode.JpegQualityInvalid),quality_);
+              }
+            }
+ catch (            Exception e) {
+              throw new OWS20Exception("Provided quality value for the jpeg compression in invalid",ows20Code(WcsExceptionCode.JpegQualityInvalid),quality_);
+            }
+          }
+        }
+      }
+ else       if (compressionS.equals("PackBits")) {
+        wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        wp.setCompressionType("PackBits");
+      }
+ else       if (compressionS.equals("DEFLATE")) {
+        wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        wp.setCompressionType("Deflate");
+      }
+ else       if (compressionS.equals("Huffman")) {
+        wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        wp.setCompressionType("CCITT RLE");
+      }
+ else {
+        throw new OWS20Exception("Provided compression does not seem supported",ows20Code(WcsExceptionCode.CompressionInvalid),compressionS);
+      }
+    }
+  }
+}

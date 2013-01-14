@@ -1,0 +1,20 @@
+{
+  JDBCConfigProperties config=createNiceMock(JDBCConfigProperties.class);
+  expect(config.isInitDb()).andReturn(true).anyTimes();
+  expect(config.isImport()).andReturn(false).anyTimes();
+  replay(config);
+  JDBCGeoServerLoader loader=new JDBCGeoServerLoader(testSupport.getResourceLoader(),config);
+  loader.setGeoServerFacade(new JDBCGeoServerFacade(testSupport.getDatabase()));
+  loader.setApplicationContext(testSupport.getApplicationContext());
+  GeoServerImpl geoServer=createNiceMock(GeoServerImpl.class);
+  expect(geoServer.getFactory()).andReturn(new GeoServerFactoryImpl(geoServer)).anyTimes();
+  geoServer.setGlobal((GeoServerInfo)anyObject());
+  expectLastCall().once();
+  geoServer.setLogging((LoggingInfo)anyObject());
+  expectLastCall().once();
+  geoServer.add((ServiceInfo)anyObject());
+  expectLastCall().once();
+  replay(geoServer);
+  loader.postProcessBeforeInitialization(geoServer,"geoServer");
+  verify(geoServer);
+}

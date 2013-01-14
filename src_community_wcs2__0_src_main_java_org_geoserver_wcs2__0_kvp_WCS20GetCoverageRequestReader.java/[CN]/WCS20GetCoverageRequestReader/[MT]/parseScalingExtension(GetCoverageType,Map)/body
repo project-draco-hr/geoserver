@@ -1,0 +1,29 @@
+{
+  boolean found=false;
+  ScalingType scaling=WCS20_FACTORY.createScalingType();
+  if (kvp.containsKey("scalefactor")) {
+    found=true;
+    ScaleByFactorType sf=WCS20_FACTORY.createScaleByFactorType();
+    sf.setScaleFactor(((Double)kvp.get("scalefactor")));
+    scaling.setScaleByFactor(sf);
+  }
+  if (kvp.containsKey("scaleaxes")) {
+    found=true;
+    scaling.setScaleAxesByFactor((ScaleAxisByFactorType)kvp.get("scaleaxes"));
+  }
+  if (kvp.containsKey("scalesize")) {
+    found=true;
+    scaling.setScaleToSize((ScaleToSizeType)kvp.get("scalesize"));
+  }
+  if (kvp.containsKey("scaleextent")) {
+    found=true;
+    scaling.setScaleToExtent((ScaleToExtentType)kvp.get("scaleextent"));
+  }
+  if (found == true) {
+    ExtensionItemType item=WCS20_FACTORY.createExtensionItemType();
+    item.setNamespace(Scaling.NAMESPACE);
+    item.setName("Scaling");
+    item.setObjectContent(scaling);
+    gc.getExtension().getContents().add(item);
+  }
+}

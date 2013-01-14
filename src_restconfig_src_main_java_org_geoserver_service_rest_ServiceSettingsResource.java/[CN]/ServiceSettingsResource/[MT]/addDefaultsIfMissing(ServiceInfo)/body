@@ -1,29 +1,11 @@
 {
-  if (serviceInfo instanceof WMSInfoImpl) {
-    WMSInfoImpl wmsInfo=(WMSInfoImpl)serviceInfo;
-    if (wmsInfo.getAuthorityURLs() == null) {
-      List<AuthorityURLInfo> authorityURLS=new ArrayList<AuthorityURLInfo>();
-      wmsInfo.setAuthorityURLs(authorityURLS);
-    }
-    if (wmsInfo.getIdentifiers() == null) {
-      List<LayerIdentifierInfo> identifiers=new ArrayList<LayerIdentifierInfo>();
-      wmsInfo.setIdentifiers(identifiers);
-    }
-    if (wmsInfo.getSRS() == null) {
-      List<String> srsList=new ArrayList<String>();
-      wmsInfo.setSRS(srsList);
-    }
+  if (serviceInfo == null) {
+    return;
   }
- else   if (serviceInfo instanceof WFSInfoImpl) {
-    WFSInfoImpl wfsInfo=(WFSInfoImpl)serviceInfo;
-    if (wfsInfo.getGML() == null) {
-      GMLInfoImpl gml3Info=new GMLInfoImpl();
-      gml3Info.setOverrideGMLAttributes(true);
-      Map<WFSInfo.Version,GMLInfo> gml=new HashMap<WFSInfo.Version,GMLInfo>();
-      wfsInfo.setGML(gml);
-      wfsInfo.getGML().put(WFSInfo.Version.V_11,gml3Info);
-      wfsInfo.getGML().put(WFSInfo.Version.V_10,gml3Info);
-      wfsInfo.getGML().put(WFSInfo.Version.V_20,gml3Info);
+  List<XStreamServiceLoader> loaders=GeoServerExtensions.extensions(XStreamServiceLoader.class);
+  for (  XStreamServiceLoader loader : loaders) {
+    if (loader.getClass().isAssignableFrom(serviceInfo.getClass())) {
+      loader.initializeService(serviceInfo);
     }
   }
 }

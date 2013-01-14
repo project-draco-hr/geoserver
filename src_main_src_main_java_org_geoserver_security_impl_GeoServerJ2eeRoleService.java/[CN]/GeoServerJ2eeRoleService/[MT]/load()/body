@@ -1,0 +1,18 @@
+{
+  if (roleMap != null)   return;
+  LOGGER.info("Start reloading roles for service named " + getName());
+  GeoServerResourceLoader loader=(GeoServerResourceLoader)GeoServerExtensions.bean("resourceLoader");
+  File webXML=loader.find("web.xml");
+  if (webXML == null)   throw new IOException("Cannot open /WEB-INF/web.xml");
+  LOGGER.info("Extracting roles from: " + webXML.getCanonicalPath());
+  Set<String> roles=parseWebXML(webXML);
+  roleMap=new HashMap<String,GeoServerRole>();
+  for (  String role : roles) {
+    roleMap.put(role,createRoleObject(role));
+    parentMappings.put(role,null);
+  }
+  roleSet=new TreeSet<GeoServerRole>();
+  roleSet.addAll(roleMap.values());
+  LOGGER.info("Reloading roles successful for service named " + getName());
+  fireRoleLoadedEvent();
+}

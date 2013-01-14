@@ -1,0 +1,14 @@
+{
+  final Integer epsgCode=CRS.lookupEpsgCode(outputCRS,false);
+  if (epsgCode != null && epsgCode > 0) {
+    CoordinateReferenceSystem finalCRS=latLonCRSFactory.createCoordinateReferenceSystem(SRS_STARTER + epsgCode);
+    if (CRS.getAxisOrder(outputCRS).equals(CRS.getAxisOrder(finalCRS))) {
+      return coverage;
+    }
+    final AffineTransform g2w=new AffineTransform((AffineTransform2D)coverage.getGridGeometry().getGridToCRS2D());
+    g2w.preConcatenate(CoverageUtilities.AXES_SWAP);
+    final GridGeometry2D finalGG=new GridGeometry2D(coverage.getGridGeometry().getGridRange(),PixelInCell.CELL_CENTER,new AffineTransform2D(g2w),finalCRS,hints);
+    coverage=CoverageFactoryFinder.getGridCoverageFactory(hints).create(coverage.getName(),coverage.getRenderedImage(),finalGG,coverage.getSampleDimensions(),new GridCoverage[]{coverage},coverage.getProperties());
+  }
+  return coverage;
+}

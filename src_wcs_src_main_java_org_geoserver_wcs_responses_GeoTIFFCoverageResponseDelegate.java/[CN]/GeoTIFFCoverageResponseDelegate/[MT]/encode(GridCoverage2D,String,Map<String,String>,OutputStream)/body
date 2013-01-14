@@ -1,0 +1,25 @@
+{
+  Utilities.ensureNonNull("sourceCoverage",sourceCoverage);
+  Utilities.ensureNonNull("econdingParameters",econdingParameters);
+  final GeoTiffWriteParams wp=new GeoTiffWriteParams();
+  handleCompression(econdingParameters,wp);
+  handleTiling(econdingParameters,wp);
+  handleInterleaving(econdingParameters,wp,sourceCoverage);
+  final ParameterValueGroup writerParams=GEOTIF_FORMAT.getWriteParameters();
+  writerParams.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+  if (geoserver.getService(WCSInfo.class).isLatLon()) {
+    writerParams.parameter(GeoTiffFormat.RETAIN_AXES_ORDER.getName().toString()).setValue(true);
+  }
+  GeoTiffWriter writer=(GeoTiffWriter)GEOTIF_FORMAT.getWriter(output);
+  try {
+    if (writer != null)     writer.write(sourceCoverage,(GeneralParameterValue[])writerParams.values().toArray(new GeneralParameterValue[1]));
+  }
+  finally {
+    try {
+      if (writer != null)       writer.dispose();
+    }
+ catch (    Throwable e) {
+    }
+    sourceCoverage.dispose(false);
+  }
+}

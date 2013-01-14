@@ -1,0 +1,28 @@
+{
+  if (sourceCoverage == null) {
+    throw new IllegalStateException(new StringBuffer("It seems prepare() has not been called").append(" or has not succeed").toString());
+  }
+  GZIPOutputStream gzipOut=null;
+  if (isOutputCompressed(outputFormat)) {
+    gzipOut=new GZIPOutputStream(output);
+    output=gzipOut;
+  }
+  ArcGridWriter writer=null;
+  try {
+    writer=new ArcGridWriter(output);
+    writer.write(sourceCoverage,null);
+    if (gzipOut != null) {
+      gzipOut.finish();
+      gzipOut.flush();
+    }
+  }
+  finally {
+    try {
+      if (writer != null)       writer.dispose();
+    }
+ catch (    Throwable e) {
+    }
+    if (gzipOut != null)     IOUtils.closeQuietly(gzipOut);
+    sourceCoverage.dispose(true);
+  }
+}

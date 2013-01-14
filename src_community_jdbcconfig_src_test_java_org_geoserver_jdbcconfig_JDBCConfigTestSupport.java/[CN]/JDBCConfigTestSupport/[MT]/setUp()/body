@@ -1,0 +1,34 @@
+{
+  ConfigDatabase.LOGGER.setLevel(Level.FINER);
+  resourceLoader=new GeoServerResourceLoader(createTempDir());
+  GeoserverDataDirectory.loader=resourceLoader;
+  appContext=createNiceMock(WebApplicationContext.class);
+  new GeoServerExtensions().setApplicationContext(appContext);
+  configureAppContext(appContext);
+  replay(appContext);
+  dataSource=new BasicDataSource();
+  dataSource.setDriverClassName(driver);
+  dataSource.setUrl(connectionUrl.replace("${DATA_DIR}",resourceLoader.getBaseDirectory().getAbsolutePath()));
+  dataSource.setUsername("postgres");
+  dataSource.setPassword("geo123");
+  dataSource.setMinIdle(3);
+  dataSource.setMaxActive(10);
+  try {
+    Connection connection=dataSource.getConnection();
+    connection.close();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  try {
+    dropDb(dataSource);
+  }
+ catch (  Exception ignored) {
+  }
+  initDb(dataSource);
+  XStreamInfoSerialBinding binding=new XStreamInfoSerialBinding(new XStreamPersisterFactory());
+  catalog=new CatalogImpl();
+  configDb=new ConfigDatabase(dataSource,binding);
+  configDb.setCatalog(catalog);
+  configDb.initDb(null);
+}

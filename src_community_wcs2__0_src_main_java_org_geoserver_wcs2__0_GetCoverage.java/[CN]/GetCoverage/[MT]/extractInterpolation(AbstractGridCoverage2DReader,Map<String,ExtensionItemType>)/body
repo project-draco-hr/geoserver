@@ -1,0 +1,51 @@
+{
+  final Map<String,InterpolationPolicy> returnValue=new HashMap<String,InterpolationPolicy>();
+  final Envelope envelope=reader.getOriginalEnvelope();
+  final List<String> axesNames=envelopeDimensionsMapper.getAxesNames(envelope,true);
+  for (  String axisName : axesNames) {
+    returnValue.put(axisName,InterpolationPolicy.getDefaultPolicy());
+  }
+  if (extensions == null || extensions.size() == 0 || !extensions.containsKey("Interpolation")) {
+    return returnValue;
+  }
+  final ExtensionItemType extensionItem=extensions.get("Interpolation");
+  InterpolationType interpolationType=(InterpolationType)extensionItem.getObjectContent();
+  if (interpolationType.getInterpolationMethod() != null) {
+    InterpolationMethodType method=interpolationType.getInterpolationMethod();
+    InterpolationPolicy policy=InterpolationPolicy.getPolicy(method);
+    for (    String axisName : axesNames) {
+      returnValue.put(axisName,policy);
+    }
+  }
+ else   if (interpolationType.getInterpolationAxes() != null) {
+    final List<String> foundAxes=new ArrayList<String>();
+    final InterpolationAxesType axes=interpolationType.getInterpolationAxes();
+    for (    InterpolationAxisType axisInterpolation : axes.getInterpolationAxis()) {
+      final String method=axisInterpolation.getInterpolationMethod();
+      final InterpolationPolicy policy=InterpolationPolicy.getPolicy(method);
+      final String axis=axisInterpolation.getAxis();
+      int index=axis.lastIndexOf("/");
+      final String axisLabel=(index >= 0 ? axis.substring(index + 1,axis.length()) : axis);
+      if (foundAxes.contains(axisLabel)) {
+        throw new WCS20Exception("Duplicated axis",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,axisLabel);
+      }
+      foundAxes.add(axisLabel);
+      if (!returnValue.containsKey(axisLabel)) {
+        throw new WCS20Exception("Invalid axes URI",WCS20Exception.WCS20ExceptionCode.NoSuchAxis,axisLabel);
+      }
+      returnValue.put(axisLabel,policy);
+    }
+  }
+  InterpolationPolicy lat=null, lon=null;
+  if (returnValue.containsKey("Long")) {
+    lon=returnValue.get("Long");
+  }
+  if (returnValue.containsKey("Lat")) {
+    lat=returnValue.get("Lat");
+  }
+  if (lat != lon) {
+    throw new WCS20Exception("We don't support different interpolations on Lat,Lon",WCS20Exception.WCS20ExceptionCode.InterpolationMethodNotSupported,"");
+  }
+  returnValue.get("Lat");
+  return returnValue;
+}

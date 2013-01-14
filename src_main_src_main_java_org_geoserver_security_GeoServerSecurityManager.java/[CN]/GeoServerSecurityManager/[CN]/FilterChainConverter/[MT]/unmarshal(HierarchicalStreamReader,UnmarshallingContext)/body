@@ -4,6 +4,11 @@
     reader.moveDown();
     String path=reader.getAttribute("path");
     String name=reader.getAttribute("name");
+    String classname=reader.getAttribute("class");
+    String roleFilterName=reader.getAttribute("roleFilterName");
+    String disabledString=reader.getAttribute("disabled");
+    String allowSessionCreationString=reader.getAttribute("allowSessionCreation");
+    String interceptorName=reader.getAttribute("interceptorName");
     if (name == null) {
       RequestFilterChain requestChain=GeoServerSecurityFilterChain.lookupRequestChainByPattern(path,GeoServerSecurityManager.this);
       if (requestChain != null) {
@@ -13,18 +18,68 @@
         name=path;
       }
     }
+    if (classname == null) {
+      if ("web".equals(name)) {
+        classname=HtmlLoginFilterChain.class.getName();
+        allowSessionCreationString="true";
+        interceptorName=GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR;
+      }
+      if ("webLogin".equals(name)) {
+        classname=ConstantFilterChain.class.getName();
+        allowSessionCreationString="true";
+        interceptorName=GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR;
+      }
+      if ("webLogout".equals(name)) {
+        classname=LogoutFilterChain.class.getName();
+        allowSessionCreationString="true";
+        interceptorName=GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR;
+      }
+      if ("rest".equals(name)) {
+        classname=ServiceLoginFilterChain.class.getName();
+        allowSessionCreationString="false";
+        interceptorName=GeoServerSecurityFilterChain.FILTER_SECURITY_REST_INTERCEPTOR;
+      }
+      if ("gwc".equals(name)) {
+        classname=ServiceLoginFilterChain.class.getName();
+        allowSessionCreationString="false";
+        interceptorName=GeoServerSecurityFilterChain.FILTER_SECURITY_REST_INTERCEPTOR;
+      }
+      if ("default".equals(name)) {
+        classname=ServiceLoginFilterChain.class.getName();
+        allowSessionCreationString="false";
+        interceptorName=GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR;
+      }
+    }
     ArrayList<String> filterNames=new ArrayList<String>();
     while (reader.hasMoreChildren()) {
       reader.moveDown();
       filterNames.add(reader.getValue());
       reader.moveUp();
     }
-    RequestFilterChain requestChain=new RequestFilterChain(path.split(","));
+    RequestFilterChain requestChain=null;
+    try {
+      Class<?> chainClass=Class.forName(classname);
+      Constructor<?> cons=chainClass.getConstructor(new Class[]{String[].class});
+      String[] args=path.split(",");
+      requestChain=(RequestFilterChain)cons.newInstance(new Object[]{args});
+    }
+ catch (    Exception ex) {
+      throw new RuntimeException(ex);
+    }
     requestChain.setName(name);
+    if (StringUtils.hasLength(disabledString)) {
+      requestChain.setDisabled(Boolean.parseBoolean(disabledString));
+    }
+    if (StringUtils.hasLength(allowSessionCreationString)) {
+      requestChain.setAllowSessionCreation(Boolean.parseBoolean(allowSessionCreationString));
+    }
+    if (requestChain instanceof VariableFilterChain) {
+      ((VariableFilterChain)requestChain).setRoleFilterName(roleFilterName);
+      ((VariableFilterChain)requestChain).setInterceptorName(interceptorName);
+    }
     requestChain.setFilterNames(filterNames);
     filterChain.getRequestChains().add(requestChain);
     reader.moveUp();
   }
-  filterChain.simplify();
   return filterChain;
 }

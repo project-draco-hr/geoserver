@@ -1,0 +1,33 @@
+{
+  InterpolationType result=Wcs20Factory.eINSTANCE.createInterpolationType();
+  value=value.trim();
+  if (value.matches("http://www.opengis.net/def/interpolation/OGC/1/[^,:]*")) {
+    InterpolationMethodType method=Wcs20Factory.eINSTANCE.createInterpolationMethodType();
+    method.setInterpolationMethod(value);
+    result.setInterpolationMethod(method);
+    return result;
+  }
+  if (value.matches(".*,\\s*,.*")) {
+    throwInvalidSyntaxException();
+  }
+ else   if (value.startsWith(",") || value.endsWith(",")) {
+    throwInvalidSyntaxException();
+  }
+  InterpolationAxesType axes=Wcs20Factory.eINSTANCE.createInterpolationAxesType();
+  result.setInterpolationAxes(axes);
+  String[] components=value.split("\\s*,\\s*");
+  for (  String component : components) {
+    if (!component.matches("http://www.opengis.net/def/axis/OGC/1/.*:http://www.opengis.net/def/interpolation/OGC/1/.*")) {
+      throwInvalidSyntaxException();
+    }
+ else     if (component.matches(".*:\\s*:.*")) {
+      throwInvalidSyntaxException();
+    }
+    int idx=component.indexOf(":","http://www.opengis.net/def/axis/OGC/1/".length());
+    InterpolationAxisType ia=Wcs20Factory.eINSTANCE.createInterpolationAxisType();
+    ia.setAxis(component.substring(0,idx));
+    ia.setInterpolationMethod(component.substring(idx + 1));
+    axes.getInterpolationAxis().add(ia);
+  }
+  return result;
+}

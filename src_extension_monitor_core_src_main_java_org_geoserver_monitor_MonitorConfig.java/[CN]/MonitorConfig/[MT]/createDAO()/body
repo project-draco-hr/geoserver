@@ -1,0 +1,25 @@
+{
+  MonitorDAO dao=null;
+  String storage=getStorage();
+  if (storage == null) {
+    Mode mode=getMode();
+    if (mode == Mode.HISTORY || mode == Mode.HYBRID) {
+      storage="hibernate";
+    }
+  }
+  if (storage == null) {
+    storage=MemoryMonitorDAO.NAME;
+  }
+  for (  MonitorDAO d : GeoServerExtensions.extensions(MonitorDAO.class)) {
+    if (storage.equalsIgnoreCase(d.getName())) {
+      dao=d;
+      break;
+    }
+  }
+  if (dao == null) {
+    LOGGER.warning("monitoring storage " + storage + " not found, falling back to '"+ MemoryMonitorDAO.NAME+ "'");
+    dao=new MemoryMonitorDAO();
+  }
+  dao.init(this);
+  return dao;
+}

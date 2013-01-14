@@ -1,11 +1,57 @@
 {
   super(id,new Model());
-  requestChain=model.getObject().getRequestChainByName("web");
-  add(new RequestChainDropDownChoice("requestChain",new PropertyModel(this,"requestChain"),new PropertyModel<List<RequestFilterChain>>(model,"requestChains")).add(new OnChangeAjaxBehavior(){
+  this.setOutputMarkupId(true);
+  setRequestChain((VariableFilterChain)model.getObject().getRequestChainByName("web"));
+  dropDownChoice=new RequestChainDropDownChoice("requestChain",new PropertyModel(this,"requestChain"),new PropertyModel<List<VariableFilterChain>>(model,"variableRequestChains"));
+  add(dropDownChoice);
+  dropDownChoice.add(new OnChangeAjaxBehavior(){
     @Override protected void onUpdate(    AjaxRequestTarget target){
-      target.addComponent(AuthFilterChainPanel.this.get("authFilterChain"));
+      palette.setChain(dropDownChoice.getModelObject());
+      target.addComponent(roleFilterChoice);
+      target.addComponent(palette);
+      target.addComponent(disabled);
+      target.addComponent(allowSessionCreation);
+      target.addComponent(antPatternField);
     }
   }
-));
-  add(new AuthFilterChainPalette("authFilterChain",new AuthFilterNamesModel(model)).setOutputMarkupId(true));
+);
+  add(antPatternField=new TextField<String>("antPatterns",new PropertyModel<String>(this,"antPatterns")));
+  antPatternField.setEnabled(false);
+  antPatternField.setOutputMarkupId(true);
+  add(allowSessionCreation=new CheckBox("allowSessionCreation",new PropertyModel<Boolean>(this,"requestChain.allowSessionCreation")));
+  allowSessionCreation.setOutputMarkupId(true);
+  allowSessionCreation.add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+    }
+  }
+);
+  add(disabled=new CheckBox("disabled",new PropertyModel<Boolean>(this,"requestChain.disabled")));
+  disabled.setOutputMarkupId(true);
+  disabled.add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      palette.setEnabled(!requestChain.isDisabled());
+      roleFilterChoice.setEnabled(!requestChain.isDisabled());
+      target.addComponent(palette);
+      target.addComponent(roleFilterChoice);
+    }
+  }
+);
+  add(palette=new AuthFilterChainPalette("authFilterChain",new AuthFilterNamesModel(model)));
+  palette.setOutputMarkupId(true);
+  palette.setChain(requestChain);
+  List<String> roleFilterNames=null;
+  try {
+    roleFilterNames=new ArrayList<String>(getSecurityManager().listFilters(GeoServerRoleFilter.class));
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  add(roleFilterChoice=new DropDownChoice<String>("roleFilterChoice",new PropertyModel<String>(this,"requestChain.roleFilterName"),roleFilterNames));
+  roleFilterChoice.setOutputMarkupId(true);
+  roleFilterChoice.setNullValid(true);
+  roleFilterChoice.add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+    }
+  }
+);
 }

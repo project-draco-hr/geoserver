@@ -1,14 +1,14 @@
 {
   try {
     final CoordinateReferenceSystem coverageCRS=reader.getCrs();
-    final CoordinateReferenceSystem requestCRS=requestedModelArea.getCoordinateReferenceSystem();
+    final CoordinateReferenceSystem requestCRS=envelope.getCoordinateReferenceSystem();
     final ReferencedEnvelope coverageEnvelope=new ReferencedEnvelope(reader.getOriginalEnvelope());
     if (CRS.equalsIgnoreMetadata(coverageCRS,requestCRS)) {
-      if (!coverageEnvelope.intersects((BoundingBox)requestedModelArea))       return null;
+      if (!coverageEnvelope.intersects((BoundingBox)envelope))       return null;
     }
  else {
       ReferencedEnvelope dataEnvelopeWGS84=coverageEnvelope.transform(DefaultGeographicCRS.WGS84,true);
-      ReferencedEnvelope requestEnvelopeWGS84=requestedModelArea.transform(DefaultGeographicCRS.WGS84,true);
+      ReferencedEnvelope requestEnvelopeWGS84=envelope.transform(DefaultGeographicCRS.WGS84,true);
       if (!dataEnvelopeWGS84.intersects((BoundingBox)requestEnvelopeWGS84))       return null;
     }
   }
@@ -16,7 +16,7 @@
     LOGGER.log(Level.WARNING,"Failed to compare data and request envelopes, proceeding with rendering anyways",e);
   }
   final Parameter<GridGeometry2D> readGG=(Parameter<GridGeometry2D>)AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
-  readGG.setValue(new GridGeometry2D(new GridEnvelope2D(requestedRasterArea),requestedModelArea));
+  readGG.setValue(new GridGeometry2D(new GridEnvelope2D(requestedRasterArea),envelope));
   final Parameter<Interpolation> readInterpolation=(Parameter<Interpolation>)ImageMosaicFormat.INTERPOLATION.createValue();
   readInterpolation.setValue(interpolation);
   final Parameter<Color> bgColorParam;

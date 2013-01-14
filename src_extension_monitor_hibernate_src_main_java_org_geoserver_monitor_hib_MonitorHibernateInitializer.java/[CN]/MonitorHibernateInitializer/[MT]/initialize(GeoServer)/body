@@ -1,0 +1,23 @@
+{
+  if (!monitor.isEnabled())   return;
+  SessionFactory sessionFactory=null;
+  if (monitor.getDAO() instanceof HibernateMonitorDAO2) {
+    sessionFactory=((HibernateMonitorDAO2)monitor.getDAO()).getSessionFactory();
+    HibUtil.setUpSession(sessionFactory);
+  }
+  try {
+    Query query=new Query().filter("status",Arrays.asList(Status.RUNNING,Status.WAITING,Status.CANCELLING),Comparison.IN);
+    for (    RequestData data : monitor.getDAO().getRequests(query)) {
+      if (InternalHostname.get().equals(data.getInternalHost())) {
+        data.setStatus(Status.INTERRUPTED);
+        monitor.getDAO().save(data);
+      }
+    }
+  }
+  finally {
+    if (sessionFactory != null) {
+      HibUtil.tearDownSession(sessionFactory,null);
+    }
+  }
+  LOGGER.info("Monitor hibernate extension enabled");
+}

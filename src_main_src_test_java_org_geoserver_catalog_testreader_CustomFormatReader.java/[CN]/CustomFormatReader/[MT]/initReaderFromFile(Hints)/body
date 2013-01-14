@@ -1,0 +1,19 @@
+{
+  if (!this.dataDirectory.isDirectory()) {
+    throw new IOException(this.dataDirectory + " is not a directory");
+  }
+  File dataFile=null;
+  for (  String filename : this.dataDirectory.list()) {
+    if (isDataFile(filename)) {
+      dataFile=new File(this.dataDirectory,filename);
+      break;
+    }
+  }
+  if (dataFile == null) {
+    throw new IOException("No data file found");
+  }
+  final GeoTiffReader geotiffReader=new GeoTiffReader(dataFile,hints);
+  this.crs=geotiffReader.getCrs();
+  this.originalGridRange=geotiffReader.getOriginalGridRange();
+  this.originalEnvelope=geotiffReader.getOriginalEnvelope();
+}

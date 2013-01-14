@@ -1,0 +1,27 @@
+{
+  X3DInfoExtract x3dInfoExtract=new X3DInfoExtract(catalog,false);
+  String[] stylesNames=W3DSUtils.parseStrArray(stylesstr,"\\s*,\\s*");
+  if (stylesNames.length != layers.size()) {
+    throw new IllegalArgumentException("Styles list length don't correspond to layers list lenght.");
+  }
+  int i=0;
+  for (  W3DSLayerInfo wl : layers) {
+    x3dInfoExtract.setLayerInfo(wl.getLayerInfo());
+    String styleName=stylesNames[i];
+    if (!styleName.isEmpty()) {
+      if (x3dInfoExtract.containsStyle(styleName)) {
+        StyleInfo styleInfo=catalog.getStyleByName(styleName);
+        if (styleInfo != null) {
+          wl.setRequestStyle(styleInfo);
+          i++;
+          continue;
+        }
+      }
+    }
+    StyleInfo styleInfo=x3dInfoExtract.getDefaultStyle();
+    if (styleInfo != null) {
+      wl.setRequestStyle(styleInfo);
+    }
+    i++;
+  }
+}

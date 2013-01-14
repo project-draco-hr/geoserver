@@ -1,0 +1,44 @@
+{
+  if (econdingParameters.containsKey("tiling")) {
+    final String tilingS=econdingParameters.get("tiling");
+    if (tilingS != null && Boolean.valueOf(tilingS)) {
+      wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
+      final Dimension tileDimensions=new Dimension(JAI.getDefaultTileSize());
+      if (econdingParameters.containsKey("tilewidth")) {
+        final String tileW_=econdingParameters.get("tilewidth");
+        if (tileW_ != null) {
+          try {
+            final int tileW=Integer.valueOf(tileW_);
+            if (tileW > 0 && (tileW % 16 == 0)) {
+              tileDimensions.width=tileW;
+            }
+ else {
+              throw new OWS20Exception("Provided tile width is invalid",ows20Code(WcsExceptionCode.TilingInvalid),Integer.toString(tileW));
+            }
+          }
+ catch (          Exception e) {
+            throw new OWS20Exception("Provided tile width is invalid",ows20Code(WcsExceptionCode.TilingInvalid),tileW_);
+          }
+        }
+      }
+      if (econdingParameters.containsKey("tileheight")) {
+        final String tileH_=econdingParameters.get("tileheight");
+        if (tileH_ != null) {
+          try {
+            final int tileH=Integer.valueOf(tileH_);
+            if (tileH > 0 && (tileH % 16 == 0)) {
+              tileDimensions.height=tileH;
+            }
+ else {
+              throw new OWS20Exception("Provided tile height is invalid",ows20Code(WcsExceptionCode.TilingInvalid),Integer.toString(tileH));
+            }
+          }
+ catch (          Exception e) {
+            throw new OWS20Exception("Provided tile height is invalid",ows20Code(WcsExceptionCode.TilingInvalid),tileH_);
+          }
+        }
+      }
+      wp.setTiling(tileDimensions.width,tileDimensions.height);
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  Utilities.ensureNonNull("interpolation",spatialInterpolation);
+  final CoordinateReferenceSystem coverageCRS=reader.getCrs();
+  if (!CRS.equalsIgnoreMetadata(subset.getCoordinateReferenceSystem(),coverageCRS)) {
+    subset=CRS.transform(CRS.findMathTransform(subset.getCoordinateReferenceSystem(),coverageCRS),subset);
+    subset.setCoordinateReferenceSystem(coverageCRS);
+  }
+  final GridGeometry2D readGG;
+  final boolean equalsMetadata=CRS.equalsIgnoreMetadata(outputCRS,coverageCRS);
+  boolean sameCRS;
+  try {
+    sameCRS=equalsMetadata ? true : CRS.findMathTransform(outputCRS,coverageCRS,true).isIdentity();
+  }
+ catch (  FactoryException e1) {
+    final IOException ioe=new IOException();
+    ioe.initCause(e1);
+    throw ioe;
+  }
+  final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
+  GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,cinfo.getParameters());
+  readParameters=(readParameters != null ? readParameters : new GeneralParameterValue[0]);
+  readParameters=RequestUtils.replaceParameter(readParameters,Boolean.FALSE,AbstractGridFormat.USE_JAI_IMAGEREAD);
+  if (sameCRS) {
+    readGG=new GridGeometry2D(PixelInCell.CELL_CENTER,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),subset,hints);
+    return RequestUtils.readBestCoverage(reader,readParameters,readGG,spatialInterpolation,hints);
+  }
+ else {
+    Rectangle rasterRange=CRS.transform(reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER).inverse(),subset).toRectangle2D().getBounds();
+    rasterRange.setBounds(rasterRange.x - 10,rasterRange.y - 10,rasterRange.width + 20,rasterRange.height + 20);
+    rasterRange=rasterRange.intersection((GridEnvelope2D)reader.getOriginalGridRange());
+    readGG=new GridGeometry2D(new GridEnvelope2D(rasterRange),PixelInCell.CELL_CENTER,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),coverageCRS,hints);
+    return RequestUtils.readBestCoverage(reader,readParameters,readGG,spatialInterpolation,hints);
+  }
+}

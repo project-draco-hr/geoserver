@@ -1,0 +1,44 @@
+{
+  final WCSInfo wcsInfo=getWCS();
+  final boolean oldLatLon=wcsInfo.isLatLon();
+  wcsInfo.setLatLon(true);
+  getGeoServer().save(wcsInfo);
+  MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1&coverageId=wcs__BlueMarble");
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=new File("./target/bm_full.tiff");
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  final Hints hints=new Hints();
+  hints.put(Hints.FORCE_AXIS_ORDER_HONORING,"EPSG");
+  hints.put(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER,Boolean.FALSE);
+  GeoTiffReader readerTarget=new GeoTiffReader(file,hints);
+  GridCoverage2D targetCoverage=null, sourceCoverage=null;
+  try {
+    targetCoverage=readerTarget.read(null);
+    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+    assertEquals(sourceCoverage.getGridGeometry().getGridRange(),targetCoverage.getGridGeometry().getGridRange());
+    assertEquals(CRS.getAxisOrder(targetCoverage.getCoordinateReferenceSystem()),AxisOrder.NORTH_EAST);
+    final GeneralEnvelope transformedEnvelope=CRS.transform((AffineTransform2D)CoverageUtilities.AXES_SWAP,targetCoverage.getEnvelope());
+    transformedEnvelope.setCoordinateReferenceSystem(sourceCoverage.getCoordinateReferenceSystem());
+    assertEquals(sourceCoverage.getEnvelope(),transformedEnvelope);
+  }
+  finally {
+    wcsInfo.setLatLon(oldLatLon);
+    getGeoServer().save(wcsInfo);
+    try {
+      readerTarget.dispose();
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(sourceCoverage);
+    }
+ catch (    Exception e) {
+    }
+  }
+}

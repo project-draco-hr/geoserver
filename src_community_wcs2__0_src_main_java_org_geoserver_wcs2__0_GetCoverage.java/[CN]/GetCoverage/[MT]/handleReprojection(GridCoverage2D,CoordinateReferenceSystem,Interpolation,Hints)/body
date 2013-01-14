@@ -1,0 +1,14 @@
+{
+  Utilities.ensureNonNull("interpolation",spatialInterpolation);
+  if (CRS.equalsIgnoreMetadata(coverage.getCoordinateReferenceSystem2D(),outputCRS)) {
+    return coverage;
+  }
+  final CoverageProcessor processor=hints == null ? CoverageProcessor.getInstance() : CoverageProcessor.getInstance(hints);
+  final Operation operation=processor.getOperation("Resample");
+  final ParameterValueGroup parameters=operation.getParameters();
+  parameters.parameter("Source").setValue(coverage);
+  parameters.parameter("CoordinateReferenceSystem").setValue(outputCRS);
+  parameters.parameter("GridGeometry").setValue(null);
+  parameters.parameter("InterpolationType").setValue(spatialInterpolation);
+  return (GridCoverage2D)processor.doOperation(parameters);
+}

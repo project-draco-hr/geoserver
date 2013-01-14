@@ -1,0 +1,21 @@
+{
+  if (extensions == null || extensions.size() == 0 || !extensions.containsKey(subsettingCRS ? "subsettingCrs" : "outputCrs")) {
+    return reader.getCrs();
+  }
+  final ExtensionItemType extensionItem=extensions.get(subsettingCRS ? "subsettingCrs" : "outputCrs");
+  if (extensionItem.getName().equals(subsettingCRS ? "subsettingCrs" : "outputCrs")) {
+    String crsName=extensionItem.getSimpleContent();
+    if (crsName == null) {
+      throw new WCS20Exception(subsettingCRS ? "Subsetting" : "Output" + " CRS was null",WCS20ExceptionCode.NotACrs,"null");
+    }
+    try {
+      return lonLatCRSFactory.createCoordinateReferenceSystem(crsName);
+    }
+ catch (    Exception e) {
+      final WCS20Exception exception=new WCS20Exception("Invalid " + (subsettingCRS ? "subsetting" : "output") + " CRS",WCS20Exception.WCS20ExceptionCode.NotACrs,crsName);
+      exception.initCause(e);
+      throw exception;
+    }
+  }
+  return reader.getCrs();
+}

@@ -1,0 +1,21 @@
+{
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  int titleHeight=getTitleHeight(req);
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(MockData.ROAD_SEGMENTS.getNamespaceURI(),MockData.ROAD_SEGMENTS.getLocalPart());
+  List<FeatureType> layers=new ArrayList<FeatureType>();
+  layers.add(ftInfo.getFeatureType());
+  layers.add(ftInfo.getFeatureType());
+  req.setLayers(layers);
+  List<Style> styles=new ArrayList<Style>();
+  Style style1=getCatalog().getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle();
+  styles.add(style1);
+  Style style2=getCatalog().getStyleByName(MockData.LAKES.getLocalPart()).getStyle();
+  styles.add(style2);
+  req.setStyles(styles);
+  this.legendProducer.buildLegendGraphic(req);
+  BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+  assertPixel(image,10,10 + titleHeight,new Color(192,160,0));
+  assertPixel(image,10,30 + titleHeight,new Color(0,0,0));
+  assertPixel(image,10,50 + titleHeight,new Color(224,64,0));
+  assertPixel(image,10,70 + titleHeight * 2,new Color(64,64,192));
+}

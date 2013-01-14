@@ -1,0 +1,14 @@
+{
+  List<Filter> filters=new ArrayList<Filter>();
+  ReferenceIdentifier id=(ReferenceIdentifier)bbox.getCoordinateReferenceSystem().getIdentifiers().toArray()[0];
+  for (int j=0; j < schema.getAttributeCount(); j++) {
+    AttributeDescriptor attType=schema.getDescriptor(j);
+    if (attType instanceof GeometryDescriptor) {
+      Filter gfilter=filterFactory.bbox(attType.getLocalName(),bbox.getMinimum(0),bbox.getMinimum(1),bbox.getMaximum(0),bbox.getMaximum(1),id.toString());
+      filters.add(gfilter);
+    }
+  }
+  if (filters.size() == 0)   return Filter.INCLUDE;
+ else   if (filters.size() == 1)   return (Filter)filters.get(0);
+ else   return filterFactory.or(filters);
+}

@@ -1,0 +1,18 @@
+{
+  final File xml=new File("./src/test/resources/requestGetCoverageScaleToExtent.xml");
+  final String request=FileUtils.readFileToString(xml);
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  final GeoTiffReader reader=new GeoTiffReader(file);
+  Assert.assertTrue(CRS.equalsIgnoreMetadata(reader.getCrs(),CRS.decode("EPSG:4326",true)));
+  assertEquals(200,reader.getOriginalGridRange().getSpan(0));
+  assertEquals(300,reader.getOriginalGridRange().getSpan(1));
+  final GridCoverage2D coverage=reader.read(null);
+  Assert.assertNotNull(coverage);
+  assertEnvelopeEquals(sourceCoverage,coverage);
+  reader.dispose();
+  scheduleForCleaning(coverage);
+}

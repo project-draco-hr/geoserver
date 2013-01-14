@@ -1,0 +1,37 @@
+{
+  start("wcs:ServiceMetadata");
+  if (ct.getAcceptVersions() == null || ct.getAcceptVersions().getVersion() == null || ct.getAcceptVersions().getVersion().isEmpty() || ct.getAcceptVersions().getVersion().contains("2.0.1")) {
+    Set<String> formats=new TreeSet<String>();
+    for (    String format : responseFactory.getOutputFormats()) {
+      CoverageResponseDelegate delegate=responseFactory.encoderFor(format);
+      String mime=delegate.getMimeType(format);
+      try {
+        new URI(mime);
+        formats.add(mime);
+      }
+ catch (      URISyntaxException e) {
+      }
+    }
+    for (    String format : formats) {
+      element("wcs:formatSupported",format);
+    }
+  }
+  start("wcs:Extension");
+  Collection<String> codes;
+  if (wcs.getSRS() == null || wcs.getSRS().isEmpty()) {
+    codes=CRS.getSupportedCodes("EPSG");
+  }
+ else {
+    codes=wcs.getSRS();
+  }
+  for (  String code : codes) {
+    if (!code.equals("WGS84(DD)")) {
+      element("wcscrs:crsSupported","http://www.opengis.net/def/crs/EPSG/0/" + code);
+    }
+  }
+  element("int:interpolationSupported","http://www.opengis.net/def/interpolation/OGC/1/nearest-neighbor");
+  element("int:interpolationSupported","http://www.opengis.net/def/interpolation/OGC/1/linear");
+  element("int:interpolationSupported","http://www.opengis.net/def/interpolation/OGC/1/cubic");
+  end("wcs:Extension");
+  end("wcs:ServiceMetadata");
+}

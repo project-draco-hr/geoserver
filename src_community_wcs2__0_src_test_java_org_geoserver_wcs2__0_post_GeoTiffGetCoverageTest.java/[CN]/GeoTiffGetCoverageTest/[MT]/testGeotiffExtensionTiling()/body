@@ -1,0 +1,19 @@
+{
+  final File xml=new File("./src/test/resources/geotiff/geotiffExtensionTiling.xml");
+  final String request=FileUtils.readFileToString(xml);
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=new File("./target/bm_gtiff.tiff");
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  final TIFFImageReader reader=(TIFFImageReader)new TIFFImageReaderSpi().createReaderInstance();
+  reader.setInput(new FileImageInputStream(file));
+  assertTrue(reader.isImageTiled(0));
+  assertEquals(256,reader.getTileHeight(0));
+  assertEquals(256,reader.getTileWidth(0));
+  IIOMetadataNode node=((TIFFImageMetadata)reader.getImageMetadata(0)).getStandardDataNode();
+  assertNotNull(node);
+  assertEquals("PlanarConfiguration",node.getFirstChild().getNodeName());
+  assertEquals("PixelInterleaved",node.getFirstChild().getAttributes().item(0).getNodeValue());
+  reader.dispose();
+}
