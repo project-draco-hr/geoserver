@@ -1,0 +1,21 @@
+{
+  if (layerGroup == null)   return;
+  if (layerGroup.getWorkspace() != null && !ws.equals(layerGroup.getWorkspace())) {
+    throw new IllegalArgumentException("Layer group within a workspace (" + ws.getName() + ") can not contain resources from other workspace: "+ layerGroup.getWorkspace().getName());
+  }
+  checkLayerGroupResourceIsInWorkspace(layerGroup.getRootLayer(),ws);
+  checkLayerGroupResourceIsInWorkspace(layerGroup.getRootLayerStyle(),ws);
+  for (  PublishedInfo p : layerGroup.getLayers()) {
+    if (p instanceof LayerGroupInfo) {
+      checkLayerGroupResourceIsInWorkspace((LayerGroupInfo)p,ws);
+    }
+ else {
+      checkLayerGroupResourceIsInWorkspace((LayerInfo)p,ws);
+    }
+  }
+  if (layerGroup.getStyles() != null) {
+    for (    StyleInfo s : layerGroup.getStyles()) {
+      checkLayerGroupResourceIsInWorkspace(s,ws);
+    }
+  }
+}

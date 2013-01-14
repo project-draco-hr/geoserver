@@ -5,6 +5,22 @@
     elementName=cam.serializedClass(item.getClass());
   }
   writer.startNode(elementName);
-  if (item != null)   context.convertAnother(item,new ReferenceConverter(clazz));
+  if (item != null) {
+    if (subclasses != null) {
+      Class theClass=null;
+      for (      Class clazz : subclasses) {
+        if (clazz.isInstance(item)) {
+          theClass=clazz;
+          break;
+        }
+      }
+      if (theClass == null) {
+        throw new ConversionException("Unexpected item " + item + " whose type is not among: "+ subclasses);
+      }
+      String typeName=cam.serializedClass(theClass);
+      writer.addAttribute("type",typeName);
+    }
+    context.convertAnother(item,new ReferenceConverter(clazz));
+  }
   writer.endNode();
 }

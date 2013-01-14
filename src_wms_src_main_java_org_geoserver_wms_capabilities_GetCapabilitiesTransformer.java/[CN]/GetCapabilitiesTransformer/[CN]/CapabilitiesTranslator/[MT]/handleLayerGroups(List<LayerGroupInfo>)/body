@@ -3,67 +3,9 @@
   if (layerGroups == null || layerGroups.size() == 0) {
     return layersAlreadyProcessed;
   }
-  Collections.sort(layerGroups,new Comparator<LayerGroupInfo>(){
-    public int compare(    LayerGroupInfo o1,    LayerGroupInfo o2){
-      return o1.getName().compareTo(o2.getName());
-    }
-  }
-);
-  for (  LayerGroupInfo layerGroup : layerGroups) {
-    String layerName=layerGroup.prefixedName();
-    AttributesImpl qatts=new AttributesImpl();
-    boolean queryable=wmsConfig.isQueryable(layerGroup);
-    qatts.addAttribute("","queryable","queryable","",queryable ? "1" : "0");
-    start("Layer",qatts);
-    if (!LayerGroupInfo.Mode.CONTAINER.equals(layerGroup.getMode())) {
-      element("Name",layerName);
-    }
-    if (StringUtils.isEmpty(layerGroup.getTitle())) {
-      element("Title",layerName);
-    }
- else {
-      element("Title",layerGroup.getTitle());
-    }
-    if (StringUtils.isEmpty(layerGroup.getAbstract())) {
-      element("Abstract","Layer-Group type layer: " + layerName);
-    }
- else {
-      element("Abstract",layerGroup.getAbstract());
-    }
-    final ReferencedEnvelope layerGroupBounds=layerGroup.getBounds();
-    final ReferencedEnvelope latLonBounds=layerGroupBounds.transform(DefaultGeographicCRS.WGS84,true);
-    String authority=layerGroupBounds.getCoordinateReferenceSystem().getIdentifiers().toArray()[0].toString();
-    element("SRS",authority);
-    handleLatLonBBox(latLonBounds);
-    handleBBox(layerGroupBounds,authority);
-    if (LayerGroupInfo.Mode.EO.equals(layerGroup.getMode())) {
-      LayerInfo rootLayer=layerGroup.getRootLayer();
-      if (rootLayer.getType() == Type.VECTOR) {
-        dimensionHelper.handleVectorLayerDimensions(rootLayer);
-      }
- else       if (rootLayer.getType() == Type.RASTER) {
-        dimensionHelper.handleRasterLayerDimensions(rootLayer);
-      }
-      layersAlreadyProcessed.add(layerGroup.getRootLayer());
-    }
-    handleAuthorityURL(layerGroup.getAuthorityURLs());
-    handleLayerIdentifiers(layerGroup.getIdentifiers());
-    List<LayerInfo> layers=layerGroup.getLayers();
-    Set<MetadataLinkInfo> aggregatedLinks=new HashSet<MetadataLinkInfo>();
-    for (    LayerInfo layer : layers) {
-      List<MetadataLinkInfo> metadataLinks=layer.getResource().getMetadataLinks();
-      if (metadataLinks != null) {
-        aggregatedLinks.addAll(metadataLinks);
-      }
-    }
-    handleMetadataList(aggregatedLinks);
-    if (!LayerGroupInfo.Mode.SINGLE.equals(layerGroup.getMode())) {
-      for (      LayerInfo layer : layers) {
-        handleLayer(layer);
-        layersAlreadyProcessed.add(layer);
-      }
-    }
-    end("Layer");
+  List<LayerGroupInfo> topLevelGropus=filterNestedGroups(layerGroups);
+  for (  LayerGroupInfo layerGroup : topLevelGropus) {
+    handleLayerGroup(layerGroup,layersAlreadyProcessed);
   }
   return layersAlreadyProcessed;
 }

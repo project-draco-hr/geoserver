@@ -1,0 +1,24 @@
+{
+  boolean dirty=false;
+  if (style.equals(group.getRootLayerStyle())) {
+    group.setRootLayerStyle(getResourceDefaultStyle(group.getRootLayer().getResource(),style));
+    dirty=true;
+  }
+  List<StyleInfo> styles=group.getStyles();
+  for (int i=0; i < styles.size(); i++) {
+    StyleInfo publishedStyle=styles.get(i);
+    if (publishedStyle != null && publishedStyle.equals(style)) {
+      LayerInfo layer=(LayerInfo)group.getLayers().get(i);
+      if (!layer.getDefaultStyle().equals(style)) {
+        styles.set(i,layer.getDefaultStyle());
+      }
+ else {
+        styles.set(i,getResourceDefaultStyle(layer.getResource(),style));
+      }
+      dirty=true;
+    }
+  }
+  if (dirty) {
+    catalog.save(group);
+  }
+}

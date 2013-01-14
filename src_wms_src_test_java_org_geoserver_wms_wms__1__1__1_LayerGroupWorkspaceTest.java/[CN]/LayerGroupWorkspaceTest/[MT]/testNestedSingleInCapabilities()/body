@@ -1,0 +1,14 @@
+{
+  Catalog cat=getCatalog();
+  nested=createLayerGroup(cat,"nested","nested",layer(cat,MockData.BRIDGES),global);
+  nested.setMode(Mode.NAMED);
+  cat.add(nested);
+  Document dom=getAsDOM("wms?request=getcapabilities&version=1.1.1");
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer/Name[text() = 'nested']",dom);
+  assertXpathNotExists("/WMT_MS_Capabilities/Capability/Layer/Layer/Name[text() = 'cite:Bridges']",dom);
+  assertXpathNotExists("/WMT_MS_Capabilities/Capability/Layer/Layer/Name[text() = 'base']",dom);
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer[Name = 'nested']/Layer[Name = 'cite:Bridges']",dom);
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer[Name = 'nested']/Layer[Name = 'base']",dom);
+  assertXpathNotExists("/WMT_MS_Capabilities/Capability/Layer/Layer[Name = 'nested']/Layer[Name = 'base']/Layer[Name = 'cite:Lakes']",dom);
+  assertXpathNotExists("/WMT_MS_Capabilities/Capability/Layer/Layer[Name = 'nested']/Layer[Name = 'base']/Layer[Name = 'cite:Forests']",dom);
+}

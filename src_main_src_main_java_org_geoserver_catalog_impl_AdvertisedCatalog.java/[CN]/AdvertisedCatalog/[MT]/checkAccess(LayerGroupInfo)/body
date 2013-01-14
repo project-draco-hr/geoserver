@@ -2,14 +2,25 @@
   if (group == null) {
     return null;
   }
-  final List<LayerInfo> filteredLayers=filterLayers(group.getLayers());
+  final List<PublishedInfo> filteredLayers=new ArrayList<PublishedInfo>();
+  for (  PublishedInfo p : group.getLayers()) {
+    if (p instanceof LayerInfo) {
+      p=checkAccess((LayerInfo)p);
+    }
+ else {
+      p=checkAccess((LayerGroupInfo)p);
+    }
+    if (p != null) {
+      filteredLayers.add(p);
+    }
+  }
   if (layerGroupPolicy.hideLayerGroup(group,filteredLayers)) {
     return null;
   }
  else {
     if (group.getLayers().size() != filteredLayers.size()) {
       return new DecoratingLayerGroupInfo(group){
-        @Override public List<LayerInfo> getLayers(){
+        @Override public List<PublishedInfo> getLayers(){
           return filteredLayers;
         }
       }

@@ -1,0 +1,18 @@
+{
+  Catalog cat=getCatalog();
+  LayerGroupInfo global=cat.getLayerGroupByName("base");
+  global.setMode(Mode.NAMED);
+  cat.save(global);
+  LayerGroupInfo global2=cat.getLayerGroupByName("base2");
+  global2.setMode(Mode.NAMED);
+  cat.save(global2);
+  Document dom=getAsDOM("wms?request=getcapabilities&version=1.1.1");
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer/Name[text() = 'base']",dom);
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer/Name[text() = 'base2']",dom);
+  assertXpathNotExists("/WMT_MS_Capabilities/Capability/Layer/Layer/Name[text() = 'cite:Lakes']",dom);
+  assertXpathNotExists("/WMT_MS_Capabilities/Capability/Layer/Layer/Name[text() = 'cite:Forests']",dom);
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer[Name = 'base']/Layer[Name = 'cite:Lakes']",dom);
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer[Name = 'base']/Layer[Name = 'cite:Forests']",dom);
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer[Name = 'base2']/Layer[Name = 'cite:Lakes']",dom);
+  assertXpathExists("/WMT_MS_Capabilities/Capability/Layer/Layer[Name = 'base2']/Layer[Name = 'cite:Forests']",dom);
+}

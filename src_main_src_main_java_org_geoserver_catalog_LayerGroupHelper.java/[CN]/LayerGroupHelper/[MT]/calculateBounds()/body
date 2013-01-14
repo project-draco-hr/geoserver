@@ -1,0 +1,32 @@
+{
+  List<LayerInfo> layers=allLayers();
+  if (layers.isEmpty()) {
+    return;
+  }
+  LayerInfo l=layers.get(0);
+  ReferencedEnvelope bounds=l.getResource().boundingBox();
+  boolean latlon=false;
+  if (bounds == null) {
+    bounds=l.getResource().getLatLonBoundingBox();
+    latlon=true;
+  }
+  if (bounds == null) {
+    throw new IllegalArgumentException("Could not calculate bounds from layer with no bounds, " + l.getName());
+  }
+  for (int i=1; i < layers.size(); i++) {
+    l=layers.get(i);
+    ReferencedEnvelope re;
+    if (latlon) {
+      re=l.getResource().getLatLonBoundingBox();
+    }
+ else {
+      re=l.getResource().boundingBox();
+    }
+    re=transform(re,bounds.getCoordinateReferenceSystem());
+    if (re == null) {
+      throw new IllegalArgumentException("Could not calculate bounds from layer with no bounds, " + l.getName());
+    }
+    bounds.expandToInclude(re);
+  }
+  group.setBounds(bounds);
+}
