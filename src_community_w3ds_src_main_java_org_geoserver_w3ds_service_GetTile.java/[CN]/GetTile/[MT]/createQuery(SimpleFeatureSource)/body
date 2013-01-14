@@ -1,0 +1,27 @@
+{
+  FilterFactory filterFactory=(FilterFactory)CommonFactoryFinder.getFilterFactory(null);
+  Filter filter=Filter.INCLUDE;
+  CoordinateReferenceSystem crs=source.getSchema().getCoordinateReferenceSystem();
+  CoordinateReferenceSystem declaredCRS=this.request.getCrs();
+  Filter transformedFilter=filter;
+  Unit<?> unit=CRSUtilities.getUnit(crs.getCoordinateSystem());
+  if (declaredCRS != null) {
+    DefaultCRSFilterVisitor defaultVisitor=new DefaultCRSFilterVisitor(CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints()),declaredCRS);
+    Filter defaulted=(Filter)filter.accept(defaultVisitor,null);
+    ReprojectingFilterVisitor visitor=new ReprojectingFilterVisitor(CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints()),source.getSchema());
+    transformedFilter=(Filter)filter.accept(visitor,null);
+  }
+  Filter gridFilter=createGridFilter(source.getSchema(),filterFactory,request);
+  filter=filterFactory.and(transformedFilter,gridFilter);
+  Query query=new Query(source.getName().getLocalPart(),filter);
+  CoordinateReferenceSystem target=declaredCRS;
+  if (target != null && declaredCRS != null && !CRS.equalsIgnoreMetadata(crs,target)) {
+    query.setCoordinateSystemReproject(target);
+  }
+  final Hints hints=new Hints();
+  hints.put(Hints.JTS_COORDINATE_SEQUENCE_FACTORY,new LiteCoordinateSequenceFactory());
+  hints.put(Query.INCLUDE_MANDATORY_PROPS,true);
+  hints.put(Hints.FEATURE_2D,Boolean.FALSE);
+  query.setHints(hints);
+  return query;
+}

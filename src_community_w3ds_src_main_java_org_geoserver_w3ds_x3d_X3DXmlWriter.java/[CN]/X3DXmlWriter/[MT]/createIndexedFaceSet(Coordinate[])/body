@@ -1,0 +1,45 @@
+{
+  Node shape=new Node("Shape");
+  Node appearance=new Node("Appearance");
+  Node material=new Node("Material");
+  material.addAttribute(new Attribute("emissiveColor","0 0 0"));
+  appearance.addNode(material);
+  shape.addNode(appearance);
+  Node indexedFaceSet=new Node("IndexedFaceSet");
+  Node coordinate=new Node("GeoCoordinate");
+  String coords="";
+  String index="";
+  int i=0;
+  int size=coordinates.length;
+  for (i=0; i < size; i++) {
+    index+=String.valueOf(i) + " ";
+  }
+  index+="-1";
+  for (i=0; i < size - 1; i++) {
+    coords+=String.valueOf(coordinates[i].x) + " ";
+    coords+=String.valueOf(coordinates[i].y) + " ";
+    if (coordinates[i].z == Double.NaN) {
+      coords+=String.valueOf(0) + " ";
+    }
+ else {
+      coords+=String.valueOf(coordinates[i].z) + " ";
+    }
+  }
+  coords+=String.valueOf(coordinates[i].x) + " ";
+  coords+=String.valueOf(coordinates[i].y) + " ";
+  if (coordinates[i].z == Double.NaN) {
+    coords+=String.valueOf(0) + " ";
+  }
+ else {
+    coords+=String.valueOf(coordinates[i].z);
+  }
+  coordinate.addAttribute(new Attribute("point",coords));
+  coordinate.addAttribute(this.geoSystem);
+  coordinate.addNode(this.origin);
+  indexedFaceSet.addNode(coordinate);
+  indexedFaceSet.addAttribute(new Attribute("coordIndex",index));
+  indexedFaceSet.addAttribute(new Attribute("solid","false"));
+  indexedFaceSet.addAttribute(new Attribute("convex","false"));
+  shape.addNode(indexedFaceSet);
+  return shape;
+}

@@ -1,0 +1,39 @@
+{
+  List<W3DSLayerInfo> layers=new ArrayList<W3DSLayerInfo>();
+  List unparsed=KvpUtils.readFlat(layersstr,",");
+  if (!(unparsed.size() > 0)) {
+    throw new IllegalArgumentException("Error parsing the parameter LAYERS (no layers given): " + layersstr);
+  }
+  Iterator it=unparsed.iterator();
+  X3DInfoExtract x3dInfoExtract=new X3DInfoExtract(catalog,false);
+  while (it.hasNext()) {
+    String n=(String)it.next();
+    LayerInfo li=catalog.getLayerByName(n);
+    if (li == null) {
+      LOGGER.warning("The layer [" + n + "] cannot be found");
+    }
+ else {
+      x3dInfoExtract.setLayerInfo(li);
+      if (x3dInfoExtract.isAX3DLayer()) {
+        if (x3dInfoExtract.isQueryable()) {
+          if (!x3dInfoExtract.isTiled()) {
+            layers.add(new W3DSLayerInfo(li,n));
+          }
+ else {
+            LOGGER.warning("The layer [" + n + "] is tiled.");
+          }
+        }
+ else {
+          LOGGER.warning("The layer [" + n + "] is not queriable.");
+        }
+      }
+ else {
+        LOGGER.warning("The layer [" + n + "] is not a X3D enable layer.");
+      }
+    }
+  }
+  if (!(layers.size() > 0)) {
+    throw new IllegalArgumentException("Error parsing the parameter LAYERS (cannot found any valid layer): " + layersstr);
+  }
+  return layers;
+}

@@ -1,0 +1,45 @@
+{
+  x3dInfoExtract.setFeatureInfo(info);
+  if (x3dInfoExtract.isAX3DLayer()) {
+    start("w3ds:Layer");
+    element("ows:Title",info.getTitle());
+    element("ows:Abstract",info.getAbstract());
+    element("ows:Identifier",info.getPrefixedName());
+    AttributesImpl bboxAtts=new AttributesImpl();
+    bboxAtts.addAttribute("","crs","crs","",info.getSRS());
+    start("ows:BoundingBox",bboxAtts);
+    Envelope bbox=info.getNativeBoundingBox();
+    element("ows:LowerCorner",bbox.getMinX() + " " + bbox.getMinY());
+    element("ows:UpperCorner",bbox.getMaxX() + " " + bbox.getMaxY());
+    end("ows:BoundingBox");
+    element("ows:OutputFormat","model/x3d+xml");
+    element("ows:OutputFormat","text/html");
+    element("w3ds:DefaultCRS",info.getSRS());
+    element("w3ds:Queriable",String.valueOf(x3dInfoExtract.isQueryable()));
+    element("w3ds:Tiled",String.valueOf(x3dInfoExtract.isTiled()));
+    if (x3dInfoExtract.haveLODS()) {
+      try {
+        LODSet lodSet=x3dInfoExtract.getLODSet();
+        if (lodSet != null) {
+          handleLODSet(lodSet);
+        }
+      }
+ catch (      Exception e) {
+        e.printStackTrace();
+      }
+    }
+    if (x3dInfoExtract.isTiled()) {
+      try {
+        TileSet tileSet=x3dInfoExtract.getTileSet();
+        if (tileSet != null) {
+          handleTileSet(tileSet);
+        }
+      }
+ catch (      Exception e) {
+        e.printStackTrace();
+      }
+    }
+    handleStyles();
+    end("w3ds:Layer");
+  }
+}

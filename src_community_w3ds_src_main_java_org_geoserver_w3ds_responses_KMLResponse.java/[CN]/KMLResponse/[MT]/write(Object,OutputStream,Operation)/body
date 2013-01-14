@@ -1,0 +1,22 @@
+{
+  GetSceneRequest gs=(GetSceneRequest)operation.getParameters()[0];
+  Scene scene=(Scene)o;
+  List<FeatureCollection<? extends FeatureType,? extends Feature>> features=new ArrayList<FeatureCollection<? extends FeatureType,? extends Feature>>();
+  ;
+  for (  W3DSLayer wl : scene.getLayers()) {
+    features.add(wl.getFeatures());
+  }
+  WMS wms=new WMS(gs.getGeoServer());
+  WMSMapContent mapContent=new WMSMapContent(getLayers(features,wms));
+  mapContent.setRequest(getRequest(getLayers(features,wms)));
+  KMLTransformer transformer=new KMLTransformer(wms);
+  transformer.setIndentation(3);
+  Charset encoding=wms.getCharSet();
+  transformer.setEncoding(encoding);
+  mapContent.setMapHeight(623);
+  mapContent.setMapWidth(623);
+  XMLTransformerMap map=new XMLTransformerMap(mapContent,transformer,mapContent,"application/vnd.google-earth.kml+xml");
+  map.setContentDispositionHeader(mapContent,".kml");
+  XMLTransformerMapResponse response=new XMLTransformerMapResponse();
+  response.write(map,output);
+}

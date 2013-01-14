@@ -1,0 +1,31 @@
+{
+  List unparsed=KvpUtils.readFlat(bboxstr,",");
+  if (unparsed.size() < 4) {
+    throw new IllegalArgumentException("Error parsing the parameter BOUNDINGBOX (invalid format): " + bboxstr);
+  }
+  double[] bbox=new double[4];
+  for (int i=0; i < 4; i++) {
+    try {
+      bbox[i]=Double.parseDouble((String)unparsed.get(i));
+    }
+ catch (    NumberFormatException e) {
+      throw new IllegalArgumentException("Error parsing the parameter BOUNDINGBOX (coordinate " + unparsed.get(i) + " is not parsable: "+ bboxstr);
+    }
+  }
+  double minx=bbox[0];
+  double miny=bbox[1];
+  double maxx=bbox[2];
+  double maxy=bbox[3];
+  if (minx > maxx) {
+    throw new IllegalArgumentException("Invalid parameter BOUNDINGBOX (MIN_X [" + minx + "] is "+ "greater than MAX_X ["+ maxx+ "]): "+ bboxstr);
+  }
+  if (miny > maxy) {
+    throw new IllegalArgumentException("Invalid parameter BOUNDINGBOX (MIN_Y [" + miny + "] is "+ "greater than MAX_Y ["+ maxy+ "]): "+ bboxstr);
+  }
+  ReferencedEnvelope crs_e=new ReferencedEnvelope(CRS.getEnvelope(crs));
+  ReferencedEnvelope bbox_e=new ReferencedEnvelope(minx,maxx,miny,maxy,crs);
+  if (!crs_e.covers(bbox_e)) {
+    LOGGER.warning("CRS [" + crs.getName().getCodeSpace() + ":"+ crs.getName().getCode()+ "] envelope don't covers the boundingbox ["+ bboxstr+ "] envelope");
+  }
+  return bbox_e;
+}

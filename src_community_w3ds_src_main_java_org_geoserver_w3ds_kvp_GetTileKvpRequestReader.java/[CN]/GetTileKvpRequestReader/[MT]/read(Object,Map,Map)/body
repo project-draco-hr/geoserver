@@ -1,0 +1,59 @@
+{
+  GetTileRequest gtr=(GetTileRequest)super.read(request,kvp,rawKvp);
+  String aux=(String)rawKvp.get("SERVICE");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter SERVICE is missing: " + rawKvp.toString());
+  }
+  String service="W3DS";
+  aux=(String)rawKvp.get("VERSION");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter VERSION is missing: " + rawKvp.toString());
+  }
+  String version="0.4.0";
+  aux=(String)rawKvp.get("REQUEST");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter REQUEST is missing: " + rawKvp.toString());
+  }
+  Operation requestStr=Operation.GETILE;
+  aux=(String)rawKvp.get("FORMAT");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter FORMAT is missing: " + rawKvp.toString());
+  }
+  Format format=KVPUtils.parseFormat(aux,gtr);
+  aux=(String)rawKvp.get("CRS");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter CRS is missing: " + rawKvp.toString());
+  }
+  CoordinateReferenceSystem crs=KVPUtils.parseCRS(aux);
+  aux=(String)rawKvp.get("LAYER");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter LAYER is missing: " + rawKvp.toString());
+  }
+  W3DSLayerInfo layer=KVPUtils.parseTiledLayer(aux,catalog,LOGGER);
+  aux=(String)rawKvp.get("STYLE");
+  if (aux != null) {
+    KVPUtils.parseStyle(layer,aux,catalog);
+  }
+ else {
+    KVPUtils.setDefaultStyle(layer,catalog);
+  }
+  aux=(String)rawKvp.get("TILELEVEL");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter TILELEVEL is missing: " + rawKvp.toString());
+  }
+  int tileLevel=Integer.parseInt(aux);
+  aux=(String)rawKvp.get("TILEROW");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter TILEROW is missing: " + rawKvp.toString());
+  }
+  int tileRow=Integer.parseInt(aux);
+  aux=(String)rawKvp.get("TILECOL");
+  if (aux == null) {
+    throw new IllegalArgumentException("Mandatory parameter TILECOL is missing: " + rawKvp.toString());
+  }
+  int tileCol=Integer.parseInt(aux);
+  String baseUrl="geoserver/w3ds?";
+  gtr.setMandatoryParameters(crs,layer,format,tileLevel,tileRow,tileCol);
+  gtr.setGeoServer(geoServer);
+  return gtr;
+}
