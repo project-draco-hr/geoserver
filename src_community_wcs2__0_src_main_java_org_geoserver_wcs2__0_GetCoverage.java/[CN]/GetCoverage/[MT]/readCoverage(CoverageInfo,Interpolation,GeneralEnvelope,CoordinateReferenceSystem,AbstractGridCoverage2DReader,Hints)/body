@@ -20,15 +20,20 @@
   GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,cinfo.getParameters());
   readParameters=(readParameters != null ? readParameters : new GeneralParameterValue[0]);
   readParameters=RequestUtils.replaceParameter(readParameters,Boolean.FALSE,AbstractGridFormat.USE_JAI_IMAGEREAD);
+  GridCoverage2D coverage=null;
   if (sameCRS) {
     readGG=new GridGeometry2D(PixelInCell.CELL_CENTER,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),subset,hints);
-    return RequestUtils.readBestCoverage(reader,readParameters,readGG,spatialInterpolation,hints);
   }
  else {
     Rectangle rasterRange=CRS.transform(reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER).inverse(),subset).toRectangle2D().getBounds();
     rasterRange.setBounds(rasterRange.x - 10,rasterRange.y - 10,rasterRange.width + 20,rasterRange.height + 20);
     rasterRange=rasterRange.intersection((GridEnvelope2D)reader.getOriginalGridRange());
     readGG=new GridGeometry2D(new GridEnvelope2D(rasterRange),PixelInCell.CELL_CENTER,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),coverageCRS,hints);
-    return RequestUtils.readBestCoverage(reader,readParameters,readGG,spatialInterpolation,hints);
   }
+  WCSUtils.checkInputLimits(wcs,cinfo,reader,readGG);
+  coverage=RequestUtils.readBestCoverage(reader,readParameters,readGG,spatialInterpolation,hints);
+  if (coverage != null) {
+    WCSUtils.checkInputLimits(wcs,coverage);
+  }
+  return coverage;
 }

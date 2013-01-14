@@ -1,0 +1,17 @@
+{
+  long limit=wcs.getMaxOutputMemory() * 1024;
+  if (limit <= 0) {
+    return;
+  }
+  final long pixelsNumber=computePixelsNumber(gc.getGridGeometry().getGridRange2D());
+  long pixelSize=0;
+  final RenderedImage image=gc.getRenderedImage();
+  final SampleModel sm=image.getSampleModel();
+  for (  int band : indexes) {
+    pixelSize+=sm.getSampleSize(band);
+  }
+  long actual=pixelsNumber * pixelSize / 8;
+  if (actual > limit) {
+    throw new WcsException("This request is trying to generate too much data, " + "the limit is " + formatBytes(limit) + " but the actual amount of bytes to be "+ "written in the output is "+ formatBytes(actual));
+  }
+}
