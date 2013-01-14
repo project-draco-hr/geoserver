@@ -1,0 +1,17 @@
+{
+  Catalog catalog=new CatalogImpl();
+  CatalogFactory cFactory=catalog.getFactory();
+  LayerGroupInfo group1=cFactory.createLayerGroup();
+  group1.setName("foo");
+  group1.setTitle("foo title");
+  group1.setAbstract("foo abstract");
+  group1.setMode(LayerGroupInfo.Mode.NAMED);
+  ByteArrayOutputStream out=out();
+  persister.save(group1,out);
+  ByteArrayInputStream in=in(out);
+  LayerGroupInfo group2=persister.load(in,LayerGroupInfo.class);
+  assertEquals(group1,group2);
+  Document dom=dom(in(out));
+  print(in(out));
+  assertEquals("layerGroup",dom.getDocumentElement().getNodeName());
+}
