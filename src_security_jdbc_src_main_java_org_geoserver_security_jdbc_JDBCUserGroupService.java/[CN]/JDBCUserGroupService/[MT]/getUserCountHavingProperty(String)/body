@@ -1,0 +1,22 @@
+{
+  if (StringUtils.hasLength(propname) == false)   return 0;
+  Connection con=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  int count;
+  try {
+    con=getConnection();
+    ps=getDMLStatement("userprops.userCountHavingProperty",con);
+    ps.setString(1,propname);
+    rs=ps.executeQuery();
+    rs.next();
+    count=rs.getInt(1);
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,rs);
+  }
+  return count;
+}

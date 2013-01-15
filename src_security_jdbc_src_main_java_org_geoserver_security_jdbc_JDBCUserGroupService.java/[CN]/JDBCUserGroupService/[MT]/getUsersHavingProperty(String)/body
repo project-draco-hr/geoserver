@@ -1,0 +1,44 @@
+{
+  if (StringUtils.hasLength(propname) == false)   return emptyUsers;
+  Connection con=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  Map<String,GeoServerUser> map=new HashMap<String,GeoServerUser>();
+  try {
+    con=getConnection();
+    ps=getDMLStatement("user.usersHavingProperty",con);
+    ps.setString(1,propname);
+    rs=ps.executeQuery();
+    while (rs.next()) {
+      String username=rs.getString(1);
+      String password=rs.getString(2);
+      String enabledString=rs.getString(3);
+      boolean isEnabled=convertFromString(enabledString);
+      GeoServerUser u=createUserObject(username,password,isEnabled);
+      map.put(username,u);
+    }
+    ps.close();
+    rs.close();
+    ps=getDMLStatement("userprops.usersHavingProperty",con);
+    ps.setString(1,propname);
+    rs=ps.executeQuery();
+    while (rs.next()) {
+      String useName=rs.getString(1);
+      String propName=rs.getString(2);
+      Object propValue=rs.getString(3);
+      GeoServerUser u=map.get(useName);
+      if (u != null) {
+        u.getProperties().put(propName,propValue == null ? "" : propValue);
+      }
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IOException(ex);
+  }
+ finally {
+    closeFinally(con,ps,rs);
+  }
+  SortedSet<GeoServerUser> users=new TreeSet<GeoServerUser>();
+  users.addAll(map.values());
+  return Collections.unmodifiableSortedSet(users);
+}
