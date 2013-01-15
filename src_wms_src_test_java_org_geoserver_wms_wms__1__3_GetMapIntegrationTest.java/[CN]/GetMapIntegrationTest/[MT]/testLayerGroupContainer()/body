@@ -5,6 +5,12 @@
     String url="wms?LAYERS=" + group.getName() + "&STYLES=&FORMAT=image%2Fpng&REQUEST=GetMap&SRS=EPSG%3A4326&WIDTH=256&HEIGHT=256&BBOX=0.0000,-0.0020,0.0035,0.0010";
     MockHttpServletResponse resp=getAsServletResponse(url);
     assertEquals("text/xml",resp.getContentType());
+    Document dom=getAsDOM(url);
+    assertEquals("ServiceExceptionReport",dom.getDocumentElement().getNodeName());
+    Element serviceException=(Element)dom.getDocumentElement().getElementsByTagName("ServiceException").item(0);
+    assertEquals("LayerNotDefined",serviceException.getAttribute("code"));
+    assertEquals("layers",serviceException.getAttribute("locator"));
+    assertEquals("Could not find layer " + group.getName(),serviceException.getTextContent().trim());
   }
   finally {
     catalog.remove(group);
