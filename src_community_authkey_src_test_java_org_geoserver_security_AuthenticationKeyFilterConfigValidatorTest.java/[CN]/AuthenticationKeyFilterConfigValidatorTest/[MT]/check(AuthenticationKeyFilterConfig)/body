@@ -1,0 +1,64 @@
+{
+  boolean failed=false;
+  try {
+    validator.validateFilterConfig(config);
+  }
+ catch (  FilterConfigException ex) {
+    assertEquals(FilterConfigException.USER_GROUP_SERVICE_NEEDED,ex.getId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setUserGroupServiceName("blabla");
+  failed=false;
+  try {
+    validator.validateFilterConfig(config);
+  }
+ catch (  FilterConfigException ex) {
+    assertEquals(FilterConfigException.UNKNOWN_USER_GROUP_SERVICE,ex.getId());
+    assertEquals(1,ex.getArgs().length);
+    assertEquals("blabla",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setUserGroupServiceName(XMLUserGroupService.DEFAULT_NAME);
+  config.setAuthKeyParamName(null);
+  failed=false;
+  try {
+    validator.validateFilterConfig(config);
+  }
+ catch (  AuthenticationKeyFilterConfigException ex) {
+    assertEquals(AuthenticationKeyFilterConfigException.AUTH_KEY_PARAM_NAME_REQUIRED,ex.getId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setAuthKeyParamName("authkey");
+  failed=false;
+  try {
+    validator.validateFilterConfig(config);
+  }
+ catch (  AuthenticationKeyFilterConfigException ex) {
+    assertEquals(AuthenticationKeyFilterConfigException.AUTH_KEY_MAPPER_NAME_REQUIRED,ex.getId());
+    assertEquals(0,ex.getArgs().length);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+  config.setAuthKeyMapperName("blabla");
+  failed=false;
+  try {
+    validator.validateFilterConfig(config);
+  }
+ catch (  AuthenticationKeyFilterConfigException ex) {
+    assertEquals(AuthenticationKeyFilterConfigException.AUTH_KEY_MAPPER_NOT_FOUND_$1,ex.getId());
+    assertEquals(1,ex.getArgs().length);
+    assertEquals("blabla",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+}

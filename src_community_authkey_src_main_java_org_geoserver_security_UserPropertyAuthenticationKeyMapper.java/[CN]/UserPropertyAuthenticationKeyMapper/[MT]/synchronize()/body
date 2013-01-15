@@ -1,0 +1,23 @@
+{
+  checkProperties();
+  GeoServerUserGroupService service=getUserGroupService();
+  if (service.canCreateStore() == false)   throw new IOException("Cannot synchronize a read only user group service");
+  int counter=0;
+  GeoServerUserGroupStore store=service.createStore();
+  store.load();
+  for (  GeoServerUser user : store.getUsers()) {
+    String value=user.getProperties().getProperty(getUserPropertyName());
+    if (StringUtils.hasLength(value) == false) {
+      user.getProperties().put(getUserPropertyName(),createAuthKey());
+      try {
+        store.updateUser(user);
+        counter++;
+      }
+ catch (      PasswordPolicyException e) {
+        throw new IOException("Never should reach this point",e);
+      }
+    }
+  }
+  store.store();
+  return counter;
+}

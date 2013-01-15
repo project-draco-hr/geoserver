@@ -1,0 +1,19 @@
+{
+  if (authKey == null)   return;
+  GeoServerUser user=mapper.getUser(authKey);
+  if (user == null) {
+    return;
+  }
+  if (GeoServerUser.ROOT_USERNAME.equals(user.getUsername())) {
+    LOGGER.warning("Authentication key login does accept the root user");
+    return;
+  }
+  LOGGER.log(Level.FINE,"found user: = " + user.getUsername() + ", trying to authenticate");
+  Collection<GeoServerRole> roles=new ArrayList<GeoServerRole>();
+  for (  GrantedAuthority auth : user.getAuthorities()) {
+    roles.add((GeoServerRole)auth);
+  }
+  if (roles.contains(GeoServerRole.AUTHENTICATED_ROLE) == false)   roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+  KeyAuthenticationToken result=new KeyAuthenticationToken(authKey,authKeyParamName,user,roles);
+  SecurityContextHolder.getContext().setAuthentication(result);
+}

@@ -1,0 +1,26 @@
+{
+  checkExistingUGService(config.getUserGroupServiceName());
+  if (isNotEmpty(config.getAuthKeyParamName()) == false) {
+    throw createFilterException(AuthenticationKeyFilterConfigException.AUTH_KEY_PARAM_NAME_REQUIRED);
+  }
+  if (isNotEmpty(config.getAuthKeyMapperName()) == false) {
+    throw createFilterException(AuthenticationKeyFilterConfigException.AUTH_KEY_MAPPER_NAME_REQUIRED);
+  }
+  try {
+    lookupBean(config.getAuthKeyMapperName());
+  }
+ catch (  NoSuchBeanDefinitionException ex) {
+    throw createFilterException(AuthenticationKeyFilterConfigException.AUTH_KEY_MAPPER_NOT_FOUND_$1,config.getAuthKeyMapperName());
+  }
+  AuthenticationKeyMapper mapper=(AuthenticationKeyMapper)lookupBean(config.getAuthKeyMapperName());
+  GeoServerUserGroupService service=null;
+  try {
+    service=manager.loadUserGroupService(config.getUserGroupServiceName());
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  if (mapper.supportsReadOnlyUserGroupService() == false && service.canCreateStore() == false) {
+    throw createFilterException(AuthenticationKeyFilterConfigException.INVALID_AUTH_KEY_MAPPER_$2,config.getAuthKeyMapperName(),config.getUserGroupServiceName());
+  }
+}

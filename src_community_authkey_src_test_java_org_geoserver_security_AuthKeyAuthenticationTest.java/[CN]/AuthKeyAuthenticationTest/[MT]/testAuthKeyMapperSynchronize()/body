@@ -1,0 +1,72 @@
+{
+  GeoServerUserGroupService ugservice=createUserGroupService("testAuthKey");
+  GeoServerUserGroupStore ugstore=ugservice.createStore();
+  GeoServerUser u1=ugstore.createUserObject("user1","passwd1",true);
+  ugstore.addUser(u1);
+  GeoServerUser u2=ugstore.createUserObject("user2","passwd2",true);
+  ugstore.addUser(u2);
+  ugstore.store();
+  PropertyAuthenticationKeyMapper propMapper=GeoServerExtensions.extensions(PropertyAuthenticationKeyMapper.class).iterator().next();
+  UserPropertyAuthenticationKeyMapper userpropMapper=GeoServerExtensions.extensions(UserPropertyAuthenticationKeyMapper.class).iterator().next();
+  propMapper.setSecurityManager(getSecurityManager());
+  propMapper.setUserGroupServiceName("testAuthKey");
+  userpropMapper.setSecurityManager(getSecurityManager());
+  userpropMapper.setUserGroupServiceName("testAuthKey");
+  assertEquals(2,propMapper.synchronize());
+  File authKeyFile=new File(getSecurityManager().getUserGroupRoot(),"testAuthKey");
+  authKeyFile=new File(authKeyFile,"authkeys.properties");
+  assertTrue(authKeyFile.exists());
+  Properties props=new Properties();
+  props.load(new FileInputStream(authKeyFile));
+  assertEquals(2,props.size());
+  String user1KeyA=null, user2KeyA=null, user3KeyA=null, user1KeyB=null, user2KeyB=null, user3KeyB=null;
+  for (  Entry<Object,Object> entry : props.entrySet()) {
+    if ("user1".equals(entry.getValue()))     user1KeyA=(String)entry.getKey();
+    if ("user2".equals(entry.getValue()))     user2KeyA=(String)entry.getKey();
+  }
+  assertNotNull(user1KeyA);
+  assertNotNull(user2KeyA);
+  assertEquals(u1,propMapper.getUser(user1KeyA));
+  assertEquals(u2,propMapper.getUser(user2KeyA));
+  assertNull(propMapper.getUser("blblal"));
+  assertEquals(2,userpropMapper.synchronize());
+  u1=(GeoServerUser)ugservice.loadUserByUsername("user1");
+  user1KeyB=u1.getProperties().getProperty(userpropMapper.getUserPropertyName());
+  u2=(GeoServerUser)ugservice.loadUserByUsername("user2");
+  user2KeyB=u2.getProperties().getProperty(userpropMapper.getUserPropertyName());
+  assertEquals(u1,userpropMapper.getUser(user1KeyB));
+  assertEquals(u2,userpropMapper.getUser(user2KeyB));
+  assertNull(userpropMapper.getUser("blblal"));
+  ugstore=ugservice.createStore();
+  GeoServerUser u3=ugstore.createUserObject("user3","passwd3",true);
+  ugstore.addUser(u3);
+  ugstore.removeUser(u1);
+  ugstore.store();
+  assertEquals(1,propMapper.synchronize());
+  props=new Properties();
+  props.load(new FileInputStream(authKeyFile));
+  assertEquals(2,props.size());
+  for (  Entry<Object,Object> entry : props.entrySet()) {
+    if ("user2".equals(entry.getValue()))     assertEquals(user2KeyA,(String)entry.getKey());
+    if ("user3".equals(entry.getValue()))     user3KeyA=(String)entry.getKey();
+  }
+  assertNotNull(user3KeyA);
+  assertNull(propMapper.getUser(user1KeyA));
+  assertEquals(u2,propMapper.getUser(user2KeyA));
+  assertEquals(u3,propMapper.getUser(user3KeyA));
+  assertEquals(1,userpropMapper.synchronize());
+  u2=(GeoServerUser)ugservice.loadUserByUsername("user2");
+  assertEquals(user2KeyB,u2.getProperties().getProperty(userpropMapper.getUserPropertyName()));
+  u3=(GeoServerUser)ugservice.loadUserByUsername("user3");
+  user3KeyB=u3.getProperties().getProperty(userpropMapper.getUserPropertyName());
+  assertNull(userpropMapper.getUser(user1KeyB));
+  assertEquals(u2,userpropMapper.getUser(user2KeyB));
+  assertEquals(u3,userpropMapper.getUser(user3KeyB));
+  ugstore=ugservice.createStore();
+  u2=(GeoServerUser)ugstore.loadUserByUsername("user2");
+  u2.setEnabled(false);
+  ugstore.updateUser(u2);
+  ugstore.store();
+  assertNull(propMapper.getUser(user2KeyA));
+  assertNull(userpropMapper.getUser(user2KeyB));
+}

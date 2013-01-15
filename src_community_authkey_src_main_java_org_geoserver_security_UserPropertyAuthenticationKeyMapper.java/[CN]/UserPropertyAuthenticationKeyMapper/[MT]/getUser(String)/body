@@ -1,0 +1,19 @@
+{
+  checkProperties();
+  SortedSet<GeoServerUser> set=getUserGroupService().getUsersHavingPropertyValue(getUserPropertyName(),key);
+  if (set.isEmpty())   return null;
+  if (set.size() > 1) {
+    StringBuffer buff=new StringBuffer();
+    for (    GeoServerUser user : set) {
+      buff.append(user.getUsername()).append(",");
+    }
+    buff.setLength(buff.length() - 1);
+    throw new IOException("More than one user have auth key: " + key + ". Problematic users :"+ buff.toString());
+  }
+  GeoServerUser user=set.first();
+  if (user.isEnabled() == false) {
+    LOGGER.info("Found user " + user.getUsername() + " for key "+ key+ ", but this user is disabled");
+    return null;
+  }
+  return user;
+}

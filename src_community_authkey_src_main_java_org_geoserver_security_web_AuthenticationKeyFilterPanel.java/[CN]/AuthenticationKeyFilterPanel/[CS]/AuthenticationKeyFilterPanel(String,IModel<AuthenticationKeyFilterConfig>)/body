@@ -1,0 +1,30 @@
+{
+  super(id,model);
+  dialog=(GeoServerDialog)get("dialog");
+  this.model=model;
+  add(new HelpLink("authKeyParametersHelp",this).setDialog(dialog));
+  add(new TextField<String>("authKeyParamName"));
+  add(new AuthenticationKeyMapperChoice("authKeyMapperName"));
+  add(new UserGroupServiceChoice("userGroupServiceName"));
+  add(new AjaxSubmitLink("synchronize"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      try {
+        AuthenticationKeyFilterConfig config=AuthenticationKeyFilterPanel.this.model.getObject();
+        getSecurityManager().saveFilter(config);
+        AuthenticationKeyMapper mapper=(AuthenticationKeyMapper)GeoServerExtensions.bean(config.getAuthKeyMapperName());
+        mapper.setSecurityManager(getSecurityManager());
+        mapper.setUserGroupServiceName(config.getUserGroupServiceName());
+        int numberOfNewKeys=mapper.synchronize();
+        info(new StringResourceModel("synchronizeSuccessful",AuthenticationKeyFilterPanel.this,null,new Object[]{numberOfNewKeys}).getObject());
+      }
+ catch (      Exception e) {
+        error(e);
+        LOGGER.log(Level.WARNING,"Authentication key  error ",e);
+      }
+ finally {
+        target.addComponent(getPage().get("feedback"));
+      }
+    }
+  }
+.setDefaultFormProcessing(true));
+}

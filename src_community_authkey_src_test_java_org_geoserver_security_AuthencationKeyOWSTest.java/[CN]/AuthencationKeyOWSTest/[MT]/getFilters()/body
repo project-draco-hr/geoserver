@@ -1,5 +1,15 @@
 {
-  javax.servlet.Filter springSecurityFilters=(javax.servlet.Filter)GeoServerExtensions.bean("filterChainProxy");
-  javax.servlet.Filter authKeyFilter=(javax.servlet.Filter)GeoServerExtensions.bean("authKeyFilter");
-  return Arrays.asList(springSecurityFilters,authKeyFilter);
+  SecurityManagerConfig mconfig=getSecurityManager().getSecurityConfig();
+  GeoServerSecurityFilterChain filterChain=mconfig.getFilterChain();
+  VariableFilterChain chain=(VariableFilterChain)filterChain.getRequestChainByName("default");
+  List<Filter> result=new ArrayList<Filter>();
+  for (  String filterName : chain.getCompiledFilterNames()) {
+    try {
+      result.add(getSecurityManager().loadFilter(filterName));
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  return result;
 }

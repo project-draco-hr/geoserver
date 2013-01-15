@@ -1,0 +1,25 @@
+{
+  checkProperties();
+  if (authKeyProps == null) {
+    synchronize();
+  }
+  if (fileWatcher.isStale())   authKeyProps=fileWatcher.getProperties();
+  String userName=authKeyProps.getProperty(key);
+  if (StringUtils.hasLength(userName) == false) {
+    LOGGER.warning("Cannot find user for auth key: " + key);
+    return null;
+  }
+  GeoServerUser theUser=null;
+  try {
+    theUser=(GeoServerUser)getUserGroupService().loadUserByUsername(userName);
+  }
+ catch (  UsernameNotFoundException ex) {
+    LOGGER.warning("Cannot find user: " + userName + " in user/group service: "+ getUserGroupServiceName());
+    return null;
+  }
+  if (theUser.isEnabled() == false) {
+    LOGGER.info("Found user " + theUser.getUsername() + " for key "+ key+ ", but this user is disabled");
+    return null;
+  }
+  return theUser;
+}
