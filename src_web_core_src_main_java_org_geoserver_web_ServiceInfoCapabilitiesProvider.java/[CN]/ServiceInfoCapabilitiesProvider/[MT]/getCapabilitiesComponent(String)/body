@@ -1,13 +1,11 @@
 {
   List<CapsInfo> serviceInfoLinks=new ArrayList<CapabilitiesHomePagePanel.CapsInfo>();
-  GeoServerApplication app=GeoServerApplication.get();
-  for (  ServiceInfo si : app.getGeoServer().getServices()) {
-    for (    Version v : si.getVersions()) {
-      String serviceId=si.getId();
-      String capsLink="../ows?service=" + serviceId + "&version="+ v.toString()+ "&request=GetCapabilities";
-      CapsInfo ci=new CapsInfo(serviceId,v,capsLink);
-      serviceInfoLinks.add(ci);
-    }
+  List<Service> extensions=GeoServerExtensions.extensions(Service.class);
+  for (  Service si : extensions) {
+    String serviceId=si.getId();
+    String capsLink="../ows?service=" + serviceId + "&version="+ si.getVersion().toString()+ "&request=GetCapabilities";
+    CapsInfo ci=new CapsInfo(serviceId,si.getVersion(),capsLink);
+    serviceInfoLinks.add(ci);
   }
   return new CapabilitiesHomePagePanel(id,serviceInfoLinks);
 }
