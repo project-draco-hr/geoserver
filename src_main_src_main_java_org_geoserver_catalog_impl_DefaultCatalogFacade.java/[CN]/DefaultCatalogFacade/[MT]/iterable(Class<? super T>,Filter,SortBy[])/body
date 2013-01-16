@@ -28,12 +28,15 @@
  else {
     throw new IllegalArgumentException("Unknown type: " + of);
   }
-  if (null != sortBy) {
-    Ordering<Object> ordering=Ordering.from(comparator(sortBy));
-    if (SortOrder.DESCENDING.equals(sortBy.getSortOrder())) {
-      ordering=ordering.reverse();
+  if (null != sortByList) {
+    for (int i=sortByList.length - 1; i >= 0; i--) {
+      SortBy sortBy=sortByList[i];
+      Ordering<Object> ordering=Ordering.from(comparator(sortBy));
+      if (SortOrder.DESCENDING.equals(sortBy.getSortOrder())) {
+        ordering=ordering.reverse();
+      }
+      all=ordering.sortedCopy(all);
     }
-    all=ordering.sortedCopy(all);
   }
   if (Filter.INCLUDE.equals(filter)) {
     return all;
