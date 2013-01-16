@@ -1,6 +1,7 @@
 {
+  Set<LayerInfo> layersAlreadyProcessed=new HashSet<LayerInfo>();
   if (layerGroups == null) {
-    return;
+    return layersAlreadyProcessed;
   }
   while (layerGroups.hasNext()) {
     LayerGroupInfo layerGroup=layerGroups.next();
@@ -9,7 +10,9 @@
     boolean queryable=wmsConfig.isQueryable(layerGroup);
     qatts.addAttribute("","queryable","queryable","",queryable ? "1" : "0");
     start("Layer",qatts);
-    element("Name",layerName);
+    if (!LayerGroupInfo.Mode.CONTAINER.equals(layerGroup.getMode())) {
+      element("Name",layerName);
+    }
     if (StringUtils.isEmpty(layerGroup.getTitle())) {
       element("Title",layerName);
     }
@@ -28,6 +31,16 @@
     element("CRS",authority);
     handleGeographicBoundingBox(latLonBounds);
     handleBBox(layerGroupBounds,authority);
+    if (LayerGroupInfo.Mode.EO.equals(layerGroup.getMode())) {
+      LayerInfo rootLayer=layerGroup.getRootLayer();
+      if (rootLayer.getType() == Type.VECTOR) {
+        dimensionHelper.handleVectorLayerDimensions(rootLayer);
+      }
+ else       if (rootLayer.getType() == Type.RASTER) {
+        dimensionHelper.handleRasterLayerDimensions(rootLayer);
+      }
+      layersAlreadyProcessed.add(layerGroup.getRootLayer());
+    }
     handleAuthorityURL(layerGroup.getAuthorityURLs());
     handleLayerIdentifiers(layerGroup.getIdentifiers());
     List<LayerInfo> layers=layerGroup.getLayers();
@@ -39,6 +52,13 @@
       }
     }
     handleMetadataList(aggregatedLinks);
+    if (!LayerGroupInfo.Mode.SINGLE.equals(layerGroup.getMode())) {
+      for (      LayerInfo layer : layers) {
+        handleLayer(layer);
+        layersAlreadyProcessed.add(layer);
+      }
+    }
     end("Layer");
   }
+  return layersAlreadyProcessed;
 }

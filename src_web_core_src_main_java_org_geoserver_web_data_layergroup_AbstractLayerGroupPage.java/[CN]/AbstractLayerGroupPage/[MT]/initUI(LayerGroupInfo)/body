@@ -2,11 +2,42 @@
   this.returnPageClass=LayerGroupPage.class;
   lgModel=new LayerGroupDetachableModel(layerGroup);
   layerGroupId=layerGroup.getId();
-  Form form=new Form("form",new CompoundPropertyModel(lgModel));
+  Form form=new Form("form",new CompoundPropertyModel(lgModel)){
+    @Override public IConverter getConverter(    Class<?> type){
+      if (LayerInfo.class.isAssignableFrom(type)) {
+        return new LayerInfoConverter();
+      }
+ else       if (StyleInfo.class.isAssignableFrom(type)) {
+        return new StyleInfoConverter();
+      }
+ else {
+        return super.getConverter(type);
+      }
+    }
+  }
+;
   add(form);
+  final WebMarkupContainer rootLayerPanelContainer=new WebMarkupContainer("rootLayerContainer");
+  rootLayerPanelContainer.setOutputMarkupId(true);
+  form.add(rootLayerPanelContainer);
+  rootLayerPanel=new RootLayerEntryPanel("rootLayer",form,layerGroup.getWorkspace());
+  rootLayerPanelContainer.add(rootLayerPanel);
+  updateRootLayerPanel(layerGroup.getMode());
   TextField name=new TextField("name");
   name.setRequired(true);
   form.add(name);
+  final DropDownChoice<LayerGroupInfo.Mode> modeChoice=new DropDownChoice<LayerGroupInfo.Mode>("mode",new LayerGroupModeModel(),new LayerGroupModeChoiceRenderer());
+  modeChoice.setNullValid(false);
+  modeChoice.setRequired(true);
+  modeChoice.add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      LayerGroupInfo.Mode mode=modeChoice.getModelObject();
+      updateRootLayerPanel(mode);
+      target.addComponent(rootLayerPanelContainer);
+    }
+  }
+);
+  form.add(modeChoice);
   form.add(new TextField("title"));
   form.add(new TextArea("abstract"));
   DropDownChoice<WorkspaceInfo> wsChoice=new DropDownChoice("workspace",new WorkspacesModel(),new WorkspaceChoiceRenderer());

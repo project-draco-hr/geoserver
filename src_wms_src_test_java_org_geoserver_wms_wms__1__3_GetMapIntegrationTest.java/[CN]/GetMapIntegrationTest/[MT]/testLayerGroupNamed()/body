@@ -1,0 +1,14 @@
+{
+  Catalog catalog=getCatalog();
+  LayerGroupInfo group=createLakesPlacesLayerGroup(catalog,LayerGroupInfo.Mode.NAMED,null);
+  try {
+    String url="wms?LAYERS=" + group.getName() + "&STYLES=&FORMAT=image%2Fpng&REQUEST=GetMap&SRS=EPSG%3A4326&WIDTH=256&HEIGHT=256&BBOX=0.0000,-0.0020,0.0035,0.0010";
+    BufferedImage image=getAsImage(url,"image/png");
+    assertPixel(image,150,160,Color.WHITE);
+    assertPixel(image,180,16,COLOR_PLACES_GRAY);
+    assertPixel(image,90,200,COLOR_LAKES_BLUE);
+  }
+  finally {
+    catalog.remove(group);
+  }
+}

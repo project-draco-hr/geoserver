@@ -21,11 +21,35 @@
     throw new IllegalArgumentException("Layer group has different number of styles than layers");
   }
   if (ws != null) {
-    for (    LayerInfo l : layerGroup.getLayers()) {
+    List<LayerInfo> layers=layerGroup.getLayers();
+    if (layerGroup.getRootLayer() != null) {
+      layers=new ArrayList<LayerInfo>(layers);
+      layers.add(layerGroup.getRootLayer());
+    }
+    for (    LayerInfo l : layers) {
       ResourceInfo r=l.getResource();
       if (!ws.equals(r.getStore().getWorkspace())) {
         throw new IllegalArgumentException("Layer group within a workspace (" + ws.getName() + ") can not contain resoures from other workspace: "+ r.getStore().getWorkspace().getName());
       }
+    }
+  }
+  if (layerGroup.getMode() == null) {
+    throw new IllegalArgumentException("Layer group mode must not be null");
+  }
+ else   if (LayerGroupInfo.Mode.EO.equals(layerGroup.getMode())) {
+    if (layerGroup.getRootLayer() == null) {
+      throw new IllegalArgumentException("Layer group in mode " + LayerGroupInfo.Mode.EO.getName() + " must have a root layer");
+    }
+    if (layerGroup.getRootLayerStyle() == null) {
+      throw new IllegalArgumentException("Layer group in mode " + LayerGroupInfo.Mode.EO.getName() + " must have a root layer style");
+    }
+  }
+ else {
+    if (layerGroup.getRootLayer() != null) {
+      throw new IllegalArgumentException("Layer group in mode " + layerGroup.getMode().getName() + " must not have a root layer");
+    }
+    if (layerGroup.getRootLayerStyle() != null) {
+      throw new IllegalArgumentException("Layer group in mode " + layerGroup.getMode().getName() + " must not have a root layer style");
     }
   }
   return postValidate(layerGroup,isNew);
