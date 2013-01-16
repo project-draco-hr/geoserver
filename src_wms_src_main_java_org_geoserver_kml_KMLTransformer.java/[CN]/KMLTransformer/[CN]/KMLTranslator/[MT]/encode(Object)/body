@@ -12,7 +12,14 @@
     LOGGER.log(Level.WARNING,"Error calculating scale denominator",e);
   }
   LOGGER.log(Level.FINE,"scale denominator = " + scaleDenominator);
-  boolean group=(layers.size() > 1) || request.getLegend();
+  boolean group;
+  Boolean legend=(Boolean)request.getFormatOptions().get("legend");
+  if (legend != null) {
+    group=(layers.size() > 1) || legend.booleanValue();
+  }
+ else {
+    group=(layers.size() > 1);
+  }
   if (group) {
     StringBuffer sb=new StringBuffer();
     for (int i=0; i < layers.size(); i++) {
@@ -40,7 +47,7 @@
       }
     }
   }
-  if (request.getLegend()) {
+  if (legend != null && legend.booleanValue()) {
     for (int i=0; i < layers.size(); i++) {
       Layer layer=layers.get(i);
       encodeLegend(mapContent,layer);
