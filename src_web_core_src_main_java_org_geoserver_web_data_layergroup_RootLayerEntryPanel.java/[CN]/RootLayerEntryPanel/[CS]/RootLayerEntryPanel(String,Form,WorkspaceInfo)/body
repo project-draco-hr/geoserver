@@ -1,0 +1,52 @@
+{
+  super(id);
+  setOutputMarkupId(true);
+  final TextField<LayerInfo> rootLayerField=new TextField<LayerInfo>("rootLayer"){
+    @Override public IConverter getConverter(    Class<?> type){
+      return form.getConverter(type);
+    }
+  }
+;
+  rootLayerField.setOutputMarkupId(true);
+  rootLayerField.setRequired(true);
+  add(rootLayerField);
+  List<StyleInfo> globalStyles=new ArrayList<StyleInfo>();
+  List<StyleInfo> allStyles=GeoServerApplication.get().getCatalog().getStyles();
+  for (  StyleInfo s : allStyles) {
+    if (s.getWorkspace() == null) {
+      globalStyles.add(s);
+    }
+  }
+  List<StyleInfo> styles=new ArrayList<StyleInfo>();
+  styles.addAll(globalStyles);
+  if (workspace != null) {
+    styles.addAll(GeoServerApplication.get().getCatalog().getStylesByWorkspace(workspace));
+  }
+  DropDownChoice<StyleInfo> styleField=new DropDownChoice<StyleInfo>("rootLayerStyle",styles){
+    @Override public IConverter getConverter(    Class<?> type){
+      return form.getConverter(type);
+    }
+  }
+;
+  styleField.setNullValid(true);
+  add(styleField);
+  final ModalWindow popupWindow=new ModalWindow("popup");
+  add(popupWindow);
+  add(new AjaxLink("add"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      popupWindow.setInitialHeight(375);
+      popupWindow.setInitialWidth(525);
+      popupWindow.setTitle(new ParamResourceModel("chooseLayer",this));
+      popupWindow.setContent(new LayerListPanel(popupWindow.getContentId()){
+        @Override protected void handleLayer(        LayerInfo layer,        AjaxRequestTarget target){
+          popupWindow.close(target);
+          ((LayerGroupInfo)form.getModelObject()).setRootLayer(layer);
+          target.addComponent(rootLayerField);
+        }
+      }
+);
+      popupWindow.show(target);
+    }
+  }
+);
+}
