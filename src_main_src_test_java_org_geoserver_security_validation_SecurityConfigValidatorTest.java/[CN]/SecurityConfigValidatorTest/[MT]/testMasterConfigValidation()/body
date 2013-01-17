@@ -4,10 +4,10 @@
   config.setConfigPasswordEncrypterName(getPBEPasswordEncoder().getName());
   config.getAuthProviderNames().add(GeoServerAuthenticationProvider.DEFAULT_NAME);
   SecurityConfigValidator validator=new SecurityConfigValidator(getSecurityManager());
-  validator.validateManagerConfig(config);
+  validator.validateManagerConfig(config,new SecurityManagerConfig());
   try {
     config.setConfigPasswordEncrypterName("abc");
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("invalid password encoder should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -15,7 +15,7 @@
   }
   try {
     config.setConfigPasswordEncrypterName(null);
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("no password encoder should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -24,7 +24,7 @@
   if (getSecurityManager().isStrongEncryptionAvailable() == false) {
     config.setConfigPasswordEncrypterName(getStrongPBEPasswordEncoder().getName());
     try {
-      validator.validateManagerConfig(config);
+      validator.validateManagerConfig(config,new SecurityManagerConfig());
       fail("invalid strong password encoder should fail");
     }
  catch (    SecurityConfigException ex) {
@@ -34,7 +34,7 @@
   config.setConfigPasswordEncrypterName(getPBEPasswordEncoder().getName());
   config.setRoleServiceName("XX");
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("unknown role service should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -42,7 +42,7 @@
   }
   config.setRoleServiceName(null);
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("null role service should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -51,7 +51,7 @@
   config.setRoleServiceName(XMLRoleService.DEFAULT_NAME);
   config.getAuthProviderNames().add("XX");
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("unknown auth provider should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -63,7 +63,7 @@
   ServiceLoginFilterChain chain=new ServiceLoginFilterChain();
   filterChain.getRequestChains().add(chain);
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("chain with no name should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -73,7 +73,7 @@
   String chainName="testChain";
   chain.setName(chainName);
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("chain with no patterns should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -83,10 +83,10 @@
   }
   chain.getPatterns().add("/**");
   chain.setDisabled(true);
-  validator.validateManagerConfig(config);
+  validator.validateManagerConfig(config,new SecurityManagerConfig());
   chain.setDisabled(false);
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("enabled authentication chain with no filter should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -98,7 +98,7 @@
   chain.getFilterNames().add(unknownFilter);
   chain.setRoleFilterName("XX");
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("unknown role filter should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -110,7 +110,7 @@
   chain.setRoleFilterName(GeoServerSecurityFilterChain.ROLE_FILTER);
   chain.getFilterNames().add(0,GeoServerSecurityFilterChain.ANONYMOUS_FILTER);
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("anonymous not last should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -121,7 +121,7 @@
   chain.getFilterNames().remove(GeoServerSecurityFilterChain.ANONYMOUS_FILTER);
   chain.getFilterNames().add(GeoServerSecurityFilterChain.ANONYMOUS_FILTER);
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("unknown  filter should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -133,7 +133,7 @@
   chain.getFilterNames().remove(unknownFilter);
   chain.getFilterNames().add(0,GeoServerSecurityFilterChain.ROLE_FILTER);
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("no authentication filter should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -145,7 +145,7 @@
   chain.getFilterNames().remove(GeoServerSecurityFilterChain.ROLE_FILTER);
   chain.getFilterNames().add(0,GeoServerSecurityFilterChain.FORM_LOGIN_FILTER);
   try {
-    validator.validateManagerConfig(config);
+    validator.validateManagerConfig(config,new SecurityManagerConfig());
     fail("form login filter should fail");
   }
  catch (  SecurityConfigException ex) {
@@ -156,5 +156,5 @@
   }
   chain.getFilterNames().remove(GeoServerSecurityFilterChain.FORM_LOGIN_FILTER);
   chain.getFilterNames().add(0,GeoServerSecurityFilterChain.BASIC_AUTH_FILTER);
-  validator.validateManagerConfig(config);
+  validator.validateManagerConfig(config,new SecurityManagerConfig());
 }

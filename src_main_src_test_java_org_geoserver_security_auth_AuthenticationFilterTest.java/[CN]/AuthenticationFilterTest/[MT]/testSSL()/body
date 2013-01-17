@@ -1,0 +1,26 @@
+{
+  prepareFilterChain(pattern,GeoServerSecurityFilterChain.ANONYMOUS_FILTER);
+  modifyChain(pattern,false,true,null);
+  SecurityManagerConfig secConfig=getSecurityManager().getSecurityConfig();
+  RequestFilterChain chain=secConfig.getFilterChain().getRequestChainByName("testChain");
+  chain.setRequireSSL(true);
+  getSecurityManager().saveSecurityConfig(secConfig);
+  MockHttpServletRequest request=createRequest("/foo/bar?request=getCapabilities&a=b");
+  request.setProtocol("https");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain authchain=new MockFilterChain();
+  getProxy().doFilter(request,response,authchain);
+  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  request=createRequest("/foo/bar?request=getCapabilities&a=b");
+  response=new MockHttpServletResponse();
+  authchain=new MockFilterChain();
+  getProxy().doFilter(request,response,authchain);
+  assertTrue(response.wasRedirectSent());
+  String urlString=response.getHeader("Location");
+  assertNotNull(urlString);
+  assertTrue(urlString.startsWith("https"));
+  assertTrue(urlString.indexOf("a=b") != -1);
+  assertTrue(urlString.indexOf("443") != -1);
+  chain.setRequireSSL(false);
+  getSecurityManager().saveSecurityConfig(secConfig);
+}

@@ -1,5 +1,5 @@
 {
-  SecurityManagerConfig config=getSecurityManager().getSecurityConfig();
+  config=getSecurityManager().getSecurityConfig();
   List<RequestFilterChain> clones=new ArrayList<RequestFilterChain>();
   for (  RequestFilterChain chain : config.getFilterChain().getRequestChains()) {
     try {
@@ -19,11 +19,20 @@
     throw new RuntimeException(e1);
   }
   form.add(new TextField<String>("redirectURL",new PropertyModel<String>(this,"logoutFilterConfig.redirectURL")));
+  try {
+    sslFilterConfig=(SSLFilterConfig)getSecurityManager().loadFilterConfig(GeoServerSecurityFilterChain.SSL_FILTER);
+  }
+ catch (  IOException e1) {
+    throw new RuntimeException(e1);
+  }
+  form.add(new TextField<Integer>("sslPort",new PropertyModel<Integer>(this,"sslFilterConfig.sslPort")));
   form.add(new AuthenticationFiltersPanel("authFilters"));
   form.add(new HelpLink("authFiltersHelp").setDialog(dialog));
   form.add(new AuthenticationProvidersPanel("authProviders"));
   form.add(new HelpLink("authProvidersHelp").setDialog(dialog));
-  form.add(new AuthFilterChainPanel("filterChain",new PropertyModel<GeoServerSecurityFilterChain>(form.getModel(),"filterChain")));
+  form.add(new SecurityFilterChainsPanel("authChains",config));
+  form.add(new HelpLink("authChainsHelp").setDialog(dialog));
+  form.add(authFilterChainPanel=new AuthFilterChainPanel("filterChain",new PropertyModel<GeoServerSecurityFilterChain>(form.getModel(),"filterChain")));
   form.add(new HelpLink("filterChainHelp").setDialog(dialog));
   form.add(new AuthenticationChainPanel("providerChain",form));
   form.add(new HelpLink("providerChainHelp").setDialog(dialog));
@@ -32,6 +41,7 @@
       try {
         getSecurityManager().saveSecurityConfig((SecurityManagerConfig)getForm().getModelObject());
         getSecurityManager().saveFilter(logoutFilterConfig);
+        getSecurityManager().saveFilter(sslFilterConfig);
         doReturn();
       }
  catch (      Exception e) {

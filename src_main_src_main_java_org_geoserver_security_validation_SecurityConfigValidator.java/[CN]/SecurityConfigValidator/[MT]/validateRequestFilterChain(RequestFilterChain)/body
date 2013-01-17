@@ -5,23 +5,40 @@
   if (requestChain.getPatterns().isEmpty()) {
     throw createSecurityException(SecurityConfigException.PATTERN_LIST_EMPTY_$1,requestChain.getName());
   }
+  GeoServerSecurityFilterChainProxy proxy=GeoServerExtensions.bean(GeoServerSecurityFilterChainProxy.class);
+  String roleFilterName=requestChain.getRoleFilterName();
+  if (StringUtils.hasLength(roleFilterName)) {
+    try {
+      if (proxy.lookupFilter(roleFilterName) == null) {
+        throw createSecurityException(SecurityConfigException.UNKNOWN_ROLE_FILTER_$2,requestChain.getName(),roleFilterName);
+      }
+    }
+ catch (    IOException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
   if (requestChain instanceof VariableFilterChain) {
     if (requestChain.isDisabled() == false && requestChain.getFilterNames().isEmpty())     throw createSecurityException(SecurityConfigException.FILTER_CHAIN_EMPTY_$1,requestChain.getName());
-    String roleFilterName=((VariableFilterChain)requestChain).getRoleFilterName();
-    if (StringUtils.hasLength(roleFilterName)) {
+    String interceptorFilterName=((VariableFilterChain)requestChain).getInterceptorName();
+    if (StringUtils.hasLength(interceptorFilterName)) {
       try {
-        if (manager.loadFilter(roleFilterName) == null)         throw createSecurityException(SecurityConfigException.UNKNOWN_ROLE_FILTER_$2,requestChain.getName(),roleFilterName);
+        if (proxy.lookupFilter(interceptorFilterName) == null) {
+          throw createSecurityException(SecurityConfigException.UNKNOWN_INTERCEPTOR_FILTER_$2,requestChain.getName(),interceptorFilterName);
+        }
       }
  catch (      IOException ex) {
         throw new RuntimeException(ex);
       }
+    }
+ else {
+      throw createSecurityException(SecurityConfigException.INTERCEPTOR_FILTER_MANDATORY_$1,requestChain.getName());
     }
     int index=requestChain.getFilterNames().indexOf(GeoServerSecurityFilterChain.ANONYMOUS_FILTER);
     if (index != -1 && index != requestChain.getFilterNames().size() - 1)     throw createSecurityException(SecurityConfigException.ANONYMOUS_NOT_LAST_$1,requestChain.getName());
     for (    String filterName : requestChain.getFilterNames()) {
       GeoServerSecurityFilter filter=null;
       try {
-        filter=manager.loadFilter(filterName);
+        filter=(GeoServerSecurityFilter)proxy.lookupFilter(filterName);
       }
  catch (      IOException ex) {
         throw new RuntimeException(ex);

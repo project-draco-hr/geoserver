@@ -1,0 +1,16 @@
+{
+  Set<HTTPMethod> methods=chain.getHttpMethods();
+  if (chain.isMatchHTTPMethod() == false)   methods=null;
+  List<String> tmp=chain.getPatterns();
+  if (tmp == null)   return new GeoServerRequestMatcher(methods,(RequestMatcher[])null);
+  List<String> patterns=new ArrayList<String>();
+  for (  String pattern : tmp) {
+    String[] array=pattern.split(",");
+    for (    String singlePattern : array)     patterns.add(singlePattern);
+  }
+  AntPathRequestMatcher[] matchers=new AntPathRequestMatcher[patterns.size()];
+  for (int i=0; i < matchers.length; i++) {
+    matchers[i]=new AntPathRequestMatcher(patterns.get(i));
+  }
+  return new GeoServerRequestMatcher(methods,matchers);
+}

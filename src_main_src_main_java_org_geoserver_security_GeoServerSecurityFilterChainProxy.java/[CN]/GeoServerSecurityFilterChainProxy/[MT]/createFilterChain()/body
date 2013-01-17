@@ -5,11 +5,11 @@
   SecurityManagerConfig config=securityManager.getSecurityConfig();
   GeoServerSecurityFilterChain filterChain=new GeoServerSecurityFilterChain(config.getFilterChain());
   filterChain.postConfigure(securityManager);
-  Map<String,List<String>> rawFilterChainMap=filterChain.compileFilterMap();
   Map<RequestMatcher,List<Filter>> filterChainMap=new LinkedHashMap<RequestMatcher,List<Filter>>();
-  for (  String pattern : rawFilterChainMap.keySet()) {
+  for (  RequestFilterChain chain : filterChain.getRequestChains()) {
+    RequestMatcher matcher=matcherForChain(chain);
     List<Filter> filters=new ArrayList<Filter>();
-    for (    String filterName : rawFilterChainMap.get(pattern)) {
+    for (    String filterName : chain.getCompiledFilterNames()) {
       try {
         Filter filter=lookupFilter(filterName);
         if (filter == null) {
@@ -21,9 +21,7 @@
         LOGGER.log(Level.SEVERE,"Error loading filter: " + filterName,ex);
       }
     }
-    for (    String p : pattern.split(",")) {
-      filterChainMap.put(new AntPathRequestMatcher(p),filters);
-    }
+    filterChainMap.put(matcher,filters);
   }
 synchronized (this) {
     if (chainsInitialized) {

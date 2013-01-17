@@ -1,0 +1,34 @@
+{
+  super(id);
+  this.secMgrConfig=secMgrConfig;
+  final boolean isAdmin=getSecurityManager().checkAuthenticationForAdminRole();
+  add(new AjaxLink("addServiceChain"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      SecurityFilterChainPage newPage=new SecurityVariableFilterChainPage(new ServiceLoginFilterChain(),SecurityFilterChainsPanel.this.secMgrConfig,true);
+      newPage.setReturnPage(getPage());
+      setResponsePage(newPage);
+    }
+  }
+.setEnabled(isAdmin));
+  add(new AjaxLink("addHtmlChain"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      SecurityFilterChainPage newPage=new SecurityVariableFilterChainPage(new HtmlLoginFilterChain(),SecurityFilterChainsPanel.this.secMgrConfig,true);
+      newPage.setReturnPage(getPage());
+      setResponsePage(newPage);
+    }
+  }
+.setEnabled(isAdmin));
+  SecurityFilterChainProvider dataProvider=new SecurityFilterChainProvider(secMgrConfig);
+  add(tablePanel=new SecurityFilterChainTablePanel("table",dataProvider){
+    private static final long serialVersionUID=1L;
+  }
+);
+  tablePanel.setOutputMarkupId(true);
+  tablePanel.setFilterable(false);
+  tablePanel.setSortable(false);
+  tablePanel.getTopPager().setVisible(false);
+  add(tablePanel);
+  add(feedbackPanel=new FeedbackPanel("feedback"));
+  feedbackPanel.setOutputMarkupId(true);
+  add(dialog=new GeoServerDialog("dialog"));
+}

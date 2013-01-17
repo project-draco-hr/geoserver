@@ -1,0 +1,34 @@
+{
+  GeoServerSecurityFilterChainProxy proxy=new GeoServerSecurityFilterChainProxy(getSecurityManager());
+  VariableFilterChain chain=new ServiceLoginFilterChain("/**");
+  RequestMatcher matcher=proxy.matcherForChain(chain);
+  assertTrue(matcher.matches(createRequest(HTTPMethod.GET,"/wms")));
+  chain=new ServiceLoginFilterChain("/**");
+  chain.getHttpMethods().add(HTTPMethod.GET);
+  chain.getHttpMethods().add(HTTPMethod.POST);
+  matcher=proxy.matcherForChain(chain);
+  assertTrue(matcher.matches(createRequest(HTTPMethod.GET,"/wms")));
+  assertTrue(matcher.matches(createRequest(HTTPMethod.POST,"/wms")));
+  assertTrue(matcher.matches(createRequest(HTTPMethod.PUT,"/wms")));
+  chain.setMatchHTTPMethod(true);
+  matcher=proxy.matcherForChain(chain);
+  assertTrue(matcher.matches(createRequest(HTTPMethod.GET,"/wms")));
+  assertTrue(matcher.matches(createRequest(HTTPMethod.POST,"/wms")));
+  assertFalse(matcher.matches(createRequest(HTTPMethod.PUT,"/wms")));
+  chain=new ServiceLoginFilterChain("/wfs/**,/web/**");
+  matcher=proxy.matcherForChain(chain);
+  assertFalse(matcher.matches(createRequest(HTTPMethod.GET,"/wms/abc")));
+  assertTrue(matcher.matches(createRequest(HTTPMethod.GET,"/wfs/acc")));
+  assertTrue(matcher.matches(createRequest(HTTPMethod.GET,"/web/abc")));
+  chain.getHttpMethods().add(HTTPMethod.GET);
+  chain.getHttpMethods().add(HTTPMethod.POST);
+  matcher=proxy.matcherForChain(chain);
+  assertFalse(matcher.matches(createRequest(HTTPMethod.GET,"/wms/abc")));
+  assertTrue(matcher.matches(createRequest(HTTPMethod.POST,"/wfs/acc")));
+  assertTrue(matcher.matches(createRequest(HTTPMethod.PUT,"/web/abc")));
+  chain.setMatchHTTPMethod(true);
+  matcher=proxy.matcherForChain(chain);
+  assertFalse(matcher.matches(createRequest(HTTPMethod.GET,"/wms/abc")));
+  assertTrue(matcher.matches(createRequest(HTTPMethod.POST,"/wfs/acc")));
+  assertFalse(matcher.matches(createRequest(HTTPMethod.PUT,"/web/abc")));
+}
