@@ -1,60 +1,14 @@
 {
-  Collection parsers=GeoServerExtensions.extensions(KvpParser.class);
+  List<KvpParser> parsers=GeoServerExtensions.extensions(KvpParser.class);
   String service=KvpUtils.getSingleValue(kvp,"service");
   String version=KvpUtils.getSingleValue(kvp,"version");
   String request=KvpUtils.getSingleValue(kvp,"request");
-  for (Iterator p=parsers.iterator(); p.hasNext(); ) {
-    KvpParser parser=(KvpParser)p.next();
-    if (parser.getService() != null && !parser.getService().equalsIgnoreCase(service)) {
-      p.remove();
-      continue;
-    }
-    if (parser.getVersion() != null && !parser.getVersion().toString().equals(version)) {
-      p.remove();
-      continue;
-    }
-    if (parser.getRequest() != null && !parser.getRequest().equalsIgnoreCase(request)) {
-      p.remove();
-    }
-  }
+  purgeParsers(parsers,service,version,request);
   ArrayList<Throwable> errors=new ArrayList<Throwable>();
-  for (Iterator itr=kvp.entrySet().iterator(); itr.hasNext(); ) {
-    Map.Entry entry=(Map.Entry)itr.next();
+  for (Iterator<Map.Entry<Object,Object>> itr=kvp.entrySet().iterator(); itr.hasNext(); ) {
+    Map.Entry<Object,Object> entry=itr.next();
     String key=(String)entry.getKey();
-    KvpParser parser=null;
-    for (Iterator pitr=parsers.iterator(); pitr.hasNext(); ) {
-      KvpParser candidate=(KvpParser)pitr.next();
-      if (key.equalsIgnoreCase(candidate.getKey())) {
-        if (parser == null) {
-          parser=candidate;
-        }
- else {
-          String curService=parser.getService();
-          Version curVersion=parser.getVersion();
-          String trgService=candidate.getService();
-          Version trgVersion=candidate.getVersion();
-          if (curService == null) {
-            if (trgService != null && trgService.equalsIgnoreCase(service)) {
-              parser=candidate;
-            }
-          }
- else {
-            if (trgService != null && trgService.equalsIgnoreCase(service)) {
-              if (trgVersion != null) {
-                if (curVersion == null && trgVersion.toString().equals(version)) {
-                  parser=candidate;
-                }
-              }
- else {
-                if (curVersion == null) {
-                  throw new IllegalStateException("Multiple kvp parsers: " + parser + ","+ candidate);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    KvpParser parser=findParser(key,service,request,version,parsers);
     Object parsed=null;
     if (parser != null) {
       try {
@@ -64,7 +18,7 @@
         }
  else {
           String[] values=(String[])entry.getValue();
-          List result=new ArrayList();
+          List<Object> result=new ArrayList<Object>();
           for (          String v : values) {
             result.add(parser.parse(v));
           }

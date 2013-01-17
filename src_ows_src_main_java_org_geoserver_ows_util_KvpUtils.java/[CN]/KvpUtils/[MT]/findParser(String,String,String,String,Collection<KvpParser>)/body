@@ -1,0 +1,36 @@
+{
+  KvpParser parser=null;
+  final Iterator<KvpParser> pitr=parsers.iterator();
+  while (pitr.hasNext()) {
+    KvpParser candidate=pitr.next();
+    if (key.equalsIgnoreCase(candidate.getKey())) {
+      if (parser == null) {
+        parser=candidate;
+      }
+ else {
+        String trgService=candidate.getService();
+        if (trgService != null && trgService.equalsIgnoreCase(service)) {
+          String curService=parser.getService();
+          if (curService == null) {
+            parser=candidate;
+          }
+ else {
+            Version curVersion=parser.getVersion();
+            Version trgVersion=candidate.getVersion();
+            if (trgVersion != null) {
+              if (curVersion == null && trgVersion.toString().equals(version)) {
+                parser=candidate;
+              }
+            }
+ else {
+              if (curVersion == null) {
+                throw new IllegalStateException("Multiple kvp parsers: " + parser + ","+ candidate);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return parser;
+}
