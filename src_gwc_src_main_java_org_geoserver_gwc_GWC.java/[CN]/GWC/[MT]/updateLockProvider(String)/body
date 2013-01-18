@@ -1,0 +1,19 @@
+{
+  LockProvider delegate=null;
+  if (lockProviderName == null) {
+    delegate=new MemoryLockProvider();
+  }
+ else {
+    Object provider=GeoWebCacheExtensions.bean(lockProviderName);
+    if (provider == null) {
+      throw new RuntimeException("Could not find lock provider " + lockProvider + " in the spring application context");
+    }
+ else     if (!(provider instanceof LockProvider)) {
+      throw new RuntimeException("Found bean " + lockProvider + " in the spring application context, but it was not a LockProvider");
+    }
+ else {
+      delegate=(LockProvider)provider;
+    }
+  }
+  lockProvider.setDelegate(delegate);
+}

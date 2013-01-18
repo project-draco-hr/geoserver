@@ -4,8 +4,9 @@
   final Set<Configuration> changedConfigs=new HashSet<Configuration>();
   for (  String layerName : affectedLayers) {
     TileLayer tileLayer=getTileLayerByName(layerName);
-    tileLayer.acquireLayerLock();
+    Lock lock=null;
     try {
+      lock=lockProvider.getLock("gwc_lock_layer_" + layerName);
       for (      String gridSetId : gridsetIds) {
         if (tileLayer.getGridSubsets().contains(gridSetId)) {
           tileLayer.removeGridSubset(gridSetId);
@@ -23,7 +24,9 @@
       }
     }
   finally {
-      tileLayer.releaseLayerLock();
+      if (lock != null) {
+        lock.release();
+      }
     }
   }
   for (  String gridSetId : gridsetIds) {

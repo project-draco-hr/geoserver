@@ -1,0 +1,77 @@
+{
+  final WebMarkupContainer quotaStoreContainer=new WebMarkupContainer("quotaStoreContainer");
+  quotaStoreContainer.setOutputMarkupId(true);
+  add(quotaStoreContainer);
+  ApplicationContext applicationContext=GeoServerApplication.get().getApplicationContext();
+  Map<String,QuotaStoreFactory> factories=applicationContext.getBeansOfType(QuotaStoreFactory.class);
+  List<String> storeNames=new ArrayList<String>();
+  for (  QuotaStoreFactory sf : factories.values()) {
+    storeNames.addAll(sf.getSupportedStoreNames());
+  }
+  Collections.sort(storeNames);
+  PropertyModel<String> storeNameModel=new PropertyModel<String>(diskQuotaModel,"quotaStore");
+  if (diskQuotaModel.getObject().getQuotaStore() == null) {
+    storeNameModel.setObject(JDBCQuotaStoreFactory.H2_STORE);
+  }
+  final DropDownChoice<String> quotaStoreChooser=new DropDownChoice<String>("diskQuotaStore",storeNameModel,storeNames,new LocalizedChoiceRenderer(this));
+  quotaStoreChooser.setOutputMarkupId(true);
+  quotaStoreContainer.add(quotaStoreChooser);
+  final WebMarkupContainer jdbcContainer=new WebMarkupContainer("jdbcQuotaStoreContainer");
+  jdbcContainer.setOutputMarkupId(true);
+  jdbcContainer.setVisible("JDBC".equals(quotaStoreChooser.getModelObject()));
+  quotaStoreContainer.add(jdbcContainer);
+  List<String> dialectBeanNames=new ArrayList<String>(applicationContext.getBeansOfType(SQLDialect.class).keySet());
+  List<String> dialectNames=new ArrayList<String>();
+  for (  String beanName : dialectBeanNames) {
+    int idx=beanName.indexOf("QuotaDialect");
+    if (idx > 0) {
+      dialectNames.add(beanName.substring(0,idx));
+    }
+  }
+  JDBCConfiguration config=jdbcQuotaConfigModel.getObject();
+  IModel<String> dialectModel=new PropertyModel<String>(jdbcQuotaConfigModel,"dialect");
+  DropDownChoice<String> dialectChooser=new DropDownChoice<String>("dialectChooser",dialectModel,dialectNames);
+  dialectChooser.setRequired(true);
+  jdbcContainer.add(dialectChooser);
+  List<String> connectionTypes=Arrays.asList("JNDI","PRIVATE_POOL");
+  Model<String> connectionTypeModel=new Model<String>();
+  if (config.getJNDISource() == null) {
+    connectionTypeModel.setObject("PRIVATE_POOL");
+  }
+ else {
+    connectionTypeModel.setObject("JNDI");
+  }
+  final DropDownChoice<String> connectionTypeChooser=new DropDownChoice<String>("connectionTypeChooser",connectionTypeModel,connectionTypes,new LocalizedChoiceRenderer(this));
+  connectionTypeChooser.setOutputMarkupId(true);
+  jdbcContainer.add(connectionTypeChooser);
+  quotaStoreChooser.add(new AjaxFormComponentUpdatingBehavior("onChange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      jdbcContainer.setVisible("JDBC".equals(quotaStoreChooser.getModelObject()));
+      target.addComponent(quotaStoreContainer);
+    }
+  }
+);
+  final WebMarkupContainer connectionTypeContainer=new WebMarkupContainer("connectionTypeContainer");
+  connectionTypeContainer.setOutputMarkupId(true);
+  jdbcContainer.add(connectionTypeContainer);
+  final WebMarkupContainer jndiContainer=new WebMarkupContainer("jndiLocationContainer");
+  jndiContainer.setVisible(config.getJNDISource() != null);
+  connectionTypeContainer.add(jndiContainer);
+  IModel<String> jndiModel=new PropertyModel<String>(jdbcQuotaConfigModel,"jNDISource");
+  TextField<String> jndiLocation=new TextField<String>("jndiLocation",jndiModel);
+  jndiLocation.setRequired(true);
+  jndiContainer.add(jndiLocation);
+  IModel<JDBCConfiguration.ConnectionPoolConfiguration> poolConfigurationModel=new PropertyModel<JDBCConfiguration.ConnectionPoolConfiguration>(jdbcQuotaConfigModel,"connectionPool");
+  final JDBCConnectionPoolPanel privatePoolPanel=new JDBCConnectionPoolPanel("connectionPoolConfigurator",poolConfigurationModel);
+  privatePoolPanel.setVisible(config.getJNDISource() == null);
+  connectionTypeContainer.add(privatePoolPanel);
+  connectionTypeChooser.add(new AjaxFormComponentUpdatingBehavior("onChange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      boolean jndiVisible="JNDI".equals(connectionTypeChooser.getModelObject());
+      jndiContainer.setVisible(jndiVisible);
+      privatePoolPanel.setVisible(!jndiVisible);
+      target.addComponent(connectionTypeContainer);
+    }
+  }
+);
+}

@@ -1,0 +1,11 @@
+{
+  checkArgument(isDiskQuotaAvailable(),"DiskQuota is not enabled");
+  DiskQuotaMonitor monitor=getDiskQuotaMonitor();
+  monitor.saveConfig(config);
+  File configFile=new File(storageFinder.getDefaultPath(),"geowebcache-diskquota-jdbc.xml");
+  JDBCConfiguration.store(jdbcConfig,configFile);
+  ConfigurableQuotaStoreProvider provider=(ConfigurableQuotaStoreProvider)monitor.getQuotaStoreProvider();
+  provider.reloadQuotaStore();
+  monitor.shutDown(1);
+  monitor.startUp();
+}

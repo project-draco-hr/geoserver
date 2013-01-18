@@ -1,0 +1,23 @@
+{
+  DiskQuotaConfig config=loader.loadConfig();
+  String quotaStoreName=config.getQuotaStore();
+  if (quotaStoreName == null) {
+    quotaStoreName=JDBCQuotaStoreFactory.H2_STORE;
+  }
+  QuotaStore store=null;
+  try {
+    store=getQuotaStoreByName(quotaStoreName);
+    exception=null;
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to get a quota store, " + "the GeoWebCache disk quota subsystem will stop working now",e);
+    this.exception=e;
+    store=new DummyQuotaStore(calculator);
+  }
+  if (this.store == null) {
+    this.store=new ConfigurableQuotaStore(store);
+  }
+ else {
+    ((ConfigurableQuotaStore)this.store).setStore(store);
+  }
+}

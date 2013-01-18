@@ -1,6 +1,11 @@
 {
   GWC gwc=getGWC();
   final boolean diskQuotaModuleDisabled=gwc.getDiskQuotaConfig() == null;
+  ConfigurableQuotaStoreProvider provider=GeoServerApplication.get().getBeanOfType(ConfigurableQuotaStoreProvider.class);
+  if (provider.getException() != null) {
+    ParamResourceModel rm=new ParamResourceModel("GWC.diskQuotaLoadFailed",null,provider.getException().getMessage());
+    error(rm.getString());
+  }
   final DiskQuotaConfig diskQuotaConfig;
   if (diskQuotaModuleDisabled) {
     diskQuotaConfig=new DiskQuotaConfig();
@@ -9,11 +14,25 @@
  else {
     diskQuotaConfig=gwc.getDiskQuotaConfig().clone();
   }
+  final JDBCConfiguration jdbcQuotaConfiguration;
+  if (gwc.getJDBCDiskQuotaConfig() == null) {
+    jdbcQuotaConfiguration=new JDBCConfiguration();
+    JDBCConfiguration.ConnectionPoolConfiguration configuration=new JDBCConfiguration.ConnectionPoolConfiguration();
+    configuration.setMinConnections(1);
+    configuration.setMaxConnections(10);
+    configuration.setConnectionTimeout(10000);
+    configuration.setMaxOpenPreparedStatements(50);
+    jdbcQuotaConfiguration.setConnectionPool(configuration);
+  }
+ else {
+    jdbcQuotaConfiguration=gwc.getJDBCDiskQuotaConfig();
+  }
   final Form<Map<String,Serializable>> form;
   form=new Form<Map<String,Serializable>>("form");
   add(form);
   final IModel<DiskQuotaConfig> diskQuotaModel=new Model<DiskQuotaConfig>(diskQuotaConfig);
-  final DiskQuotaConfigPanel diskQuotaConfigPanel=new DiskQuotaConfigPanel("diskQuotaPanel",diskQuotaModel);
+  final IModel<JDBCConfiguration> jdbcQuotaModel=new Model<JDBCConfiguration>(jdbcQuotaConfiguration);
+  final DiskQuotaConfigPanel diskQuotaConfigPanel=new DiskQuotaConfigPanel("diskQuotaPanel",diskQuotaModel,jdbcQuotaModel);
   if (diskQuotaModuleDisabled) {
     diskQuotaConfigPanel.setEnabled(false);
     super.warn(new ResourceModel("DiskQuotaSettingsPage.disabledWarning").getObject());
@@ -39,8 +58,26 @@
           return;
         }
         DiskQuotaConfig dqConfig=diskQuotaModel.getObject();
+        JDBCConfiguration jdbcConfig=jdbcQuotaModel.getObject();
+        if (dqConfig.getQuotaStore() != null && dqConfig.getQuotaStore().equals("JDBC")) {
+          try {
+            gwc.testQuotaConfiguration(jdbcConfig);
+          }
+ catch (          Exception e) {
+            LOGGER.log(Level.SEVERE,"Error instantiating the JDBC configuration",e);
+            error("Failure occurred while saving the JDBC configuration" + e.getMessage() + " (see the logs for a full stack trace)");
+            return;
+          }
+        }
         dqConfig.getGlobalQuota().setValue(chosenQuota.doubleValue(),chosenUnit);
-        gwc.saveDiskQuotaConfig(dqConfig);
+        try {
+          gwc.saveDiskQuotaConfig(dqConfig,jdbcConfig);
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.SEVERE,"Failed to save the JDBC configuration",e);
+          error("Failure occurred while saving the JDBC configuration" + e.getMessage() + " (see the logs for a full stack trace)");
+          return;
+        }
       }
       doReturn();
     }
