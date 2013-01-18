@@ -1,0 +1,37 @@
+{
+  AboutModel resources=ManifestLoader.getResources();
+  ManifestModel mm=resources.getManifests().first();
+  if (mm == null) {
+    LOGGER.log(Level.WARNING,"Unable to test with this resource name: " + resourceName + "\nNo resource found.");
+    return;
+  }
+  Iterator<Entry<String,String>> it=mm.getEntries().entrySet().iterator();
+  if (!it.hasNext()) {
+    LOGGER.log(Level.WARNING,"Unable to test with this resource name which does not has properties.");
+    return;
+  }
+  Entry<String,String> entry=it.next();
+  propertyKey=entry.getKey();
+  FileWriter writer=null;
+  try {
+    properties=new File(testData.getDataDirectoryRoot(),ManifestLoader.PROPERTIES_FILE);
+    writer=new FileWriter(properties);
+    writer.write(ManifestLoader.VERSION_ATTRIBUTE_INCLUSIONS + "=" + propertyKey+ "\n");
+    writer.write(ManifestLoader.RESOURCE_ATTRIBUTE_EXCLUSIONS + "=" + propertyKey);
+    writer.flush();
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Unable to write test data to:" + testData.getDataDirectoryRoot());
+    org.junit.Assert.fail(e.getLocalizedMessage());
+  }
+ finally {
+    IOUtils.closeQuietly(writer);
+  }
+  try {
+    loader=new ManifestLoader(getResourceLoader());
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.FINER,e.getMessage(),e);
+    org.junit.Assert.fail(e.getLocalizedMessage());
+  }
+}

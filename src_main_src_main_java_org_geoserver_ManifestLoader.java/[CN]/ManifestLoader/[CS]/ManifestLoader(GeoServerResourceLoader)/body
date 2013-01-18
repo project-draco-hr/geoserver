@@ -1,0 +1,51 @@
+{
+  classLoader=loader.getClassLoader();
+  props=new Properties();
+  InputStream is=null;
+  try {
+    is=classLoader.getResourceAsStream("org/geoserver/" + PROPERTIES_FILE);
+    if (is != null) {
+      props.load(is);
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.FINER,e.getMessage(),e);
+  }
+ finally {
+    IOUtils.closeQuietly(is);
+  }
+  try {
+    File properties=loader.find(PROPERTIES_FILE);
+    if (properties != null) {
+      is=new FileInputStream(properties);
+      props.load(is);
+    }
+  }
+ catch (  IOException e2) {
+    LOGGER.log(Level.FINER,e2.getMessage(),e2);
+  }
+ finally {
+    IOUtils.closeQuietly(is);
+  }
+  try {
+    resourceNameRegex=Pattern.compile(props.getProperty(RESOURCE_NAME_REGEX) + "!/META-INF/MANIFEST.MF");
+  }
+ catch (  PatternSyntaxException e) {
+    LOGGER.log(java.util.logging.Level.SEVERE,e.getLocalizedMessage(),e);
+    throw e;
+  }
+  String ae=props.getProperty(RESOURCE_ATTRIBUTE_EXCLUSIONS);
+  if (ae != null) {
+    resourceAttributeExclusions=ae.split(",");
+  }
+ else {
+    resourceAttributeExclusions=new String[0];
+  }
+  String ai=props.getProperty(VERSION_ATTRIBUTE_INCLUSIONS);
+  if (ai != null) {
+    versionAttributeInclusions=ai.split(",");
+  }
+ else {
+    throw new Exception("Include attribute array cannot be null");
+  }
+}

@@ -1,0 +1,29 @@
+{
+  if (at == null)   throw new IllegalArgumentException("Null argument");
+  Map<String,String> ret=new HashMap<String,String>();
+  if (include == null) {
+    if (LOGGER.isLoggable(Level.FINE))     LOGGER.log(Level.FINE,"No includes: including all");
+    final Iterator<java.util.Map.Entry<Object,Object>> it=at.entrySet().iterator();
+    while (it.hasNext()) {
+      java.util.Map.Entry<Object,Object> entry=it.next();
+      String attrName=((Attributes.Name)entry.getKey()).toString();
+      ret.put(attrName,entry.getValue().toString());
+    }
+  }
+ else {
+    final Iterator<java.util.Map.Entry<Object,Object>> it=at.entrySet().iterator();
+    while (it.hasNext()) {
+      java.util.Map.Entry<Object,Object> entry=it.next();
+      String attrName=((Attributes.Name)entry.getKey()).toString();
+      int i=0;
+      while (i < include.length) {
+        String key[]=include[i++].split(":");
+        if (attrName.matches(key[0]) == true) {
+          ret.put(key.length > 1 ? key[1] : key[0],entry.getValue().toString());
+          break;
+        }
+      }
+    }
+  }
+  return ret;
+}

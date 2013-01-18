@@ -1,0 +1,22 @@
+{
+  if (at == null)   throw new IllegalArgumentException("Null arguments");
+  if (exclude == null) {
+    if (LOGGER.isLoggable(Level.FINE))     LOGGER.log(Level.FINE,"No exceptions");
+    exclude=new String[0];
+  }
+  Map<String,String> ret=new HashMap<String,String>();
+  final Iterator<Object> it=at.keySet().iterator();
+  while (it.hasNext()) {
+    String attrName=((Attributes.Name)it.next()).toString();
+    boolean skip=false;
+    int i=0;
+    while (i < exclude.length) {
+      if (attrName.matches(exclude[i++]) == true) {
+        skip=true;
+        break;
+      }
+    }
+    if (!skip)     ret.put(attrName,at.getValue(attrName));
+  }
+  return ret;
+}

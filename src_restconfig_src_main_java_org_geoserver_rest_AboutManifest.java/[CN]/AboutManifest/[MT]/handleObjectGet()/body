@@ -1,0 +1,33 @@
+{
+  AboutModel model=null;
+  final String regex=getQueryStringValue("manifest",String.class,null);
+  if (regex != null) {
+    model=buildAboutModel(type).filterNameByRegex(regex);
+  }
+  final String from=getQueryStringValue("from",String.class,null);
+  final String to=getQueryStringValue("to",String.class,null);
+  if (from != null && to != null) {
+    if (model != null) {
+      model=model.filterNameByRange(from,to);
+    }
+ else {
+      model=buildAboutModel(type).filterNameByRange(from,to);
+    }
+  }
+  final String key=getQueryStringValue("key",String.class,null);
+  final String value=getQueryStringValue("value",String.class,null);
+  if (model == null) {
+    model=buildAboutModel(type);
+  }
+  if (key != null && value != null) {
+    model=model.filterPropertyByKeyValue(value,key);
+  }
+ else   if (key != null) {
+    model=model.filterPropertyByKey(key);
+  }
+ else   if (value != null) {
+    model=model.filterPropertyByValue(value);
+  }
+  if (model != null)   return model;
+ else   return buildAboutModel(type);
+}
