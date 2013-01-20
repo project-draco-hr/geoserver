@@ -1,7 +1,22 @@
 {
   request=GetCapabilitiesRequest.adapt(object);
   verifyUpdateSequence(request);
-  AttributesImpl attributes=attributes(new String[]{"version","1.1.0","xmlns:xsi",XSI_URI,"xmlns",WFS_URI,"xmlns:wfs",WFS_URI,"xmlns:ows",OWS.NAMESPACE,"xmlns:gml",GML.NAMESPACE,"xmlns:ogc",OGC.NAMESPACE,"xmlns:xlink",XLINK.NAMESPACE,"xsi:schemaLocation",org.geoserver.wfs.xml.v1_1_0.WFS.NAMESPACE + " " + (wfs.isCanonicalSchemaLocation() ? org.geoserver.wfs.xml.v1_1_0.WFS.CANONICAL_SCHEMA_LOCATION : (buildSchemaURL(request.getBaseUrl(),"wfs/1.1.0/wfs.xsd")))});
+  StringBuilder schemaLocation=new StringBuilder();
+  schemaLocation.append(org.geoserver.wfs.xml.v1_1_0.WFS.NAMESPACE);
+  schemaLocation.append(" ");
+  if (wfs.isCanonicalSchemaLocation()) {
+    schemaLocation.append(org.geoserver.wfs.xml.v1_1_0.WFS.CANONICAL_SCHEMA_LOCATION);
+  }
+ else {
+    schemaLocation.append(buildSchemaURL(request.getBaseUrl(),"wfs/1.1.0/wfs.xsd"));
+  }
+  addExtensionSchemaLocation(schemaLocation);
+  AttributesImpl attributes=attributes(new String[]{"version","1.1.0","xmlns:xsi",XSI_URI,"xmlns",WFS_URI,"xmlns:wfs",WFS_URI,"xmlns:ows",OWS.NAMESPACE,"xmlns:gml",GML.NAMESPACE,"xmlns:ogc",OGC.NAMESPACE,"xmlns:xlink",XLINK.NAMESPACE,"xsi:schemaLocation",schemaLocation.toString()});
+  @SuppressWarnings("rawtypes") Enumeration prefixes=getNamespaceSupport().getPrefixes();
+  while (prefixes.hasMoreElements()) {
+    String prefix=(String)prefixes.nextElement();
+    attributes.addAttribute(null,null,"xmlns:" + prefix,null,getNamespaceSupport().getURI(prefix));
+  }
   registerNamespaces(attributes);
   updateSequence(attributes);
   start("wfs:WFS_Capabilities",attributes);
