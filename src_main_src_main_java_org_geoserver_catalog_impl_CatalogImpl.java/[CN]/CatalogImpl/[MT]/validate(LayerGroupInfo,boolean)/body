@@ -20,18 +20,13 @@
   if (layerGroup.getStyles() != null && !layerGroup.getStyles().isEmpty() && !(layerGroup.getStyles().size() == layerGroup.getLayers().size())) {
     throw new IllegalArgumentException("Layer group has different number of styles than layers");
   }
+  LayerGroupHelper helper=new LayerGroupHelper(layerGroup);
+  Stack<LayerGroupInfo> loopPath=helper.checkLoops();
+  if (loopPath != null) {
+    throw new IllegalArgumentException("Layer group is in a loop: " + helper.getLoopAsString(loopPath));
+  }
   if (ws != null) {
-    List<LayerInfo> layers=layerGroup.getLayers();
-    if (layerGroup.getRootLayer() != null) {
-      layers=new ArrayList<LayerInfo>(layers);
-      layers.add(layerGroup.getRootLayer());
-    }
-    for (    LayerInfo l : layers) {
-      ResourceInfo r=l.getResource();
-      if (!ws.equals(r.getStore().getWorkspace())) {
-        throw new IllegalArgumentException("Layer group within a workspace (" + ws.getName() + ") can not contain resoures from other workspace: "+ r.getStore().getWorkspace().getName());
-      }
-    }
+    checkLayerGroupResourceIsInWorkspace(layerGroup,ws);
   }
   if (layerGroup.getMode() == null) {
     throw new IllegalArgumentException("Layer group mode must not be null");

@@ -1,34 +1,11 @@
 {
-  List<LayerInfo> layer=catalog.getLayers();
-  for (  LayerInfo li : layer) {
-    StyleInfo ds=li.getDefaultStyle();
-    if (ds != null && ds.equals(style)) {
-      try {
-        li.setDefaultStyle(new CatalogBuilder(catalog).getDefaultStyle(li.getResource()));
-        catalog.save(li);
-      }
- catch (      IOException e) {
-        LOGGER.log(Level.WARNING,"Could not find default style for resource " + li.getResource() + " resetting the default to point",e);
-        li.setDefaultStyle(catalog.getStyleByName(StyleInfo.DEFAULT_POINT));
-        catalog.save(li);
-      }
-    }
-    if (li.getStyles().remove(style)) {
-      catalog.save(li);
-    }
+  List<LayerInfo> layers=catalog.getLayers();
+  for (  LayerInfo layer : layers) {
+    removeStyleInLayer(layer,style);
   }
   List<LayerGroupInfo> groups=catalog.getLayerGroups();
   for (  LayerGroupInfo group : groups) {
-    List<StyleInfo> styles=group.getStyles();
-    boolean dirty=false;
-    for (int i=0; i < styles.size(); i++) {
-      StyleInfo si=styles.get(i);
-      if (si != null && si.equals(style)) {
-        styles.set(i,group.getLayers().get(i).getDefaultStyle());
-        dirty=true;
-      }
-    }
-    if (dirty)     catalog.save(group);
+    removeStyleInLayerGroup(group,style);
   }
   catalog.remove(style);
 }

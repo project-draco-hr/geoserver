@@ -30,8 +30,9 @@
     for (    String styleName : styleNames) {
       if (styleName.equals("") && infoObj instanceof LayerGroupInfo) {
         LayerGroupInfo layerGroupInfo=(LayerGroupInfo)infoObj;
-        if (pos < layerGroupInfo.getLayers().size()) {
-          sldStyles.add(getStyleFromLayer(layerGroupInfo.getLayers().get(pos)));
+        List<LayerInfo> groupLayers=layerGroupInfo.layers();
+        if (pos < groupLayers.size()) {
+          sldStyles.add(getStyleFromLayer(groupLayers.get(pos)));
         }
       }
  else {
@@ -46,12 +47,14 @@
     }
  else     if (infoObj instanceof LayerGroupInfo) {
       LayerGroupInfo layerGroupInfo=(LayerGroupInfo)infoObj;
-      for (int count=0; count < layerGroupInfo.getLayers().size(); count++) {
-        if (count < layerGroupInfo.getStyles().size() && layerGroupInfo.getStyles().get(count) != null) {
-          sldStyles.add(layerGroupInfo.getStyles().get(count).getStyle());
+      List<LayerInfo> groupLayers=layerGroupInfo.layers();
+      List<StyleInfo> groupStyles=layerGroupInfo.styles();
+      for (int count=0; count < groupLayers.size(); count++) {
+        if (count < groupStyles.size() && groupStyles.get(count) != null) {
+          sldStyles.add(groupStyles.get(count).getStyle());
         }
  else {
-          LayerInfo layerInfo=layerGroupInfo.getLayers().get(count);
+          LayerInfo layerInfo=groupLayers.get(count);
           sldStyles.add(getStyleFromLayer(layerInfo));
         }
       }
