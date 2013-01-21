@@ -1,0 +1,30 @@
+{
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+  builder.setName("MIXEDGEOMETRY");
+  builder.setNamespaceURI("test");
+  builder.setDefaultGeometry("GEOMETRY");
+  CoordinateReferenceSystem crs=CRS.decode("EPSG:4326");
+  builder.setCRS(crs);
+  GeometryFactory geometryFactory=new GeometryFactory();
+  AttributeType at=new AttributeTypeImpl(new NameImpl("ID"),String.class,false,false,Collections.EMPTY_LIST,null,null);
+  builder.add(new AttributeDescriptorImpl(at,new NameImpl("ID"),0,1,false,null));
+  GeometryType gt=new GeometryTypeImpl(new NameImpl("GEOMETRY"),Geometry.class,crs,false,false,Collections.EMPTY_LIST,null,null);
+  builder.add(new GeometryDescriptorImpl(gt,new NameImpl("GEOMETRY"),0,1,false,null));
+  FeatureType fType=builder.buildFeatureType();
+  List<FeatureType> layers=new ArrayList<FeatureType>();
+  layers.add(fType);
+  req.setLayers(layers);
+  List<Style> styles=new ArrayList<Style>();
+  req.setStyles(styles);
+  StyleFactory styleFactory=CommonFactoryFinder.getStyleFactory(null);
+  SLDParser stylereader=new SLDParser(styleFactory,getClass().getResource("MixedGeometry.sld"));
+  Style[] style=stylereader.readXML();
+  styles.add(style[0]);
+  this.legendProducer.buildLegendGraphic(req);
+  BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+  assertNotBlank("testMixedGeometry",image,LegendUtils.DEFAULT_BG_COLOR);
+  assertPixel(image,10,10,new Color(0,0,0));
+  assertPixel(image,10,30,new Color(0,0,255));
+  assertPixel(image,10,50,new Color(255,0,0));
+}

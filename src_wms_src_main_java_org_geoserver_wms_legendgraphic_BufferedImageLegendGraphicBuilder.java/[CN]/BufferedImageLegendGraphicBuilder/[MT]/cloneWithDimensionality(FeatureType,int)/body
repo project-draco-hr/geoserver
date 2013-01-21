@@ -1,0 +1,20 @@
+{
+  SimpleFeatureType simpleFt=(SimpleFeatureType)schema;
+  SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+  builder.setName(schema.getName());
+  builder.setCRS(schema.getCoordinateReferenceSystem());
+  for (  AttributeDescriptor desc : simpleFt.getAttributeDescriptors()) {
+    if (isMixedGeometry(desc)) {
+      GeometryDescriptor geomDescriptor=(GeometryDescriptor)desc;
+      GeometryType geomType=geomDescriptor.getType();
+      Class<?> geometryClass=getGeometryForDimensionality(dimensionality);
+      GeometryType gt=new GeometryTypeImpl(geomType.getName(),geometryClass,geomType.getCoordinateReferenceSystem(),geomType.isIdentified(),geomType.isAbstract(),geomType.getRestrictions(),geomType.getSuper(),geomType.getDescription());
+      builder.add(new GeometryDescriptorImpl(gt,geomDescriptor.getName(),geomDescriptor.getMinOccurs(),geomDescriptor.getMaxOccurs(),geomDescriptor.isNillable(),geomDescriptor.getDefaultValue()));
+    }
+ else {
+      builder.add(desc);
+    }
+  }
+  schema=builder.buildFeatureType();
+  return schema;
+}
