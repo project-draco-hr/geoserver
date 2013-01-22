@@ -1,0 +1,27 @@
+{
+  double minSize=Double.MAX_VALUE;
+  double maxSize=0.0;
+  final int ruleCount=rules.length;
+  for (int i=0; i < ruleCount; i++) {
+    Feature sample=getSampleFeatureForRule(featureType,feature,rules[i]);
+    final Symbolizer[] symbolizers=rules[i].getSymbolizers();
+    for (int sIdx=0; sIdx < symbolizers.length; sIdx++) {
+      final Symbolizer symbolizer=symbolizers[sIdx];
+      if (symbolizer instanceof PointSymbolizer) {
+        double size=getPointSymbolizerSize(sample,(PointSymbolizer)symbolizer,Math.min(width,height));
+        if (size < minSize) {
+          minSize=size;
+        }
+        if (size > maxSize) {
+          maxSize=size;
+        }
+      }
+    }
+  }
+  if (minSize != maxSize) {
+    return (maxSize - minSize + 1) / (Math.min(width,height) - minimumSymbolsSize);
+  }
+ else {
+    return maxSize / (Math.min(width,height) - minimumSymbolsSize);
+  }
+}

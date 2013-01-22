@@ -1,0 +1,19 @@
+{
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  req.setScale(RendererUtilities.calculatePixelsPerMeterRatio(10,Collections.EMPTY_MAP));
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(MockData.MPOINTS.getNamespaceURI(),MockData.MPOINTS.getLocalPart());
+  List<FeatureType> layers=new ArrayList<FeatureType>();
+  layers.add(ftInfo.getFeatureType());
+  req.setLayers(layers);
+  List<Style> styles=new ArrayList<Style>();
+  req.setStyles(styles);
+  styles.add(readSLD("ProportionalSymbolsPartialUOM.sld"));
+  BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+  assertNotBlank("testProportionalSymbolSize",image,LegendUtils.DEFAULT_BG_COLOR);
+  assertPixel(image,1,1,new Color(255,255,255));
+  assertPixel(image,5,5,new Color(255,0,0));
+  assertPixel(image,10,10,new Color(255,0,0));
+  assertPixel(image,1,1,new Color(255,255,255));
+  assertPixel(image,5,5,new Color(255,0,0));
+  assertPixel(image,10,10,new Color(255,0,0));
+}
