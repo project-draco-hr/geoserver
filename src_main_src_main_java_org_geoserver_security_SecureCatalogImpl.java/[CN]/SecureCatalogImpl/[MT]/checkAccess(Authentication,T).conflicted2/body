@@ -1,21 +1,18 @@
 {
-  if (info instanceof WorkspaceInfo) {
-    return (T)checkAccess(user,(WorkspaceInfo)info);
+  if (store == null)   return null;
+  WrapperPolicy policy=buildWrapperPolicy(user,store.getWorkspace(),store.getName());
+  if (policy.level == AccessLevel.HIDDEN)   return null;
+ else   if (policy.level == AccessLevel.READ_WRITE || (policy.level == AccessLevel.READ_ONLY && store instanceof CoverageStoreInfo))   return store;
+  if (store instanceof DataStoreInfo) {
+    return (T)new SecuredDataStoreInfo((DataStoreInfo)store,policy);
   }
-  if (info instanceof NamespaceInfo) {
-    return (T)checkAccess(user,(NamespaceInfo)info);
+ else   if (store instanceof CoverageStoreInfo) {
+    return (T)new SecuredCoverageStoreInfo((CoverageStoreInfo)store,policy);
   }
-  if (info instanceof StoreInfo) {
-    return (T)checkAccess(user,(StoreInfo)info);
+ else   if (store instanceof WMSStoreInfo) {
+    return store;
   }
-  if (info instanceof ResourceInfo) {
-    return (T)checkAccess(user,(ResourceInfo)info);
+ else {
+    throw new RuntimeException("Unknown store type " + store.getClass());
   }
-  if (info instanceof LayerInfo) {
-    return (T)checkAccess(user,(LayerInfo)info);
-  }
-  if (info instanceof LayerGroupInfo) {
-    return (T)checkAccess(user,(LayerGroupInfo)info);
-  }
-  return info;
 }
