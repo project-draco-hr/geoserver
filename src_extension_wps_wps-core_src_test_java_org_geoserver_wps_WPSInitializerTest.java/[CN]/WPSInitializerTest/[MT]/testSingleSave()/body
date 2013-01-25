@@ -1,0 +1,20 @@
+{
+  GeoServer gs=createMock(GeoServer.class);
+  List<ConfigurationListener> listeners=new ArrayList();
+  gs.addListener(capture(listeners));
+  expectLastCall().atLeastOnce();
+  List<ProcessGroupInfo> procGroups=new ArrayList();
+  WPSInfo wps=createNiceMock(WPSInfo.class);
+  expect(wps.getProcessGroups()).andReturn(procGroups).anyTimes();
+  replay(wps);
+  expect(gs.getService(WPSInfo.class)).andReturn(wps).anyTimes();
+  gs.save(wps);
+  expectLastCall().once();
+  replay(gs);
+  initer.initialize(gs);
+  assertEquals(1,listeners.size());
+  ConfigurationListener l=listeners.get(0);
+  l.handleGlobalChange(null,null,null,null);
+  l.handlePostGlobalChange(null);
+  verify(gs);
+}
