@@ -1,4 +1,9 @@
 {
+  Event e=message.getMessageObject();
+  if (localAddress(hz).equals(e.getSource())) {
+    LOGGER.finer("Skipping message generated locally " + message);
+    return;
+  }
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Message recieved: " + message);
   }
@@ -8,7 +13,7 @@
       if (queue.isEmpty()) {
         return;
       }
-      reloadLock.lock();
+      reloadLock.set(true);
       try {
         queue.clear();
         gs.reload();
@@ -17,9 +22,9 @@
         LOGGER.log(Level.WARNING,"Reload failed",e);
       }
  finally {
-        reloadLock.unlock();
+        reloadLock.set(false);
       }
     }
   }
-,1,TimeUnit.SECONDS);
+,configWatcher.get().getSyncDelay(),TimeUnit.SECONDS);
 }
