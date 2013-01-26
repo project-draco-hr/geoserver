@@ -1,0 +1,23 @@
+{
+  if (checkAuthenticationForAdminRole() == false) {
+    LOGGER.warning("Unautorized user tries to dump master password");
+    return false;
+  }
+  String[][] allowedMethods=new String[][]{{"org.geoserver.security.GeoServerSecurityManagerTest","testMasterPasswordDump"},{"org.geoserver.security.web.passwd.MasterPasswordInfoPage","dumpMasterPassword"}};
+  StackTraceElement[] stackTraceElements=Thread.currentThread().getStackTrace();
+  StackTraceElement element=stackTraceElements[2];
+  boolean isAllowed=false;
+  for (  String[] methodEntry : allowedMethods) {
+    if (methodEntry[0].equals(element.getClassName()) && methodEntry[1].equals(element.getMethodName())) {
+      isAllowed=true;
+      break;
+    }
+  }
+  if (!isAllowed) {
+    LOGGER.warning("Dump master password is called be yn unautorized method:  " + element.getClassName() + ":"+ element.getMethodName());
+    return false;
+  }
+  String message="The current master password is: ";
+  writeMasterPasswordInfo(file,message,getMasterPassword());
+  return true;
+}
