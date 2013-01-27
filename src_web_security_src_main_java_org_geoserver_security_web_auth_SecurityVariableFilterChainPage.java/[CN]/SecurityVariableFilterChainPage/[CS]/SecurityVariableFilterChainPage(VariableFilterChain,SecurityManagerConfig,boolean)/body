@@ -4,6 +4,17 @@
   super.initialize(chain,secMgrConfig,isNew,theForm,wrapper);
   List<String> filterNames=new ArrayList<String>();
   try {
+    filterNames.addAll(getSecurityManager().listFilters(GeoServerExceptionTranslationFilter.class));
+    for (    GeoServerExceptionTranslationFilter filter : GeoServerExtensions.extensions(GeoServerExceptionTranslationFilter.class)) {
+      filterNames.add(filter.getName());
+    }
+    form.add(new DropDownChoice<String>("exceptionTranslationName",new PropertyModel<String>(chainWrapper.getChain(),"exceptionTranslationName"),filterNames));
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  filterNames=new ArrayList<String>();
+  try {
     filterNames.addAll(getSecurityManager().listFilters(GeoServerSecurityInterceptorFilter.class));
     for (    GeoServerSecurityInterceptorFilter filter : GeoServerExtensions.extensions(GeoServerSecurityInterceptorFilter.class)) {
       filterNames.add(filter.getName());
