@@ -1,0 +1,31 @@
+{
+  File logoutFilterDir=new File(getSecurityManager().getFilterRoot(),GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
+  File oldLogoutFilterConfig=new File(logoutFilterDir,"config.xml.2.2.x");
+  assertTrue(oldLogoutFilterConfig.exists());
+  File oldSecManagerConfig=new File(getSecurityManager().getSecurityRoot(),"config.xml.2.2.x");
+  assertTrue(oldSecManagerConfig.exists());
+  RoleFilterConfig rfConfig=(RoleFilterConfig)getSecurityManager().loadFilterConfig(GeoServerSecurityFilterChain.ROLE_FILTER);
+  assertNotNull(rfConfig);
+  SSLFilterConfig sslConfig=(SSLFilterConfig)getSecurityManager().loadFilterConfig(GeoServerSecurityFilterChain.SSL_FILTER);
+  assertNotNull(sslConfig);
+  assertNull(getSecurityManager().loadFilterConfig(GeoServerSecurityFilterChain.GUI_EXCEPTION_TRANSLATION_FILTER));
+  SecurityManagerConfig config=getSecurityManager().loadSecurityConfig();
+  for (  RequestFilterChain chain : config.getFilterChain().getRequestChains()) {
+    assertFalse(chain.getFilterNames().contains(GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER));
+    assertFalse(chain.getFilterNames().remove(GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR));
+    assertFalse(chain.getFilterNames().remove(GeoServerSecurityFilterChain.FILTER_SECURITY_REST_INTERCEPTOR));
+    assertFalse(chain.getFilterNames().remove(GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER));
+    assertFalse(chain.getFilterNames().remove(GeoServerSecurityFilterChain.SECURITY_CONTEXT_NO_ASC_FILTER));
+    assertFalse(chain.isDisabled());
+    assertFalse(chain.isRequireSSL());
+    assertFalse(StringUtils.hasLength(chain.getRoleFilterName()));
+    if (GeoServerSecurityFilterChain.WEB_CHAIN_NAME.equals(chain.getName()) || GeoServerSecurityFilterChain.WEB_LOGIN_CHAIN_NAME.equals(chain.getName()) || GeoServerSecurityFilterChain.WEB_LOGOUT_CHAIN_NAME.equals(chain.getName()))     assertTrue(chain.isAllowSessionCreation());
+ else     assertFalse(chain.isAllowSessionCreation());
+    if (chain instanceof VariableFilterChain) {
+      VariableFilterChain vchain=(VariableFilterChain)chain;
+      assertEquals(GeoServerSecurityFilterChain.DYNAMIC_EXCEPTION_TRANSLATION_FILTER,vchain.getExceptionTranslationName());
+      if (GeoServerSecurityFilterChain.REST_CHAIN_NAME.equals(vchain.getName()) || GeoServerSecurityFilterChain.GWC_CHAIN_NAME.equals(vchain.getName()))       assertEquals(GeoServerSecurityFilterChain.FILTER_SECURITY_REST_INTERCEPTOR,vchain.getInterceptorName());
+ else       assertEquals(GeoServerSecurityFilterChain.FILTER_SECURITY_INTERCEPTOR,vchain.getInterceptorName());
+    }
+  }
+}
