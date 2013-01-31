@@ -27,6 +27,7 @@
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("setting up map");
   }
+  fireMapContentInit(mapContent);
   boolean cachingPossible=request.isGet();
   final String featureVersion=request.getFeatureVersion();
   int maxAge=Integer.MAX_VALUE;
@@ -158,6 +159,7 @@
     LOGGER.log(Level.SEVERE,"Failed to compute the scale denominator, wms_scale_denominator env variable is unset",e);
   }
   setupRenderingBuffer(mapContent,layers);
+  mapContent=fireBeforeRender(mapContent);
   WebMap map=delegate.produceMap(mapContent);
   if (cachingPossible) {
     map.setResponseHeader("Cache-Control","max-age=" + maxAge + ", must-revalidate");

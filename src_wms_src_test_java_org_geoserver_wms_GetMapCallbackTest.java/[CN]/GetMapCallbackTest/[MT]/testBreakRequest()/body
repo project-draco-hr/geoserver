@@ -1,0 +1,19 @@
+{
+  final String message="This layer is not allowed";
+  TestCallback callback=new TestCallback(){
+    @Override public Layer beforeLayer(    WMSMapContent content,    Layer layer){
+      throw new RuntimeException(message);
+    }
+  }
+;
+  getMap.setGetMapCallbacks(Arrays.asList((GetMapCallback)callback));
+  Document dom=getAsDOM("wms?request=reflect&layers=nature&format=kml&version=1.1.0");
+  assertXpathExists("/ServiceExceptionReport",dom);
+  assertEquals(1,callback.requests.size());
+  assertEquals(1,callback.mapContentsInited.size());
+  assertEquals(0,callback.layers.size());
+  assertEquals(0,callback.mapContents.size());
+  assertEquals(0,callback.maps.size());
+  assertEquals(1,callback.exceptions.size());
+  assertEquals(message,callback.exceptions.get(0).getMessage());
+}
