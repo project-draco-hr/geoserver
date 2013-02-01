@@ -1,0 +1,23 @@
+{
+  TestCallback callback=new TestCallback(){
+    @Override public Layer beforeLayer(    WMSMapContent content,    Layer layer){
+      if ("cite:Lakes".equals(layer.getTitle())) {
+        return null;
+      }
+ else {
+        return super.beforeLayer(content,layer);
+      }
+    }
+  }
+;
+  getMap.setGetMapCallbacks(Arrays.asList((GetMapCallback)callback));
+  Document dom=getAsDOM("wms?request=reflect&layers=nature&format=kml&version=1.1.0");
+  assertXpathExists("/kml:kml/kml:Document/kml:name[text() = 'cite:Forests']",dom);
+  assertEquals(1,callback.requests.size());
+  assertEquals(1,callback.mapContentsInited.size());
+  assertEquals(1,callback.layers.size());
+  assertEquals(1,callback.mapContents.size());
+  assertEquals(1,callback.maps.size());
+  assertEquals(0,callback.exceptions.size());
+  assertEquals("cite:Forests",callback.layers.get(0).getTitle());
+}

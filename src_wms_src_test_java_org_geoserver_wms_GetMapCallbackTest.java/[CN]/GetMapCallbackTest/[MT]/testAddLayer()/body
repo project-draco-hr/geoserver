@@ -1,0 +1,24 @@
+{
+  FeatureTypeInfo ft=getCatalog().getFeatureTypeByName(getLayerId(MockData.BRIDGES));
+  FeatureSource<? extends FeatureType,? extends Feature> fs=ft.getFeatureSource(null,null);
+  Style style=getCatalog().getStyleByName("point").getStyle();
+  final FeatureLayer layer=new FeatureLayer(fs,style);
+  layer.setTitle("extra");
+  TestCallback callback=new TestCallback(){
+    @Override public WMSMapContent beforeRender(    WMSMapContent mapContent){
+      mapContent.addLayer(layer);
+      return super.beforeRender(mapContent);
+    }
+  }
+;
+  getMap.setGetMapCallbacks(Arrays.asList((GetMapCallback)callback));
+  Document dom=getAsDOM("wms?request=reflect&layers=nature&format=kml&version=1.1.0");
+  assertXpathExists("/kml:kml/kml:Document/kml:name[text() = 'cite:Lakes,cite:Forests,extra']",dom);
+  assertEquals(1,callback.requests.size());
+  assertEquals(1,callback.mapContentsInited.size());
+  assertEquals(3,callback.layers.size());
+  assertEquals(1,callback.mapContents.size());
+  assertEquals(1,callback.maps.size());
+  assertEquals(0,callback.exceptions.size());
+  assertEquals(layer,callback.layers.get(2));
+}

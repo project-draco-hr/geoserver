@@ -1,18 +1,22 @@
 {
+  request=fireInitRequest(request);
   WMSMapContent mapContent=new WMSMapContent(request);
+  mapContent.setGetMapCallbacks(callbacks);
   try {
-    return run(request,mapContent);
+    WebMap map=run(request,mapContent);
+    map=fireFinished(map);
+    return map;
   }
- catch (  ServiceException e) {
-    mapContent.dispose();
-    throw e;
-  }
-catch (  RuntimeException e) {
-    mapContent.dispose();
-    throw (RuntimeException)e;
-  }
-catch (  Exception e) {
-    mapContent.dispose();
-    throw new ServiceException("Internal error ",e);
+ catch (  Throwable t) {
+    fireFailed(t);
+    if (t instanceof RuntimeException) {
+      throw (RuntimeException)t;
+    }
+ else     if (t instanceof Error) {
+      throw (Error)t;
+    }
+ else {
+      throw new ServiceException("Internal error ",t);
+    }
   }
 }
