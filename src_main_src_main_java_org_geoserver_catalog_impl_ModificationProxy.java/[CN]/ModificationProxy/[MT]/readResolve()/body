@@ -1,0 +1,42 @@
+{
+  if (proxyObject instanceof CatalogInfo) {
+    CatalogInfo replacement=replaceCatalogInfo((CatalogInfo)proxyObject);
+    if (replacement != null) {
+      proxyObject=unwrap(replacement);
+    }
+  }
+  if (properties != null) {
+    for (    Entry<String,Object> property : properties.entrySet()) {
+      Object value=property.getValue();
+      if (value instanceof CatalogInfo) {
+        CatalogInfo replacement=replaceCatalogInfo((CatalogInfo)value);
+        if (replacement != null) {
+          property.setValue(unwrap(replacement));
+        }
+      }
+ else       if (value instanceof Collection) {
+        Collection clone=cloneCollection((Collection)value);
+        property.setValue(clone);
+      }
+ else       if (value instanceof MetadataMap) {
+        MetadataMap clone=cloneMetadataMap((MetadataMap)value);
+        property.setValue(clone);
+      }
+    }
+  }
+  if (oldCollectionValues != null) {
+    for (    Entry<String,Object> oce : oldCollectionValues.entrySet()) {
+      Object value=oce.getValue();
+      if (value instanceof Collection) {
+        Collection oldCollection=(Collection)value;
+        Collection clone=cloneCollection(oldCollection);
+        oce.setValue(clone);
+      }
+ else       if (value instanceof MetadataMap) {
+        MetadataMap clone=cloneMetadataMap((MetadataMap)value);
+        oce.setValue(clone);
+      }
+    }
+  }
+  return this;
+}
