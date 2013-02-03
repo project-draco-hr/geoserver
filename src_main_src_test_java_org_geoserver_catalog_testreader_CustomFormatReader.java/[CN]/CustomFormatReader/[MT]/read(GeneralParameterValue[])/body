@@ -1,24 +1,44 @@
 {
   boolean haveDimension=false;
+  final List<GridCoverage2D> returnValues=new ArrayList<GridCoverage2D>();
   for (  GeneralParameterValue p : params) {
     if (p.getDescriptor().getName().toString().equalsIgnoreCase(CustomFormat.CUSTOM_DIMENSION_NAME)) {
       haveDimension=true;
-      final String value=String.valueOf(extractValue(p));
-      for (      String filename : this.dataDirectory.list()) {
-        if (isDataFile(filename)) {
-          final String dimValue=getDimensionValue(filename);
-          if (dimValue.equalsIgnoreCase(value)) {
-            return createCoverage(filename);
+      final List<?> value=extractValue(p);
+      for (      Object o : value) {
+        final String s=Converters.convert(o,String.class);
+        for (        String filename : this.dataDirectory.list()) {
+          if (isDataFile(filename)) {
+            final String dimValue=getDimensionValue(filename);
+            if (dimValue.equalsIgnoreCase(s)) {
+              returnValues.add(createCoverage(filename));
+              break;
+            }
           }
         }
       }
     }
   }
+  final int size=returnValues.size();
   if (!haveDimension) {
     for (    String filename : this.dataDirectory.list()) {
       if (isDataFile(filename)) {
         return createCoverage(filename);
       }
+    }
+  }
+ else   if (size > 0) {
+    if (size == 1) {
+      return returnValues.get(0);
+    }
+ else {
+      final ImageWorker worker=new ImageWorker(returnValues.get(0).getRenderedImage());
+      for (int i=1; i < size; i++) {
+        worker.addBand(returnValues.get(i).getRenderedImage(),false);
+      }
+      final GridSampleDimension sds[]=new GridSampleDimension[size];
+      Arrays.fill(sds,returnValues.get(0).getSampleDimensions()[0]);
+      return new GridCoverageFactory().create("result",worker.getRenderedImage(),returnValues.get(0).getEnvelope(),sds,null,null);
     }
   }
   return null;
