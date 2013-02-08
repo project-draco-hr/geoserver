@@ -1,0 +1,59 @@
+{
+  return new AjaxSubmitLink("save",paramsForm){
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> paramsForm){
+      super.onError(target,paramsForm);
+      target.addComponent(paramsForm);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> paramsForm){
+      WmsEoAddLayerModel model=(WmsEoAddLayerModel)paramsForm.getModelObject();
+      LayerGroupInfo group=model.getGroup();
+      EoCatalogBuilder builder=new EoCatalogBuilder(getCatalog());
+      if (StringUtils.isEmpty(model.getMasksLayerName()) && !StringUtils.isEmpty(model.getMasksUrl())) {
+        paramsForm.error("Field 'Masks Layer Name' is required.");
+      }
+      if (StringUtils.isEmpty(model.getParametersLayerName()) && !StringUtils.isEmpty(model.getParametersUrl())) {
+        paramsForm.error("Field 'Parameters Layer Name' is required.");
+      }
+      if (paramsForm.hasError()) {
+        target.addComponent(paramsForm);
+      }
+ else {
+        try {
+          group=getCatalog().getLayerGroupByName(group.getWorkspace(),group.getName());
+          LayerInfo layer=builder.createEoMosaicLayer(group.getWorkspace(),model.getMasksLayerName(),EoLayerType.BITMASK,model.getMasksUrl());
+          if (layer != null) {
+            group.getLayers().add(layer);
+            group.getStyles().add(layer.getDefaultStyle());
+          }
+          layer=builder.createEoMosaicLayer(group.getWorkspace(),model.getParametersLayerName(),EoLayerType.GEOPHYSICAL_PARAMETER,model.getParametersUrl());
+          if (layer != null) {
+            group.getLayers().add(layer);
+            group.getStyles().add(layer.getDefaultStyle());
+          }
+          CatalogBuilder catalogBuilder=new CatalogBuilder(getCatalog());
+          catalogBuilder.calculateLayerGroupBounds(group);
+          getCatalog().save(group);
+          Map<String,String> parameters=new HashMap<String,String>();
+          parameters.put(LayerGroupEditPage.WORKSPACE,group.getWorkspace().getName());
+          parameters.put(LayerGroupEditPage.GROUP,group.getName());
+          setResponsePage(new LayerGroupEditPage(new PageParameters(parameters)));
+        }
+ catch (        RuntimeException e) {
+          if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO,e.getMessage(),e);
+          }
+          paramsForm.error(e.getMessage());
+          target.addComponent(paramsForm);
+        }
+catch (        Exception e) {
+          if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO,e.getMessage(),e);
+          }
+          paramsForm.error(e.getMessage());
+          target.addComponent(paramsForm);
+        }
+      }
+    }
+  }
+;
+}
