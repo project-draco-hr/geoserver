@@ -1,0 +1,27 @@
+{
+  File dir=DataUtilities.urlToFile(new URL(url));
+  CatalogBuilder builder=new CatalogBuilder(catalog);
+  DataStoreInfo storeInfo=builder.buildDataStore(name);
+  DataStoreFactorySpi dataStoreFactory=getOutlineDataStoreFactory(dir);
+  Map<String,Serializable> parameters=getOutlineDataStoreParameters(dir,dataStoreFactory);
+  storeInfo.setType(dataStoreFactory.getDisplayName());
+  storeInfo.setWorkspace(ws);
+  storeInfo.getConnectionParameters().putAll(parameters);
+  catalog.add(storeInfo);
+  builder.setStore(storeInfo);
+  DataStore dataStore=dataStoreFactory.createDataStore(parameters);
+  @SuppressWarnings("rawtypes") FeatureSource featureSource=dataStore.getFeatureSource(dir.getName());
+  FeatureTypeInfo featureType=builder.buildFeatureType(featureSource);
+  featureType.setName(name + " Resource");
+  builder.setupBounds(featureType,featureSource);
+  catalog.add(featureType);
+  LayerInfo layer=builder.buildLayer(featureType);
+  layer.setName(name);
+  layer.setTitle(name);
+  layer.setEnabled(true);
+  layer.setQueryable(true);
+  layer.setType(LayerInfo.Type.VECTOR);
+  layer.getMetadata().put(EoLayerType.KEY,EoLayerType.COVERAGE_OUTLINE);
+  catalog.add(layer);
+  return layer;
+}
