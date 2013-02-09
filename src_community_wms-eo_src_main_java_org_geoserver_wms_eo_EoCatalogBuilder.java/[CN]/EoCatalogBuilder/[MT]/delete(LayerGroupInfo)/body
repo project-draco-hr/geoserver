@@ -1,0 +1,18 @@
+{
+  group=catalog.getLayerGroupByName(group.getWorkspace(),group.getName());
+  try {
+    catalog.remove(group);
+    delete(group.getRootLayer());
+    for (    PublishedInfo p : group.getLayers()) {
+      if (p instanceof LayerGroupInfo) {
+        delete(group);
+      }
+ else {
+        delete((LayerInfo)p);
+      }
+    }
+  }
+ catch (  RuntimeException e) {
+    throw new IllegalArgumentException("The group '" + group.getName() + "' could not be removed. Failure message: "+ e.getMessage(),e);
+  }
+}
