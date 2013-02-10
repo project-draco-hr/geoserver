@@ -27,6 +27,23 @@
     this.store=new ConfigurableQuotaStore(store);
   }
  else {
-    ((ConfigurableQuotaStore)this.store).setStore(store);
+    ConfigurableQuotaStore configurable=(ConfigurableQuotaStore)this.store;
+    QuotaStore oldStore=configurable.getStore();
+    configurable.setStore(store);
+    if (!(oldStore instanceof DummyQuotaStore)) {
+      try {
+        for (        TileLayer tl : GWC.get().getTileLayers()) {
+          oldStore.deleteLayer(tl.getName());
+        }
+      }
+  finally {
+        try {
+          oldStore.close();
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.SEVERE,"An error occurred while closing up the previous quota store",e);
+        }
+      }
+    }
   }
 }
