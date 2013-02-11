@@ -1,4 +1,5 @@
 {
+  List<ProcessGroupInfo> newGroups=new ArrayList();
   for (  ProcessGroupInfo available : lookupProcessGroups()) {
     boolean found=false;
     for (    ProcessGroupInfo configured : info.getProcessGroups()) {
@@ -8,8 +9,11 @@
       }
     }
     if (!found) {
-      info.getProcessGroups().add(available);
+      newGroups.add(available);
     }
   }
-  geoServer.save(info);
+  if (!newGroups.isEmpty()) {
+    info.getProcessGroups().addAll(newGroups);
+    geoServer.save(info);
+  }
 }
