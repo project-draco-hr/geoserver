@@ -58,7 +58,31 @@
     if (layers.size() > 1 && !forceTitlesOff) {
       titleImage=getLayerTitle(layer,w,h,transparent,request);
     }
-    final boolean buildRasterLegend=(!strict && layer == null && LegendUtils.checkRasterSymbolizer(gt2Style)) || LegendUtils.checkGridLayer(layer);
+    boolean hasVectorTransformation=false;
+    boolean hasRasterTransformation=false;
+    List<FeatureTypeStyle> ftsList=gt2Style.featureTypeStyles();
+    for (int i=0; i < ftsList.size(); i++) {
+      FeatureTypeStyle fts=ftsList.get(i);
+      Expression exp=fts.getTransformation();
+      if (exp != null) {
+        ProcessFunction processFunction=(ProcessFunction)exp;
+        Name processName=processFunction.getProcessName();
+        Map<String,Parameter<?>> outputs=Processors.getResultInfo(processName,null);
+        if (outputs.isEmpty()) {
+          continue;
+        }
+        Parameter<?> output=outputs.values().iterator().next();
+        if (SimpleFeatureCollection.class.isAssignableFrom(output.getType())) {
+          hasVectorTransformation=true;
+          break;
+        }
+ else         if (GridCoverage2D.class.isAssignableFrom(output.getType())) {
+          hasRasterTransformation=true;
+          break;
+        }
+      }
+    }
+    final boolean buildRasterLegend=(!strict && layer == null && LegendUtils.checkRasterSymbolizer(gt2Style)) || (LegendUtils.checkGridLayer(layer) && !hasVectorTransformation) || hasRasterTransformation;
     if (buildRasterLegend) {
       final RasterLayerLegendHelper rasterLegendHelper=new RasterLayerLegendHelper(request,gt2Style,ruleName);
       final BufferedImage image=rasterLegendHelper.getLegend();

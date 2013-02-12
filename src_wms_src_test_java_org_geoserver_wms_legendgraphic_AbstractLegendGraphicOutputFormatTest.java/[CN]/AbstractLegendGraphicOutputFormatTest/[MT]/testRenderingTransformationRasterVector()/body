@@ -1,0 +1,32 @@
+{
+  Style transformStyle=readSLD("RenderingTransformRasterVector.sld");
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  CoverageInfo cInfo=getCatalog().getCoverageByName(MockData.TASMANIA_DEM.getNamespaceURI(),MockData.TASMANIA_DEM.getLocalPart());
+  assertNotNull(cInfo);
+  GridCoverage coverage=cInfo.getGridCoverage(null,null);
+  try {
+    SimpleFeatureCollection feature;
+    feature=FeatureUtilities.wrapGridCoverage((GridCoverage2D)coverage);
+    req.setLayer(feature.getSchema());
+    req.setStyle(transformStyle);
+    req.setLegendOptions(new HashMap());
+    this.legendProducer.buildLegendGraphic(req);
+    BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+    assertNotBlank("testRenderingTransform",image,LegendUtils.DEFAULT_BG_COLOR);
+    assertPixel(image,1,1,new Color(255,255,255));
+    assertPixel(image,10,10,new Color(0,0,0));
+    assertPixel(image,19,19,new Color(255,255,255));
+  }
+ catch (  Exception e) {
+    fail(e.getMessage());
+  }
+ finally {
+    RenderedImage ri=coverage.getRenderedImage();
+    if (coverage instanceof GridCoverage2D) {
+      ((GridCoverage2D)coverage).dispose(true);
+    }
+    if (ri instanceof PlanarImage) {
+      ImageUtilities.disposePlanarImageChain((PlanarImage)ri);
+    }
+  }
+}
