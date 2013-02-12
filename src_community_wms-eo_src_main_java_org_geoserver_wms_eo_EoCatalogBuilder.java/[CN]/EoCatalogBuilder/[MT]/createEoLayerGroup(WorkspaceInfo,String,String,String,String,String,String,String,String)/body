@@ -1,0 +1,47 @@
+{
+  LayerInfo bandsLayer=createEoBandsLayer(ws,groupName,bandsUrl);
+  LayerInfo browseLayer=createEoBrowseImageLayer(ws,groupName,browseImageUrl);
+  LayerInfo paramsLayer=createEoParametersLayer(ws,groupName,parametersName,parametersUrl);
+  LayerInfo masksLayer=createEoMasksLayer(ws,groupName,masksName,masksUrl);
+  LayerInfo outlineLayer;
+  try {
+    outlineLayer=createEoOutlineLayer(bandsUrl,ws,groupName);
+  }
+ catch (  RuntimeException e) {
+    throw new IllegalArgumentException("The Outline layer could not be created. Failure message: " + e.getMessage(),e);
+  }
+catch (  Exception e) {
+    throw new IllegalArgumentException("The Outline layer could not be created. Failure message: " + e.getMessage(),e);
+  }
+  LayerGroupInfo layerGroup=catalog.getFactory().createLayerGroup();
+  layerGroup.setWorkspace(ws);
+  layerGroup.setName(groupName);
+  layerGroup.setTitle(groupTitle);
+  layerGroup.setMode(LayerGroupInfo.Mode.EO);
+  layerGroup.setRootLayer(browseLayer);
+  layerGroup.setRootLayerStyle(browseLayer.getDefaultStyle());
+  layerGroup.getLayers().add(outlineLayer);
+  layerGroup.getStyles().add(outlineLayer.getDefaultStyle());
+  layerGroup.getLayers().add(bandsLayer);
+  layerGroup.getStyles().add(bandsLayer.getDefaultStyle());
+  if (masksLayer != null) {
+    layerGroup.getLayers().add(masksLayer);
+    layerGroup.getStyles().add(masksLayer.getDefaultStyle());
+  }
+  if (paramsLayer != null) {
+    layerGroup.getLayers().add(paramsLayer);
+    layerGroup.getStyles().add(paramsLayer.getDefaultStyle());
+  }
+  try {
+    CatalogBuilder builder=new CatalogBuilder(catalog);
+    builder.calculateLayerGroupBounds(layerGroup);
+    catalog.add(layerGroup);
+    return layerGroup;
+  }
+ catch (  RuntimeException e) {
+    throw new IllegalArgumentException("The layer group '" + groupName + "' could not be created. Failure message: "+ e.getMessage(),e);
+  }
+catch (  Exception e) {
+    throw new IllegalArgumentException("The layer group '" + groupName + "' could not be created. Failure message: "+ e.getMessage(),e);
+  }
+}

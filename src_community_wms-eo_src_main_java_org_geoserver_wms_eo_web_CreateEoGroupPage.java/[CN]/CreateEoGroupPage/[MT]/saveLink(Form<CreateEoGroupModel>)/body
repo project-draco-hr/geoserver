@@ -1,0 +1,45 @@
+{
+  return new AjaxSubmitLink("save",paramsForm){
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> paramsForm){
+      super.onError(target,paramsForm);
+      target.addComponent(paramsForm);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> paramsForm){
+      CreateEoGroupModel model=(CreateEoGroupModel)paramsForm.getModelObject();
+      if (getCatalog().getLayerGroupByName(model.getWorkspace(),model.getGroupName()) != null) {
+        paramsForm.error("Layer Group '" + model.getGroupName() + "' already exists");
+      }
+      if (StringUtils.isEmpty(model.getBitmaskName()) && !StringUtils.isEmpty(model.getBitmaskUrl())) {
+        paramsForm.error("Field '" + BITMASK.getObject() + " Name' is required.");
+      }
+      if (StringUtils.isEmpty(model.getParameterName()) && !StringUtils.isEmpty(model.getParameterUrl())) {
+        paramsForm.error("Field '" + GEOPHYSICAL_PARAMETER.getObject() + " Name' is required.");
+      }
+      if (paramsForm.hasError()) {
+        target.addComponent(paramsForm);
+      }
+ else {
+        EoCatalogBuilder builder=new EoCatalogBuilder(getCatalog());
+        try {
+          builder.createEoLayerGroup(model.getWorkspace(),model.getGroupName(),model.getGroupTitle(),model.getBrowseImageUrl(),model.getBandUrl(),model.getBitmaskName(),model.getBitmaskUrl(),model.getParameterName(),model.getParameterUrl());
+          setResponsePage(EoLayerGroupPage.class);
+        }
+ catch (        RuntimeException e) {
+          if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO,e.getMessage(),e);
+          }
+          paramsForm.error(e.getMessage());
+          target.addComponent(paramsForm);
+        }
+catch (        Exception e) {
+          if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.log(Level.INFO,e.getMessage(),e);
+          }
+          paramsForm.error(e.getMessage());
+          target.addComponent(paramsForm);
+        }
+      }
+    }
+  }
+;
+}

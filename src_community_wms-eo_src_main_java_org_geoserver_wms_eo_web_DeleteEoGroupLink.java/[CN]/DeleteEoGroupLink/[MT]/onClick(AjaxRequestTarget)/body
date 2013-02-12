@@ -1,0 +1,30 @@
+{
+  final List<LayerGroupInfo> selection=groupTable.getSelection();
+  if (selection.size() == 0) {
+    return;
+  }
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    protected Component getContents(    String id){
+      return new ConfirmRemovalPanel(id,selection);
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      EoCatalogBuilder builder=new EoCatalogBuilder(GeoServerApplication.get().getCatalog());
+      for (      LayerGroupInfo group : selection) {
+        delete(builder,group);
+      }
+      groupTable.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (groupTable.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(groupTable);
+        for (        AbstractLink link : groupTable.getSelectionLinks()) {
+          target.addComponent(link);
+        }
+      }
+    }
+  }
+);
+}
