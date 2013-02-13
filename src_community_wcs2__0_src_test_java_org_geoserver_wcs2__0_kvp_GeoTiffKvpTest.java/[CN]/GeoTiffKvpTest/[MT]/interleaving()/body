@@ -1,0 +1,22 @@
+{
+  MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&interleave=pixel");
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  final TIFFImageReader reader=(TIFFImageReader)new TIFFImageReaderSpi().createReaderInstance();
+  reader.setInput(new FileImageInputStream(file));
+  final TIFFImageMetadata metadata=(TIFFImageMetadata)reader.getImageMetadata(0);
+  assertNotNull(metadata);
+  IIOMetadataNode node=metadata.getStandardDataNode();
+  assertNotNull(node);
+  assertEquals("PlanarConfiguration",node.getFirstChild().getNodeName());
+  assertEquals("PixelInterleaved",node.getFirstChild().getAttributes().item(0).getNodeValue());
+  reader.dispose();
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&interleave=band");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WcsExceptionCode.InterleavingNotSupported.toString(),"band");
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&interleave=asds");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WcsExceptionCode.InterleavingInvalid.toString(),"asds");
+}
