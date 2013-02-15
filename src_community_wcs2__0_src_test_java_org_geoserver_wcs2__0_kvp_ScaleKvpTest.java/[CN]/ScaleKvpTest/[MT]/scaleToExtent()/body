@@ -1,0 +1,81 @@
+{
+  MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALEEXTENT=http://www.opengis.net/def/axis/OGC/1/i(0,99)," + "http://www.opengis.net/def/axis/OGC/1/j(0,99)");
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  GeoTiffReader readerTarget=new GeoTiffReader(file);
+  GridCoverage2D targetCoverage=null, sourceCoverage=null;
+  try {
+    targetCoverage=readerTarget.read(null);
+    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+    assertEquals(sourceCoverage.getCoordinateReferenceSystem(),targetCoverage.getCoordinateReferenceSystem());
+    assertEnvelopeEquals(sourceCoverage,targetCoverage);
+    assertEquals(100,targetCoverage.getGridGeometry().getGridRange().getSpan(0));
+    assertEquals(100,targetCoverage.getGridGeometry().getGridRange().getSpan(1));
+  }
+  finally {
+    try {
+      readerTarget.dispose();
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(sourceCoverage);
+    }
+ catch (    Exception e) {
+    }
+  }
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALEEXTENT=http://www.opengis.net/def/axis/OGC/1/i(100,1099)," + "http://www.opengis.net/def/axis/OGC/1/j(100,1099)");
+  assertEquals("image/tiff",response.getContentType());
+  tiffContents=getBinary(response);
+  file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  readerTarget=new GeoTiffReader(file);
+  try {
+    targetCoverage=readerTarget.read(null);
+    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+    assertEquals(sourceCoverage.getCoordinateReferenceSystem(),targetCoverage.getCoordinateReferenceSystem());
+    assertEnvelopeEquals(sourceCoverage,targetCoverage);
+    assertEquals(1000,targetCoverage.getGridGeometry().getGridRange().getSpan(0));
+    assertEquals(1000,targetCoverage.getGridGeometry().getGridRange().getSpan(1));
+    assertEquals(0,targetCoverage.getGridGeometry().getGridRange().getLow(0));
+    assertEquals(0,targetCoverage.getGridGeometry().getGridRange().getLow(1));
+    assertEquals(999,targetCoverage.getGridGeometry().getGridRange().getHigh(0));
+    assertEquals(999,targetCoverage.getGridGeometry().getGridRange().getHigh(1));
+  }
+  finally {
+    try {
+      readerTarget.dispose();
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(sourceCoverage);
+    }
+ catch (    Exception e) {
+    }
+  }
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALEEXTENT=http://www.opengis.net/def/axis/OGC/1/i(1000,0)," + "http://www.opengis.net/def/axis/OGC/1/j(0,1000)");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WCS20ExceptionCode.InvalidExtent.getExceptionCode(),"0");
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALEEXTENT=http://www.opengis.net/def/axis/OGC/1/i(1000,1000)," + "http://www.opengis.net/def/axis/OGC/1/j(0,1000)");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WCS20ExceptionCode.InvalidExtent.getExceptionCode(),"1000");
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALEEXTENT=http://www.opengis.net/def/axis/OGC/1/j(1000,0)," + "http://www.opengis.net/def/axis/OGC/1/i(0,1000)");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WCS20ExceptionCode.InvalidExtent.getExceptionCode(),"0");
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALEEXTENT=http://www.opengis.net/def/axis/OGC/1/j(1000,1000)," + "http://www.opengis.net/def/axis/OGC/1/i(0,1000)");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WCS20ExceptionCode.InvalidExtent.getExceptionCode(),"1000");
+}

@@ -1,9 +1,8 @@
 {
+  final Dimension tileDimensions=new Dimension(JAI.getDefaultTileSize());
   if (econdingParameters.containsKey("tiling")) {
     final String tilingS=econdingParameters.get("tiling");
     if (tilingS != null && Boolean.valueOf(tilingS)) {
-      wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
-      final Dimension tileDimensions=new Dimension(JAI.getDefaultTileSize());
       if (econdingParameters.containsKey("tilewidth")) {
         final String tileW_=econdingParameters.get("tilewidth");
         if (tileW_ != null) {
@@ -38,7 +37,18 @@
           }
         }
       }
-      wp.setTiling(tileDimensions.width,tileDimensions.height);
     }
   }
+ else {
+    final RenderedImage image=sourceCoverage.getRenderedImage();
+    final SampleModel sm=image.getSampleModel();
+    final int tileW=sm.getWidth();
+    final int tileH=sm.getHeight();
+    if (tileW < image.getWidth()) {
+      tileDimensions.width=tileW;
+      tileDimensions.height=tileH;
+    }
+  }
+  wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
+  wp.setTiling(tileDimensions.width,tileDimensions.height);
 }
