@@ -9,6 +9,12 @@
     if (filter(property)) {
       continue;
     }
+    if (!hasRepeatedParameters) {
+      Object rawValue=rawKvp.get(property);
+      if (rawValue instanceof String[]) {
+        throw new ServiceException("Found multiple, inconsistent values for parameter " + property + ": "+ Arrays.toString((String[])rawValue),ServiceException.INVALID_PARAMETER_VALUE,property);
+      }
+    }
     Class<? extends Object> targetClass=request.getClass();
     Class<? extends Object> valueClass=value.getClass();
     Method setter=OwsUtils.setter(targetClass,property,valueClass);
