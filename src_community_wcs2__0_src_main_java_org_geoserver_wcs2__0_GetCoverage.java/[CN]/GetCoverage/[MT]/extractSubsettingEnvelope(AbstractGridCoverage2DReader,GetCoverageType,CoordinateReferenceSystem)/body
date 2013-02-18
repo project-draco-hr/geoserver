@@ -23,9 +23,15 @@
   final List<String> axesNames=envelopeDimensionsMapper.getAxesNames(envelope,true);
   final List<String> foundDimensions=new ArrayList<String>();
   for (  DimensionSubsetType dim : dimensions) {
-    final String dimension=dim.getDimension();
+    String dimension=dim.getDimension();
+    if (dimension.startsWith("http://www.opengis.net/def/axis/OGC/0/")) {
+      dimension=dimension.substring("http://www.opengis.net/def/axis/OGC/0/".length());
+    }
+ else     if (dimension.startsWith("http://opengis.net/def/axis/OGC/0/")) {
+      dimension=dimension.substring("http://opengis.net/def/axis/OGC/0/".length());
+    }
     if (dimension == null || dimension.length() <= 0 || !axesNames.contains(dimension)) {
-      throw new WCS20Exception("Empty axis label provided",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,dimension == null ? "Null" : dimension);
+      throw new WCS20Exception("Empty or wrong axis label provided",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,dimension == null ? "Null" : dimension);
     }
     if (foundDimensions.contains(dimension)) {
       throw new WCS20Exception("Axis label already used during subsetting",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,dimension);
