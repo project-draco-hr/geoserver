@@ -16,6 +16,15 @@
     assertEquals(180,targetCoverage.getGridGeometry().getGridRange().getSpan(1));
     assertEquals(0,targetCoverage.getGridGeometry().getGridRange().getLow(0));
     assertEquals(0,targetCoverage.getGridGeometry().getGridRange().getLow(1));
+    response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff" + "&subset=http://www.opengis.net/def/axis/OGC/0/Long(" + (sourceEnvelope.x + 1.1 * sourceEnvelope.width) + ","+ (sourceEnvelope.x + 1.2 * sourceEnvelope.width)+ ")"+ "&subset=http://www.opengis.net/def/axis/OGC/0/Lat("+ (sourceEnvelope.y + 1.1 * sourceEnvelope.height)+ ","+ (sourceEnvelope.y + 1.2 * sourceEnvelope.height)+ ")");
+    assertEquals("application/xml",response.getContentType());
+    checkOws20Exception(response,404,WCS20ExceptionCode.InvalidSubsetting.getExceptionCode(),"");
+    response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff" + "&subset=http://www.opengis.net/def/axis/OGC/0/Long(" + (sourceEnvelope.x + sourceEnvelope.width) + ","+ (sourceEnvelope.x)+ ")"+ "&subset=http://www.opengis.net/def/axis/OGC/0/Lat("+ (sourceEnvelope.y + 1.1 * sourceEnvelope.height)+ ","+ (sourceEnvelope.y + 1.2 * sourceEnvelope.height)+ ")");
+    assertEquals("application/xml",response.getContentType());
+    checkOws20Exception(response,404,WCS20ExceptionCode.InvalidSubsetting.getExceptionCode(),Double.toString((sourceEnvelope.x + sourceEnvelope.width)));
+    response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff" + "&subset=http://www.opengis.net/def/axis/OGC/0/Long(" + (sourceEnvelope.x) + ","+ (sourceEnvelope.x + sourceEnvelope.width)+ ")"+ "&subset=http://www.opengis.net/def/axis/OGC/0/Lat("+ (sourceEnvelope.y + sourceEnvelope.height)+ ","+ (sourceEnvelope.y)+ ")");
+    assertEquals("application/xml",response.getContentType());
+    checkOws20Exception(response,404,WCS20ExceptionCode.InvalidSubsetting.getExceptionCode(),Double.toString((sourceEnvelope.y + sourceEnvelope.height)));
   }
   finally {
     try {
