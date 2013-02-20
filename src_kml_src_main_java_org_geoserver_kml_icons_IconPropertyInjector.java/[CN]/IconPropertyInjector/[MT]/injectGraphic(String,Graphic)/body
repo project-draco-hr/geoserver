@@ -1,0 +1,45 @@
+{
+  final ExternalGraphic[] externalGraphics;
+  final Mark[] marks;
+  final Symbol[] symbols=new Symbol[0];
+  final Expression opacity;
+  final Expression size;
+  final Expression rotation;
+  if (shouldUpdate(key + ".opacity",original.getOpacity())) {
+    opacity=getLiteral(key + ".opacity");
+  }
+ else {
+    opacity=null;
+  }
+  if (shouldUpdate(key + ".rotation",original.getRotation())) {
+    rotation=getLiteral(key + ".rotation");
+  }
+ else {
+    rotation=null;
+  }
+  if (shouldUpdate(key + ".size",original.getSize())) {
+    size=getLiteral(key + ".size");
+  }
+ else {
+    size=null;
+  }
+  if (!original.graphicalSymbols().isEmpty()) {
+    List<Mark> markList=new ArrayList<Mark>();
+    List<ExternalGraphic> externalGraphicList=new ArrayList<ExternalGraphic>();
+    for (    GraphicalSymbol symbol : original.graphicalSymbols()) {
+      if (symbol instanceof Mark) {
+        markList.add(injectMark(key,(Mark)symbol));
+      }
+ else       if (symbol instanceof ExternalGraphic) {
+        externalGraphicList.add(injectExternalGraphic(key,(ExternalGraphic)symbol));
+      }
+    }
+    marks=markList.toArray(new Mark[0]);
+    externalGraphics=externalGraphicList.toArray(new ExternalGraphic[0]);
+  }
+ else {
+    marks=new Mark[0];
+    externalGraphics=new ExternalGraphic[0];
+  }
+  return styleFactory.createGraphic(externalGraphics,marks,symbols,opacity,size,rotation);
+}
