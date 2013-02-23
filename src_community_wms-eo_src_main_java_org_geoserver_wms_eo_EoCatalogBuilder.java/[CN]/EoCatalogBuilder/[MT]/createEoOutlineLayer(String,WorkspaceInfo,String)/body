@@ -16,25 +16,24 @@
   storeInfo.getConnectionParameters().putAll(parameters);
   catalog.add(storeInfo);
   builder.setStore(storeInfo);
-  DataStore dataStore=dataStoreFactory.createDataStore(parameters);
-  try {
-    FeatureSource featureSource=dataStore.getFeatureSource(storeName);
-    FeatureTypeInfo featureType=builder.buildFeatureType(featureSource);
-    featureType.setName(layerName);
-    builder.setupBounds(featureType,featureSource);
-    catalog.add(featureType);
-    LayerInfo layer=builder.buildLayer(featureType);
-    layer.setName(layerName);
-    layer.setTitle(layerName);
-    layer.setEnabled(true);
-    layer.setQueryable(true);
-    layer.setType(LayerInfo.Type.VECTOR);
-    layer.getMetadata().put(EoLayerType.KEY,EoLayerType.COVERAGE_OUTLINE);
-    addEoStyles(layer,DEFAULT_OUTLINE_STYLE);
-    catalog.add(layer);
-    return layer;
+  DataStore dataStore=(DataStore)storeInfo.getDataStore(new NullProgressListener());
+  SimpleFeatureSource featureSource=dataStore.getFeatureSource(storeName);
+  FeatureTypeInfo featureType=builder.buildFeatureType(featureSource);
+  featureType.setName(layerName);
+  builder.setupBounds(featureType,featureSource);
+  catalog.add(featureType);
+  boolean foundTime=enableDimensions(featureType,loadProperties(new File(dir,storeName + ".properties")));
+  if (!foundTime) {
+    throw new IllegalArgumentException("Unable to enable TIME dimension on outline layer:" + layerName);
   }
-  finally {
-    dataStore.dispose();
-  }
+  LayerInfo layer=builder.buildLayer(featureType);
+  layer.setName(layerName);
+  layer.setTitle(layerName);
+  layer.setEnabled(true);
+  layer.setQueryable(true);
+  layer.setType(LayerInfo.Type.VECTOR);
+  layer.getMetadata().put(EoLayerType.KEY,EoLayerType.COVERAGE_OUTLINE);
+  addEoStyles(layer,DEFAULT_OUTLINE_STYLE);
+  catalog.add(layer);
+  return layer;
 }

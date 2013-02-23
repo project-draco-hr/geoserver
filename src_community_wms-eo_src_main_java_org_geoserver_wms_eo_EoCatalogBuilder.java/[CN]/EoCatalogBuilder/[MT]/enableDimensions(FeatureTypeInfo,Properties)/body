@@ -1,0 +1,36 @@
+{
+  Utilities.ensureNonNull("FeatureTypeInfo",fi);
+  Utilities.ensureNonNull("mosaicProperties",mosaicProperties);
+  boolean timeDimension=false;
+  try {
+    boolean elevationDimension=mosaicProperties.containsKey("ElevationAttribute");
+    if (elevationDimension) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine(fi.getName() + ": found ELEVATION dimension");
+      }
+      DimensionInfo dimension=new DimensionInfoImpl();
+      dimension.setEnabled(true);
+      dimension.setPresentation(DimensionPresentation.LIST);
+      dimension.setAttribute((String)mosaicProperties.get("ElevationAttribute"));
+      fi.getMetadata().put(ResourceInfo.ELEVATION,dimension);
+    }
+    timeDimension=mosaicProperties.containsKey("TimeAttribute");
+    if (timeDimension) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine(fi.getName() + ": found TIME dimension");
+      }
+      DimensionInfo dimension=new DimensionInfoImpl();
+      dimension.setEnabled(true);
+      dimension.setPresentation(DimensionPresentation.LIST);
+      dimension.setAttribute((String)mosaicProperties.get("TimeAttribute"));
+      fi.getMetadata().put(ResourceInfo.TIME,dimension);
+      timeDimension=true;
+    }
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(Level.SEVERE)) {
+      LOGGER.log(Level.SEVERE,"Failed to access coverage reader custom dimensions",e);
+    }
+  }
+  return timeDimension;
+}
