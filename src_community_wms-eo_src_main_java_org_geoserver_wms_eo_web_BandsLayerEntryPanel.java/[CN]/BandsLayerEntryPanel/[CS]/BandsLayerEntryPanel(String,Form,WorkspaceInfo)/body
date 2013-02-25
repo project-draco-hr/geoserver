@@ -1,0 +1,50 @@
+{
+  super(id);
+  setOutputMarkupId(true);
+  LayerGroupInfo group=(LayerGroupInfo)form.getModel().getObject();
+  int pos=0;
+  for (  PublishedInfo p : group.getLayers()) {
+    if (p instanceof LayerInfo) {
+      if (EoLayerType.BAND_COVERAGE.name().equals(((LayerInfo)p).getMetadata().get(EoLayerType.KEY))) {
+        layer=(LayerInfo)p;
+        layerStyle=group.getStyles().get(pos);
+      }
+    }
+    pos++;
+  }
+  Link link=new Link("bandsLayer"){
+    @Override public void onClick(){
+      Map<String,String> params=new HashMap<String,String>(2);
+      if (layer.getResource().getStore().getWorkspace() != null) {
+        params.put(ResourceConfigurationPage.WORKSPACE,layer.getResource().getStore().getWorkspace().getName());
+      }
+      params.put(ResourceConfigurationPage.NAME,layer.getName());
+      setResponsePage(ResourceConfigurationPage.class,new PageParameters(params));
+    }
+  }
+;
+  link.add(new Label("bandsLayerName",new PropertyModel(layer,"name")));
+  add(link);
+  List<StyleInfo> globalStyles=new ArrayList<StyleInfo>();
+  List<StyleInfo> allStyles=GeoServerApplication.get().getCatalog().getStyles();
+  for (  StyleInfo s : allStyles) {
+    if (s.getWorkspace() == null) {
+      globalStyles.add(s);
+    }
+  }
+  List<StyleInfo> styles=new ArrayList<StyleInfo>();
+  styles.addAll(globalStyles);
+  if (workspace != null) {
+    styles.addAll(GeoServerApplication.get().getCatalog().getStylesByWorkspace(workspace));
+  }
+  Collections.sort(styles,new StyleInfoNameComparator());
+  DropDownChoice<StyleInfo> styleField=new DropDownChoice<StyleInfo>("bandsLayerStyle",new PropertyModel<StyleInfo>(this,"layerStyle"),styles){
+    @Override public IConverter getConverter(    Class<?> type){
+      return form.getConverter(type);
+    }
+  }
+;
+  styleField.setNullValid(true);
+  styleField.setOutputMarkupId(true);
+  add(styleField);
+}
