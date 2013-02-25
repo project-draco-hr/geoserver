@@ -1,31 +1,59 @@
 {
   Utilities.ensureNonNull("cInfo",cInfo);
   final String nativeFormat=cInfo.getNativeFormat();
-  if (mapping.containsKey(nativeFormat)) {
-    return mapping.get(nativeFormat);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Trying to map mime type for coverageinfo: " + cInfo.toString());
   }
-  final String source=cInfo.getStore().getURL();
-  final URL sourceURL=new URL(source);
-  final File sourceFile=DataUtilities.urlToFile(sourceURL);
+  if (mapping.containsKey(nativeFormat)) {
+    final String mime=mapping.get(nativeFormat);
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Found mapping for nativeFormat: " + nativeFormat + mime);
+    }
+    return mime;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Unable to find mapping , let's open an ImageReader to the original source");
+  }
+  final File sourceFile=GeoserverDataDirectory.findDataFile(cInfo.getStore().getURL());
   if (sourceFile == null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Original source is null");
+    }
     return null;
+  }
+ else {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Original source: " + sourceFile.getAbsolutePath());
+    }
   }
   ImageInputStream inStream=null;
   ImageReader reader=null;
   try {
     inStream=ImageIO.createImageInputStream(sourceFile);
     if (inStream == null) {
-      LOGGER.info("Unable to create an imageinputstream for this file:" + sourceFile.getAbsolutePath());
+      LOGGER.warning("Unable to create an imageinputstream for this file:" + sourceFile.getAbsolutePath());
       return null;
     }
     Iterator<ImageReader> readers=ImageIO.getImageReaders(inStream);
     if (readers.hasNext()) {
       reader=readers.next();
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Found reader for format: " + reader.getFormatName());
+      }
       mapping.putIfAbsent(nativeFormat,reader.getOriginatingProvider().getMIMETypes()[0]);
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Added mapping: " + mapping.get(nativeFormat));
+      }
       return mapping.get(nativeFormat);
+    }
+ else {
+      LOGGER.warning("Unable to create a reader for this file:" + sourceFile.getAbsolutePath());
     }
   }
  catch (  Exception e) {
+    if (LOGGER.isLoggable(Level.WARNING)) {
+      LOGGER.warning("Unable to map mime type for coverage: " + cInfo.toString());
+    }
   }
  finally {
     try {
@@ -34,6 +62,9 @@
       }
     }
  catch (    Exception e) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+      }
     }
     try {
       if (reader != null) {
@@ -41,6 +72,9 @@
       }
     }
  catch (    Exception e) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+      }
     }
   }
   return null;
