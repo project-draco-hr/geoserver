@@ -1,6 +1,59 @@
 {
   Utilities.ensureNonNull("sourceGC",sourceGC);
   Utilities.ensureNonNull("ScalingType",scaling);
-  Utilities.ensureNonNull("Interpolation",interpolation);
-  return sourceGC;
+  final ScaleAxisByFactorType scaleType=scaling.getScaleAxesByFactor();
+  final EList<ScaleAxisType> targetAxisScaleElements=scaleType.getScaleAxis();
+  ScaleAxisType xScale=null, yScale=null;
+  for (  ScaleAxisType scaleAxisType : targetAxisScaleElements) {
+    final String axisName=scaleAxisType.getAxis();
+    if (axisName.equals("http://www.opengis.net/def/axis/OGC/1/i")) {
+      xScale=scaleAxisType;
+    }
+ else     if (axisName.equals("http://www.opengis.net/def/axis/OGC/1/j")) {
+      yScale=scaleAxisType;
+    }
+ else {
+      throw new WCS20Exception("Scale Axis Undefined",WCS20Exception.WCS20ExceptionCode.ScaleAxisUndefined,axisName);
+    }
+  }
+  if (xScale == null) {
+    throw new WCS20Exception("Missing scale factor along i",WCS20Exception.WCS20ExceptionCode.InvalidScaleFactor,"Null");
+  }
+  if (yScale == null) {
+    throw new WCS20Exception("Missing scale factor along j",WCS20Exception.WCS20ExceptionCode.InvalidScaleFactor,"Null");
+  }
+  final double scaleFactorX=xScale.getScaleFactor();
+  if (scaleFactorX <= 0) {
+    throw new WCS20Exception("Invalid scale factor",WCS20Exception.WCS20ExceptionCode.InvalidScaleFactor,Double.toString(scaleFactorX));
+  }
+  final double scaleFactorY=yScale.getScaleFactor();
+  if (scaleFactorY <= 0) {
+    throw new WCS20Exception("Invalid scale factor",WCS20Exception.WCS20ExceptionCode.InvalidScaleFactor,Double.toString(scaleFactorY));
+  }
+  if (scaleFactorX == 1.0 && scaleFactorY == 1.0) {
+    if (interpolation instanceof InterpolationNearest) {
+      return sourceGC;
+    }
+ else {
+      final Operation operation=CoverageProcessor.getInstance().getOperation("Warp");
+      final ParameterValueGroup parameters=operation.getParameters();
+      parameters.parameter("Source").setValue(sourceGC);
+      parameters.parameter("warp").setValue(new WarpAffine(AffineTransform.getScaleInstance(1,1)));
+      parameters.parameter("interpolation").setValue(interpolation);
+      parameters.parameter("backgroundValues").setValue(CoverageUtilities.getBackgroundValues(sourceGC));
+      return (GridCoverage2D)CoverageProcessor.getInstance(hints).doOperation(parameters,hints);
+    }
+  }
+  final GridGeometry2D gridGeometry=sourceGC.getGridGeometry();
+  final GridEnvelope gridRange=gridGeometry.getGridRange();
+  WCSUtils.checkOutputLimits(wcsinfo,new GridEnvelope2D(0,0,(int)(gridRange.getSpan(gridGeometry.gridDimensionX) * scaleFactorX),(int)(gridRange.getSpan(gridGeometry.gridDimensionY) * scaleFactorY)),sourceGC.getRenderedImage().getSampleModel());
+  final Operation operation=CoverageProcessor.getInstance().getOperation("Scale");
+  final ParameterValueGroup parameters=operation.getParameters();
+  parameters.parameter("Source").setValue(sourceGC);
+  parameters.parameter("interpolation").setValue(interpolation != null ? interpolation : InterpolationPolicy.getDefaultPolicy().getInterpolation());
+  parameters.parameter("xScale").setValue(scaleFactorX);
+  parameters.parameter("yScale").setValue(scaleFactorY);
+  parameters.parameter("xTrans").setValue(0.0);
+  parameters.parameter("yTrans").setValue(0.0);
+  return (GridCoverage2D)CoverageProcessor.getInstance(hints).doOperation(parameters,hints);
 }
