@@ -1,0 +1,47 @@
+{
+  Utilities.ensureNonNull("cInfo",cInfo);
+  final String nativeFormat=cInfo.getNativeFormat();
+  if (mapping.containsKey(nativeFormat)) {
+    return mapping.get(nativeFormat);
+  }
+  final String source=cInfo.getStore().getURL();
+  final URL sourceURL=new URL(source);
+  final File sourceFile=DataUtilities.urlToFile(sourceURL);
+  if (sourceFile == null) {
+    return null;
+  }
+  ImageInputStream inStream=null;
+  ImageReader reader=null;
+  try {
+    inStream=ImageIO.createImageInputStream(sourceFile);
+    if (inStream == null) {
+      LOGGER.info("Unable to create an imageinputstream for this file:" + sourceFile.getAbsolutePath());
+      return null;
+    }
+    Iterator<ImageReader> readers=ImageIO.getImageReaders(inStream);
+    if (readers.hasNext()) {
+      reader=readers.next();
+      mapping.putIfAbsent(nativeFormat,reader.getOriginatingProvider().getMIMETypes()[0]);
+      return mapping.get(nativeFormat);
+    }
+  }
+ catch (  Exception e) {
+  }
+ finally {
+    try {
+      if (inStream != null) {
+        inStream.close();
+      }
+    }
+ catch (    Exception e) {
+    }
+    try {
+      if (reader != null) {
+        reader.dispose();
+      }
+    }
+ catch (    Exception e) {
+    }
+  }
+  return null;
+}
