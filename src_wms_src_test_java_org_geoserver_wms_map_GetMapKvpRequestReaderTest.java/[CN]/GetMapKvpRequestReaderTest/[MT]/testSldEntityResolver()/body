@@ -1,0 +1,20 @@
+{
+  WMS wms=new WMS(getGeoServer());
+  WMSInfo wmsInfo=wms.getServiceInfo();
+  try {
+    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,true);
+    getGeoServer().save(wmsInfo);
+    assertNotNull(wms.getServiceInfo().getMetadata().get(WMS.SLD_EXTERNAL_ENTITIES));
+    assertTrue((Boolean)wms.getServiceInfo().getMetadata().get(WMS.SLD_EXTERNAL_ENTITIES));
+    GetMapKvpRequestReader reader=new GetMapKvpRequestReader(wms);
+    assertNull(reader.getSldEntityResolver());
+    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,false);
+    getGeoServer().save(wmsInfo);
+    reader=new GetMapKvpRequestReader(wms);
+    assertNotNull(reader.getSldEntityResolver());
+  }
+  finally {
+    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,WMS.SLD_EXTERNAL_ENTITIES_DEFAULT);
+    getGeoServer().save(wmsInfo);
+  }
+}

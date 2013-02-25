@@ -1,0 +1,20 @@
+{
+  URL sldUrl=GetMapIntegrationTest.class.getResource("../externalEntities.sld");
+  String url="wms?bbox=" + bbox + "&styles="+ "&layers="+ layers+ "&Format=image/png"+ "&request=GetMap"+ "&width=550"+ "&height=250"+ "&srs=EPSG:4326"+ "&sld="+ sldUrl.toString();
+  WMS wms=new WMS(getGeoServer());
+  WMSInfo wmsInfo=wms.getServiceInfo();
+  try {
+    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,true);
+    getGeoServer().save(wmsInfo);
+    String response=getAsString(url);
+    assertTrue(response.indexOf("java.io.FileNotFoundException") > -1);
+    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,false);
+    getGeoServer().save(wmsInfo);
+    response=getAsString(url);
+    assertTrue(response.indexOf("java.net.MalformedURLException") > -1);
+  }
+  finally {
+    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,WMS.SLD_EXTERNAL_ENTITIES_DEFAULT);
+    getGeoServer().save(wmsInfo);
+  }
+}
