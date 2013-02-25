@@ -1,0 +1,11 @@
+{
+  final File xml=new File("./src/test/resources/getcapabilities/getCap.xml");
+  final String request=FileUtils.readFileToString(xml);
+  Document dom=postAsDOM("wcs",request);
+  assertXpathEvaluatesTo("1","count(//ows:ServiceIdentification[ows:Profile='http://www.opengis.net/spec/WCS_service-extension_range-subsetting/1.0/conf/record-subsetting'])",dom);
+  dom=getAsDOM("wcs?request=Getcapabilities&service=wCS");
+  assertXpathEvaluatesTo("1","count(//ows:ExceptionReport)",dom);
+  assertXpathEvaluatesTo("1","count(//ows:ExceptionReport//ows:Exception)",dom);
+  assertXpathEvaluatesTo("1","count(//ows:ExceptionReport//ows:Exception[@exceptionCode='InvalidParameterValue'])",dom);
+  assertXpathEvaluatesTo("1","count(//ows:ExceptionReport//ows:Exception[@locator='wCS'])",dom);
+}
