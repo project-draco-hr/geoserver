@@ -1,0 +1,19 @@
+{
+  final CoverageInfo cinfo=catalogChecks(layer);
+  if (cinfo == null) {
+    throw new IllegalStateException("Layer " + layer.getTitle() + " does nto resolve to a coverage");
+  }
+  if (!(layer instanceof GridReaderLayer)) {
+    throw new IllegalStateException("Layer " + layer.getTitle() + " does nto resolve to a coverage");
+  }
+  final GridReaderLayer gridReaderLayer=(GridReaderLayer)layer;
+  final AbstractGridCoverage2DReader reader=gridReaderLayer.getReader();
+  Set<ParameterDescriptor<List>> dimensions=reader.getDynamicParameters();
+  if (dimensions.size() != 1) {
+    throw new IllegalStateException("Coverage " + cinfo.getName() + " has a number of dimensions different than 1");
+  }
+  final GeneralParameterValue[] params=gridReaderLayer.getParams();
+  enforceParamCardinality(params,dimensions);
+  enforceStackingOrder(params);
+  return layer;
+}

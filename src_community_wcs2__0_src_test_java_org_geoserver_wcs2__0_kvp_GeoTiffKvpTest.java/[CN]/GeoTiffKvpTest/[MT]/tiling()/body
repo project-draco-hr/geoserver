@@ -1,0 +1,36 @@
+{
+  MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&tiling=true&tileheight=256&tilewidth=256");
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  final TIFFImageReader reader=(TIFFImageReader)new TIFFImageReaderSpi().createReaderInstance();
+  reader.setInput(new FileImageInputStream(file));
+  assertTrue(reader.isImageTiled(0));
+  assertEquals(256,reader.getTileHeight(0));
+  assertEquals(256,reader.getTileWidth(0));
+  IIOMetadataNode node=((TIFFImageMetadata)reader.getImageMetadata(0)).getStandardDataNode();
+  assertNotNull(node);
+  assertEquals("PlanarConfiguration",node.getFirstChild().getNodeName());
+  assertEquals("PixelInterleaved",node.getFirstChild().getAttributes().item(0).getNodeValue());
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble" + "&interleave=pixel&tiling=true&tileheight=13&tilewidth=256");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WcsExceptionCode.TilingInvalid.toString(),"13");
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble" + "&interleave=pixel&tiling=true&tileheight=13&tilewidth=11");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WcsExceptionCode.TilingInvalid.toString(),"11");
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&tiling=true");
+  assertEquals("image/tiff",response.getContentType());
+  tiffContents=getBinary(response);
+  file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  reader.setInput(new FileImageInputStream(file));
+  assertTrue(reader.isImageTiled(0));
+  assertEquals(512,reader.getTileHeight(0));
+  assertEquals(512,reader.getTileWidth(0));
+  node=((TIFFImageMetadata)reader.getImageMetadata(0)).getStandardDataNode();
+  assertNotNull(node);
+  assertEquals("PlanarConfiguration",node.getFirstChild().getNodeName());
+  assertEquals("PixelInterleaved",node.getFirstChild().getAttributes().item(0).getNodeValue());
+  reader.dispose();
+}

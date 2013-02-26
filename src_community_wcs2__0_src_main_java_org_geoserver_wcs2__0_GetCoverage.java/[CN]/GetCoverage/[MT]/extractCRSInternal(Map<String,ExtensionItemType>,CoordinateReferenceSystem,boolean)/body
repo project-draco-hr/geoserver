@@ -1,0 +1,23 @@
+{
+  Utilities.ensureNonNull("defaultCRS",defaultCRS);
+  final String identifier=isOutputCRS ? "outputCrs" : "subsettingCrs";
+  if (extensions == null || extensions.size() == 0 || !extensions.containsKey(identifier)) {
+    return defaultCRS;
+  }
+  final ExtensionItemType extensionItem=extensions.get(identifier);
+  if (extensionItem.getName().equals(identifier)) {
+    String crsName=extensionItem.getSimpleContent();
+    if (crsName == null) {
+      throw new WCS20Exception(identifier + " was null",WCS20ExceptionCode.NotACrs,"null");
+    }
+    try {
+      return lonLatCRSFactory.createCoordinateReferenceSystem(crsName);
+    }
+ catch (    Exception e) {
+      final WCS20Exception exception=new WCS20Exception("Invalid " + identifier,isOutputCRS ? WCS20Exception.WCS20ExceptionCode.OutputCrsNotSupported : WCS20Exception.WCS20ExceptionCode.SubsettingCrsNotSupported,crsName);
+      exception.initCause(e);
+      throw exception;
+    }
+  }
+  return defaultCRS;
+}

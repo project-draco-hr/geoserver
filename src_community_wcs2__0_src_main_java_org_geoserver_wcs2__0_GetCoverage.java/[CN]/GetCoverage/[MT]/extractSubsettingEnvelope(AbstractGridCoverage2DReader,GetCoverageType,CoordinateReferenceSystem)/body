@@ -22,10 +22,17 @@
   }
   final List<String> axesNames=envelopeDimensionsMapper.getAxesNames(envelope,true);
   final List<String> foundDimensions=new ArrayList<String>();
+  final GeneralEnvelope sourceEnvelope=new GeneralEnvelope(reader.getOriginalEnvelope());
   for (  DimensionSubsetType dim : dimensions) {
-    final String dimension=dim.getDimension();
+    String dimension=dim.getDimension();
+    if (dimension.startsWith("http://www.opengis.net/def/axis/OGC/0/")) {
+      dimension=dimension.substring("http://www.opengis.net/def/axis/OGC/0/".length());
+    }
+ else     if (dimension.startsWith("http://opengis.net/def/axis/OGC/0/")) {
+      dimension=dimension.substring("http://opengis.net/def/axis/OGC/0/".length());
+    }
     if (dimension == null || dimension.length() <= 0 || !axesNames.contains(dimension)) {
-      throw new WCS20Exception("Empty axis label provided",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,dimension == null ? "Null" : dimension);
+      throw new WCS20Exception("Empty or wrong axis label provided",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,dimension == null ? "Null" : dimension);
     }
     if (foundDimensions.contains(dimension)) {
       throw new WCS20Exception("Axis label already used during subsetting",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,dimension);
@@ -36,6 +43,9 @@
       final DimensionTrimType trim=(DimensionTrimType)dim;
       final double low=Double.parseDouble(trim.getTrimLow());
       final double high=Double.parseDouble(trim.getTrimHigh());
+      if (low > high) {
+        throw new WCS20Exception("Low greater than High",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,trim.getTrimLow());
+      }
       final int axisIndex=envelopeDimensionsMapper.getAxisIndex(envelope,dimension);
       if (axisIndex < 0) {
         throw new WCS20Exception("Invalid axis provided",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,dimension);
@@ -53,12 +63,14 @@
       AffineTransform affineTransform=RequestUtils.getAffineTransform(reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER));
       final double scale=axisIndex == 0 ? affineTransform.getScaleX() : -affineTransform.getScaleY();
       envelope.setRange(axisIndex,slicePoint,slicePoint + scale);
+      if (sourceEnvelope.getMinimum(axisIndex) > slicePoint || slicePoint > sourceEnvelope.getMaximum(axisIndex)) {
+        throw new WCS20Exception("SlicePoint outside coverage envelope",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,slicePointS);
+      }
     }
  else {
       throw new WCS20Exception("Invalid element found while attempting to parse dimension subsetting request",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,dim.getClass().toString());
     }
   }
-  final GeneralEnvelope sourceEnvelope=new GeneralEnvelope(reader.getOriginalEnvelope());
   if (CRS.equalsIgnoreMetadata(envelope.getCoordinateReferenceSystem(),sourceEnvelope.getCoordinateReferenceSystem())) {
     envelope.intersect(sourceEnvelope);
     envelope.setCoordinateReferenceSystem(reader.getCrs());
