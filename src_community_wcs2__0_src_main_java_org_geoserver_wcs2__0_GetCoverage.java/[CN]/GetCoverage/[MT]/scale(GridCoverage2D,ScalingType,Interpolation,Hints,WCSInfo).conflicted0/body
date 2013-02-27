@@ -1,40 +1,29 @@
 {
-  Utilities.ensureNonNull("sourceGC",sourceGC);
-  Utilities.ensureNonNull("ScalingType",scaling);
-  final ScaleToExtentType scaleType=scaling.getScaleToExtent();
-  final EList<TargetAxisExtentType> targetAxisExtentElements=scaleType.getTargetAxisExtent();
-  TargetAxisExtentType xExtent=null, yExtent=null;
-  for (  TargetAxisExtentType axisExtentType : targetAxisExtentElements) {
-    final String axisName=axisExtentType.getAxis();
+  final ScaleToSizeType scaleType=scaling.getScaleToSize();
+  final EList<TargetAxisSizeType> targetAxisSizeElements=scaleType.getTargetAxisSize();
+  TargetAxisSizeType xSize=null, ySize=null;
+  for (  TargetAxisSizeType axisSizeType : targetAxisSizeElements) {
+    final String axisName=axisSizeType.getAxis();
     if (axisName.equals("http://www.opengis.net/def/axis/OGC/1/i")) {
-      xExtent=axisExtentType;
+      xSize=axisSizeType;
     }
  else     if (axisName.equals("http://www.opengis.net/def/axis/OGC/1/j")) {
-      yExtent=axisExtentType;
+      ySize=axisSizeType;
     }
  else {
       throw new WCS20Exception("Scale Axis Undefined",WCS20Exception.WCS20ExceptionCode.ScaleAxisUndefined,axisName);
     }
   }
-  if (xExtent == null) {
-    throw new WCS20Exception("Missing extent along i",WCS20Exception.WCS20ExceptionCode.InvalidExtent,"Null");
+  final int sizeX=(int)xSize.getTargetSize();
+  if (sizeX <= 0) {
+    throw new WCS20Exception("Invalid target size",WCS20Exception.WCS20ExceptionCode.InvalidExtent,Integer.toString(sizeX));
   }
-  if (yExtent == null) {
-    throw new WCS20Exception("Missing extent along j",WCS20Exception.WCS20ExceptionCode.InvalidExtent,"Null");
+  final int sizeY=(int)ySize.getTargetSize();
+  if (sizeY <= 0) {
+    throw new WCS20Exception("Invalid target size",WCS20Exception.WCS20ExceptionCode.InvalidExtent,Integer.toString(sizeY));
   }
-  final int minx=(int)targetAxisExtentElements.get(0).getLow();
-  final int maxx=(int)targetAxisExtentElements.get(0).getHigh();
-  final int miny=(int)targetAxisExtentElements.get(1).getLow();
-  final int maxy=(int)targetAxisExtentElements.get(1).getHigh();
   final GridEnvelope2D sourceGE=sourceGC.getGridGeometry().getGridRange2D();
-  if (minx >= maxx) {
-    throw new WCS20Exception("Invalid Extent for dimension:" + targetAxisExtentElements.get(0).getAxis(),WCS20Exception.WCS20ExceptionCode.InvalidExtent,String.valueOf(maxx));
-  }
-  if (miny >= maxy) {
-    throw new WCS20Exception("Invalid Extent for dimension:" + targetAxisExtentElements.get(1).getAxis(),WCS20Exception.WCS20ExceptionCode.InvalidExtent,String.valueOf(maxy));
-  }
-  final Rectangle destinationRectangle=new Rectangle(minx,miny,maxx - minx + 1,maxy - miny + 1);
-  if (destinationRectangle.equals(sourceGE)) {
+  if (sizeY == sourceGE.width && sizeX == sourceGE.height) {
     if (interpolation instanceof InterpolationNearest) {
       return sourceGC;
     }
@@ -45,12 +34,12 @@
       parameters.parameter("warp").setValue(new WarpAffine(AffineTransform.getScaleInstance(1,1)));
       parameters.parameter("interpolation").setValue(interpolation);
       parameters.parameter("backgroundValues").setValue(CoverageUtilities.getBackgroundValues(sourceGC));
-      return (GridCoverage2D)CoverageProcessor.getInstance(hints).doOperation(parameters,hints);
+      return (GridCoverage2D)CoverageProcessor.getInstance().doOperation(parameters,hints);
     }
   }
-  WCSUtils.checkOutputLimits(wcsinfo,new GridEnvelope2D(destinationRectangle),sourceGC.getRenderedImage().getSampleModel());
-  final Warp warp=new WarpAffine(AffineTransform.getScaleInstance(sourceGE.width / destinationRectangle.width,sourceGE.height / destinationRectangle.height));
-  final ImageLayout2 layout=new ImageLayout2(destinationRectangle.x,destinationRectangle.y,destinationRectangle.width,destinationRectangle.height);
+  WCSUtils.checkOutputLimits(wcsinfo,new GridEnvelope2D(0,0,sizeX,sizeY),sourceGC.getRenderedImage().getSampleModel());
+  final Warp warp=new WarpAffine(AffineTransform.getScaleInstance(sourceGE.width / sizeX,sourceGE.height / sizeY));
+  final ImageLayout2 layout=new ImageLayout2(sourceGE.x,sourceGE.y,sizeX,sizeY);
   hints.add(new Hints(JAI.KEY_IMAGE_LAYOUT,layout));
   final Operation operation=CoverageProcessor.getInstance().getOperation("Warp");
   final ParameterValueGroup parameters=operation.getParameters();
@@ -58,5 +47,6 @@
   parameters.parameter("warp").setValue(warp);
   parameters.parameter("interpolation").setValue(interpolation != null ? interpolation : InterpolationPolicy.getDefaultPolicy().getInterpolation());
   parameters.parameter("backgroundValues").setValue(CoverageUtilities.getBackgroundValues(sourceGC));
-  return (GridCoverage2D)CoverageProcessor.getInstance().doOperation(parameters,hints);
+  GridCoverage2D gc=(GridCoverage2D)CoverageProcessor.getInstance().doOperation(parameters,hints);
+  return gc;
 }
