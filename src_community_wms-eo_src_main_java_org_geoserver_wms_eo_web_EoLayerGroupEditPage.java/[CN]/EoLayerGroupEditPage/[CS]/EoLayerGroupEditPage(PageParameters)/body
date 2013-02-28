@@ -1,0 +1,19 @@
+{
+  String groupName=parameters.getString(GROUP);
+  String wsName=parameters.getString(WORKSPACE);
+  LayerGroupInfo lg=wsName != null ? getCatalog().getLayerGroupByName(wsName,groupName) : getCatalog().getLayerGroupByName(groupName);
+  if (lg == null) {
+    error(new ParamResourceModel("LayerGroupEditPage.notFound",this,groupName).getString());
+    doReturn(EoLayerGroupPage.class);
+    return;
+  }
+  initUI(lg);
+  if (!isAuthenticatedAsAdmin()) {
+    Form f=(Form)get("form");
+    if (lg.getWorkspace() == null) {
+      disableForm(f);
+      info(new StringResourceModel("globalLayerGroupReadOnly",this,null).getString());
+    }
+    f.get("workspace").setEnabled(false);
+  }
+}

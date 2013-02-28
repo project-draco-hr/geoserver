@@ -1,0 +1,52 @@
+{
+  boolean timeDimension=false;
+  boolean customDimension=false;
+  AbstractGridCoverage2DReader reader=null;
+  try {
+    reader=(AbstractGridCoverage2DReader)ci.getGridCoverageReader(null,null);
+    if (reader == null) {
+      throw new RuntimeException("Unable to acquire reader for this coverageinfo: " + ci.getName());
+    }
+    final ReaderDimensionsAccessor ra=new ReaderDimensionsAccessor(reader);
+    for (    String domain : ra.getCustomDomains()) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        boolean hasRange=ra.hasRange(domain);
+        boolean hasResolution=ra.hasResolution(domain);
+        LOGGER.fine(ci.getName() + ": found " + domain+ " dimension (hasRange: "+ hasRange+ ", hasResolution: "+ hasResolution+ ")");
+      }
+      DimensionInfo dimension=new DimensionInfoImpl();
+      dimension.setEnabled(true);
+      dimension.setPresentation(DimensionPresentation.LIST);
+      ci.getMetadata().put(ResourceInfo.CUSTOM_DIMENSION_PREFIX + domain,dimension);
+      customDimension=true;
+    }
+    String elev=reader.getMetadataValue(AbstractGridCoverage2DReader.HAS_ELEVATION_DOMAIN);
+    if (Boolean.parseBoolean(elev)) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine(ci.getName() + ": found ELEVATION dimension");
+      }
+      DimensionInfo dimension=new DimensionInfoImpl();
+      dimension.setEnabled(true);
+      dimension.setPresentation(DimensionPresentation.LIST);
+      ci.getMetadata().put(ResourceInfo.ELEVATION,dimension);
+      customDimension=true;
+    }
+    String time=reader.getMetadataValue(AbstractGridCoverage2DReader.HAS_TIME_DOMAIN);
+    if (Boolean.parseBoolean(time)) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine(ci.getName() + ": found TIME dimension");
+      }
+      DimensionInfo dimension=new DimensionInfoImpl();
+      dimension.setEnabled(true);
+      dimension.setPresentation(DimensionPresentation.LIST);
+      ci.getMetadata().put(ResourceInfo.TIME,dimension);
+      timeDimension=true;
+    }
+  }
+ catch (  IOException e) {
+    if (LOGGER.isLoggable(Level.SEVERE)) {
+      LOGGER.log(Level.SEVERE,"Failed to access coverage reader custom dimensions",e);
+    }
+  }
+  return timeDimension && customDimension;
+}
