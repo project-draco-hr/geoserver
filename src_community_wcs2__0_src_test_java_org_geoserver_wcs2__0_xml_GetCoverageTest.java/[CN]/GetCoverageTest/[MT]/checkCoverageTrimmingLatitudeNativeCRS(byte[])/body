@@ -1,0 +1,29 @@
+{
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  GeoTiffReader readerTarget=new GeoTiffReader(file);
+  GridCoverage2D targetCoverage=null;
+  try {
+    targetCoverage=readerTarget.read(null);
+    final GridEnvelope gridRange=targetCoverage.getGridGeometry().getGridRange();
+    final GeneralEnvelope expectedEnvelope=new GeneralEnvelope(new double[]{targetCoverage.getEnvelope().getMinimum(0),-43.5},new double[]{targetCoverage.getEnvelope().getMaximum(0),-43.0});
+    expectedEnvelope.setCoordinateReferenceSystem(CRS.decode("EPSG:4326",true));
+    final double scale=getScale(targetCoverage);
+    assertEnvelopeEquals(expectedEnvelope,scale,(GeneralEnvelope)targetCoverage.getEnvelope(),scale);
+    Assert.assertTrue(CRS.equalsIgnoreMetadata(targetCoverage.getCoordinateReferenceSystem(),expectedEnvelope.getCoordinateReferenceSystem()));
+    assertEquals(gridRange.getSpan(0),360);
+    assertEquals(gridRange.getSpan(1),120);
+  }
+  finally {
+    try {
+      readerTarget.dispose();
+    }
+ catch (    Exception e) {
+    }
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+    }
+  }
+}

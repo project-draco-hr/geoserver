@@ -1,0 +1,22 @@
+{
+  final File xml=new File("./src/test/resources/requestGetCoverageTrimmingLatitudeNativeCRSXMLMultipart.xml");
+  final String request=FileUtils.readFileToString(xml);
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("multipart/related",response.getContentType());
+  Multipart multipart=getMultipart(response);
+  assertEquals(2,multipart.getCount());
+  BodyPart xmlPart=multipart.getBodyPart(0);
+  assertEquals("application/gml+xml",xmlPart.getHeader("Content-Type")[0]);
+  assertEquals("wcs",xmlPart.getHeader("Content-ID")[0]);
+  Document gml=dom(xmlPart.getInputStream());
+  assertXpathEvaluatesTo("fileReference","//gml:rangeSet/gml:File/gml:rangeParameters/@xlink:arcrole",gml);
+  assertXpathEvaluatesTo("cid:/coverages/wcs__BlueMarble.tif","//gml:rangeSet/gml:File/gml:rangeParameters/@xlink:href",gml);
+  assertXpathEvaluatesTo("http://www.opengis.net/spec/GMLCOV_geotiff-coverages/1.0/conf/geotiff-coverage","//gml:rangeSet/gml:File/gml:rangeParameters/@xlink:role",gml);
+  assertXpathEvaluatesTo("cid:/coverages/wcs__BlueMarble.tif","//gml:rangeSet/gml:File/gml:fileReference",gml);
+  assertXpathEvaluatesTo("image/tiff","//gml:rangeSet/gml:File/gml:mimeType",gml);
+  BodyPart coveragePart=multipart.getBodyPart(1);
+  assertEquals("/coverages/wcs__BlueMarble.tif",coveragePart.getHeader("Content-ID")[0]);
+  assertEquals("image/tiff",coveragePart.getContentType());
+  byte[] tiffContents=IOUtils.toByteArray(coveragePart.getInputStream());
+  checkCoverageTrimmingLatitudeNativeCRS(tiffContents);
+}

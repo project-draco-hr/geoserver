@@ -1,0 +1,42 @@
+{
+  GridCoverage2D coverage=(GridCoverage2D)value;
+  GetCoverageType getCoverage=(GetCoverageType)operation.getParameters()[0];
+  String format=getCoverage.getFormat();
+  if (format == null) {
+    format="image/tiff";
+  }
+  final Map<String,String> encodingParameters=new HashMap<String,String>();
+  final ExtensionType extension=getCoverage.getExtension();
+  if (extension != null) {
+    final EList<ExtensionItemType> extensions=extension.getContents();
+    for (    ExtensionItemType ext : extensions) {
+      encodingParameters.put(ext.getName(),ext.getSimpleContent());
+    }
+  }
+  CoverageResponseDelegate delegate=responseFactory.encoderFor(format);
+  try {
+    String fileName="/coverages/" + getCoverage.getCoverageId() + "."+ delegate.getFileExtension(format);
+    BodyPart coveragesPart=new MimeBodyPart();
+    FileReference reference=new FileReference(fileName,delegate.getMimeType(format),delegate.getConformanceClass(format));
+    final CoverageData coveragesData=new CoverageData(coverage,reference,envelopeDimensionsMapper);
+    coveragesPart.setDataHandler(new DataHandler(coveragesData,"geoserver/coverages20"));
+    coveragesPart.setHeader("Content-ID","wcs");
+    coveragesPart.setHeader("Content-Type","application/gml+xml");
+    multipart.addBodyPart(coveragesPart);
+    BodyPart coveragePart=new MimeBodyPart();
+    CoverageEncoder encoder=new CoverageEncoder(delegate,coverage,format,encodingParameters);
+    coveragePart.setDataHandler(new DataHandler(encoder,"geoserver/coverageDelegate"));
+    coveragePart.setHeader("Content-ID",fileName);
+    coveragePart.setHeader("Content-Type",delegate.getMimeType(format));
+    coveragePart.setHeader("Content-Transfer-Encoding","binary");
+    multipart.addBodyPart(coveragePart);
+    MimeMessage message=new GeoServerMimeMessage();
+    message.setContent(multipart);
+    message.writeTo(output);
+    output.flush();
+  }
+ catch (  MessagingException e) {
+    throw new WcsException("Error occurred while encoding the mime multipart response",e);
+  }
+  delegate.encode(coverage,format,encodingParameters,output);
+}
