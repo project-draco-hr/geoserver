@@ -1,0 +1,37 @@
+{
+  Envelope lookAtEnvelope=bounds;
+  Geometry lookAtGeometry=options.getLookAt();
+  if (!forceBounds && lookAtGeometry != null) {
+    lookAtEnvelope=lookAtGeometry.getEnvelopeInternal();
+  }
+  if (lookAtEnvelope.isNull()) {
+    return null;
+  }
+  double lon1=lookAtEnvelope.getMinX();
+  double lat1=lookAtEnvelope.getMinY();
+  double lon2=lookAtEnvelope.getMaxX();
+  double lat2=lookAtEnvelope.getMaxY();
+  double R_EARTH=6.371 * 1000000;
+  double VIEWER_WIDTH=22 * Math.PI / 180;
+  double[] p1=getRect(lon1,lat1,R_EARTH);
+  double[] p2=getRect(lon2,lat2,R_EARTH);
+  double[] midpoint=new double[]{(p1[0] + p2[0]) / 2,(p1[1] + p2[1]) / 2,(p1[2] + p2[2]) / 2};
+  midpoint=getGeographic(midpoint[0],midpoint[1],midpoint[2]);
+  Double distance=options.getRange();
+  if (null == distance) {
+    distance=distance(p1,p2);
+  }
+  double height=distance / (2 * Math.tan(VIEWER_WIDTH));
+  final Double tilt=options.getTilt() == null ? Double.valueOf(0) : options.getTilt();
+  final Double heading=options.getHeading() == null ? Double.valueOf(0) : options.getHeading();
+  final Double altitude=options.getAltitude() == null ? Double.valueOf(height) : options.getAltitude();
+  LookAt lookAt=new LookAt();
+  lookAt.setLongitude(midpoint[0]);
+  lookAt.setLatitude(midpoint[1]);
+  lookAt.setAltitude(altitude);
+  lookAt.setRange(distance);
+  lookAt.setTilt(tilt);
+  lookAt.setHeading(heading);
+  lookAt.setAltitudeMode(options.getAltitudeMode());
+  return lookAt;
+}

@@ -1,0 +1,19 @@
+{
+  Connection conn=null;
+  Statement st=null;
+  canonicalizer.add(tableName);
+  tableName=canonicalizer.get(tableName);
+  try {
+synchronized (tableName) {
+      conn=DriverManager.getConnection("jdbc:h2:file:" + dataDir + "/geosearch/h2cache_"+ tableName,"geoserver","geopass");
+      st=conn.createStatement();
+      st.execute("CREATE TABLE IF NOT EXISTS TILECACHE( " + "x BIGINT, " + "y BIGINT, "+ "z INT, "+ "fid varchar (64))");
+      st.execute("CREATE INDEX IF NOT EXISTS IDX_TILECACHE ON TILECACHE(x, y, z)");
+    }
+    return readFeaturesForTile(tile,conn);
+  }
+  finally {
+    JDBCUtils.close(st);
+    JDBCUtils.close(conn,null,null);
+  }
+}

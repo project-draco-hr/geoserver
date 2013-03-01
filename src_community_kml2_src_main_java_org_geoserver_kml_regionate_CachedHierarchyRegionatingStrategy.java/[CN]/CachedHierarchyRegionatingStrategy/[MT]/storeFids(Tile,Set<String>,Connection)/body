@@ -1,0 +1,23 @@
+{
+  PreparedStatement ps=null;
+  try {
+    String stmt="INSERT INTO TILECACHE VALUES (" + t.x + ", "+ t.y+ ", "+ t.z+ ", ?)";
+    ps=conn.prepareStatement(stmt);
+    if (fids.size() == 0) {
+      ps.setString(1,null);
+      ps.execute();
+    }
+ else {
+      conn.setAutoCommit(false);
+      for (      String fid : fids) {
+        ps.setString(1,fid);
+        ps.execute();
+      }
+      conn.commit();
+    }
+  }
+  finally {
+    conn.setAutoCommit(true);
+    JDBCUtils.close(ps);
+  }
+}

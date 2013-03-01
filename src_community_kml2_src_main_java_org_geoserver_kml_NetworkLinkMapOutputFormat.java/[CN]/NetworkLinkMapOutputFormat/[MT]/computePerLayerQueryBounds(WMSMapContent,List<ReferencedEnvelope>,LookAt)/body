@@ -1,0 +1,29 @@
+{
+  final boolean computeQueryBounds=lookAt == null;
+  ReferencedEnvelope aggregatedBounds;
+  try {
+    boolean longitudeFirst=true;
+    aggregatedBounds=new ReferencedEnvelope(CRS.decode("EPSG:4326",longitudeFirst));
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  aggregatedBounds.setToNull();
+  final List<Layer> mapLayers=context.layers();
+  final List<MapLayerInfo> layerInfos=context.getRequest().getLayers();
+  for (int i=0; i < mapLayers.size(); i++) {
+    final Layer Layer=mapLayers.get(i);
+    final MapLayerInfo layerInfo=layerInfos.get(i);
+    ReferencedEnvelope layerLatLongBbox;
+    layerLatLongBbox=computeLayerBounds(Layer,layerInfo,computeQueryBounds);
+    try {
+      layerLatLongBbox=layerLatLongBbox.transform(aggregatedBounds.getCoordinateReferenceSystem(),true);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+    target.add(layerLatLongBbox);
+    aggregatedBounds.expandToInclude(layerLatLongBbox);
+  }
+  return aggregatedBounds;
+}

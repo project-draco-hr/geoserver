@@ -1,0 +1,21 @@
+{
+  while (i < size) {
+    List<Layer> layers=context.getMapContent().layers();
+    Layer layer=layers.get(i++);
+    context.setCurrentLayer(layer);
+    Folder folder=new Folder();
+    folder.setName(layer.getTitle());
+    for (    KmlDecorator decorator : decorators) {
+      folder=(Folder)decorator.decorate(folder,context);
+      if (folder == null) {
+        continue;
+      }
+    }
+    if (layer instanceof FeatureLayer) {
+      List<Feature> features=new SequenceList<Feature>(new FeatureSequenceFactory(context,(FeatureLayer)layer));
+      folder.setFeature(features);
+    }
+    return folder;
+  }
+  return null;
+}

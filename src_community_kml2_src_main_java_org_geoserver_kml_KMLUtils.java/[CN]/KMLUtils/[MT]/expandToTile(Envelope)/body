@@ -1,0 +1,26 @@
+{
+  double resolution=Math.max(extent.getWidth() / 256d,extent.getHeight() / 256d);
+  int i=findZoomLevel(extent);
+  while (i > 0) {
+    resolution=TILE_RESOLUTIONS[i];
+    double tilelon=resolution * 256;
+    double tilelat=resolution * 256;
+    double lon0=extent.getMinX() - WORLD_BOUNDS_WGS84.getMinX();
+    double lon1=extent.getMaxX() - WORLD_BOUNDS_WGS84.getMinX();
+    int col0=(int)Math.floor(lon0 / tilelon);
+    int col1=(int)Math.floor((lon1 / tilelon) - 1E-9);
+    double lat0=extent.getMinY() - WORLD_BOUNDS_WGS84.getMinY();
+    double lat1=extent.getMaxY() - WORLD_BOUNDS_WGS84.getMinY();
+    int row0=(int)Math.floor(lat0 / tilelat);
+    int row1=(int)Math.floor((lat1 / tilelat) - 1E-9);
+    if ((col0 == col1) && (row0 == row1)) {
+      double tileoffsetlon=WORLD_BOUNDS_WGS84.getMinX() + (col0 * tilelon);
+      double tileoffsetlat=WORLD_BOUNDS_WGS84.getMinY() + (row0 * tilelat);
+      return new Envelope(tileoffsetlon,tileoffsetlon + tilelon,tileoffsetlat,tileoffsetlat + tilelat);
+    }
+ else {
+      i--;
+    }
+  }
+  return WORLD_BOUNDS_WGS84;
+}

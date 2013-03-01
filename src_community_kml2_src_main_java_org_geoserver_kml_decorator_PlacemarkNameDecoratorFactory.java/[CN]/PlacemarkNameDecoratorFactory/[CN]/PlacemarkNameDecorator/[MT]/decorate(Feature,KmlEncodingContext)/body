@@ -1,0 +1,30 @@
+{
+  Placemark pm=(Placemark)feature;
+  SimpleFeature sf=context.getCurrentFeature();
+  String title=null;
+  try {
+    title=context.getTemplate().title(sf);
+  }
+ catch (  IOException e) {
+    String msg="Error occured processing 'title' template.";
+    LOGGER.log(Level.WARNING,msg,e);
+  }
+  if (title == null || "".equals(title)) {
+    title=sf.getID();
+    StringBuffer label=new StringBuffer();
+    for (    Symbolizer sym : context.getCurrentSymbolizers()) {
+      if (sym instanceof TextSymbolizer) {
+        Expression e=SLD.textLabel((TextSymbolizer)sym);
+        String value=e.evaluate(feature,String.class);
+        if ((value != null) && !"".equals(value.trim())) {
+          label.append(value);
+        }
+      }
+    }
+    if (label.length() > 0) {
+      title=label.toString();
+    }
+  }
+  pm.setName(title);
+  return pm;
+}

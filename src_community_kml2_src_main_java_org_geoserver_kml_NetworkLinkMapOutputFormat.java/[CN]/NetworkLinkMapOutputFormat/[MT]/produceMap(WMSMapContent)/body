@@ -1,0 +1,35 @@
+{
+  GetMapRequest request=mapContent.getRequest();
+  Kml kml=new Kml();
+  Document document=kml.createAndSetDocument();
+  String kmltitle=(String)request.getFormatOptions().get("kmltitle");
+  Folder folder=document.createAndAddFolder();
+  folder.setName(kmltitle);
+  LookAt lookAt=null;
+  List<ReferencedEnvelope> layerBounds=new ArrayList<ReferencedEnvelope>(mapContent.layers().size());
+  ReferencedEnvelope aggregatedBounds=computePerLayerQueryBounds(mapContent,layerBounds,null);
+  final List<MapLayerInfo> layers=request.getLayers();
+  final List<Style> styles=request.getStyles();
+  for (int i=0; i < layers.size(); i++) {
+    MapLayerInfo layerInfo=layers.get(i);
+    NetworkLink nl=folder.createAndAddNetworkLink();
+    nl.setName(layerInfo.getName());
+    nl.setVisibility(true);
+    nl.setOpen(true);
+    ReferencedEnvelope latLongBoundingBox=layerBounds.get(i);
+    request.setBbox(null);
+    String style=i < styles.size() ? styles.get(i).getName() : null;
+    String href=WMSRequests.getGetMapUrl(request,layers.get(i).getName(),i,style,null,null);
+    try {
+      href=URLDecoder.decode(href,"UTF-8");
+    }
+ catch (    UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+    Link url=nl.createAndSetUrl();
+    url.setHref(href);
+    url.setViewRefreshMode(ViewRefreshMode.ON_STOP);
+    url.setViewRefreshTime(1);
+  }
+  return new KMLMap(mapContent,kml);
+}

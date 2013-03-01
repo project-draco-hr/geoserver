@@ -1,0 +1,50 @@
+{
+  Statement st=null;
+  PreparedStatement ps=null;
+  FeatureIterator fi=null;
+  try {
+    st=conn.createStatement();
+    st.execute("CREATE TABLE FEATUREIDX(" + "X NUMBER, " + "Y NUMBER, "+ "FID VARCHAR(64), "+ "ORDER_FIELD " + h2Type + ")");
+    st.execute("CREATE INDEX FEATUREIDX_COORDS ON FEATUREIDX(X, Y)");
+    st.execute("CREATE INDEX FEATUREIDX_ORDER_FIELD ON FEATUREIDX(ORDER_FIELD)");
+    ps=conn.prepareStatement("INSERT INTO " + "FEATUREIDX(X, Y, FID, ORDER_FIELD) VALUES (?, ?, ?, ?)");
+    GeometryDescriptor geom=fs.getSchema().getGeometryDescriptor();
+    CoordinateReferenceSystem nativeCrs=geom.getCoordinateReferenceSystem();
+    Query q=new Query();
+    if (geom.getLocalName().equals(attribute)) {
+      q.setPropertyNames(new String[]{geom.getLocalName()});
+    }
+ else {
+      q.setPropertyNames(new String[]{attribute,geom.getLocalName()});
+    }
+    MathTransform tx=null;
+    double[] coords=new double[2];
+    if (!CRS.equalsIgnoreMetadata(nativeCrs,WGS84))     tx=CRS.findMathTransform(nativeCrs,WGS84,true);
+    conn.setAutoCommit(false);
+    fi=fs.getFeatures(q).features();
+    while (fi.hasNext()) {
+      SimpleFeature f=(SimpleFeature)fi.next();
+      Geometry g=(Geometry)f.getDefaultGeometry();
+      Point centroid=g.getCentroid();
+      if (Double.isNaN(centroid.getX()) || Double.isNaN(centroid.getY())) {
+        LOGGER.warning("Could not calculate centroid for feature " + f.getID() + "; g =  "+ g.toText());
+        continue;
+      }
+      coords[0]=centroid.getX();
+      coords[1]=centroid.getY();
+      if (tx != null)       tx.transform(coords,0,coords,0,1);
+      ps.setDouble(1,coords[0]);
+      ps.setDouble(2,coords[1]);
+      ps.setString(3,f.getID());
+      ps.setObject(4,getSortAttributeValue(f));
+      ps.execute();
+    }
+    conn.commit();
+  }
+  finally {
+    conn.setAutoCommit(true);
+    JDBCUtils.close(st);
+    JDBCUtils.close(ps);
+    if (fi != null)     fi.close();
+  }
+}
