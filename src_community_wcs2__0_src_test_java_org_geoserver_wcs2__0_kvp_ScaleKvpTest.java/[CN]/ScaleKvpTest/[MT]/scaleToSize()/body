@@ -1,0 +1,85 @@
+{
+  GeoTiffReader readerTarget=null;
+  GridCoverage2D targetCoverage=null, sourceCoverage=null;
+  try {
+    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+    final Envelope2D sourceEnvelope=sourceCoverage.getEnvelope2D();
+    MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff" + "&subset=http://www.opengis.net/def/axis/OGC/0/Long(" + sourceEnvelope.x + ","+ (sourceEnvelope.x + sourceEnvelope.width / 2)+ ")"+ "&subset=http://www.opengis.net/def/axis/OGC/0/Lat("+ sourceEnvelope.y+ ","+ (sourceEnvelope.y + sourceEnvelope.height / 2)+ ")"+ "&SCALESIZE=http://www.opengis.net/def/axis/OGC/1/i(50),"+ "http://www.opengis.net/def/axis/OGC/1/j(50)");
+    assertEquals("image/tiff",response.getContentType());
+    byte[] tiffContents=getBinary(response);
+    File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+    FileUtils.writeByteArrayToFile(file,tiffContents);
+    readerTarget=new GeoTiffReader(file);
+    targetCoverage=readerTarget.read(null);
+    assertEquals(sourceCoverage.getCoordinateReferenceSystem(),targetCoverage.getCoordinateReferenceSystem());
+    final GeneralEnvelope finalEnvelope=new GeneralEnvelope(new double[]{sourceEnvelope.x,sourceEnvelope.y},new double[]{sourceEnvelope.x + sourceEnvelope.width / 2,sourceEnvelope.y + sourceEnvelope.height / 2});
+    finalEnvelope.setCoordinateReferenceSystem(sourceCoverage.getCoordinateReferenceSystem());
+    assertEquals(50,targetCoverage.getGridGeometry().getGridRange().getSpan(0));
+    assertEquals(50,targetCoverage.getGridGeometry().getGridRange().getSpan(1));
+    assertEquals(29.0,new ImageWorker(targetCoverage.getRenderedImage()).getMaximums()[0]);
+  }
+  finally {
+    try {
+      readerTarget.dispose();
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+    try {
+      scheduleForCleaning(sourceCoverage);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+  }
+  try {
+    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+    final Envelope2D sourceEnvelope=sourceCoverage.getEnvelope2D();
+    MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALESIZE=http://www.opengis.net/def/axis/OGC/1/i(1000)," + "http://www.opengis.net/def/axis/OGC/1/j(1000)&"+ "&subset=http://www.opengis.net/def/axis/OGC/0/Long(" + sourceEnvelope.x + ","+ (sourceEnvelope.x + sourceEnvelope.width / 2)+ ")"+ "&subset=http://www.opengis.net/def/axis/OGC/0/Lat("+ sourceEnvelope.y+ ","+ (sourceEnvelope.y + sourceEnvelope.height / 2)+ ")");
+    assertEquals("image/tiff",response.getContentType());
+    byte[] tiffContents=getBinary(response);
+    File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+    FileUtils.writeByteArrayToFile(file,tiffContents);
+    readerTarget=new GeoTiffReader(file);
+    targetCoverage=readerTarget.read(null);
+    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName("BlueMarble").getGridCoverageReader(null,null).read(null);
+    assertEquals(sourceCoverage.getCoordinateReferenceSystem(),targetCoverage.getCoordinateReferenceSystem());
+    assertEquals(1000,targetCoverage.getGridGeometry().getGridRange().getSpan(0));
+    assertEquals(1000,targetCoverage.getGridGeometry().getGridRange().getSpan(1));
+    final GeneralEnvelope finalEnvelope=new GeneralEnvelope(new double[]{sourceEnvelope.x,sourceEnvelope.y},new double[]{sourceEnvelope.x + sourceEnvelope.width * 2,sourceEnvelope.y + sourceEnvelope.height * 2});
+    finalEnvelope.setCoordinateReferenceSystem(sourceCoverage.getCoordinateReferenceSystem());
+    assertEquals(29.0,new ImageWorker(targetCoverage.getRenderedImage()).getMaximums()[0]);
+  }
+  finally {
+    try {
+      readerTarget.dispose();
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+    try {
+      scheduleForCleaning(sourceCoverage);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+  }
+  MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALESIZE=http://www.opengis.net/def/axis/OGC/1/i(100)," + "http://www.opengis.net/def/axis/OGC/1/j(0)");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WCS20ExceptionCode.InvalidExtent.getExceptionCode(),"0");
+  response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__BlueMarble&&Format=image/tiff&SCALESIZE=http://www.opengis.net/def/axis/OGC/1/i(-2)," + "http://www.opengis.net/def/axis/OGC/1/j(100)");
+  assertEquals("application/xml",response.getContentType());
+  checkOws20Exception(response,404,WCS20ExceptionCode.InvalidExtent.getExceptionCode(),"-2");
+}
