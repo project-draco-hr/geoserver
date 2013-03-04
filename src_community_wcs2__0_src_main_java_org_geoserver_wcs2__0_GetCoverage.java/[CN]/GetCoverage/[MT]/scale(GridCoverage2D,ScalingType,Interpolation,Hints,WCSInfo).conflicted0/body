@@ -38,8 +38,20 @@
     }
   }
   WCSUtils.checkOutputLimits(wcsinfo,new GridEnvelope2D(0,0,sizeX,sizeY),sourceGC.getRenderedImage().getSampleModel());
-  final Warp warp=new WarpAffine(AffineTransform.getScaleInstance(sourceGE.width / sizeX,sourceGE.height / sizeY));
-  final ImageLayout2 layout=new ImageLayout2(sourceGE.x,sourceGE.y,sizeX,sizeY);
+  final double scaleX=1.0 * sizeX / sourceGE.width;
+  final double scaleY=1.0 * sizeY / sourceGE.height;
+  final RenderedImage sourceImage=sourceGC.getRenderedImage();
+  final int sourceMinX=sourceImage.getMinX();
+  final int sourceMinY=sourceImage.getMinY();
+  final AffineTransform affineTransform=new AffineTransform(scaleX,0,0,scaleY,sourceMinX - scaleX * sourceMinX,sourceMinY - scaleY * sourceMinY);
+  Warp warp;
+  try {
+    warp=new WarpAffine(affineTransform.createInverse());
+  }
+ catch (  NoninvertibleTransformException e) {
+    throw new RuntimeException(e);
+  }
+  final ImageLayout2 layout=new ImageLayout2(sourceMinX,sourceMinY,sizeX,sizeY);
   hints.add(new Hints(JAI.KEY_IMAGE_LAYOUT,layout));
   final Operation operation=CoverageProcessor.getInstance().getOperation("Warp");
   final ParameterValueGroup parameters=operation.getParameters();
