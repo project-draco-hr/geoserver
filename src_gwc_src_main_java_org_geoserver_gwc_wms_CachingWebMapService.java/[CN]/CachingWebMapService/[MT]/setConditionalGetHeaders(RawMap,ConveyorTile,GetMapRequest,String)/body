@@ -1,0 +1,23 @@
+{
+  map.setResponseHeader("ETag",etag);
+  final long tileTimeStamp=cachedTile.getTSCreated();
+  final String ifModSinceHeader=request.getHttpRequestHeader("If-Modified-Since");
+  final String lastModified=org.apache.commons.httpclient.util.DateUtil.formatDate(new Date(tileTimeStamp));
+  map.setResponseHeader("Last-Modified",lastModified);
+  final Date ifModifiedSince;
+  if (ifModSinceHeader != null && ifModSinceHeader.length() > 0) {
+    try {
+      ifModifiedSince=DateUtil.parseDate(ifModSinceHeader);
+      long ifModSinceSeconds=1000 * (ifModifiedSince.getTime() / 1000);
+      long tileTimeStampSeconds=1000 * (tileTimeStamp / 1000);
+      if (ifModSinceSeconds >= tileTimeStampSeconds) {
+        throw new HttpErrorCodeException(HttpServletResponse.SC_NOT_MODIFIED);
+      }
+    }
+ catch (    DateParseException e) {
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Can't parse client's If-Modified-Since header: '" + ifModSinceHeader + "'");
+      }
+    }
+  }
+}
