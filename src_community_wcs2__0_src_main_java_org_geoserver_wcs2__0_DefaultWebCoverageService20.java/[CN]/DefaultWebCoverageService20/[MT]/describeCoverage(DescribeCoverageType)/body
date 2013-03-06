@@ -4,6 +4,17 @@
   if (request.getCoverageId() == null || request.getCoverageId().isEmpty()) {
     throw new OWS20Exception("Required parameter coverageId missing",WCS20Exception.WCS20ExceptionCode.EmptyCoverageIdList,"coverageId");
   }
+  List<String> badCoverageIds=new ArrayList<String>();
+  for (  String encodedCoverageId : (List<String>)request.getCoverageId()) {
+    LayerInfo layer=NCNameResourceCodec.getCoverage(catalog,encodedCoverageId);
+    if (layer == null) {
+      badCoverageIds.add(encodedCoverageId);
+    }
+  }
+  if (!badCoverageIds.isEmpty()) {
+    String mergedIds=StringUtils.merge(badCoverageIds);
+    throw new WCS20Exception("Could not find the requested coverage(s): " + mergedIds,WCS20Exception.WCS20ExceptionCode.NoSuchCoverage,"coverageId");
+  }
   WCSInfo wcs=getServiceInfo();
   WCS20DescribeCoverageTransformer describeTransformer=new WCS20DescribeCoverageTransformer(wcs,catalog,responseFactory,envelopeAxesMapper,mimemapper);
   describeTransformer.setEncoding(Charset.forName(wcs.getGeoServer().getSettings().getCharset()));

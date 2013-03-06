@@ -1,11 +1,10 @@
 {
   if (!(o instanceof DescribeCoverageType)) {
-    throw new IllegalArgumentException(new StringBuffer("Not a GetCapabilitiesType: ").append(o).toString());
+    throw new IllegalArgumentException(new StringBuffer("Not a DescribeCoverageType: ").append(o).toString());
   }
   this.request=(DescribeCoverageType)o;
   final AttributesImpl attributes=WCS20Const.getDefaultNamespaces();
   attributes.addAttribute("","xmlns:swe","xmlns:swe","","http://www.opengis.net/swe/2.0");
-  List<String> badCoverageIds=new ArrayList<String>();
   List<LayerInfo> coverages=new ArrayList<LayerInfo>();
   for (  String encodedCoverageId : (List<String>)request.getCoverageId()) {
     LayerInfo layer=NCNameResourceCodec.getCoverage(catalog,encodedCoverageId);
@@ -13,12 +12,8 @@
       coverages.add(layer);
     }
  else {
-      badCoverageIds.add(encodedCoverageId);
+      throw new IllegalArgumentException("Failed to locate coverage " + encodedCoverageId + ", unexpected, the coverage existance has been "+ "checked earlier in the request lifecycle");
     }
-  }
-  if (!badCoverageIds.isEmpty()) {
-    String mergedIds=StringUtils.merge(badCoverageIds);
-    throw new WCS20Exception("Could not find the requested coverage(s): " + mergedIds,WCS20Exception.WCS20ExceptionCode.NoSuchCoverage,mergedIds);
   }
   start("wcs:CoverageDescriptions",attributes);
   for (  LayerInfo layer : coverages) {
