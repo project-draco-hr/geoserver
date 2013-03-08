@@ -1,0 +1,27 @@
+{
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("bm_gtiff","bm_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  GeoTiffReader readerTarget=new GeoTiffReader(file);
+  GridCoverage2D targetCoverage=null;
+  try {
+    targetCoverage=readerTarget.read(null);
+    AbstractGridCoverage2DReader sourceReader=(AbstractGridCoverage2DReader)getCatalog().getCoverageByName(getLayerId(WATTEMP)).getGridCoverageReader(null,null);
+    GeneralEnvelope expectedEnvelope=sourceReader.getOriginalEnvelope();
+    assertEnvelopeEquals(expectedEnvelope,1.0,(GeneralEnvelope)targetCoverage.getEnvelope(),1.0);
+    Assert.assertTrue(CRS.equalsIgnoreMetadata(targetCoverage.getCoordinateReferenceSystem(),expectedEnvelope.getCoordinateReferenceSystem()));
+    final GridEnvelope gridRange=targetCoverage.getGridGeometry().getGridRange();
+    GridEnvelope expectedGridRange=sourceReader.getOriginalGridRange();
+    assertEquals(gridRange.getSpan(0),expectedGridRange.getSpan(0));
+    assertEquals(gridRange.getSpan(1),expectedGridRange.getSpan(1));
+    double[] pixel=new double[1];
+    targetCoverage.getRenderedImage().getData().getPixel(1,24,pixel);
+    assertEquals(expectedValue,pixel[0],1e-6);
+  }
+  finally {
+    readerTarget.dispose();
+    scheduleForCleaning(targetCoverage);
+  }
+}

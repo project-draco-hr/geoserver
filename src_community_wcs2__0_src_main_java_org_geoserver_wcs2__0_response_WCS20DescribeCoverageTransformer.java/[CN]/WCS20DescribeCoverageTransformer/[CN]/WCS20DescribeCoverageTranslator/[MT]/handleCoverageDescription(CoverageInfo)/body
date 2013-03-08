@@ -1,6 +1,12 @@
 {
   GridCoverage2D gc2d=null;
   try {
+    String encodedId=NCNameResourceCodec.encode(ci);
+    TimeDimensionHelper timeHelper=null;
+    DimensionInfo time=ci.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+    if (time != null && time.isEnabled()) {
+      timeHelper=new TimeDimensionHelper(time,RequestUtils.getCoverageReader(ci),encodedId);
+    }
     gc2d=RequestUtils.readSampleGridCoverage(ci);
     if (gc2d == null) {
       throw new WCS20Exception("Unable to read sample coverage for " + ci.getName());
@@ -20,18 +26,20 @@
     final String srsName=GetCoverage.SRS_STARTER + EPSGCode;
     final boolean axisSwap=CRS.getAxisOrder(crs).equals(AxisOrder.EAST_NORTH);
     final AttributesImpl coverageAttributes=new AttributesImpl();
-    String encodedId=NCNameResourceCodec.encode(ci);
     coverageAttributes.addAttribute("","gml:id","gml:id","",encodedId);
     start("wcs:CoverageDescription",coverageAttributes);
     final StringBuilder builder=new StringBuilder();
     for (    String axisName : axesNames) {
       builder.append(axisName).append(" ");
     }
+    if (timeHelper != null) {
+      builder.append("time ");
+    }
     String axesLabel=builder.substring(0,builder.length() - 1);
-    handleBoundedBy(gc2d,axisSwap,srsName,axesLabel);
+    handleBoundedBy(gc2d,axisSwap,srsName,axesLabel,timeHelper);
     element("wcs:CoverageId",encodedId);
     handleCoverageFunction(gc2d,axisSwap);
-    handleMetadata(gc2d);
+    handleMetadata(gc2d,timeHelper);
     builder.setLength(0);
     axesNames=envelopeDimensionsMapper.getAxesNames(gc2d.getEnvelope2D(),false);
     for (    String axisName : axesNames) {

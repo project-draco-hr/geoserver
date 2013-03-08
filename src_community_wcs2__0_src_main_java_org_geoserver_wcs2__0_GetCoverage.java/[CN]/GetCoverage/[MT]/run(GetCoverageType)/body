@@ -1,2 +1,44 @@
 {
+  final LayerInfo linfo=NCNameResourceCodec.getCoverage(catalog,request.getCoverageId());
+  if (linfo == null) {
+    throw new WCS20Exception("Could not locate coverage " + request.getCoverageId(),WCS20Exception.WCS20ExceptionCode.NoSuchCoverage,"coverageId");
+  }
+  final CoverageInfo cinfo=(CoverageInfo)linfo.getResource();
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Executing GetCoverage request on coverage :" + linfo.toString());
+  }
+  GridCoverage2D coverage=null;
+  try {
+    Map<String,ExtensionItemType> extensions=extractExtensions(request);
+    final Hints hints=GeoTools.getDefaultHints();
+    hints.add(WCSUtils.getReaderHints(wcs));
+    hints.add(new RenderingHints(JAI.KEY_BORDER_EXTENDER,BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
+    final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)cinfo.getGridCoverageReader(new DefaultProgressListener(),hints);
+    GridCoverageRequest gcr=parseGridCoverageRequest(cinfo,reader,request,extensions);
+    coverage=readCoverage(cinfo,gcr,reader,hints);
+    if (coverage == null) {
+      throw new IllegalStateException("Unable to read a coverage for the current request" + request.toString());
+    }
+    coverage=handleRangeSubsettingExtension(coverage,extensions,hints);
+    coverage=handleSubsettingExtension(coverage,gcr.getSpatialSubset(),hints);
+    coverage=handleScaling(coverage,extensions,gcr.getSpatialInterpolation(),hints);
+    coverage=handleReprojection(coverage,gcr.getOutputCRS(),gcr.getSpatialInterpolation(),hints);
+    final boolean enforceLatLonAxesOrder=requestingLatLonAxesOrder(gcr.getOutputCRS());
+    if (enforceLatLonAxesOrder) {
+      coverage=enforceLatLongOrder(coverage,hints,gcr.getOutputCRS());
+    }
+    WCSUtils.checkOutputLimits(wcs,coverage.getGridGeometry().getGridRange2D(),coverage.getRenderedImage().getSampleModel());
+  }
+ catch (  ServiceException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    throw new WCS20Exception("Failed to read the coverage " + request.getCoverageId(),e);
+  }
+ finally {
+    if (coverage != null) {
+      CoverageCleanerCallback.addCoverages(coverage);
+    }
+  }
+  return coverage;
 }

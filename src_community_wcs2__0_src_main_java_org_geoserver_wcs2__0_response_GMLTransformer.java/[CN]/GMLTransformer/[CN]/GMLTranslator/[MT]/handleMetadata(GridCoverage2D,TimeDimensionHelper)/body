@@ -1,0 +1,33 @@
+{
+  start("gmlcov:metadata");
+  start("gmlcov:Extension");
+  if (timeHelper != null) {
+    start("wcsgs:TimeDomain");
+    DimensionPresentation presentation=timeHelper.getPresentation();
+switch (presentation) {
+case CONTINUOUS_INTERVAL:
+      String id0=timeHelper.getCoverageId() + "_tp_0";
+    encodeTimePeriod(timeHelper.getBeginPosition(),timeHelper.getEndPosition(),id0,null,null);
+  break;
+case DISCRETE_INTERVAL:
+String id1=timeHelper.getCoverageId() + "_tp_0";
+encodeTimePeriod(timeHelper.getBeginPosition(),timeHelper.getEndPosition(),id1,timeHelper.getResolutionUnit(),timeHelper.getResolutionValue());
+break;
+default :
+List<String> instants=timeHelper.getInstantsList();
+int i=0;
+for (String instant : instants) {
+final AttributesImpl atts=new AttributesImpl();
+atts.addAttribute("","gml:id","gml:id","",timeHelper.getCoverageId() + "_ti_" + i);
+start("gml:TimeInstant",atts);
+element("gml:timePosition",instant);
+end("gml:TimeInstant");
+i++;
+}
+break;
+}
+end("wcsgs:TimeDomain");
+}
+end("gmlcov:Extension");
+end("gmlcov:metadata");
+}
