@@ -1,10 +1,16 @@
 {
   GeoServer geoServer=getGeoServer();
   WFSInfo service=geoServer.getService(WFSInfo.class);
-  service.setCiteCompliant(true);
-  geoServer.save(service);
-  final QName typeName=CiteTestData.POLYGONS;
-  String path="ows?service=WFS&version=2.0.0&request=DescribeFeatureType&typeName=" + getLayerId(typeName);
-  Document doc=getAsDOM(path);
-  assertSchema(doc,CiteTestData.POLYGONS);
+  try {
+    service.setCiteCompliant(true);
+    geoServer.save(service);
+    final QName typeName=CiteTestData.POLYGONS;
+    String path="ows?service=WFS&version=2.0.0&request=DescribeFeatureType&typeName=" + getLayerId(typeName);
+    Document doc=getAsDOM(path);
+    assertSchema(doc,CiteTestData.POLYGONS);
+  }
+  finally {
+    service.setCiteCompliant(false);
+    geoServer.save(service);
+  }
 }
