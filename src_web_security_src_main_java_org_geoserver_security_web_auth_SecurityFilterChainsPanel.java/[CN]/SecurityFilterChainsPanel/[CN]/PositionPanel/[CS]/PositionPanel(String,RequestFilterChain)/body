@@ -1,48 +1,51 @@
 {
   super(id);
-  this.theChain=entry;
-  if (getChains().indexOf(entry) > 0) {
-    ImageAjaxLink upLink=new ImageAjaxLink("up",new ResourceReference(getClass(),"../img/icons/silk/arrow_up.png")){
-      @Override protected void onClick(      AjaxRequestTarget target){
-        int index=getChains().indexOf(PositionPanel.this.theChain);
-        getChains().remove(index);
-        getChains().add(index - 1,PositionPanel.this.theChain);
-        target.addComponent(tablePanel);
-      }
+  this.theChain=chain;
+  this.setOutputMarkupId(true);
+  upLink=new ImageAjaxLink("up",new ResourceReference(getClass(),"../img/icons/silk/arrow_up.png")){
+    @Override protected void onClick(    AjaxRequestTarget target){
+      int index=getChains().indexOf(PositionPanel.this.theChain);
+      getChains().remove(index);
+      getChains().add(Math.max(0,index - 1),PositionPanel.this.theChain);
+      target.addComponent(tablePanel);
+      target.addComponent(this);
+      target.addComponent(downLink);
+      target.addComponent(upLink);
     }
-;
-    upLink.getImage().add(new AttributeModifier("alt",true,new ParamResourceModel("SecurityFilterChainsPanel.th.up",upLink)));
-    add(upLink);
-  }
+    @Override protected void onComponentTag(    ComponentTag tag){
+      if (getChains().indexOf(theChain) == 0) {
+        tag.put("style","visibility:hidden");
+      }
  else {
-    ImageAjaxLink blankLink=new ImageAjaxLink("up",new ResourceReference(getClass(),"../img/icons/blank.png")){
-      @Override protected void onClick(      AjaxRequestTarget target){
+        tag.put("style","visibility:visible");
       }
     }
-;
-    blankLink.getImage().add(new AttributeModifier("alt",true,new Model("")));
-    add(blankLink);
   }
-  if (getChains().indexOf(entry) < getChains().size() - 1) {
-    ImageAjaxLink downLink=new ImageAjaxLink("down",new ResourceReference(getClass(),"../img/icons/silk/arrow_down.png")){
-      @Override protected void onClick(      AjaxRequestTarget target){
-        int index=getChains().indexOf(PositionPanel.this.theChain);
-        getChains().remove(index);
-        getChains().add(index + 1,PositionPanel.this.theChain);
-        target.addComponent(tablePanel);
-      }
+;
+  upLink.getImage().add(new AttributeModifier("alt",true,new ParamResourceModel("SecurityFilterChainsPanel.th.up",upLink)));
+  upLink.setOutputMarkupId(true);
+  add(upLink);
+  downLink=new ImageAjaxLink("down",new ResourceReference(getClass(),"../img/icons/silk/arrow_down.png")){
+    @Override protected void onClick(    AjaxRequestTarget target){
+      int index=getChains().indexOf(PositionPanel.this.theChain);
+      getChains().remove(index);
+      getChains().add(Math.min(getChains().size(),index + 1),PositionPanel.this.theChain);
+      target.addComponent(tablePanel);
+      target.addComponent(this);
+      target.addComponent(downLink);
+      target.addComponent(upLink);
     }
-;
-    downLink.getImage().add(new AttributeModifier("alt",true,new ParamResourceModel("SecurityFilterChainsPanel.th.down",downLink)));
-    add(downLink);
-  }
+    @Override protected void onComponentTag(    ComponentTag tag){
+      if (getChains().indexOf(theChain) == getChains().size() - 1) {
+        tag.put("style","visibility:hidden");
+      }
  else {
-    ImageAjaxLink blankLink=new ImageAjaxLink("down",new ResourceReference(getClass(),"../img/icons/blank.png")){
-      @Override protected void onClick(      AjaxRequestTarget target){
+        tag.put("style","visibility:visible");
       }
     }
-;
-    blankLink.getImage().add(new AttributeModifier("alt",true,new Model("")));
-    add(blankLink);
   }
+;
+  downLink.getImage().add(new AttributeModifier("alt",true,new ParamResourceModel("SecurityFilterChainsPanel.th.down",downLink)));
+  downLink.setOutputMarkupId(true);
+  add(downLink);
 }
