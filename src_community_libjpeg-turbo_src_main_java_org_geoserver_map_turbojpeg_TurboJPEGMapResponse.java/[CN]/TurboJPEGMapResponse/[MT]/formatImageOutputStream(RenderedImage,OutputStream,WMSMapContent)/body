@@ -1,0 +1,33 @@
+{
+  if (!TURBO_JPEG_LIB_AVAILABLE || DISABLE_TURBO) {
+    if (LOGGER.isLoggable(Level.INFO)) {
+      LOGGER.info("About to fallback on standard lib as libjpeg-turbi is not available");
+    }
+    fallback.formatImageOutputStream(image,outStream,mapContent);
+    return;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("About to write a JPEG image using libjpeg-turbo");
+  }
+  float quality=(100 - wms.getJpegCompression()) / 100.0f;
+  TurboJpegImageWorker iw=null;
+  try {
+    iw=new TurboJpegImageWorker(image);
+    iw.writeTurboJPEG(outStream,quality);
+  }
+  finally {
+    try {
+      if (iw != null) {
+        iw.dispose();
+      }
+    }
+ catch (    Exception e) {
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.log(Level.FINEST,e.getLocalizedMessage(),e);
+      }
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Writing a JPEG done!!!");
+  }
+}
