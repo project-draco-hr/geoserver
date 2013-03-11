@@ -1,0 +1,42 @@
+{
+  if (!TurboJpegUtilities.isTurboJpegAvailable()) {
+    throw new IllegalStateException(ERROR_LIB_MESSAGE);
+  }
+  if (LOGGER.isLoggable(Level.FINE))   LOGGER.fine("Encoding input image to write out as JPEG using .");
+  ColorModel cm=image.getColorModel();
+  final boolean hasAlpha=cm.hasAlpha();
+  forceComponentColorModel();
+  cm=image.getColorModel();
+  rescaleToBytes();
+  cm=image.getColorModel();
+  final int numBands=image.getSampleModel().getNumBands();
+  if (hasAlpha) {
+    retainBands(numBands - 1);
+  }
+  if (LOGGER.isLoggable(Level.FINE))   LOGGER.fine("Creating a TURBO JPEG writer and configuring it.");
+  final TurboJpegImageWriter writer=(TurboJpegImageWriter)TURBO_JPEG_SPI.createWriterInstance();
+  TurboJpegImageWriteParam iwp=(TurboJpegImageWriteParam)writer.getDefaultWriteParam();
+  final ImageOutputStreamAdapter2 outStream=new ImageOutputStreamAdapter2(destination);
+  iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+  iwp.setCompressionType("JPEG");
+  iwp.setCompressionQuality(compressionRate);
+  if (LOGGER.isLoggable(Level.FINE))   LOGGER.fine("Writing image out...");
+  try {
+    writer.setOutput(outStream);
+    writer.write(null,new IIOImage(image,null,null),iwp);
+  }
+  finally {
+    try {
+      writer.dispose();
+    }
+ catch (    Throwable e) {
+      if (LOGGER.isLoggable(Level.FINE))       LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+    }
+    try {
+      outStream.close();
+    }
+ catch (    Throwable e) {
+      if (LOGGER.isLoggable(Level.FINE))       LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+    }
+  }
+}
