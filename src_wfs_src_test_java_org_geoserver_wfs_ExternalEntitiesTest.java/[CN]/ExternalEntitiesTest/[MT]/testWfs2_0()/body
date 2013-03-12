@@ -1,0 +1,24 @@
+{
+  GeoServerInfo cfg=getGeoServer().getGlobal();
+  try {
+    cfg.setXmlExternalEntitiesEnabled(true);
+    getGeoServer().save(cfg);
+    String output=string(post("wfs",WFS_2_0_0_REQUEST));
+    Assert.assertTrue(output.indexOf("thisfiledoesnotexist") > -1);
+    cfg.setXmlExternalEntitiesEnabled(false);
+    getGeoServer().save(cfg);
+    output=string(post("wfs",WFS_2_0_0_REQUEST));
+    System.out.println(output);
+    Assert.assertTrue(output.indexOf("Request parsing failed") > -1);
+    Assert.assertTrue(output.indexOf("thisfiledoesnotexist") == -1);
+    cfg.setXmlExternalEntitiesEnabled(null);
+    getGeoServer().save(cfg);
+    output=string(post("wfs",WFS_2_0_0_REQUEST));
+    Assert.assertTrue(output.indexOf("Request parsing failed") > -1);
+    Assert.assertTrue(output.indexOf("thisfiledoesnotexist") == -1);
+  }
+  finally {
+    cfg.setXmlExternalEntitiesEnabled(null);
+    getGeoServer().save(cfg);
+  }
+}

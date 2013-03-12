@@ -1,0 +1,21 @@
+{
+  GeoServerInfo cfg=getGeoServer().getGlobal();
+  try {
+    cfg.setXmlExternalEntitiesEnabled(true);
+    getGeoServer().save(cfg);
+    String output=string(post("wfs",WFS_1_0_0_REQUEST));
+    Assert.assertTrue(output.indexOf("java.io.FileNotFoundException") > -1);
+    cfg.setXmlExternalEntitiesEnabled(false);
+    getGeoServer().save(cfg);
+    output=string(post("wfs",WFS_1_0_0_REQUEST));
+    Assert.assertTrue(output.indexOf("java.net.MalformedURLException") > -1);
+    cfg.setXmlExternalEntitiesEnabled(null);
+    getGeoServer().save(cfg);
+    output=string(post("wfs",WFS_1_0_0_REQUEST));
+    Assert.assertTrue(output.indexOf("java.net.MalformedURLException") > -1);
+  }
+  finally {
+    cfg.setXmlExternalEntitiesEnabled(null);
+    getGeoServer().save(cfg);
+  }
+}
