@@ -2,8 +2,19 @@
   SimpleDateFormat timeFormat=dimensions.getTimeFormat();
   start("wcs:temporalDomain");
   if (timeInfo.getPresentation() == DimensionPresentation.LIST) {
-    for (    Date date : dimensions.getTimeDomain()) {
-      element("gml:timePosition",timeFormat.format(date));
+    for (    Object item : dimensions.getTimeDomain()) {
+      if (item instanceof Date) {
+        element("gml:timePosition",timeFormat.format((Date)item));
+      }
+ else {
+        DateRange range=(DateRange)item;
+        start("wcs:timePeriod");
+        String minTime=timeFormat.format(range.getMinValue());
+        String maxTime=timeFormat.format(range.getMaxValue());
+        element("wcs:beginPosition",minTime);
+        element("wcs:endPosition",maxTime);
+        end("wcs:timePeriod");
+      }
     }
   }
  else {

@@ -1,0 +1,14 @@
+{
+  File tiffFile=File.createTempFile("wcs","",new File("target"));
+  try {
+    IOUtils.copy(getBinaryInputStream(response),new FileOutputStream(tiffFile));
+    GeoTiffReader reader=new GeoTiffReader(tiffFile);
+    GridCoverage2D result=reader.read(null);
+    double[] pixel=new double[1];
+    result.getRenderedImage().getData().getPixel(x,y,pixel);
+    assertEquals(value,pixel[0],1e-6);
+  }
+  finally {
+    tiffFile.delete();
+  }
+}

@@ -1,0 +1,48 @@
+{
+  String timeMetadata=null;
+  final StringBuilder buff=new StringBuilder();
+  final ISO8601Formatter df=new ISO8601Formatter();
+  if (DimensionPresentation.LIST == dimension.getPresentation()) {
+    for (    Object date : values) {
+      buff.append(df.format(date));
+      buff.append(",");
+    }
+    timeMetadata=buff.substring(0,buff.length() - 1).toString().replaceAll("\\[","").replaceAll("\\]","").replaceAll(" ","");
+  }
+ else   if (DimensionPresentation.CONTINUOUS_INTERVAL == dimension.getPresentation()) {
+    DateRange interval=getMinMaxTimeInterval(values);
+    buff.append(df.format(interval.getMinValue()));
+    buff.append("/");
+    buff.append(df.format(interval.getMaxValue()));
+    buff.append("/PT1S");
+    timeMetadata=buff.toString();
+  }
+ else   if (DimensionPresentation.DISCRETE_INTERVAL == dimension.getPresentation()) {
+    DateRange interval=getMinMaxTimeInterval(values);
+    buff.append(df.format(interval.getMinValue()));
+    buff.append("/");
+    buff.append(df.format(interval.getMaxValue()));
+    buff.append("/");
+    final BigDecimal resolution=dimension.getResolution();
+    if (resolution != null) {
+      buff.append(new DefaultPeriodDuration(resolution.longValue()).toString());
+    }
+ else {
+      if (values.size() >= 2 && allDates(values)) {
+        int count=2, i=2;
+        Date[] timePositions=new Date[count];
+        for (        Object date : values) {
+          timePositions[count - i--]=(Date)date;
+          if (i == 0)           break;
+        }
+        long durationInMilliSeconds=timePositions[count - 1].getTime() - timePositions[count - 2].getTime();
+        buff.append(new DefaultPeriodDuration(durationInMilliSeconds).toString());
+      }
+ else {
+        buff.append("PT1S");
+      }
+    }
+    timeMetadata=buff.toString();
+  }
+  return timeMetadata;
+}

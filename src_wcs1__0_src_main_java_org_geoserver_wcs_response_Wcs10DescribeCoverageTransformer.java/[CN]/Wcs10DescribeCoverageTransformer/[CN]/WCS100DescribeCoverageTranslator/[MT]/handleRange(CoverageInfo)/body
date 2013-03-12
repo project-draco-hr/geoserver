@@ -40,7 +40,18 @@
       element("wcs:name","ELEVATION");
       element("wcs:label","ELEVATION");
       start("wcs:values");
-      TreeSet<Double> elevations=dimensions.getElevationDomain();
+      TreeSet<Object> rawElevations=dimensions.getElevationDomain();
+      TreeSet<Double> elevations=new TreeSet<Double>();
+      for (      Object raw : rawElevations) {
+        if (raw instanceof Double) {
+          elevations.add((Double)raw);
+        }
+ else {
+          NumberRange<Double> range=(NumberRange<Double>)raw;
+          double midValue=(range.getMinimum() + range.getMaximum()) / 2;
+          elevations.add(midValue);
+        }
+      }
       for (      Double elevation : elevations) {
         element("wcs:singleValue",Double.toString(elevation));
       }
