@@ -1,20 +1,24 @@
 {
   WMS wms=new WMS(getGeoServer());
-  WMSInfo wmsInfo=wms.getServiceInfo();
+  GeoServerInfo geoserverInfo=wms.getGeoServer().getGlobal();
   try {
-    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,true);
-    getGeoServer().save(wmsInfo);
-    assertNotNull(wms.getServiceInfo().getMetadata().get(WMS.SLD_EXTERNAL_ENTITIES));
-    assertTrue((Boolean)wms.getServiceInfo().getMetadata().get(WMS.SLD_EXTERNAL_ENTITIES));
+    geoserverInfo.setXmlExternalEntitiesEnabled(true);
+    getGeoServer().save(geoserverInfo);
+    assertNotNull(wms.getGeoServer().getGlobal().getXmlExternalEntitiesEnabled());
+    assertTrue((Boolean)wms.getGeoServer().getGlobal().getXmlExternalEntitiesEnabled());
     GetMapKvpRequestReader reader=new GetMapKvpRequestReader(wms);
     assertNull(reader.getSldEntityResolver());
-    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,false);
-    getGeoServer().save(wmsInfo);
+    geoserverInfo.setXmlExternalEntitiesEnabled(false);
+    getGeoServer().save(geoserverInfo);
+    reader=new GetMapKvpRequestReader(wms);
+    assertNotNull(reader.getSldEntityResolver());
+    geoserverInfo.setXmlExternalEntitiesEnabled(null);
+    getGeoServer().save(geoserverInfo);
     reader=new GetMapKvpRequestReader(wms);
     assertNotNull(reader.getSldEntityResolver());
   }
   finally {
-    wmsInfo.getMetadata().put(WMS.SLD_EXTERNAL_ENTITIES,WMS.SLD_EXTERNAL_ENTITIES_DEFAULT);
-    getGeoServer().save(wmsInfo);
+    geoserverInfo.setXmlExternalEntitiesEnabled(null);
+    getGeoServer().save(geoserverInfo);
   }
 }
