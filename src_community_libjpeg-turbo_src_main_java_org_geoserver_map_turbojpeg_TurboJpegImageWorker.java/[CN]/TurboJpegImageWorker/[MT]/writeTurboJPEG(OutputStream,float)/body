@@ -11,7 +11,13 @@
   cm=image.getColorModel();
   final int numBands=image.getSampleModel().getNumBands();
   if (hasAlpha) {
-    retainBands(numBands - 1);
+    final int requestedBands=numBands - 1;
+    if (ImageUtilities.isMediaLibAvailable()) {
+      retainBands(requestedBands);
+    }
+ else     if (getNumBands() > requestedBands) {
+      removeAlpha(requestedBands);
+    }
   }
   if (LOGGER.isLoggable(Level.FINE))   LOGGER.fine("Creating a TURBO JPEG writer and configuring it.");
   final TurboJpegImageWriter writer=(TurboJpegImageWriter)TURBO_JPEG_SPI.createWriterInstance();
