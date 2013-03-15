@@ -43,39 +43,16 @@
   LOGGER.finer("No matching ETag, returning cached tile");
   final String mimeType=cachedTile.getMimeType().getMimeType();
   RawMap map=new RawMap(null,tileBytes,mimeType);
-  map.setResponseHeader("Cache-Control","no-cache");
-  map.setResponseHeader("ETag",etag);
   map.setContentDispositionHeader(null,"." + cachedTile.getMimeType().getFileExtension(),false);
-  final long tileTimeStamp=cachedTile.getTSCreated();
-  final String ifModSinceHeader=request.getHttpRequestHeader("If-Modified-Since");
-  final String lastModified=org.apache.commons.httpclient.util.DateUtil.formatDate(new Date(tileTimeStamp));
-  map.setResponseHeader("Last-Modified",lastModified);
-  final Date ifModifiedSince;
-  if (ifModSinceHeader != null && ifModSinceHeader.length() > 0) {
-    try {
-      ifModifiedSince=DateUtil.parseDate(ifModSinceHeader);
-      long ifModSinceSeconds=1000 * (ifModifiedSince.getTime() / 1000);
-      long tileTimeStampSeconds=1000 * (tileTimeStamp / 1000);
-      if (ifModSinceSeconds >= tileTimeStampSeconds) {
-        throw new HttpErrorCodeException(HttpServletResponse.SC_NOT_MODIFIED);
-      }
-    }
- catch (    DateParseException e) {
-      if (LOGGER.isLoggable(Level.FINER)) {
-        LOGGER.finer("Can't parse client's If-Modified-Since header: '" + ifModSinceHeader + "'");
-      }
-    }
+  Object cacheAgeMax=getCacheAge(layer);
+  LOGGER.log(Level.FINE,"Using cacheAgeMax {0}",cacheAgeMax);
+  if (cacheAgeMax != null) {
+    map.setResponseHeader("Cache-Control","max-age=" + cacheAgeMax);
   }
-  long[] tileIndex=cachedTile.getTileIndex();
-  CacheResult cacheResult=cachedTile.getCacheResult();
-  GridSubset gridSubset=layer.getGridSubset(cachedTile.getGridSetId());
-  BoundingBox tileBounds=gridSubset.boundsFromIndex(tileIndex);
-  String cacheResultHeader=cacheResult == null ? "UNKNOWN" : cacheResult.toString();
-  map.setResponseHeader("geowebcache-layer",layer.getName());
-  map.setResponseHeader("geowebcache-cache-result",cacheResultHeader);
-  map.setResponseHeader("geowebcache-tile-index",Arrays.toString(tileIndex));
-  map.setResponseHeader("geowebcache-tile-bounds",tileBounds.toString());
-  map.setResponseHeader("geowebcache-gridset",gridSubset.getName());
-  map.setResponseHeader("geowebcache-crs",gridSubset.getSRS().toString());
+ else {
+    map.setResponseHeader("Cache-Control","no-cache");
+  }
+  setConditionalGetHeaders(map,cachedTile,request,etag);
+  setCacheMetadataHeaders(map,cachedTile,layer);
   return map;
 }
