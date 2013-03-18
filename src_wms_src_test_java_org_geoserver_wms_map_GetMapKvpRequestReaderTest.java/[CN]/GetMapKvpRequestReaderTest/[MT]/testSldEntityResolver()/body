@@ -1,0 +1,24 @@
+{
+  WMS wms=new WMS(getGeoServer());
+  GeoServerInfo geoserverInfo=wms.getGeoServer().getGlobal();
+  try {
+    geoserverInfo.setXmlExternalEntitiesEnabled(true);
+    getGeoServer().save(geoserverInfo);
+    assertNotNull(wms.getGeoServer().getGlobal().isXmlExternalEntitiesEnabled());
+    assertTrue((Boolean)wms.getGeoServer().getGlobal().isXmlExternalEntitiesEnabled());
+    GetMapKvpRequestReader reader=new GetMapKvpRequestReader(wms);
+    assertNull(reader.entityResolverProvider.getEntityResolver());
+    geoserverInfo.setXmlExternalEntitiesEnabled(false);
+    getGeoServer().save(geoserverInfo);
+    reader=new GetMapKvpRequestReader(wms);
+    assertNotNull(reader.entityResolverProvider.getEntityResolver());
+    geoserverInfo.setXmlExternalEntitiesEnabled(null);
+    getGeoServer().save(geoserverInfo);
+    reader=new GetMapKvpRequestReader(wms);
+    assertNotNull(reader.entityResolverProvider.getEntityResolver());
+  }
+  finally {
+    geoserverInfo.setXmlExternalEntitiesEnabled(null);
+    getGeoServer().save(geoserverInfo);
+  }
+}
