@@ -1,0 +1,26 @@
+{
+  if (context.getCurrentLayer() == null || context.getCurrentFeatureCollection() == null) {
+    return feature;
+  }
+  Folder folder=(Folder)feature;
+  String linkbase="";
+  try {
+    linkbase=getFeatureTypeURL(context);
+    linkbase+=".kml";
+  }
+ catch (  IOException ioe) {
+    throw new RuntimeException(ioe);
+  }
+  GetMapRequest request=context.getRequest();
+  int maxFeatures=request.getMaxFeatures();
+  int startIndex=(request.getStartIndex() == null) ? 0 : request.getStartIndex().intValue();
+  int prevStart=startIndex - maxFeatures;
+  int nextStart=startIndex + maxFeatures;
+  if (prevStart >= 0) {
+    encodeSequentialNetworkLink(folder,linkbase,prevStart,maxFeatures,"prev","Previous page");
+  }
+  if (context.getCurrentFeatureCollection().size() >= maxFeatures) {
+    encodeSequentialNetworkLink(folder,linkbase,nextStart,maxFeatures,"next","Next page");
+  }
+  return folder;
+}
