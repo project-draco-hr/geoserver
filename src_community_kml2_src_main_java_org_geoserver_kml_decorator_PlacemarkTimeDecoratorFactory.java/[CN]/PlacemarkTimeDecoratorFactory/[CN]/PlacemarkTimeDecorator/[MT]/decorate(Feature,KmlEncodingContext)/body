@@ -1,0 +1,22 @@
+{
+  Placemark pm=(Placemark)feature;
+  SimpleFeature sf=context.getCurrentFeature();
+  try {
+    String[] times=execute(context.getTemplate(),sf);
+    if (times != null && times.length > 0) {
+      if (times.length == 1) {
+        TimeStamp stamp=pm.createAndSetTimeStamp();
+        stamp.setWhen(times[0]);
+      }
+ else {
+        TimeSpan span=pm.createAndSetTimeSpan();
+        span.setBegin(times[0]);
+        span.setEnd(times[1]);
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new ServiceException("Failed to apply KML time template to the current feature",e);
+  }
+  return pm;
+}

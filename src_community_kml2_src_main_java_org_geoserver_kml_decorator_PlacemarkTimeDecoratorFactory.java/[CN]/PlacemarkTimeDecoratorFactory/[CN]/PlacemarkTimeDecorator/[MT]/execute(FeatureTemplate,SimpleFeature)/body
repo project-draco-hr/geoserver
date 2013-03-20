@@ -1,0 +1,32 @@
+{
+  String output=delegate.template(feature,"time.ftl",FeatureTemplate.class);
+  if (output != null) {
+    output=output.trim();
+  }
+  if (output == null || "".equals(output)) {
+    return new String[]{};
+  }
+  String[] timespan=output.split("\\|\\|");
+  if (output.endsWith("||")) {
+    timespan=new String[]{timespan[0],null};
+  }
+  if (timespan.length > 2) {
+    String msg="Incorrect time syntax. Should be: <date>||<date>";
+    throw new IllegalArgumentException(msg);
+  }
+  if (timespan.length > 1) {
+    if (timespan[0] == null || "".equals(timespan[0].trim())) {
+      timespan[0]=null;
+    }
+    if (timespan[1] == null || "".equals(timespan[1].trim())) {
+      timespan[1]=null;
+    }
+  }
+  for (int i=0; i < timespan.length; i++) {
+    if (timespan[i] != null) {
+      Date d=parseDateTime(timespan[i]);
+      timespan[i]=encodeDateTime(d);
+    }
+  }
+  return timespan;
+}
