@@ -1,0 +1,41 @@
+{
+  ZipOutputStream zip=new ZipOutputStream(output);
+  ZipEntry entry=new ZipEntry("wms.kml");
+  zip.putNextEntry(entry);
+  encodeAsKml(kml,zip);
+  final RenderedImageMapOutputFormat pngProducer=new RenderedImageMapOutputFormat("image/png",wms);
+  final PNGMapResponse pngEncoder=new PNGMapResponse(wms);
+  ZipEntry images=new ZipEntry("images/");
+  zip.putNextEntry(images);
+  WMSMapContent mapContent=context.getMapContent();
+  for (  Entry<String,Layer> goEntry : context.getKmzGroundOverlays().entrySet()) {
+    String path=goEntry.getKey();
+    Layer mapLayer=goEntry.getValue();
+    WMSMapContent subContext=new WMSMapContent();
+    subContext.addLayer(mapLayer);
+    subContext.setRequest(mapContent.getRequest());
+    subContext.setMapHeight(mapContent.getMapHeight());
+    subContext.setMapWidth(mapContent.getMapWidth());
+    subContext.getViewport().setBounds(mapContent.getRenderingArea());
+    subContext.setBgColor(mapContent.getBgColor());
+    subContext.setBuffer(mapContent.getBuffer());
+    subContext.setContactInformation(mapContent.getContactInformation());
+    subContext.setKeywords(mapContent.getKeywords());
+    subContext.setAbstract(mapContent.getAbstract());
+    subContext.setTransparent(true);
+    RenderedImageMap imageMap;
+    try {
+      imageMap=pngProducer.produceMap(subContext);
+    }
+  finally {
+      subContext.dispose();
+    }
+    entry=new ZipEntry(path);
+    zip.putNextEntry(entry);
+    pngEncoder.write(imageMap,zip,operation);
+    zip.closeEntry();
+  }
+  zip.closeEntry();
+  zip.finish();
+  zip.flush();
+}

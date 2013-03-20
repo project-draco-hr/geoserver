@@ -27,14 +27,16 @@
       }
     }
     if (layer instanceof FeatureLayer) {
-      List<Feature> features=new SequenceList<Feature>(new FeatureSequenceFactory(context,(FeatureLayer)layer));
-      List<Feature> originalFeatures=folder.getFeature();
-      if (originalFeatures == null || originalFeatures.size() == 0) {
-        folder.setFeature(features);
+      if (useVectorOutput(context.getCurrentFeatureCollection())) {
+        List<Feature> features=new SequenceList<Feature>(new FeatureSequenceFactory(context,(FeatureLayer)layer));
+        addFeatures(folder,features);
       }
  else {
-        folder.setFeature(new CompositeList<Feature>(originalFeatures,features));
+        addGroundOverlay(folder,layer);
       }
+    }
+ else {
+      addGroundOverlay(folder,layer);
     }
     return folder;
   }
