@@ -5,9 +5,9 @@
   File info=new File(coverageDir,"info.xml");
   info.createNewFile();
   AbstractGridFormat format=(AbstractGridFormat)GridFormatFinder.findFormat(coverageFile);
-  AbstractGridCoverage2DReader reader;
+  GridCoverage2DReader reader;
   try {
-    reader=(AbstractGridCoverage2DReader)format.getReader(coverageFile);
+    reader=(GridCoverage2DReader)format.getReader(coverageFile);
   }
  catch (  Exception e) {
     String message="Exception while trying to read " + coverageFile.getCanonicalPath() + " with format"+ format.getName();
@@ -25,7 +25,7 @@
   writer.write("<keywords>WCS," + coverage + " </keywords>\n");
   if (styleName == null)   styleName="raster";
   writer.write("<styles default=\"" + styleName + "\"/>\n");
-  CoordinateReferenceSystem crs=reader.getCrs();
+  CoordinateReferenceSystem crs=reader.getCoordinateReferenceSystem();
   GeneralEnvelope envelope=reader.getOriginalEnvelope();
   GeneralEnvelope wgs84envelope=CoverageStoreUtils.getWGS84LonLatEnvelope(envelope);
   final String nativeCrsName=CRS.lookupIdentifier(crs,false);
@@ -38,7 +38,7 @@
   double[] minCP=envelope.getLowerCorner().getCoordinate();
   double[] maxCP=new double[]{minCP[0] + (envelope.getSpan(0) / 20.0),minCP[1] + (envelope.getSpan(1) / 20.0)};
   final GeneralEnvelope subEnvelope=new GeneralEnvelope(minCP,maxCP);
-  subEnvelope.setCoordinateReferenceSystem(reader.getCrs());
+  subEnvelope.setCoordinateReferenceSystem(reader.getCoordinateReferenceSystem());
   parameters.put(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString(),new GridGeometry2D(reader.getOriginalGridRange(),subEnvelope));
   GridCoverage2D gc=(GridCoverage2D)reader.read(CoverageUtils.getParameters(readParams,parameters,true));
   final GridGeometry geometry=gc.getGridGeometry();

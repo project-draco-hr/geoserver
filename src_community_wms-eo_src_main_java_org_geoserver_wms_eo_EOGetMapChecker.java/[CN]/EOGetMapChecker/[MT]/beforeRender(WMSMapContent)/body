@@ -23,40 +23,45 @@
   }
   final GridReaderLayer readerLayer=(GridReaderLayer)layer;
   final GeneralParameterValue[] params=readerLayer.getParams();
-  final Set<ParameterDescriptor<List>> dynamicParameters=readerLayer.getReader().getDynamicParameters();
-  if (dynamicParameters.isEmpty()) {
-    throw new IllegalStateException("Layer " + readerLayer.getTitle() + " has no additional dimensions which are required for an EO BANDS layer");
-  }
-  final Set<ReferenceIdentifier> dynamicParametersNames=new HashSet<ReferenceIdentifier>();
-  for (  ParameterDescriptor<List> param : dynamicParameters) {
-    dynamicParametersNames.add(param.getName());
-  }
-  boolean foundMergeBehavior=false;
-  int foundCustomDimensions=0;
-  for (int i=0; i < params.length; i++) {
-    final ParameterValue param=(ParameterValue)params[i];
-    final ParameterDescriptor descriptor=param.getDescriptor();
-    final ReferenceIdentifier name=descriptor.getName();
-    if (name.equals(ImageMosaicFormat.MERGE_BEHAVIOR.getName())) {
-      foundMergeBehavior=true;
-      param.setValue(MergeBehavior.STACK.toString());
+  try {
+    final Set<ParameterDescriptor<List>> dynamicParameters=readerLayer.getReader().getDynamicParameters();
+    if (dynamicParameters.isEmpty()) {
+      throw new IllegalStateException("Layer " + readerLayer.getTitle() + " has no additional dimensions which are required for an EO BANDS layer");
     }
+    final Set<ReferenceIdentifier> dynamicParametersNames=new HashSet<ReferenceIdentifier>();
+    for (    ParameterDescriptor<List> param : dynamicParameters) {
+      dynamicParametersNames.add(param.getName());
+    }
+    boolean foundMergeBehavior=false;
+    int foundCustomDimensions=0;
+    for (int i=0; i < params.length; i++) {
+      final ParameterValue param=(ParameterValue)params[i];
+      final ParameterDescriptor descriptor=param.getDescriptor();
+      final ReferenceIdentifier name=descriptor.getName();
+      if (name.equals(ImageMosaicFormat.MERGE_BEHAVIOR.getName())) {
+        foundMergeBehavior=true;
+        param.setValue(MergeBehavior.STACK.toString());
+      }
  else {
-      if (dynamicParametersNames.contains(name)) {
-        final List paramValues=(List)param.getValue();
-        final int size=paramValues.size();
-        if (size != 1 && size != 3) {
-          throw new ServiceException("Wrong number of values provided to this GetMap for EO BANDS layer. Paremeter:" + name.getCode() + " #:"+ size,"InvalidDimensionValue");
+        if (dynamicParametersNames.contains(name)) {
+          final List paramValues=(List)param.getValue();
+          final int size=paramValues.size();
+          if (size != 1 && size != 3) {
+            throw new ServiceException("Wrong number of values provided to this GetMap for EO BANDS layer. Paremeter:" + name.getCode() + " #:"+ size,"InvalidDimensionValue");
+          }
+          foundCustomDimensions++;
         }
-        foundCustomDimensions++;
       }
     }
+    if (foundCustomDimensions != dynamicParameters.size()) {
+      throw new IllegalArgumentException("Not all the dimensions for this EO BANDS layer were requested. Please, check the GetMap request.");
+    }
+    if (!foundMergeBehavior) {
+      throw new IllegalStateException("Unable to impose Stacking merge behavior!");
+    }
+    return super.beforeRender(content);
   }
-  if (foundCustomDimensions != dynamicParameters.size()) {
-    throw new IllegalArgumentException("Not all the dimensions for this EO BANDS layer were requested. Please, check the GetMap request.");
+ catch (  IOException e) {
+    throw new ServiceException(e);
   }
-  if (!foundMergeBehavior) {
-    throw new IllegalStateException("Unable to impose Stacking merge behavior!");
-  }
-  return super.beforeRender(content);
 }
