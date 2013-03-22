@@ -1,18 +1,19 @@
 {
   this.roleServiceName=roleService;
   boolean hasRoleStore=hasRoleStore(roleServiceName);
+  if (role == null)   role=new GeoServerRole("");
   Form form=new Form("form",new CompoundPropertyModel(role));
   add(form);
   StringResourceModel descriptionModel;
-  if (role.getUserName() == null) {
-    descriptionModel=new StringResourceModel("anonymousRole",getPage(),null);
+  if (role.getUserName() != null) {
+    descriptionModel=new StringResourceModel("personalizedRole",getPage(),null,new Object[]{role.getUserName()});
   }
  else {
-    descriptionModel=new StringResourceModel("personalizedRole",getPage(),null,new Object[]{role.getUserName()});
+    descriptionModel=new StringResourceModel("anonymousRole",getPage(),null);
   }
   form.add(new Label("description",descriptionModel));
   form.add(new TextField("name",new Model(role.getAuthority())).setRequired(true).setEnabled(hasRoleStore));
-  form.add(new DropDownChoice("parent",new ParentRoleModel(role),new ParentRolesModel(role)).setEnabled(hasRoleStore));
+  form.add(new DropDownChoice("parent",new ParentRoleModel(role),new ParentRolesModel(role)).setNullValid(true).setEnabled(hasRoleStore));
   form.add(new PropertyEditorFormComponent("properties").setEnabled(hasRoleStore));
   form.add(new SubmitLink("save"){
     @Override public void onSubmit(){
