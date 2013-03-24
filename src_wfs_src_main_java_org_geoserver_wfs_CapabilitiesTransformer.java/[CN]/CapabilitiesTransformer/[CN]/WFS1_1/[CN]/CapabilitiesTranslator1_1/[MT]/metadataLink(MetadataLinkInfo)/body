@@ -1,0 +1,17 @@
+{
+  String format=link.getType();
+  String metadataType=link.getMetadataType();
+  if ("ISO19115:2003".equals(metadataType)) {
+    metadataType="19115";
+  }
+  if (!VALID_LINKS_FORMATS.contains(format)) {
+    LOGGER.log(Level.FINE,"Skipping metadata link " + link.getContent() + ", format "+ format+ " is not valid in WFS 1.1, supported types are: "+ VALID_LINKS_FORMATS);
+    return;
+  }
+  if (!VALID_LINKS_METADATATYPES.contains(metadataType)) {
+    LOGGER.log(Level.FINE,"Skipping metadata link " + link.getContent() + ", metadata type "+ metadataType+ " is not valid in WFS 1.1, supported types are: "+ VALID_LINKS_METADATATYPES);
+    return;
+  }
+  AttributesImpl mtAtts=attributes("type",metadataType,"format",format);
+  element("MetadataURL",link.getContent(),mtAtts);
+}
