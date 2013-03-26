@@ -1,7 +1,10 @@
 {
   String request="wcs?service=WCS&version=1.1.1&request=GetCoverage" + "&identifier=" + getLayerId(TASMANIA_BM) + "&BoundingBox=-90,-180,90,180,urn:ogc:def:crs:EPSG:4326"+ "&GridBaseCRS=urn:ogc:def:crs:EPSG:4326"+ "&format=geotiff";
   MockHttpServletResponse response=getAsServletResponse(request);
-  assertTrue(response.getContentType().matches("multipart/related;\\s*boundary=\".*\""));
+  String contentType=response.getContentType();
+  assertTrue(contentType.matches("multipart/related;\\s*boundary=\".*\""));
+  assertFalse(contentType.contains("\n"));
+  assertFalse(contentType.contains("\r"));
   Multipart multipart=getMultipart(response);
   assertEquals(2,multipart.getCount());
   BodyPart coveragesPart=multipart.getBodyPart(0);
