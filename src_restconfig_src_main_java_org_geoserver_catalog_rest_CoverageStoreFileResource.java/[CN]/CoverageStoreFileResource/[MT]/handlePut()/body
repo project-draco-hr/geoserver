@@ -23,16 +23,12 @@
     LOGGER.info("Using existing coverage store: " + coveragestore);
   }
   info.setType(coverageFormat.getName());
+  URL uploadedFileURL=DataUtilities.fileToURL(uploadedFile);
   if (isInlineUpload(method)) {
     info.setURL("file:data/" + workspace + "/"+ coveragestore+ "/"+ uploadedFile.getName());
   }
  else {
-    try {
-      info.setURL(uploadedFile.toURL().toExternalForm());
-    }
- catch (    MalformedURLException e) {
-      throw new RestletException("url error",Status.SERVER_ERROR_INTERNAL,e);
-    }
+    info.setURL(uploadedFileURL.toExternalForm());
   }
   if (add) {
     catalog.add(info);
@@ -51,7 +47,7 @@
     coverage=coverage.substring(0,coverage.indexOf('.'));
   }
   try {
-    AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)((AbstractGridFormat)coverageFormat).getReader(uploadedFile.toURL());
+    AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)((AbstractGridFormat)coverageFormat).getReader(uploadedFileURL);
     if (reader == null) {
       throw new RestletException("Could not aquire reader for coverage.",Status.SERVER_ERROR_INTERNAL);
     }
