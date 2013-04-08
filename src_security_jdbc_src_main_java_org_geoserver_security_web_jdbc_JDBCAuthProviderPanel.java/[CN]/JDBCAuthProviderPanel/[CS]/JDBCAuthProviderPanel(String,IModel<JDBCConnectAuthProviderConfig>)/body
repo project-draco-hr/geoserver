@@ -2,5 +2,32 @@
   super(id,model);
   add(new UserGroupServiceChoice("userGroupServiceName"));
   add(new JDBCDriverChoice("driverClassName"));
-  add(new TextField("connectURL"));
+  add(new TextField<String>("connectURL"));
+  TextField<String> userNameField=new TextField<String>("username");
+  userNameField.setModel(new PropertyModel<String>(this,"username"));
+  userNameField.setRequired(false);
+  add(userNameField);
+  PasswordTextField pwdField=new PasswordTextField("password");
+  pwdField.setModel(new PropertyModel<String>(this,"password"));
+  pwdField.setRequired(false);
+  pwdField.setResetPassword(true);
+  add(pwdField);
+  add(new AjaxSubmitLink("cxTest"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      try {
+        test();
+        info(new StringResourceModel("connectionSuccessful",JDBCAuthProviderPanel.this,null).getObject());
+      }
+ catch (      Exception e) {
+        error(e);
+        LOGGER.log(Level.WARNING,"Connection error",e);
+      }
+ finally {
+        target.addComponent(feedbackPanel);
+      }
+    }
+  }
+.setDefaultFormProcessing(false));
+  add(feedbackPanel=new FeedbackPanel("feedback"));
+  feedbackPanel.setOutputMarkupId(true);
 }
