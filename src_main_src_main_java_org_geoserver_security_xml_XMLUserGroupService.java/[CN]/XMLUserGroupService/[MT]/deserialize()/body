@@ -1,11 +1,16 @@
 {
   try {
     Document doc=null;
+    FileInputStream is=null;
     try {
-      doc=builder.parse(new FileInputStream(userFile));
+      is=new FileInputStream(userFile);
+      doc=builder.parse(is);
     }
  catch (    SAXException e) {
       throw new IOException(e);
+    }
+ finally {
+      IOUtils.closeQuietly(is);
     }
     if (isValidatingXMLSchema()) {
       XMLValidator.Singleton.validateUserGroupRegistry(doc);
