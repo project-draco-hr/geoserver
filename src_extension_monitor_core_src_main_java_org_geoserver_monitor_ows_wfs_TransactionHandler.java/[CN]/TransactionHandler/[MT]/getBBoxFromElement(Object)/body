@@ -1,0 +1,25 @@
+{
+  if (isInsert(element)) {
+    ReferencedEnvelope bbox=null;
+    if (OwsUtils.has(element,"srsName")) {
+      Object srs=OwsUtils.get(element,"srsName");
+      CoordinateReferenceSystem crs=crs(srs);
+      if (crs != null) {
+        bbox=new ReferencedEnvelope(crs);
+        bbox.setToNull();
+      }
+    }
+    for (    Feature f : (List<Feature>)OwsUtils.get(element,"feature")) {
+      BoundingBox fbbox=f.getBounds();
+      if (fbbox == null) {
+        continue;
+      }
+      if (bbox == null) {
+        bbox=new ReferencedEnvelope(fbbox);
+      }
+      bbox.include(fbbox);
+    }
+    return bbox;
+  }
+  return null;
+}

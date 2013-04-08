@@ -1,0 +1,46 @@
+{
+  if (geometry == null) {
+    return null;
+  }
+  if (geometry instanceof GeometryCollection) {
+    MultiGeometry mg=new MultiGeometry();
+    GeometryCollection gc=(GeometryCollection)geometry;
+    if (gc.getNumGeometries() == 1) {
+      return toKmlGeometry(gc.getGeometryN(0));
+    }
+ else {
+      for (int i=0; i < gc.getNumGeometries(); i++) {
+        Geometry child=gc.getGeometryN(i);
+        mg.addToGeometry(toKmlGeometry(child));
+      }
+    }
+    return mg;
+  }
+ else   if (geometry instanceof Point) {
+    return toKmlPoint(geometry.getCoordinate());
+  }
+ else   if (geometry instanceof LinearRing) {
+    return convertLinearRing((LinearRing)geometry);
+  }
+ else   if (geometry instanceof LineString) {
+    de.micromata.opengis.kml.v_2_2_0.LineString kmlLine=new de.micromata.opengis.kml.v_2_2_0.LineString();
+    List<de.micromata.opengis.kml.v_2_2_0.Coordinate> kmlCoordinates=dumpCoordinateSequence(((LineString)geometry).getCoordinateSequence());
+    kmlLine.setCoordinates(kmlCoordinates);
+    return kmlLine;
+  }
+ else   if (geometry instanceof Polygon) {
+    Polygon polygon=(Polygon)geometry;
+    de.micromata.opengis.kml.v_2_2_0.Polygon kmlPolygon=new de.micromata.opengis.kml.v_2_2_0.Polygon();
+    de.micromata.opengis.kml.v_2_2_0.LinearRing kmlOuterRing=convertLinearRing((LinearRing)polygon.getExteriorRing());
+    kmlPolygon.createAndSetOuterBoundaryIs().setLinearRing(kmlOuterRing);
+    for (int i=0; i < polygon.getNumInteriorRing(); i++) {
+      LinearRing interior=(LinearRing)polygon.getInteriorRingN(i);
+      de.micromata.opengis.kml.v_2_2_0.LinearRing kmlInterior=convertLinearRing(interior);
+      kmlPolygon.createAndAddInnerBoundaryIs().setLinearRing(kmlInterior);
+    }
+    return kmlPolygon;
+  }
+ else {
+    throw new IllegalArgumentException("Unrecognized geometry type: " + geometry);
+  }
+}

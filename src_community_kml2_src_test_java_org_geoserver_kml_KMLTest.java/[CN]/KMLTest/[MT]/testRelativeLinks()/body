@@ -1,0 +1,16 @@
+{
+  final String kmlRequest="wms?request=getmap&service=wms&version=1.1.1" + "&format=" + KMLMapOutputFormat.MIME_TYPE + "&layers="+ getLayerId(MockData.BASIC_POLYGONS)+ "&styles="+ MockData.BASIC_POLYGONS.getLocalPart()+ "&height=1024&width=1024&bbox=-180,-90,180,90&srs=EPSG:4326&format_options=rellinks:true";
+  Document dom=getAsDOM(kmlRequest + "&startIndex=0&maxFeatures=1");
+  assertXpathEvaluatesTo("1","count(//kml:Folder/kml:NetworkLink)",dom);
+  assertXpathEvaluatesTo("next","//kml:Folder/kml:NetworkLink/@id",dom);
+  assertXpathEvaluatesTo("Next page","//kml:Folder/kml:NetworkLink/kml:description",dom);
+  assertXpathEvaluatesTo("http://localhost:8080/geoserver/rest/cite/BasicPolygons.kml?startindex=1&maxfeatures=1","//kml:Folder/kml:NetworkLink/kml:Link/kml:href",dom);
+  dom=getAsDOM(kmlRequest + "&startIndex=1&maxFeatures=1");
+  assertXpathEvaluatesTo("2","count(//kml:Folder/kml:NetworkLink)",dom);
+  assertXpathEvaluatesTo("prev","//kml:Folder/kml:NetworkLink[1]/@id",dom);
+  assertXpathEvaluatesTo("Previous page","//kml:Folder/kml:NetworkLink[1]/kml:description",dom);
+  assertXpathEvaluatesTo("http://localhost:8080/geoserver/rest/cite/BasicPolygons.kml?startindex=0&maxfeatures=1","//kml:Folder/kml:NetworkLink[1]/kml:Link/kml:href",dom);
+  assertXpathEvaluatesTo("next","//kml:Folder/kml:NetworkLink[2]/@id",dom);
+  assertXpathEvaluatesTo("Next page","//kml:Folder/kml:NetworkLink[2]/kml:description",dom);
+  assertXpathEvaluatesTo("http://localhost:8080/geoserver/rest/cite/BasicPolygons.kml?startindex=2&maxfeatures=1","//kml:Folder/kml:NetworkLink[2]/kml:Link/kml:href",dom);
+}

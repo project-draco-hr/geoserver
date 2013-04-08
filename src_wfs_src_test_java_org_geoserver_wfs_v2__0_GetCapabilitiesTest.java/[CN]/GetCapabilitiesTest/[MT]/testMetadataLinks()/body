@@ -1,0 +1,13 @@
+{
+  FeatureTypeInfo mpolys=getCatalog().getFeatureTypeByName(getLayerId(MockTestData.MPOLYGONS));
+  MetadataLinkInfo ml=getCatalog().getFactory().createMetadataLink();
+  ml.setMetadataType("FGDC");
+  ml.setType("text/html");
+  ml.setContent("http://www.geoserver.org");
+  mpolys.getMetadataLinks().add(ml);
+  getCatalog().save(mpolys);
+  Document doc=getAsDOM("wfs?service=WFS&version=2.0.0&request=getCapabilities");
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  assertEquals(1,xpath.getMatchingNodes("//wfs:FeatureType[wfs:Name='cgf:MPolygons']/wfs:MetadataURL",doc).getLength());
+  assertEquals(1,xpath.getMatchingNodes("//wfs:FeatureType[wfs:Name='cgf:MPolygons']/wfs:MetadataURL[@xlink:href='http://www.geoserver.org']",doc).getLength());
+}

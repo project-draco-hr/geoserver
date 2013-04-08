@@ -1,0 +1,18 @@
+{
+  TransactionType t=WfsFactory.eINSTANCE.createTransactionType();
+  InsertElementType ie=WfsFactory.eINSTANCE.createInsertElementType();
+  t.getInsert().add(ie);
+  BoundingBox expected=new ReferencedEnvelope(53.73,40,-60,-95.1193,CRS.decode("EPSG:4326"));
+  SimpleFeatureType ft=createNiceMock(SimpleFeatureType.class);
+  expect(ft.getTypeName()).andReturn("acme:foo").anyTimes();
+  replay(ft);
+  SimpleFeature f=createNiceMock(SimpleFeature.class);
+  expect(f.getBounds()).andReturn(expected).anyTimes();
+  expect(f.getType()).andReturn(ft).anyTimes();
+  replay(f);
+  ie.getFeature().add(f);
+  Operation op=op("Transaction","WFS","1.1.0",t);
+  callback.operationDispatched(new Request(),op);
+  assertEquals("acme:foo",data.getResources().get(0));
+  BBoxAsserts.assertEqualsBbox(expected,data.getBbox(),0.01);
+}

@@ -45,4 +45,12 @@
   getSecurityManager().getKeyStoreProvider().commitMasterPasswordChange();
   assertEquals("geoserver3",getMasterPassword());
   getSecurityManager().getKeyStoreProvider().getConfigPasswordKey();
+  Authentication auth=new UsernamePasswordAuthenticationToken("root","geoserver3");
+  GeoServerRootAuthenticationProvider authProvider=new GeoServerRootAuthenticationProvider();
+  authProvider.setSecurityManager(getSecurityManager());
+  auth=authProvider.authenticate(auth);
+  assertTrue(auth.isAuthenticated());
+  auth=new UsernamePasswordAuthenticationToken("root","abcdefghijk");
+  assertNull(authProvider.authenticate(auth));
+  assertFalse(auth.isAuthenticated());
 }

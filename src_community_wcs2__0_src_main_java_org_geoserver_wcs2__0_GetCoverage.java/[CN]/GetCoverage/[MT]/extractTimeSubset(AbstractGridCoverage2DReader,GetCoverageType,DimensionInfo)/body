@@ -28,17 +28,18 @@
       throw new WCS20Exception("Invalid element found while attempting to parse dimension subsetting request: " + dim.getClass().toString(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
     }
   }
-  if (!range.getMinValue().equals(range.getMaxValue())) {
+  if (range != null && !range.getMinValue().equals(range.getMaxValue())) {
     throw new WCS20Exception("Trimming on time is not supported at the moment, only slicing is");
   }
   if (range != null) {
     ReaderDimensionsAccessor accessor=new ReaderDimensionsAccessor(reader);
-    TreeSet<Date> domain=accessor.getTimeDomain();
+    TreeSet<Object> domain=accessor.getTimeDomain();
     Date slicePoint=range.getMinValue();
-    if (!domain.contains(slicePoint)) {
+    if (!domainContains(slicePoint,domain)) {
       Date previous=null;
       Date newSlicePoint=null;
-      for (      Date curr : domain) {
+      TreeSet<Date> domainDates=getDomainDates(domain);
+      for (      Date curr : domainDates) {
         if (curr.compareTo(slicePoint) > 0) {
           if (previous == null) {
             newSlicePoint=curr;

@@ -1,0 +1,13 @@
+{
+  setupRasterDimension(TIMERANGES,ResourceInfo.TIME,DimensionPresentation.LIST,null);
+  setupRasterDimension(TIMERANGES,ResourceInfo.ELEVATION,DimensionPresentation.LIST,null);
+  String baseUrl="wcs?request=getcoverage&service=wcs&version=1.0.0&format=image/geotiff" + "&bbox=0.237,40.562,14.593,44.558&crs=EPSG:4326&width=25&height=25" + "&coverage="+ getLayerId(TIMERANGES);
+  MockHttpServletResponse response=getAsServletResponse(baseUrl + "&TIME=2008-11-05T00:00:00.000Z/2008-11-06T12:00:00.000Z");
+  assertEquals("image/tiff",response.getContentType());
+  checkPixelValue(response,10,10,13.337999683572);
+  Document dom=getAsDOM(baseUrl + "&TIME=2008-11-04T12:00:00.000Z/2008-11-04T16:00:00.000Z");
+  XMLAssert.assertXpathEvaluatesTo("1","count(//ServiceExceptionReport)",dom);
+  response=getAsServletResponse(baseUrl + "&TIME=2008-10-31T12:00:00.000Z/2008-10-31T16:00:00.000Z");
+  assertEquals("image/tiff",response.getContentType());
+  checkPixelValue(response,10,10,18.2659999176394);
+}

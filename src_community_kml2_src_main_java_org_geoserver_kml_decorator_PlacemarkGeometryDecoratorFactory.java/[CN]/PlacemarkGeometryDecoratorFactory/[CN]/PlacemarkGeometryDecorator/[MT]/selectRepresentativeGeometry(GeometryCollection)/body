@@ -1,0 +1,23 @@
+{
+  GeometryCollection gc=(GeometryCollection)g;
+  if (gc.isEmpty()) {
+    return null;
+  }
+  Geometry first=gc.getGeometryN(0);
+  if (gc.getNumGeometries() == 1 || g instanceof MultiPoint) {
+    return first;
+  }
+ else {
+    double maxAreaSoFar=first.getEnvelope().getArea();
+    Geometry geometryToReturn=first;
+    for (int t=0; t < gc.getNumGeometries(); t++) {
+      Geometry curr=gc.getGeometryN(t);
+      double area=curr.getEnvelope().getArea();
+      if (area > maxAreaSoFar) {
+        maxAreaSoFar=area;
+        geometryToReturn=curr;
+      }
+    }
+    return geometryToReturn;
+  }
+}

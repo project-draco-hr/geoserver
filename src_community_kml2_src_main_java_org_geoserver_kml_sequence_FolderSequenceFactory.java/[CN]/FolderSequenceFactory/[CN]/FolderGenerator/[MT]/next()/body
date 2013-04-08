@@ -3,6 +3,21 @@
     List<Layer> layers=context.getMapContent().layers();
     Layer layer=layers.get(i++);
     context.setCurrentLayer(layer);
+    if (layer instanceof FeatureLayer) {
+      try {
+        WMSMapContent mapContent=context.getMapContent();
+        SimpleFeatureCollection fc=KMLUtils.loadFeatureCollection((SimpleFeatureSource)layer.getFeatureSource(),layer,mapContent,context.getWms(),mapContent.getScaleDenominator());
+        context.setCurrentFeatureCollection(fc);
+      }
+ catch (      Exception e) {
+        if (e instanceof ServiceException) {
+          throw (ServiceException)e;
+        }
+ else {
+          throw new ServiceException("Failed to load vector data during KML generation",e);
+        }
+      }
+    }
     Folder folder=new Folder();
     folder.setName(layer.getTitle());
     for (    KmlDecorator decorator : decorators) {
@@ -12,8 +27,16 @@
       }
     }
     if (layer instanceof FeatureLayer) {
-      List<Feature> features=new SequenceList<Feature>(new FeatureSequenceFactory(context,(FeatureLayer)layer));
-      folder.setFeature(features);
+      if (useVectorOutput(context.getCurrentFeatureCollection())) {
+        List<Feature> features=new SequenceList<Feature>(new FeatureSequenceFactory(context,(FeatureLayer)layer));
+        addFeatures(folder,features);
+      }
+ else {
+        addGroundOverlay(folder,layer);
+      }
+    }
+ else {
+      addGroundOverlay(folder,layer);
     }
     return folder;
   }

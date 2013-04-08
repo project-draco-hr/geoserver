@@ -1,0 +1,16 @@
+{
+  setupRasterDimension(TIMERANGES,ResourceInfo.TIME,DimensionPresentation.LIST,null,null,null);
+  setupRasterDimension(TIMERANGES,ResourceInfo.ELEVATION,DimensionPresentation.LIST,null,UNITS,UNIT_SYMBOL);
+  setupRasterDimension(TIMERANGES,"wavelength",DimensionPresentation.LIST,null,null,null);
+  setupRasterDimension(TIMERANGES,"date",DimensionPresentation.LIST,null,null,null);
+  String layer=getLayerId(TIMERANGES);
+  String baseUrl="wms?LAYERS=" + layer + "&STYLES=temperature&FORMAT=image%2Fpng&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&SRS=EPSG:4326"+ "&BBOX=-0.89131513678082,40.246933882167,15.721292974683,44.873229811941&WIDTH=200&HEIGHT=80&query_layers="+ layer;
+  String url=baseUrl + "&TIME=2008-11-05T00:00:00.000Z/2008-11-06T12:00:00.000Z";
+  assertEquals(-30000,getFeatureAt(url,36,31,layer),EPS);
+  assertEquals(14.782,getFeatureAt(url,68,72,layer),EPS);
+  url=baseUrl + "&TIME=2008-11-04T12:00:00.000Z/2008-11-04T16:00:00.000Z";
+  assertNull(getFeatureAt(url,36,31,layer));
+  url=baseUrl + "&TIME=2008-10-31T12:00:00.000Z/2008-10-31T16:00:00.000Z";
+  assertEquals(-30000,getFeatureAt(url,36,31,layer),EPS);
+  assertEquals(20.027,getFeatureAt(url,68,72,layer),EPS);
+}

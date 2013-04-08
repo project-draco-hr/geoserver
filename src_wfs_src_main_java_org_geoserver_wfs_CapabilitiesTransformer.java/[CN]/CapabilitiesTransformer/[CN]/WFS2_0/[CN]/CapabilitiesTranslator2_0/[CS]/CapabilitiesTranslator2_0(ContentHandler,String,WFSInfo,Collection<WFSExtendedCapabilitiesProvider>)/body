@@ -5,5 +5,21 @@
   for (  WFSExtendedCapabilitiesProvider cp : extCapsProviders) {
     cp.registerNamespaces(getNamespaceSupport());
   }
-  delegate=(CapabilitiesTranslator1_1)new WFS1_1(wfs,version,baseUrl,catalog,extCapsProviders).createTranslator(handler);
+  WFS1_1 wfs1_1=new WFS1_1(wfs,version,baseUrl,catalog,extCapsProviders){
+    @Override public Translator createTranslator(    ContentHandler handler){
+      return new CapabilitiesTranslator1_1_v2MetadataLinks(handler,baseUrl,wfs,extCapsProviders);
+    }
+class CapabilitiesTranslator1_1_v2MetadataLinks extends CapabilitiesTranslator1_1 {
+      public CapabilitiesTranslator1_1_v2MetadataLinks(      ContentHandler handler,      String baseUrl,      WFSInfo wfs,      Collection<WFSExtendedCapabilitiesProvider> extCapsProviders){
+        super(handler,baseUrl,wfs,extCapsProviders);
+      }
+      @Override protected void metadataLink(      MetadataLinkInfo link){
+        AttributesImpl mtAtts=attributes("xlink:href",link.getContent());
+        start("MetadataURL",mtAtts);
+        end("MetadataURL");
+      }
+    }
+  }
+;
+  delegate=(CapabilitiesTranslator1_1)wfs1_1.createTranslator(handler);
 }

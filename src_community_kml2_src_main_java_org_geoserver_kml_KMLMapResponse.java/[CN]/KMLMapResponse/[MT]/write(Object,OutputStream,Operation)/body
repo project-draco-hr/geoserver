@@ -1,13 +1,16 @@
 {
   KMLMap kmlMap=(KMLMap)value;
-  Kml kml=kmlMap.getKml();
   try {
-    createMarshaller().marshal(kml,output);
+    KmlEncodingContext context=kmlMap.getKmlEncodingContext();
+    Kml kml=kmlMap.getKml();
+    if (context != null && context.isKmz()) {
+      encodeAsKmz(kml,context,operation,output);
+    }
+ else {
+      encodeAsKml(kml,output);
+    }
   }
- catch (  JAXBException e) {
-    throw new ServiceException(e);
-  }
- finally {
+  finally {
     kmlMap.dispose();
   }
 }
