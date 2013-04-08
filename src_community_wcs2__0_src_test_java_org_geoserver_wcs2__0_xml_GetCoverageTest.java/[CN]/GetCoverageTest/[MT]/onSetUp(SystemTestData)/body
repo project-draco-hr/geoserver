@@ -1,7 +1,16 @@
 {
   super.onSetUp(testData);
   testData.addRasterLayer(WATTEMP,"watertemp.zip",null,null,SystemTestData.class,getCatalog());
-  sortByElevation(WATTEMP);
+  File data=getDataDirectory().findDataDir("watertemp");
+  FilenameFilter groundElevationFilter=new FilenameFilter(){
+    @Override public boolean accept(    File dir,    String name){
+      return name.matches(".*_000_.*tiff") || name.matches("watertemp\\..*");
+    }
+  }
+;
+  for (  File file : data.listFiles(groundElevationFilter)) {
+    file.delete();
+  }
   testData.addRasterLayer(TIMERANGES,"timeranges.zip",null,null,SystemTestData.class,getCatalog());
   sortByElevation(TIMERANGES);
 }
