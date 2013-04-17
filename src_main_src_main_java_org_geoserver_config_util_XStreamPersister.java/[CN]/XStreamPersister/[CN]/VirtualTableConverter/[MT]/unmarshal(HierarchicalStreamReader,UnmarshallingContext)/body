@@ -1,7 +1,15 @@
 {
   String name=readValue("name",String.class,reader);
   String sql=readValue("sql",String.class,reader);
-  VirtualTable vt=new VirtualTable(name,sql);
+  boolean escapeSql;
+  try {
+    escapeSql=Boolean.valueOf(readValue("escapeSql",String.class,reader));
+  }
+ catch (  IllegalArgumentException e) {
+    escapeSql=false;
+    reader.moveUp();
+  }
+  VirtualTable vt=new VirtualTable(name,sql,escapeSql);
   List<String> primaryKeys=new ArrayList<String>();
   while (reader.hasMoreChildren()) {
     reader.moveDown();
