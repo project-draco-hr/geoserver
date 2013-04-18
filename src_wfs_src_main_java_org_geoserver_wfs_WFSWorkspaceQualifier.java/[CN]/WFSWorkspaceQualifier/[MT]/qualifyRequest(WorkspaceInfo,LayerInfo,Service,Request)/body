@@ -1,2 +1,24 @@
 {
+  if (request.getContext() != null) {
+    if (workspace != null && request.getKvp().containsKey("TYPENAME")) {
+      Iterable typeNames=(Iterable)request.getKvp().get("TYPENAME");
+      NamespaceInfo ns=catalog.getNamespaceByPrefix(workspace.getName());
+      if (ns != null) {
+        List<QName> qualifiedNames=new ArrayList<QName>();
+        for (        Object name : typeNames) {
+          if (name != null && name instanceof QName) {
+            QName typeName=(QName)name;
+            if (typeName.getNamespaceURI() == null || typeName.getNamespaceURI().equals("")) {
+              typeName=new QName(ns.getURI(),typeName.getLocalPart());
+            }
+ else             if (typeName.getNamespaceURI().equals(catalog.getDefaultNamespace().getURI())) {
+              typeName=checkDefaultNamespace(request,ns,typeName);
+            }
+            qualifiedNames.add(typeName);
+          }
+        }
+        request.getKvp().put("TYPENAME",qualifiedNames);
+      }
+    }
+  }
 }
