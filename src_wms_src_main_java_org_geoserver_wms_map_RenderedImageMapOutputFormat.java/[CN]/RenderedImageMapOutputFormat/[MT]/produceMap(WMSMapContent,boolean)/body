@@ -83,27 +83,20 @@
   }
   graphic.setRenderingHints(hintsMap);
   RenderingHints hints=new RenderingHints(hintsMap);
-  GTRenderer renderer;
-  if (DefaultWebMapService.useShapefileRenderer()) {
-    renderer=new ShapefileRenderer();
-  }
- else {
-    StreamingRenderer sr=new StreamingRenderer();
-    sr.setThreadPool(DefaultWebMapService.getRenderingPool());
-    renderer=sr;
-  }
+  StreamingRenderer renderer=new StreamingRenderer();
+  renderer.setThreadPool(DefaultWebMapService.getRenderingPool());
   renderer.setMapContent(mapContent);
   renderer.setJava2DHints(hints);
   Map<Object,Object> rendererParams=new HashMap<Object,Object>();
   rendererParams.put("optimizedDataLoadingEnabled",new Boolean(true));
   rendererParams.put("renderingBuffer",new Integer(mapContent.getBuffer()));
   rendererParams.put("maxFiltersToSendToDatastore",DefaultWebMapService.getMaxFilterRules());
-  rendererParams.put(ShapefileRenderer.SCALE_COMPUTATION_METHOD_KEY,ShapefileRenderer.SCALE_OGC);
+  rendererParams.put(StreamingRenderer.SCALE_COMPUTATION_METHOD_KEY,StreamingRenderer.SCALE_OGC);
   if (AA_NONE.equals(antialias)) {
-    rendererParams.put(ShapefileRenderer.TEXT_RENDERING_KEY,StreamingRenderer.TEXT_RENDERING_STRING);
+    rendererParams.put(StreamingRenderer.TEXT_RENDERING_KEY,StreamingRenderer.TEXT_RENDERING_STRING);
   }
  else {
-    rendererParams.put(ShapefileRenderer.TEXT_RENDERING_KEY,StreamingRenderer.TEXT_RENDERING_ADAPTIVE);
+    rendererParams.put(StreamingRenderer.TEXT_RENDERING_KEY,StreamingRenderer.TEXT_RENDERING_ADAPTIVE);
   }
   if (DefaultWebMapService.isLineWidthOptimizationEnabled()) {
     rendererParams.put(StreamingRenderer.LINE_WIDTH_OPTIMIZATION_KEY,true);
