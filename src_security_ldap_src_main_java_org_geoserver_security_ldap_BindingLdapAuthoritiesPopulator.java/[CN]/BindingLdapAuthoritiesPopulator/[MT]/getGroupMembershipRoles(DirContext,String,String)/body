@@ -1,0 +1,38 @@
+{
+  if (getGroupSearchBase() == null) {
+    return new HashSet<GrantedAuthority>();
+  }
+  Set<GrantedAuthority> authorities=new HashSet<GrantedAuthority>();
+  if (logger.isDebugEnabled()) {
+    logger.debug("Searching for roles for user '" + username + "', DN = "+ "'"+ userDn+ "', with filter "+ groupSearchFilter+ " in search base '"+ getGroupSearchBase()+ "'");
+  }
+  SpringSecurityLdapTemplate authTemplate;
+  if (ctx == null) {
+    authTemplate=ldapTemplate;
+  }
+ else {
+    authTemplate=new SpringSecurityLdapTemplate(new ContextSource(){
+      @Override public DirContext getReadOnlyContext() throws NamingException {
+        return ctx;
+      }
+      @Override public DirContext getReadWriteContext() throws NamingException {
+        return ctx;
+      }
+      @Override public DirContext getContext(      String principal,      String credentials) throws NamingException {
+        return ctx;
+      }
+    }
+);
+  }
+  Set<String> userRoles=authTemplate.searchForSingleAttributeValues(getGroupSearchBase(),groupSearchFilter,new String[]{userDn,username},groupRoleAttribute);
+  if (logger.isDebugEnabled()) {
+    logger.debug("Roles from search: " + userRoles);
+  }
+  for (  String role : userRoles) {
+    if (convertToUpperCase) {
+      role=role.toUpperCase();
+    }
+    authorities.add(new SimpleGrantedAuthority(rolePrefix + role));
+  }
+  return authorities;
+}

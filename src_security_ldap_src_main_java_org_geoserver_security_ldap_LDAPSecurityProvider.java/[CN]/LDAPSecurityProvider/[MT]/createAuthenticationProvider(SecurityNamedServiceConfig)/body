@@ -14,25 +14,51 @@
 );
     ldapContext.setAuthenticationStrategy(tls);
   }
-  BindAuthenticator authenticator=new BindAuthenticator(ldapContext);
-  authenticator.setUserDnPatterns(new String[]{ldapConfig.getUserDnPattern()});
+  GeoserverLdapBindAuthenticator authenticator=new GeoserverLdapBindAuthenticator(ldapContext);
+  authenticator.setUserFilter(ldapConfig.getUserFilter());
+  authenticator.setUserFormat(ldapConfig.getUserFormat());
+  if (ldapConfig.getUserDnPattern() != null) {
+    authenticator.setUserDnPatterns(new String[]{ldapConfig.getUserDnPattern()});
+  }
   LdapAuthoritiesPopulator authPopulator=null;
+  LdapAuthenticationProvider provider=null;
   String ugServiceName=ldapConfig.getUserGroupServiceName();
   if (ugServiceName != null) {
     GeoServerUserGroupService ugService;
     try {
       ugService=securityManager.loadUserGroupService(ugServiceName);
       authPopulator=new UserDetailsServiceLdapAuthoritiesPopulator(ugService);
+      provider=new LdapAuthenticationProvider(authenticator,authPopulator);
     }
  catch (    IOException e) {
       LOGGER.log(Level.SEVERE,String.format("Unable to load user group service '%s', " + "will use LDAP server for calculating roles",ugServiceName),e);
     }
   }
   if (authPopulator == null) {
-    authPopulator=new DefaultLdapAuthoritiesPopulator(ldapContext,ldapConfig.getGroupSearchBase());
-    if (ldapConfig.getGroupSearchFilter() != null) {
-      ((DefaultLdapAuthoritiesPopulator)authPopulator).setGroupSearchFilter(ldapConfig.getGroupSearchFilter());
+    if (ldapConfig.isBindBeforeGroupSearch()) {
+      authPopulator=new BindingLdapAuthoritiesPopulator(ldapContext,ldapConfig.getGroupSearchBase(),ldapConfig.getAdminGroup());
+      if (ldapConfig.getGroupSearchFilter() != null) {
+        ((BindingLdapAuthoritiesPopulator)authPopulator).setGroupSearchFilter(ldapConfig.getGroupSearchFilter());
+      }
+      provider=new LdapAuthenticationProvider(authenticator,authPopulator){
+        /** 
+ * We need to give authoritiesPopulator both username and
+ * password, so it can bind to the LDAP server. We encode
+ * them in the username:password format.
+ */
+        @Override protected Collection<? extends GrantedAuthority> loadUserAuthorities(        DirContextOperations userData,        String username,        String password){
+          return getAuthoritiesPopulator().getGrantedAuthorities(userData,username + ":" + password);
+        }
+      }
+;
+    }
+ else {
+      authPopulator=new DefaultLdapAuthoritiesPopulator(ldapContext,ldapConfig.getGroupSearchBase());
+      if (ldapConfig.getGroupSearchFilter() != null) {
+        ((DefaultLdapAuthoritiesPopulator)authPopulator).setGroupSearchFilter(ldapConfig.getGroupSearchFilter());
+      }
+      provider=new LdapAuthenticationProvider(authenticator,authPopulator);
     }
   }
-  return new LDAPAuthenticationProvider(new LdapAuthenticationProvider(authenticator,authPopulator));
+  return new LDAPAuthenticationProvider(provider,ldapConfig.getAdminGroup());
 }

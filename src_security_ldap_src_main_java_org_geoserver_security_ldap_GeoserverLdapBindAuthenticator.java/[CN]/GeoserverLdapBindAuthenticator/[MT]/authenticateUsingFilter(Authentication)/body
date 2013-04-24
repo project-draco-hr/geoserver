@@ -1,0 +1,45 @@
+{
+  DirContextOperations user=null;
+  Assert.isInstanceOf(UsernamePasswordAuthenticationToken.class,authentication,"Can only process UsernamePasswordAuthenticationToken objects");
+  String username=authentication.getName();
+  String password=(String)authentication.getCredentials();
+  if (userFormat != null && !userFormat.equals("")) {
+    username=MessageFormat.format(userFormat,username);
+  }
+  if (!StringUtils.hasLength(password)) {
+    logger.debug("Rejecting empty password for user " + username);
+    throw new BadCredentialsException(messages.getMessage("BindAuthenticator.emptyPassword","Empty Password"));
+  }
+  DirContext ctx=null;
+  String userDnStr="";
+  try {
+    ctx=getContextSource().getContext(username,password);
+    PasswordPolicyControl ppolicy=PasswordPolicyControlExtractor.extractControl(ctx);
+    logger.debug("Retrieving user object using filter...");
+    SearchControls searchCtls=new SearchControls();
+    searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+    user=SpringSecurityLdapTemplate.searchForSingleEntryInternal(ctx,searchCtls,"",userFilter,new Object[]{username});
+    userDnStr=user.getDn().toString();
+    if (ppolicy != null) {
+      user.setAttributeValue(ppolicy.getID(),ppolicy);
+    }
+  }
+ catch (  NamingException e) {
+    if ((e instanceof org.springframework.ldap.AuthenticationException) || (e instanceof org.springframework.ldap.OperationNotSupportedException)) {
+      handleBindException(userDnStr,username,e);
+    }
+ else {
+      throw e;
+    }
+  }
+catch (  javax.naming.NamingException e) {
+    throw LdapUtils.convertLdapException(e);
+  }
+ finally {
+    LdapUtils.closeContext(ctx);
+  }
+  if (user == null) {
+    throw new BadCredentialsException(messages.getMessage("BindAuthenticator.badCredentials","Bad credentials"));
+  }
+  return user;
+}
