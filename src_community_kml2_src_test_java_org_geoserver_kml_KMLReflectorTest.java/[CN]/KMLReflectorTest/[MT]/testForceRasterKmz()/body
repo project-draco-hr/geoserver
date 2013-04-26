@@ -1,0 +1,27 @@
+{
+  final String requestUrl="wms/kml?layers=" + getLayerId(MockData.BASIC_POLYGONS) + "&styles=&mode=download&KMSCORE=0&format="+ KMZMapOutputFormat.MIME_TYPE;
+  MockHttpServletResponse response=getAsServletResponse(requestUrl);
+  assertEquals(KMZMapOutputFormat.MIME_TYPE,response.getContentType());
+  assertEquals("attachment; filename=cite-BasicPolygons.kmz",response.getHeader("Content-Disposition"));
+  ZipInputStream zis=new ZipInputStream(getBinaryInputStream(response));
+  try {
+    ZipEntry entry=zis.getNextEntry();
+    assertEquals("wms.kml",entry.getName());
+    byte[] data=IOUtils.toByteArray(zis);
+    Document dom=dom(new ByteArrayInputStream(data));
+    assertXpathEvaluatesTo("1","count(//kml:Folder/kml:GroundOverlay)",dom);
+    String href=XMLUnit.newXpathEngine().evaluate("//kml:Folder/kml:GroundOverlay/kml:Icon/kml:href",dom);
+    assertEquals("images/layers_0.png",href);
+    zis.closeEntry();
+    entry=zis.getNextEntry();
+    assertEquals("images/",entry.getName());
+    zis.closeEntry();
+    entry=zis.getNextEntry();
+    assertEquals("images/layers_0.png",entry.getName());
+    zis.closeEntry();
+    assertNull(zis.getNextEntry());
+  }
+  finally {
+    zis.close();
+  }
+}
