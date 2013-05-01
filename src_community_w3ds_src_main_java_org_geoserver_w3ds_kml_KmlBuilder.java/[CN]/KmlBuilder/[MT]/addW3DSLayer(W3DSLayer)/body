@@ -1,0 +1,30 @@
+{
+  List<KmlModel> kmlModels=KmlUtils.getKmlModels(layer.getStyles());
+  FeatureCollection<?,?> collection=layer.getFeatures();
+  document.setName((document.getName() + layer.getLayerInfo().getRequestName()));
+  try {
+    FeatureIterator<?> iterator=collection.features();
+    SimpleFeature feature;
+    SimpleFeatureType fType;
+    List<AttributeDescriptor> types;
+    while (iterator.hasNext()) {
+      feature=(SimpleFeature)iterator.next();
+      fType=feature.getFeatureType();
+      types=fType.getAttributeDescriptors();
+      for (int j=0; j < types.size(); j++) {
+        Object value=feature.getAttribute(j);
+        if (value != null) {
+          if (value instanceof Point) {
+            addPoint(feature,(Point)value,kmlModels);
+          }
+        }
+      }
+    }
+    iterator.close();
+  }
+ catch (  Exception exception) {
+    ServiceException serviceException=new ServiceException("Error: " + exception.getMessage());
+    serviceException.initCause(exception);
+    throw serviceException;
+  }
+}
