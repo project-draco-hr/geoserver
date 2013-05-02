@@ -1,0 +1,20 @@
+{
+  String layerId=getLayerId(MockData.BASIC_POLYGONS);
+  final String requestUrl="wms/kml?layers=" + layerId + "&styles=polygon&mode=download&format_options=legend:true"+ "&legend_options=fontStyle:bold;fontColor:ff0000;fontSize:18";
+  Document doc=getAsDOM(requestUrl);
+  assertEquals("kml",doc.getDocumentElement().getNodeName());
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  String href=xpath.evaluate("//kml:ScreenOverlay/kml:Icon/kml:href",doc);
+  assertTrue(href.contains("request=GetLegendGraphic"));
+  assertTrue(href.contains("layer=cite%3ABasicPolygons"));
+  assertTrue(href.contains("style=polygon"));
+  assertTrue(href.contains("LEGEND_OPTIONS=fontStyle%3Abold%3BfontColor%3Aff0000%3BfontSize%3A18"));
+  XMLAssert.assertXpathEvaluatesTo("0.0","//kml:ScreenOverlay/kml:overlayXY/@x",doc);
+  XMLAssert.assertXpathEvaluatesTo("0.0","//kml:ScreenOverlay/kml:overlayXY/@y",doc);
+  XMLAssert.assertXpathEvaluatesTo("pixels","//kml:ScreenOverlay/kml:overlayXY/@xunits",doc);
+  XMLAssert.assertXpathEvaluatesTo("pixels","//kml:ScreenOverlay/kml:overlayXY/@yunits",doc);
+  XMLAssert.assertXpathEvaluatesTo("10.0","//kml:ScreenOverlay/kml:screenXY/@x",doc);
+  XMLAssert.assertXpathEvaluatesTo("20.0","//kml:ScreenOverlay/kml:screenXY/@y",doc);
+  XMLAssert.assertXpathEvaluatesTo("pixels","//kml:ScreenOverlay/kml:screenXY/@xunits",doc);
+  XMLAssert.assertXpathEvaluatesTo("pixels","//kml:ScreenOverlay/kml:screenXY/@yunits",doc);
+}
