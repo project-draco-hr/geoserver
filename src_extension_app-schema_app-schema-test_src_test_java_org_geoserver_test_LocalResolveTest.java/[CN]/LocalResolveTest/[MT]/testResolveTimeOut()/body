@@ -1,0 +1,13 @@
+{
+  Document doc=getAsDOM("wfs?request=GetFeature&version=2.0.0&typename=gsml:MappedFeature&resolve=local&resolveDepth=2&resolveTimeOut=0");
+  LOGGER.info("WFS testResolveTimeOut 0 response:\n" + prettyString(doc));
+  assertXpathEvaluatesTo("urn:x-test:GeologicUnit:gu.25699","//gsml:MappedFeature[@gml:id='mf1']/gsml:specification/@xlink:href",doc);
+  assertXpathCount(0,"//gsml:GeologicUnit",doc);
+  assertXpathCount(0,"//gsml:CompositionPart",doc);
+  doc=getAsDOM("wfs?request=GetFeature&version=2.0.0&typename=gsml:MappedFeature&resolve=local&resolveDepth=2&resolveTimeOut=100000");
+  LOGGER.info("WFS testResolveTimeOut 100000 response:\n" + prettyString(doc));
+  assertXpathEvaluatesTo("gu.25699","//gsml:MappedFeature[@gml:id='mf1']/gsml:specification/gsml:GeologicUnit/@gml:id",doc);
+  assertXpathEvaluatesTo("urn:ogc:def:nil:OGC::unknown","//gsml:MappedFeature[@gml:id='mf1']/gsml:specification/gsml:GeologicUnit/gsml:composition/gsml:CompositionPart/gsml:role/@xlink:href",doc);
+  assertXpathCount(3,"//gsml:GeologicUnit",doc);
+  assertXpathCount(3,"//gsml:CompositionPart",doc);
+}
