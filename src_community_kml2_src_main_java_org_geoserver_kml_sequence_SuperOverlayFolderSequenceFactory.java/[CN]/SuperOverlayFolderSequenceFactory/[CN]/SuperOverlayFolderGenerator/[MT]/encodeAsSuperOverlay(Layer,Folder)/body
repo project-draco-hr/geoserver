@@ -1,0 +1,27 @@
+{
+  GetMapRequest request=context.getRequest();
+  NetworkLink nl=folder.createAndAddNetworkLink();
+  nl.setName(layer.getTitle());
+  nl.setOpen(true);
+  nl.setVisibility(true);
+  Region region=nl.createAndSetRegion();
+  LatLonAltBox box=region.createAndSetLatLonAltBox();
+  Envelope requestBox=request.getBbox();
+  box.setNorth(requestBox.getMaxY());
+  box.setSouth(requestBox.getMinY());
+  box.setEast(requestBox.getMaxX());
+  box.setWest(requestBox.getMinX());
+  Lod lod=region.createAndSetLod();
+  lod.setMinLodPixels(128);
+  lod.setMaxLodPixels(-1);
+  Link link=nl.createAndSetLink();
+  int index=KMLUtils.getLayerIndex(context.getMapContent(),layer);
+  try {
+    String href=WMSRequests.getGetMapUrl(request,layer,index,null,null);
+    href=URLDecoder.decode(href,"UTF-8");
+    link.setHref(href);
+  }
+ catch (  UnsupportedEncodingException e) {
+    throw new ServiceException(e);
+  }
+}
