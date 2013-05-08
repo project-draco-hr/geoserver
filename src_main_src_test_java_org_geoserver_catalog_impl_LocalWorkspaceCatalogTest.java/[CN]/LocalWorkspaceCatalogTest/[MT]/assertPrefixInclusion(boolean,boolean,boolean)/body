@@ -1,0 +1,17 @@
+{
+  if (createGeoServer) {
+    SettingsInfo settings=createNiceMock(SettingsInfo.class);
+    expect(settings.isLocalWorkspaceIncludesPrefix()).andReturn(includePrefix).anyTimes();
+    replay(settings);
+    GeoServer geoServer=createNiceMock(GeoServer.class);
+    expect(geoServer.getSettings()).andReturn(settings).anyTimes();
+    replay(geoServer);
+    catalog.setGeoServer(geoServer);
+  }
+  if (setLocalWorkspace) {
+    WorkspaceInfo workspaceByName=catalog.getWorkspaceByName("ws1");
+    LocalWorkspace.set(workspaceByName);
+  }
+  checkLayerNamePrefixInclusion(includePrefix,catalog.getLayers().iterator());
+  checkLayerNamePrefixInclusion(includePrefix,catalog.list(LayerInfo.class,Filter.INCLUDE));
+}

@@ -34,7 +34,7 @@
   expect(ft1.getNamespace()).andReturn(ns1).anyTimes();
   replay(ft1);
   LayerInfo l1=createNiceMock(LayerInfo.class);
-  expect(l1.getName()).andReturn("l1").anyTimes();
+  expect(l1.getName()).andReturn("ws1:l1").anyTimes();
   expect(l1.getResource()).andReturn(ft1).anyTimes();
   replay(l1);
   FeatureTypeInfo ft2=createNiceMock(FeatureTypeInfo.class);
@@ -42,15 +42,15 @@
   expect(ft2.getNamespace()).andReturn(ns2).anyTimes();
   replay(ft2);
   LayerInfo l2=createNiceMock(LayerInfo.class);
-  expect(l2.getName()).andReturn("l2").anyTimes();
+  expect(l2.getName()).andReturn("ws2:l2").anyTimes();
   expect(l2.getResource()).andReturn(ft2).anyTimes();
   replay(l2);
   LayerInfo lc1=createNiceMock(LayerInfo.class);
-  expect(lc1.getName()).andReturn("lc").anyTimes();
+  expect(lc1.getName()).andReturn("ws1:lc").anyTimes();
   expect(lc1.getResource()).andReturn(ft1).anyTimes();
   replay(lc1);
   LayerInfo lc2=createNiceMock(LayerInfo.class);
-  expect(lc2.getName()).andReturn("lc").anyTimes();
+  expect(lc2.getName()).andReturn("ws2:lc").anyTimes();
   expect(lc2.getResource()).andReturn(ft2).anyTimes();
   replay(lc2);
   Catalog cat=createNiceMock(Catalog.class);
@@ -78,6 +78,13 @@
   expect(cat.getLayerByName(new NameImpl("ws1","lc"))).andReturn(lc1).anyTimes();
   expect(cat.getLayerByName(new NameImpl("ws2","lc"))).andReturn(lc2).anyTimes();
   expect(cat.getLayerByName("lc")).andReturn(lc1).anyTimes();
+  List<LayerInfo> layers=new ArrayList<LayerInfo>(2);
+  layers.add(l1);
+  layers.add(l2);
+  layers.add(lc1);
+  layers.add(lc2);
+  expect(cat.getLayers()).andReturn(layers).anyTimes();
+  expect(cat.list(LayerInfo.class,Filter.INCLUDE,(Integer)null,(Integer)null,(SortBy)null)).andReturn(new CloseableIteratorAdapter<LayerInfo>(layers.iterator())).anyTimes();
   replay(cat);
   catalog=new LocalWorkspaceCatalog(cat);
 }
