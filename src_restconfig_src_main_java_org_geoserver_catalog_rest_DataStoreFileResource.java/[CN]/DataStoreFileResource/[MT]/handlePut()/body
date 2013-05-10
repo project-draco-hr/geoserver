@@ -176,16 +176,18 @@
  catch (  Exception e) {
     throw new RuntimeException(e);
   }
-  source.dispose();
-  if (isInlineUpload(method) && canRemoveFiles) {
-    if (uploadedFile.isFile())     uploadedFile=uploadedFile.getParentFile();
-    try {
-      FileUtils.deleteDirectory(uploadedFile);
-    }
- catch (    IOException e) {
-      LOGGER.info("Unable to delete " + uploadedFile.getAbsolutePath());
-      if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.log(Level.FINE,"",e);
+ finally {
+    source.dispose();
+    if (isInlineUpload(method) && canRemoveFiles) {
+      if (uploadedFile.isFile())       uploadedFile=uploadedFile.getParentFile();
+      try {
+        FileUtils.deleteDirectory(uploadedFile);
+      }
+ catch (      IOException ie) {
+        LOGGER.info("Unable to delete " + uploadedFile.getAbsolutePath());
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.log(Level.FINE,"",ie);
+        }
       }
     }
   }
