@@ -1,0 +1,27 @@
+{
+  Metrics.newCounter(getClass(),"recieved").inc();
+  Event e=message.getMessageObject();
+  if (localAddress(hz).equals(e.getSource())) {
+    LOGGER.finer("Skipping message generated locally " + message);
+    return;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Message recieved: " + message);
+  }
+  queue.add(message.getMessageObject());
+  executor.schedule(new Runnable(){
+    @Override public void run(){
+      if (queue.isEmpty()) {
+        return;
+      }
+      try {
+        processEventQueue(queue);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Event processing failed",e);
+      }
+      Metrics.newCounter(getClass(),"reloads").inc();
+    }
+  }
+,configWatcher.get().getSyncDelay(),TimeUnit.SECONDS);
+}
