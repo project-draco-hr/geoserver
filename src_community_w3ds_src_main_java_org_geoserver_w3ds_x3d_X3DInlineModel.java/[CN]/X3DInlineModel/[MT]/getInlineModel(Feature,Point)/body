@@ -1,0 +1,30 @@
+{
+  X3DNode modelInline=new X3DNode("Inline");
+  X3DNode modelPosition=new X3DNode("Transform");
+  X3DNode rootNode=modelPosition;
+  modelPosition.addX3DNode(modelInline);
+  modelInline.addX3DAttribute("url",styleFilter.getExpressionValue(model.getHref(),feature));
+  Coordinate coordinate=point.getCoordinate();
+  modelPosition.addX3DAttribute("translation",coordinate.y + " " + coordinate.z+ " "+ coordinate.x);
+  X3DNode rollRotation=getGenericRotation(feature,model.getRoll(),"1 0 0");
+  if (rollRotation != null) {
+    rollRotation.addX3DNode(rootNode.clone());
+    rootNode=rollRotation;
+  }
+  X3DNode titlRotation=getGenericRotation(feature,model.getTilt(),"0 0 1");
+  if (titlRotation != null) {
+    titlRotation.addX3DNode(rootNode.clone());
+    rootNode=titlRotation;
+  }
+  X3DNode headingRotation=getGenericRotation(feature,model.getHeading(),"0 1 0");
+  if (headingRotation != null) {
+    headingRotation.addX3DNode(rootNode.clone());
+    rootNode=headingRotation;
+  }
+  X3DNode altituteTranslation=getAltitudeTranslation(feature,point);
+  if (altituteTranslation != null) {
+    altituteTranslation.addX3DNode(rootNode.clone());
+    rootNode=altituteTranslation;
+  }
+  return rootNode;
+}
