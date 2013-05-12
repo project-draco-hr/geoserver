@@ -1,0 +1,33 @@
+{
+  while (i < size) {
+    List<Layer> layers=context.getMapContent().layers();
+    Layer layer=layers.get(i++);
+    context.setCurrentLayer(layer);
+    Folder folder=new Folder();
+    folder.setName(layer.getTitle());
+    if (layer instanceof FeatureLayer) {
+      try {
+        WMSMapContent mapContent=context.getMapContent();
+        SimpleFeatureCollection fc=KMLUtils.loadFeatureCollection((SimpleFeatureSource)layer.getFeatureSource(),layer,mapContent,context.getWms(),mapContent.getScaleDenominator());
+        context.setCurrentFeatureCollection(fc);
+      }
+ catch (      Exception e) {
+        if (e instanceof ServiceException) {
+          throw (ServiceException)e;
+        }
+ else {
+          throw new ServiceException("Failed to load vector data during KML generation",e);
+        }
+      }
+    }
+    for (    KmlDecorator decorator : decorators) {
+      folder=(Folder)decorator.decorate(folder,context);
+      if (folder == null) {
+        continue;
+      }
+    }
+    encodeFolderContents(layer,folder);
+    return folder;
+  }
+  return null;
+}
