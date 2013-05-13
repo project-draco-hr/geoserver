@@ -3,16 +3,20 @@
   if (auth == null)   return null;
   boolean hasNoAuthenticatedRole=auth.getAuthorities().contains(GeoServerRole.AUTHENTICATED_ROLE) == false;
   boolean hasAdminRole=adminRole != null && !adminRole.equals("") && !auth.getAuthorities().contains(GeoServerRole.ADMIN_ROLE);
-  if (hasNoAuthenticatedRole || hasAdminRole) {
+  boolean hasGroupAdminRole=groupAdminRole != null && !groupAdminRole.equals("") && !auth.getAuthorities().contains(GeoServerRole.GROUP_ADMIN_ROLE);
+  if (hasNoAuthenticatedRole || hasAdminRole || hasGroupAdminRole) {
     List<GrantedAuthority> roles=new ArrayList<GrantedAuthority>();
     roles.addAll(auth.getAuthorities());
     if (hasNoAuthenticatedRole) {
       roles.add(GeoServerRole.AUTHENTICATED_ROLE);
     }
-    if (hasAdminRole) {
+    if (hasAdminRole || hasGroupAdminRole) {
       for (      GrantedAuthority authority : auth.getAuthorities()) {
         if (authority.getAuthority().equalsIgnoreCase("ROLE_" + adminRole)) {
           roles.add(GeoServerRole.ADMIN_ROLE);
+        }
+        if (authority.getAuthority().equalsIgnoreCase("ROLE_" + groupAdminRole)) {
+          roles.add(GeoServerRole.GROUP_ADMIN_ROLE);
         }
       }
     }
