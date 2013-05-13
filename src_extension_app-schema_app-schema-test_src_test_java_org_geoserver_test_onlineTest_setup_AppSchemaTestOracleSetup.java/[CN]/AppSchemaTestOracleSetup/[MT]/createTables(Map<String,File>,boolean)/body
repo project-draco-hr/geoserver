@@ -19,7 +19,7 @@
     String tableName=schema.getName().getLocalPart().toUpperCase();
     buf.append("CALL DROP_TABLE_OR_VIEW('").append(tableName).append("')\n");
     buf.append("CREATE TABLE ").append(tableName).append("(");
-    int size=schema.getAttributeCount() + 2;
+    int size=schema.getAttributeCount() + 1;
     String[] fieldNames=new String[size];
     List<String> createParams=new ArrayList<String>();
     int j=0;
@@ -53,19 +53,13 @@
       createParams.add(field + " " + type);
       j++;
     }
-    if (schema.isIdentified()) {
-      fieldNames[j]="ROW_ID";
-      createParams.add("ROW_ID VARCHAR2(30)");
-      j++;
-    }
     fieldNames[j]="PKEY";
-    createParams.add("PKEY NUMBER(5)");
+    createParams.add("PKEY VARCHAR2(30)");
     buf.append(StringUtils.join(createParams.iterator(),", "));
     buf.append(")\n");
     buf.append("ALTER TABLE " + tableName + " ADD CONSTRAINT "+ tableName+ " PRIMARY KEY (PKEY)\n");
     SimpleFeature feature;
     FeatureId id;
-    int pKey=0;
     while (reader.hasNext()) {
       buf.append("INSERT INTO ").append(tableName).append("(");
       feature=reader.next();
@@ -103,12 +97,7 @@
         valueIndex++;
       }
       id=feature.getIdentifier();
-      if (id != null) {
-        values[valueIndex]="'" + id.toString() + "'";
-        valueIndex++;
-      }
-      values[valueIndex]="'" + pKey + "'";
-      pKey++;
+      values[valueIndex]="'" + id.toString() + "'";
       buf.append(StringUtils.join(values,","));
       buf.append(")\n");
     }
