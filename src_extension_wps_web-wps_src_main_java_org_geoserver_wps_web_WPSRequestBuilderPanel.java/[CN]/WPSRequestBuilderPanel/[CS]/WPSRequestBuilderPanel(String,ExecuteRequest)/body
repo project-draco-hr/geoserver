@@ -112,4 +112,25 @@
   }
 );
   if (execute.processName != null)   initProcessView();
+  final WebMarkupContainer authenticationContainer=new WebMarkupContainer("authenticationContainer");
+  authenticationContainer.setOutputMarkupId(true);
+  add(authenticationContainer);
+  final WebMarkupContainer userpwdContainer=new WebMarkupContainer("userpwdContainer");
+  userpwdContainer.setOutputMarkupId(true);
+  userpwdContainer.setVisible(false);
+  authenticationContainer.add(userpwdContainer);
+  final TextField username=new TextField("username",new PropertyModel(this,"username"));
+  userpwdContainer.add(username);
+  final PasswordTextField password=new PasswordTextField("password",new PropertyModel(this,"password"));
+  password.setRequired(false);
+  userpwdContainer.add(password);
+  CheckBox checkbox=new CheckBox("authenticate",new PropertyModel(this,"authenticate"));
+  checkbox.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      userpwdContainer.setVisible(authenticate);
+      target.addComponent(authenticationContainer);
+    }
+  }
+);
+  authenticationContainer.add(checkbox);
 }
