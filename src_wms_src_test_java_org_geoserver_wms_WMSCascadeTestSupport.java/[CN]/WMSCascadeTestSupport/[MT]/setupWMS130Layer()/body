@@ -1,0 +1,20 @@
+{
+  wms13Client=new MockHttpClient();
+  wms13BaseURL=new URL(TestHttpClientProvider.MOCKSERVER + "/wms13");
+  URL capsDocument=WMSTestSupport.class.getResource("caps130.xml");
+  wms13Client.expectGet(new URL(wms13BaseURL + "?service=WMS&request=GetCapabilities&version=1.3.0"),new MockHttpResponse(capsDocument,"text/xml"));
+  URL pngImage=WMSTestSupport.class.getResource("world.png");
+  wms13Client.expectGet(new URL(wms13BaseURL + "?service=WMS&version=1.3.0&request=GetMap&layers=world4326" + "&styles&bbox=-90.0,-180.0,90.0,180.0&crs=EPSG:4326&bgcolor=0xFFFFFF&transparent=FALSE&format=image/png&width=180&height=90"),new MockHttpResponse(pngImage,"image/png"));
+  String caps=wms13BaseURL + "?service=WMS&request=GetCapabilities&version=1.3.0";
+  TestHttpClientProvider.bind(wms13Client,caps);
+  CatalogBuilder cb=new CatalogBuilder(getCatalog());
+  WMSStoreInfo store=cb.buildWMSStore("mock-wms-store-130");
+  getCatalog().add(store);
+  cb.setStore(store);
+  store.setCapabilitiesURL(caps);
+  WMSLayerInfo wmsLayer=cb.buildWMSLayer("world4326");
+  getCatalog().add(wmsLayer);
+  LayerInfo gsLayer=cb.buildLayer(wmsLayer);
+  gsLayer.setName(WORLD4326_130);
+  getCatalog().add(gsLayer);
+}
