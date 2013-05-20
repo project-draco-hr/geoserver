@@ -1,14 +1,15 @@
 {
-  initLdapServer(true);
-  config.setUserDnPattern("uid={0},ou=People");
-  config.setAdminGroup("other");
-  createAuthenticationProvider();
-  Authentication result=authProvider.authenticate(authenticationOther);
-  boolean foundAdmin=false;
-  for (  GrantedAuthority authority : result.getAuthorities()) {
-    if (authority.getAuthority().equalsIgnoreCase("ROLE_ADMINISTRATOR")) {
-      foundAdmin=true;
+  if (initLdapServer(true)) {
+    config.setUserDnPattern("uid={0},ou=People");
+    config.setAdminGroup("other");
+    createAuthenticationProvider();
+    Authentication result=authProvider.authenticate(authenticationOther);
+    boolean foundAdmin=false;
+    for (    GrantedAuthority authority : result.getAuthorities()) {
+      if (authority.getAuthority().equalsIgnoreCase("ROLE_ADMINISTRATOR")) {
+        foundAdmin=true;
+      }
     }
+    assertTrue(foundAdmin);
   }
-  assertTrue(foundAdmin);
 }
