@@ -1,0 +1,16 @@
+{
+  try {
+    if (!isVectorLayer(layer))     return false;
+    String overlayMode=KMLUtils.getSuperoverlayMode(mapContent.getRequest(),wms);
+    if ("raster".equals(overlayMode))     return false;
+    if ("overview".equals(overlayMode)) {
+      int featureCount=featuresInTile(layer,box,false);
+      return featureCount <= getRegionateFeatureLimit(getFeatureTypeInfo(layer));
+    }
+    int featureCount=featuresInTile(layer,box,true);
+    return featureCount > 0;
+  }
+ catch (  HttpErrorCodeException e) {
+    return false;
+  }
+}

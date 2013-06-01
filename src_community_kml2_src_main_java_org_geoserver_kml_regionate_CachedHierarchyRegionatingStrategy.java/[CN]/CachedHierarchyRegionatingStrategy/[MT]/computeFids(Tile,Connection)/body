@@ -1,5 +1,6 @@
 {
-  Set<String> parentFids=getUpwardFids(tile.getParent(),conn);
+  Tile parent=tile.getParent();
+  Set<String> parentFids=getUpwardFids(parent,conn);
   Set<String> currFids=new HashSet<String>();
   FeatureIterator fi=null;
   try {
@@ -7,7 +8,7 @@
     GeometryDescriptor geom=fs.getSchema().getGeometryDescriptor();
     CoordinateReferenceSystem nativeCrs=geom.getCoordinateReferenceSystem();
     ReferencedEnvelope nativeTileEnvelope=null;
-    if (!CRS.equalsIgnoreMetadata(WGS84,nativeCrs)) {
+    if (!CRS.equalsIgnoreMetadata(Tile.WGS84,nativeCrs)) {
       try {
         nativeTileEnvelope=tile.getEnvelope().transform(nativeCrs,true);
       }
@@ -36,8 +37,8 @@
         first=false;
         CoordinateReferenceSystem nativeCRS=f.getType().getCoordinateReferenceSystem();
         featureType.getFeatureType().getCoordinateReferenceSystem();
-        if (nativeCRS != null && !CRS.equalsIgnoreMetadata(nativeCRS,WGS84)) {
-          tx=CRS.findMathTransform(nativeCRS,WGS84);
+        if (nativeCRS != null && !CRS.equalsIgnoreMetadata(nativeCRS,Tile.WGS84)) {
+          tx=CRS.findMathTransform(nativeCRS,Tile.WGS84);
         }
       }
       Point p=((Geometry)f.getDefaultGeometry()).getCentroid();

@@ -9,10 +9,10 @@
     featuresPerTile=featureType.getMetadata().get("kml.regionateFeatureLimit",Integer.class);
     if (featuresPerTile == null || featuresPerTile.intValue() <= 1)     featuresPerTile=64;
     if (featureType.getFeatureType().getGeometryDescriptor() == null)     throw new ServiceException(featureType.getName() + " is geometryless, cannot generate KML!");
-    ReferencedEnvelope requestedEnvelope=context.getRenderingArea().transform(WGS84,true);
+    ReferencedEnvelope requestedEnvelope=context.getRenderingArea().transform(Tile.WGS84,true);
     LOGGER.log(Level.FINE,"Requested tile: {0}",requestedEnvelope);
     dataEnvelope=featureType.getLatLonBoundingBox();
-    Tile tile=new Tile(requestedEnvelope);
+    Tile tile=new CachedTile(requestedEnvelope);
     ReferencedEnvelope tileEnvelope=tile.getEnvelope();
     if (!envelopeMatch(tileEnvelope,requestedEnvelope))     throw new ServiceException("Invalid bounding box request, it does not fit " + "the nearest regionating tile. Requested area: " + requestedEnvelope + ", "+ "nearest tile: "+ tileEnvelope);
     featuresInTile=getFeaturesForTile(dataDir,tile);

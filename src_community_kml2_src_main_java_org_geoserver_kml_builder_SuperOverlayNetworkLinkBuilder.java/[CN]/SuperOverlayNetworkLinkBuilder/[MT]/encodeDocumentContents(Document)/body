@@ -1,0 +1,23 @@
+{
+  boolean cachedMode="cached".equals(KMLUtils.getSuperoverlayMode(request,wms));
+  Tile tile=new Tile(new ReferencedEnvelope(request.getBbox(),Tile.WGS84));
+  Envelope normalizedEnvelope=null;
+  if (tile.getZ() >= 0) {
+    normalizedEnvelope=tile.getEnvelope();
+  }
+ else {
+    normalizedEnvelope=KMLUtils.WORLD_BOUNDS_WGS84;
+  }
+  int zoomLevel=(int)tile.getZ();
+  addRegion(container,normalizedEnvelope,256,-1);
+  List<MapLayerInfo> layers=request.getLayers();
+  for (int i=0; i < layers.size(); i++) {
+    MapLayerInfo layer=layers.get(i);
+    if (cachedMode && KMLUtils.isRequestGWCCompatible(request,i,wms)) {
+      encodeGWCLink(container,request,layer);
+    }
+ else {
+      encodeLayerSuperOverlay(container,i,normalizedEnvelope,zoomLevel);
+    }
+  }
+}

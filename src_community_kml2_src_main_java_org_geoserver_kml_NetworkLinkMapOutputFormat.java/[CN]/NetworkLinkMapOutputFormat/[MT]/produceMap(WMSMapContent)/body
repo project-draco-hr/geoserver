@@ -1,29 +1,27 @@
 {
   GetMapRequest request=mapContent.getRequest();
+  boolean kmz=false;
   if (NetworkLinkMapOutputFormat.KML_MIME_TYPE.equals(request.getFormat())) {
     request.setFormat(KMLMapOutputFormat.MIME_TYPE);
   }
  else {
+    kmz=true;
     request.setFormat(KMZMapOutputFormat.MIME_TYPE);
   }
-  Kml kml=new Kml();
-  Document document=kml.createAndSetDocument();
-  Map formatOptions=request.getFormatOptions();
-  String kmltitle=(String)formatOptions.get("kmltitle");
-  document.setName(kmltitle);
-  Boolean superoverlay=(Boolean)formatOptions.get("superoverlay");
+  Boolean superoverlay=(Boolean)request.getFormatOptions().get("superoverlay");
   if (superoverlay == null) {
     superoverlay=Boolean.FALSE;
   }
+  Kml kml=null;
+  KmlEncodingContext context=new KmlEncodingContext(mapContent,wms,kmz);
   if (superoverlay) {
-    encodeAsSuperOverlay(document,mapContent);
+    kml=new SuperOverlayNetworkLinkBuilder(context).buildKMLDocument();
   }
  else {
-    encodeAsOverlay(document,mapContent);
+    kml=new SimpleNetworkLinkBuilder(context).buildKMLDocument();
   }
-  boolean kmz=request.getFormat().equals(KMZ_MIME_TYPE) || request.getFormat().equals(KMZMapOutputFormat.MIME_TYPE);
   String mime=kmz ? KMZMapOutputFormat.MIME_TYPE : KMLMapOutputFormat.MIME_TYPE;
   KMLMap map=new KMLMap(mapContent,null,kml,mime);
-  map.setContentDispositionHeader(mapContent,".kml");
+  map.setContentDispositionHeader(mapContent,kmz ? ".kmz" : ".kml");
   return map;
 }

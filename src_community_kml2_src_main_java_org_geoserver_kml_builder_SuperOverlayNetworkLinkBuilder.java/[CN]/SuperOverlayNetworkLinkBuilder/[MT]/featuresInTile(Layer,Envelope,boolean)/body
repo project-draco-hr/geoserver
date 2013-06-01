@@ -1,0 +1,37 @@
+{
+  if (!isVectorLayer(layer))   return 1;
+  Envelope originalBounds=mapContent.getRequest().getBbox();
+  mapContent.getRequest().setBbox(bounds);
+  mapContent.getViewport().setBounds(new ReferencedEnvelope(bounds,DefaultGeographicCRS.WGS84));
+  String originalRegionateBy=null;
+  if (regionate) {
+    originalRegionateBy=(String)mapContent.getRequest().getFormatOptions().get("regionateby");
+    if (originalRegionateBy == null)     mapContent.getRequest().getFormatOptions().put("regionateby","auto");
+  }
+  int numFeatures=0;
+  try {
+    final SimpleFeatureCollection fc=KMLUtils.loadFeatureCollection((SimpleFeatureSource)layer.getFeatureSource(),layer,mapContent,wms,-1);
+    numFeatures=fc == null ? 0 : fc.size();
+  }
+ catch (  ServiceException e) {
+    LOGGER.severe("Caught the WmsException!");
+    numFeatures=-1;
+  }
+catch (  HttpErrorCodeException e) {
+    if (e.getErrorCode() == 204) {
+      throw e;
+    }
+ else {
+      LOGGER.log(Level.WARNING,"Failure while checking whether a regionated child tile " + "contained features!",e);
+    }
+  }
+catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Failure while checking whether a regionated child tile contained features!",e);
+  }
+  mapContent.getRequest().setBbox(originalBounds);
+  mapContent.getViewport().setBounds(new ReferencedEnvelope(originalBounds,DefaultGeographicCRS.WGS84));
+  if (regionate && originalRegionateBy == null) {
+    mapContent.getRequest().getFormatOptions().remove("regionateby");
+  }
+  return numFeatures;
+}
