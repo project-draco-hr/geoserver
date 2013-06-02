@@ -1,0 +1,44 @@
+{
+  if (source == null) {
+    return null;
+  }
+  if (ModificationProxy.handler(source) != null) {
+    return source;
+  }
+  if (source instanceof CatalogInfo) {
+    return (T)ModificationProxy.create(source,getDeepestCatalogInfoInterface((CatalogInfo)source));
+  }
+  if (source instanceof String || source instanceof Byte || source instanceof Short|| source instanceof Integer|| source instanceof Float|| source instanceof Double|| source instanceof BigInteger|| source instanceof BigDecimal) {
+    return (T)source;
+  }
+  try {
+    if (source instanceof Cloneable) {
+      Method method=source.getClass().getDeclaredMethod("clone");
+      if (Modifier.isPublic(method.getModifiers()) && method.getParameterTypes().length == 0) {
+        return (T)method.invoke(source);
+      }
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.FINE,"Source object is cloneable, yet it does not have a public no argument method 'clone'",e);
+  }
+  Constructor copyConstructor=ConstructorUtils.getAccessibleConstructor(source.getClass(),source.getClass());
+  if (copyConstructor != null) {
+    try {
+      return (T)copyConstructor.newInstance(source);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.FINE,"Source has a copy constructor, but it failed, skipping to XStream",e);
+    }
+  }
+  if (source instanceof Serializable) {
+    return (T)SerializationUtils.clone((Serializable)source);
+  }
+ else {
+    XStreamPersister persister=XSTREAM_PERSISTER_FACTORY.createXMLPersister();
+    XStream xs=persister.getXStream();
+    String xml=xs.toXML(source);
+    T copy=(T)xs.fromXML(xml);
+    return copy;
+  }
+}
