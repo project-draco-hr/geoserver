@@ -1,0 +1,22 @@
+{
+  ResourceAccessManager manager=buildManager("publicRead.properties");
+  CatalogFilterAccessManager filter=new CatalogFilterAccessManager();
+  filter.setDelegate(manager);
+  Catalog withLayers=new AbstractCatalogDecorator(catalog){
+    @Override public <T extends CatalogInfo>CloseableIterator<T> list(    Class<T> of,    Filter filter,    Integer offset,    Integer count,    SortBy sortBy){
+      return new CloseableIteratorAdapter<T>((Iterator<T>)layers.iterator());
+    }
+  }
+;
+  SecureCatalogImpl sc=new SecureCatalogImpl(withLayers,filter);
+  assertTrue(layers.size() > 1);
+  assertTrue(sc.getLayers().size() > 1);
+  filter.setCatalogFilters(Collections.singletonList(new AbstractCatalogFilter(){
+    @Override public boolean hideLayer(    LayerInfo layer){
+      return layer != statesLayer;
+    }
+  }
+));
+  assertEquals(1,sc.getLayers().size());
+  assertEquals(statesLayer.getName(),sc.getLayers().get(0).getName());
+}
