@@ -1,0 +1,18 @@
+{
+  SimpleFeatureSource featureSource=(SimpleFeatureSource)layer.getFeatureSource();
+  Query q=getFeaturesQuery(layer,mapContent,wms,scaleDenominator);
+  CoordinateReferenceSystem wgs84;
+  try {
+    wgs84=CRS.decode("EPSG:4326",true);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Cannot decode EPSG:4326, the CRS subsystem must be badly broken...",e);
+  }
+  SimpleFeatureCollection features=featureSource.getFeatures(q);
+  SimpleFeatureType schema=featureSource.getSchema();
+  CoordinateReferenceSystem nativeCRS=schema.getCoordinateReferenceSystem();
+  if (nativeCRS != null && !CRS.equalsIgnoreMetadata(wgs84,nativeCRS)) {
+    features=new ReprojectFeatureResults(features,wgs84);
+  }
+  return features;
+}
