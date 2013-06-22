@@ -1,0 +1,24 @@
+{
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  Map<String,String> options=new HashMap<String,String>();
+  options.put("forceLabels","on");
+  req.setLegendOptions(options);
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(MockData.MPOINTS.getNamespaceURI(),MockData.MPOINTS.getLocalPart());
+  List<FeatureType> layers=new ArrayList<FeatureType>();
+  layers.add(ftInfo.getFeatureType());
+  req.setLayers(layers);
+  List<Style> styles=new ArrayList<Style>();
+  req.setStyles(styles);
+  styles.add(readSLD("Internationalized.sld"));
+  BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+  int noLocalizedWidth=image.getWidth();
+  req.setLocale(Locale.ITALIAN);
+  image=this.legendProducer.buildLegendGraphic(req);
+  int itWidth=image.getWidth();
+  assertTrue(itWidth != noLocalizedWidth);
+  req.setLocale(Locale.ENGLISH);
+  image=this.legendProducer.buildLegendGraphic(req);
+  int enWidth=image.getWidth();
+  assertTrue(enWidth != noLocalizedWidth);
+  assertTrue(enWidth != itWidth);
+}
