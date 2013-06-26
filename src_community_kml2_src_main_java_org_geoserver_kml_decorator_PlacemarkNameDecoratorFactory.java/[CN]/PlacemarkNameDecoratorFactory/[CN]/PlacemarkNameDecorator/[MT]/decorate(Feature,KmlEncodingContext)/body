@@ -9,14 +9,15 @@
     String msg="Error occured processing 'title' template.";
     LOGGER.log(Level.WARNING,msg,e);
   }
-  if (title == null || "".equals(title)) {
-    title=sf.getID();
-    StringBuffer label=new StringBuffer();
+  String featureId=sf.getID();
+  if (title == null || "".equals(title) || featureId.equals(title)) {
+    title=featureId;
     if (context.getCurrentSymbolizers() != null) {
+      StringBuffer label=new StringBuffer();
       for (      Symbolizer sym : context.getCurrentSymbolizers()) {
         if (sym instanceof TextSymbolizer) {
           Expression e=SLD.textLabel((TextSymbolizer)sym);
-          String value=e.evaluate(feature,String.class);
+          String value=e.evaluate(sf,String.class);
           if ((value != null) && !"".equals(value.trim())) {
             label.append(value);
           }
