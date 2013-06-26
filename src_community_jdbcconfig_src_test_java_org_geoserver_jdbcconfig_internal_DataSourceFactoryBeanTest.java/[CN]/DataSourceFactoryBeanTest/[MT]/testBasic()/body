@@ -1,0 +1,48 @@
+{
+  final BasicDataSource ds=EasyMock.createMock(BasicDataSource.class);
+  JDBCConfigProperties config=EasyMock.createMock(JDBCConfigProperties.class);
+  Context jndi=EasyMock.createMock(Context.class);
+  expect(config.getProperty("jndiName")).andStubReturn(null);
+  expect(config.getJdbcUrl()).andStubReturn("jdbc:test");
+  ds.setUrl("jdbc:test");
+  expectLastCall();
+  expect(config.getProperty("driverClassName")).andStubReturn("org.geoserver.jdbcconfig.internal.MockJDBCDriver");
+  ds.setDriverClassName("org.geoserver.jdbcconfig.internal.MockJDBCDriver");
+  expectLastCall();
+  expect(config.getProperty("username")).andStubReturn("testUser");
+  ds.setUsername("testUser");
+  expect(config.getProperty("password")).andStubReturn("swordfish");
+  ds.setPassword("swordfish");
+  expect(config.getProperty("pool.minIdle")).andStubReturn(null);
+  expect(config.getProperty("pool.maxActive")).andStubReturn(null);
+  expect(config.getProperty("pool.poolPreparedStatements")).andStubReturn(null);
+  expect(config.getProperty("pool.maxOpenPreparedStatements")).andStubReturn(null);
+  expect(config.getProperty("pool.testOnBorrow")).andStubReturn(null);
+  ds.setMinIdle(1);
+  expectLastCall();
+  ds.setMaxActive(10);
+  expectLastCall();
+  ds.setPoolPreparedStatements(true);
+  expectLastCall();
+  ds.setMaxOpenPreparedStatements(50);
+  expectLastCall();
+  replay(ds,config,jndi);
+  DataSourceFactoryBean fact=new DataSourceFactoryBean(config,jndi){
+    @Override protected BasicDataSource createBasicDataSource(){
+      return ds;
+    }
+  }
+;
+  assertThat(fact.getObject(),is((DataSource)ds));
+  verify(ds);
+  reset(ds);
+  replay(ds);
+  assertThat(fact.getObject(),is((DataSource)ds));
+  verify(ds,config,jndi);
+  reset(ds);
+  ds.close();
+  expectLastCall();
+  replay(ds);
+  fact.destroy();
+  verify(ds);
+}
