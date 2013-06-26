@@ -1,5 +1,6 @@
 {
   Placemark pm=(Placemark)feature;
+  Style style=pm.createAndAddStyle();
   List<Symbolizer> symbolizers=context.getCurrentSymbolizers();
   SimpleFeature sf=context.getCurrentFeature();
   if (symbolizers.size() > 0 && sf.getDefaultGeometry() != null) {
@@ -7,33 +8,33 @@
     List<Symbolizer> points=classified.get(PointSymbolizer.class);
     if (points.size() == 0) {
       if (context.isDescriptionEnabled()) {
-        addDefaultIconStyle(pm,sf,context);
+        setDefaultIconStyle(style,sf,context);
       }
     }
  else {
-      for (      Symbolizer symbolizer : points) {
-        addIconStyle(pm,(PointSymbolizer)symbolizer,sf,context);
-      }
+      PointSymbolizer lastPointSymbolizer=(PointSymbolizer)points.get(points.size() - 1);
+      setIconStyle(style,lastPointSymbolizer,sf,context);
     }
     List<Symbolizer> texts=classified.get(TextSymbolizer.class);
     if (texts.size() == 0) {
       if (context.isDescriptionEnabled()) {
-        addDefaultLabelStyle(pm);
+        setDefaultLabelStyle(style);
       }
     }
  else {
-      for (      Symbolizer symbolizer : texts) {
-        addLabelStyle(pm,sf,(TextSymbolizer)symbolizer);
-      }
+      TextSymbolizer lastTextSymbolizer=(TextSymbolizer)texts.get(texts.size() - 1);
+      setLabelStyle(style,sf,lastTextSymbolizer);
     }
     List<Symbolizer> lines=classified.get(LineSymbolizer.class);
-    for (    Symbolizer symbolizer : lines) {
-      addLineStyle(pm,sf,((LineSymbolizer)symbolizer).getStroke());
+    if (lines.size() > 0) {
+      LineSymbolizer lastLineSymbolizer=(LineSymbolizer)lines.get(lines.size() - 1);
+      setLineStyle(style,sf,lastLineSymbolizer.getStroke());
     }
     boolean forceOutiline=lines.size() == 0;
     List<Symbolizer> polygons=classified.get(PolygonSymbolizer.class);
-    for (    Symbolizer symbolizer : polygons) {
-      addPolygonStyle(pm,sf,(PolygonSymbolizer)symbolizer,forceOutiline);
+    if (polygons.size() > 0) {
+      PolygonSymbolizer lastPolygonSymbolizer=(PolygonSymbolizer)polygons.get(polygons.size() - 1);
+      setPolygonStyle(style,sf,lastPolygonSymbolizer,forceOutiline);
     }
   }
   return feature;
