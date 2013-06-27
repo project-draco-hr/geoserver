@@ -1,9 +1,19 @@
 {
   Placemark pm=(Placemark)feature;
   SimpleFeature sf=context.getCurrentFeature();
-  Geometry geometry=getFeatureGeometry(sf,context);
+  double height=Double.NaN;
+  if (hasHeightTemplate) {
+    try {
+      String output=context.getTemplate().template(sf,"height.ftl",FeatureTemplate.class);
+      height=Double.valueOf(output);
+    }
+ catch (    IOException ioe) {
+      LOGGER.log(Level.WARNING,"Couldn't render height template for " + sf.getID(),ioe);
+    }
+  }
+  Geometry geometry=getFeatureGeometry(sf,height);
   if (geometry != null) {
-    pm.setGeometry(encodeGeometry(geometry,context));
+    pm.setGeometry(encodeGeometry(geometry,context,height));
   }
   return feature;
 }
