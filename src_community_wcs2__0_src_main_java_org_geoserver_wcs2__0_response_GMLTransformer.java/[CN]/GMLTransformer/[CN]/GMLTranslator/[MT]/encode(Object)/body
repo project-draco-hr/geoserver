@@ -31,7 +31,12 @@
     builder.append(axisName).append(" ");
   }
   String axesLabel=builder.substring(0,builder.length() - 1);
-  handleBoundedBy(gc2d,axisSwap,srsName,axesLabel,null);
+  try {
+    handleBoundedBy(gc2d,axisSwap,srsName,axesLabel,null);
+  }
+ catch (  IOException ex) {
+    throw new WCS20Exception(ex);
+  }
   builder.setLength(0);
   axesNames=GMLTransformer.this.envelopeDimensionsMapper.getAxesNames(gc2d.getEnvelope2D(),false);
   for (  String axisName : axesNames) {
@@ -42,6 +47,11 @@
   handleRangeType(gc2d);
   handleCoverageFunction(gc2d,axisSwap);
   handleRange(gc2d);
-  handleMetadata(gc2d,null);
+  try {
+    handleMetadata(gc2d,null);
+  }
+ catch (  IOException e) {
+    e.printStackTrace();
+  }
   end("gml:RectifiedGridCoverage");
 }
