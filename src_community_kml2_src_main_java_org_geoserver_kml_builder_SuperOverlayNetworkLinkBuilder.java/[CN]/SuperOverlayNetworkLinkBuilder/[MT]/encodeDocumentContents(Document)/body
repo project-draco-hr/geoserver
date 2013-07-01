@@ -1,19 +1,22 @@
 {
   boolean cachedMode="cached".equals(context.getSuperOverlayMode());
   Tile tile=new Tile(new ReferencedEnvelope(request.getBbox(),Tile.WGS84));
+  if (!tile.getEnvelope().contains(request.getBbox()) && tile.getZ() > 0) {
+    tile=tile.getParent();
+  }
   Envelope normalizedEnvelope=null;
-  if (tile.getZ() >= 0) {
+  if (tile.getZ() >= 0 && tile.getEnvelope().contains(request.getBbox())) {
     normalizedEnvelope=tile.getEnvelope();
   }
  else {
-    normalizedEnvelope=KMLUtils.WORLD_BOUNDS_WGS84;
+    normalizedEnvelope=KmlEncodingContext.WORLD_BOUNDS_WGS84;
   }
   int zoomLevel=(int)tile.getZ();
   addRegion(container,normalizedEnvelope,256,-1);
   List<MapLayerInfo> layers=request.getLayers();
   for (int i=0; i < layers.size(); i++) {
     MapLayerInfo layer=layers.get(i);
-    if (cachedMode && KMLUtils.isRequestGWCCompatible(request,i,wms)) {
+    if (cachedMode && isRequestGWCCompatible(request,i,wms)) {
       encodeGWCLink(container,request,layer);
     }
  else {
