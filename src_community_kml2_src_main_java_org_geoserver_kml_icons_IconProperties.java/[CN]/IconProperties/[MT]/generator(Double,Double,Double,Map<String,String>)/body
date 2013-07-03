@@ -1,0 +1,51 @@
+{
+  return new IconProperties(){
+    @Override public Double getOpacity(){
+      return opacity;
+    }
+    @Override public Double getScale(){
+      return scale;
+    }
+    @Override public Double getHeading(){
+      return heading;
+    }
+    @Override public boolean isExternal(){
+      return false;
+    }
+    @Override public String href(    String baseURL,    String workspace,    String styleName){
+      if (workspace != null) {
+        styleName=workspace + "/" + styleName;
+      }
+      return ResponseUtils.buildURL(baseURL,"kml/icon/" + styleName,styleProperties,URLType.RESOURCE);
+    }
+    @Override public Style inject(    Style base){
+      return IconPropertyInjector.injectProperties(base,styleProperties);
+    }
+    @Override public Map<String,String> getProperties(){
+      return styleProperties;
+    }
+    @Override public String getIconName(    Style style){
+      try {
+        final MessageDigest digest=MessageDigest.getInstance("MD5");
+        digest.update(style.getName().getBytes("UTF-8"));
+        for (        Map.Entry<String,String> property : styleProperties.entrySet()) {
+          digest.update(property.getKey().getBytes("UTF-8"));
+          digest.update(property.getValue().getBytes("UTF-8"));
+        }
+        final byte[] hash=digest.digest();
+        final StringBuilder builder=new StringBuilder();
+        for (        byte b : hash) {
+          builder.append(String.format("%02x",b));
+        }
+        return builder.toString();
+      }
+ catch (      NoSuchAlgorithmException e) {
+        throw new RuntimeException(e);
+      }
+catch (      UnsupportedEncodingException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+;
+}
