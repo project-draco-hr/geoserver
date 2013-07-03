@@ -1,0 +1,105 @@
+{
+  if (dcs.getDimensionTrim() == null || dcs.getDimensionTrim().size() == 0) {
+    return Query.ALL;
+  }
+  DateRange timeRange=null;
+  NumberRange<Double> lonRange=null;
+  NumberRange<Double> latRange=null;
+  for (  DimensionTrimType trim : dcs.getDimensionTrim()) {
+    String name=trim.getDimension();
+    if ("Long".equals(name)) {
+      if (lonRange != null) {
+        throw new WCS20Exception("Long trim specified more than once",OWSExceptionCode.InvalidParameterValue,"subset");
+      }
+      lonRange=parseNumberRange(trim);
+    }
+ else     if ("Lat".equals(name)) {
+      if (latRange != null) {
+        throw new WCS20Exception("Lat trim specified more than once",OWSExceptionCode.InvalidParameterValue,"subset");
+      }
+      latRange=parseNumberRange(trim);
+    }
+ else     if ("phenomenonTime".equals(name)) {
+      if (timeRange != null) {
+        throw new WCS20Exception("phenomenonTime trim specified more than once",OWSExceptionCode.InvalidParameterValue,"subset");
+      }
+      timeRange=parseDateRange(trim);
+    }
+ else {
+      throw new WCS20Exception("Invalid dimension name " + name + ", the only valid values "+ "by WCS EO spec are Long, Lat and phenomenonTime",OWSExceptionCode.InvalidParameterValue,"subset");
+    }
+  }
+  boolean overlaps;
+  String containment=dcs.getContainmentType();
+  if (containment == null || "overlaps".equals(containment)) {
+    overlaps=true;
+  }
+ else   if ("contains".equals(containment)) {
+    overlaps=false;
+  }
+ else {
+    throw new WCS20Exception("Invalid containment value " + containment + ", the only valid values by WCS EO spec are contains and overlaps",OWSExceptionCode.InvalidParameterValue,"containment");
+  }
+  FilterFactory2 ff=CommonFactoryFinder.getFilterFactory2();
+  Filter filter=null;
+  if (lonRange != null || latRange != null) {
+    try {
+      ReferencedEnvelope original=new ReferencedEnvelope(reader.getOriginalEnvelope()).transform(DefaultGeographicCRS.WGS84,true);
+      if (lonRange != null) {
+        ReferencedEnvelope lonTrim=new ReferencedEnvelope(lonRange.getMinimum(),lonRange.getMaximum(),-90,90,DefaultGeographicCRS.WGS84);
+        original=new ReferencedEnvelope(original.intersection(lonTrim),DefaultGeographicCRS.WGS84);
+      }
+      if (latRange != null) {
+        ReferencedEnvelope latTrim=new ReferencedEnvelope(-180,180,latRange.getMinimum(),latRange.getMaximum(),DefaultGeographicCRS.WGS84);
+        original=new ReferencedEnvelope(original.intersection(latTrim),DefaultGeographicCRS.WGS84);
+      }
+      if (original.isEmpty()) {
+        filter=Filter.EXCLUDE;
+      }
+ else {
+        Polygon llPolygon=JTS.toGeometry(original);
+        GeometryDescriptor geom=reader.getGranules(coverageName,true).getSchema().getGeometryDescriptor();
+        PropertyName geometryProperty=ff.property(geom.getLocalName());
+        Geometry nativeCRSPolygon=JTS.transform(llPolygon,CRS.findMathTransform(DefaultGeographicCRS.WGS84,reader.getCoordinateReferenceSystem()));
+        Literal polygonLiteral=ff.literal(nativeCRSPolygon);
+        if (overlaps) {
+          filter=ff.intersects(geometryProperty,polygonLiteral);
+        }
+ else {
+          filter=ff.within(geometryProperty,polygonLiteral);
+        }
+      }
+    }
+ catch (    Exception e) {
+      throw new WCS20Exception("Failed to translate the spatial trim into a native filter",e);
+    }
+  }
+  if (timeRange != null && filter != Filter.EXCLUDE) {
+    DimensionDescriptor timeDescriptor=WCSDimensionsHelper.getDimensionDescriptor(reader,coverageName,"TIME");
+    String start=timeDescriptor.getStartAttribute();
+    String end=timeDescriptor.getEndAttribute();
+    Filter timeFilter;
+    if (end == null) {
+      timeFilter=ff.between(ff.property(start),ff.literal(timeRange.getMinValue()),ff.literal(timeRange.getMaxValue()));
+    }
+ else {
+      if (overlaps) {
+        Filter f1=ff.lessOrEqual(ff.property(start),ff.literal(timeRange.getMaxValue()));
+        Filter f2=ff.greaterOrEqual(ff.property(end),ff.literal(timeRange.getMinValue()));
+        timeFilter=ff.and(Arrays.asList(f1,f2));
+      }
+ else {
+        Filter f1=ff.greaterOrEqual(ff.property(start),ff.literal(timeRange.getMinValue()));
+        Filter f2=ff.lessOrEqual(ff.property(end),ff.literal(timeRange.getMaxValue()));
+        timeFilter=ff.and(Arrays.asList(f1,f2));
+      }
+    }
+    if (filter == null) {
+      filter=timeFilter;
+    }
+ else {
+      filter=ff.and(filter,timeFilter);
+    }
+  }
+  return new Query(null,filter);
+}

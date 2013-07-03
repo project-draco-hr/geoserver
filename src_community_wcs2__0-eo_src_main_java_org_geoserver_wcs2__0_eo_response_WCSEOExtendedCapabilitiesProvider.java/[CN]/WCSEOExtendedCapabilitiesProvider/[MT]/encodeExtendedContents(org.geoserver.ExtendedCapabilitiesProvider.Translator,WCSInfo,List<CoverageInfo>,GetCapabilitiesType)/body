@@ -1,0 +1,27 @@
+{
+  Boolean enabled=wcs.getMetadata().get(WCSEOMetadata.ENABLED.key,Boolean.class);
+  if (enabled == null || !enabled) {
+    return;
+  }
+  for (  CoverageInfo ci : coverages) {
+    Boolean dataset=ci.getMetadata().get(WCSEOMetadata.DATASET.key,Boolean.class);
+    DimensionInfo time=ci.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+    if (dataset != null && dataset && time != null && time.isEnabled()) {
+      tx.start("wcseo:DatasetSeriesSummary");
+      ReferencedEnvelope bbox=ci.getLatLonBoundingBox();
+      tx.start("ows:WGS84BoundingBox");
+      element(tx,"ows:LowerCorner",bbox.getMinX() + " " + bbox.getMinY(),null);
+      element(tx,"ows:UpperCorner",bbox.getMaxX() + " " + bbox.getMaxY(),null);
+      tx.end("ows:WGS84BoundingBox");
+      String datasetId=codec.getDatasetName(ci);
+      element(tx,"wcseo:DatasetSeriesId",datasetId,null);
+      GridCoverage2DReader reader=(GridCoverage2DReader)ci.getGridCoverageReader(null,null);
+      WCSDimensionsHelper dimensionsHelper=new WCSDimensionsHelper(time,reader,null);
+      tx.start("gml:TimePeriod",atts("gml:id",datasetId + "__timeperiod"));
+      element(tx,"gml:beginPosition",dimensionsHelper.getBeginTime(),null);
+      element(tx,"gml:endPosition",dimensionsHelper.getEndTime(),null);
+      tx.end("gml:TimePeriod");
+      tx.end("wcseo:DatasetSeriesSummary");
+    }
+  }
+}

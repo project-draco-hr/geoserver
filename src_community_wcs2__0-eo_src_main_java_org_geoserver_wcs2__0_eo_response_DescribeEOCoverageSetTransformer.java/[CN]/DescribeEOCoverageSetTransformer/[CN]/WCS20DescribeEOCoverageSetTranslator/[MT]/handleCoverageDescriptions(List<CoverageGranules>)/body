@@ -1,0 +1,19 @@
+{
+  start("wcs:CoverageDescriptions");
+  for (  CoverageGranules cg : coverageGranules) {
+    SimpleFeatureIterator features=cg.granules.features();
+    try {
+      while (features.hasNext()) {
+        SimpleFeature f=features.next();
+        String granuleId=codec.getGranuleId(cg.coverage,f.getID());
+        dcTranslator.handleCoverageDescription(granuleId,new GranuleCoverageInfo(cg.coverage,f,cg.dimensionDescriptors));
+      }
+    }
+  finally {
+      if (features != null) {
+        features.close();
+      }
+    }
+  }
+  end("wcs:CoverageDescriptions");
+}
