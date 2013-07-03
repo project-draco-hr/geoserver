@@ -1,0 +1,23 @@
+{
+  int size=0;
+  if (style.featureTypeStyles().isEmpty())   throw new IllegalArgumentException("Feature type style list was empty");
+  for (  FeatureTypeStyle ftStyle : style.featureTypeStyles()) {
+    if (ftStyle.rules().isEmpty())     throw new IllegalArgumentException("Rule list was empty");
+    for (    Rule rule : ftStyle.rules()) {
+      if (rule.symbolizers().isEmpty())       throw new IllegalArgumentException("Symbolizer list was empty");
+      for (      Symbolizer symbolizer : rule.symbolizers()) {
+        if (symbolizer instanceof PointSymbolizer) {
+          Graphic g=((PointSymbolizer)symbolizer).getGraphic();
+          if (g != null) {
+            Double rotation=g.getRotation() != null ? g.getRotation().evaluate(null,Double.class) : null;
+            size=Math.max(size,getGraphicSize(g,rotation));
+          }
+        }
+ else {
+          throw new IllegalArgumentException("IconRenderer only supports PointSymbolizer");
+        }
+      }
+    }
+  }
+  return size;
+}

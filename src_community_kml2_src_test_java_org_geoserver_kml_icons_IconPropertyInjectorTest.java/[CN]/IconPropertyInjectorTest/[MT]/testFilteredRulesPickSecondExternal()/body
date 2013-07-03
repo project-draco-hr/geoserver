@@ -1,0 +1,20 @@
+{
+  Style result;
+{
+    Filter f1=filterFactory.less(filterFactory.property("foo"),filterFactory.literal(4));
+    Filter f2=filterFactory.greaterOrEqual(filterFactory.property("foo"),filterFactory.literal(4));
+    PointSymbolizer symb1=externalGraphic("http://example.com/foo.png","image/png");
+    PointSymbolizer symb2=externalGraphic("http://example.com/bar.png","image/png");
+    Style input=styleFromRules(rule(f1,symb1),rule(f2,symb2));
+    Map<String,String> properties=new HashMap<String,String>();
+    properties.put("0.1.0","");
+    result=IconPropertyInjector.injectProperties(input,properties);
+  }
+{
+    FeatureTypeStyle fts=assumeSingleElement(result.featureTypeStyles());
+    Rule rule=assertSingleElement(fts.rules());
+    PointSymbolizer symb=assertSingleElement(rule.symbolizers(),PointSymbolizer.class);
+    ExternalGraphic eg=assertSingleElement(symb.getGraphic().graphicalSymbols(),ExternalGraphic.class);
+    assertThat(eg.getOnlineResource().getLinkage().toString(),is("http://example.com/bar.png"));
+  }
+}

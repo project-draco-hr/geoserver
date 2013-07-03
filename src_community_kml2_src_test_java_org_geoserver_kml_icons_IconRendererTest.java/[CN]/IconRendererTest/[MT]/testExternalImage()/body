@@ -1,0 +1,16 @@
+{
+  StyleFactory sfact=CommonFactoryFinder.getStyleFactory();
+  FilterFactory ffact=CommonFactoryFinder.getFilterFactory();
+  GraphicalSymbol gs=sfact.createExternalGraphic(KMLTest.class.getResource("arrow-16.png"),"image/png");
+  Graphic g=sfact.graphic(Arrays.asList(gs),Expression.NIL,Expression.NIL,Expression.NIL,null,null);
+  Symbolizer symb=sfact.pointSymbolizer(null,ffact.property(null),null,null,g);
+  Rule r=sfact.rule(null,null,null,Float.NEGATIVE_INFINITY,Float.POSITIVE_INFINITY,Arrays.asList(symb),null);
+  FeatureTypeStyle fts=sfact.featureTypeStyle(null,null,null,Collections.<Name>emptySet(),Collections.<SemanticType>emptySet(),Arrays.asList(r));
+  Style s=sfact.style(null,null,true,Arrays.asList(fts),null);
+  BufferedImage img=IconRenderer.renderIcon((org.geotools.styling.Style)s);
+  final int size=(16 + 0 + 1) * 4 + 1;
+  assertEquals(size,img.getHeight());
+  assertEquals(size,img.getWidth());
+  BufferedImage expected=ImageIO.read(KMLTest.class.getResource("arrow-16-x4.png"));
+  ImageAssert.assertEquals(expected,img,THRESHOLD);
+}

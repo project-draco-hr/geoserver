@@ -1,0 +1,22 @@
+{
+  SimpleFeatureIterator reader=null;
+  try {
+    reader=features.features();
+    while (reader.hasNext()) {
+      SimpleFeature feature=(SimpleFeature)reader.next();
+      try {
+        List<Symbolizer> symbolizers=filterSymbolizers(feature,styles);
+        if (symbolizers.size() > 0) {
+          encodePlacemark(feature,style,symbolizers,lookAtOpts);
+        }
+      }
+ catch (      RuntimeException t) {
+        if (t.getCause() instanceof SAXException)         throw t;
+ else         LOGGER.log(Level.WARNING,"Failure tranforming feature to KML:" + feature.getID(),t);
+      }
+    }
+  }
+  finally {
+    reader.close();
+  }
+}

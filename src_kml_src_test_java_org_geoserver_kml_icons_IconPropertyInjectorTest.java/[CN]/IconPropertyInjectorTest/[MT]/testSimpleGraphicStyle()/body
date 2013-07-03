@@ -1,0 +1,17 @@
+{
+  Style result;
+{
+    Symbolizer symb=this.externalGraphic("http://example.com/foo.png","image/png");
+    Style input=styleFromRules(catchAllRule(symb));
+    Map<String,String> properties=new HashMap<String,String>();
+    properties.put("0.0.0","");
+    result=IconPropertyInjector.injectProperties(input,properties);
+  }
+{
+    FeatureTypeStyle fts=assumeSingleElement(result.featureTypeStyles());
+    Rule rule=assumeSingleElement(fts.rules());
+    PointSymbolizer symb=assertSingleElement(rule.symbolizers(),PointSymbolizer.class);
+    ExternalGraphic eg=assertSingleElement(symb.getGraphic().graphicalSymbols(),ExternalGraphic.class);
+    assertThat(eg.getOnlineResource().getLinkage().toString(),is("http://example.com/foo.png"));
+  }
+}
