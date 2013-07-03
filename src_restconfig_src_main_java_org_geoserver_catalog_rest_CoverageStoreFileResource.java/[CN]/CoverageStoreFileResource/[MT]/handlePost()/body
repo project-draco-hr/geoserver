@@ -1,0 +1,17 @@
+{
+  String workspace=getAttribute("workspace");
+  String coveragestore=getAttribute("coveragestore");
+  String format=getAttribute("format");
+  Request request=getRequest();
+  String method=getUploadMethod(request);
+  try {
+    CoverageStoreInfo info=catalog.getCoverageStoreByName(workspace,coveragestore);
+    GridCoverageReader reader=info.getGridCoverageReader(null,null);
+    StructuredGridCoverage2DReader sr=(StructuredGridCoverage2DReader)reader;
+    final File uploadedFile=doFileUpload(method,workspace,coveragestore,format);
+    sr.harvest(null,uploadedFile,null);
+  }
+ catch (  IOException e) {
+    throw new RestletException("File harvest failed",Status.SERVER_ERROR_INTERNAL,e);
+  }
+}

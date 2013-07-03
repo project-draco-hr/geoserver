@@ -1,0 +1,12 @@
+{
+  File file=movedFiles.get(0);
+  File target=new File(mosaic,file.getName());
+  assertTrue(file.renameTo(target));
+  URL url=DataUtilities.fileToURL(target.getCanonicalFile());
+  String body=url.toExternalForm();
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/wcs/coveragestores/watertemp/external.imagemosaic",body,"text/plain");
+  assertEquals(202,response.getStatusCode());
+  Document dom=getAsDOM("/rest/workspaces/wcs/coveragestores/watertemp/coverages/watertemp/index/granules.xml");
+  assertXpathEvaluatesTo("3","count(//gf:watertemp)",dom);
+  assertXpathEvaluatesTo("1","count(//gf:watertemp[gf:location = '" + file.getName() + "'])",dom);
+}

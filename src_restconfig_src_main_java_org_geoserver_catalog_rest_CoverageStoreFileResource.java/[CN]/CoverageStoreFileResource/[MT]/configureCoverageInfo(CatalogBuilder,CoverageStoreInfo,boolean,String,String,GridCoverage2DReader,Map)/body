@@ -1,0 +1,58 @@
+{
+  CoverageInfo cinfo=builder.buildCoverage(reader,customParameters);
+  if (coverageName != null) {
+    cinfo.setName(coverageName);
+  }
+  if (nativeName != null) {
+    cinfo.setNativeName(nativeName);
+  }
+  if (!add) {
+    String name=coverageName != null ? coverageName : nativeName;
+    CoverageInfo existing=catalog.getCoverageByCoverageStore(storeInfo,name);
+    if (existing == null) {
+      List<CoverageInfo> coverages=catalog.getCoveragesByCoverageStore(storeInfo);
+      if (coverages.size() == 1 && coverages.get(0).getNativeName() == null) {
+        existing=coverages.get(0);
+      }
+      if (coverages.size() == 0) {
+        add=true;
+      }
+ else {
+        for (        CoverageInfo ci : coverages) {
+          if (ci.getNativeName().equals(name)) {
+            existing=ci;
+          }
+        }
+        if (existing == null) {
+          add=true;
+        }
+      }
+    }
+    if (existing != null) {
+      builder.updateCoverage(existing,cinfo);
+      catalog.save(existing);
+      cinfo=existing;
+    }
+  }
+  if ("UNKNOWN".equals(cinfo.getSRS())) {
+    cinfo.setSRS("EPSG:4326");
+  }
+  if (add) {
+    catalog.add(cinfo);
+    LayerInfo layerInfo=builder.buildLayer(cinfo);
+    boolean valid=true;
+    try {
+      if (!catalog.validate(layerInfo,true).isEmpty()) {
+        valid=false;
+      }
+    }
+ catch (    Exception e) {
+      valid=false;
+    }
+    layerInfo.setEnabled(valid);
+    catalog.add(layerInfo);
+  }
+ else {
+    catalog.save(cinfo);
+  }
+}

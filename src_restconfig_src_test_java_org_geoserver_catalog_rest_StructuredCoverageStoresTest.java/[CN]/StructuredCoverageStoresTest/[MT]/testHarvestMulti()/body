@@ -1,0 +1,20 @@
+{
+  for (  File file : movedFiles) {
+    File target=new File(mosaic,file.getName());
+    assertTrue(file.renameTo(target));
+  }
+  URL url=DataUtilities.fileToURL(mosaic.getCanonicalFile());
+  String body=url.toExternalForm();
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/wcs/coveragestores/watertemp/external.imagemosaic",body,"text/plain");
+  assertEquals(202,response.getStatusCode());
+  Document dom=getAsDOM("/rest/workspaces/wcs/coveragestores/watertemp/coverages/watertemp/index/granules.xml");
+  assertXpathEvaluatesTo("4","count(//gf:watertemp)",dom);
+  assertXpathEvaluatesTo("2008-10-31T00:00:00Z","//gf:watertemp[gf:location = 'NCOM_wattemp_000_20081031T0000000_12.tiff']/gf:ingestion",dom);
+  assertXpathEvaluatesTo("0","//gf:watertemp[gf:location = 'NCOM_wattemp_000_20081031T0000000_12.tiff']/gf:elevation",dom);
+  assertXpathEvaluatesTo("2008-11-01T00:00:00Z","//gf:watertemp[gf:location = 'NCOM_wattemp_000_20081101T0000000_12.tiff']/gf:ingestion",dom);
+  assertXpathEvaluatesTo("0","//gf:watertemp[gf:location = 'NCOM_wattemp_000_20081101T0000000_12.tiff']/gf:elevation",dom);
+  assertXpathEvaluatesTo("2008-10-31T00:00:00Z","//gf:watertemp[gf:location = 'NCOM_wattemp_100_20081031T0000000_12.tiff']/gf:ingestion",dom);
+  assertXpathEvaluatesTo("100","//gf:watertemp[gf:location = 'NCOM_wattemp_100_20081031T0000000_12.tiff']/gf:elevation",dom);
+  assertXpathEvaluatesTo("2008-11-01T00:00:00Z","//gf:watertemp[gf:location = 'NCOM_wattemp_100_20081101T0000000_12.tiff']/gf:ingestion",dom);
+  assertXpathEvaluatesTo("100","//gf:watertemp[gf:location = 'NCOM_wattemp_100_20081101T0000000_12.tiff']/gf:elevation",dom);
+}
