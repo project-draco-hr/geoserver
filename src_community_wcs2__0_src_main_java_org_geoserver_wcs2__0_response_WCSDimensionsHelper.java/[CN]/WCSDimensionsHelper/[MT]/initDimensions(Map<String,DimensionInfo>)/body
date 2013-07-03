@@ -1,0 +1,23 @@
+{
+  Utilities.ensureNonNull("dimensions",dimensions);
+  Map<String,DimensionInfo> updatedDimensions=new HashMap<String,DimensionInfo>();
+  updatedDimensions.putAll(dimensions);
+  if (updatedDimensions.containsKey(ResourceInfo.TIME)) {
+    timeDimension=updatedDimensions.remove(ResourceInfo.TIME);
+    if (timeDimension != null) {
+      final BigDecimal resolution=timeDimension.getResolution();
+      if (resolution != null) {
+        setupTimeResolution(resolution);
+      }
+    }
+  }
+  if (updatedDimensions.containsKey(ResourceInfo.ELEVATION)) {
+    elevationDimension=updatedDimensions.remove(ResourceInfo.ELEVATION);
+    final BigDecimal resolution=elevationDimension.getResolution();
+    if (resolution != null) {
+      elevationResolutionValue=resolution.doubleValue();
+      elevationResolutionUnit=elevationDimension.getUnitSymbol();
+    }
+  }
+  this.additionalDimensions=updatedDimensions;
+}

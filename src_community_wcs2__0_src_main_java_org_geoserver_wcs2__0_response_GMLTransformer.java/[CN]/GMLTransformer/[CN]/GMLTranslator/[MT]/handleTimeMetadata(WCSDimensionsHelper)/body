@@ -1,0 +1,31 @@
+{
+  Utilities.ensureNonNull("helper",helper);
+  final DimensionInfo timeDimension=helper.getTimeDimension();
+  if (timeDimension != null) {
+    start(initStartMetadataTag(TAG.TIME_DOMAIN,null,timeDimension,helper));
+    final DimensionPresentation presentation=timeDimension.getPresentation();
+    final String id=helper.getCoverageId();
+switch (presentation) {
+case CONTINUOUS_INTERVAL:
+      encodeTimePeriod(helper.getBeginTime(),helper.getEndTime(),id + "_tp_0",null,null);
+    break;
+case DISCRETE_INTERVAL:
+  encodeTimePeriod(helper.getBeginTime(),helper.getEndTime(),id + "_tp_0",helper.getTimeResolutionUnit(),helper.getTimeResolutionValue());
+break;
+default :
+final TreeSet<Object> domain=helper.getTimeDomain();
+int i=0;
+for (Object item : domain) {
+if (item instanceof Date) {
+encodeDate((Date)item,helper,id + "_td_" + i);
+}
+ else if (item instanceof DateRange) {
+encodeDateRange((DateRange)item,helper,id + "_td_" + i);
+}
+i++;
+}
+break;
+}
+end(TAG.TIME_DOMAIN);
+}
+}
