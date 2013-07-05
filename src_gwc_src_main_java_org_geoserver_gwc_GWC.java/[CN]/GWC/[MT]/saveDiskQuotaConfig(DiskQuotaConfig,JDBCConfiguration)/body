@@ -2,15 +2,7 @@
   checkArgument(isDiskQuotaAvailable(),"DiskQuota is not enabled");
   DiskQuotaMonitor monitor=getDiskQuotaMonitor();
   monitor.saveConfig(config);
-  File configFile=new File(storageFinder.getDefaultPath(),"geowebcache-diskquota-jdbc.xml");
-  if ("JDBC".equals(config.getQuotaStore())) {
-    JDBCConfiguration.store(jdbcConfig,configFile);
-  }
- else {
-    if (configFile.exists() && !configFile.delete()) {
-      log.log(Level.SEVERE,"Failed to delete " + configFile + ", this might cause misbehavior on GeoServer restart");
-    }
-  }
+  jdbcConfigurationStorage.saveDiskQuotaConfig(config,jdbcConfig);
   ConfigurableQuotaStoreProvider provider=(ConfigurableQuotaStoreProvider)monitor.getQuotaStoreProvider();
   provider.reloadQuotaStore();
   monitor.shutDown(1);
