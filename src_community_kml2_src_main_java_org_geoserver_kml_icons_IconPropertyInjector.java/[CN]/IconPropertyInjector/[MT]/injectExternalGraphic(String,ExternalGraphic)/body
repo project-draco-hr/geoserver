@@ -1,0 +1,23 @@
+{
+  try {
+    final String format=original.getFormat();
+    final URL location;
+    final Expression locationExpression;
+    if (original.getLocation() == null) {
+      locationExpression=null;
+    }
+ else {
+      locationExpression=ExpressionExtractor.extractCqlExpressions(original.getLocation().toExternalForm());
+    }
+    if (locationExpression == null || isStatic(locationExpression)) {
+      location=original.getLocation();
+    }
+ else {
+      location=new URL(properties.get(key + ".url"));
+    }
+    return styleFactory.createExternalGraphic(location,format);
+  }
+ catch (  MalformedURLException e) {
+    throw new RuntimeException(e);
+  }
+}

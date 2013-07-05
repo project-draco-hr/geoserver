@@ -1,0 +1,23 @@
+{
+  int size=findIconSize(style) + 1;
+  MapContent mapContent=new MapContent();
+  mapContent.addLayer(new FeatureLayer(sampleData,style));
+  BufferedImage image=new BufferedImage(size * Icons.RENDER_SCALE_FACTOR + 1,size * Icons.RENDER_SCALE_FACTOR + 1,BufferedImage.TYPE_INT_ARGB);
+  Graphics2D graphics=image.createGraphics();
+  graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+  graphics.scale(Icons.RENDER_SCALE_FACTOR,Icons.RENDER_SCALE_FACTOR);
+  StreamingRenderer renderer=new StreamingRenderer();
+  renderer.setMapContent(mapContent);
+  try {
+    try {
+      renderer.paint(graphics,new Rectangle(size,size),sampleArea);
+    }
+  finally {
+      graphics.dispose();
+    }
+  }
+  finally {
+    mapContent.dispose();
+  }
+  return image;
+}

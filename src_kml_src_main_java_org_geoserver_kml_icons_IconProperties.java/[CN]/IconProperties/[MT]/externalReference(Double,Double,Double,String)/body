@@ -1,0 +1,63 @@
+{
+  return new IconProperties(){
+    @Override public Double getOpacity(){
+      return opacity;
+    }
+    @Override public Double getScale(){
+      return scale;
+    }
+    @Override public Double getHeading(){
+      return heading;
+    }
+    @Override public String href(    String baseURL,    String workspace,    String styleName){
+      try {
+        URL target=new URL(url);
+        String graphicProtocol=target.getProtocol();
+        if ("file".equals(graphicProtocol)) {
+          File file=DataUtilities.urlToFile(target);
+          File styles=null;
+          File graphicFile=null;
+          if (file.isAbsolute()) {
+            GeoServerDataDirectory dataDir=(GeoServerDataDirectory)GeoServerExtensions.bean("dataDirectory");
+            styles=dataDir.findOrCreateStyleDir().getCanonicalFile();
+            graphicFile=file.getCanonicalFile();
+            file=graphicFile;
+            if (file.getAbsolutePath().startsWith(styles.getAbsolutePath())) {
+              file=new File(file.getAbsolutePath().substring(styles.getAbsolutePath().length() + 1));
+            }
+ else {
+              file=null;
+            }
+            if (file != null && styles != null) {
+              return ResponseUtils.buildURL(baseURL,"styles/" + styles.toURI().relativize(graphicFile.toURI()),null,URLType.RESOURCE);
+            }
+ else {
+              return null;
+            }
+          }
+          return ResponseUtils.buildURL(baseURL,"styles/" + target.getPath(),Collections.<String,String>emptyMap(),URLType.RESOURCE);
+        }
+ else         if (!("http".equals(graphicProtocol) || "https".equals(graphicProtocol))) {
+          return null;
+        }
+        return url;
+      }
+ catch (      Exception ex) {
+        throw new IllegalStateException(ex);
+      }
+    }
+    @Override public boolean isExternal(){
+      return true;
+    }
+    @Override public Style inject(    Style base){
+      throw new RuntimeException("An implementation is missing");
+    }
+    @Override public Map<String,String> getProperties(){
+      throw new RuntimeException("An implementation is missing");
+    }
+    @Override public String getIconName(    Style style){
+      throw new RuntimeException("An implementation is missing");
+    }
+  }
+;
+}

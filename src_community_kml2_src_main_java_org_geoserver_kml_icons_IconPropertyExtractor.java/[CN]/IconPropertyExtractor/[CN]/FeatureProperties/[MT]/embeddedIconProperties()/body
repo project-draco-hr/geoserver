@@ -1,0 +1,36 @@
+{
+  Map<String,String> props=new TreeMap<String,String>();
+  Double size=null;
+  boolean allRotated=true;
+  for (int i=0; i < style.size(); i++) {
+    List<MiniRule> rules=style.get(i);
+    for (int j=0; j < rules.size(); j++) {
+      MiniRule rule=rules.get(j);
+      final boolean matches;
+      if (rule.filter == null) {
+        matches=!rule.isElseFilter || props.isEmpty();
+      }
+ else {
+        matches=rule.filter.evaluate(feature);
+      }
+      if (matches) {
+        for (int k=0; k < rule.symbolizers.size(); k++) {
+          props.put(i + "." + j+ "."+ k,"");
+          PointSymbolizer sym=rule.symbolizers.get(k);
+          if (sym.getGraphic() != null) {
+            addGraphicProperties(i + "." + j+ "."+ k,sym.getGraphic(),props);
+            final Double gRotation=graphicRotation(sym.getGraphic());
+            allRotated&=gRotation != null;
+            final Double gSize=Icons.graphicSize(sym.getGraphic(),gRotation,feature);
+            if (size == null || (gSize != null && gSize > size)) {
+              size=gSize;
+            }
+          }
+        }
+      }
+    }
+  }
+  if (size != null)   size=size / 16d;
+  final Double rotation=allRotated ? 0d : null;
+  return IconProperties.generator(null,size,rotation,props);
+}

@@ -46,6 +46,18 @@
       zip.closeEntry();
     }
     zip.closeEntry();
+    Map<String,Style> embeddedIcons=transformer.getEmbeddedIcons();
+    ZipEntry icons=new ZipEntry("icons/");
+    zip.putNextEntry(icons);
+    for (    Map.Entry<String,Style> namedStyle : embeddedIcons.entrySet()) {
+      final String name=namedStyle.getKey();
+      final Style style=namedStyle.getValue();
+      BufferedImage icon=IconRenderer.renderIcon(style);
+      entry=new ZipEntry("icons/" + name + ".png");
+      zip.putNextEntry(entry);
+      ImageIO.write(icon,"PNG",zip);
+    }
+    zip.closeEntry();
     zip.finish();
     zip.flush();
   }

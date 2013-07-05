@@ -1,0 +1,23 @@
+{
+  Icon i=eg.getInlineContent();
+  if (i == null) {
+    Expression location;
+    try {
+      location=ExpressionExtractor.extractCqlExpressions(eg.getLocation().toString());
+      Iterator<ExternalGraphicFactory> it=DynamicSymbolFactoryFinder.getExternalGraphicFactories();
+      while (i == null && it.hasNext()) {
+        try {
+          ExternalGraphicFactory fact=it.next();
+          i=fact.getIcon((Feature)null,location,eg.getFormat(),-1);
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.FINE,"Error occurred evaluating external graphic",e);
+        }
+      }
+    }
+ catch (    MalformedURLException e1) {
+      LOGGER.log(Level.FINER,e1.getMessage(),e1);
+    }
+  }
+  return i;
+}

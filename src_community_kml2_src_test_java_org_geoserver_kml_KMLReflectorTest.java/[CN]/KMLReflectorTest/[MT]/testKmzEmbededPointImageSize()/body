@@ -1,0 +1,23 @@
+{
+  WMSMapContent mapContent=createMapContext(MockData.POINTS,"big-mark");
+  File temp=File.createTempFile("test","kmz",new File("target"));
+  temp.delete();
+  temp.mkdir();
+  temp.deleteOnExit();
+  File zip=new File(temp,"kmz.zip");
+  zip.deleteOnExit();
+  KMZMapOutputFormat mapProducer=new KMZMapOutputFormat(getWMS());
+  KMLMap map=mapProducer.produceMap(mapContent);
+  FileOutputStream output=new FileOutputStream(zip);
+  new KMLMapResponse(new KMLEncoder(),getWMS()).write(map,output,null);
+  output.flush();
+  output.close();
+  assertTrue(zip.exists());
+  ZipFile zipFile=new ZipFile(zip);
+  ZipEntry kmlEntry=zipFile.getEntry("wms.kml");
+  InputStream kmlStream=zipFile.getInputStream(kmlEntry);
+  Document kmlResult=XMLUnit.buildTestDocument(new InputSource(kmlStream));
+  Double scale=Double.parseDouble(XMLUnit.newXpathEngine().getMatchingNodes("(//kml:Style)[1]/kml:IconStyle/kml:scale",kmlResult).item(0).getTextContent());
+  assertEquals(49d / 16d,scale,0.01);
+  zipFile.close();
+}
