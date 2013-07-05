@@ -45,17 +45,18 @@
       throw new ServiceException("Unknown overlay mode: " + submode);
     }
   }
+  boolean refreshMode=mode.equals("refresh");
   if (request.getWidth() < 1) {
-    request.setWidth(mode.equals("refresh") || containsRasterData ? 1024 : 256);
+    request.setWidth(refreshMode || containsRasterData ? DEFAULT_OVERLAY_SIZE : 256);
   }
   if (request.getHeight() < 1) {
-    request.setHeight(mode.equals("refresh") || containsRasterData ? 1024 : 256);
+    request.setHeight(refreshMode || containsRasterData ? DEFAULT_OVERLAY_SIZE : 256);
   }
   request.setSRS("EPSG:4326");
   request=DefaultWebMapService.autoSetMissingProperties(request);
   Map fo=request.getFormatOptions();
-  KvpUtils.merge(fo,modeOptions);
   organizeFormatOptionsParams(request.getRawKvp(),fo);
+  mergeDefaults(fo,modeOptions);
   if (fo.get("kmattr") == null) {
     fo.put("kmattr",wmsConfiguration.getKmlKmAttr());
   }
@@ -66,31 +67,15 @@
     fo.put("kmplacemark",wmsConfiguration.getKmlPlacemark());
   }
   Boolean superoverlay=(Boolean)fo.get("superoverlay");
-  if (superoverlay == null)   superoverlay=Boolean.FALSE;
-  String formatExtension=".kmz";
-  if (superoverlay) {
-    request.setFormat(KMZMapOutputFormat.MIME_TYPE);
-    request.setBbox(KMLUtils.expandToTile(request.getBbox()));
+  if (superoverlay == null) {
+    superoverlay=Boolean.FALSE;
   }
- else   if (mode.equals("refresh") || containsRasterData) {
-    request.setFormat(KMZMapOutputFormat.MIME_TYPE);
+  if (superoverlay || refreshMode || containsRasterData) {
+    request.setFormat(NetworkLinkMapOutputFormat.KML_MIME_TYPE);
   }
  else   if (!Arrays.asList(KMZMapOutputFormat.OUTPUT_FORMATS).contains(request.getFormat())) {
     request.setFormat(KMLMapOutputFormat.MIME_TYPE);
-    formatExtension=".kml";
   }
-  org.geoserver.wms.WebMap wmsResponse;
-  if (!"download".equals(mode)) {
-    if (KMLMapOutputFormat.MIME_TYPE.equals(request.getFormat())) {
-      request.setFormat(NetworkLinkMapOutputFormat.KML_MIME_TYPE);
-    }
- else {
-      request.setFormat(NetworkLinkMapOutputFormat.KMZ_MIME_TYPE);
-    }
-  }
-  wmsResponse=wms.getMap(request);
-  filename.setLength(filename.length() - 1);
-  String contentDisposition="attachment; filename=" + filename.toString() + formatExtension;
-  wmsResponse.setResponseHeader("Content-Disposition",contentDisposition);
+  org.geoserver.wms.WebMap wmsResponse=wms.getMap(request);
   return wmsResponse;
 }

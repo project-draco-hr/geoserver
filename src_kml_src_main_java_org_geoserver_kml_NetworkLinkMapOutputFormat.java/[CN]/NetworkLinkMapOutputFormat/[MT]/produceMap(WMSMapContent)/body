@@ -1,18 +1,27 @@
 {
-  KMLNetworkLinkTransformer transformer=new KMLNetworkLinkTransformer(wms,mapContent);
-  transformer.setIndentation(3);
-  Charset encoding=wms.getCharSet();
-  transformer.setEncoding(encoding);
-  Map fo=mapContent.getRequest().getFormatOptions();
-  Boolean superoverlay=(Boolean)fo.get("superoverlay");
+  GetMapRequest request=mapContent.getRequest();
+  boolean kmz=false;
+  if (NetworkLinkMapOutputFormat.KML_MIME_TYPE.equals(request.getFormat())) {
+    request.setFormat(KMLMapOutputFormat.MIME_TYPE);
+  }
+ else {
+    kmz=true;
+    request.setFormat(KMZMapOutputFormat.MIME_TYPE);
+  }
+  Boolean superoverlay=(Boolean)request.getFormatOptions().get("superoverlay");
   if (superoverlay == null) {
     superoverlay=Boolean.FALSE;
   }
-  transformer.setEncodeAsRegion(superoverlay);
-  GetMapRequest request=mapContent.getRequest();
-  boolean cachedMode="cached".equals(KMLUtils.getSuperoverlayMode(request,wms));
-  transformer.setCachedMode(cachedMode);
-  String mimeType=request.getFormat();
-  XMLTransformerMap wmsResponse=new XMLTransformerMap(mapContent,transformer,mapContent,mimeType);
-  return wmsResponse;
+  Kml kml=null;
+  KmlEncodingContext context=new KmlEncodingContext(mapContent,wms,kmz);
+  if (superoverlay) {
+    kml=new SuperOverlayNetworkLinkBuilder(context).buildKMLDocument();
+  }
+ else {
+    kml=new SimpleNetworkLinkBuilder(context).buildKMLDocument();
+  }
+  String mime=kmz ? KMZMapOutputFormat.MIME_TYPE : KMLMapOutputFormat.MIME_TYPE;
+  KMLMap map=new KMLMap(mapContent,null,kml,mime);
+  map.setContentDispositionHeader(mapContent,kmz ? ".kmz" : ".kml");
+  return map;
 }
