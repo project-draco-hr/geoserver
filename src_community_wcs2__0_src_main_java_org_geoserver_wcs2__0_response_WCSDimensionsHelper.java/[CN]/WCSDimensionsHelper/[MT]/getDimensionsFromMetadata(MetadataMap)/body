@@ -1,0 +1,20 @@
+{
+  Map<String,DimensionInfo> dimensionsMap=new HashMap<String,DimensionInfo>();
+  if (metadata != null && !metadata.isEmpty()) {
+    final Set<String> metadataKeys=metadata.keySet();
+    final Iterator<String> metadataIterator=metadataKeys.iterator();
+    while (metadataIterator.hasNext()) {
+      String key=metadataIterator.next();
+      if (isADimension(key)) {
+        DimensionInfo dimension=metadata.get(key,DimensionInfo.class);
+        if (dimension != null && dimension.isEnabled()) {
+          if (key.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+            key=key.substring(ResourceInfo.CUSTOM_DIMENSION_PREFIX.length());
+          }
+          dimensionsMap.put(key,dimension);
+        }
+      }
+    }
+  }
+  return dimensionsMap;
+}

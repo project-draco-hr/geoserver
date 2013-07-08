@@ -1,0 +1,42 @@
+{
+  final CoordinateReferenceSystem crs=envelope.getCoordinateReferenceSystem();
+  final CoordinateSystem cs=crs.getCoordinateSystem();
+  String uomLabels=extractUoM(crs,cs.getAxis(axisSwap ? 1 : 0).getUnit()) + " " + extractUoM(crs,cs.getAxis(axisSwap ? 0 : 1).getUnit());
+  boolean hasElevation=false;
+  boolean hasTime=false;
+  if (dimensionHelper != null) {
+    if (dimensionHelper.getElevationDimension() != null) {
+      uomLabels=uomLabels + " m";
+      hasElevation=true;
+    }
+    if (dimensionHelper.getTimeDimension() != null) {
+      uomLabels=uomLabels + " s";
+      hasTime=true;
+    }
+  }
+  final int srsDimension=cs.getDimension() + (hasElevation ? 1 : 0);
+  final String lower=new StringBuilder().append(envelope.getLowerCorner().getOrdinate(axisSwap ? 1 : 0)).append(" ").append(envelope.getLowerCorner().getOrdinate(axisSwap ? 0 : 1)).append(hasElevation ? " " + dimensionHelper.getBeginElevation() : "").toString();
+  final String upper=new StringBuilder().append(envelope.getUpperCorner().getOrdinate(axisSwap ? 1 : 0)).append(" ").append(envelope.getUpperCorner().getOrdinate(axisSwap ? 0 : 1)).append(hasElevation ? " " + dimensionHelper.getEndElevation() : "").toString();
+  final AttributesImpl envelopeAttrs=new AttributesImpl();
+  envelopeAttrs.addAttribute("","srsName","srsName","",srsName);
+  envelopeAttrs.addAttribute("","axisLabels","axisLabels","",axisLabels);
+  envelopeAttrs.addAttribute("","uomLabels","uomLabels","",uomLabels);
+  envelopeAttrs.addAttribute("","srsDimension","srsDimension","",String.valueOf(srsDimension));
+  start("gml:boundedBy");
+  String envelopeName;
+  if (dimensionHelper != null && (hasTime || hasElevation)) {
+    envelopeName="gml:EnvelopeWithTimePeriod";
+  }
+ else {
+    envelopeName="gml:Envelope";
+  }
+  start(envelopeName,envelopeAttrs);
+  element("gml:lowerCorner",lower);
+  element("gml:upperCorner",upper);
+  if (dimensionHelper != null && hasTime) {
+    element("gml:beginPosition",dimensionHelper.getBeginTime());
+    element("gml:endPosition",dimensionHelper.getEndTime());
+  }
+  end(envelopeName);
+  end("gml:boundedBy");
+}

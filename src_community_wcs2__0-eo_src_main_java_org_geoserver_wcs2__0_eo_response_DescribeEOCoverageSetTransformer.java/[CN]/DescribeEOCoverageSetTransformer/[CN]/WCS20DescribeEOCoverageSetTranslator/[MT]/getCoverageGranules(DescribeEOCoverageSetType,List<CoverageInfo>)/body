@@ -1,0 +1,32 @@
+{
+  List<CoverageGranules> results=new ArrayList<CoverageGranules>();
+  for (  CoverageInfo ci : coverages) {
+    GranuleSource source=null;
+    try {
+      StructuredGridCoverage2DReader reader=(StructuredGridCoverage2DReader)ci.getGridCoverageReader(null,null);
+      String name=codec.getCoverageName(ci);
+      source=reader.getGranules(name,true);
+      Query q=buildQueryFromDimensionTrims(dcs,reader,name);
+      SimpleFeatureCollection collection=source.getGranules(q);
+      if (!collection.isEmpty()) {
+        List<DimensionDescriptor> descriptors=getActiveDimensionDescriptor(ci,reader,name);
+        CoverageGranules granules=new CoverageGranules(ci,name,reader,collection,descriptors);
+        results.add(granules);
+      }
+    }
+ catch (    IOException e) {
+      throw new WCS20Exception("Failed to load the coverage granules for covearge " + ci.prefixedName(),e);
+    }
+ finally {
+      try {
+        if (source != null) {
+          source.dispose();
+        }
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.FINE,"Failed to dispose granule source",e);
+      }
+    }
+  }
+  return results;
+}

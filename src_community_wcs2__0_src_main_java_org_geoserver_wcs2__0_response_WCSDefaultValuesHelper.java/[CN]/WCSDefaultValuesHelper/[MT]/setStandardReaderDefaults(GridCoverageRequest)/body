@@ -1,0 +1,34 @@
+{
+  DateRange temporalSubset=subsettingRequest.getTemporalSubset();
+  NumberRange<?> elevationSubset=subsettingRequest.getElevationSubset();
+  Map<String,List<Object>> dimensionSubset=subsettingRequest.getDimensionsSubset();
+  if (temporalSubset == null) {
+    Date maxTime=accessor.getMaxTime();
+    if (maxTime != null) {
+      temporalSubset=new DateRange(maxTime,maxTime);
+    }
+  }
+  if (elevationSubset == null) {
+    Number minElevation=accessor.getMinElevation();
+    if (minElevation != null) {
+      elevationSubset=new NumberRange(minElevation.getClass(),minElevation,minElevation);
+    }
+  }
+  final List<String> customDomains=accessor.getCustomDomains();
+  int availableCustomDimensions=0;
+  int specifiedCustomDimensions=0;
+  if (customDomains != null && !customDomains.isEmpty()) {
+    availableCustomDimensions=customDomains.size();
+    specifiedCustomDimensions=dimensionSubset != null ? dimensionSubset.size() : 0;
+    if (dimensionSubset == null) {
+      dimensionSubset=new HashMap<String,List<Object>>();
+    }
+  }
+  if (availableCustomDimensions != specifiedCustomDimensions) {
+    setDefaultCustomDimensions(customDomains,dimensionSubset);
+  }
+  subsettingRequest.setDimensionsSubset(dimensionSubset);
+  subsettingRequest.setTemporalSubset(temporalSubset);
+  subsettingRequest.setElevationSubset(elevationSubset);
+  return subsettingRequest;
+}

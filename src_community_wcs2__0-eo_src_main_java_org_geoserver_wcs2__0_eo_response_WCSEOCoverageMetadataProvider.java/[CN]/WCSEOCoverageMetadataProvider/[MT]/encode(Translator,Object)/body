@@ -1,0 +1,71 @@
+{
+  if (!(context instanceof CoverageInfo) || !isEarthObservationEnabled()) {
+    return;
+  }
+  CoverageInfo ci=(CoverageInfo)context;
+  DimensionInfo time=ci.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+  if (time == null) {
+    LOGGER.log(Level.FINE,"We received a coverage info that has no " + "associated time, cannot add EO metadata to it: " + ci.prefixedName());
+    return;
+  }
+  GridCoverage2DReader reader=(GridCoverage2DReader)ci.getGridCoverageReader(null,null);
+  String coverageId=NCNameResourceCodec.encode(ci);
+  WCSDimensionsHelper dimensionHelper=new WCSDimensionsHelper(time,reader,coverageId);
+  tx.start("wcseo:EOMetadata");
+  tx.start("eop:EarthObservation",atts("gml:id",coverageId + "_metadata"));
+  tx.start("om:phenomenonTime");
+  tx.start("gml:TimePeriod",atts("gml:id",coverageId + "_tp"));
+  element(tx,"gml:beginPosition",dimensionHelper.getBeginTime(),null);
+  element(tx,"gml:endPosition",dimensionHelper.getEndTime(),null);
+  tx.end("gml:TimePeriod");
+  tx.end("om:phenomenonTime");
+  tx.start("om:resultTime");
+  tx.start("gml:TimeInstant",atts("gml:id",coverageId + "_rt"));
+  element(tx,"gml:timePosition",dimensionHelper.getEndTime(),null);
+  tx.end("gml:TimeInstant");
+  tx.end("om:resultTime");
+  element(tx,"om:procedure",null,null);
+  element(tx,"om:observedProperty",null,null);
+  GeneralEnvelope ge=reader.getOriginalEnvelope();
+  CoordinateReferenceSystem crs=reader.getCoordinateReferenceSystem();
+  String srsName=getSRSName(crs);
+  final boolean axisSwap=CRS.getAxisOrder(crs).equals(AxisOrder.EAST_NORTH);
+  double minx=ge.getLowerCorner().getOrdinate(axisSwap ? 1 : 0);
+  double miny=ge.getLowerCorner().getOrdinate(axisSwap ? 0 : 1);
+  double maxx=ge.getUpperCorner().getOrdinate(axisSwap ? 1 : 0);
+  double maxy=ge.getUpperCorner().getOrdinate(axisSwap ? 0 : 1);
+  tx.start("om:FeatureOfInterest");
+  tx.start("eop:Footprint",atts("gml:id",coverageId + "_fp"));
+  tx.start("eop:multiExtentOf");
+  tx.start("gml:MultiSurface",atts("gml:id",coverageId + "_ms","srsName",srsName));
+  tx.start("gml:surfaceMembers");
+  tx.start("gml:Polygon",atts("gml:id",coverageId + "_msp"));
+  tx.start("gml:exterior");
+  tx.start("gml:LinearRing");
+  String posList=posList(minx,miny,minx,maxy,maxx,maxy,maxx,miny,minx,miny);
+  element(tx,"gml:posList",posList,null);
+  tx.end("gml:LinearRing");
+  tx.end("gml:exterior");
+  tx.end("gml:Polygon");
+  tx.end("gml:surfaceMembers");
+  tx.end("gml:MultiSurface");
+  tx.end("eop:multiExtentOf");
+  double midx=(minx + maxx) / 2;
+  double midy=(miny + maxy) / 2;
+  tx.start("eop:centerOf");
+  tx.start("gml:Point",atts("gml:id",coverageId + "_co","srsName",srsName));
+  element(tx,"gml:pos",midx + " " + midy,null);
+  tx.end("gml:Point");
+  tx.end("eop:centerOf");
+  tx.end("eop:Footprint");
+  tx.end("om:FeatureOfInterest");
+  tx.start("eop:metaDataProperty");
+  tx.start("eop:EarthObservationMetaData");
+  element(tx,"eop:identifier",coverageId,null);
+  element(tx,"eop:acquisitionType","NOMINAL",null);
+  element(tx,"eop:status","ARCHIVED",null);
+  tx.end("eop:EarthObservationMetaData");
+  tx.end("eop:metaDataProperty");
+  tx.end("eop:EarthObservation");
+  tx.end("wcseo:EOMetadata");
+}

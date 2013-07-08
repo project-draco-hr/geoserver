@@ -1,0 +1,21 @@
+{
+  start("wcseo:DatasetSeriesDescriptions");
+  for (  CoverageGranules gc : coverages) {
+    CoverageInfo ci=gc.coverage;
+    String datasetId=codec.getDatasetName(ci);
+    start("wcseo:DatasetSeriesDescription",atts("gml:id",datasetId));
+    try {
+      GridCoverage2DReader reader=(GridCoverage2DReader)ci.getGridCoverageReader(null,null);
+      encodeDatasetBounds(ci,reader);
+      element("wcseo:DatasetSeriesId",datasetId);
+      DimensionInfo time=ci.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+      WCSDimensionsHelper timeHelper=new WCSDimensionsHelper(time,reader,datasetId);
+      dcTranslator.encodeTimePeriod(timeHelper.getBeginTime(),timeHelper.getEndTime(),datasetId + "_timeperiod",null,null);
+      end("wcseo:DatasetSeriesDescription");
+    }
+ catch (    IOException e) {
+      throw new WCS20Exception("Failed to build the description for dataset series " + codec.getDatasetName(ci),e);
+    }
+  }
+  end("wcseo:DatasetSeriesDescriptions");
+}

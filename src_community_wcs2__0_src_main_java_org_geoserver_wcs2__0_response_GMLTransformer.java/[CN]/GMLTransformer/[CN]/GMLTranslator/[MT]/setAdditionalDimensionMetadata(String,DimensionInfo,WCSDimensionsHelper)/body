@@ -1,0 +1,30 @@
+{
+  Utilities.ensureNonNull("helper",helper);
+  final String startTag=initStartMetadataTag(TAG.ADDITIONAL_DIMENSION,name,dimension,helper);
+  start(startTag);
+  final TreeSet<String> domain=helper.getDomain(name);
+  int i=0;
+  for (  String item : domain) {
+    Date date=WCSDimensionsSubsetHelper.parseAsDate(item);
+    if (date != null) {
+      final String dimensionId=helper.getCoverageId() + "_dd_" + i;
+      encodeDate(date,helper,dimensionId);
+      continue;
+    }
+    Double number=WCSDimensionsSubsetHelper.parseAsDouble(item);
+    if (number != null) {
+      element(TAG.SINGLE_VALUE,item.toString());
+      continue;
+    }
+    NumberRange<Double> range=WCSDimensionsSubsetHelper.parseAsDoubleRange(item);
+    if (range != null) {
+      encodeInterval(range.getMinValue().toString(),range.getMaxValue().toString(),null,null);
+      continue;
+    }
+    if (item instanceof String) {
+      element(TAG.SINGLE_VALUE,item.toString());
+    }
+    i++;
+  }
+  end(TAG.ADDITIONAL_DIMENSION);
+}

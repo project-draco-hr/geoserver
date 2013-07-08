@@ -1,0 +1,24 @@
+{
+  Object[] parameters=operation.getParameters();
+  if (parameters != null && parameters.length > 0 && parameters[0] instanceof GetCoverageType) {
+    GetCoverageType gc=(GetCoverageType)parameters[0];
+    String coverageId=gc.getCoverageId();
+    CoverageInfo coverage=codec.getGranuleCoverage(coverageId);
+    if (coverage != null) {
+      String actualCoverageId=NCNameResourceCodec.encode(coverage);
+      gc.setCoverageId(actualCoverageId);
+      Filter granuleFilter=codec.getGranuleFilter(coverageId);
+      if (!readerHasGranule(coverage,granuleFilter)) {
+        throw new WCS20Exception("Could not locate coverage " + coverageId,WCS20ExceptionCode.NoSuchCoverage,"coverageId");
+      }
+      Filter previous=gc.getFilter();
+      if (previous == null || previous == Filter.INCLUDE) {
+        gc.setFilter(granuleFilter);
+      }
+ else {
+        gc.setFilter(FF.and(previous,granuleFilter));
+      }
+    }
+  }
+  return operation;
+}

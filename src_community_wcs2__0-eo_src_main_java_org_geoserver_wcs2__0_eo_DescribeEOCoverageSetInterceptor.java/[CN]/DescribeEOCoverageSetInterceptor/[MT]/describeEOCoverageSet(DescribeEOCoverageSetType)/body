@@ -1,0 +1,20 @@
+{
+  checkService(dcs.getService());
+  checkVersion(dcs.getVersion());
+  if (dcs.getEoId() == null || dcs.getEoId().isEmpty()) {
+    throw new OWS20Exception("Required parameter eoID missing",new OWSExceptionCode("emptyEoIdList",404),"eoid");
+  }
+  List<String> badCoverageIds=new ArrayList<String>();
+  for (  String datasetId : (List<String>)dcs.getEoId()) {
+    CoverageInfo layer=resourceCodec.getDatasetCoverage(datasetId);
+    if (layer == null) {
+      badCoverageIds.add(datasetId);
+    }
+  }
+  if (!badCoverageIds.isEmpty()) {
+    String mergedIds=StringUtils.merge(badCoverageIds);
+    throw new WCS20Exception("Could not find the requested coverage(s): " + mergedIds,new OWSExceptionCode("noSuchEODataset",404),"eoid");
+  }
+  WCS20DescribeCoverageTransformer tx=new WCS20DescribeCoverageTransformer(getServiceInfo(),catalog,responseFactory,envelopeAxesMapper,mimemapper);
+  return new DescribeEOCoverageSetTransformer(getServiceInfo(),resourceCodec,envelopeAxesMapper,tx);
+}

@@ -1,0 +1,9 @@
+{
+  WCSInfo wcs=getGeoServer().getService(WCSInfo.class);
+  wcs.getMetadata().put(WCSEOMetadata.ENABLED.key,false);
+  getGeoServer().save(wcs);
+  Document dom=getAsDOM("wcs?request=GetCapabilities&version=2.0.1&service=WCS");
+  assertEquals("0",xpath.evaluate("count(//ows:Operation[@name='DescribeEOCoverageSet'])",dom));
+  assertEquals("0",xpath.evaluate("count(//ows:Constraint[@name='CountDefault'])",dom));
+  assertEquals("0",xpath.evaluate("count(//wcs:Extension/wcseo:DatasetSeriesSummary)",dom));
+}

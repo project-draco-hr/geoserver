@@ -1,0 +1,62 @@
+{
+  DateRange temporalSubset=subsettingRequest.getTemporalSubset();
+  NumberRange<?> elevationSubset=subsettingRequest.getElevationSubset();
+  Map<String,List<Object>> dimensionsSubset=subsettingRequest.getDimensionsSubset();
+  GeneralEnvelope envelopeSubset=subsettingRequest.getSpatialSubset();
+  Filter originalFilter=subsettingRequest.getFilter();
+  final int specifiedDimensionsSubset=dimensionsSubset != null ? dimensionsSubset.size() : 0;
+  final StructuredGridCoverage2DReader structuredReader=(StructuredGridCoverage2DReader)reader;
+  final List<DimensionDescriptor> dimensionDescriptors=structuredReader.getDimensionDescriptors(coverageName);
+  DimensionDescriptor timeDimension=null;
+  DimensionDescriptor elevationDimension=null;
+  final List<DimensionDescriptor> customDimensions=new ArrayList<DimensionDescriptor>();
+  int dimensions=0;
+  for (  DimensionDescriptor dimensionDescriptor : dimensionDescriptors) {
+    if (dimensionDescriptor.getName().equalsIgnoreCase(ResourceInfo.TIME)) {
+      timeDimension=dimensionDescriptor;
+    }
+ else     if (dimensionDescriptor.getName().equalsIgnoreCase(ResourceInfo.ELEVATION)) {
+      elevationDimension=dimensionDescriptor;
+    }
+ else {
+      customDimensions.add(dimensionDescriptor);
+      dimensions++;
+    }
+  }
+  final boolean defaultTimeNeeded=temporalSubset == null && timeDimension != null;
+  final boolean defaultElevationNeeded=elevationSubset == null && elevationDimension != null;
+  final boolean defaultCustomDimensionsNeeded=dimensions != specifiedDimensionsSubset;
+  if (defaultTimeNeeded || defaultElevationNeeded || defaultCustomDimensionsNeeded) {
+    GranuleSource source=structuredReader.getGranules(coverageName,true);
+    Filter finalFilter=setFilters(originalFilter,temporalSubset,elevationSubset,envelopeSubset,dimensionsSubset,structuredReader,timeDimension,elevationDimension,customDimensions);
+    Query query=new Query();
+    sortBy(query,timeDimension,elevationDimension);
+    query.setFilter(finalFilter);
+    query.setMaxFeatures(1);
+    SimpleFeatureCollection granulesCollection=source.getGranules(query);
+    SimpleFeatureIterator features=granulesCollection.features();
+    try {
+      if (features.hasNext()) {
+        final SimpleFeature feature=features.next();
+        if (defaultTimeNeeded && timeDimension != null) {
+          temporalSubset=setDefaultTemporalSubset(timeDimension,feature);
+          subsettingRequest.setTemporalSubset(temporalSubset);
+        }
+        if (defaultElevationNeeded && elevationDimension != null) {
+          elevationSubset=setDefaultElevationSubset(elevationDimension,feature);
+          subsettingRequest.setElevationSubset(elevationSubset);
+        }
+        if (defaultCustomDimensionsNeeded && !customDimensions.isEmpty()) {
+          dimensionsSubset=setDefaultDimensionsSubset(customDimensions,feature);
+          subsettingRequest.setDimensionsSubset(dimensionsSubset);
+        }
+      }
+    }
+  finally {
+      if (features != null) {
+        features.close();
+      }
+    }
+  }
+  return subsettingRequest;
+}

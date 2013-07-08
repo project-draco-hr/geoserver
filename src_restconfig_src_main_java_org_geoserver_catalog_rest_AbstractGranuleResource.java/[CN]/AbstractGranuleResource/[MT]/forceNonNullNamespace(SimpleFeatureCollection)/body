@@ -1,0 +1,18 @@
+{
+  SimpleFeatureType sourceSchema=features.getSchema();
+  if (sourceSchema.getName().getNamespaceURI() == null) {
+    try {
+      String targetNs="http://www.geoserver.org/rest/granules";
+      AttributeDescriptor[] attributes=(AttributeDescriptor[])sourceSchema.getAttributeDescriptors().toArray(new AttributeDescriptor[sourceSchema.getAttributeDescriptors().size()]);
+      SimpleFeatureType targetSchema=FeatureTypes.newFeatureType(attributes,sourceSchema.getName().getLocalPart(),new URI(targetNs));
+      RetypingFeatureCollection retyped=new RetypingFeatureCollection(features,targetSchema);
+      return retyped;
+    }
+ catch (    Exception e) {
+      throw new IOException("Failed to retype the granules feature schema, in order to force " + "it having a non null namespace",e);
+    }
+  }
+ else {
+    return features;
+  }
+}

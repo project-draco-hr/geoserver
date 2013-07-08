@@ -1,0 +1,39 @@
+{
+  NumberRange elevationSubset=null;
+  if (elevationDimension != null) {
+    for (    DimensionSubsetType dim : request.getDimensionSubset()) {
+      String dimension=WCSDimensionsSubsetHelper.getDimensionName(dim);
+      if (!WCSDimensionsSubsetHelper.ELEVATION_NAMES.contains(dimension.toLowerCase())) {
+        continue;
+      }
+      if (elevationSubset != null) {
+        throw new WCS20Exception("Elevation dimension trimming/slicing specified twice in the request",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
+      }
+      if (dim instanceof DimensionTrimType) {
+        final DimensionTrimType trim=(DimensionTrimType)dim;
+        final Double low=XML_CONVERTER.parseDouble(trim.getTrimLow());
+        final Double high=XML_CONVERTER.parseDouble(trim.getTrimHigh());
+        if (low > high) {
+          throw new WCS20Exception("Low greater than High: " + trim.getTrimLow() + ", "+ trim.getTrimHigh(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
+        }
+        elevationSubset=new NumberRange<Double>(Double.class,low,high);
+      }
+ else       if (dim instanceof DimensionSliceType) {
+        final DimensionSliceType slicing=(DimensionSliceType)dim;
+        final String slicePointS=slicing.getSlicePoint();
+        final Double slicePoint=XML_CONVERTER.parseDouble(slicePointS);
+        elevationSubset=new NumberRange<Double>(Double.class,slicePoint,slicePoint);
+      }
+ else {
+        throw new WCS20Exception("Invalid element found while attempting to parse dimension subsetting request: " + dim.getClass().toString(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
+      }
+    }
+    if (elevationSubset != null && !elevationSubset.getMinValue().equals(elevationSubset.getMaxValue())) {
+      throw new WCS20Exception("Trimming on elevation is not supported at the moment, only slicing is");
+    }
+    if (elevationSubset != null) {
+      interpolateElevation(elevationSubset,accessor);
+    }
+  }
+  return elevationSubset;
+}

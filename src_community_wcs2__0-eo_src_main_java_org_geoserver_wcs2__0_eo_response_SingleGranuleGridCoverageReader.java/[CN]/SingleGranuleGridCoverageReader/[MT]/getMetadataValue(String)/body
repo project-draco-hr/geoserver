@@ -1,0 +1,39 @@
+{
+  if (name.endsWith("_DOMAIN_MINIMUM") || name.endsWith("_DOMAIN_MAXIMUM") || name.endsWith("_DOMAIN")) {
+    String dimensionName=name.substring(0,name.indexOf("_DOMAIN"));
+    DimensionDescriptor descriptor=dimensionDescriptors.get(dimensionName);
+    if (descriptor != null) {
+      Object start=feature.getAttribute(descriptor.getStartAttribute());
+      Object end=null;
+      if (descriptor.getEndAttribute() != null) {
+        end=feature.getAttribute(descriptor.getEndAttribute());
+      }
+      if (dimensionName.equalsIgnoreCase("TIME")) {
+        start=formatter.format((Date)start);
+        if (end != null) {
+          end=formatter.format((Date)end);
+        }
+      }
+      if (name.endsWith("_DOMAIN_MINIMUM")) {
+        return String.valueOf(start);
+      }
+      if (name.endsWith("_DOMAIN_MAXIMUM")) {
+        if (end != null) {
+          return String.valueOf(end);
+        }
+ else {
+          return String.valueOf(start);
+        }
+      }
+      if (name.endsWith("_DOMAIN")) {
+        if (end != null) {
+          return start + "/" + end;
+        }
+ else {
+          return String.valueOf(start);
+        }
+      }
+    }
+  }
+  return reader.getMetadataValue(name);
+}

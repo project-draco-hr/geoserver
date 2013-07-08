@@ -25,7 +25,14 @@
   info.setType(coverageFormat.getName());
   URL uploadedFileURL=DataUtilities.fileToURL(uploadedFile);
   if (isInlineUpload(method)) {
-    info.setURL("file:data/" + workspace + "/"+ coveragestore+ "/"+ uploadedFile.getName());
+    String url;
+    if (uploadedFile.isDirectory() && uploadedFile.getName().equals(coveragestore)) {
+      url="file:data/" + workspace + "/"+ coveragestore;
+    }
+ else {
+      url="file:data/" + workspace + "/"+ coveragestore+ "/"+ uploadedFile.getName();
+    }
+    info.setURL(url);
   }
  else {
     info.setURL(uploadedFileURL.toExternalForm());
@@ -42,12 +49,9 @@
     getResponse().setStatus(Status.SUCCESS_CREATED);
     return;
   }
-  String coverage=uploadedFile.getName();
-  if (coverage.indexOf('.') != -1) {
-    coverage=coverage.substring(0,coverage.indexOf('.'));
-  }
+  GridCoverage2DReader reader=null;
   try {
-    GridCoverage2DReader reader=(GridCoverage2DReader)((AbstractGridFormat)coverageFormat).getReader(uploadedFileURL);
+    reader=(GridCoverage2DReader)((AbstractGridFormat)coverageFormat).getReader(uploadedFile.toURL());
     if (reader == null) {
       throw new RestletException("Could not aquire reader for coverage.",Status.SERVER_ERROR_INTERNAL);
     }
@@ -58,55 +62,36 @@
     }
     CoverageInfo cinfo=builder.buildCoverage(reader,customParameters);
     String coverageName=form.getFirstValue("coverageName");
-    if (coverageName != null) {
-      cinfo.setName(coverageName);
+    String[] names=reader.getGridCoverageNames();
+    if (names.length > 1 && coverageName != null) {
+      throw new RestletException("The reader found more than one coverage, " + "coverageName cannot be used in this case (it would generate " + "the same name for all coverages found",Status.CLIENT_ERROR_BAD_REQUEST);
     }
-    if (!add) {
-      CoverageInfo existing=catalog.getCoverageByCoverageStore(info,coverageName != null ? coverageName : coverage);
-      if (existing == null) {
-        List<CoverageInfo> coverages=catalog.getCoveragesByCoverageStore(info);
-        if (coverages.size() == 1) {
-          existing=coverages.get(0);
-        }
-        if (coverages.size() == 0) {
-          add=true;
-        }
- else {
-          throw new RestletException("Unable to determine coverage to configure.",Status.SERVER_ERROR_INTERNAL);
-        }
+    if (names.length > 1) {
+      for (      String name : names) {
+        SingleGridCoverage2DReader singleReader=new SingleGridCoverage2DReader(reader,name);
+        configureCoverageInfo(builder,info,add,name,name,singleReader,customParameters);
       }
-      if (existing != null) {
-        builder.updateCoverage(existing,cinfo);
-        catalog.save(existing);
-        cinfo=existing;
-      }
-    }
-    if ("UNKNOWN".equals(cinfo.getSRS())) {
-      cinfo.setSRS("EPSG:4326");
-    }
-    if (add) {
-      catalog.add(cinfo);
-      LayerInfo layerInfo=builder.buildLayer(cinfo);
-      boolean valid=true;
-      try {
-        if (!catalog.validate(layerInfo,true).isEmpty()) {
-          valid=false;
-        }
-      }
- catch (      Exception e) {
-        valid=false;
-      }
-      layerInfo.setEnabled(valid);
-      catalog.add(layerInfo);
     }
  else {
-      catalog.save(cinfo);
+      configureCoverageInfo(builder,info,add,names[0],coverageName,reader,customParameters);
     }
     DataFormat df=new CoverageStoreResource(getContext(),request,response,catalog).createXMLFormat(request,response);
     response.setEntity(df.toRepresentation(info));
     response.setStatus(Status.SUCCESS_CREATED);
   }
  catch (  Exception e) {
+    if (e instanceof RestletException) {
+      throw (RestletException)e;
+    }
     throw new RestletException("Error auto-configuring coverage",Status.SERVER_ERROR_INTERNAL,e);
+  }
+ finally {
+    if (reader != null) {
+      try {
+        reader.dispose();
+      }
+ catch (      IOException e) {
+      }
+    }
   }
 }
