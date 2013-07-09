@@ -1,0 +1,16 @@
+{
+  try {
+    File file=page.findStyleFile(cssSource);
+    String sld=page.cssText2sldText(styleBody.getObject());
+    Writer writer=new FileWriter(file);
+    writer.write(styleBody.getObject());
+    writer.close();
+    page.catalog().getResourcePool().writeStyle(page.getStyleInfo(),new ByteArrayInputStream(sld.getBytes()));
+    page.catalog().save(page.getStyleInfo());
+    if (page.sldPreview != null)     target.addComponent(page.sldPreview);
+    if (page.map != null)     target.appendJavascript(page.map.getUpdateCommand());
+  }
+ catch (  Exception e) {
+    throw new WicketRuntimeException(e);
+  }
+}

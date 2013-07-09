@@ -1,0 +1,20 @@
+{
+  Map<String,Object> context=new HashMap<String,Object>();
+  context.put("minx",bbox.getMinX());
+  context.put("miny",bbox.getMinY());
+  context.put("maxx",bbox.getMaxX());
+  context.put("maxy",bbox.getMaxY());
+  context.put("id",getMarkupId());
+  context.put("layer",resource.getPrefixedName());
+  context.put("style",style.getName());
+  if (style.getWorkspace() != null) {
+    context.put("styleWorkspace",style.getWorkspace().getName());
+  }
+  context.put("cachebuster",rand.nextInt());
+  context.put("resolution",Math.max(bbox.getSpan(0),bbox.getSpan(1)) / 256.0);
+  Template template=templates.getTemplate("ol-load.ftl");
+  StringWriter script=new java.io.StringWriter();
+  template.process(context,script);
+  header.renderJavascriptReference("../openlayers/OpenLayers.js");
+  header.renderOnLoadJavascript(script.toString());
+}
