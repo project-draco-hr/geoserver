@@ -5,6 +5,13 @@
   OutputStreamWriter osw=null;
   Writer outWriter=null;
   boolean hasGeom=false;
+  int featureCount=0;
+  if (describeFeatureType.getParameters()[0] instanceof GetFeatureType) {
+    featureCount=getFeatureCountFromWFS11Request(describeFeatureType,wfs);
+  }
+ else   if (describeFeatureType.getParameters()[0] instanceof net.opengis.wfs20.GetFeatureType) {
+    featureCount=featureCollection.getTotalNumberOfFeatures().intValue();
+  }
   try {
     osw=new OutputStreamWriter(output,gs.getSettings().getCharset());
     outWriter=new BufferedWriter(osw);
@@ -13,6 +20,7 @@
     }
     final GeoJSONBuilder jsonWriter=new GeoJSONBuilder(outWriter);
     jsonWriter.object().key("type").value("FeatureCollection");
+    jsonWriter.key("totalFeatures").value(featureCount);
     jsonWriter.key("features");
     jsonWriter.array();
     List resultsList=featureCollection.getFeature();
