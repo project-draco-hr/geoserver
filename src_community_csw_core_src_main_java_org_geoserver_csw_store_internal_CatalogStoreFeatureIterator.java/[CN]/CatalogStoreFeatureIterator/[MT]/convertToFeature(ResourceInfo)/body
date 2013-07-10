@@ -4,12 +4,14 @@
     Object value=mappingElement.getContent().evaluate(resource);
     if (value != null) {
       if (value instanceof Collection) {
-        String[] elements=new String[((Collection)value).size()];
-        int i=0;
-        for (        Object element : (Collection)value) {
-          elements[i++]=element.toString();
+        if (((Collection)value).size() > 0) {
+          String[] elements=new String[((Collection)value).size()];
+          int i=0;
+          for (          Object element : (Collection)value) {
+            elements[i++]=element.toString();
+          }
+          builder.addElement(mappingElement.getKey(),elements);
         }
-        builder.addElement(mappingElement.getKey(),elements);
       }
  else {
         builder.addElement(mappingElement.getKey(),value.toString());
@@ -19,15 +21,17 @@
       }
     }
   }
-  ReferencedEnvelope bbox=null;
-  try {
-    bbox=resource.boundingBox();
-  }
- catch (  Exception e) {
-    LOGGER.log(Level.INFO,"Failed to parse original record bbox");
-  }
-  if (bbox != null) {
-    builder.addBoundingBox(bbox);
+  if (mapping.isIncludeEnvelope()) {
+    ReferencedEnvelope bbox=null;
+    try {
+      bbox=resource.boundingBox();
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.INFO,"Failed to parse original record bbox");
+    }
+    if (bbox != null) {
+      builder.addBoundingBox(bbox);
+    }
   }
   return builder.build(id);
 }
