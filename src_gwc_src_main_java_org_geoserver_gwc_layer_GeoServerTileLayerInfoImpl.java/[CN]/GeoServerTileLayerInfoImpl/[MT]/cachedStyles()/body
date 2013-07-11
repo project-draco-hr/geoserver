@@ -1,10 +1,15 @@
 {
-  ParameterFilter styleQualifier=TileLayerInfoUtil.findParameterFilter("STYLES",getParameterFilters());
-  if (styleQualifier != null) {
-    if (styleQualifier instanceof StringParameterFilter) {
-      StringParameterFilter sp=(StringParameterFilter)styleQualifier;
-      return ImmutableSet.copyOf(sp.getLegalValues());
+  ParameterFilter styleQualifier=getParameterFilter("STYLES");
+  try {
+    if (styleQualifier != null) {
+      List<String> styles=styleQualifier.getLegalValues();
+      if (styles != null) {
+        return ImmutableSet.copyOf(styles);
+      }
     }
+  }
+ catch (  IllegalStateException ex) {
+    LOGGER.log(Level.WARNING,"StyleParameterFilter was not initialized properly",ex);
   }
   return ImmutableSet.of();
 }

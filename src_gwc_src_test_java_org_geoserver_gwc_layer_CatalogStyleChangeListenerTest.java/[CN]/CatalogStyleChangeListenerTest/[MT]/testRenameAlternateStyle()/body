@@ -1,15 +1,14 @@
 {
   Set<ParameterFilter> params=new HashSet<ParameterFilter>();
-  when(mockTileLayerInfo.getParameterFilters()).thenReturn(params);
+  StyleParameterFilter newStyleFilter=new StyleParameterFilter();
+  newStyleFilter.setStyles(ImmutableSet.of(STYLE_NAME));
+  params.add(newStyleFilter);
   TileLayerInfoUtil.setCachedStyles(mockTileLayerInfo,null,ImmutableSet.of(STYLE_NAME));
-  assertEquals(1,params.size());
+  verify(mockTileLayerInfo).addParameterFilter((ParameterFilter)argThat(allOf(hasProperty("key",is("STYLES")),hasProperty("styles",is(ImmutableSet.of(STYLE_NAME))))));
   ImmutableSet<String> styles=ImmutableSet.of(STYLE_NAME);
   when(mockTileLayerInfo.cachedStyles()).thenReturn(styles);
   listener.handleModifyEvent(styleNameModifyEvent);
-  assertEquals(1,params.size());
-  ParameterFilter updated=params.iterator().next();
-  assertTrue(updated instanceof StringParameterFilter);
-  assertEquals(Lists.newArrayList(STYLE_NAME_MODIFIED),((StringParameterFilter)updated).getValues());
+  verify(mockTileLayerInfo).addParameterFilter((ParameterFilter)argThat(allOf(hasProperty("key",is("STYLES")),hasProperty("styles",is(ImmutableSet.of(STYLE_NAME_MODIFIED))))));
   verify(mockTileLayer,times(1)).resetParameterFilters();
   verify(mockMediator,times(1)).truncateByLayerAndStyle(eq(PREFIXED_RESOURCE_NAME),eq(STYLE_NAME));
   verify(mockMediator,times(1)).save(same(mockTileLayer));

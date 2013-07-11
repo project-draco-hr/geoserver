@@ -1,0 +1,24 @@
+{
+  final String layerName=getLayerId(MockData.ROAD_SEGMENTS);
+  final GWC mediator=GWC.get();
+  assertTrue(mediator.tileLayerExists(layerName));
+  final String url="gwc/rest/layers/" + layerName + ".xml";
+{
+    final String xml="<GeoServerLayer>" + " <name>" + layerName + "</name>"+ " <autoCacheStyles>true</autoCacheStyles>"+ "</GeoServerLayer>";
+    MockHttpServletResponse response=super.postAsServletResponse(url,xml,"text/xml");
+    assertEquals(HttpServletResponse.SC_OK,response.getStatusCode());
+    GeoServerTileLayer tileLayer=(GeoServerTileLayer)mediator.getTileLayerByName(layerName);
+    GeoServerTileLayerInfo info=tileLayer.getInfo();
+    List<ParameterFilter> filters=Lists.newArrayList(info.getParameterFilters());
+    assertThat(filters,contains(allOf(Matchers.<ParameterFilter>hasProperty("key",is("STYLES")),isA((Class<ParameterFilter>)StyleParameterFilter.class.asSubclass(ParameterFilter.class)))));
+  }
+{
+    final String xml="<GeoServerLayer>" + " <name>" + layerName + "</name>"+ " <autoCacheStyles>false</autoCacheStyles>"+ "</GeoServerLayer>";
+    MockHttpServletResponse response=super.postAsServletResponse(url,xml,"text/xml");
+    assertEquals(HttpServletResponse.SC_OK,response.getStatusCode());
+    GeoServerTileLayer tileLayer=(GeoServerTileLayer)mediator.getTileLayerByName(layerName);
+    GeoServerTileLayerInfo info=tileLayer.getInfo();
+    List<ParameterFilter> filters=Lists.newArrayList(info.getParameterFilters());
+    assertThat(filters,not(contains(allOf(Matchers.<ParameterFilter>hasProperty("key",is("STYLES")),isA((Class<ParameterFilter>)StyleParameterFilter.class.asSubclass(ParameterFilter.class))))));
+  }
+}
