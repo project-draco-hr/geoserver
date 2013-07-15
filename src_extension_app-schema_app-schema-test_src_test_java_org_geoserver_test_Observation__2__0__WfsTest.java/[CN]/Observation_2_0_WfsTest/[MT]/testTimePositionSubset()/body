@@ -1,6 +1,6 @@
 {
-  String beginPosition="1950-03-01T00:00:00";
-  String endPosition="1950-06-01T00:00:00";
+  String beginPosition="1950-03-01T00:00:00Z";
+  String endPosition="1950-06-01T00:00:00Z";
   String xml="<wfs:GetFeature " + "service=\"WFS\" " + "version=\"1.1.0\" "+ "outputFormat=\"gml32\" "+ "xmlns:om=\"http://www.opengis.net/om/2.0\" "+ "xmlns:ogc=\"http://www.opengis.net/ogc\" "+ "xmlns:wfs=\"http://www.opengis.net/wfs\" "+ "xmlns:gml=\"http://www.opengis.net/gml/3.2\" "+ "xmlns:wml2dr=\"http://www.opengis.net/waterml/DR/2.0\" "+ "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "+ "xsi:schemaLocation=\""+ "http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"+ "\""+ ">"+ "<wfs:Query typeName=\"om:OM_Observation\">"+ "    <ogc:Filter>"+ "        <ogc:PropertyIsBetween>"+ "             <ogc:PropertyName>"+ " om:OM_Observation/om:result/wml2dr:MeasurementTimeseriesDomainRange/gml:domainSet/wml2dr:TimePositionList/wml2dr:timePositionList"+ "</ogc:PropertyName>"+ "             <ogc:LowerBoundary><ogc:Literal>" + beginPosition + "</ogc:Literal></ogc:LowerBoundary>"+ "             <ogc:UpperBoundary><ogc:Literal>"+ endPosition+ "</ogc:Literal></ogc:UpperBoundary>"+ "        </ogc:PropertyIsBetween>"+ "    </ogc:Filter>"+ "</wfs:Query> "+ "</wfs:GetFeature>";
   Document doc=postAsDOM("wfs",xml);
   LOGGER.info("WFS filter GetFeature response:\n" + prettyString(doc));
@@ -12,7 +12,7 @@
   assertXpathEvaluatesTo(endPosition,"//om:OM_Observation/om:phenomenonTime/gml:TimePeriod/gml:endPosition",doc);
   assertXpathEvaluatesTo("measurement." + id,"//om:OM_Observation/om:result/wml2dr:MeasurementTimeseriesDomainRange/@gml:id",doc);
   assertXpathEvaluatesTo("tpl." + id,"//om:OM_Observation/om:result/wml2dr:MeasurementTimeseriesDomainRange/gml:domainSet/wml2dr:TimePositionList/@gml:id",doc);
-  assertXpathEvaluatesTo("1950-03-01T00:00:00 1950-04-01T00:00:00 1950-05-01T00:00:00 1950-06-01T00:00:00","//om:OM_Observation/om:result/wml2dr:MeasurementTimeseriesDomainRange/gml:domainSet/wml2dr:TimePositionList/wml2dr:timePositionList",doc);
+  assertXpathEvaluatesTo("1950-03-01T00:00:00Z 1950-04-01T00:00:00Z 1950-05-01T00:00:00Z 1950-06-01T00:00:00Z","//om:OM_Observation/om:result/wml2dr:MeasurementTimeseriesDomainRange/gml:domainSet/wml2dr:TimePositionList/wml2dr:timePositionList",doc);
   assertXpathEvaluatesTo("12.3 12.9 17.2 23.6","//om:OM_Observation/om:result/wml2dr:MeasurementTimeseriesDomainRange/gml:rangeSet/gml:QuantityList",doc);
   assertXpathEvaluatesTo("degC","//om:OM_Observation/om:result/wml2dr:MeasurementTimeseriesDomainRange/gml:rangeSet/gml:QuantityList/@uom",doc);
   assertXpathEvaluatesTo("string","//om:OM_Observation/om:result/wml2dr:MeasurementTimeseriesDomainRange/gml:coverageFunction/gml:MappingRule",doc);
