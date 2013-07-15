@@ -27,27 +27,26 @@
       reader=(GridCoverageReader)coverageReaderCache.get(key);
     }
   }
-  if (reader != null) {
-    return reader;
-  }
+  if (reader == null) {
 synchronized (hints != null ? hintCoverageReaderCache : coverageReaderCache) {
-    if (key != null) {
-      if (hints != null) {
-        reader=(GridCoverageReader)hintCoverageReaderCache.get(key);
-      }
- else {
-        reader=(GridCoverageReader)coverageReaderCache.get(key);
-      }
-    }
-    if (reader == null) {
-      final File obj=GeoserverDataDirectory.findDataFile(info.getURL());
-      reader=gridFormat.getReader(obj,new Hints(hints));
       if (key != null) {
         if (hints != null) {
-          hintCoverageReaderCache.put((CoverageHintReaderKey)key,reader);
+          reader=(GridCoverageReader)hintCoverageReaderCache.get(key);
         }
  else {
-          coverageReaderCache.put((String)key,reader);
+          reader=(GridCoverageReader)coverageReaderCache.get(key);
+        }
+      }
+      if (reader == null) {
+        final File obj=GeoserverDataDirectory.findDataFile(info.getURL());
+        reader=gridFormat.getReader(obj,new Hints(hints));
+        if (key != null) {
+          if (hints != null) {
+            hintCoverageReaderCache.put((CoverageHintReaderKey)key,reader);
+          }
+ else {
+            coverageReaderCache.put((String)key,reader);
+          }
         }
       }
     }
