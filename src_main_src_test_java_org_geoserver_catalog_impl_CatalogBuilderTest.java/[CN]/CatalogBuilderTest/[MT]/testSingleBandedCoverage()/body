@@ -1,0 +1,19 @@
+{
+  Catalog cat=getCatalog();
+  CatalogBuilder cb=new CatalogBuilder(cat);
+  cb.setStore(cat.getCoverageStoreByName(MockData.TASMANIA_DEM.getLocalPart()));
+  CoverageInfo ci=cb.buildCoverage();
+  assertEquals(CRS.decode("EPSG:4326",true),ci.getCRS());
+  assertEquals("EPSG:4326",ci.getSRS());
+  assertNotNull(ci.getNativeCRS());
+  assertNotNull(ci.getNativeBoundingBox());
+  assertNotNull(ci.getLatLonBoundingBox());
+  List<CoverageDimensionInfo> dimensions=ci.getDimensions();
+  assertEquals(1,dimensions.size());
+  CoverageDimensionInfo dimension=dimensions.get(0);
+  assertEquals("GRAY_INDEX",dimension.getName());
+  assertEquals(1,dimension.getNullValues().size());
+  assertEquals(-9999,dimension.getNullValues().get(0),0d);
+  assertEquals(-9999,dimension.getRange().getMinimum(),0d);
+  assertNull(dimension.getUnit());
+}

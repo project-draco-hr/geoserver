@@ -3,15 +3,22 @@
   List<CoverageDimensionInfo> dims=new ArrayList<CoverageDimensionInfo>();
   for (int i=0; i < length; i++) {
     CoverageDimensionInfo dim=catalog.getFactory().createCoverageDimension();
-    dim.setName(sampleDimensions[i].getDescription().toString(Locale.getDefault()));
+    GridSampleDimension sd=sampleDimensions[i];
+    String name=sd.getDescription().toString(Locale.getDefault());
+    dim.setName(name);
     StringBuilder label=new StringBuilder("GridSampleDimension".intern());
-    final Unit uom=sampleDimensions[i].getUnits();
+    final Unit uom=sd.getUnits();
+    String uName=name.toUpperCase();
     if (uom != null) {
       label.append("(".intern());
       parseUOM(label,uom);
       label.append(")".intern());
+      dim.setUnit(uom.toString());
     }
-    GridSampleDimension sd=sampleDimensions[i];
+ else     if (uName.startsWith("RED") || uName.startsWith("GREEN") || uName.startsWith("BLUE")) {
+      dim.setUnit("W.m-2.Sr-1");
+    }
+    dim.setDimensionType(sd.getSampleDimensionType());
     label.append("[".intern());
     label.append(sd.getMinimumValue());
     label.append(",".intern());

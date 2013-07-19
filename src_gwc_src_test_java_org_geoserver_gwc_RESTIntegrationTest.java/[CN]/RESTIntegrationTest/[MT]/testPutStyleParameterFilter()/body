@@ -1,0 +1,27 @@
+{
+  final String layerName=getLayerId(MockData.LAKES);
+  final GWC mediator=GWC.get();
+  assertTrue(mediator.tileLayerExists(layerName));
+  mediator.removeTileLayers(Lists.newArrayList(layerName));
+  assertFalse(mediator.tileLayerExists(layerName));
+  final String xml="<GeoServerLayer>" + " <enabled>true</enabled>" + " <name>" + layerName + "</name>"+ " <mimeFormats><string>image/png8</string></mimeFormats>"+ " <gridSubsets>"+ "  <gridSubset><gridSetName>GoogleCRS84Quad</gridSetName></gridSubset>"+ "  <gridSubset><gridSetName>EPSG:4326</gridSetName></gridSubset>"+ " </gridSubsets>"+ " <metaWidthHeight><int>9</int><int>6</int></metaWidthHeight>"+ " <parameterFilters>"+ "  <styleParameterFilter>"+ "   <key>STYLES</key>"+ "   <defaultValue>capitals</defaultValue>"+ "   <allowedStyles><string>points</string><string>bergs</string></allowedStyles>"+ "  </styleParameterFilter>"+ " </parameterFilters>"+ " <gutter>20</gutter>"+ "</GeoServerLayer>";
+  final String url="gwc/rest/layers/" + layerName + ".xml";
+  MockHttpServletResponse response=super.putAsServletResponse(url,xml,"text/xml");
+  assertEquals(HttpServletResponse.SC_OK,response.getStatusCode());
+  assertTrue(mediator.tileLayerExists(layerName));
+  GeoServerTileLayer tileLayer=(GeoServerTileLayer)mediator.getTileLayerByName(layerName);
+  GeoServerTileLayerInfo info=tileLayer.getInfo();
+  assertEquals(20,info.getGutter());
+  assertEquals(2,tileLayer.getGridSubsets().size());
+  assertTrue(tileLayer.getGridSubsets().contains("GoogleCRS84Quad"));
+  assertTrue(tileLayer.getGridSubsets().contains("EPSG:4326"));
+  assertEquals(ImmutableSet.of("image/png8"),info.getMimeFormats());
+  assertEquals(9,info.getMetaTilingX());
+  assertEquals(6,info.getMetaTilingY());
+  List<ParameterFilter> filters=Lists.newArrayList(info.getParameterFilters());
+  assertEquals(1,filters.size());
+  StyleParameterFilter styleFilter=(StyleParameterFilter)filters.get(0);
+  assertEquals("STYLES",styleFilter.getKey());
+  assertEquals("capitals",styleFilter.getDefaultValue());
+  assertEquals(ImmutableSet.of("points","bergs"),styleFilter.getStyles());
+}

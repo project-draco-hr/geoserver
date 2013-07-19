@@ -1,0 +1,46 @@
+{
+  List<Property<CoverageDimensionInfo>> result=new ArrayList<Property<CoverageDimensionInfo>>();
+  result.add(new BeanProperty<CoverageDimensionInfo>("band","name"));
+  result.add(new AbstractProperty<CoverageDimensionInfo>("dimensionType"){
+    @Override public Object getPropertyValue(    CoverageDimensionInfo item){
+      SampleDimensionType type=item.getDimensionType();
+      if (type == null) {
+        return "-";
+      }
+ else {
+        String name=type.name();
+        try {
+          String key=CoverageBandsConfigurationPanel.class.getSimpleName() + "." + name;
+          ParamResourceModel rm=new ParamResourceModel(key,null);
+          return rm.getString();
+        }
+ catch (        Exception e) {
+          return name;
+        }
+      }
+    }
+  }
+);
+  result.add(new AbstractProperty<CoverageDimensionInfo>("nullValues"){
+    @Override public Object getPropertyValue(    CoverageDimensionInfo item){
+      List<Double> values=item.getNullValues();
+      if (values == null || values.isEmpty()) {
+        return "-";
+      }
+ else {
+        StringBuilder sb=new StringBuilder();
+        final int size=values.size();
+        for (int i=0; i < size; i++) {
+          sb.append(values.get(i));
+          if (i < size - 1) {
+            sb.append(", ");
+          }
+        }
+        return sb.toString();
+      }
+    }
+  }
+);
+  result.add(new BeanProperty<CoverageDimensionInfo>("unit","unit"));
+  return result;
+}

@@ -1,0 +1,130 @@
+{
+  super(id,model);
+  add(validator=new ParameterListValidator());
+  final WebMarkupContainer container=new WebMarkupContainer("container");
+  container.setOutputMarkupId(true);
+  add(container);
+  table=new WebMarkupContainer("table");
+  table.setOutputMarkupId(true);
+  container.add(table);
+  filters=new ListView<ParameterFilter>("parameterFilters",new ArrayList<ParameterFilter>(model.getObject())){
+    private static final long serialVersionUID=1L;
+    @Override protected void onBeforeRender(){
+      super.onBeforeRender();
+    }
+    @Override protected void populateItem(    final ListItem<ParameterFilter> item){
+      final int index=item.getIndex();
+      item.add(new SimpleAttributeModifier("class",index % 2 == 0 ? "even" : "odd"));
+      final Label keyLabel;
+      keyLabel=new Label("key",new PropertyModel<String>(item.getModel(),"key"));
+      item.add(keyLabel);
+      final Component subForm=getSubform("subform",item.getModel());
+      item.add(subForm);
+      final Component removeLink;
+      removeLink=new ImageAjaxLink("removeLink",GWCIconFactory.DELETE_ICON){
+        private static final long serialVersionUID=1L;
+        @Override protected void onClick(        AjaxRequestTarget target){
+          List<ParameterFilter> list;
+          list=new ArrayList<ParameterFilter>(filters.getModelObject());
+          final ParameterFilter filter=(ParameterFilter)getDefaultModelObject();
+          list.remove(filter);
+          filters.setModelObject(list);
+          item.remove();
+          target.addComponent(container);
+        }
+      }
+;
+      removeLink.setDefaultModel(item.getModel());
+      removeLink.add(new AttributeModifier("title",true,new ResourceModel("ParameterFilterEditor.removeLink")));
+      item.add(removeLink);
+    }
+  }
+;
+  filters.setOutputMarkupId(true);
+  filters.setReuseItems(true);
+  table.add(filters);
+  List<String> parameterKeys=new ArrayList<String>(GWC.get().getGridSetBroker().getNames());
+  for (  ParameterFilter filter : model.getObject()) {
+    parameterKeys.remove(filter.getKey());
+  }
+  Collections.sort(parameterKeys);
+  GeoServerAjaxFormLink addStyleFilterLink=new GeoServerAjaxFormLink("addStyleFilter"){
+    private static final long serialVersionUID=1L;
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      StyleParameterFilter newFilter=new StyleParameterFilter();
+      newFilter.setLayer((LayerInfo)layerModel.getObject());
+      addFilter(newFilter);
+      target.addComponent(container);
+    }
+  }
+;
+  addStyleFilterLink.add(new Icon("addIcon",GWCIconFactory.ADD_ICON));
+  add(addStyleFilterLink);
+  ArrayList<Class<? extends ParameterFilter>> filterTypes=new ArrayList<Class<? extends ParameterFilter>>();
+  filterTypes.add(StringParameterFilter.class);
+  filterTypes.add(FloatParameterFilter.class);
+  filterTypes.add(RegexParameterFilter.class);
+  availableFilterTypes=new DropDownChoice<Class<? extends ParameterFilter>>("availableFilterTypes",new Model<Class<? extends ParameterFilter>>(),new Model<ArrayList<Class<? extends ParameterFilter>>>(filterTypes),new IChoiceRenderer<Class<? extends ParameterFilter>>(){
+    /** 
+ * serialVersionUID 
+ */
+    private static final long serialVersionUID=1L;
+    @Override public Object getDisplayValue(    Class<? extends ParameterFilter> object){
+      String resource="ParameterFilterEditor.filtername." + object.getCanonicalName();
+      try {
+        return getLocalizer().getString(resource,ParameterFilterEditor.this);
+      }
+ catch (      MissingResourceException ex) {
+        if (LOGGER.isLoggable(Level.CONFIG))         LOGGER.log(Level.CONFIG,"Could not find localization resource" + " for ParameterFilter subclass " + object.getCanonicalName());
+        return object.getSimpleName();
+      }
+    }
+    @Override public String getIdValue(    Class<? extends ParameterFilter> object,    int index){
+      return Integer.toString(index);
+    }
+  }
+);
+  availableFilterTypes.setOutputMarkupId(true);
+  add(availableFilterTypes);
+  newFilterKey=new TextField<String>("newFilterKey",Model.of(""));
+  add(newFilterKey);
+  final RepeatingView commonKeys=new RepeatingView("commonKeys");
+  for (  String key : COMMON_KEYS) {
+    commonKeys.add(new Label(commonKeys.newChildId(),key));
+  }
+  add(commonKeys);
+  GeoServerAjaxFormLink addFilterLink=new GeoServerAjaxFormLink("addFilter"){
+    private static final long serialVersionUID=1L;
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      availableFilterTypes.processInput();
+      newFilterKey.processInput();
+      String key=newFilterKey.getModelObject();
+      Class<? extends ParameterFilter> type=availableFilterTypes.getModelObject();
+      try {
+        ParameterFilter newFilter=type.getConstructor().newInstance();
+        newFilter.setKey(key);
+        addFilter(newFilter);
+        newFilterKey.setModel(Model.of(""));
+      }
+ catch (      NoSuchMethodException ex) {
+        LOGGER.log(Level.WARNING,"No Default Constructor for " + type,ex);
+      }
+catch (      InvocationTargetException ex) {
+        LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+      }
+catch (      SecurityException ex) {
+        LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+      }
+catch (      InstantiationException ex) {
+        LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+      }
+catch (      IllegalAccessException ex) {
+        LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+      }
+      target.addComponent(container);
+    }
+  }
+;
+  addFilterLink.add(new Icon("addIcon",GWCIconFactory.ADD_ICON));
+  add(addFilterLink);
+}
