@@ -1,0 +1,30 @@
+{
+  StringBuilder builder=new StringBuilder("pgraster://");
+  builder.append(user.getValue()).append(":").append(password.getValue()).append("@").append(server.getValue()).append(":").append(port.getValue()).append(":").append(database.getValue()).append(".").append(schema.getValue()).append(".").append(table.getValue());
+  final CoordinateReferenceSystem crs=(CoordinateReferenceSystem)epsgcode.getModel().getObject();
+  if (crs != null) {
+    Integer code;
+    try {
+      code=CRS.lookupEpsgCode(crs,false);
+      if (code != null) {
+        builder.append("@").append(code);
+      }
+    }
+ catch (    FactoryException e) {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.warning("Unable to parse the specified CRS due to " + e.getMessage());
+      }
+    }
+  }
+  builder.append(":");
+  final String fileExt=fileext.getValue();
+  if (fileExt != null && fileExt.trim().length() > 0) {
+    builder.append(fileExt);
+  }
+  final String options=importopt.getValue();
+  if (options != null && options.trim().length() > 0) {
+    builder.append("?").append(options);
+  }
+  builder.append("#");
+  return builder.toString();
+}
