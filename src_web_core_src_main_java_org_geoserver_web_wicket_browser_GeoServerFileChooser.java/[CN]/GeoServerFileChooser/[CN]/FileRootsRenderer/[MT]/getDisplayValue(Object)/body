@@ -7,9 +7,13 @@
     return new ParamResourceModel("dataDirectory",GeoServerFileChooser.this).getString();
   }
   try {
-    return FileSystemView.getFileSystemView().getSystemDisplayName(f);
+    final String displayName=FileSystemView.getFileSystemView().getSystemDisplayName(f);
+    if (displayName != null && displayName.length() > 0) {
+      return displayName;
+    }
+    return FilenameUtils.getPrefix(f.getAbsolutePath());
   }
  catch (  Exception e) {
-    return f.getName();
   }
+  return f.getName();
 }
