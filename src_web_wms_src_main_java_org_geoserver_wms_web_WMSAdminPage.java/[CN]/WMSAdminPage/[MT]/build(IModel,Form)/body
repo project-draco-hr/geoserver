@@ -1,4 +1,5 @@
 {
+  form.add(modal=new ModalWindow("modal"));
   LayerAuthoritiesAndIdentifiersPanel authAndIds;
   authAndIds=new LayerAuthoritiesAndIdentifiersPanel("authoritiesAndIds",true,info);
   form.add(authAndIds);
@@ -22,7 +23,11 @@
   maxErrors.add(new MinimumValidator<Integer>(0));
   form.add(maxErrors);
   form.add(new CheckBox("watermark.enabled"));
-  form.add(new TextField("watermark.uRL").add(new FileExistsValidator(true)));
+  TextField watermarkUrlField=new TextField("watermark.uRL",new FileModel(new PropertyModel<String>(form.getModel(),"watermark.URL")));
+  watermarkUrlField.add(new FileExistsValidator(true));
+  watermarkUrlField.setOutputMarkupId(true);
+  form.add(watermarkUrlField);
+  form.add(chooserButton("chooser",new ParamResourceModel("chooseWatermark",this).getString(),watermarkUrlField));
   TextField<Integer> transparency=new TextField<Integer>("watermark.transparency");
   transparency.add(new RangeValidator<Integer>(0,100));
   form.add(transparency);
