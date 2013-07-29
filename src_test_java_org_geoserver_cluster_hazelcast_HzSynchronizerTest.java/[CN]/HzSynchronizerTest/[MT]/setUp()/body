@@ -1,0 +1,32 @@
+{
+  hz=createMock(HazelcastInstance.class);
+  topic=createMock(ITopic.class);
+  configWatcher=createMock(ClusterConfigWatcher.class);
+  clusterConfig=createMock(ClusterConfig.class);
+  captureTopicListener=new Capture<MessageListener<Event>>();
+  localAddress=new InetSocketAddress(localAddress(42),5000);
+  remoteAddress=new InetSocketAddress(localAddress(54),5000);
+  Cluster cluster=createMock(Cluster.class);
+  Member member=createMock(Member.class);
+  expect(hz.<Event>getTopic(TOPIC_NAME)).andReturn(topic);
+  topic.addMessageListener(capture(captureTopicListener));
+  expectLastCall();
+  expect(cluster.getLocalMember()).andStubReturn(member);
+  expect(member.getInetSocketAddress()).andStubReturn(localAddress);
+  EasyMock.replay(cluster,member);
+  expect(hz.getCluster()).andStubReturn(cluster);
+  expect(configWatcher.get()).andStubReturn(clusterConfig);
+  expect(clusterConfig.getSyncDelay()).andStubReturn(SYNC_DELAY);
+  catalog=createMock(Catalog.class);
+  geoServer=createMock(GeoServer.class);
+  expect(geoServer.getCatalog()).andStubReturn(catalog);
+  gsListenerCapture=new Capture<ConfigurationListener>();
+  geoServer.addListener(capture(gsListenerCapture));
+  expectLastCall().atLeastOnce();
+  catListenerCapture=new Capture<CatalogListener>();
+  catalog.addListener(capture(catListenerCapture));
+  expectLastCall().atLeastOnce();
+  executor=createMock(ScheduledExecutorService.class);
+  captureExecutor=new Capture<Runnable>();
+  expect(executor.schedule(capture(captureExecutor),anyLong(),(TimeUnit)anyObject())).andStubReturn(null);
+}

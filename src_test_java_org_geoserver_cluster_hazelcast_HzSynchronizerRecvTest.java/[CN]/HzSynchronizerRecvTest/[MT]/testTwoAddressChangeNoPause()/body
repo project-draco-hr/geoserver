@@ -1,0 +1,19 @@
+{
+  GeoServerInfo gsInfo;
+  final String globalId="GeoServer-TEST";
+{
+    gsInfo=createMock(GeoServerInfo.class);
+    expect(gsInfo.getId()).andStubReturn(globalId);
+    expectationTestTwoAddressChangeNoPause(gsInfo,globalId);
+  }
+  replay(gsInfo);
+{
+    HzSynchronizer sync=getSynchronizer();
+    sync.initialize(configWatcher);
+    ConfigChangeEvent evtGs=new ConfigChangeEvent(globalId,null,GeoServerInfoImpl.class,Type.MODIFY);
+    mockMessage(evtGs);
+    mockMessage(evtGs);
+    waitForSync();
+  }
+  verify(gsInfo);
+}

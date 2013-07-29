@@ -1,0 +1,20 @@
+{
+  GeoServerInfo info;
+  final String globalName=null;
+  final String globalId="GeoServer-TEST";
+  final String globalWorkspace=null;
+{
+    info=createMock(GeoServerInfo.class);
+    expect(info.getId()).andStubReturn(globalId);
+    expectationTestContactChange(info,globalId);
+  }
+  replay(info);
+{
+    HzSynchronizer sync=getSynchronizer();
+    sync.initialize(configWatcher);
+    ConfigChangeEvent evt=new ConfigChangeEvent(globalId,null,GeoServerInfoImpl.class,Type.MODIFY);
+    mockMessage(evt);
+  }
+  waitForSync();
+  verify(info);
+}
