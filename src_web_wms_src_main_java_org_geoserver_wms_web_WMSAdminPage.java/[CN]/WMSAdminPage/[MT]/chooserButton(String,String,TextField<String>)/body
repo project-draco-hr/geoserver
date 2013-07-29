@@ -1,0 +1,30 @@
+{
+  AjaxSubmitLink link=new AjaxSubmitLink(linkId){
+    @Override public boolean getDefaultFormProcessing(){
+      return false;
+    }
+    @Override public void onSubmit(    AjaxRequestTarget target,    Form form){
+      File file=null;
+      textField.processInput();
+      String input=(String)textField.getConvertedInput();
+      if (input != null && !input.equals("")) {
+        file=new File(input);
+      }
+      GeoServerFileChooser chooser=new GeoServerFileChooser(modal.getContentId(),new Model(file)){
+        protected void fileClicked(        File file,        AjaxRequestTarget target){
+          textField.clearInput();
+          textField.setModelObject(file.getAbsolutePath());
+          target.addComponent(textField);
+          dialog.close(target);
+        }
+      }
+;
+      chooser.setFileTableHeight(null);
+      modal.setContent(chooser);
+      modal.setTitle(windowTitle);
+      modal.show(target);
+    }
+  }
+;
+  return link;
+}

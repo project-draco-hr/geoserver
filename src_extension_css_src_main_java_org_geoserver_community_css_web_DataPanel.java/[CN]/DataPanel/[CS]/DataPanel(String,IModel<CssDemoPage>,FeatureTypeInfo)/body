@@ -1,7 +1,37 @@
 {
   super(id,model);
-  FeatureCollection<SimpleFeatureType,SimpleFeature> features=((FeatureSource<SimpleFeatureType,SimpleFeature>)layerInfo.getFeatureSource(null,null)).getFeatures();
-  SummaryProvider summaries=new SummaryProvider(features);
+  this.featureTypeId=layerInfo.getId();
+  Feature sample=getSampleFeature(layerInfo);
+  DataAttributesProvider summaries=new DataAttributesProvider(sample);
   add(new Label("summary-message","For reference, here is a listing of the attributes in this data set."));
-  add(new SummaryTable("summary",summaries));
+  final WebMarkupContainer attsContainer=new WebMarkupContainer("attributes-container");
+  attsContainer.setOutputMarkupId(true);
+  add(attsContainer);
+  final GeoServerTablePanel<DataAttribute> attributes=new GeoServerTablePanel<DataAttribute>("attributes",summaries){
+    @Override protected Component getComponentForProperty(    String id,    final IModel itemModel,    Property<DataAttribute> property){
+      if (DataAttributesProvider.COMPUTE_STATS.equals(property.getName())) {
+        Fragment f=new Fragment(id,"computeStatsFragment",DataPanel.this);
+        f.add(new AjaxLink<Void>("computeStats"){
+          @Override public void onClick(          AjaxRequestTarget target){
+            DataAttribute attribute=(DataAttribute)itemModel.getObject();
+            try {
+              updateAttributeStats(attribute);
+            }
+ catch (            IOException e) {
+              error("Failed to compute stats for the attribute: " + e.getMessage());
+            }
+            target.addComponent(attsContainer);
+          }
+        }
+);
+        return f;
+      }
+      return null;
+    }
+  }
+;
+  attributes.setPageable(false);
+  attributes.setFilterable(false);
+  attributes.setSortable(false);
+  attsContainer.add(attributes);
 }

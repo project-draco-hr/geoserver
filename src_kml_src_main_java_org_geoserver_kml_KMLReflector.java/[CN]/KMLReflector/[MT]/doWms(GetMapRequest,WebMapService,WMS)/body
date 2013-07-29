@@ -45,16 +45,18 @@
       throw new ServiceException("Unknown overlay mode: " + submode);
     }
   }
+  Map fo=request.getFormatOptions();
   boolean refreshMode=mode.equals("refresh");
   if (request.getWidth() < 1) {
     request.setWidth(refreshMode || containsRasterData ? DEFAULT_OVERLAY_SIZE : 256);
+    fo.put("autofit","true");
   }
   if (request.getHeight() < 1) {
     request.setHeight(refreshMode || containsRasterData ? DEFAULT_OVERLAY_SIZE : 256);
+    fo.put("autofit","true");
   }
   request.setSRS("EPSG:4326");
   request=DefaultWebMapService.autoSetMissingProperties(request);
-  Map fo=request.getFormatOptions();
   organizeFormatOptionsParams(request.getRawKvp(),fo);
   mergeDefaults(fo,modeOptions);
   if (fo.get("kmattr") == null) {
