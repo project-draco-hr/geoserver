@@ -1,0 +1,49 @@
+{
+  ImportTask item=model.getObject();
+  Form form=new Form("form");
+  add(form);
+  ReprojectTransform reprojectTx=(ReprojectTransform)item.getTransform().get(ReprojectTransform.class);
+  reprojectCheckBox=new CheckBox("enableReprojection",new Model(reprojectTx != null));
+  reprojectCheckBox.add(new AjaxFormComponentUpdatingBehavior("onclick"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      reprojectPanel.setEnabled(reprojectCheckBox.getModelObject());
+      target.addComponent(reprojectPanel);
+    }
+  }
+);
+  form.add(reprojectCheckBox);
+  if (reprojectTx == null) {
+    reprojectTx=new ReprojectTransform(null);
+    reprojectTx.setSource(item.getLayer().getResource().getNativeCRS());
+  }
+  reprojectPanel=new ReprojectionPanel("reprojection",reprojectTx);
+  reprojectPanel.setOutputMarkupId(true);
+  reprojectPanel.setEnabled(false);
+  form.add(reprojectPanel);
+  remapPanel=new AttributeRemappingPanel("remapping",model);
+  form.add(remapPanel);
+  form.add(new AjaxSubmitLink("save"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      ImportTask task=model.getObject();
+      TransformChain txChain=task.getTransform();
+      txChain.removeAll(ReprojectTransform.class);
+      if (reprojectCheckBox.getModelObject()) {
+        txChain.add(reprojectPanel.getTransform());
+      }
+      txChain.removeAll(AttributeRemapTransform.class);
+      txChain.getTransforms().addAll(remapPanel.remaps);
+      ImporterWebUtils.importer().changed(task);
+      PageParameters pp=new PageParameters("id=" + task.getContext().getId());
+      setResponsePage(ImportPage.class,pp);
+    }
+  }
+);
+  form.add(new AjaxLink("cancel"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      ImportTask task=model.getObject();
+      PageParameters pp=new PageParameters("id=" + task.getContext().getId());
+      setResponsePage(ImportPage.class,pp);
+    }
+  }
+);
+}

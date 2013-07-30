@@ -1,0 +1,20 @@
+{
+  String NOT_USED=null;
+  DateFormatTransform transform=new DateFormatTransform("not used",NOT_USED);
+  Date now=new Date();
+  List<String> patterns=new ArrayList<String>();
+  patterns.addAll(Collections2.transform(Dates.patterns(false),new Function<DatePattern,String>(){
+    @Override public String apply(    DatePattern input){
+      return input.dateFormat().toPattern();
+    }
+  }
+));
+  Collections.shuffle(patterns);
+  for (  String f : patterns) {
+    SimpleDateFormat fmt=new SimpleDateFormat(f);
+    fmt.setTimeZone(Dates.UTC_TZ);
+    Date expected=fmt.parse(fmt.format(now));
+    Date parsed=transform.parseDate(fmt.format(now));
+    assertEquals(expected,parsed);
+  }
+}

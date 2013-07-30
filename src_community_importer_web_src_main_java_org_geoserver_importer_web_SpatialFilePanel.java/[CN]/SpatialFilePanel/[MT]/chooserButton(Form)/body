@@ -1,0 +1,42 @@
+{
+  AjaxSubmitLink link=new AjaxSubmitLink("chooser"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      dialog.setTitle(new ParamResourceModel("chooseFile",this));
+      dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+        @Override protected Component getContents(        String id){
+          File file=null;
+          if (!fileField.getInput().trim().equals("")) {
+            file=new File(fileField.getInput());
+            if (!file.exists())             file=null;
+          }
+          GeoServerFileChooser chooser=new GeoServerFileChooser(id,new Model(file)){
+            @Override protected void fileClicked(            File file,            AjaxRequestTarget target){
+              SpatialFilePanel.this.file=file.getAbsolutePath();
+              fileField.clearInput();
+              fileField.setModelObject(file.getAbsolutePath());
+              target.addComponent(fileField);
+              dialog.close(target);
+            }
+          }
+;
+          initFileChooser(chooser);
+          return chooser;
+        }
+        @Override protected boolean onSubmit(        AjaxRequestTarget target,        Component contents){
+          GeoServerFileChooser chooser=(GeoServerFileChooser)contents;
+          file=((File)chooser.getDefaultModelObject()).getAbsolutePath();
+          fileField.clearInput();
+          target.addComponent(fileField);
+          return true;
+        }
+        @Override public void onClose(        AjaxRequestTarget target){
+          target.addComponent(fileField);
+        }
+      }
+);
+    }
+  }
+;
+  link.setDefaultFormProcessing(false);
+  return link;
+}

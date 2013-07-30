@@ -1,0 +1,16 @@
+{
+  JSONObject json=(JSONObject)getAsJSON("/rest/imports/1?expand=3");
+  assertNotNull(json.get("import"));
+  JSONObject imprt=json.optJSONObject("import");
+  assertEquals(1,imprt.getInt("id"));
+  JSONArray tasks=imprt.getJSONArray("tasks");
+  assertEquals(1,tasks.size());
+  JSONObject task=tasks.getJSONObject(0);
+  assertEquals("READY",task.get("state"));
+  JSONObject source=imprt.getJSONArray("tasks").getJSONObject(0).getJSONObject("data");
+  assertEquals("file",source.getString("type"));
+  assertEquals("GeoTIFF",source.getString("format"));
+  ImportContext context=importer.getContext(1);
+  assertEquals(((SpatialFile)context.getTasks().get(0).getData()).getFile().getParentFile().getPath(),source.getString("location"));
+  assertEquals("EmissiveCampania.tif",source.getString("file"));
+}

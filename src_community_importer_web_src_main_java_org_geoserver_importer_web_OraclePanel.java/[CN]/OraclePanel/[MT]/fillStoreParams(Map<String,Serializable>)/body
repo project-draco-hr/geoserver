@@ -1,0 +1,31 @@
+{
+  DataStoreFactorySpi factory;
+  params.put(JDBCDataStoreFactory.DBTYPE.key,"oracle");
+  if (CONNECTION_JNDI.equals(connectionType)) {
+    factory=new OracleNGJNDIDataStoreFactory();
+    fillInJndiParams(params,jndiParamPanel);
+  }
+ else   if (CONNECTION_OCI.equals(connectionType)) {
+    factory=new OracleNGOCIDataStoreFactory();
+    params.put(ALIAS.key,ociParamPanel.alias);
+    params.put(USER.key,ociParamPanel.username);
+    params.put(PASSWD.key,ociParamPanel.password);
+  }
+ else {
+    factory=new OracleNGDataStoreFactory();
+    params.put(HOST.key,basicParamPanel.host);
+    params.put(OracleNGDataStoreFactory.PORT.key,basicParamPanel.port);
+    params.put(USER.key,basicParamPanel.username);
+    params.put(PASSWD.key,basicParamPanel.password);
+    params.put(DATABASE.key,basicParamPanel.database);
+  }
+  if (!CONNECTION_JNDI.equals(connectionType)) {
+    fillInConnPoolParams(params,basicParamPanel);
+  }
+  if (basicParamPanel.schema != null) {
+    params.put(JDBCDataStoreFactory.SCHEMA.key,basicParamPanel.schema);
+  }
+  params.put(OracleNGDataStoreFactory.LOOSEBBOX.key,advancedParamPanel.looseBBox);
+  params.put(PK_METADATA_TABLE.key,advancedParamPanel.pkMetadata);
+  return factory;
+}

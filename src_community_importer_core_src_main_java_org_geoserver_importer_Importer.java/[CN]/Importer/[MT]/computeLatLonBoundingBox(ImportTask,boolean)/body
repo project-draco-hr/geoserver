@@ -1,0 +1,10 @@
+{
+  ResourceInfo r=task.getLayer().getResource();
+  if (force || r.getLatLonBoundingBox() == null && r.getNativeBoundingBox() != null) {
+    CoordinateReferenceSystem nativeCRS=CRS.decode(r.getSRS());
+    ReferencedEnvelope nativeBbox=new ReferencedEnvelope(r.getNativeBoundingBox(),nativeCRS);
+    r.setLatLonBoundingBox(nativeBbox.transform(CRS.decode("EPSG:4326"),true));
+    return true;
+  }
+  return false;
+}

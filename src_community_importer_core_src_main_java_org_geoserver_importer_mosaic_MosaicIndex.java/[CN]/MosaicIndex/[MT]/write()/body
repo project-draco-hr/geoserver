@@ -1,0 +1,71 @@
+{
+  delete();
+  Collection<Granule> granules=mosaic.granules();
+  if (granules.isEmpty()) {
+    LOGGER.warning("No granules in mosaic, nothing to write");
+    return;
+  }
+  Granule first=Iterators.find(granules.iterator(),new Predicate<Granule>(){
+    @Override public boolean apply(    Granule input){
+      return input.getEnvelope() != null && input.getEnvelope().getCoordinateReferenceSystem() != null;
+    }
+  }
+);
+  if (first == null) {
+    throw new IOException("Unable to determine CRS for mosaic");
+  }
+  Envelope2D envelope=new Envelope2D(first.getEnvelope());
+  SimpleFeatureTypeBuilder typeBuilder=new SimpleFeatureTypeBuilder();
+  typeBuilder.setName(mosaic.getName());
+  typeBuilder.setCRS(envelope.getCoordinateReferenceSystem());
+  typeBuilder.add("the_geom",Polygon.class);
+  typeBuilder.add("location",String.class);
+  if (mosaic.getTimeMode() != TimeMode.NONE) {
+    typeBuilder.add("time",Date.class);
+  }
+  ShapefileDataStoreFactory shpFactory=new ShapefileDataStoreFactory();
+  DirectoryDataStore dir=new DirectoryDataStore(mosaic.getFile(),new ShapefileDataStoreFactory.ShpFileStoreFactory(shpFactory,new HashMap()));
+  try {
+    dir.createSchema(typeBuilder.buildFeatureType());
+    FeatureWriter<SimpleFeatureType,SimpleFeature> w=dir.getFeatureWriterAppend(mosaic.getName(),Transaction.AUTO_COMMIT);
+    try {
+      for (      Granule g : mosaic.granules()) {
+        if (g.getEnvelope() == null) {
+          LOGGER.warning("Skipping " + g.getFile().getAbsolutePath() + ", no envelope");
+        }
+        SimpleFeature f=w.next();
+        f.setDefaultGeometry(JTS.toGeometry((BoundingBox)g.getEnvelope()));
+        f.setAttribute("location",g.getFile().getName());
+        if (mosaic.getTimeMode() != TimeMode.NONE) {
+          f.setAttribute("time",g.getTimestamp());
+        }
+        w.write();
+        envelope.include(g.getEnvelope());
+      }
+    }
+  finally {
+      w.close();
+    }
+  }
+  finally {
+    dir.dispose();
+  }
+  double width=first.getGrid().getGridRange2D().getWidth();
+  double height=first.getGrid().getGridRange2D().getHeight();
+  Properties props=new Properties();
+  props.setProperty("Name",mosaic.getName());
+  props.setProperty("Levels",String.format("%f,%f",first.getEnvelope().getWidth() / width,first.getEnvelope().getHeight() / height));
+  props.setProperty("LevelsNum","1");
+  props.setProperty("LocationAttribute","location");
+  if (mosaic.getTimeMode() != TimeMode.NONE) {
+    props.setProperty("TimeAttribute","time");
+  }
+  FileOutputStream fout=new FileOutputStream(new File(mosaic.getFile(),mosaic.getName() + ".properties"));
+  try {
+    props.store(fout,null);
+    fout.flush();
+  }
+  finally {
+    fout.close();
+  }
+}

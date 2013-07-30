@@ -1,0 +1,18 @@
+{
+  int i=postNewImport();
+  int t=postNewTaskAsMultiPartForm(i,"shape/archsites_no_crs.zip");
+  JSONObject task=getTask(i,t);
+  assertEquals("NO_CRS",task.getString("state"));
+  String json="{" + "\"task\": {" + "\"layer\": {"+ "\"srs\": \"EPSG:4326\""+ "}"+ "}"+ "}";
+  putTask(i,t,json);
+  task=getTask(i,t);
+  assertEquals("READY",task.getString("state"));
+  assertEquals("gs_archsites",task.getJSONObject("layer").getJSONObject("style").getString("name"));
+  json="{" + "\"task\": {" + "\"layer\": {"+ "\"style\": {"+ "\"name\": \"point\""+ "}"+ "}"+ "}"+ "}";
+  putTask(i,t,json);
+  task=getTask(i,t);
+  assertEquals("READY",task.getString("state"));
+  assertEquals("point",task.getJSONObject("layer").getJSONObject("style").getString("name"));
+  postImport(i);
+  runChecks("archsites");
+}

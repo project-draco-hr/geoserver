@@ -1,0 +1,41 @@
+{
+  File file=maybeFile(data).get();
+  SimpleFeature first=sniff(file);
+  Preconditions.checkNotNull(first);
+  SimpleFeatureType featureType=first.getFeatureType();
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.init(featureType);
+  tb.setName(FilenameUtils.getBaseName(file.getName()));
+  featureType=tb.buildFeatureType();
+  FeatureTypeInfo ft=catalog.getFactory().createFeatureType();
+  ft.setName(FilenameUtils.getBaseName(file.getName()));
+  ft.setNativeName(ft.getName());
+  CoordinateReferenceSystem crs=null;
+  if (featureType != null && featureType.getCoordinateReferenceSystem() != null) {
+    crs=featureType.getCoordinateReferenceSystem();
+  }
+  try {
+    crs=crs != null ? crs : CRS.decode("EPSG:4326");
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+  ft.setNativeCRS(crs);
+  String srs=srs(crs);
+  if (srs != null) {
+    ft.setSRS(srs);
+  }
+  ReferencedEnvelope bounds=new ReferencedEnvelope(crs);
+  FeatureIterator<SimpleFeature> it=new FeatureJSON().streamFeatureCollection(file);
+  while (it.hasNext()) {
+    SimpleFeature f=it.next();
+    bounds.include(f.getBounds());
+  }
+  ft.setNativeBoundingBox(bounds);
+  LayerInfo layer=catalog.getFactory().createLayer();
+  layer.setResource(ft);
+  ImportTask task=new ImportTask(data);
+  task.setLayer(layer);
+  task.getMetadata().put(FeatureType.class,featureType);
+  return task;
+}

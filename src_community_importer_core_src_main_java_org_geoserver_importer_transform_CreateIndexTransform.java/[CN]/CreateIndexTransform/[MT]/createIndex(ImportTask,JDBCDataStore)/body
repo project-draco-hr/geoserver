@@ -1,0 +1,24 @@
+{
+  Connection conn=null;
+  Statement stmt=null;
+  Exception error=null;
+  String sql=null;
+  try {
+    conn=store.getConnection(Transaction.AUTO_COMMIT);
+    stmt=conn.createStatement();
+    String tableName=item.getLayer().getResource().getNativeName();
+    String indexName="\"" + tableName + "_"+ field+ "\"";
+    sql="CREATE INDEX " + indexName + " ON \""+ tableName+ "\" (\""+ field+ "\")";
+    stmt.execute(sql);
+  }
+ catch (  SQLException sqle) {
+    error=sqle;
+  }
+ finally {
+    store.closeSafe(stmt);
+    store.closeSafe(conn);
+  }
+  if (error != null) {
+    throw new Exception("Error creating index, SQL was : " + sql,error);
+  }
+}

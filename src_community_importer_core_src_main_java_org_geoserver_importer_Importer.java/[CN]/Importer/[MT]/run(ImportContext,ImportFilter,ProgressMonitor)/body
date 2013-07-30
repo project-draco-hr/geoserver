@@ -1,0 +1,50 @@
+{
+  context.setProgress(monitor);
+  context.setState(ImportContext.State.RUNNING);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Running import " + context.getId());
+  }
+  for (  ImportTask task : context.getTasks()) {
+    if (!filter.include(task)) {
+      continue;
+    }
+    if (!task.readyForImport()) {
+      continue;
+    }
+    if (context.progress().isCanceled()) {
+      break;
+    }
+    run(task);
+  }
+  context.updated();
+  contextStore.save(context);
+  if (context.isArchive() && context.getState() == ImportContext.State.COMPLETE) {
+    boolean canArchive=!Iterables.any(context.getTasks(),new Predicate<ImportTask>(){
+      @Override public boolean apply(      ImportTask input){
+        return input.isDirect();
+      }
+    }
+);
+    if (canArchive) {
+      Directory directory=null;
+      if (context.getData() instanceof Directory) {
+        directory=(Directory)context.getData();
+      }
+ else       if (context.getData() instanceof SpatialFile) {
+        directory=new Directory(((SpatialFile)context.getData()).getFile().getParentFile());
+      }
+      if (directory != null) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Archiving directory " + directory.getFile().getAbsolutePath());
+        }
+        try {
+          directory.archive(getArchiveFile(context));
+        }
+ catch (        Exception ioe) {
+          ioe.printStackTrace();
+          LOGGER.log(Level.WARNING,"Error archiving",ioe);
+        }
+      }
+    }
+  }
+}

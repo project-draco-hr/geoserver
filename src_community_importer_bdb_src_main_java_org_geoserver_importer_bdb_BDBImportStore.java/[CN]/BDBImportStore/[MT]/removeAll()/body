@@ -1,0 +1,18 @@
+{
+  Transaction tx=db.getEnvironment().beginTransaction(null,null);
+  Cursor c=db.openCursor(tx,null);
+  DatabaseEntry key=new DatabaseEntry();
+  DatabaseEntry val=new DatabaseEntry();
+  LongBinding keyBinding=new LongBinding();
+  List<Long> ids=new ArrayList();
+  OperationStatus op=null;
+  while ((op=c.getNext(key,val,LockMode.DEFAULT)) == OperationStatus.SUCCESS) {
+    ids.add(LongBinding.entryToLong(key));
+  }
+  c.close();
+  for (  Long id : ids) {
+    keyBinding.objectToEntry(id,key);
+    db.delete(tx,key);
+  }
+  tx.commit();
+}

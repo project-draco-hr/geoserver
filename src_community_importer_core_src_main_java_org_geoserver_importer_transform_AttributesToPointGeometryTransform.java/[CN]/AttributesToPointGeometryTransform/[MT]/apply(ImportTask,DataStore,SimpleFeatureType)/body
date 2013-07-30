@@ -1,0 +1,17 @@
+{
+  SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+  builder.init(featureType);
+  int latIndex=featureType.indexOf(latField);
+  int lngIndex=featureType.indexOf(lngField);
+  if (latIndex < 0 || lngIndex < 0) {
+    throw new Exception("FeatureType " + featureType.getName() + " does not have lat lng fields named '"+ latField+ "'"+ " and "+ "'"+ lngField+ "'");
+  }
+  GeometryDescriptor geometryDescriptor=featureType.getGeometryDescriptor();
+  if (geometryDescriptor != null) {
+    builder.remove(geometryDescriptor.getLocalName());
+  }
+  builder.remove(latField);
+  builder.remove(lngField);
+  builder.add(pointFieldName,Point.class);
+  return builder.buildFeatureType();
+}

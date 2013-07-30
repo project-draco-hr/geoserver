@@ -1,0 +1,16 @@
+{
+  List<ImportTask> tasks=super.list(data,catalog,monitor);
+  Mosaic m=(Mosaic)data;
+  if (m.getTimeMode() != TimeMode.NONE) {
+    for (    ImportTask task : tasks) {
+      DimensionInfo dim=new DimensionInfoImpl();
+      dim.setEnabled(true);
+      dim.setAttribute("time");
+      dim.setPresentation(DimensionPresentation.LIST);
+      dim.setUnits("ISO8601");
+      ResourceInfo r=task.getLayer().getResource();
+      r.getMetadata().put(ResourceInfo.TIME,dim);
+    }
+  }
+  return tasks;
+}

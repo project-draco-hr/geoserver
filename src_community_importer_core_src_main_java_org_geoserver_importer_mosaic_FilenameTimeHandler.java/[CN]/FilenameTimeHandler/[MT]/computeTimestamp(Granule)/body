@@ -1,0 +1,21 @@
+{
+  Preconditions.checkNotNull(filenamePattern);
+  Preconditions.checkNotNull(timeFormat);
+  String filename=g.getFile().getName();
+  Matcher m=filenamePattern.matcher(g.getFile().getName());
+  if (!m.matches() || m.groupCount() != 2) {
+    String msg="Failure parsing time from file " + filename + " with pattern "+ getFilenameRegex();
+    g.setMessage(msg);
+    LOGGER.log(Level.WARNING,msg);
+    return null;
+  }
+  try {
+    return timeFormat.parse(m.group(1));
+  }
+ catch (  ParseException e) {
+    String msg="Failure parsing timestamp with pattern " + timeFormat.toPattern() + ": "+ e.getLocalizedMessage();
+    g.setMessage(msg);
+    LOGGER.log(Level.WARNING,msg,e);
+    return null;
+  }
+}

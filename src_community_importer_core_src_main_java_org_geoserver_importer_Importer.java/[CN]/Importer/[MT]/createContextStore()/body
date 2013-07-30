@@ -1,0 +1,23 @@
+{
+  ImportStore store=null;
+  String name=GeoServerExtensions.getProperty("org.geoserver.importer.store");
+  if (name == null) {
+    name=GeoServerExtensions.getProperty("org.opengeo.importer.store");
+  }
+  if (name != null) {
+    for (    ImportStore bean : GeoServerExtensions.extensions(ImportStore.class)) {
+      if (name.equals(bean.getName())) {
+        store=bean;
+        break;
+      }
+    }
+    if (store == null) {
+      LOGGER.warning("Invalid value for import store, no such store " + name);
+    }
+  }
+  if (store == null) {
+    store=new MemoryImportStore();
+  }
+  LOGGER.info("Enabling import store: " + store.getName());
+  return store;
+}

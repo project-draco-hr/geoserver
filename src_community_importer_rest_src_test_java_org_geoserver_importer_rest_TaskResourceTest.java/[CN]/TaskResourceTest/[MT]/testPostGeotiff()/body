@@ -1,0 +1,20 @@
+{
+  File tempBase=tmpDir();
+  File tempDir=new File(tempBase,"testPostGeotiff");
+  if (!tempDir.mkdirs()) {
+    throw new IllegalStateException("Cannot create temp dir for testing geotiff");
+  }
+  String tifname="EmissiveCampania.tif";
+  String bz2name=tifname + ".bz2";
+  File destinationArchive=new File(tempDir,bz2name);
+  InputStream inputStream=ImporterTestSupport.class.getResourceAsStream("test-data/geotiff/" + bz2name);
+  IOUtils.copy(inputStream,destinationArchive);
+  VFSWorker vfs=new VFSWorker();
+  vfs.extractTo(destinationArchive,tempDir);
+  File tiff=new File(tempDir,tifname);
+  if (!tiff.exists()) {
+    throw new IllegalStateException("Did not extract tif correctly");
+  }
+  FileInputStream fis=new FileInputStream(tiff);
+  uploadGeotiffAndVerify(tifname,fis,"image/tiff");
+}

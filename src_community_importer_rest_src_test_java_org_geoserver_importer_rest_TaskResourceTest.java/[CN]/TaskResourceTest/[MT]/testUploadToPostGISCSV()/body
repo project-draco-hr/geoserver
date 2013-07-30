@@ -1,0 +1,11 @@
+{
+  if (jdbcStore == null)   return;
+  Integer id=upload("shape/locations.zip",false);
+  setSRSRequest("/rest/imports/" + id + "/tasks/0/items/0","EPSG:4326");
+  ImportContext context=importer.getContext(id);
+  context.getTasks().get(0).getTransform().add(new AttributesToPointGeometryTransform("LAT","LON"));
+  completeAndVerifyUpload(id,false,"locations");
+  FeatureTypeInfo featureTypeByName=importer.getCatalog().getFeatureTypeByName("locations");
+  assertEquals("ReferencedEnvelope[-123.365556 : 151.211111, -33.925278 : 48.428611]",featureTypeByName.getNativeBoundingBox().toString());
+  assertEquals("ReferencedEnvelope[-123.365556 : 151.211111, -33.925278 : 48.428611]",featureTypeByName.getLatLonBoundingBox().toString());
+}

@@ -1,0 +1,23 @@
+{
+  tables=new ArrayList<Table>();
+  DataStoreFactorySpi factory=(DataStoreFactorySpi)DataStoreUtils.aquireFactory(parameters);
+  if (factory == null) {
+    throw new IOException("Unable to find data store for specified parameters");
+  }
+  m.setTask("Loading tables");
+  DataStore store=factory.createDataStore(parameters);
+  if (store == null) {
+    throw new IOException("Unable to create data store from specified parameters");
+  }
+  format=DataFormat.lookup(parameters);
+  try {
+    for (    String typeName : store.getTypeNames()) {
+      Table tbl=new Table(typeName,this);
+      tbl.setFormat(format);
+      tables.add(tbl);
+    }
+  }
+  finally {
+    store.dispose();
+  }
+}

@@ -1,0 +1,19 @@
+{
+  URL resource=ImporterTestSupport.class.getResource("../test-data/" + zip);
+  File file=new File(resource.getFile());
+  String[] nameext=file.getName().split("\\.");
+  Connection conn=jdbcStore.getConnection(Transaction.AUTO_COMMIT);
+  String sql="drop table if exists \"" + nameext[0] + "\"";
+  Statement stmt=conn.createStatement();
+  stmt.execute(sql);
+  stmt.close();
+  conn.close();
+  if (asURL) {
+    File copyDir=tmpDir();
+    FileUtils.copyFile(file,new File(copyDir,zip));
+    return putZipAsURL(new File(copyDir,zip).getAbsolutePath());
+  }
+ else {
+    return putZip(zip);
+  }
+}

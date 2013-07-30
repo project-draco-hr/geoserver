@@ -1,0 +1,23 @@
+{
+  context.reattach(catalog);
+  for (  ImportTask task : context.getTasks()) {
+    StoreInfo store=task.getStore();
+    if (store != null && store.getId() != null) {
+      task.setStore(catalog.getStore(store.getId(),StoreInfo.class));
+    }
+    if (task.getLayer() != null) {
+      LayerInfo l=task.getLayer();
+      if (l.getDefaultStyle() != null && l.getDefaultStyle().getId() != null) {
+        l.setDefaultStyle(catalog.getStyle(l.getDefaultStyle().getId()));
+      }
+      if (l.getResource() != null) {
+        ResourceInfo r=l.getResource();
+        r.setCatalog(catalog);
+        if (r.getStore() == null && resourceMatchesStore(r,store)) {
+          r.setStore(store);
+        }
+      }
+    }
+  }
+  return context;
+}

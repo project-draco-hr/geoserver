@@ -1,0 +1,15 @@
+{
+  File dir=unpack("shape/archsites_no_crs.zip");
+  ImportContext context=importer.createContext(new Directory(dir));
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertEquals(ImportTask.State.NO_CRS,task.getState());
+  assertNull(task.getLayer().getResource().getLatLonBoundingBox());
+  task.getLayer().getResource().setSRS("EPSG:26713");
+  importer.changed(task);
+  assertEquals(ImportTask.State.READY,task.getState());
+  ResourceInfo r=task.getLayer().getResource();
+  assertNotNull(r.getLatLonBoundingBox());
+  assertNotNull(r.boundingBox());
+  assertNotNull(r.boundingBox().getCoordinateReferenceSystem());
+}

@@ -1,0 +1,38 @@
+{
+  FileData fileData=new FileData(file);
+  for (  DataFormat df : GeoServerExtensions.extensions(DataFormat.class)) {
+    try {
+      if (df.canRead(fileData)) {
+        return df;
+      }
+    }
+ catch (    IOException e) {
+      LOG.log(Level.FINER,String.format("Error checking if format %s can read file %s, " + df.getName(),file.getPath()),e);
+    }
+  }
+  String ext=FilenameUtils.getExtension(file.getName());
+  FileDataStoreFactorySpi factory=FileDataStoreFinder.getDataStoreFactory(ext);
+  if (factory != null) {
+    return new DataStoreFormat(factory);
+  }
+  Set<AbstractGridFormat> formats=GridFormatFinder.findFormats(file);
+  AbstractGridFormat format=null;
+  if (formats.size() > 1) {
+    for (    AbstractGridFormat f : formats) {
+      if ("GeoTIFF".equals(f.getName())) {
+        format=f;
+        break;
+      }
+    }
+    if (format == null) {
+      throw new RuntimeException("multiple formats found but not handled " + formats);
+    }
+  }
+ else   if (formats.size() == 1) {
+    format=formats.iterator().next();
+  }
+  if (format != null && !(format instanceof UnknownFormat)) {
+    return new GridFormat(format);
+  }
+  return null;
+}
