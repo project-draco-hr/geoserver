@@ -1,0 +1,19 @@
+{
+  DataSource ds=EasyMock.createMock(DataSource.class);
+  JDBCConfigProperties config=EasyMock.createMock(JDBCConfigProperties.class);
+  Context jndi=EasyMock.createMock(Context.class);
+  expect(config.getProperty("jndiName")).andStubReturn("java:comp/env/jdbc/test");
+  expect(jndi.lookup("java:comp/env/jdbc/test")).andStubReturn(ds);
+  replay(ds,config,jndi);
+  DataSourceFactoryBean fact=new DataSourceFactoryBean(config,jndi);
+  assertThat(fact.getObject(),is((DataSource)ds));
+  verify(ds);
+  reset(ds);
+  replay(ds);
+  assertThat(fact.getObject(),is((DataSource)ds));
+  verify(ds,config,jndi);
+  reset(ds);
+  replay(ds);
+  fact.destroy();
+  verify(ds);
+}

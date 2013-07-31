@@ -1,5 +1,5 @@
 {
-  BasicDataSource dataSource=new BasicDataSource();
+  BasicDataSource dataSource=createBasicDataSource();
   dataSource.setUrl(config.getJdbcUrl());
   Optional<String> driverClassName=get(config,"driverClassName",String.class,true);
   try {
@@ -20,6 +20,9 @@
     String validateQuery=get(config,"pool.validationQuery",String.class,true).get();
     dataSource.setTestOnBorrow(true);
     dataSource.setValidationQuery(validateQuery);
+  }
+  if (LOGGER.isLoggable(Level.INFO)) {
+    LOGGER.log(Level.INFO,"JDBCConfig using JDBC DataSource {0}",config.getJdbcUrl());
   }
   return dataSource;
 }
