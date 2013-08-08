@@ -2,11 +2,15 @@
   super(geoserver.getCatalog());
   GeoServerResourceLoader loader=geoserver.getCatalog().getResourceLoader();
   File dir=loader.findOrCreateDirectory("csw");
-  for (  File f : dir.listFiles()) {
-    Properties properties=new Properties();
-    FileInputStream in=new FileInputStream(f);
-    properties.load(in);
-    in.close();
-    addMapping(f.getName(),CatalogStoreMapping.parse(new HashMap<String,String>((Map)properties)));
+  for (  String typeName : descriptorByType.keySet()) {
+    File f=new File(dir,typeName + ".properties");
+    PropertyFileWatcher watcher=new PropertyFileWatcher(f);
+    watchers.put(typeName,watcher);
+    if (f.exists()) {
+      addMapping(typeName,CatalogStoreMapping.parse(new HashMap<String,String>((Map)watcher.getProperties())));
+    }
+ else {
+      addMapping(typeName,new CatalogStoreMapping());
+    }
   }
 }
