@@ -1,0 +1,48 @@
+{
+  super(id);
+  this.popupWindow=popupWindow;
+  Catalog catalog=GeoServerApplication.get().getCatalog();
+  this.layerGroupName=layerGroup.getName();
+  items=new ArrayList<EoLayerGroupEntry>();
+  for (int i=0; i < layerGroup.getLayers().size(); i++) {
+    PublishedInfo layer=layerGroup.getLayers().get(i);
+    StyleInfo style=layerGroup.getStyles().get(i);
+    if (style == null) {
+      LayerInfo li=catalog.getLayer(layer.getId());
+      if (layer != null) {
+        style=li.getDefaultStyle();
+      }
+    }
+    items.add(new EoLayerGroupEntry((LayerInfo)layer,style,layerGroup.getName()));
+  }
+  final EoLayerTypeRenderer eoLayerTypeRenderer=new EoLayerTypeRenderer();
+  entryProvider=new LayerGroupEntryProvider(items);
+  layerTable=new GeoServerTablePanel<EoLayerGroupEntry>("layers",entryProvider){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<EoLayerGroupEntry> property){
+      if (property == LayerGroupEntryProvider.LAYER) {
+        EoLayerGroupEntry entry=(EoLayerGroupEntry)itemModel.getObject();
+        return new Label(id,entry.getLayer().prefixedName());
+      }
+      if (property == LayerGroupEntryProvider.TYPE) {
+        EoLayerType type=(EoLayerType)property.getModel(itemModel).getObject();
+        return new Label(id,(String)eoLayerTypeRenderer.getDisplayValue(type));
+      }
+      if (property == LayerGroupEntryProvider.STYLE) {
+        return styleLink(id,itemModel);
+      }
+      if (property == LayerGroupEntryProvider.REMOVE) {
+        return removeLink(id,itemModel);
+      }
+      if (property == LayerGroupEntryProvider.POSITION) {
+        return positionPanel(id,itemModel);
+      }
+      return null;
+    }
+  }
+;
+  layerTable.setFilterable(false);
+  layerTable.setSortable(false);
+  layerTable.setOutputMarkupId(true);
+  layerTable.setItemReuseStrategy(new DefaultItemReuseStrategy());
+  add(layerTable);
+}

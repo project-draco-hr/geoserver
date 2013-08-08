@@ -1,0 +1,38 @@
+{
+  return new SubmitLink("save"){
+    @Override public void onSubmit(){
+      if (lgEntryPanel.getEntries().size() == 0) {
+        error((String)new ParamResourceModel("oneLayerMinimum",getPage()).getObject());
+        return;
+      }
+      LayerGroupInfo lg=(LayerGroupInfo)lgModel.getObject();
+      lg.getLayers().clear();
+      lg.getStyles().clear();
+      for (      EoLayerGroupEntry entry : lgEntryPanel.getEntries()) {
+        PublishedInfo pi=entry.getLayer();
+        if (pi instanceof LayerInfo) {
+          LayerInfo li=getCatalog().getLayer(pi.getId());
+          String expectedName=lg.getName() + "_" + entry.getLayerSubName();
+          String actualName=li.getName();
+          if (!expectedName.equals(actualName)) {
+            ResourceInfo resource=li.getResource();
+            li.setName(expectedName);
+            resource.setName(expectedName);
+            getCatalog().save(resource);
+            getCatalog().save(li);
+          }
+          lg.getLayers().add(li);
+          lg.getStyles().add(entry.getStyle());
+        }
+      }
+      try {
+        EoLayerGroupAbstractPage.this.save();
+      }
+ catch (      Exception e) {
+        error(e);
+        LOGGER.log(Level.WARNING,"Error adding/modifying layer group.",e);
+      }
+    }
+  }
+;
+}

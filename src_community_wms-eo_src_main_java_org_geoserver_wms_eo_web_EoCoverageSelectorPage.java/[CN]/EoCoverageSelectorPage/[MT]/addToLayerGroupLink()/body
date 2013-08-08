@@ -1,0 +1,36 @@
+{
+  return new SubmitLink("save"){
+    @Override public void onSubmit(){
+      CatalogBuilder builder=new CatalogBuilder(getCatalog());
+      builder.setStore(selectedStore);
+      EoLayerGroupAbstractPage layerGroupPage=(EoLayerGroupAbstractPage)returnPage;
+      List<EoLayerGroupEntry> items=layerGroupPage.lgEntryPanel.entryProvider.getItems();
+      boolean error=false;
+      for (      EoCoverageSelection item : selections) {
+        if (item.getType() != EoLayerType.IGNORE) {
+          try {
+            LayerInfo layer=createLayer(groupName,item,builder);
+            if (layer == null) {
+              error=true;
+            }
+ else {
+              items.add(new EoLayerGroupEntry(layer,layer.getDefaultStyle(),layerGroupPage.lgModel.getObject().getName()));
+              info("Layer " + layer.getName() + " successfully created and added to the EO layer group");
+            }
+          }
+ catch (          Exception e) {
+            error=true;
+            error("Failed to create layer from covearge " + item.getCoverageName() + ": "+ e.getMessage());
+          }
+        }
+      }
+      if (!error) {
+        setResponsePage(returnPage);
+      }
+ else {
+        updateCoveragesList(true);
+      }
+    }
+  }
+;
+}

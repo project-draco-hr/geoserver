@@ -1,0 +1,61 @@
+{
+  File dir=DataUtilities.urlToFile(new URL(url));
+  if (ws == null) {
+    ws=catalog.getDefaultWorkspace();
+  }
+  String storeName=dir.getName();
+  String layerName=groupName + "_outlines";
+  CatalogBuilder builder=new CatalogBuilder(catalog);
+  DataStoreInfo store=null;
+  FeatureTypeInfo featureType=null;
+  LayerInfo layer=null;
+  boolean success=false;
+  try {
+    store=builder.buildDataStore(layerName);
+    DataStoreFactorySpi dataStoreFactory=getOutlineDataStoreFactory(dir);
+    Map<String,Serializable> parameters=getOutlineDataStoreParameters(dir,dataStoreFactory);
+    NamespaceInfo ns=catalog.getNamespaceByPrefix(ws.getName());
+    parameters.put("namespace",ns.getURI());
+    store.setType(dataStoreFactory.getDisplayName());
+    store.setWorkspace(ws);
+    store.getConnectionParameters().putAll(parameters);
+    catalog.add(store);
+    builder.setStore(store);
+    DataStore dataStore=(DataStore)store.getDataStore(new NullProgressListener());
+    String featureTypeName=coverageName != null ? coverageName : storeName;
+    SimpleFeatureSource featureSource=dataStore.getFeatureSource(featureTypeName);
+    featureType=builder.buildFeatureType(featureSource);
+    featureType.setName(layerName);
+    featureType.setTitle(layerName);
+    builder.setupBounds(featureType,featureSource);
+    boolean foundTime=enableDimensions(featureType,coverageName,reader);
+    if (!foundTime) {
+      throw new IllegalArgumentException("Unable to enable TIME dimension on outline layer:" + layerName);
+    }
+    catalog.add(featureType);
+    layer=builder.buildLayer(featureType);
+    layer.setName(layerName);
+    layer.setTitle(layerName);
+    layer.setEnabled(true);
+    layer.setQueryable(true);
+    layer.setType(LayerInfo.Type.VECTOR);
+    layer.getMetadata().put(EoLayerType.KEY,EoLayerType.COVERAGE_OUTLINE.name());
+    addEoStyles(layer,DEFAULT_OUTLINE_STYLE);
+    catalog.add(layer);
+    success=true;
+    return layer;
+  }
+  finally {
+    if (!success) {
+      if (layer != null) {
+        catalog.remove(layer);
+      }
+      if (featureType != null) {
+        catalog.remove(featureType);
+      }
+      if (store != null) {
+        catalog.remove(store);
+      }
+    }
+  }
+}
