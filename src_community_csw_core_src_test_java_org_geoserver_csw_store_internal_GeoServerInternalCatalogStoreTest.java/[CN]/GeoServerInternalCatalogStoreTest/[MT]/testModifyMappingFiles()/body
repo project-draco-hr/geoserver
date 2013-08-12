@@ -1,16 +1,16 @@
 {
-  InternalCatalogStore store=new GeoServerInternalCatalogStore(this.getGeoServer());
-  assertNull(store.getMapping("MD_Metadata").getElement("fileIdentifier.CharacterString"));
-  assertNull(store.getMapping("Record").getElement("identifier.value"));
   File root=testData.getDataDirectoryRoot();
   File csw=new File(root,"csw");
-  File records=new File("./src/main/resources/org/geoserver/csw/store/internal");
-  FileUtils.copyDirectory(records,csw);
-  Thread.sleep(1001);
+  if (csw.exists()) {
+    csw.delete();
+  }
+  InternalCatalogStore store=new GeoServerInternalCatalogStore(this.getGeoServer());
+  File record=new File(csw,"Record.properties");
+  assertTrue(record.exists());
   assertNotNull(store.getMapping("MD_Metadata").getElement("fileIdentifier.CharacterString"));
   assertNotNull(store.getMapping("Record").getElement("identifier.value"));
   assertNull(store.getMapping("Record").getElement("format.value"));
-  File record=new File(csw,"Record.properties");
+  Thread.sleep(1001);
   PrintWriter out=new PrintWriter(new BufferedWriter(new FileWriter(record,true)));
   out.println("\nformat.value='img/jpeg'");
   out.close();
