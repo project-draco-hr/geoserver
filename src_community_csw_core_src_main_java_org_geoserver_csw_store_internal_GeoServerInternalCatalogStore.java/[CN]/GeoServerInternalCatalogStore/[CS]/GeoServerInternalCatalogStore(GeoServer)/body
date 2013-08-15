@@ -6,11 +6,9 @@
     File f=new File(dir,typeName + ".properties");
     PropertyFileWatcher watcher=new PropertyFileWatcher(f);
     watchers.put(typeName,watcher);
-    if (f.exists()) {
-      addMapping(typeName,CatalogStoreMapping.parse(new HashMap<String,String>((Map)watcher.getProperties())));
+    if (!f.exists()) {
+      IOUtils.copy(getClass().getResourceAsStream(typeName + ".properties"),f);
     }
- else {
-      addMapping(typeName,new CatalogStoreMapping());
-    }
+    addMapping(typeName,CatalogStoreMapping.parse(new HashMap<String,String>((Map)watcher.getProperties())));
   }
 }
