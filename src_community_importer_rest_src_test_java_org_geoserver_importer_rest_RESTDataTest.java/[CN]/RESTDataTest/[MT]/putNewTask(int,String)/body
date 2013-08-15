@@ -1,0 +1,19 @@
+{
+  File zip=file(data);
+  byte[] payload=new byte[(int)zip.length()];
+  FileInputStream fis=new FileInputStream(zip);
+  fis.read(payload);
+  fis.close();
+  MockHttpServletRequest req=createRequest("/rest/imports/" + imp + "/tasks/"+ new File(data).getName());
+  req.setHeader("Content-Type",MediaType.APPLICATION_ZIP.toString());
+  req.setMethod("PUT");
+  req.setBodyContent(payload);
+  MockHttpServletResponse resp=dispatch(req);
+  assertEquals(201,resp.getStatusCode());
+  assertNotNull(resp.getHeader("Location"));
+  assertTrue(resp.getHeader("Location").matches(".*/imports/" + imp + "/tasks/\\d"));
+  assertEquals("application/json",resp.getContentType());
+  JSONObject json=(JSONObject)json(resp);
+  JSONObject task=json.getJSONObject("task");
+  return task.getInt("id");
+}

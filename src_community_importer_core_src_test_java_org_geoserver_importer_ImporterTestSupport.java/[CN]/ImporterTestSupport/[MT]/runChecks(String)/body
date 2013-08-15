@@ -1,0 +1,16 @@
+{
+  LayerInfo layer=getCatalog().getLayerByName(layerName);
+  assertNotNull(layer);
+  assertNotNull(layer.getDefaultStyle());
+  if (layer.getType() == LayerInfo.Type.VECTOR) {
+    FeatureTypeInfo featureType=(FeatureTypeInfo)layer.getResource();
+    FeatureSource source=featureType.getFeatureSource(null,null);
+    assertTrue(source.getCount(Query.ALL) > 0);
+    print(get("wfs?request=getFeature&typename=" + featureType.getPrefixedName()));
+    Document dom=getAsDOM("wfs?request=getFeature&typename=" + featureType.getPrefixedName());
+    assertEquals("wfs:FeatureCollection",dom.getDocumentElement().getNodeName());
+    assertEquals(source.getCount(Query.ALL),dom.getElementsByTagName(featureType.getPrefixedName()).getLength());
+  }
+  MockHttpServletResponse response=getAsServletResponse("wms/reflect?layers=" + layer.getResource().getPrefixedName());
+  assertEquals("image/png",response.getContentType());
+}

@@ -1,0 +1,25 @@
+{
+  DataStoreFactorySpi factory;
+  params.put(JDBCDataStoreFactory.DBTYPE.key,"sqlserver");
+  if (CONNECTION_JNDI.equals(connectionType)) {
+    factory=new SQLServerJNDIDataStoreFactory();
+    fillInJndiParams(params,jndiParamPanel);
+  }
+ else {
+    factory=new SQLServerDataStoreFactory();
+    params.put(HOST.key,basicParamPanel.host);
+    params.put(PORT.key,basicParamPanel.port);
+    params.put(USER.key,basicParamPanel.username);
+    params.put(PASSWD.key,basicParamPanel.password);
+    params.put(DATABASE.key,basicParamPanel.database);
+  }
+  if (!CONNECTION_JNDI.equals(connectionType)) {
+    fillInConnPoolParams(params,basicParamPanel);
+  }
+  params.put(SQLServerDataStoreFactory.INTSEC.key,false);
+  if (basicParamPanel.schema != null) {
+    params.put(JDBCDataStoreFactory.SCHEMA.key,basicParamPanel.schema);
+  }
+  params.put(PK_METADATA_TABLE.key,advancedParamPanel.pkMetadata);
+  return factory;
+}

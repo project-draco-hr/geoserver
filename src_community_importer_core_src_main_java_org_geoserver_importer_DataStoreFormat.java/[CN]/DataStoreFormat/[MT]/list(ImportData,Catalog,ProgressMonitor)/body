@@ -1,0 +1,42 @@
+{
+  DataStore dataStore=createDataStore(data);
+  try {
+    CatalogBuilder cb=new CatalogBuilder(catalog);
+    DataStoreInfo store=cb.buildDataStore("dummy");
+    cb.setStore(store);
+    List<ImportTask> tasks=new ArrayList<ImportTask>();
+    for (    String typeName : dataStore.getTypeNames()) {
+      if (monitor.isCanceled()) {
+        break;
+      }
+      monitor.setTask("Processing " + typeName);
+      try {
+        FeatureTypeInfo featureType=cb.buildFeatureType(dataStore.getFeatureSource(typeName));
+        featureType.setStore(null);
+        featureType.setNamespace(null);
+        SimpleFeatureSource featureSource=dataStore.getFeatureSource(typeName);
+        cb.setupBounds(featureType,featureSource);
+        CatalogFactory factory=catalog.getFactory();
+        SimpleFeatureType schema=featureSource.getSchema();
+        for (        AttributeDescriptor ad : schema.getAttributeDescriptors()) {
+          AttributeTypeInfo att=factory.createAttribute();
+          att.setName(ad.getLocalName());
+          att.setBinding(ad.getType().getBinding());
+          featureType.getAttributes().add(att);
+        }
+        LayerInfo layer=cb.buildLayer((ResourceInfo)featureType);
+        ImportTask task=new ImportTask(data.part(typeName));
+        task.setLayer(layer);
+        task.getMetadata().put(FeatureType.class,schema);
+        tasks.add(task);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Error occured loading " + typeName,e);
+      }
+    }
+    return tasks;
+  }
+  finally {
+    dataStore.dispose();
+  }
+}

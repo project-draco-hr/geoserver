@@ -1,0 +1,42 @@
+{
+  json.object();
+  json.key("type").value(transform.getClass().getSimpleName());
+  json.key("href").value(page.rootURI(pathTo(task) + "/transform/" + index));
+  if (expand > 0) {
+    if (transform instanceof DateFormatTransform) {
+      DateFormatTransform df=(DateFormatTransform)transform;
+      json.key("field").value(df.getField());
+      if (df.getDatePattern() != null) {
+        json.key("format").value(df.getDatePattern().dateFormat().toPattern());
+      }
+    }
+ else     if (transform instanceof IntegerFieldToDateTransform) {
+      IntegerFieldToDateTransform df=(IntegerFieldToDateTransform)transform;
+      json.key("field").value(df.getField());
+    }
+ else     if (transform instanceof CreateIndexTransform) {
+      CreateIndexTransform df=(CreateIndexTransform)transform;
+      json.key("field").value(df.getField());
+    }
+ else     if (transform instanceof AttributeRemapTransform) {
+      AttributeRemapTransform art=(AttributeRemapTransform)transform;
+      json.key("field").value(art.getField());
+      json.key("target").value(art.getType().getName());
+    }
+ else     if (transform.getClass() == AttributesToPointGeometryTransform.class) {
+      AttributesToPointGeometryTransform atpgt=(AttributesToPointGeometryTransform)transform;
+      json.key("latField").value(atpgt.getLatField());
+      json.key("lngField").value(atpgt.getLngField());
+    }
+ else     if (transform.getClass() == ReprojectTransform.class) {
+      ReprojectTransform rt=(ReprojectTransform)transform;
+      json.key("source").value(srs(rt.getSource()));
+      json.key("target").value(srs(rt.getTarget()));
+    }
+ else {
+      throw new IOException("Serializaiton of " + transform.getClass() + " not implemented");
+    }
+  }
+  json.endObject();
+  json.flush();
+}

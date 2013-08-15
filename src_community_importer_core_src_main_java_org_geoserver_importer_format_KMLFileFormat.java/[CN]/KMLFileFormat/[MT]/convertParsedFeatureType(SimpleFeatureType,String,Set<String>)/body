@@ -1,0 +1,18 @@
+{
+  SimpleFeatureType transformedType=kmlTransform.convertFeatureType(ft);
+  SimpleFeatureTypeBuilder ftb=new SimpleFeatureTypeBuilder();
+  ftb.init(transformedType);
+  Set<String> existringAttrNames=new HashSet<String>();
+  for (  AttributeDescriptor ad : ft.getAttributeDescriptors()) {
+    existringAttrNames.add(ad.getLocalName());
+  }
+  for (  String attr : untypedAttributes) {
+    if (!existringAttrNames.contains(attr)) {
+      ftb.add(attr,String.class);
+    }
+  }
+  ftb.setName(name);
+  ftb.setCRS(KML_CRS);
+  ftb.setSRS(KML_SRS);
+  return ftb.buildFeatureType();
+}

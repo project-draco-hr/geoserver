@@ -1,0 +1,20 @@
+{
+  XStreamPersister xp=importer.initXStreamPersister(new XStreamPersisterFactory().createJSONPersister());
+  xp.setReferenceByName(true);
+  xp.setExcludeIds();
+  xp.setHideFeatureTypeAttributes();
+  xp.setCallback(new XStreamPersister.Callback(){
+    @Override protected void postEncodeFeatureType(    FeatureTypeInfo ft,    HierarchicalStreamWriter writer,    MarshallingContext context){
+      try {
+        writer.startNode("attributes");
+        context.convertAnother(ft.attributes());
+        writer.endNode();
+      }
+ catch (      IOException e) {
+        throw new RuntimeException("Could not get native attributes",e);
+      }
+    }
+  }
+);
+  return xp;
+}

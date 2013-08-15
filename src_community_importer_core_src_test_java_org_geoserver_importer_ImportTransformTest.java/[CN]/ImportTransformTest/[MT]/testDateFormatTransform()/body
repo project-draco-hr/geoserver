@@ -1,0 +1,28 @@
+{
+  Catalog cat=getCatalog();
+  File dir=unpack("shape/ivan.zip");
+  SpatialFile file=new SpatialFile(new File(dir,"ivan.shp"));
+  file.prepare();
+  ImportContext context=importer.createContext(file,store);
+  assertEquals(1,context.getTasks().size());
+  context.setTargetStore(store);
+  ImportTask task=context.getTasks().get(0);
+  task.getTransform().add(new DateFormatTransform("timestamp","yyyy-MM-dd HH:mm:ss.S"));
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  FeatureTypeInfo ft=cat.getFeatureTypeByDataStore(store,"ivan");
+  assertNotNull(ft);
+  SimpleFeatureType schema=(SimpleFeatureType)ft.getFeatureType();
+  assertTrue(Date.class.isAssignableFrom(schema.getDescriptor("timestamp").getType().getBinding()));
+  FeatureIterator it=ft.getFeatureSource(null,null).getFeatures().features();
+  try {
+    assertTrue(it.hasNext());
+    while (it.hasNext()) {
+      SimpleFeature f=(SimpleFeature)it.next();
+      assertTrue(f.getAttribute("timestamp") instanceof Date);
+    }
+  }
+  finally {
+    it.close();
+  }
+}

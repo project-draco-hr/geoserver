@@ -1,0 +1,27 @@
+{
+  Catalog cat=getCatalog();
+  DataStoreInfo ds=createH2DataStore(cat.getDefaultWorkspace().getName(),"spearfish");
+  File dir=tmpDir();
+  unpack("shape/archsites_epsg_prj.zip",dir);
+  unpack("shape/bugsites_esri_prj.tar.gz",dir);
+  ImportContext context=importer.createContext(new Directory(dir),ds);
+  assertEquals(2,context.getTasks().size());
+  ImportTask task1=context.getTasks().get(0);
+  ImportTask task2=context.getTasks().get(1);
+  assertEquals(ImportTask.State.READY,task1.getState());
+  assertEquals(ImportTask.State.READY,task2.getState());
+  HashSet resources=new HashSet();
+  resources.add(task1.getLayer().getResource().getName());
+  resources.add(task2.getLayer().getResource().getName());
+  assertTrue(resources.contains("bugsites"));
+  assertTrue(resources.contains("archsites"));
+  importer.run(context);
+  assertEquals(ImportTask.State.COMPLETE,task1.getState());
+  assertEquals(ImportTask.State.COMPLETE,task2.getState());
+  assertNotNull(cat.getLayerByName("archsites"));
+  assertNotNull(cat.getLayerByName("bugsites"));
+  assertNotNull(cat.getFeatureTypeByDataStore(ds,"archsites"));
+  assertNotNull(cat.getFeatureTypeByDataStore(ds,"bugsites"));
+  runChecks("archsites");
+  runChecks("bugsites");
+}

@@ -1,0 +1,15 @@
+{
+  createH2DataStore("sf","skunkworks");
+  String json="{" + "\"import\": { " + "\"targetWorkspace\": {"+ "\"workspace\": {"+ "\"name\": \"sf\""+ "}"+ "},"+ "\"targetStore\": {"+ "\"dataStore\": {"+ "\"name\": \"skunkworks\""+ "}"+ "}"+ "}"+ "}";
+  MockHttpServletResponse resp=postAsServletResponse("/rest/imports",json,"application/json");
+  assertEquals(201,resp.getStatusCode());
+  assertNotNull(resp.getHeader("Location"));
+  int id=lastId();
+  assertTrue(resp.getHeader("Location").endsWith("/imports/" + id));
+  ImportContext ctx=importer.getContext(id);
+  assertNotNull(ctx);
+  assertNotNull(ctx.getTargetWorkspace());
+  assertEquals("sf",ctx.getTargetWorkspace().getName());
+  assertNotNull(ctx.getTargetStore());
+  assertEquals("skunkworks",ctx.getTargetStore().getName());
+}

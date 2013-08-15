@@ -1,0 +1,15 @@
+{
+  ImportData data=null;
+  getLogger().info("Handling POST of " + getRequest().getEntity().getMediaType());
+  MediaType mimeType=getRequest().getEntity().getMediaType();
+  if (MediaType.MULTIPART_FORM_DATA.equals(mimeType,true)) {
+    data=handleMultiPartFormUpload(context());
+  }
+ else   if (MediaType.APPLICATION_WWW_FORM.equals(mimeType,true)) {
+    data=handleFormPost();
+  }
+  if (data == null) {
+    throw new RestletException("Unsupported POST",Status.CLIENT_ERROR_FORBIDDEN);
+  }
+  acceptData(data);
+}

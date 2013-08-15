@@ -1,0 +1,20 @@
+{
+  File unpack=ImporterTestUtils.unpack("mosaic/bm.zip");
+  String[] aux=new String[]{"aux","rrd","xml","tif.aux.xml","tfw"};
+  File[] tifs=unpack.listFiles();
+  for (int i=0; i < tifs.length; i++) {
+    File file=tifs[i];
+    for (int j=0; j < aux.length; j++) {
+      new File(unpack,file.getName().replace("tif",aux[j])).createNewFile();
+    }
+  }
+  Mosaic m=new Mosaic(unpack);
+  m.prepare();
+  assertEquals(4,m.getFiles().size());
+  for (int i=0; i < m.getFiles().size(); i++) {
+    assertEquals("GeoTIFF",m.getFiles().get(1).getFormat().getName());
+  }
+  for (  FileData f : m.getFiles()) {
+    assertEquals(aux.length,((SpatialFile)f).getSuppFiles().size());
+  }
+}

@@ -1,0 +1,27 @@
+{
+  byte[] data=entry.getData();
+  InputStream in=new ByteArrayInputStream(data,entry.getOffset(),entry.getSize());
+  try {
+    if (compress) {
+      in=new LZFInputStream(in);
+    }
+  }
+ catch (  Exception e) {
+    throw Throwables.propagate(e);
+  }
+  T info;
+  try {
+    if (DEBUG) {
+      ByteArrayOutputStream tmp=new ByteArrayOutputStream();
+      ByteStreams.copy(in,tmp);
+      System.err.println("Read: " + tmp.toString());
+      System.err.flush();
+      in=new ByteArrayInputStream(tmp.toByteArray());
+    }
+    info=xstreamPersister.load(in,target);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  return info;
+}

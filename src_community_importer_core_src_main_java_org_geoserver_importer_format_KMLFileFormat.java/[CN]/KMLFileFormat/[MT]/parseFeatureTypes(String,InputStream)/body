@@ -1,0 +1,37 @@
+{
+  KMLRawReader reader=new KMLRawReader(inputStream,KMLRawReader.ReadType.SCHEMA_AND_FEATURES);
+  Set<String> untypedAttributes=new HashSet<String>();
+  List<String> schemaNames=new ArrayList<String>();
+  List<SimpleFeatureType> schemas=new ArrayList<SimpleFeatureType>();
+  SimpleFeatureType aggregateFeatureType=null;
+  for (  Object object : reader) {
+    if (object instanceof SimpleFeature) {
+      SimpleFeature feature=(SimpleFeature)object;
+      SimpleFeatureType ft=feature.getFeatureType();
+      aggregateFeatureType=unionFeatureTypes(aggregateFeatureType,ft);
+      Map<Object,Object> userData=feature.getUserData();
+      @SuppressWarnings("unchecked") Map<String,Object> untypedData=(Map<String,Object>)userData.get("UntypedExtendedData");
+      if (untypedData != null) {
+        untypedAttributes.addAll(untypedData.keySet());
+      }
+    }
+ else     if (object instanceof SimpleFeatureType) {
+      SimpleFeatureType schema=(SimpleFeatureType)object;
+      schemas.add(schema);
+      schemaNames.add(schema.getName().getLocalPart());
+    }
+  }
+  if (aggregateFeatureType == null && schemas.isEmpty()) {
+    throw new IllegalArgumentException("No features found");
+  }
+  SimpleFeatureType featureType=aggregateFeatureType;
+  for (  SimpleFeatureType schema : schemas) {
+    featureType=unionFeatureTypes(featureType,schema);
+  }
+  featureType=convertParsedFeatureType(featureType,typeName,untypedAttributes);
+  if (!schemaNames.isEmpty()) {
+    Map<Object,Object> userData=featureType.getUserData();
+    userData.put("schemanames",schemaNames);
+  }
+  return Collections.singletonList(featureType);
+}

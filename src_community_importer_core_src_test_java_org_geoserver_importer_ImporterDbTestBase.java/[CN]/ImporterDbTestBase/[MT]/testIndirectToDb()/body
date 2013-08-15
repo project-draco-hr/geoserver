@@ -1,0 +1,22 @@
+{
+  Catalog cat=getCatalog();
+  DataStoreInfo ds=cat.getFactory().createDataStore();
+  ds.setName("oracle");
+  ds.setWorkspace(cat.getDefaultWorkspace());
+  ds.setEnabled(true);
+  ds.getConnectionParameters().putAll(getConnectionParams());
+  cat.add(ds);
+  assertEquals(0,cat.getFeatureTypesByDataStore(ds).size());
+  File dir=tmpDir();
+  unpack("shape/archsites_epsg_prj.zip",dir);
+  unpack("shape/bugsites_esri_prj.tar.gz",dir);
+  ImportContext context=importer.createContext(new Directory(dir),ds);
+  assertEquals(2,context.getTasks().size());
+  assertEquals(ImportTask.State.READY,context.getTasks().get(0).getState());
+  assertEquals(ImportTask.State.READY,context.getTasks().get(1).getState());
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  assertEquals(2,cat.getFeatureTypesByDataStore(ds).size());
+  runChecks("gs:" + tableName("archsites"));
+  runChecks("gs:" + tableName("bugsites"));
+}

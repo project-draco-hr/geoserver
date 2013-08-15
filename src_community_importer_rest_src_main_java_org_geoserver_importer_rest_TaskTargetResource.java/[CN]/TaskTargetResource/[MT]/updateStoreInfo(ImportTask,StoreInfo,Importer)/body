@@ -1,0 +1,51 @@
+{
+  StoreInfo orig=task.getStore();
+  StoreInfo existing=null;
+  if (update.getName() != null) {
+    Catalog cat=importer.getCatalog();
+    try {
+      if (update.getWorkspace() != null) {
+        existing=cat.getStoreByName(update.getWorkspace(),update.getName(),StoreInfo.class);
+      }
+ else {
+        existing=importer.getCatalog().getStoreByName(update.getName(),StoreInfo.class);
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+    }
+  }
+  if (existing != null) {
+    CatalogBuilder cb=new CatalogBuilder(importer.getCatalog());
+    StoreInfo clone;
+    if (existing instanceof DataStoreInfo) {
+      clone=cb.buildDataStore(existing.getName());
+      cb.updateDataStore((DataStoreInfo)clone,(DataStoreInfo)existing);
+    }
+ else     if (existing instanceof CoverageStoreInfo) {
+      clone=cb.buildCoverageStore(existing.getName());
+      cb.updateCoverageStore((CoverageStoreInfo)clone,(CoverageStoreInfo)existing);
+    }
+ else {
+      throw new RestletException("Unable to handle existing store: " + update,Status.SERVER_ERROR_INTERNAL);
+    }
+    ((StoreInfoImpl)clone).setId(existing.getId());
+    task.setStore(clone);
+    task.setDirect(false);
+  }
+ else   if (orig == null) {
+    task.setStore(update);
+  }
+ else {
+    CatalogBuilder cb=new CatalogBuilder(importer.getCatalog());
+    if (orig instanceof DataStoreInfo) {
+      cb.updateDataStore((DataStoreInfo)orig,(DataStoreInfo)update);
+    }
+ else     if (orig instanceof CoverageStoreInfo) {
+      cb.updateCoverageStore((CoverageStoreInfo)orig,(CoverageStoreInfo)update);
+    }
+ else {
+      throw new RestletException("Unable to update store with " + update,Status.SERVER_ERROR_INTERNAL);
+    }
+  }
+}

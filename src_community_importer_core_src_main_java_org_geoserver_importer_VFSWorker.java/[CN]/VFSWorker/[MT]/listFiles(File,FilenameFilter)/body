@@ -1,0 +1,47 @@
+{
+  FileSystemManager fsManager;
+  try {
+    fsManager=VFS.getManager();
+    String absolutePath=resolveArchiveURI(archiveFile);
+    FileObject resolvedFile=fsManager.resolveFile(absolutePath);
+    FileSelector fileSelector=new FileSelector(){
+      /** 
+ * @see org.apache.commons.vfs.FileSelector#traverseDescendents(org.apache.commons.vfs.FileSelectInfo)
+ */
+      public boolean traverseDescendents(      FileSelectInfo folderInfo) throws Exception {
+        return true;
+      }
+      /** 
+ * @see org.apache.commons.vfs.FileSelector#includeFile(org.apache.commons.vfs.FileSelectInfo)
+ */
+      public boolean includeFile(      FileSelectInfo fileInfo) throws Exception {
+        File folder=archiveFile.getParentFile();
+        String name=fileInfo.getFile().getName().getFriendlyURI();
+        return filter.accept(folder,name);
+      }
+    }
+;
+    FileObject fileSystem;
+    if (fsManager.canCreateFileSystem(resolvedFile)) {
+      fileSystem=fsManager.createFileSystem(resolvedFile);
+    }
+ else {
+      fileSystem=resolvedFile;
+    }
+    LOGGER.fine("Listing spatial data files archived in " + archiveFile.getName());
+    FileObject[] containedFiles=fileSystem.findFiles(fileSelector);
+    List<String> names=new ArrayList<String>(containedFiles.length);
+    for (    FileObject fo : containedFiles) {
+      String pathDecoded=fo.getName().getPathDecoded();
+      names.add(pathDecoded);
+    }
+    LOGGER.fine("Found " + names.size() + " spatial data files in "+ archiveFile.getName()+ ": "+ names);
+    return names;
+  }
+ catch (  FileSystemException e) {
+    e.printStackTrace();
+  }
+ finally {
+  }
+  return Collections.emptyList();
+}

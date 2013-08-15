@@ -1,0 +1,13 @@
+{
+  File dir=unpack("geotiff/EmissiveCampania.tif.bz2");
+  ImportContext context=importer.createContext(new SpatialFile(new File(dir,"EmissiveCampania.tif")));
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertEquals(ImportTask.State.READY,task.getState());
+  assertEquals("EmissiveCampania",task.getLayer().getResource().getName());
+  importer.run(context);
+  Catalog cat=getCatalog();
+  assertNotNull(cat.getLayerByName("EmissiveCampania"));
+  assertEquals(ImportTask.State.COMPLETE,task.getState());
+  runChecks("EmissiveCampania");
+}

@@ -1,0 +1,41 @@
+{
+  if (property == ImportTaskProvider.NAME) {
+    return new LayerLinkPanel(id,itemModel);
+  }
+  if (property == ImportTaskProvider.STATUS) {
+    ImportTask.State state=(ImportTask.State)property.getModel(itemModel).getObject();
+    Component c=null;
+    if (state == ImportTask.State.ERROR) {
+      c=new SimpleAjaxLink<ImportTask>(id,itemModel,new StatusDescriptionModel(property.getModel(itemModel))){
+        @Override protected void onClick(        AjaxRequestTarget target){
+          popupWindow.setContent(new ExceptionPanel(popupWindow.getContentId(),getModelObject().getError()));
+          popupWindow.show(target);
+        }
+      }
+;
+    }
+ else {
+      c=new Label(id,new StatusDescriptionModel(property.getModel(itemModel)));
+    }
+    String cssClass=new StatusIconModel(property.getModel(itemModel)).getCssClass();
+    return c.add(new SimpleAttributeModifier("class",cssClass));
+  }
+  if (property == ImportTaskProvider.ACTION) {
+    ImportTask.State state=(ImportTask.State)property.getModel(itemModel).getObject();
+switch (state) {
+case COMPLETE:
+      return new LayerPreviewPanel(id,itemModel);
+case NO_CRS:
+    return new NoCRSPanel(id,itemModel);
+case READY:
+  ImportTask task=(ImportTask)itemModel.getObject();
+if (task.getLayer() != null && task.getLayer().getResource() instanceof FeatureTypeInfo) {
+  return new AdvancedOptionPanel(id,itemModel);
+}
+return new WebMarkupContainer(id);
+default :
+return new WebMarkupContainer(id);
+}
+}
+return null;
+}

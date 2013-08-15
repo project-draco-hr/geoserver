@@ -1,0 +1,28 @@
+{
+  Catalog cat=getCatalog();
+  File dir=unpack("shape/archsites_epsg_prj.zip");
+  SpatialFile file=new SpatialFile(new File(dir,"archsites.shp"));
+  file.prepare();
+  ImportContext context=importer.createContext(file,store);
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  LayerInfo l1=context.getTasks().get(0).getLayer();
+  assertTrue(CRS.equalsIgnoreMetadata(CRS.decode("EPSG:26713"),l1.getResource().getNativeCRS()));
+  assertEquals("EPSG:26713",l1.getResource().getSRS());
+  dir=unpack("shape/archsites_epsg_prj.zip");
+  file=new SpatialFile(new File(dir,"archsites.shp"));
+  file.prepare();
+  context=importer.createContext(file,store);
+  ImportTask item=context.getTasks().get(0);
+  item.getTransform().add(new ReprojectTransform(CRS.decode("EPSG:4326")));
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  LayerInfo l2=context.getTasks().get(0).getLayer();
+  assertTrue(CRS.equalsIgnoreMetadata(CRS.decode("EPSG:4326"),l2.getResource().getNativeCRS()));
+  assertEquals("EPSG:4326",l2.getResource().getSRS());
+  assertFalse(l1.getResource().getNativeBoundingBox().equals(l2.getResource().getNativeBoundingBox()));
+  assertTrue(CRS.equalsIgnoreMetadata(l2.getResource().getNativeCRS(),l2.getResource().getNativeBoundingBox().getCoordinateReferenceSystem()));
+  LayerInfo l=cat.getLayer(l2.getId());
+  assertTrue(CRS.equalsIgnoreMetadata(CRS.decode("EPSG:4326"),l2.getResource().getNativeCRS()));
+  assertEquals("EPSG:4326",l2.getResource().getSRS());
+}

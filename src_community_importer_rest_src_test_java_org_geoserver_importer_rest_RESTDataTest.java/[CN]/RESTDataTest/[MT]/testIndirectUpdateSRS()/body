@@ -1,0 +1,18 @@
+{
+  Catalog cat=getCatalog();
+  DataStoreInfo ds=createH2DataStore(cat.getDefaultWorkspace().getName(),"spearfish");
+  File dir=tmpDir();
+  unpack("shape/archsites_no_crs.zip",dir);
+  ImportContext context=importer.createContext(new Directory(dir),ds);
+  JSONObject task=getTask(0,0);
+  assertEquals("NO_CRS",task.get("state"));
+  String json="{\"id\":0,\"layer\":{\"srs\":\"EPSG:26713\"}}";
+  putTask(0,0,json);
+  task=getTask(0,0);
+  assertEquals("READY",task.get("state"));
+  DataStore store=(DataStore)ds.getDataStore(null);
+  assertEquals(store.getTypeNames().length,0);
+  postImport(0);
+  assertEquals(store.getTypeNames().length,1);
+  assertEquals("archsites",store.getTypeNames()[0]);
+}

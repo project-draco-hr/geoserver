@@ -1,0 +1,17 @@
+{
+  FileSystemManager manager=VFS.getManager();
+  String sourceURI=resolveArchiveURI(archiveFile);
+  FileObject source=manager.resolveFile(sourceURI);
+  if (manager.canCreateFileSystem(source)) {
+    source=manager.createFileSystem(source);
+  }
+  FileObject target=manager.createVirtualFileSystem(manager.resolveFile(targetFolder.getAbsolutePath()));
+  FileSelector selector=new AllFileSelector(){
+    @Override public boolean includeFile(    FileSelectInfo fileInfo){
+      LOGGER.fine("Uncompressing " + fileInfo.getFile().getName().getFriendlyURI());
+      return true;
+    }
+  }
+;
+  target.copyFrom(source,selector);
+}

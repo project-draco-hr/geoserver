@@ -1,0 +1,35 @@
+{
+  List<ImportTask> tasks=new ArrayList<ImportTask>();
+  boolean direct=false;
+  StoreInfo targetStore=context.getTargetStore();
+  if (targetStore == null) {
+    direct=true;
+    if (format != null) {
+      targetStore=format.createStore(data,context.getTargetWorkspace(),catalog);
+    }
+    if (targetStore == null) {
+      targetStore=lookupDefaultStore();
+      direct=targetStore == null;
+    }
+  }
+  if (format != null) {
+    for (    ImportTask t : format.list(data,catalog,context.progress())) {
+      t.setTransform(format instanceof VectorFormat ? new VectorTransformChain() : new RasterTransformChain());
+      t.setDirect(direct);
+      t.setStore(targetStore);
+      prep(t);
+      tasks.add(t);
+    }
+  }
+ else   if (!skipNoFormat) {
+    ImportTask t=new ImportTask(data);
+    t.setDirect(direct);
+    t.setStore(targetStore);
+    prep(t);
+    tasks.add(t);
+  }
+  for (  ImportTask t : tasks) {
+    context.addTask(t);
+  }
+  return tasks;
+}

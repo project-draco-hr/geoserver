@@ -1,0 +1,17 @@
+{
+  DataStoreInfo h2=createH2DataStore(getCatalog().getDefaultWorkspace().getName(),"jsontest");
+  File dir=unpack("geojson/point.json.zip");
+  unpack("geojson/line.json.zip",dir);
+  unpack("geojson/polygon.json.zip",dir);
+  ImportContext imp=importer.createContext(new Directory(dir),h2);
+  assertEquals(3,imp.getTasks().size());
+  assertEquals(ImportContext.State.PENDING,imp.getState());
+  assertEquals(ImportTask.State.READY,imp.task(0).getState());
+  assertEquals(ImportTask.State.READY,imp.task(1).getState());
+  assertEquals(ImportTask.State.READY,imp.task(2).getState());
+  importer.run(imp);
+  assertEquals(ImportContext.State.COMPLETE,imp.getState());
+  runChecks("point");
+  runChecks("line");
+  runChecks("polygon");
+}

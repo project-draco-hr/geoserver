@@ -1,0 +1,10 @@
+{
+  String kmlInput=DOC_EL + "<Placemark>" + "<ExtendedData>"+ "<Data name=\"foo\"><value>bar</value></Data>"+ "<Data name=\"quux\"><value>morx</value></Data>"+ "</ExtendedData>"+ "</Placemark></kml>";
+  SimpleFeatureType featureType=kmlFileFormat.parseFeatureTypes("foo",IOUtils.toInputStream(kmlInput)).get(0);
+  FeatureReader<SimpleFeatureType,SimpleFeature> reader=kmlFileFormat.read(featureType,IOUtils.toInputStream(kmlInput));
+  assertTrue("No features found",reader.hasNext());
+  SimpleFeature feature=(SimpleFeature)reader.next();
+  assertNotNull("Expecting feature",feature);
+  assertEquals("Invalid ext attr foo","bar",feature.getAttribute("foo"));
+  assertEquals("Invalid ext attr quux","morx",feature.getAttribute("quux"));
+}

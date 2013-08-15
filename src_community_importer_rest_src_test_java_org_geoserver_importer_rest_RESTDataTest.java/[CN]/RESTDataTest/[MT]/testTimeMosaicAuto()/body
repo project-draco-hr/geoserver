@@ -1,0 +1,28 @@
+{
+  String json="{" + "\"import\": { " + "\"data\": {"+ "\"type\": \"mosaic\", "+ "\"time\": {"+ " \"mode\": \"auto\""+ "}"+ "}"+ "}"+ "}";
+  int imp=postNewImport(json);
+  int task=postNewTaskAsMultiPartForm(imp,"mosaic/bm_time.zip");
+  JSONObject t=getTask(imp,task);
+  JSONArray files=t.getJSONObject("data").getJSONArray("files");
+  assertEquals(4,files.size());
+  for (int i=0; i < files.size(); i++) {
+    JSONObject obj=files.getJSONObject(i);
+    assertTrue(obj.has("timestamp"));
+  }
+  t=getTask(imp,task);
+  files=t.getJSONObject("data").getJSONArray("files");
+  List<Integer> ints=Lists.newArrayList(1,2,3,4);
+  Pattern p=Pattern.compile("2004-0(\\d)-01T00:00:00.000\\+0000");
+  for (int i=0; i < files.size(); i++) {
+    JSONObject obj=files.getJSONObject(i);
+    assertTrue(obj.has("timestamp"));
+    String timestamp=obj.getString("timestamp");
+    Matcher m=p.matcher(timestamp);
+    assertTrue(m.matches());
+    ints.remove((Object)Integer.parseInt(m.group(1)));
+  }
+  assertTrue(ints.isEmpty());
+  postImport(imp);
+  LayerInfo l=importer.getContext(imp).getTasks().get(0).getLayer();
+  runChecks(l.getName());
+}

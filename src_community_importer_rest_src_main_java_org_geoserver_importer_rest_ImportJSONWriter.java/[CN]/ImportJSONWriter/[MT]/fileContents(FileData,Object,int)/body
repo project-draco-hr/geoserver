@@ -1,0 +1,22 @@
+{
+  String filename=data.getFile().getName();
+  json.key("file").value(filename);
+  json.key("href").value(page.rootURI(pathTo(data,parent) + "/files/" + filename));
+  if (expand > 0) {
+    if (data instanceof SpatialFile) {
+      SpatialFile sf=(SpatialFile)data;
+      json.key("prj").value(sf.getPrjFile() != null ? sf.getPrjFile().getName() : null);
+      json.key("other").array();
+      for (      File supp : ((SpatialFile)data).getSuppFiles()) {
+        json.value(supp.getName());
+      }
+      json.endArray();
+      if (sf instanceof Granule) {
+        Granule g=(Granule)sf;
+        if (g.getTimestamp() != null) {
+          json.key("timestamp").value(DATE_FORMAT.format(g.getTimestamp()));
+        }
+      }
+    }
+  }
+}

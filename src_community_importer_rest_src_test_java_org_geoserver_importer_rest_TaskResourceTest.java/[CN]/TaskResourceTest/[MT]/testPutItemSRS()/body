@@ -1,0 +1,22 @@
+{
+  File dir=unpack("shape/archsites_no_crs.zip");
+  importer.createContext(new SpatialFile(new File(dir,"archsites.shp")));
+  JSONObject json=(JSONObject)getAsJSON("/rest/imports/1/tasks/0");
+  JSONObject task=json.getJSONObject("task");
+  assertEquals("NO_CRS",task.get("state"));
+  assertFalse(task.getJSONObject("layer").containsKey("srs"));
+  MockHttpServletResponse resp=setSRSRequest("/rest/imports/1/tasks/0","26713");
+  verifyInvalidCRSErrorResponse(resp);
+  resp=setSRSRequest("/rest/imports/1/tasks/0","EPSG:9838275");
+  verifyInvalidCRSErrorResponse(resp);
+  setSRSRequest("/rest/imports/1/tasks/0","EPSG:26713");
+  ImportContext context=importer.getContext(1);
+  ReferencedEnvelope latLonBoundingBox=context.getTasks().get(0).getLayer().getResource().getLatLonBoundingBox();
+  assertFalse("expected not empty bbox",latLonBoundingBox.isEmpty());
+  json=(JSONObject)getAsJSON("/rest/imports/1/tasks/0?expand=2");
+  task=json.getJSONObject("task");
+  assertEquals("READY",task.get("state"));
+  assertEquals("EPSG:26713",task.getJSONObject("layer").getString("srs"));
+  State state=context.getState();
+  assertEquals("Invalid context state",State.PENDING,state);
+}

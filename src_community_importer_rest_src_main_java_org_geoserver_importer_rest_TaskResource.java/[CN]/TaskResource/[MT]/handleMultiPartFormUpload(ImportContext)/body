@@ -1,0 +1,24 @@
+{
+  DiskFileItemFactory factory=new DiskFileItemFactory();
+  RestletFileUpload upload=new RestletFileUpload(factory);
+  List<FileItem> items=null;
+  try {
+    items=upload.parseRequest(getRequest());
+  }
+ catch (  FileUploadException e) {
+    throw new RestletException("File upload failed",Status.SERVER_ERROR_INTERNAL,e);
+  }
+  Directory directory=findOrCreateDirectory(context);
+  for (  FileItem item : items) {
+    if (item.getName() == null) {
+      continue;
+    }
+    try {
+      directory.accept(item);
+    }
+ catch (    Exception ex) {
+      throw new RestletException("Error writing file " + item.getName(),Status.SERVER_ERROR_INTERNAL,ex);
+    }
+  }
+  return directory;
+}

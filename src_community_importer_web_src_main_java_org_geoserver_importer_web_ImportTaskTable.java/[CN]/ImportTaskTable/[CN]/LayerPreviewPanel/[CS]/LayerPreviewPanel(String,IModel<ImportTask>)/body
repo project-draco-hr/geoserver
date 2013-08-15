@@ -1,0 +1,18 @@
+{
+  super(id);
+  LayerInfo layer=model.getObject().getLayer();
+  PreviewLayer preview=new PreviewLayer(layer);
+  List<PreviewLink> links=new ArrayList<PreviewLink>();
+  links.add(new PreviewLink("layerPreview",preview.getWmsLink() + "&format=application/openlayers"));
+  links.add(new PreviewLink("googleearth","../wms/kml?layers=" + layer.getName()));
+  add(new DropDownChoice<PreviewLink>("links",new Model(links.get(0)),links,new ChoiceRenderer<PreviewLink>(){
+    @Override public Object getDisplayValue(    PreviewLink object){
+      return new ParamResourceModel(object.id,ImportTaskTable.this,object.id).getString();
+    }
+    @Override public String getIdValue(    PreviewLink object,    int index){
+      return object.href;
+    }
+  }
+).setNullValid(false).setOutputMarkupId(true));
+  add(new ExternalLink("go","#").add(new AttributeModifier("onclick",new Model("go(document.getElementById('" + get("links").getMarkupId() + "'));"))));
+}

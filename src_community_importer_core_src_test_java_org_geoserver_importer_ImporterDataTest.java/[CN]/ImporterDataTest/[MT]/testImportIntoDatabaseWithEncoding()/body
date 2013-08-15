@@ -1,0 +1,21 @@
+{
+  Catalog cat=getCatalog();
+  DataStoreInfo ds=createH2DataStore(cat.getDefaultWorkspace().getName(),"ming");
+  File dir=tmpDir();
+  unpack("shape/ming_time.zip",dir);
+  ImportContext context=importer.createContext(new Directory(dir),ds);
+  assertEquals(1,context.getTasks().size());
+  context.getTasks().get(0).getData().setCharsetEncoding("UTF-8");
+  importer.run(context);
+  FeatureTypeInfo info=(FeatureTypeInfo)context.getTasks().get(0).getLayer().getResource();
+  FeatureSource<? extends FeatureType,? extends Feature> fs=info.getFeatureSource(null,null);
+  FeatureCollection<? extends FeatureType,? extends Feature> features=fs.getFeatures();
+  FeatureIterator<? extends Feature> it=features.features();
+  assertTrue(it.hasNext());
+  SimpleFeature next=(SimpleFeature)it.next();
+  String type_ch=(String)next.getAttribute("type_ch");
+  assertEquals("???",type_ch);
+  String name_ch=(String)next.getAttribute("name_ch");
+  assertEquals("????????????",name_ch);
+  it.close();
+}

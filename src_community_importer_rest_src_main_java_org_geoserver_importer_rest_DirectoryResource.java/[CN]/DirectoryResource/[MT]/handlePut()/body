@@ -1,0 +1,21 @@
+{
+  JSONObject obj=(JSONObject)getFormatPostOrPut().toObject(getRequest().getEntity());
+  FileData file=lookupFile();
+  if (file instanceof SpatialFile) {
+    SpatialFile sf=(SpatialFile)file;
+    if (sf instanceof Granule) {
+      Granule g=(Granule)sf;
+      if (obj.has("timestamp")) {
+        String ts=obj.getString("timestamp");
+        try {
+          g.setTimestamp(ImportJSONWriter.DATE_FORMAT.parse(ts));
+        }
+ catch (        ParseException e) {
+          throw new RestletException("Could not parse timestamp: " + ts + ", must be "+ "format: "+ ImportJSONWriter.DATE_FORMAT.toPattern(),Status.CLIENT_ERROR_BAD_REQUEST);
+        }
+        getResponse().setEntity(getFormatGet().toRepresentation(g));
+      }
+    }
+  }
+  getResponse().setStatus(Status.SUCCESS_OK);
+}
