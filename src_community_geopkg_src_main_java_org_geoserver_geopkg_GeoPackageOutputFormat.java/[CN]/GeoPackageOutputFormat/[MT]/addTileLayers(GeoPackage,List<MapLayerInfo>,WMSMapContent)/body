@@ -1,0 +1,73 @@
+{
+  if (mapLayers.isEmpty()) {
+    return;
+  }
+  String tileEntryName=null;
+  Map formatOpts=map.getRequest().getFormatOptions();
+  if (formatOpts.containsKey("tileset_name")) {
+    tileEntryName=(String)formatOpts.get("tileset_name");
+  }
+  if (tileEntryName == null) {
+    tileEntryName=map.getTitle();
+  }
+  if (tileEntryName == null && mapLayers.size() == 1) {
+    Iterator<MapLayerInfo> it=mapLayers.iterator();
+    tileEntryName=it.next().getLayerInfo().getName();
+  }
+  GridSubset gridSubset=findBestGridSubset(map);
+  int[] minmax=findMinMaxZoom(gridSubset,map);
+  BoundingBox bbox=bbox(map);
+  TileEntry e=new TileEntry();
+  e.setTableName(tileEntryName);
+  if (mapLayers.size() == 1) {
+    ResourceInfo r=mapLayers.get(0).getResource();
+    e.setIdentifier(r.getTitle());
+    e.setDescription(r.getAbstract());
+  }
+  e.setBounds(new ReferencedEnvelope(findTileBounds(gridSubset,bbox,minmax[0]),map.getCoordinateReferenceSystem()));
+  e.setSrid(srid(map));
+  GridSet gridSet=gridSubset.getGridSet();
+  for (int z=minmax[0]; z < minmax[1]; z++) {
+    Grid g=gridSet.getGrid(z);
+    TileMatrix m=new TileMatrix();
+    m.setZoomLevel(z);
+    m.setMatrixWidth((int)g.getNumTilesWide());
+    m.setMatrixHeight((int)g.getNumTilesHigh());
+    m.setTileWidth(gridSubset.getTileWidth());
+    m.setTileHeight(gridSubset.getTileHeight());
+    m.setXPixelSize(g.getResolution());
+    m.setYPixelSize(g.getResolution());
+    e.getTileMatricies().add(m);
+  }
+  LOGGER.fine("Creating tile entry" + e.getTableName());
+  geopkg.create(e);
+  GetMapRequest req=new GetMapRequest();
+  OwsUtils.copy(map.getRequest(),req,GetMapRequest.class);
+  req.setLayers(mapLayers);
+  String imageFormat=formatOpts.containsKey("format") ? parseFormatFromOpts(formatOpts) : findBestFormat(map);
+  req.setFormat(imageFormat);
+  req.setWidth(gridSubset.getTileWidth());
+  req.setHeight(gridSubset.getTileHeight());
+  int ntiles=0;
+  boolean flipy=Boolean.valueOf((String)formatOpts.get("flipy"));
+  for (int z=minmax[0]; z < minmax[1]; z++) {
+    long[] intersect=gridSubset.getCoverageIntersection(z,bbox);
+    for (long x=intersect[0]; x <= intersect[2]; x++) {
+      for (long y=intersect[1]; y <= intersect[3]; y++) {
+        BoundingBox box=gridSubset.boundsFromIndex(new long[]{x,y,z});
+        req.setBbox(new Envelope(box.getMinX(),box.getMaxX(),box.getMinY(),box.getMaxY()));
+        Tile t=new Tile();
+        t.setZoom(z);
+        t.setColumn((int)x);
+        t.setRow((int)(flipy ? gridSubset.getNumTilesHigh(z) - (y + 1) : y));
+        WebMap result=webMapService.getMap(req);
+        t.setData(toBytes(result));
+        geopkg.add(e,t);
+        if (ntiles++ == TILE_CLEANUP_INTERVAL) {
+          cleanUpImages();
+          ntiles=0;
+        }
+      }
+    }
+  }
+}
