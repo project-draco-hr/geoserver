@@ -1,0 +1,42 @@
+{
+  XpathEngine engine=XMLUnit.newXpathEngine();
+  String text=engine.evaluate(xpath,doc);
+  if (equalsRegardingNull(expectedText,text)) {
+    return;
+  }
+  if (expectedText != null && text != null) {
+    String expectedCoordinates[]=expectedText.split("(\\s|,)");
+    String actualCoordiantes[]=text.split("(\\s|,)");
+    if (expectedCoordinates.length == actualCoordiantes.length) {
+      final int LENGTH=actualCoordiantes.length;
+      boolean checked=true;
+      LIST:       for (int i=0; i < LENGTH; i++) {
+        String expected=expectedCoordinates[i];
+        String actual=actualCoordiantes[i];
+        if (expected.length() == actual.length()) {
+          if (!expected.equals(actual)) {
+            checked=false;
+            break LIST;
+          }
+        }
+ else {
+          try {
+            double expectedOrdinate=Double.parseDouble(expected);
+            double actualOridnate=Double.parseDouble(actual);
+            if (Double.compare(expectedOrdinate,actualOridnate) != 0) {
+              break LIST;
+            }
+          }
+ catch (          NumberFormatException formatException) {
+            checked=false;
+            break LIST;
+          }
+        }
+      }
+      if (checked) {
+        return;
+      }
+    }
+  }
+  assertEquals(message,expectedText,text);
+}
