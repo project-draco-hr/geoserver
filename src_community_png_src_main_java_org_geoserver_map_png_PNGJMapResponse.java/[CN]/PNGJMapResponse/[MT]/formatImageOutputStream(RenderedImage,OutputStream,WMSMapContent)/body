@@ -1,0 +1,18 @@
+{
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Writing png image ...");
+  }
+  if (image.getColorModel() instanceof IndexColorModel) {
+    IndexColorModel icm=(IndexColorModel)image.getColorModel();
+    if (icm.getMapSize() > 256) {
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.fine("Forcing input image to be compatible with PNG: Palette with > 256 color is not supported.");
+      }
+      ImageWorker iw=new ImageWorker(image);
+      iw.rescaleToBytes();
+      image=iw.getRenderedImage();
+    }
+  }
+  image=applyPalette(image,mapContent,"image/png8",true);
+  writePNG(image,outStream);
+}
