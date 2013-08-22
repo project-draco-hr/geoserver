@@ -1,0 +1,43 @@
+{
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  MockHttpServletResponse response=new MockHttpServletResponse(){
+    ServletOutputStream os;
+    @Override public ServletOutputStream getOutputStream() throws IOException {
+      if (os == null) {
+        final ServletOutputStream wrapped=super.getOutputStream();
+        os=new ServletOutputStream(){
+          boolean closed;
+          @Override public void write(          int b) throws IOException {
+            wrapped.write(b);
+          }
+          @Override public void close() throws IOException {
+            closed=true;
+            wrapped.close();
+          }
+          @Override public void flush() throws IOException {
+            if (closed) {
+              throw new RuntimeException("Aaarg, I'm already closed, your JVM shall die now!");
+            }
+            wrapped.flush();
+          }
+        }
+;
+      }
+      return os;
+    }
+  }
+;
+  MockFilterChain chain=new MockFilterChain(){
+    @Override public void doFilter(    ServletRequest request,    ServletResponse response) throws IOException, ServletException {
+      ServletOutputStream os=response.getOutputStream();
+      os.print("Some random text");
+      os.close();
+      os.flush();
+    }
+  }
+;
+  FlushSafeFilter filter=new FlushSafeFilter();
+  filter.init(new MockFilterConfig());
+  filter.doFilter(request,response,chain);
+  assertEquals("Some random text",response.getOutputStreamContent());
+}
