@@ -1,0 +1,23 @@
+{
+  WorkspaceInfo info;
+  final String workspaceName="testWorkspace";
+  final String workspaceId="Workspace-TEST";
+  final String workspaceWorkspace=null;
+{
+    info=createMock(WorkspaceInfo.class);
+    expect(info.getName()).andStubReturn(workspaceName);
+    expect(info.getId()).andStubReturn(workspaceId);
+    expectEvent(localAddress,workspaceName,workspaceWorkspace,workspaceId,WorkspaceInfo.class,Type.ADD);
+  }
+  replay(info);
+{
+    HzSynchronizer sync=getSynchronizer();
+    CatalogAddEventImpl preEvent=new CatalogAddEventImpl();
+    preEvent.setSource(info);
+    for (    CatalogListener listener : catListenerCapture.getValues()) {
+      listener.handleAddEvent(preEvent);
+    }
+  }
+  waitForSync();
+  verify(info);
+}
