@@ -9,29 +9,27 @@
       ((FormComponent)LDAPAuthProviderPanel.this.get("serverURL")).processInput();
       ((FormComponent)LDAPAuthProviderPanel.this.get("useTLS")).processInput();
       ((FormComponent)LDAPAuthProviderPanel.this.get("userDnPattern")).processInput();
-      Map map=(Map)TestLDAPConnectionPanel.this.getDefaultModelObject();
-      String username=(String)map.get("username");
-      String password=(String)map.get("password");
+      ((FormComponent)LDAPAuthProviderPanel.this.get("userFilter")).processInput();
+      ((FormComponent)LDAPAuthProviderPanel.this.get("userFormat")).processInput();
+      String username=(String)((FormComponent)TestLDAPConnectionPanel.this.get("username")).getConvertedInput();
+      String password=(String)((FormComponent)TestLDAPConnectionPanel.this.get("password")).getConvertedInput();
       LDAPSecurityServiceConfig ldapConfig=(LDAPSecurityServiceConfig)getForm().getModelObject();
       doTest(ldapConfig,username,password);
-      target.addComponent(((GeoServerBasePage)getPage()).get("feedback"));
+      target.addComponent(getPage().get("feedback"));
     }
     void doTest(    LDAPSecurityServiceConfig ldapConfig,    String username,    String password){
-      LdapContext ctx=null;
       try {
-        Hashtable env=new Hashtable(11);
-        env.put(Context.INITIAL_CONTEXT_FACTORY,"com.sun.jndi.ldap.LdapCtxFactory");
-        env.put(Context.PROVIDER_URL,ldapConfig.getServerURL());
-        env.put(Context.SECURITY_AUTHENTICATION,"simple");
-        URI url=new URI(ldapConfig.getServerURL());
-        if (ldapConfig.getUserDnPattern() == null) {
-          error("No user dn pattern specified");
+        if (ldapConfig.getUserDnPattern() == null && ldapConfig.getUserFilter() == null) {
+          error("Neither user dn pattern or user filter specified");
           return;
         }
-        String p=ldapConfig.getUserDnPattern().replaceAll("\\{0\\}",username) + "," + url.getPath().substring(1);
-        env.put(Context.SECURITY_PRINCIPAL,p);
-        env.put(Context.SECURITY_CREDENTIALS,password);
-        ctx=new InitialLdapContext(env,null);
+        LDAPSecurityProvider provider=new LDAPSecurityProvider(null);
+        LDAPAuthenticationProvider authProvider=(LDAPAuthenticationProvider)provider.createAuthenticationProvider(ldapConfig);
+        Authentication authentication=authProvider.authenticate(new UsernamePasswordAuthenticationToken(username,password));
+        if (authentication == null || !authentication.isAuthenticated()) {
+          throw new AuthenticationException("Cannot authenticate " + username);
+        }
+        provider.destroy(null);
         info(new StringResourceModel(LDAPAuthProviderPanel.class.getSimpleName() + ".connectionSuccessful",null).getObject());
       }
  catch (      Exception e) {
@@ -39,13 +37,6 @@
         LOGGER.log(Level.WARNING,e.getMessage(),e);
       }
  finally {
-        if (ctx != null) {
-          try {
-            ctx.close();
-          }
- catch (          NamingException e) {
-          }
-        }
       }
     }
   }

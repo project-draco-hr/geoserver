@@ -1,0 +1,27 @@
+{
+  CatalogStoreMapping mapping=new CatalogStoreMapping();
+  for (  Map.Entry<String,String> mappingEntry : mappingSource.entrySet()) {
+    String key=mappingEntry.getKey();
+    boolean required=false;
+    boolean id=false;
+    if ("$".equals(key.substring(0,1))) {
+      key=key.substring(1);
+      required=true;
+    }
+    if ("@".equals(key.substring(0,1))) {
+      key=key.substring(1);
+      id=true;
+    }
+    CatalogStoreMappingElement element=mapping.mappingElements.get(key);
+    if (element == null) {
+      element=new CatalogStoreMappingElement(key);
+      mapping.mappingElements.put(key,element);
+    }
+    element.content=parseOgcCqlExpression(mappingEntry.getValue());
+    element.required=required;
+    if (id) {
+      mapping.identifier=element;
+    }
+  }
+  return mapping;
+}

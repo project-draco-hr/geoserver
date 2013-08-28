@@ -1,0 +1,40 @@
+{
+  ImportTask orig=(ImportTask)lookupTask(false);
+  ImportTask task;
+  try {
+    task=(ImportTask)getFormatPostOrPut().toObject(getRequest().getEntity());
+  }
+ catch (  ValidationException ve) {
+    getLogger().log(Level.WARNING,null,ve);
+    throw ImportJSONWriter.badRequest(ve.getMessage());
+  }
+  boolean change=false;
+  if (task.getStore() != null) {
+    TaskTargetResource.updateStoreInfo(orig,task.getStore(),importer);
+    change=true;
+  }
+  if (task.getData() != null) {
+    orig.getData().setCharsetEncoding(task.getData().getCharsetEncoding());
+    change=true;
+  }
+  if (task.getUpdateMode() != null) {
+    orig.setUpdateMode(task.getUpdateMode());
+    change=true;
+  }
+  if (task.getLayer() != null) {
+    change=true;
+    LayerResource.updateLayer(orig,task.getLayer(),importer);
+  }
+  TransformChain chain=task.getTransform();
+  if (chain != null) {
+    orig.setTransform(chain);
+    change=true;
+  }
+  if (!change) {
+    throw new RestletException("Unknown representation",Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+ else {
+    importer.changed(orig);
+    getResponse().setStatus(Status.SUCCESS_NO_CONTENT);
+  }
+}

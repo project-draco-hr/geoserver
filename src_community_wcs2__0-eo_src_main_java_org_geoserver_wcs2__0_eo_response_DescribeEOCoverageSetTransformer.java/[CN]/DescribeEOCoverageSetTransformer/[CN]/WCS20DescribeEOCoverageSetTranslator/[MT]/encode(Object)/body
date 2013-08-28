@@ -1,0 +1,31 @@
+{
+  DescribeEOCoverageSetType dcs=(DescribeEOCoverageSetType)o;
+  List<CoverageInfo> coverages=getCoverages(dcs);
+  List<CoverageGranules> coverageGranules=getCoverageGranules(dcs,coverages);
+  int granuleCount=getGranuleCount(coverageGranules);
+  Integer maxCoverages=getMaxCoverages(dcs);
+  int returned;
+  if (maxCoverages != null) {
+    returned=granuleCount < maxCoverages ? granuleCount : maxCoverages;
+  }
+ else {
+    returned=granuleCount;
+  }
+  String eoSchemaLocation=ResponseUtils.buildSchemaURL(dcs.getBaseUrl(),"wcseo/1.0/wcsEOAll.xsd");
+  Attributes atts=atts("xmlns:eop","http://www.opengis.net/eop/2.0","xmlns:gml","http://www.opengis.net/gml/3.2","xmlns:wcsgs","http://www.geoserver.org/wcsgs/2.0","xmlns:gmlcov","http://www.opengis.net/gmlcov/1.0","xmlns:om","http://www.opengis.net/om/2.0","xmlns:swe","http://www.opengis.net/swe/2.0","xmlns:wcs","http://www.opengis.net/wcs/2.0","xmlns:wcseo","http://www.opengis.net/wcseo/1.0","xmlns:xlink","http://www.w3.org/1999/xlink","xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance","numberMatched",String.valueOf(granuleCount),"numberReturned",String.valueOf(returned),"xsi:schemaLocation","http://www.opengis.net/wcseo/1.0 " + eoSchemaLocation);
+  start("wcseo:EOCoverageSetDescription",atts);
+  if (!coverageGranules.isEmpty()) {
+    List<CoverageGranules> reducedGranules=coverageGranules;
+    if (maxCoverages != null) {
+      reducedGranules=applyMaxCoverages(coverageGranules,maxCoverages);
+    }
+    boolean allSections=dcs.getSections() == null || dcs.getSections().getSection() == null || dcs.getSections().getSection().contains(Section.ALL);
+    if (allSections || dcs.getSections().getSection().contains(Section.COVERAGEDESCRIPTIONS)) {
+      handleCoverageDescriptions(reducedGranules);
+    }
+    if (allSections || dcs.getSections().getSection().contains(Section.DATASETSERIESDESCRIPTIONS)) {
+      handleDatasetSeriesDescriptions(coverageGranules);
+    }
+  }
+  end("wcseo:EOCoverageSetDescription");
+}

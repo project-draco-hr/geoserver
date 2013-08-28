@@ -1,12 +1,31 @@
 {
   final File newFile=new File(directory,fileName);
-  if (deleteDirectoryContent && newFile.exists()) {
-    FileUtils.cleanDirectory(directory);
+  if (newFile.exists()) {
+    if (deleteDirectoryContent) {
+      FileUtils.cleanDirectory(directory);
+    }
+ else {
+      newFile.delete();
+    }
   }
   final ReadableByteChannel source=request.getEntity().getChannel();
-  final FileChannel outputChannel=IOUtils.getOuputChannel(newFile);
-  IOUtils.copyChannel(1024 * 1024,source,outputChannel);
-  IOUtils.closeQuietly(source);
-  IOUtils.closeQuietly(outputChannel);
+  RandomAccessFile raf=null;
+  FileChannel outputChannel=null;
+  try {
+    raf=new RandomAccessFile(newFile,"rw");
+    outputChannel=raf.getChannel();
+    IOUtils.copyChannel(1024 * 1024,source,outputChannel);
+  }
+  finally {
+    try {
+      if (raf != null) {
+        raf.close();
+      }
+    }
+  finally {
+      IOUtils.closeQuietly(source);
+      IOUtils.closeQuietly(outputChannel);
+    }
+  }
   return newFile;
 }

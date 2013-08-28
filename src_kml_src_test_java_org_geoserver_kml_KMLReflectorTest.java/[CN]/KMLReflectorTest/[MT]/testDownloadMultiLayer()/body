@@ -1,0 +1,10 @@
+{
+  String requestURL="wms/kml?&layers=" + getLayerId(MockData.LAKES) + ","+ getLayerId(MockData.FORESTS);
+  MockHttpServletResponse response=getAsServletResponse(requestURL);
+  assertEquals(KMLMapOutputFormat.MIME_TYPE,response.getContentType());
+  assertEquals("attachment; filename=cite-Lakes_cite-Forests.kml",response.getHeader("Content-Disposition"));
+  Document dom=dom(getBinaryInputStream(response));
+  assertXpathEvaluatesTo("1","count(kml:kml/kml:Document)",dom);
+  assertXpathEvaluatesTo("2","count(kml:kml/kml:Document/kml:NetworkLink)",dom);
+  assertXpathEvaluatesTo("2","count(kml:kml/kml:Document/kml:NetworkLink/kml:LookAt)",dom);
+}

@@ -1,0 +1,37 @@
+{
+  TreeSet<Object> domain=accessor.getElevationDomain();
+  Double slicePoint=elevationSubset.getMinimum();
+  if (!domainContainsPoint(slicePoint,domain)) {
+    Double previous=null;
+    Double newSlicePoint=null;
+    TreeSet<Double> domainDates=getDomainNumber(domain);
+    for (    Double curr : domainDates) {
+      if (curr.compareTo(slicePoint) > 0) {
+        if (previous == null) {
+          newSlicePoint=curr;
+          break;
+        }
+ else {
+          double diffPrevious=slicePoint - previous;
+          double diffCurr=curr - slicePoint;
+          if (diffCurr > diffPrevious) {
+            newSlicePoint=curr;
+            break;
+          }
+ else {
+            newSlicePoint=previous;
+            break;
+          }
+        }
+      }
+ else {
+        previous=curr;
+      }
+    }
+    if (newSlicePoint == null) {
+      newSlicePoint=previous;
+    }
+    elevationSubset=new NumberRange<Double>(Double.class,newSlicePoint,newSlicePoint);
+  }
+  return elevationSubset;
+}

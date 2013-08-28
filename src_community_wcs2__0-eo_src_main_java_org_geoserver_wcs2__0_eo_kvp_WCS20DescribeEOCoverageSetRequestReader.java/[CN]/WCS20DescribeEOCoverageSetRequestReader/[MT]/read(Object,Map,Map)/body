@@ -1,0 +1,24 @@
+{
+  SectionsType owsSections=(SectionsType)kvp.get("sections");
+  if (owsSections != null) {
+    Sections sections=Wcs20Factory.eINSTANCE.createSections();
+    for (    Object o : owsSections.getSection()) {
+      String sectionName=(String)o;
+      Section section=Section.get(sectionName);
+      if (section == null) {
+        throw new WCS20Exception("Invalid sections value " + sectionName + ", supported values are "+ Arrays.asList(Section.values()),OWSExceptionCode.InvalidParameterValue,"sections");
+      }
+      sections.getSection().add(section);
+    }
+    kvp.put("sections",sections);
+  }
+  Object subset=kvp.get("subset");
+  if (subset != null) {
+    kvp.put("dimensionTrim",subset);
+  }
+  Object containment=kvp.get("containment");
+  if (containment != null) {
+    kvp.put("containmentType",containment);
+  }
+  return super.read(request,kvp,rawKvp);
+}

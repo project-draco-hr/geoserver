@@ -1,0 +1,21 @@
+{
+  File dir=unpack("csv/locations.zip");
+  ImportContext context=importer.createContext(new SpatialFile(new File(dir,"locations.csv")));
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertEquals(ImportTask.State.NO_CRS,task.getState());
+  LayerInfo layer=task.getLayer();
+  ResourceInfo resource=layer.getResource();
+  resource.setSRS("EPSG:4326");
+  assertTrue("Item not ready",importer.prep(task));
+  assertEquals(ImportTask.State.READY,task.getState());
+  context.updated();
+  assertEquals(ImportContext.State.PENDING,context.getState());
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  FeatureTypeInfo fti=(FeatureTypeInfo)resource;
+  SimpleFeatureType featureType=(SimpleFeatureType)fti.getFeatureType();
+  GeometryDescriptor geometryDescriptor=featureType.getGeometryDescriptor();
+  assertNull("Expecting no geometry",geometryDescriptor);
+  assertEquals(4,featureType.getAttributeCount());
+}

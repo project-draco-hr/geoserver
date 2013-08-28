@@ -1,0 +1,67 @@
+{
+  Assert.isInstanceOf(XMLTransformerMap.class,value);
+  final XMLTransformerMap map=(XMLTransformerMap)value;
+  try {
+    final KMLTransformer transformer=(KMLTransformer)map.getTransformer();
+    final WMSMapContent mapContent=(WMSMapContent)map.getTransformerSubject();
+    ZipOutputStream zip=new ZipOutputStream(output);
+    ZipEntry entry=new ZipEntry("wms.kml");
+    zip.putNextEntry(entry);
+    try {
+      transformer.transform(mapContent,zip);
+      zip.closeEntry();
+    }
+ catch (    TransformerException e) {
+      throw (IOException)new IOException().initCause(e);
+    }
+    final RenderedImageMapOutputFormat pngProducer=new RenderedImageMapOutputFormat("image/png",wms);
+    final PNGMapResponse pngEncoder=new PNGMapResponse(wms);
+    ZipEntry images=new ZipEntry("images/");
+    zip.putNextEntry(images);
+    List<Layer> layers=mapContent.layers();
+    for (int i=0; i < layers.size(); i++) {
+      Layer mapLayer=layers.get(i);
+      WMSMapContent subContext=new WMSMapContent();
+      subContext.addLayer(mapLayer);
+      subContext.setRequest(mapContent.getRequest());
+      subContext.setMapHeight(mapContent.getMapHeight());
+      subContext.setMapWidth(mapContent.getMapWidth());
+      subContext.getViewport().setBounds(mapContent.getRenderingArea());
+      subContext.setBgColor(mapContent.getBgColor());
+      subContext.setBuffer(mapContent.getBuffer());
+      subContext.setContactInformation(mapContent.getContactInformation());
+      subContext.setKeywords(mapContent.getKeywords());
+      subContext.setAbstract(mapContent.getAbstract());
+      subContext.setTransparent(true);
+      RenderedImageMap imageMap;
+      try {
+        imageMap=pngProducer.produceMap(subContext);
+      }
+  finally {
+        subContext.dispose();
+      }
+      entry=new ZipEntry("images/layer_" + i + ".png");
+      zip.putNextEntry(entry);
+      pngEncoder.write(imageMap,zip,operation);
+      zip.closeEntry();
+    }
+    zip.closeEntry();
+    Map<String,Style> embeddedIcons=transformer.getEmbeddedIcons();
+    ZipEntry icons=new ZipEntry("icons/");
+    zip.putNextEntry(icons);
+    for (    Map.Entry<String,Style> namedStyle : embeddedIcons.entrySet()) {
+      final String name=namedStyle.getKey();
+      final Style style=namedStyle.getValue();
+      BufferedImage icon=IconRenderer.renderIcon(style);
+      entry=new ZipEntry("icons/" + name + ".png");
+      zip.putNextEntry(entry);
+      ImageIO.write(icon,"PNG",zip);
+    }
+    zip.closeEntry();
+    zip.finish();
+    zip.flush();
+  }
+  finally {
+    map.dispose();
+  }
+}

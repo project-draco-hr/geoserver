@@ -1,4 +1,15 @@
 {
+  NamespaceSupport namespaces=getNamespaceSupport();
+  namespaces.declarePrefix("wcscrs","http://www.opengis.net/wcs/service-extension/crs/1.0");
+  namespaces.declarePrefix("int","http://www.opengis.net/WCS_service-extension_interpolation/1.0");
+  namespaces.declarePrefix("gml","http://www.opengis.net/gml/3.2");
+  namespaces.declarePrefix("gmlcov","http://www.opengis.net/gmlcov/1.0");
+  namespaces.declarePrefix("swe","http://www.opengis.net/swe/2.0");
+  namespaces.declarePrefix("xlink","http://www.w3.org/1999/xlink");
+  namespaces.declarePrefix("xsi","http://www.w3.org/2001/XMLSchema-instance");
+  for (  WCS20CoverageMetadataProvider cp : extensions) {
+    cp.registerNamespaces(namespaces);
+  }
   if (!(o instanceof GridCoverage2D)) {
     throw new IllegalArgumentException("Provided object is not a GridCoverage2D:" + (o != null ? o.getClass().toString() : "null"));
   }
@@ -19,11 +30,7 @@
   final String srsName=GetCoverage.SRS_STARTER + EPSGCode;
   final boolean axisSwap=CRS.getAxisOrder(crs).equals(AxisOrder.EAST_NORTH);
   final AttributesImpl attributes=new AttributesImpl();
-  attributes.addAttribute("","xmlns:gml","xmlns:gml","","http://www.opengis.net/gml/3.2");
-  attributes.addAttribute("","xmlns:gmlcov","xmlns:gmlcov","","http://www.opengis.net/gmlcov/1.0");
-  attributes.addAttribute("","xmlns:swe","xmlns:swe","","http://www.opengis.net/swe/2.0");
-  attributes.addAttribute("","xmlns:xlink","xmlns:xlink","","http://www.w3.org/1999/xlink");
-  attributes.addAttribute("","xmlns:xsi","xmlns:xsi","","http://www.w3.org/2001/XMLSchema-instance");
+  helper.registerNamespaces(getNamespaceSupport(),attributes);
   attributes.addAttribute("","gml:id","gml:id","",gc2d.getName().toString(Locale.getDefault()));
   start("gml:RectifiedGridCoverage",attributes);
   final StringBuilder builder=new StringBuilder();
@@ -31,17 +38,29 @@
     builder.append(axisName).append(" ");
   }
   String axesLabel=builder.substring(0,builder.length() - 1);
-  handleBoundedBy(gc2d,axisSwap,srsName,axesLabel,null);
+  try {
+    GeneralEnvelope envelope=new GeneralEnvelope(gc2d.getEnvelope());
+    handleBoundedBy(envelope,axisSwap,srsName,axesLabel,null);
+  }
+ catch (  IOException ex) {
+    throw new WCS20Exception(ex);
+  }
   builder.setLength(0);
   axesNames=GMLTransformer.this.envelopeDimensionsMapper.getAxesNames(gc2d.getEnvelope2D(),false);
   for (  String axisName : axesNames) {
     builder.append(axisName).append(" ");
   }
   axesLabel=builder.substring(0,builder.length() - 1);
-  handleDomainSet(gc2d,gcName,srsName,axisSwap);
+  handleDomainSet(gc2d.getGridGeometry(),gc2d.getDimension(),gcName,srsName,axisSwap);
   handleRangeType(gc2d);
-  handleCoverageFunction(gc2d,axisSwap);
+  final GridEnvelope2D ge2D=gc2d.getGridGeometry().getGridRange2D();
+  handleCoverageFunction(ge2D,axisSwap);
   handleRange(gc2d);
-  handleMetadata(gc2d,null);
+  try {
+    handleMetadata(null,null);
+  }
+ catch (  IOException e) {
+    e.printStackTrace();
+  }
   end("gml:RectifiedGridCoverage");
 }

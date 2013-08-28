@@ -1,0 +1,23 @@
+{
+  URL zip=MockData.class.getResource("watertemp.zip");
+  InputStream is=null;
+  byte[] bytes;
+  try {
+    is=zip.openStream();
+    bytes=IOUtils.toByteArray(is);
+  }
+  finally {
+    IOUtils.closeQuietly(is);
+  }
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/gs/coveragestores/watertemp/file.imagemosaic",bytes,"application/zip");
+  assertEquals(201,response.getStatusCode());
+  String content=response.getOutputStreamContent();
+  Document d=dom(new ByteArrayInputStream(content.getBytes()));
+  XMLAssert.assertXpathEvaluatesTo("watertemp","//coverageStore/name",d);
+  XMLAssert.assertXpathEvaluatesTo("ImageMosaic","//coverageStore/type",d);
+  CoverageStoreInfo storeInfo=getCatalog().getCoverageStoreByName("watertemp");
+  assertNotNull(storeInfo);
+  CoverageInfo ci=getCatalog().getCoverageByName("watertemp");
+  assertNotNull(ci);
+  assertEquals(storeInfo,ci.getStore());
+}

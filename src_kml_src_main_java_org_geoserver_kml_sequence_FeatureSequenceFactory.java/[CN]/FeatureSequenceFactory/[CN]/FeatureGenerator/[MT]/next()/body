@@ -1,0 +1,39 @@
+{
+  if (fi == null) {
+    return null;
+  }
+  while (fi.hasNext()) {
+    boolean featureRetrieved=false;
+    try {
+      SimpleFeature sf=(SimpleFeature)fi.next();
+      featureRetrieved=true;
+      context.setCurrentFeature(sf);
+      List<Symbolizer> symbolizers=getSymbolizers(simplified,sf);
+      if (symbolizers.size() == 0) {
+        continue;
+      }
+      context.setCurrentSymbolizers(symbolizers);
+      Placemark pm=new Placemark();
+      pm.setId(sf.getID());
+      for (      KmlDecorator callback : callbacks) {
+        pm=(Placemark)callback.decorate(pm,context);
+        if (pm == null) {
+          continue;
+        }
+      }
+      return pm;
+    }
+  finally {
+      if (!featureRetrieved) {
+        fi.close();
+        EnvFunction.setLocalValue(OUTPUT_MODE,null);
+        fi=null;
+      }
+    }
+  }
+  if (!fi.hasNext()) {
+    EnvFunction.setLocalValue(OUTPUT_MODE,null);
+    fi.close();
+  }
+  return null;
+}

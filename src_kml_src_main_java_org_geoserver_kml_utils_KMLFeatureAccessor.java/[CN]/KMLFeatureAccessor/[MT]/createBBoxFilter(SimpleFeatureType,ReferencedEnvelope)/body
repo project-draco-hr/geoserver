@@ -1,0 +1,48 @@
+{
+  List<ReferencedEnvelope> envelopes=new ArrayList<ReferencedEnvelope>();
+  if (KmlEncodingContext.WORLD_BOUNDS_WGS84.contains((Envelope)aoi)) {
+    envelopes.add(aoi);
+  }
+ else {
+    Envelope intersection=KmlEncodingContext.WORLD_BOUNDS_WGS84.intersection((Envelope)aoi);
+    if (intersection.getWidth() > 0) {
+      envelopes.add(new ReferencedEnvelope(intersection,DefaultGeographicCRS.WGS84));
+    }
+    if (aoi.getMaxX() > 180) {
+      double maxx=aoi.getMaxX() - 360;
+      double minx=aoi.getMinX() > 180 ? aoi.getMinX() - 360 : -180;
+      envelopes.add(new ReferencedEnvelope(minx,maxx,aoi.getMinY(),aoi.getMaxY(),DefaultGeographicCRS.WGS84));
+    }
+  }
+  List<ReferencedEnvelope> sourceEnvelopes=new ArrayList<ReferencedEnvelope>();
+  CoordinateReferenceSystem sourceCrs=schema.getCoordinateReferenceSystem();
+  if ((sourceCrs != null) && !CRS.equalsIgnoreMetadata(aoi.getCoordinateReferenceSystem(),sourceCrs)) {
+    for (    ReferencedEnvelope re : envelopes) {
+      try {
+        ReferencedEnvelope se=re.transform(sourceCrs,true);
+        sourceEnvelopes.add(se);
+      }
+ catch (      Exception e) {
+        return Filter.INCLUDE;
+      }
+    }
+  }
+ else {
+    sourceEnvelopes.addAll(envelopes);
+  }
+  GeometryDescriptor gd=schema.getGeometryDescriptor();
+  if (sourceEnvelopes.size() == 0) {
+    return Filter.INCLUDE;
+  }
+ else   if (sourceEnvelopes.size() == 1) {
+    ReferencedEnvelope se=sourceEnvelopes.get(0);
+    return filterFactory.bbox(gd.getLocalName(),se.getMinX(),se.getMinY(),se.getMaxX(),se.getMaxY(),null);
+  }
+ else {
+    List<Filter> filters=new ArrayList<Filter>();
+    for (    ReferencedEnvelope se : sourceEnvelopes) {
+      filters.add(filterFactory.bbox(gd.getLocalName(),se.getMinX(),se.getMinY(),se.getMaxX(),se.getMaxY(),null));
+    }
+    return filterFactory.or(filters);
+  }
+}

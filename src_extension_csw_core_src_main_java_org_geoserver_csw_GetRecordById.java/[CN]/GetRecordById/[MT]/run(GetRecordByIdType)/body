@@ -1,0 +1,33 @@
+{
+  Date timestamp=new Date();
+  try {
+    RecordDescriptor rd=getRecordDescriptor(request);
+    List<Query> queries=toGtQueries(rd,request.getId());
+    int numberOfRecordsMatched=0;
+    int[] counts=new int[queries.size()];
+    for (int i=0; i < queries.size(); i++) {
+      counts[i]=store.getRecordsCount(queries.get(i),Transaction.AUTO_COMMIT);
+      numberOfRecordsMatched+=counts[i];
+    }
+    FeatureCollection records=null;
+    List<FeatureCollection> results=new ArrayList<FeatureCollection>();
+    for (int i=0; i < queries.size(); i++) {
+      FeatureCollection collection=store.getRecords(queries.get(i),Transaction.AUTO_COMMIT);
+      if (collection != null && collection.size() > 0) {
+        results.add(collection);
+      }
+    }
+    if (results.size() == 1) {
+      records=results.get(0);
+    }
+ else     if (results.size() > 1) {
+      records=new CompositeFeatureCollection(results);
+    }
+    ElementSetType elementSet=getElementSetName(request);
+    CSWRecordsResult result=new CSWRecordsResult(elementSet,request.getOutputSchema(),numberOfRecordsMatched,numberOfRecordsMatched,0,timestamp,records);
+    return result;
+  }
+ catch (  IOException e) {
+    throw new ServiceException("Request failed due to: " + e.getMessage(),e);
+  }
+}

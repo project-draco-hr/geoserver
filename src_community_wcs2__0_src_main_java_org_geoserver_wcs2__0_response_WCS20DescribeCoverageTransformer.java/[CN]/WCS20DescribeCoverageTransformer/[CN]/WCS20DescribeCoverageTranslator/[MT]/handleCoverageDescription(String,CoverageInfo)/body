@@ -1,0 +1,61 @@
+{
+  try {
+    WCSDimensionsHelper dimensionsHelper=null;
+    MetadataMap metadata=ci.getMetadata();
+    Map<String,DimensionInfo> dimensionsMap=WCSDimensionsHelper.getDimensionsFromMetadata(metadata);
+    if (!dimensionsMap.isEmpty()) {
+      dimensionsHelper=new WCSDimensionsHelper(dimensionsMap,RequestUtils.getCoverageReader(ci),encodedId);
+    }
+    GridCoverage2DReader reader=(GridCoverage2DReader)ci.getGridCoverageReader(null,null);
+    if (reader == null) {
+      throw new WCS20Exception("Unable to read sample coverage for " + ci.getName());
+    }
+    final CoordinateReferenceSystem crs=reader.getCoordinateReferenceSystem();
+    List<String> axesNames=envelopeDimensionsMapper.getAxesNames(reader.getOriginalEnvelope(),true);
+    Integer EPSGCode=null;
+    try {
+      EPSGCode=CRS.lookupEpsgCode(crs,false);
+    }
+ catch (    FactoryException e) {
+      throw new IllegalStateException("Unable to lookup epsg code for this CRS:" + crs,e);
+    }
+    if (EPSGCode == null) {
+      throw new IllegalStateException("Unable to lookup epsg code for this CRS:" + crs);
+    }
+    final String srsName=GetCoverage.SRS_STARTER + EPSGCode;
+    final boolean axisSwap=CRS.getAxisOrder(crs).equals(AxisOrder.EAST_NORTH);
+    final AttributesImpl coverageAttributes=new AttributesImpl();
+    coverageAttributes.addAttribute("","gml:id","gml:id","",encodedId);
+    start("wcs:CoverageDescription",coverageAttributes);
+    final StringBuilder builder=new StringBuilder();
+    for (    String axisName : axesNames) {
+      builder.append(axisName).append(" ");
+    }
+    if (dimensionsHelper != null && dimensionsHelper.getElevationDimension() != null) {
+      builder.append("elevation ");
+    }
+    if (dimensionsHelper != null && dimensionsHelper.getTimeDimension() != null) {
+      builder.append("time ");
+    }
+    String axesLabel=builder.substring(0,builder.length() - 1);
+    GeneralEnvelope envelope=reader.getOriginalEnvelope();
+    handleBoundedBy(envelope,axisSwap,srsName,axesLabel,dimensionsHelper);
+    element("wcs:CoverageId",encodedId);
+    handleCoverageFunction((GridEnvelope2D)reader.getOriginalGridRange(),axisSwap);
+    handleMetadata(ci,dimensionsHelper);
+    builder.setLength(0);
+    axesNames=envelopeDimensionsMapper.getAxesNames(reader.getOriginalEnvelope(),false);
+    for (    String axisName : axesNames) {
+      builder.append(axisName).append(" ");
+    }
+    axesLabel=builder.substring(0,builder.length() - 1);
+    GridGeometry2D gg=new GridGeometry2D(reader.getOriginalGridRange(),reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),reader.getCoordinateReferenceSystem());
+    handleDomainSet(gg,2,encodedId,srsName,axisSwap);
+    handleRangeType(ci.getDimensions());
+    handleServiceParameters(ci);
+    end("wcs:CoverageDescription");
+  }
+ catch (  Exception e) {
+    throw new WcsException(e);
+  }
+}

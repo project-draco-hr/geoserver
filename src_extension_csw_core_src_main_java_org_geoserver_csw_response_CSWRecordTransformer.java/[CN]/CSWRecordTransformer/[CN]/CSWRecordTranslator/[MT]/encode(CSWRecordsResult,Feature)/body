@@ -1,0 +1,50 @@
+{
+  String element="csw:" + getRecordElement(response);
+  start(element);
+  List<Name> elements=getElements(response);
+  if (elements != null && !element.isEmpty()) {
+    for (    Name name : elements) {
+      Collection<Property> properties=f.getProperties(name);
+      if (properties != null && !properties.isEmpty()) {
+        for (        Property p : properties) {
+          encodeProperty(f,p);
+        }
+      }
+ else       if (DC_TITLE.getName().equals(name)) {
+        element("dc:title",null);
+      }
+    }
+  }
+ else {
+    for (    Property p : f.getProperties()) {
+      if (elements == null || elements.contains(p.getName())) {
+        encodeProperty(f,p);
+      }
+    }
+  }
+  if (elements == null || elements.contains(CSWRecordDescriptor.RECORD_BBOX_NAME)) {
+    Property bboxes=f.getProperty(CSWRecordDescriptor.RECORD_BBOX_NAME);
+    if (bboxes != null) {
+      List<ReferencedEnvelope> originalBoxes=(List<ReferencedEnvelope>)bboxes.getUserData().get(GenericRecordBuilder.ORIGINAL_BBOXES);
+      for (      ReferencedEnvelope re : originalBoxes) {
+        try {
+          ReferencedEnvelope wgs84re=re.transform(CRS.decode(CSWRecordDescriptor.DEFAULT_CRS_NAME),true);
+          String minx=String.valueOf(wgs84re.getMinX());
+          String miny=String.valueOf(wgs84re.getMinY());
+          String maxx=String.valueOf(wgs84re.getMaxX());
+          String maxy=String.valueOf(wgs84re.getMaxY());
+          AttributesImpl attributes=new AttributesImpl();
+          addAttribute(attributes,"crs",CSWRecordDescriptor.DEFAULT_CRS_NAME);
+          start("ows:BoundingBox",attributes);
+          element("ows:LowerCorner",minx + " " + miny);
+          element("ows:UpperCorner",maxx + " " + maxy);
+          end("ows:BoundingBox");
+        }
+ catch (        Exception e) {
+          throw new ServiceException("Failed to encode the current record: " + f,e);
+        }
+      }
+    }
+  }
+  end(element);
+}

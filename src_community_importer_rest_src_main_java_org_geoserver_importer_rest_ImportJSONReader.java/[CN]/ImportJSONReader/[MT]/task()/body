@@ -1,0 +1,42 @@
+{
+  if (json.has("task")) {
+    json=json.getJSONObject("task");
+  }
+  ImportTask task=new ImportTask();
+  if (json.has("id")) {
+    task.setId(json.getInt("id"));
+  }
+  if (json.has("updateMode")) {
+    task.setUpdateMode(UpdateMode.valueOf(json.getString("updateMode").toUpperCase()));
+  }
+  JSONObject data=null;
+  if (json.has("data")) {
+    data=json.getJSONObject("data");
+  }
+ else   if (json.has("source")) {
+    data=json.getJSONObject("source");
+  }
+  if (data != null) {
+    if (data.has("charset")) {
+      if (task.getData() == null) {
+        task.setData(new ImportData.TransferObject());
+      }
+      task.getData().setCharsetEncoding(data.getString("charset"));
+    }
+  }
+  if (json.has("target")) {
+    task.setStore(fromJSON(json.getJSONObject("target"),StoreInfo.class));
+  }
+  LayerInfo layer=null;
+  if (json.has("layer")) {
+    layer=layer(json.getJSONObject("layer"));
+  }
+ else {
+    layer=importer.getCatalog().getFactory().createLayer();
+  }
+  task.setLayer(layer);
+  if (json.has("transformChain")) {
+    task.setTransform(transformChain(json.getJSONObject("transformChain")));
+  }
+  return task;
+}

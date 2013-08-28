@@ -1,0 +1,28 @@
+{
+  Double size=getSpecifiedSize(g,f);
+  double border=0;
+  if (rotation == null) {
+    rotation=getRotation(g,f);
+  }
+  GraphicalSymbol gs=g.graphicalSymbols().iterator().next();
+  if (gs instanceof Mark) {
+    Stroke stroke=((Mark)gs).getStroke();
+    if (stroke != null) {
+      Double width=stroke.getWidth().evaluate(f,Double.class);
+      if (width != null) {
+        border=width;
+      }
+    }
+  }
+  if (size == null) {
+    if (gs instanceof ExternalGraphic) {
+      size=(double)getExternalSize((ExternalGraphic)gs,f);
+    }
+ else {
+      size=(double)DEFAULT_SYMBOL_SIZE;
+    }
+  }
+  size=rotationScale(size,rotation);
+  if (size != null)   size+=border;
+  return size;
+}

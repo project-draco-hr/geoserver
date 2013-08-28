@@ -1,0 +1,31 @@
+{
+  if (!isEarthObservationEnabled()) {
+    return;
+  }
+  AttributesImpl attributes=new AttributesImpl();
+  attributes.addAttribute(null,"name","name",null,"DescribeEOCoverageSet");
+  tx.start("ows:Operation",attributes);
+  final String url=appendQueryString(buildURL(request.getBaseUrl(),"wcs",null,URLMangler.URLType.SERVICE),"");
+  tx.start("ows:DCP");
+  tx.start("ows:HTTP");
+  attributes=new AttributesImpl();
+  attributes.addAttribute("","xlink:href","xlink:href","",url);
+  element(tx,"ows:Get",null,attributes);
+  tx.end("ows:HTTP");
+  tx.end("ows:DCP");
+  attributes=new AttributesImpl();
+  attributes.addAttribute("","xlink:href","xlink:href","",url);
+  tx.start("ows:DCP");
+  tx.start("ows:HTTP");
+  element(tx,"ows:Post",null,attributes);
+  tx.end("ows:HTTP");
+  tx.end("ows:DCP");
+  tx.end("ows:Operation");
+  Integer defaultCount=wcs.getMetadata().get(WCSEOMetadata.COUNT_DEFAULT.key,Integer.class);
+  if (defaultCount != null) {
+    tx.start("ows:Constraint",atts("name","CountDefault"));
+    element(tx,"ows:NoValues",null,null);
+    element(tx,"ows:DefaultValue",String.valueOf(defaultCount),null);
+    tx.end("ows:Constraint");
+  }
+}

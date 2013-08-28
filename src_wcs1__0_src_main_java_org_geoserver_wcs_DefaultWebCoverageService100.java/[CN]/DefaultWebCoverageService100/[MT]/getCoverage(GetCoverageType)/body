@@ -23,7 +23,7 @@
     final CodeType outputCRS=output.getCrs();
     final int dimension=grid.getDimension().intValue();
     if (dimension == 3)     throw new WcsException("We support a third dimension only via a specifica Axis in Range",InvalidParameterValue,null);
-    final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)meta.getGridCoverageReader(null,WCSUtils.getReaderHints(wcs));
+    final GridCoverage2DReader reader=(GridCoverage2DReader)meta.getGridCoverageReader(null,WCSUtils.getReaderHints(wcs));
     if (reader == null) {
       return coverageResults.toArray(new GridCoverage2D[]{});
     }
@@ -165,15 +165,38 @@
       readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,filter,"FILTER","Filter");
     }
     WCSUtils.checkInputLimits(wcs,meta,reader,requestedGridGeometry);
+    Interpolation interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+    String interpolationType=null;
+    if (request.getInterpolationMethod() != null) {
+      interpolationType=request.getInterpolationMethod().getLiteral();
+      if (interpolationType != null) {
+        if (interpolationType.equalsIgnoreCase("bilinear")) {
+          interpolation=Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
+        }
+ else         if (interpolationType.equalsIgnoreCase("bicubic")) {
+          interpolation=Interpolation.getInstance(Interpolation.INTERP_BICUBIC);
+        }
+ else         if (interpolationType.equalsIgnoreCase("nearest neighbor")) {
+          interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+        }
+        readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,interpolation,"interpolation");
+        if (meta.getStore().getFormat() instanceof ImageMosaicFormat) {
+          GeneralParameterValue[] temp=new GeneralParameterValue[readParameters.length + 1];
+          System.arraycopy(readParameters,0,temp,0,readParameters.length);
+          temp[temp.length - 1]=ImageMosaicFormat.INTERPOLATION.createValue();
+          ((ParameterValue)temp[temp.length - 1]).setValue(interpolation);
+          readParameters=temp;
+        }
+      }
+    }
+    readParameters=WCSUtils.replaceParameter(readParameters,Boolean.FALSE,AbstractGridFormat.USE_JAI_IMAGEREAD);
     coverage=(GridCoverage2D)reader.read(readParameters);
     if ((coverage == null) || !(coverage instanceof GridCoverage2D)) {
       throw new IOException("No raster data found in the request (it may be that " + "the request bbox is outside of the coverage area, or that the filters used " + "match no portions of it.");
     }
     WCSUtils.checkInputLimits(wcs,coverage);
     GridCoverage2D bandSelectedCoverage=coverage;
-    String interpolationType=null;
     if (request.getRangeSubset() != null) {
-      interpolationType=request.getInterpolationMethod().getLiteral();
       EList axisSubset=request.getRangeSubset().getAxisSubset();
       if (axisSubset.size() > 0) {
         for (int a=0; a < axisSubset.size(); a++) {
@@ -203,18 +226,6 @@
             throw new WcsException("Band Select Operation: " + e.getLocalizedMessage());
           }
         }
-      }
-    }
-    Interpolation interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
-    if (interpolationType != null) {
-      if (interpolationType.equalsIgnoreCase("bilinear")) {
-        interpolation=Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
-      }
- else       if (interpolationType.equalsIgnoreCase("bicubic")) {
-        interpolation=Interpolation.getInstance(Interpolation.INTERP_BICUBIC);
-      }
- else       if (interpolationType.equalsIgnoreCase("nearest neighbor")) {
-        interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
       }
     }
     GeneralEnvelope destinationEnvelope=(GeneralEnvelope)getHorizontalEnvelope(computeIntersectionEnvelope(requestedEnvelope,nativeEnvelope));

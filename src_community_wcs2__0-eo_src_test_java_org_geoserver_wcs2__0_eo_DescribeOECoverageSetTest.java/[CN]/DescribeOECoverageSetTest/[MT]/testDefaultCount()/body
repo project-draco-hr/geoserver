@@ -1,0 +1,9 @@
+{
+  WCSInfo wcs=getGeoServer().getService(WCSInfo.class);
+  wcs.getMetadata().put(WCSEOMetadata.COUNT_DEFAULT.key,1);
+  getGeoServer().save(wcs);
+  Document dom=getAsDOM("wcs?request=DescribeEOCoverageSet&version=2.0.1&service=WCS&eoid=sf__watertemp_dss");
+  assertEquals("4",xpath.evaluate("/wcseo:EOCoverageSetDescription/@numberMatched",dom));
+  assertEquals("1",xpath.evaluate("/wcseo:EOCoverageSetDescription/@numberReturned",dom));
+  assertEquals("1",xpath.evaluate("count(//wcs:CoverageDescriptions/wcs:CoverageDescription)",dom));
+}

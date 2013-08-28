@@ -3,6 +3,9 @@
   final String baseUrl="wms/kml?layers=" + layerName + "&styles=&mode=superoverlay";
   final String requestUrl=baseUrl + "&kmltitle=myCustomLayerTitle&kmscore=10&legend=true&kmattr=true";
   Document dom=getAsDOM(requestUrl);
-  XPath xpath=XPathFactory.newInstance().newXPath();
-  assertTrue(xpath.evaluate("kml/Folder/NetworkLink[1]/Link/href",dom).contains("&format_options=LEGEND:true;SUPEROVERLAY:true;KMPLACEMARK:false;OVERLAYMODE:auto;KMSCORE:10;KMATTR:true;KMLTITLE:myCustomLayerTitle;"));
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  String result=xpath.evaluate("//kml:NetworkLink/kml:Link/kml:href",dom);
+  Map<String,Object> kvp=KvpUtils.parseQueryString(result);
+  String formatOptions=(String)kvp.get("format_options");
+  assertEquals("LEGEND:true;SUPEROVERLAY:true;AUTOFIT:true;KMPLACEMARK:false;OVERLAYMODE:auto;KMSCORE:10;KMATTR:true;KMLTITLE:myCustomLayerTitle;",formatOptions);
 }

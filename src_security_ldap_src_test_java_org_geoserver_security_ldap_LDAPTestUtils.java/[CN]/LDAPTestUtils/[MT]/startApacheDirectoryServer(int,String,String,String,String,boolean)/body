@@ -1,0 +1,15 @@
+{
+  MutableServerStartupConfiguration cfg=new MutableServerStartupConfiguration();
+  cfg.setAllowAnonymousAccess(anonymousEnabled);
+  String tempDir=System.getProperty("java.io.tmpdir");
+  cfg.setWorkingDirectory(new File(tempDir));
+  cfg.setLdapPort(port);
+  MutableBTreePartitionConfiguration partitionConfiguration=new MutableBTreePartitionConfiguration();
+  partitionConfiguration.setSuffix(defaultPartitionSuffix);
+  partitionConfiguration.setContextEntry(getRootPartitionAttributes(defaultPartitionName));
+  partitionConfiguration.setName(defaultPartitionName);
+  cfg.setContextPartitionConfigurations(Collections.singleton(partitionConfiguration));
+  Hashtable<String,String> env=createEnv(principal,credentials);
+  env.putAll(cfg.toJndiEnvironment());
+  return new InitialDirContext(env);
+}

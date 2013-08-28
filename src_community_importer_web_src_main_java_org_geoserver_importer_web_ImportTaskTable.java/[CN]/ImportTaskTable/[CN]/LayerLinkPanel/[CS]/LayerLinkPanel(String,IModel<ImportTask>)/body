@@ -1,0 +1,18 @@
+{
+  super(id);
+  add(new Link<ImportTask>("link",model){
+    @Override public void onClick(){
+      ImportTask task=getModelObject();
+      PageParameters pp=new PageParameters();
+      pp.put("id",task.getContext().getId());
+      setResponsePage(new LayerPage(task.getLayer(),pp){
+        protected void onSuccessfulSave(){
+          super.onSuccessfulSave();
+          ImporterWebUtils.importer().changed(model.getObject());
+        }
+      }
+);
+    }
+  }
+.add(new Label("name",new PropertyModel(model,"layer.name"))).add(new Icon("icon",new DataIconModel(model.getObject().getData()))));
+}

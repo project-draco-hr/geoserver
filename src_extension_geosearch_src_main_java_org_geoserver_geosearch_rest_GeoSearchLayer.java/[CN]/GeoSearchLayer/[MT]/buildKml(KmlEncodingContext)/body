@@ -1,0 +1,29 @@
+{
+  SimpleNetworkLinkBuilder nlBuilder=new SimpleNetworkLinkBuilder(encodingContext);
+  Kml kml=nlBuilder.buildKMLDocument();
+  Document doc=(Document)kml.getFeature();
+  doc.createAndSetAtomAuthor();
+  doc.setOpen(true);
+  GeoServerInfo gsInfo=encodingContext.getWms().getGeoServer().getGlobal();
+  String authorName=gsInfo.getSettings().getContact().getContactPerson();
+  Author author=doc.createAndSetAtomAuthor();
+  author.addToNameOrUriOrEmail(authorName);
+  doc.createAndSetAtomLink(gsInfo.getSettings().getOnlineResource());
+  WMSMapContent mapContent=encodingContext.getMapContent();
+  doc.setDescription(buildDescription(mapContent));
+  List<Layer> layers=mapContent.layers();
+  boolean includeSampleData=false;
+  for (int i=0; i < layers.size(); i++) {
+    MapLayerInfo layerInfo=mapContent.getRequest().getLayers().get(i);
+    final int type=layerInfo.getType();
+    if (MapLayerInfo.TYPE_VECTOR == type || MapLayerInfo.TYPE_REMOTE_VECTOR == type) {
+      includeSampleData=true;
+    }
+  }
+  if (includeSampleData) {
+    SequenceFactory<Feature> generatorFactory=new PlainFolderSequenceFactory(encodingContext);
+    SequenceList<Feature> folders=new SequenceList<Feature>(generatorFactory);
+    encodingContext.addFeatures(doc,folders);
+  }
+  return kml;
+}

@@ -1,0 +1,27 @@
+{
+  LayerInfo layer=(LayerInfo)entry.getLayer();
+  MetadataMap metadata=layer.getResource().getMetadata();
+  DimensionInfo timeDimension=metadata.get(ResourceInfo.TIME,DimensionInfo.class);
+  boolean timeAvaiable=timeDimension != null && timeDimension.isEnabled();
+  if (!timeAvaiable) {
+    error(new ParamResourceModel("EoLayerGroupError.invalidLayer",null,layer.getName()).getString());
+    return false;
+  }
+ else   if (entry.getLayerType() != EoLayerType.BAND_COVERAGE) {
+    return true;
+  }
+  DimensionInfo elevationDimension=metadata.get(ResourceInfo.ELEVATION,DimensionInfo.class);
+  if (elevationDimension != null && elevationDimension.isEnabled()) {
+    return true;
+  }
+  for (  String key : metadata.keySet()) {
+    if (key != null && key.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+      DimensionInfo di=metadata.get(key,DimensionInfo.class);
+      if (di != null && di.isEnabled()) {
+        return true;
+      }
+    }
+  }
+  error(new ParamResourceModel("EoLayerGroupError.invalidBandCoverage",null,layer.getName()).getString());
+  return false;
+}

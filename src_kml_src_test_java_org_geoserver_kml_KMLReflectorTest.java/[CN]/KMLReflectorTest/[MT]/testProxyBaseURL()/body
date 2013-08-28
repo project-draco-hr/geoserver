@@ -1,0 +1,16 @@
+{
+  GeoServer gs=getGeoServer();
+  try {
+    GeoServerInfo info=gs.getGlobal();
+    info.getSettings().setProxyBaseUrl("http://myhost:9999/gs");
+    gs.save(info);
+    final String requestUrl="wms/kml?layers=" + getLayerId(MockData.BRIDGES) + "&styles=Bridge&mode=download";
+    Document dom=getAsDOM(requestUrl);
+    XMLAssert.assertXpathEvaluatesTo("http://myhost:9999/gs/styles/bridge.png","//kml:Style/kml:IconStyle/kml:Icon/kml:href",dom);
+  }
+  finally {
+    GeoServerInfo info=gs.getGlobal();
+    info.getSettings().setProxyBaseUrl(null);
+    gs.save(info);
+  }
+}

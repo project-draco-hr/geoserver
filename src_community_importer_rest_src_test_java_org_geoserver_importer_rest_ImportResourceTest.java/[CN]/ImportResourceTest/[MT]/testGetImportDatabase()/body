@@ -1,0 +1,16 @@
+{
+  File dir=unpack("h2/cookbook.zip");
+  Map params=new HashMap();
+  params.put(H2DataStoreFactory.DBTYPE.key,"h2");
+  params.put(H2DataStoreFactory.DATABASE.key,new File(dir,"cookbook").getAbsolutePath());
+  importer.createContext(new Database(params));
+  JSONObject json=(JSONObject)getAsJSON("/rest/imports/3?expand=2");
+  assertNotNull(json.get("import"));
+  JSONObject source=json.getJSONObject("import").getJSONObject("data");
+  assertEquals("database",source.getString("type"));
+  assertEquals("H2",source.getString("format"));
+  JSONArray tables=source.getJSONArray("tables");
+  assertTrue(tables.contains("point"));
+  assertTrue(tables.contains("line"));
+  assertTrue(tables.contains("polygon"));
+}

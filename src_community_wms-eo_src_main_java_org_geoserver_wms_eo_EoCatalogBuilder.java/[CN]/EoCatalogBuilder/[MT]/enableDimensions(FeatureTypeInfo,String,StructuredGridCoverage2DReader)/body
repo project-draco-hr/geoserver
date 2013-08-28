@@ -1,0 +1,33 @@
+{
+  Utilities.ensureNonNull("FeatureTypeInfo",fi);
+  Utilities.ensureNonNull("reader",reader);
+  List<DimensionDescriptor> dimensionDescriptors=reader.getDimensionDescriptors(coverageName == null ? reader.getGridCoverageNames()[0] : coverageName);
+  boolean timeDimension=false;
+  for (  DimensionDescriptor dd : dimensionDescriptors) {
+    DimensionInfo di=new DimensionInfoImpl();
+    String key;
+    String units=dd.getUnits();
+    String symbol=dd.getUnitSymbol();
+    if (ResourceInfo.TIME.equalsIgnoreCase(dd.getName())) {
+      timeDimension=true;
+      key=ResourceInfo.TIME;
+      units=DimensionInfo.TIME_UNITS;
+    }
+ else     if (ResourceInfo.ELEVATION.equalsIgnoreCase(dd.getName())) {
+      key=ResourceInfo.ELEVATION;
+      units=DimensionInfo.ELEVATION_UNITS;
+      symbol=DimensionInfo.ELEVATION_UNIT_SYMBOL;
+    }
+ else {
+      key=ResourceInfo.CUSTOM_DIMENSION_PREFIX + dd.getName();
+    }
+    di.setEnabled(true);
+    di.setAttribute(dd.getStartAttribute());
+    di.setEndAttribute(dd.getEndAttribute());
+    di.setPresentation(DimensionPresentation.LIST);
+    di.setUnits(units);
+    di.setUnitSymbol(symbol);
+    fi.getMetadata().put(key,di);
+  }
+  return timeDimension;
+}

@@ -1,0 +1,28 @@
+{
+  final DimensionInfo elevationDimension=helper.getElevationDimension();
+  if (elevationDimension != null) {
+    start(initStartMetadataTag(TAG.ELEVATION_DOMAIN,null,elevationDimension,helper));
+    final DimensionPresentation presentation=elevationDimension.getPresentation();
+switch (presentation) {
+case CONTINUOUS_INTERVAL:
+      encodeInterval(helper.getBeginElevation(),helper.getEndElevation(),null,null);
+    break;
+case DISCRETE_INTERVAL:
+  encodeInterval(helper.getBeginElevation(),helper.getEndElevation(),helper.getElevationResolutionUnit(),helper.getElevationResolutionValue());
+break;
+default :
+final TreeSet<Object> domain=helper.getElevationDomain();
+for (Object item : domain) {
+if (item instanceof Number) {
+element(TAG.SINGLE_VALUE,item.toString());
+}
+ else if (item instanceof NumberRange) {
+NumberRange range=(NumberRange)item;
+encodeInterval(range.getMinValue().toString(),range.getMaxValue().toString(),null,null);
+}
+}
+break;
+}
+end(TAG.ELEVATION_DOMAIN);
+}
+}

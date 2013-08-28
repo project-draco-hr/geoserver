@@ -1,5 +1,18 @@
 {
-  final Dimension tileDimensions=new Dimension(JAI.getDefaultTileSize());
+  final RenderedImage sourceImage=sourceCoverage.getRenderedImage();
+  final SampleModel sampleModel=sourceImage.getSampleModel();
+  final int sourceTileW=sampleModel.getWidth();
+  final int sourceTileH=sampleModel.getHeight();
+  final Dimension tileDimensions=new Dimension(sourceTileW,sourceTileH);
+  LOGGER.fine("Source tiling:" + tileDimensions.width + "x"+ tileDimensions.height);
+  final GridEnvelope gr=sourceCoverage.getGridGeometry().getGridRange();
+  if (gr.getSpan(0) < tileDimensions.width) {
+    tileDimensions.width=gr.getSpan(0);
+  }
+  if (gr.getSpan(1) < tileDimensions.height) {
+    tileDimensions.height=gr.getSpan(1);
+  }
+  LOGGER.fine("Source tiling reviewed to save space:" + tileDimensions.width + "x"+ tileDimensions.height);
   if (econdingParameters.containsKey("tiling")) {
     final String tilingS=econdingParameters.get("tiling");
     if (tilingS != null && Boolean.valueOf(tilingS)) {
@@ -39,16 +52,12 @@
       }
     }
   }
- else {
-    final RenderedImage image=sourceCoverage.getRenderedImage();
-    final SampleModel sm=image.getSampleModel();
-    final int tileW=sm.getWidth();
-    final int tileH=sm.getHeight();
-    if (tileW < image.getWidth()) {
-      tileDimensions.width=tileW;
-      tileDimensions.height=tileH;
-    }
+  if (tileDimensions.width != sourceTileW || tileDimensions.height != sourceTileH) {
+    LOGGER.fine("Final tiling:" + tileDimensions.width + "x"+ tileDimensions.height);
+    wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
+    wp.setTiling(tileDimensions.width,tileDimensions.height);
   }
-  wp.setTilingMode(GeoToolsWriteParams.MODE_EXPLICIT);
-  wp.setTiling(tileDimensions.width,tileDimensions.height);
+ else {
+    LOGGER.fine("Mantaining original tiling");
+  }
 }

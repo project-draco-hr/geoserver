@@ -1,0 +1,31 @@
+{
+  SimpleFeature sf=context.getCurrentFeature();
+  Placemark pm=(Placemark)feature;
+  ExtendedData exd=pm.createAndSetExtendedData();
+  SchemaData schemaData=exd.createAndAddSchemaData();
+  schemaData.setSchemaUrl("#" + context.getCurrentFeatureType().getTypeName() + "_"+ context.getCurrentLayerIndex());
+  for (  AttributeDescriptor ad : sf.getFeatureType().getAttributeDescriptors()) {
+    if (ad instanceof GeometryDescriptor) {
+      continue;
+    }
+    Object value=sf.getAttribute(ad.getLocalName());
+    if (value == null) {
+      continue;
+    }
+    String kmlValue;
+    if (value instanceof Date) {
+      try {
+        kmlValue=DATE_CONVERTER.convert(value,String.class);
+      }
+ catch (      Exception e) {
+        throw new ServiceException("Failed to convert date into string while " + "generating extended data section",e);
+      }
+    }
+ else {
+      kmlValue=Converters.convert(value,String.class);
+    }
+    SimpleData sd=schemaData.createAndAddSimpleData(ad.getLocalName());
+    sd.setValue(kmlValue);
+  }
+  return pm;
+}

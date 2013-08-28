@@ -1,0 +1,23 @@
+{
+  File dir=unpack(data);
+  List<Part> parts=new ArrayList<Part>();
+  for (  File f : dir.listFiles()) {
+    parts.add(new FilePart(f.getName(),f));
+  }
+  MultipartRequestEntity multipart=new MultipartRequestEntity(parts.toArray(new Part[parts.size()]),new PostMethod().getParams());
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  multipart.writeRequest(bout);
+  MockHttpServletRequest req=createRequest("/rest/imports/" + imp + "/tasks");
+  req.setContentType(multipart.getContentType());
+  req.addHeader("Content-Type",multipart.getContentType());
+  req.setMethod("POST");
+  req.setBodyContent(bout.toByteArray());
+  MockHttpServletResponse resp=dispatch(req);
+  assertEquals(201,resp.getStatusCode());
+  assertNotNull(resp.getHeader("Location"));
+  assertTrue(resp.getHeader("Location").matches(".*/imports/" + imp + "/tasks/\\d"));
+  assertEquals("application/json",resp.getContentType());
+  JSONObject json=(JSONObject)json(resp);
+  JSONObject task=json.getJSONObject("task");
+  return task.getInt("id");
+}

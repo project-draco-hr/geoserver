@@ -1,0 +1,28 @@
+{
+  try {
+    JDBCConfiguration config=getJDBCDiskQuotaConfig();
+    if (config != null) {
+      File configFile=new File(storageFinder.getDefaultPath(),"geowebcache-diskquota-jdbc.xml");
+      if (!configFile.exists()) {
+        return;
+      }
+      JDBCConfiguration c1=JDBCConfiguration.load(configFile);
+      if (c1 == null || c1.getConnectionPool() == null) {
+        return;
+      }
+      String originalEncrypted=c1.getConnectionPool().getPassword();
+      if (originalEncrypted == null) {
+        return;
+      }
+      JDBCConfiguration c2=passwordHelper.unencryptPassword(c1);
+      JDBCConfiguration c3=passwordHelper.encryptPassword(c2);
+      String newEncrypted=c3.getConnectionPool().getPassword();
+      if (!originalEncrypted.equals(newEncrypted)) {
+        JDBCConfiguration.store(c3,configFile);
+      }
+    }
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+  }
+}

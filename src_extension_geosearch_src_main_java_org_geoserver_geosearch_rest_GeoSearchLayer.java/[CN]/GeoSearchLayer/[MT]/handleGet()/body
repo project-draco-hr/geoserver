@@ -1,15 +1,7 @@
 {
   final WMS wms=new WMS(geoserver){
-    /** 
- * Override to KMLMetadataDocumentMapOutputFormat does not need to be in the spring
- * context and hence available to the whole geoserver
- * @see org.geoserver.wms.WMS#getMapOutputFormat(java.lang.String)
- */
     @Override public GetMapOutputFormat getMapOutputFormat(    final String mimeType){
-      if (KMLMetadataDocumentMapOutputFormat.MIME_TYPE.equals(mimeType)) {
-        return new KMLMetadataDocumentMapOutputFormat(this);
-      }
-      return super.getMapOutputFormat(mimeType);
+      return new GetMapSnatcher();
     }
   }
 ;
@@ -41,17 +33,17 @@
   context.setMapWidth(getMapRequest.getWidth());
   context.setMapHeight(getMapRequest.getHeight());
   context.getViewport().setBounds((ReferencedEnvelope)getMapRequest.getBbox());
-  WebMap webMap;
+  MapContentWebMap webMap;
   try {
-    webMap=new GetMap(wms).run(getMapRequest,context);
+    webMap=(MapContentWebMap)new GetMap(wms).run(getMapRequest,context);
   }
  catch (  Exception e) {
-    e.printStackTrace();
     throw new RestletException(e.getMessage(),Status.SERVER_ERROR_INTERNAL,e);
   }
-  Assert.isTrue(webMap instanceof XMLTransformerMap);
+  KmlEncodingContext encodingContext=new KmlEncodingContext(webMap.getMapContent(),wms,true);
+  Kml kml=buildKml(encodingContext);
   DataFormat format=getFormatGet();
-  Representation representation=format.toRepresentation(webMap);
+  Representation representation=format.toRepresentation(kml);
   Response response=getResponse();
   response.setEntity(representation);
 }

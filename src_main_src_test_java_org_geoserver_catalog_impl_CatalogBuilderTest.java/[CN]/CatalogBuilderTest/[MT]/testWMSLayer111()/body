@@ -1,0 +1,24 @@
+{
+  TestHttpClientProvider.startTest();
+  try {
+    String baseURL=TestHttpClientProvider.MOCKSERVER + "/wms11";
+    MockHttpClient client=new MockHttpClient();
+    URL capsURL=new URL(baseURL + "?service=WMS&request=GetCapabilities&version=1.1.0");
+    client.expectGet(capsURL,new MockHttpResponse(getClass().getResource("caps111.xml"),"text/xml"));
+    TestHttpClientProvider.bind(client,capsURL);
+    CatalogBuilder cb=new CatalogBuilder(getCatalog());
+    WMSStoreInfo store=cb.buildWMSStore("test-store");
+    store.setCapabilitiesURL(capsURL.toExternalForm());
+    cb.setStore(store);
+    WMSLayerInfo layer=cb.buildWMSLayer("world4326");
+    assertEquals("EPSG:4326",layer.getSRS());
+    ReferencedEnvelope bbox=layer.getLatLonBoundingBox();
+    assertEquals(-180,bbox.getMinX(),0d);
+    assertEquals(-90,bbox.getMinY(),0d);
+    assertEquals(180,bbox.getMaxX(),0d);
+    assertEquals(90,bbox.getMaxY(),0d);
+  }
+  finally {
+    TestHttpClientProvider.endTest();
+  }
+}

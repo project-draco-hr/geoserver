@@ -1,0 +1,13 @@
+{
+  FeatureEntry e=new FeatureEntry();
+  initEntry(e,layer,mapLayer,map);
+  Filter filter=layer.getQuery().getFilter();
+  GeometryDescriptor gd=mapLayer.getFeature().getFeatureType().getGeometryDescriptor();
+  if (gd != null) {
+    Envelope bnds=bounds(map);
+    BBOX bboxFilter=filterFactory.bbox(gd.getLocalName(),bnds.getMinX(),bnds.getMinY(),bnds.getMaxX(),bnds.getMaxY(),map.getRequest().getSRS());
+    filter=filterFactory.and(filter,bboxFilter);
+  }
+  LOGGER.fine("Creating feature entry" + e.getTableName());
+  geopkg.add(e,layer.getSimpleFeatureSource(),filter);
+}

@@ -1,0 +1,14 @@
+{
+  DatatypeConverterImpl xmlTimeConverter=DatatypeConverterImpl.getInstance();
+  try {
+    final Date low=xmlTimeConverter.parseDateTime(trim.getTrimLow()).getTime();
+    final Date high=xmlTimeConverter.parseDateTime(trim.getTrimHigh()).getTime();
+    if (low.compareTo(high) > 0) {
+      throw new WCS20Exception("Low greater than High in trim for dimension: " + trim.getDimension(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"dimensionTrim");
+    }
+    return new DateRange(low,high);
+  }
+ catch (  IllegalArgumentException e) {
+    throw new WCS20Exception("Invalid date value",OWSExceptionCode.InvalidParameterValue,"dimensionTrim",e);
+  }
+}

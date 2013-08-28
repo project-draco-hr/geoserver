@@ -1,0 +1,19 @@
+{
+  boolean line=feature.getDefaultGeometry() != null && (feature.getDefaultGeometry() instanceof LineString || feature.getDefaultGeometry() instanceof MultiLineString);
+  boolean poly=feature.getDefaultGeometry() != null && (feature.getDefaultGeometry() instanceof Polygon || feature.getDefaultGeometry() instanceof MultiPolygon);
+  if (!line && !poly) {
+    LOGGER.log(Level.FINER,"Unexpectedly entered encodeDefaultIconStyle() " + "with something that does not have a multipoint geometry.");
+    return;
+  }
+  IconStyle is=style.createAndSetIconStyle();
+  if (context.isDescriptionEnabled()) {
+    is.setColor("00ffffff");
+  }
+  if (line || poly) {
+    is.setScale(0.4);
+  }
+  String imageURL="http://icons.opengeo.org/markers/icon-" + (poly ? "poly.1" : "line.1") + ".png";
+  Icon icon=is.createAndSetIcon();
+  icon.setHref(imageURL);
+  icon.setViewBoundScale(1);
+}

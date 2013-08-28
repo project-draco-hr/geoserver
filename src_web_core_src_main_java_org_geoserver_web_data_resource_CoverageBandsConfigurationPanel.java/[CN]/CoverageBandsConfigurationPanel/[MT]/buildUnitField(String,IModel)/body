@@ -1,0 +1,27 @@
+{
+  return new AutoCompleteTextField<String>(id,model){
+    @Override protected Iterator<String> getChoices(    String input){
+      if (Strings.isEmpty(input)) {
+        List<String> emptyList=Collections.emptyList();
+        return emptyList.iterator();
+      }
+      List<Unit<?>> units=new ArrayList<Unit<?>>();
+      units.addAll(SI.getInstance().getUnits());
+      units.addAll(NonSI.getInstance().getUnits());
+      List<String> unitNames=new ArrayList<String>();
+      unitNames.add("W.m-2.Sr-1");
+      UnitFormat format=UnitFormat.getInstance(Locale.ENGLISH);
+      for (      Unit<?> unit : units) {
+        unitNames.add(format.format(unit));
+      }
+      List<String> choices=new ArrayList<String>();
+      for (      String name : unitNames) {
+        if (name.toLowerCase().startsWith(input.toLowerCase())) {
+          choices.add(name);
+        }
+      }
+      return choices.iterator();
+    }
+  }
+;
+}

@@ -24,14 +24,18 @@
   }
  else   if (rinfo instanceof CoverageInfo) {
     CoverageInfo cinfo=(CoverageInfo)rinfo;
-    AbstractGridCoverage2DReader reader=null;
-    if (data instanceof AbstractGridCoverage2DReader) {
-      reader=(AbstractGridCoverage2DReader)data;
+    GridCoverage2DReader reader=null;
+    if (data instanceof GridCoverage2DReader) {
+      reader=(GridCoverage2DReader)data;
     }
  else {
-      reader=(AbstractGridCoverage2DReader)cinfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
+      reader=(GridCoverage2DReader)cinfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
     }
     bounds=new ReferencedEnvelope(reader.getOriginalEnvelope());
+  }
+ else   if (rinfo instanceof WMSLayerInfo) {
+    WMSLayerInfo rebuilt=buildWMSLayer(rinfo.getStore(),rinfo.getNativeName());
+    bounds=rebuilt.getNativeBoundingBox();
   }
   if (rinfo.getProjectionPolicy() == ProjectionPolicy.REPROJECT_TO_DECLARED && bounds != null) {
     try {

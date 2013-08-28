@@ -1,0 +1,20 @@
+{
+  ImportTask task=importer.getContext(0).getTasks().get(0);
+  writer.task(task,true,1);
+  JSONObject json=buffer();
+  JSONArray transforms=json.getJSONObject("task").getJSONObject("transformChain").getJSONArray("transforms");
+  JSONObject dateTransform=new JSONObject();
+  dateTransform.put("type","dateFormatTransform");
+  dateTransform.put("field","foobar");
+  dateTransform.put("format","yyyy-MM-dd");
+  transforms.add(dateTransform);
+  json.getJSONObject("task").getJSONObject("target").remove("href");
+  task=reader(json).task();
+  assertNotNull(task);
+  TransformChain chain=task.getTransform();
+  assertNotNull(chain);
+  assertEquals(1,chain.getTransforms().size());
+  DateFormatTransform dft=(DateFormatTransform)chain.getTransforms().get(0);
+  assertEquals("foobar",dft.getField());
+  assertEquals("yyyy-MM-dd",dft.getDatePattern().dateFormat().toPattern());
+}

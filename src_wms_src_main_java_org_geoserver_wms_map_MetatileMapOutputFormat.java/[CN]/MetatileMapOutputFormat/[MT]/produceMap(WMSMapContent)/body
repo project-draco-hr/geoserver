@@ -10,11 +10,13 @@ synchronized (key) {
       if (LOGGER.isLoggable(Level.FINER)) {
         LOGGER.finer("Building meta tile " + key.metaTileCoords.x + ", "+ key.metaTileCoords.y+ " of size w="+ key.getTileSize() * key.getMetaFactor() + ", h=" + key.getTileSize() * key.getMetaFactor() + " with metatilign factor " + key.getMetaFactor());
       }
-      ReferencedEnvelope origEnv=mapContent.getRenderingArea();
       mapContent.getViewport().setBounds(key.getMetaTileEnvelope());
       mapContent.setMapWidth(key.getTileSize() * key.getMetaFactor());
       mapContent.setMapHeight(key.getTileSize() * key.getMetaFactor());
       mapContent.setTileSize(key.getTileSize());
+      EnvFunction.setLocalValue("wms_bbox",mapContent.getViewport().getBounds());
+      EnvFunction.setLocalValue("wms_width",mapContent.getMapWidth());
+      EnvFunction.setLocalValue("wms_height",mapContent.getMapHeight());
       RenderedImageMap metaTileMap=delegate.produceMap(mapContent);
       RenderedImage metaTile=metaTileMap.getImage();
       RenderedImage[] tiles=split(key,metaTile,mapContent);

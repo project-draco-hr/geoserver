@@ -1,0 +1,27 @@
+{
+  if (geometry instanceof Point || (geometry instanceof MultiPoint) && ((MultiPoint)geometry).getNumPoints() == 1) {
+    Coordinate c=geometry.getCoordinate();
+    return toKmlPoint(c);
+  }
+ else {
+    de.micromata.opengis.kml.v_2_2_0.Geometry kmlGeometry=toKmlGeometry(geometry);
+    if (context.isDescriptionEnabled()) {
+      MultiGeometry mg=new MultiGeometry();
+      Coordinate c=CENTROIDS.geometryCentroid(geometry);
+      if (!Double.isNaN(height)) {
+        c.setOrdinate(2,height);
+      }
+      de.micromata.opengis.kml.v_2_2_0.Point kmlPoint=toKmlPoint(c);
+      if (hasHeightTemplate) {
+        applyExtrusion(kmlGeometry);
+      }
+      mg.addToGeometry(kmlPoint);
+      mg.addToGeometry(kmlGeometry);
+      kmlGeometry=mg;
+    }
+    if (hasHeightTemplate) {
+      applyExtrusion(kmlGeometry);
+    }
+    return kmlGeometry;
+  }
+}

@@ -1,0 +1,12 @@
+{
+  File dd=getTestData().getDataDirectoryRoot();
+  File wfs=new File(dd,"wfs");
+  File transform=new File(wfs,"transform");
+  if (transform.exists()) {
+    FileUtils.deleteDirectory(transform);
+  }
+  XSLTOutputFormatUpdater updater=applicationContext.getBean(XSLTOutputFormatUpdater.class);
+  updater.run();
+  Document d=getAsDOM("wfs?request=GetFeature&typename=" + getLayerId(MockData.BRIDGES) + ","+ getLayerId(MockData.BUILDINGS)+ "&version=1.0.0&service=wfs");
+  XMLAssert.assertXpathEvaluatesTo("1","count(/wfs:FeatureCollection)",d);
+}

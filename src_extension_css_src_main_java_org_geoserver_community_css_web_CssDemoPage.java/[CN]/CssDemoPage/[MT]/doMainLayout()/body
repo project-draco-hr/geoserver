@@ -1,0 +1,132 @@
+{
+  Fragment mainContent=new Fragment("main-content","normal",this);
+  final ModalWindow popup=new ModalWindow("popup");
+  mainContent.add(popup);
+  mainContent.add(new Label("style.name",new PropertyModel(style,"name")));
+  mainContent.add(new Label("layer.name",new PropertyModel(layer,"name")));
+  mainContent.add(new AjaxLink("change.style",new ParamResourceModel("CssDemoPage.changeStyle",this)){
+    public void onClick(    AjaxRequestTarget target){
+      target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
+      popup.setInitialHeight(400);
+      popup.setInitialWidth(600);
+      popup.setTitle(new Model("Choose style to edit"));
+      popup.setContent(new StyleChooser(popup.getContentId(),CssDemoPage.this));
+      popup.show(target);
+    }
+  }
+);
+  mainContent.add(new AjaxLink("change.layer",new ParamResourceModel("CssDemoPage.changeLayer",this)){
+    public void onClick(    AjaxRequestTarget target){
+      target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
+      popup.setInitialHeight(400);
+      popup.setInitialWidth(600);
+      popup.setTitle(new Model("Choose layer to edit"));
+      popup.setContent(new LayerChooser(popup.getContentId(),CssDemoPage.this));
+      popup.show(target);
+    }
+  }
+);
+  mainContent.add(new AjaxLink("create.style",new ParamResourceModel("CssDemoPage.createStyle",this)){
+    public void onClick(    AjaxRequestTarget target){
+      target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
+      popup.setInitialHeight(200);
+      popup.setInitialWidth(300);
+      popup.setTitle(new Model("Choose name for new style"));
+      popup.setContent(new LayerNameInput(popup.getContentId(),CssDemoPage.this));
+      popup.show(target);
+    }
+  }
+);
+  mainContent.add(new AjaxLink("associate.styles",new ParamResourceModel("CssDemoPage.associateStyles",this)){
+    public void onClick(    AjaxRequestTarget target){
+      target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
+      popup.setInitialHeight(400);
+      popup.setInitialWidth(600);
+      popup.setTitle(new Model("Choose layers to associate"));
+      popup.setContent(new MultipleLayerChooser(popup.getContentId(),CssDemoPage.this));
+      popup.show(target);
+    }
+  }
+);
+  final IModel<String> sldModel=new AbstractReadOnlyModel<String>(){
+    public String getObject(){
+      File file=findStyleFile(style.getFilename());
+      if (file != null && file.isFile()) {
+        BufferedReader reader=null;
+        try {
+          reader=new BufferedReader(new FileReader(file));
+          StringBuilder builder=new StringBuilder();
+          char[] line=new char[4096];
+          int len=0;
+          while ((len=reader.read(line,0,4096)) >= 0)           builder.append(line,0,len);
+          return builder.toString();
+        }
+ catch (        IOException e) {
+          throw new WicketRuntimeException(e);
+        }
+ finally {
+          try {
+            if (reader != null)             reader.close();
+          }
+ catch (          IOException e) {
+            throw new WicketRuntimeException(e);
+          }
+        }
+      }
+ else {
+        return "No SLD file found for this style. One will be generated automatically if you save the CSS.";
+      }
+    }
+  }
+;
+  final CompoundPropertyModel model=new CompoundPropertyModel<CssDemoPage>(CssDemoPage.this);
+  List<ITab> tabs=new ArrayList<ITab>();
+  tabs.add(new PanelCachingTab(new AbstractTab(new Model("Generated SLD")){
+    public Panel getPanel(    String id){
+      SLDPreviewPanel panel=new SLDPreviewPanel(id,sldModel);
+      sldPreview=panel.getLabel();
+      return panel;
+    }
+  }
+));
+  tabs.add(new PanelCachingTab(new AbstractTab(new Model("Map")){
+    public Panel getPanel(    String id){
+      return map=new OpenLayersMapPanel(id,layer,style);
+    }
+  }
+));
+  if (layer.getResource() instanceof FeatureTypeInfo) {
+    tabs.add(new PanelCachingTab(new AbstractTab(new Model("Data")){
+      public Panel getPanel(      String id){
+        try {
+          return new DataPanel(id,model,(FeatureTypeInfo)layer.getResource());
+        }
+ catch (        IOException e) {
+          throw new WicketRuntimeException(e);
+        }
+      }
+    }
+));
+  }
+ else   if (layer.getResource() instanceof CoverageInfo) {
+    tabs.add(new PanelCachingTab(new AbstractTab(new Model("Data")){
+      public Panel getPanel(      String id){
+        return new BandsPanel(id,(CoverageInfo)layer.getResource());
+      }
+    }
+));
+  }
+  tabs.add(new AbstractTab(new Model("CSS Reference")){
+    public Panel getPanel(    String id){
+      return new DocsPanel(id);
+    }
+  }
+);
+  FeedbackPanel feedback2=new FeedbackPanel("feedback-low");
+  feedback2.setOutputMarkupId(true);
+  mainContent.add(feedback2);
+  String cssSource=style.getFilename().replaceFirst("(\\.sld)?$",".css");
+  mainContent.add(new StylePanel("style.editing",model,CssDemoPage.this,getFeedbackPanel(),cssSource));
+  mainContent.add(new AjaxTabbedPanel("context",tabs));
+  add(mainContent);
+}

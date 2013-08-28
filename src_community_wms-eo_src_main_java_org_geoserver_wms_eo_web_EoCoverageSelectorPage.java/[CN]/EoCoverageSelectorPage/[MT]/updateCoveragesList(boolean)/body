@@ -1,0 +1,24 @@
+{
+  selections.clear();
+  if (stores.getModelObject() != null) {
+    try {
+      CoverageStoreInfo store=(CoverageStoreInfo)stores.getModelObject();
+      GridCoverageReader reader=store.getGridCoverageReader(null,null);
+      String[] names=reader.getGridCoverageNames();
+      Arrays.sort(names);
+      for (      String name : names) {
+        LayerInfo li=getPreExistingLayer(name,store);
+        if (li == null) {
+          selections.add(new EoCoverageSelection(name,EoLayerType.IGNORE));
+        }
+ else         if (reportSkippedLayers) {
+          info("Skipping coverage " + name + " as it's already part of the group as "+ li.getName());
+        }
+      }
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.SEVERE,"Failed to list coverages in the specified store",e);
+      error("Failed to list coverages in the specified store: " + e.getMessage());
+    }
+  }
+}

@@ -3,7 +3,15 @@
   if (datastorePropertiesFile.exists()) {
     Properties datastoreProperties=loadProperties(datastorePropertiesFile);
     Map<String,Serializable> params=Utils.createDataStoreParamsFromPropertiesFile(datastoreProperties,dataStoreFactory);
-    params.put("dbtype",getDbType(dataStoreFactory));
+    String dbType=getDbType(dataStoreFactory);
+    params.put("dbtype",dbType);
+    if ("h2".equals(dbType)) {
+      String dbParameter=(String)params.get("database");
+      if (!new File(dbParameter).isAbsolute()) {
+        File actualPath=new File(dir,dbParameter).getCanonicalFile();
+        params.put("database",actualPath.getAbsolutePath());
+      }
+    }
     return params;
   }
  else {

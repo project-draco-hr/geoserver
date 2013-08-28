@@ -1,0 +1,29 @@
+{
+  if (top) {
+    json.object().key("import");
+  }
+  json.object();
+  json.key("id").value(context.getId());
+  json.key("href").value(page.rootURI(pathTo(context)));
+  json.key("state").value(context.getState());
+  if (expand > 0) {
+    json.key("archive").value(context.isArchive());
+    if (context.getTargetWorkspace() != null) {
+      json.key("targetWorkspace").value(toJSON(context.getTargetWorkspace()));
+    }
+    if (context.getTargetStore() != null) {
+      json.key("targetStore");
+      store(context.getTargetStore(),null,false,expand - 1);
+    }
+    if (context.getData() != null) {
+      json.key("data");
+      data(context.getData(),context,expand - 1);
+    }
+    tasks(context.getTasks(),false,expand - 1);
+  }
+  json.endObject();
+  if (top) {
+    json.endObject();
+  }
+  json.flush();
+}

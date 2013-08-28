@@ -1,0 +1,18 @@
+{
+  Filter envelopeFilter=null;
+  if (envelopeSubset != null) {
+    Polygon polygon=JTS.toGeometry(new ReferencedEnvelope(envelopeSubset));
+    GeometryDescriptor geom=reader.getGranules(coverageName,true).getSchema().getGeometryDescriptor();
+    PropertyName geometryProperty=FF.property(geom.getLocalName());
+    Geometry nativeCRSPolygon;
+    try {
+      nativeCRSPolygon=JTS.transform(polygon,CRS.findMathTransform(DefaultGeographicCRS.WGS84,reader.getCoordinateReferenceSystem()));
+      Literal polygonLiteral=FF.literal(nativeCRSPolygon);
+      envelopeFilter=FF.intersects(geometryProperty,polygonLiteral);
+    }
+ catch (    Exception e) {
+      throw new IOException(e);
+    }
+  }
+  return envelopeFilter;
+}

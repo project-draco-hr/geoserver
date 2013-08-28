@@ -1,0 +1,42 @@
+{
+  CatalogFactory f=importer.getCatalog().getFactory();
+  if (json.has("layer")) {
+    json=json.getJSONObject("layer");
+  }
+  ResourceInfo r=f.createFeatureType();
+  if (json.has("name")) {
+    r.setName(json.getString("name"));
+  }
+  if (json.has("nativeName")) {
+    r.setNativeName(json.getString("nativeName"));
+  }
+  if (json.has("srs")) {
+    r.setSRS(json.getString("srs"));
+    try {
+      r.setNativeCRS(CRS.decode(json.getString("srs")));
+    }
+ catch (    Exception e) {
+    }
+  }
+  if (json.has("bbox")) {
+    r.setNativeBoundingBox(bbox(json.getJSONObject("bbox")));
+  }
+  LayerInfo l=f.createLayer();
+  l.setResource(r);
+  if (json.has("style")) {
+    JSONObject sobj=new JSONObject();
+    sobj.put("defaultStyle",json.get("style"));
+    JSONObject lobj=new JSONObject();
+    lobj.put("layer",sobj);
+    LayerInfo tmp=fromJSON(lobj,LayerInfo.class);
+    if (tmp.getDefaultStyle() != null) {
+      l.setDefaultStyle(tmp.getDefaultStyle());
+    }
+ else {
+      sobj=new JSONObject();
+      sobj.put("style",json.get("style"));
+      l.setDefaultStyle(fromJSON(sobj,StyleInfo.class));
+    }
+  }
+  return l;
+}

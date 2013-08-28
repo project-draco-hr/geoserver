@@ -1,0 +1,49 @@
+{
+  files=new ArrayList<FileData>();
+  LinkedList<File> q=new LinkedList<File>();
+  q.add(file);
+  while (!q.isEmpty()) {
+    File dir=q.poll();
+    if (m.isCanceled()) {
+      return;
+    }
+    m.setTask("Scanning " + dir.getPath());
+    Set<File> all=new LinkedHashSet<File>(Arrays.asList(dir.listFiles(new FilenameFilter(){
+      public boolean accept(      File dir,      String name){
+        return !new File(dir,name).isDirectory();
+      }
+    }
+)));
+    for (    File f : dir.listFiles()) {
+      if (f.isHidden()) {
+        all.remove(f);
+        continue;
+      }
+      if (f.isDirectory()) {
+        if (!recursive && !f.equals(file)) {
+          continue;
+        }
+        if (!"__MACOSX".equals(f.getName())) {
+          Directory d=new Directory(f);
+          d.prepare(m);
+          files.add(d);
+        }
+        continue;
+      }
+      if ("aux".equalsIgnoreCase(FilenameUtils.getExtension(f.getName()))) {
+        continue;
+      }
+      DataFormat format=DataFormat.lookup(f);
+      if (format != null) {
+        SpatialFile sf=newSpatialFile(f,format);
+        sf.prepare(m);
+        files.add(sf);
+        all.removeAll(sf.allFiles());
+      }
+    }
+    for (    File f : all) {
+      files.add(new ASpatialFile(f));
+    }
+  }
+  format=format();
+}

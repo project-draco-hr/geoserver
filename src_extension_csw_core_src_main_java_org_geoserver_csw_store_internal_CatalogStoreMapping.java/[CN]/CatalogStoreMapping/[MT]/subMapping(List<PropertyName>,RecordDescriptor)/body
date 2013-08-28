@@ -1,0 +1,15 @@
+{
+  Set<String> paths=new HashSet<String>();
+  for (  PropertyName prop : properties) {
+    paths.add(toDotPath(XPathUtil.steps(rd.getFeatureDescriptor(),prop.toString(),rd.getNamespaceSupport())));
+  }
+  CatalogStoreMapping mapping=new CatalogStoreMapping();
+  for (  Entry<String,CatalogStoreMappingElement> element : mappingElements.entrySet()) {
+    if (element.getValue().isRequired() || paths.contains(element.getKey())) {
+      mapping.mappingElements.put(element.getKey(),element.getValue());
+    }
+  }
+  mapping.identifier=identifier;
+  mapping.includeEnvelope=includeEnvelope && paths.contains(rd.getBoundingBoxPropertyName());
+  return mapping;
+}

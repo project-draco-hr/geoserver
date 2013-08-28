@@ -1,0 +1,26 @@
+{
+  final String layerName=MockData.BASIC_POLYGONS.getPrefix() + ":" + MockData.BASIC_POLYGONS.getLocalPart();
+  String requestUrl="wms/kml?mode=refresh&layers=" + layerName + ","+ layerName+ "&styles=Default,Default&cql_filter=att1<10;att1>1000";
+  Document dom=getAsDOM(requestUrl);
+  assertEquals("kml",dom.getDocumentElement().getLocalName());
+  NodeList folders=dom.getDocumentElement().getElementsByTagName("Folder");
+  assertEquals(1,folders.getLength());
+  Element folder=(Element)folders.item(0);
+  NodeList netLinks=folder.getElementsByTagName("NetworkLink");
+  assertEquals(2,netLinks.getLength());
+  assertXpathEvaluatesTo(layerName,"kml/Folder/NetworkLink[1]/name",dom);
+  assertXpathEvaluatesTo(layerName,"kml/Folder/NetworkLink[2]/name",dom);
+  XPath xpath=XPathFactory.newInstance().newXPath();
+  String url1=xpath.compile("/kml/Folder/NetworkLink[1]/Url/href").evaluate(dom);
+  String url2=xpath.compile("/kml/Folder/NetworkLink[2]/Url/href").evaluate(dom);
+  assertNotNull(url1);
+  assertNotNull(url2);
+  Map<String,String> kvp1=toKvp(url1);
+  Map<String,String> kvp2=toKvp(url2);
+  assertEquals(layerName,kvp1.get("LAYERS"));
+  assertEquals(layerName,kvp2.get("LAYERS"));
+  assertEquals("Default",kvp1.get("STYLES"));
+  assertEquals("Default",kvp2.get("STYLES"));
+  assertEquals("att1<10",kvp1.get("CQL_FILTER"));
+  assertEquals("att1>1000",kvp2.get("CQL_FILTER"));
+}

@@ -1,0 +1,37 @@
+{
+  ImportContext context;
+  try {
+    context=importer.createContext(id);
+    context.setUser(getCurrentUser());
+    if (MediaType.APPLICATION_JSON.equals(getRequest().getEntity().getMediaType())) {
+      ImportContext newContext=(ImportContext)getFormatPostOrPut().toObject(getRequest().getEntity());
+      WorkspaceInfo targetWorkspace=newContext.getTargetWorkspace();
+      StoreInfo targetStore=newContext.getTargetStore();
+      if (targetWorkspace != null) {
+        context.setTargetWorkspace(targetWorkspace);
+      }
+      if (targetStore != null) {
+        context.setTargetStore(targetStore);
+      }
+      if (targetStore != null && targetWorkspace == null) {
+        context.setTargetWorkspace(targetStore.getWorkspace());
+      }
+      context.setData(newContext.getData());
+      if (newContext.getData() != null) {
+        importer.init(context,true);
+      }
+    }
+    context.reattach(importer.getCatalog(),true);
+    getResponse().redirectSeeOther(getPageInfo().rootURI("/imports/" + context.getId()));
+    getResponse().setEntity(new ImportContextJSONFormat().toRepresentation(context));
+    getResponse().setStatus(Status.SUCCESS_CREATED);
+    importer.changed(context);
+  }
+ catch (  IOException e) {
+    throw new RestletException("Unable to create import",Status.SERVER_ERROR_INTERNAL,e);
+  }
+catch (  IllegalArgumentException iae) {
+    throw new RestletException(iae.getMessage(),Status.CLIENT_ERROR_BAD_REQUEST,iae);
+  }
+  return context;
+}

@@ -1,0 +1,20 @@
+{
+  Style result;
+{
+    Filter f1=filterFactory.less(filterFactory.property("foo"),filterFactory.literal(4));
+    Filter f2=filterFactory.greaterOrEqual(filterFactory.property("foo"),filterFactory.literal(4));
+    PointSymbolizer symb1=mark("arrow",Color.BLACK,Color.RED,1f,16);
+    PointSymbolizer symb2=mark("arrow",Color.BLACK,Color.BLUE,1f,16);
+    Style input=styleFromRules(rule(f1,symb1),rule(f2,symb2));
+    Map<String,String> properties=new HashMap<String,String>();
+    properties.put("0.0.0","");
+    result=IconPropertyInjector.injectProperties(input,properties);
+  }
+{
+    FeatureTypeStyle fts=assumeSingleElement(result.featureTypeStyles());
+    Rule rule=assertSingleElement(fts.rules());
+    PointSymbolizer symb=assertSingleElement(rule.symbolizers(),PointSymbolizer.class);
+    Mark mark=assertSingleElement(symb.getGraphic().graphicalSymbols(),Mark.class);
+    assertThat(mark.getFill().getColor().evaluate(null,Color.class),is(Color.RED));
+  }
+}

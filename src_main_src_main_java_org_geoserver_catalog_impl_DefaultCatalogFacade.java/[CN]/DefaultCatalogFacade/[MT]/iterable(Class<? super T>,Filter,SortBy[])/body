@@ -1,0 +1,51 @@
+{
+  List<T> all;
+  T t=null;
+  if (NamespaceInfo.class.isAssignableFrom(of)) {
+    all=(List<T>)getNamespaces();
+  }
+ else   if (WorkspaceInfo.class.isAssignableFrom(of)) {
+    all=(List<T>)getWorkspaces();
+  }
+ else   if (StoreInfo.class.isAssignableFrom(of)) {
+    all=(List<T>)getStores(of);
+  }
+ else   if (ResourceInfo.class.isAssignableFrom(of)) {
+    all=(List<T>)getResources(of);
+  }
+ else   if (LayerInfo.class.isAssignableFrom(of)) {
+    all=(List<T>)getLayers();
+  }
+ else   if (LayerGroupInfo.class.isAssignableFrom(of)) {
+    all=(List<T>)getLayerGroups();
+  }
+ else   if (StyleInfo.class.isAssignableFrom(of)) {
+    all=(List<T>)getStyles();
+  }
+ else   if (MapInfo.class.isAssignableFrom(of)) {
+    all=(List<T>)getMaps();
+  }
+ else {
+    throw new IllegalArgumentException("Unknown type: " + of);
+  }
+  if (null != sortByList) {
+    for (int i=sortByList.length - 1; i >= 0; i--) {
+      SortBy sortBy=sortByList[i];
+      Ordering<Object> ordering=Ordering.from(comparator(sortBy));
+      if (SortOrder.DESCENDING.equals(sortBy.getSortOrder())) {
+        ordering=ordering.reverse();
+      }
+      all=ordering.sortedCopy(all);
+    }
+  }
+  if (Filter.INCLUDE.equals(filter)) {
+    return all;
+  }
+  com.google.common.base.Predicate<T> filterAdapter=new com.google.common.base.Predicate<T>(){
+    @Override public boolean apply(    T input){
+      return filter.evaluate(input);
+    }
+  }
+;
+  return Iterables.filter(all,filterAdapter);
+}

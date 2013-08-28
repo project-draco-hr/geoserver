@@ -29,11 +29,16 @@
     value=((Map<?,?>)input).get(propName);
   }
  else {
-    try {
-      value=OwsUtils.get(input,propName);
+    if ("boundingBox".equalsIgnoreCase(propName) && input instanceof ResourceInfo) {
+      try {
+        value=((ResourceInfo)input).boundingBox();
+      }
+ catch (      Exception e) {
+        throw new IllegalArgumentException(e);
+      }
     }
- catch (    IllegalArgumentException noSuchProperty) {
-      throw noSuchProperty;
+ else {
+      value=OwsUtils.get(input,propName);
     }
   }
   return getProperty(value,propertyNames,offset + 1);

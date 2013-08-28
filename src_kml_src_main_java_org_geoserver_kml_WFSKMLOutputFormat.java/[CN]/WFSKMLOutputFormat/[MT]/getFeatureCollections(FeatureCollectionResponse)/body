@@ -1,0 +1,16 @@
+{
+  List<FeatureCollection> inputs=featureCollection.getFeatures();
+  List<SimpleFeatureCollection> result=new ArrayList<SimpleFeatureCollection>();
+  for (  FeatureCollection fc : inputs) {
+    if (!(fc instanceof SimpleFeatureCollection)) {
+      throw new ServiceException("The KML output format can only be applied to simple features");
+    }
+    SimpleFeatureCollection sfc=(SimpleFeatureCollection)fc;
+    CoordinateReferenceSystem sourceCRS=sfc.getSchema().getCoordinateReferenceSystem();
+    if (sourceCRS != null && !CRS.equalsIgnoreMetadata(sourceCRS,DefaultGeographicCRS.WGS84)) {
+      sfc=new ReprojectingFeatureCollection(sfc,DefaultGeographicCRS.WGS84);
+    }
+    result.add(sfc);
+  }
+  return result;
+}

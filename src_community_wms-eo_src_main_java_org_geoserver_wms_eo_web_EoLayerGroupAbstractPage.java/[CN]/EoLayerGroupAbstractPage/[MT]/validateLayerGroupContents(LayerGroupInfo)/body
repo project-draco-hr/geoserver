@@ -1,0 +1,45 @@
+{
+  boolean valid=true;
+  List<EoLayerGroupEntry> items=lgEntryPanel.items;
+  int browseCount=0;
+  LayerInfo browseLayer=null;
+  StyleInfo browseLayerStyle=null;
+  int bandsCount=0;
+  for (  EoLayerGroupEntry entry : items) {
+    if (!(entry.getLayer() instanceof LayerInfo)) {
+      error(new ParamResourceModel("nestedLayerGroupInvalid",this));
+    }
+ else {
+      EoLayerType type=entry.getLayerType();
+switch (type) {
+case BAND_COVERAGE:
+        bandsCount++;
+      break;
+case BROWSE_IMAGE:
+    browseCount++;
+  browseLayer=(LayerInfo)entry.getLayer();
+browseLayerStyle=entry.getStyle();
+break;
+default :
+break;
+}
+if (!checkDimensions(entry)) {
+valid=false;
+}
+}
+}
+if (browseCount != 1) {
+error(new ParamResourceModel("invalidBrowseCount",this,browseCount).getString());
+valid=false;
+}
+if (bandsCount > 1) {
+error(new ParamResourceModel("invalidBandsCount",this,bandsCount).getString());
+valid=false;
+}
+if (valid) {
+lg.setRootLayer(browseLayer);
+lg.setRootLayerStyle(browseLayerStyle);
+lg.setMode(Mode.EO);
+}
+return valid;
+}

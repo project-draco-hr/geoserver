@@ -1,0 +1,20 @@
+{
+  List<X3DInlineModel> inlineModels=new ArrayList<X3DInlineModel>();
+  List<FeatureTypeStyle> featureTypeStyles=style.featureTypeStyles();
+  for (  FeatureTypeStyle featureTypeStyle : featureTypeStyles) {
+    List<Rule> rules=featureTypeStyle.rules();
+    for (    Rule rule : rules) {
+      List<Symbolizer> symbolizers=rule.symbolizers();
+      for (      Symbolizer symbolizer : symbolizers) {
+        if (symbolizer.getClass().isAssignableFrom(PointSymbolizerImpl.class)) {
+          PointSymbolizerImpl pointSymbolizerImpl=(PointSymbolizerImpl)symbolizer;
+          GraphicImpl graphicImpl=pointSymbolizerImpl.getGraphic();
+          if (graphicImpl.getClass().isAssignableFrom(ModelImpl.class)) {
+            inlineModels.add(new X3DInlineModel(rule,(ModelImpl)graphicImpl));
+          }
+        }
+      }
+    }
+  }
+  return inlineModels;
+}

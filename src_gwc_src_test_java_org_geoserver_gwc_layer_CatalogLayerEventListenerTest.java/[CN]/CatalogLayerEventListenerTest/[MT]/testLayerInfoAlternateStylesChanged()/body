@@ -27,5 +27,14 @@
   listener.handlePostModifyEvent(postModifyEvent);
   verify(mockMediator).truncateByLayerAndStyle(eq(PREFIXED_RESOURCE_NAME),eq("removedStyleName"));
   verify(mockMediator,atMost(1)).truncateByLayerAndStyle(anyString(),anyString());
-  verify(mockMediator).save(any(GeoServerTileLayer.class));
+  verify(mockMediator).save(argThat(new BaseMatcher<GeoServerTileLayer>(){
+    @Override public boolean matches(    Object item){
+      GeoServerTileLayer tl=(GeoServerTileLayer)item;
+      LayerInfo li=tl.getLayerInfo();
+      return li == mockLayerInfo;
+    }
+    @Override public void describeTo(    Description description){
+    }
+  }
+));
 }

@@ -4,14 +4,23 @@
   LayerGroupInfo lg=wsName != null ? getCatalog().getLayerGroupByName(wsName,groupName) : getCatalog().getLayerGroupByName(groupName);
   if (lg == null) {
     error(new ParamResourceModel("LayerGroupEditPage.notFound",this,groupName).getString());
-    doReturn(EoLayerGroupPage.class);
+    doReturn(LayerGroupPage.class);
     return;
   }
   initUI(lg);
   if (!isAuthenticatedAsAdmin()) {
     Form f=(Form)get("form");
     if (lg.getWorkspace() == null) {
-      disableForm(f);
+      f.visitChildren(new IVisitor<Component>(){
+        @Override public Object component(        Component c){
+          if (!(c instanceof AbstractLink && "cancel".equals(c.getId()))) {
+            c.setEnabled(false);
+          }
+          return CONTINUE_TRAVERSAL_BUT_DONT_GO_DEEPER;
+        }
+      }
+);
+      f.get("save").setVisible(false);
       info(new StringResourceModel("globalLayerGroupReadOnly",this,null).getString());
     }
     f.get("workspace").setEnabled(false);

@@ -1,0 +1,39 @@
+{
+  DateRange timeSubset=null;
+  if (timeDimension != null) {
+    for (    DimensionSubsetType dim : request.getDimensionSubset()) {
+      String dimension=WCSDimensionsSubsetHelper.getDimensionName(dim);
+      if (!TIME_NAMES.contains(dimension.toLowerCase())) {
+        continue;
+      }
+      if (timeSubset != null) {
+        throw new WCS20Exception("Time dimension trimming/slicing specified twice in the request",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
+      }
+      if (dim instanceof DimensionTrimType) {
+        final DimensionTrimType trim=(DimensionTrimType)dim;
+        final Date low=XML_CONVERTER.parseDateTime(trim.getTrimLow()).getTime();
+        final Date high=XML_CONVERTER.parseDateTime(trim.getTrimHigh()).getTime();
+        if (low.compareTo(high) > 0) {
+          throw new WCS20Exception("Low greater than High: " + trim.getTrimLow() + ", "+ trim.getTrimHigh(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
+        }
+        timeSubset=new DateRange(low,high);
+      }
+ else       if (dim instanceof DimensionSliceType) {
+        final DimensionSliceType slicing=(DimensionSliceType)dim;
+        final String slicePointS=slicing.getSlicePoint();
+        final Date slicePoint=XML_CONVERTER.parseDateTime(slicePointS).getTime();
+        timeSubset=new DateRange(slicePoint,slicePoint);
+      }
+ else {
+        throw new WCS20Exception("Invalid element found while attempting to parse dimension subsetting request: " + dim.getClass().toString(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
+      }
+    }
+    if (timeSubset != null && !timeSubset.getMinValue().equals(timeSubset.getMaxValue())) {
+      throw new WCS20Exception("Trimming on time is not supported at the moment, only slicing is");
+    }
+    if (timeSubset != null) {
+      timeSubset=interpolateTime(timeSubset,accessor);
+    }
+  }
+  return timeSubset;
+}

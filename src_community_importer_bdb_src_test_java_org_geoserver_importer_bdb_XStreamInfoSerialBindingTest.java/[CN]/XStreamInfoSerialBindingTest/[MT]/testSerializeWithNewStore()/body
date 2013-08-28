@@ -1,0 +1,25 @@
+{
+  File dir=unpack("shape/archsites_epsg_prj.zip");
+  ImportContext context=importer.createContext(new Directory(dir));
+  XStreamPersister xp=importer.createXStreamPersisterXML();
+  XStreamInfoSerialBinding<ImportContext> binding=new XStreamInfoSerialBinding<ImportContext>(xp,ImportContext.class);
+  binding.setCompress(false);
+  DatabaseEntry e=new DatabaseEntry();
+  binding.objectToEntry(context,e);
+  Document dom=dom(new ByteArrayInputStream(e.getData(),0,e.getSize()));
+  print(dom);
+  XMLAssert.assertXpathExists("/import",dom);
+  print(dom);
+  XMLAssert.assertXpathExists("/import/targetWorkspace/id",dom);
+  XMLAssert.assertXpathExists("/import/tasks/task[position()=1]/store/name",dom);
+  XMLAssert.assertXpathNotExists("/import/tasks/task[position()=1]/store/id",dom);
+  ImportContext context2=binding.entryToObject(e);
+  assertNotNull(context2.getTargetWorkspace());
+  assertNotNull(context2.getTargetWorkspace().getId());
+  assertNotNull(context2.getTargetWorkspace().getName());
+  ImportTask task=context2.getTasks().get(0);
+  assertNotNull(task.getStore());
+  assertNull(task.getStore().getId());
+  assertNotNull(task.getStore().getName());
+  assertNotNull(task.getLayer());
+}

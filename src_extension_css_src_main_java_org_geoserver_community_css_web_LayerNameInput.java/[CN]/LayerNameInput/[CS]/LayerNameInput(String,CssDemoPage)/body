@@ -1,0 +1,50 @@
+{
+  super(id);
+  Form form=new Form("layer.name.form");
+  IValidator<String> nameValidator=new IValidator<String>(){
+    @Override public void validate(    IValidatable<String> text){
+      final String value=text.getValue();
+      if (value.matches("\\s")) {
+        text.error(new ValidationError().setMessage("Spaces not allowed in style names"));
+        return;
+      }
+    }
+  }
+;
+  List<String> workspaces=new ArrayList<String>();
+  workspaces.add(null);
+  for (  WorkspaceInfo info : demo.catalog().getWorkspaces()) {
+    workspaces.add(info.getName());
+  }
+  IChoiceRenderer<String> workspaceRenderer=new ChoiceRenderer<String>(){
+    @Override public Object getDisplayValue(    String value){
+      return value == null ? "No workspace" : value;
+    }
+  }
+;
+  DropDownChoice workspaceChooser=new DropDownChoice("layer.workspace.field",new PropertyModel<String>(this,"workspace"),workspaces,workspaceRenderer);
+  form.add(workspaceChooser);
+  TextField nameField=new TextField("layer.name.field",new PropertyModel<String>(this,"name"));
+  nameField.add(nameValidator);
+  AjaxButton submitButton=new AjaxButton("submit.button",form){
+    @Override public void onSubmit(    AjaxRequestTarget target,    Form f){
+      if (demo.catalog().getStyleByName(workspace,name) != null) {
+        throw new RuntimeException("Trying to create style with same name as existing one!");
+      }
+      demo.createCssTemplate(name);
+      PageParameters params=new PageParameters();
+      params.put("layer",demo.getLayer().prefixedName());
+      if (workspace == null) {
+        params.put("style",name);
+      }
+ else {
+        params.put("style",workspace + ":" + name);
+      }
+      setResponsePage(CssDemoPage.class,params);
+    }
+  }
+;
+  form.add(nameField);
+  form.add(submitButton);
+  add(form);
+}

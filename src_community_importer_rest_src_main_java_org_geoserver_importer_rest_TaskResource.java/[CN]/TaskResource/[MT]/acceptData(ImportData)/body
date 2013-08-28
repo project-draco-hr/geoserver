@@ -1,0 +1,23 @@
+{
+  ImportContext context=context();
+  List<ImportTask> newTasks=null;
+  try {
+    newTasks=importer.update(context,data);
+  }
+ catch (  ValidationException ve) {
+    throw ImportJSONWriter.badRequest(ve.getMessage());
+  }
+catch (  IOException e) {
+    throw new RestletException("Error updating context",Status.SERVER_ERROR_INTERNAL,e);
+  }
+  if (!newTasks.isEmpty()) {
+    Object result=newTasks;
+    if (newTasks.size() == 1) {
+      result=newTasks.get(0);
+      long taskId=newTasks.get(0).getId();
+      getResponse().redirectSeeOther(getPageInfo().rootURI(String.format("/imports/%d/tasks/%d",context.getId(),taskId)));
+    }
+    getResponse().setEntity(new ImportTaskJSONFormat().toRepresentation(result));
+    getResponse().setStatus(Status.SUCCESS_CREATED);
+  }
+}

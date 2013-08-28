@@ -1,0 +1,45 @@
+{
+  String coverageName=selection.getCoverageName();
+  EoLayerType layerType=selection.getType();
+  String name=coverageName;
+  if (groupName != null) {
+    name=groupName + "_" + name;
+  }
+  try {
+    CoverageInfo resource=builder.buildCoverage(coverageName);
+    boolean dimensionsPresent=enableDimensions(resource,layerType);
+    if (!dimensionsPresent) {
+      if (layerType == EoLayerType.BAND_COVERAGE) {
+        error(new ParamResourceModel("EoLayerGroupError.invalidBandCoverage",null,coverageName).getString());
+      }
+ else {
+        error(new ParamResourceModel("EoLayerGroupError.invalidLayer",null,coverageName).getString());
+      }
+      return null;
+    }
+    resource.setName(name);
+    resource.setTitle(name);
+    getCatalog().add(resource);
+    LayerInfo layer=builder.buildLayer(resource);
+    layer.setName(name);
+    layer.setTitle(name);
+    layer.setEnabled(true);
+    layer.setQueryable(true);
+    layer.setType(LayerInfo.Type.RASTER);
+    layer.getMetadata().put(EoLayerType.KEY,layerType.name());
+    if (layerType == EoLayerType.BITMASK) {
+      StyleInfo red=getCatalog().getStyleByName("red");
+      if (red != null) {
+        layer.setDefaultStyle(red);
+      }
+ else {
+        warn("Default style for bitmask layers 'red' was not found, the default 'raster' layer got assigned instead. Please fix");
+      }
+    }
+    getCatalog().add(layer);
+    return layer;
+  }
+ catch (  Exception e) {
+    throw new IllegalArgumentException("The layer '" + name + "' could not be created. Failure message: "+ e.getMessage(),e);
+  }
+}

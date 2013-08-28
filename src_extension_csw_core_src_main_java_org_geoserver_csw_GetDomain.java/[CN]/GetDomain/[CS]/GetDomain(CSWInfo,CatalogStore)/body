@@ -1,0 +1,20 @@
+{
+  this.csw=csw;
+  this.store=store;
+  try {
+    for (    RecordDescriptor rd : store.getRecordDescriptors()) {
+      for (      Name prop : store.getCapabilities().getDomainQueriables(rd.getFeatureDescriptor().getName())) {
+        attributeTypeMap.put(prop,rd.getFeatureDescriptor().getName());
+        Enumeration declaredPrefixes=rd.getNamespaceSupport().getDeclaredPrefixes();
+        while (declaredPrefixes.hasMoreElements()) {
+          String prefix=(String)declaredPrefixes.nextElement();
+          String uri=rd.getNamespaceSupport().getURI(prefix);
+          ns.declarePrefix(prefix,uri);
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new ServiceException(e,"Failed to retrieve the domain values",ServiceException.NO_APPLICABLE_CODE);
+  }
+}

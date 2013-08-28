@@ -1,0 +1,16 @@
+{
+  try {
+    ImportContext context=iterator().next();
+    System.out.println(context);
+  }
+ catch (  RuntimeException re) {
+    if (re.getCause() instanceof java.io.ObjectStreamException) {
+      LOGGER.warning("Unable to read import database, attempting recovery");
+      dbBinding.closeDb(env);
+      dbBinding.destroyDb(env);
+      db.close();
+      env.removeDatabase(null,"imports");
+      initDb(dbConfig,env);
+    }
+  }
+}

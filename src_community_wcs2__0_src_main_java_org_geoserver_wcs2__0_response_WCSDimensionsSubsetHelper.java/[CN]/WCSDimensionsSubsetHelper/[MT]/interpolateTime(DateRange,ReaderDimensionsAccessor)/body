@@ -1,0 +1,37 @@
+{
+  TreeSet<Object> domain=accessor.getTimeDomain();
+  Date slicePoint=timeSubset.getMinValue();
+  if (!domainContainsPoint(slicePoint,domain)) {
+    Date previous=null;
+    Date newSlicePoint=null;
+    TreeSet<Date> domainDates=getDomainDates(domain);
+    for (    Date curr : domainDates) {
+      if (curr.compareTo(slicePoint) > 0) {
+        if (previous == null) {
+          newSlicePoint=curr;
+          break;
+        }
+ else {
+          long diffPrevious=slicePoint.getTime() - previous.getTime();
+          long diffCurr=curr.getTime() - slicePoint.getTime();
+          if (diffCurr > diffPrevious) {
+            newSlicePoint=curr;
+            break;
+          }
+ else {
+            newSlicePoint=previous;
+            break;
+          }
+        }
+      }
+ else {
+        previous=curr;
+      }
+    }
+    if (newSlicePoint == null) {
+      newSlicePoint=previous;
+    }
+    timeSubset=new DateRange(newSlicePoint,newSlicePoint);
+  }
+  return timeSubset;
+}

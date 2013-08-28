@@ -1,0 +1,40 @@
+{
+  setReturnPage(returnPage);
+  this.groupName=groupName;
+  layerGroupEntries=returnPage.lgEntryPanel.entryProvider.getItems();
+  Form form=new Form("form");
+  add(form);
+  List<CoverageStoreInfo> coverageStores=new ArrayList<CoverageStoreInfo>(getCatalog().getCoverageStores());
+  Collections.sort(coverageStores,new StoreNameComparator());
+  stores=new DropDownChoice<CoverageStoreInfo>("store",coverageStores,new StoreChoiceRenderer());
+  stores.setModel(new PropertyModel(this,"selectedStore"));
+  stores.setRequired(true);
+  form.add(stores);
+  final WebMarkupContainer coveragesContainer=new WebMarkupContainer("coveragesContainer");
+  coveragesContainer.setOutputMarkupId(true);
+  form.add(coveragesContainer);
+  GeoServerTablePanel<EoCoverageSelection> coverages=new GeoServerTablePanel<EoCoverageSelection>("coverages",new EoCoverageSelectionProvider(selections)){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<EoCoverageSelection> property){
+      if ("type".equals(property.getName())) {
+        DropDownChoice<EoLayerType> layerTypes=new DropDownChoice<EoLayerType>("type",property.getModel(itemModel),EoLayerType.getRasterTypes(true),new EoLayerTypeRenderer());
+        Fragment fragment=new Fragment(id,"typeFragment",EoCoverageSelectorPage.this);
+        fragment.add(layerTypes);
+        return fragment;
+      }
+      return null;
+    }
+  }
+;
+  coverages.setItemReuseStrategy(ReuseIfModelsEqualStrategy.getInstance());
+  coveragesContainer.add(coverages);
+  stores.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      updateCoveragesList(true);
+      target.addComponent(coveragesContainer);
+      target.addComponent(feedbackPanel);
+    }
+  }
+);
+  form.add(addToLayerGroupLink());
+  form.add(cancelLink());
+}

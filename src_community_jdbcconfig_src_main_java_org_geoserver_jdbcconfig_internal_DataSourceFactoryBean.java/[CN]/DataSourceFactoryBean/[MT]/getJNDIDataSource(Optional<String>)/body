@@ -1,0 +1,24 @@
+{
+  if (jndiCtx == null)   return Optional.absent();
+  if (name.isPresent()) {
+    try {
+      Optional<DataSource> ds=Optional.of((DataSource)jndiCtx.lookup(name.get()));
+      if (LOGGER.isLoggable(Level.INFO)) {
+        LOGGER.log(Level.INFO,"JDBCConfig using JNDI DataSource {0}",name.get());
+      }
+      return ds;
+    }
+ catch (    NamingException ex) {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.log(Level.WARNING,"Could not resolve JNDI name " + name.get() + " for JDBCConfig Database",ex);
+      }
+      return Optional.absent();
+    }
+  }
+ else {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("No JNDI name given for JDBCConfig DB.");
+    }
+    return Optional.absent();
+  }
+}

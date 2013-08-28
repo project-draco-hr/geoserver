@@ -1,0 +1,25 @@
+{
+  JSONObject progress=new JSONObject();
+  long imprt=Long.parseLong(getAttribute("import"));
+  ImportTask inProgress=importer.getCurrentlyProcessingTask(imprt);
+  try {
+    if (inProgress != null) {
+      progress.put("progress",inProgress.getNumberProcessed());
+      progress.put("total",inProgress.getTotalToProcess());
+      progress.put("state",inProgress.getState().toString());
+    }
+ else {
+      ImportTask task=(ImportTask)lookupTask(false);
+      progress.put("state",task.getState().toString());
+      if (task.getState() == ImportTask.State.ERROR) {
+        if (task.getError() != null) {
+          progress.put("message",task.getError().getMessage());
+        }
+      }
+    }
+  }
+ catch (  JSONException jex) {
+    throw new RestletException("Internal Error",Status.SERVER_ERROR_INTERNAL,jex);
+  }
+  return new JSONRepresentation(progress);
+}

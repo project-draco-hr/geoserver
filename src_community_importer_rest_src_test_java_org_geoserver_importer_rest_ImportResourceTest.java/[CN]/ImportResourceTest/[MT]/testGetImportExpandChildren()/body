@@ -1,0 +1,16 @@
+{
+  JSONObject json=(JSONObject)getAsJSON("/rest/imports/0?expand=2");
+  JSONObject source=json.getJSONObject("import").getJSONObject("data");
+  assertEquals("directory",source.getString("type"));
+  assertEquals("Shapefile",source.getString("format"));
+  ImportContext context=importer.getContext(0);
+  assertEquals(((Directory)context.getData()).getFile().getPath(),source.getString("location"));
+  JSONArray files=source.getJSONArray("files");
+  assertEquals(2,files.size());
+  JSONArray tasks=json.getJSONObject("import").getJSONArray("tasks");
+  assertEquals(2,tasks.size());
+  JSONObject t=tasks.getJSONObject(0);
+  assertEquals("READY",t.getString("state"));
+  t=tasks.getJSONObject(1);
+  assertEquals("READY",t.getString("state"));
+}

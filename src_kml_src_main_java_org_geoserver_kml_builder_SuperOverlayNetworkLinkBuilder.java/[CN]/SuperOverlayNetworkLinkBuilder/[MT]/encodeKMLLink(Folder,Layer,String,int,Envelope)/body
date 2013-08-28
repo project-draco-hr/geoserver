@@ -1,0 +1,22 @@
+{
+  CaseInsensitiveMap fo=new CaseInsensitiveMap(new HashMap());
+  fo.putAll(mapContent.getRequest().getFormatOptions());
+  fo.remove("superoverlay");
+  String overlayMode=(String)fo.get("overlayMode");
+  if ("overview".equalsIgnoreCase(overlayMode)) {
+    fo.remove("regionateBy");
+  }
+ else {
+    if (!fo.containsKey("regionateBy")) {
+      fo.put("regionateBy","auto");
+    }
+  }
+  String foEncoded=WMSRequests.encodeFormatOptions(fo);
+  NetworkLink nl=container.createAndAddNetworkLink();
+  nl.setName(name);
+  addRegion(nl,box,128,-1);
+  nl.setVisibility(true);
+  Link link=nl.createAndSetLink();
+  String url=WMSRequests.getGetMapUrl(request,layer,0,box,new String[]{"width","256","height","256","format_options",foEncoded,"superoverlay","true"});
+  link.setHref(url);
+}

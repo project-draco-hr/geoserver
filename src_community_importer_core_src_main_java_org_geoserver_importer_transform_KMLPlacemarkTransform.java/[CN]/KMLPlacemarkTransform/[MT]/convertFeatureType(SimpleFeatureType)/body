@@ -1,0 +1,22 @@
+{
+  SimpleFeatureTypeBuilder ftb=new SimpleFeatureTypeBuilder();
+  ftb.add("Geometry",Geometry.class);
+  ftb.setDefaultGeometry("Geometry");
+  List<AttributeDescriptor> attributeDescriptors=oldFeatureType.getAttributeDescriptors();
+  for (  AttributeDescriptor attributeDescriptor : attributeDescriptors) {
+    String localName=attributeDescriptor.getLocalName();
+    if (!"Geometry".equals(localName)) {
+      ftb.add(attributeDescriptor);
+    }
+  }
+  ftb.setName(oldFeatureType.getName());
+  ftb.setDescription(oldFeatureType.getDescription());
+  ftb.setCRS(KMLFileFormat.KML_CRS);
+  ftb.setSRS(KMLFileFormat.KML_SRS);
+  if (oldFeatureType.getDescriptor("Style") != null) {
+    ftb.remove("Style");
+  }
+  ftb.add("Folder",String.class);
+  SimpleFeatureType ft=ftb.buildFeatureType();
+  return ft;
+}

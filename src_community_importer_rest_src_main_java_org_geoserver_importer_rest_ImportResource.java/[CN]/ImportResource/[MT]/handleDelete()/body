@@ -1,0 +1,21 @@
+{
+  Iterator<ImportContext> contexts=null;
+  if (importContext instanceof ImportContext) {
+    contexts=Collections.singletonList((ImportContext)importContext).iterator();
+  }
+ else {
+    contexts=(Iterator<ImportContext>)importContext;
+  }
+  while (contexts.hasNext()) {
+    ImportContext ctx=contexts.next();
+    if (ctx.getState() != ImportContext.State.COMPLETE) {
+      try {
+        importer.delete(ctx);
+      }
+ catch (      IOException ioe) {
+        throw new RestletException("Error deleting context " + ctx.getId(),Status.SERVER_ERROR_INTERNAL,ioe);
+      }
+    }
+  }
+  getResponse().setStatus(Status.SUCCESS_NO_CONTENT);
+}

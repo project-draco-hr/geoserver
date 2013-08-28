@@ -1,0 +1,76 @@
+{
+  super(id,file);
+  this.file=file;
+  this.hideFileSystem=hideFileSystem;
+  ArrayList<File> roots=new ArrayList<File>();
+  if (!hideFileSystem) {
+    roots.addAll(Arrays.asList(File.listRoots()));
+  }
+  Collections.sort(roots);
+  File dataDirectory=GeoserverDataDirectory.getGeoserverDataDirectory();
+  roots.add(0,dataDirectory);
+  if (!hideFileSystem && USER_HOME != null) {
+    roots.add(1,USER_HOME);
+  }
+  File selection=(File)file.getObject();
+  if (selection != null) {
+    File relativeToDataDir=GeoserverDataDirectory.findDataFile(selection.getPath());
+    if (relativeToDataDir != null) {
+      selection=relativeToDataDir;
+    }
+  }
+  File selectionRoot=null;
+  if (selection != null && selection.exists()) {
+    for (    File root : roots) {
+      if (isSubfile(root,selection.getAbsoluteFile())) {
+        selectionRoot=root;
+        break;
+      }
+    }
+    if (selectionRoot == null) {
+      selectionRoot=dataDirectory;
+      file=new Model(selectionRoot);
+    }
+ else {
+      if (!selection.isDirectory()) {
+        file=new Model(selection.getParentFile());
+      }
+ else {
+        file=new Model(selection);
+      }
+    }
+  }
+ else {
+    selectionRoot=dataDirectory;
+    file=new Model(selectionRoot);
+  }
+  this.file=file;
+  setDefaultModel(file);
+  final DropDownChoice choice=new DropDownChoice("roots",new Model(selectionRoot),new Model(roots),new FileRootsRenderer());
+  choice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      File selection=(File)choice.getModelObject();
+      breadcrumbs.setRootFile(selection);
+      updateFileBrowser(selection,target);
+    }
+  }
+);
+  choice.setOutputMarkupId(true);
+  add(choice);
+  breadcrumbs=new FileBreadcrumbs("breadcrumbs",new Model(selectionRoot),file){
+    @Override protected void pathItemClicked(    File file,    AjaxRequestTarget target){
+      updateFileBrowser(file,target);
+    }
+  }
+;
+  breadcrumbs.setOutputMarkupId(true);
+  add(breadcrumbs);
+  fileTable=new FileDataView("fileTable",new FileProvider(file)){
+    @Override protected void linkNameClicked(    File file,    AjaxRequestTarget target){
+      updateFileBrowser(file,target);
+    }
+  }
+;
+  fileTable.setOutputMarkupId(true);
+  add(fileTable);
+}

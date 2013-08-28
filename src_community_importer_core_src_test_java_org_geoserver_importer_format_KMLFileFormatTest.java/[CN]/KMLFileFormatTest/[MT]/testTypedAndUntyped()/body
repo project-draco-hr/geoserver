@@ -1,0 +1,12 @@
+{
+  String kmlInput=DOC_EL + "<Schema name=\"myschema\">" + "<SimpleField type=\"int\" name=\"foo\"></SimpleField>"+ "</Schema>"+ "<Placemark>"+ "<ExtendedData>"+ "<SchemaData schemaUrl=\"#myschema\">"+ "<SimpleData name=\"foo\">42</SimpleData>"+ "</SchemaData>"+ "<Data name=\"fleem\"><value>bar</value></Data>"+ "<Data name=\"quux\"><value>morx</value></Data>"+ "</ExtendedData>"+ "</Placemark></kml>";
+  List<SimpleFeatureType> featureTypes=kmlFileFormat.parseFeatureTypes("typed-and-untyped",IOUtils.toInputStream(kmlInput));
+  assertEquals("Unexpected number of feature types",1,featureTypes.size());
+  SimpleFeatureType featureType=featureTypes.get(0);
+  FeatureReader<SimpleFeatureType,SimpleFeature> reader=kmlFileFormat.read(featureType,IOUtils.toInputStream(kmlInput));
+  SimpleFeature feature=reader.next();
+  assertNotNull("Expecting feature",feature);
+  assertEquals("Invalid ext attr foo",42,feature.getAttribute("foo"));
+  assertEquals("bar",feature.getAttribute("fleem"));
+  assertEquals("morx",feature.getAttribute("quux"));
+}

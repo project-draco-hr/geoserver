@@ -1,0 +1,16 @@
+{
+  String bpLayerId=getLayerId(MockData.BASIC_POLYGONS);
+  setCachingMetadata(bpLayerId,true,7200);
+  String mpLayerId=getLayerId(MockData.MPOINTS);
+  setCachingMetadata(mpLayerId,true,1000);
+  LayerGroupInfo lg=getCatalog().getFactory().createLayerGroup();
+  lg.setName(FLAT_LAYER_GROUP);
+  lg.getLayers().add(getCatalog().getLayerByName(bpLayerId));
+  lg.getLayers().add(getCatalog().getLayerByName(mpLayerId));
+  new CatalogBuilder(getCatalog()).calculateLayerGroupBounds(lg);
+  getCatalog().add(lg);
+  MockHttpServletResponse sr=getAsServletResponse("gwc/service/wmts?request=GetTile&layer=" + FLAT_LAYER_GROUP + "&format=image/png&tilematrixset=EPSG:4326&tilematrix=EPSG:4326:0&tilerow=0&tilecol=0");
+  assertEquals(200,sr.getErrorCode());
+  assertEquals("image/png",sr.getContentType());
+  assertEquals("max-age=1000, must-revalidate",sr.getHeader("Cache-Control"));
+}

@@ -1,0 +1,28 @@
+{
+  Catalog cat=getCatalog();
+  File dir=unpack("shape/restricted.zip");
+  SpatialFile file=new SpatialFile(new File(dir,"restricted.shp"));
+  file.prepare();
+  ImportContext context=importer.createContext(file,store);
+  assertEquals(1,context.getTasks().size());
+  context.setTargetStore(store);
+  ImportTask task=context.getTasks().get(0);
+  task.getTransform().add(new NumberFormatTransform("cat",Integer.class));
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  FeatureTypeInfo ft=cat.getFeatureTypeByDataStore(store,"restricted");
+  assertNotNull(ft);
+  SimpleFeatureType schema=(SimpleFeatureType)ft.getFeatureType();
+  assertEquals(Integer.class,schema.getDescriptor("cat").getType().getBinding());
+  FeatureIterator it=ft.getFeatureSource(null,null).getFeatures().features();
+  try {
+    assertTrue(it.hasNext());
+    while (it.hasNext()) {
+      SimpleFeature f=(SimpleFeature)it.next();
+      assertTrue(f.getAttribute("cat") instanceof Integer);
+    }
+  }
+  finally {
+    it.close();
+  }
+}

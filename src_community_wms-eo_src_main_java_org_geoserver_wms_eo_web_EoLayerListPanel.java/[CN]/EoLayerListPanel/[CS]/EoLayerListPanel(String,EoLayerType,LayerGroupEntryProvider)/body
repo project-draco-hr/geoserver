@@ -1,0 +1,33 @@
+{
+  super(contentId,new LayerListProvider(){
+    @Override protected List<LayerInfo> getItems(){
+      List<LayerInfo> layers=GeoServerApplication.get().getCatalog().getLayers();
+      Set<String> existingLayerIds=new HashSet<String>();
+      for (      EoLayerGroupEntry entry : entryProvider.getItems()) {
+        existingLayerIds.add(entry.layerId);
+      }
+      List<LayerInfo> results=new ArrayList<LayerInfo>();
+      for (      LayerInfo layer : layers) {
+        if (layerType == EoLayerType.COVERAGE_OUTLINE) {
+          if (!(layer.getResource() instanceof FeatureTypeInfo)) {
+            continue;
+          }
+        }
+ else {
+          if (!(layer.getResource() instanceof CoverageInfo)) {
+            continue;
+          }
+        }
+        if (existingLayerIds.contains(layer.getId())) {
+          continue;
+        }
+        if (layer.getResource().getMetadata().get(ResourceInfo.TIME,DimensionInfo.class) == null) {
+          continue;
+        }
+        results.add(layer);
+      }
+      return results;
+    }
+  }
+);
+}

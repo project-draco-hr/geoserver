@@ -1,0 +1,35 @@
+{
+  Form form=getRequest().getEntityAsForm();
+  String url=form.getFirstValue("url",null);
+  if (url == null) {
+    throw new RestletException("Invalid request",Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+  URL location=null;
+  try {
+    location=new URL(url);
+  }
+ catch (  MalformedURLException ex) {
+    getLogger().warning("invalid URL specified in upload : " + url);
+  }
+  if (location == null || !location.getProtocol().equalsIgnoreCase("file")) {
+    throw new RestletException("Invalid url in request",Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+  FileData file;
+  try {
+    file=FileData.createFromFile(new File(location.toURI().getPath()));
+  }
+ catch (  Exception ex) {
+    throw new RuntimeException("Unexpected exception",ex);
+  }
+  if (file instanceof Directory) {
+    try {
+      file.prepare();
+    }
+ catch (    IOException ioe) {
+      String msg="Error processing file: " + file.getFile().getAbsolutePath();
+      getLogger().log(Level.WARNING,msg,ioe);
+      throw new RestletException(msg,Status.SERVER_ERROR_INTERNAL);
+    }
+  }
+  return file;
+}

@@ -1,0 +1,48 @@
+{
+  OperationType getRecords=owsf.createOperationType();
+  operationsMetadata.getOperation().add(getRecords);
+  getRecords.setName("GetRecords");
+  DCPType getRecordsDCP=owsf.createDCPType();
+  getRecords.getDCP().add(getRecordsDCP);
+  HTTPType getRecordsHTTP=owsf.createHTTPType();
+  getRecordsDCP.setHTTP(getRecordsHTTP);
+  String getRecordsHref=ResponseUtils.buildURL(baseUrl,"csw",new HashMap<String,String>(),URLType.SERVICE);
+  RequestMethodType getRecordsGet=owsf.createRequestMethodType();
+  getRecordsGet.setHref(getRecordsHref);
+  getRecordsHTTP.getGet().add(getRecordsGet);
+  RequestMethodType getRecordsPost=owsf.createRequestMethodType();
+  getRecordsPost.setHref(getRecordsHref);
+  DomainType getRecordsPostConstraints=owsf.createDomainType();
+  getRecordsPostConstraints.setName("PostEncoding");
+  getRecordsPostConstraints.getValue().add("XML");
+  getRecordsPost.getConstraint().add(getRecordsPostConstraints);
+  getRecordsHTTP.getPost().add(getRecordsPost);
+  for (  DomainType param : operationParameters.get("GetRecords")) {
+    getRecords.getParameter().add(param);
+  }
+  for (  DomainType constraint : operationConstraints.get("GetRecords")) {
+    getRecords.getConstraint().add(constraint);
+  }
+  try {
+    for (    RecordDescriptor rd : store.getRecordDescriptors()) {
+      List<Name> queriables=store.getCapabilities().getQueriables(rd.getFeatureDescriptor().getName());
+      if (queriables != null && queriables.size() > 0) {
+        DomainType dt=owsf.createDomainType();
+        dt.setName(rd.getQueryablesDescription());
+        NamespaceSupport nss=rd.getNamespaceSupport();
+        for (        Name q : queriables) {
+          String prefix=nss.getPrefix(q.getNamespaceURI());
+          dt.getValue().add(prefix == null ? q.getLocalPart() : prefix + ":" + q.getLocalPart());
+        }
+        getRecords.getConstraint().add(dt);
+      }
+    }
+    DomainType dt=owsf.createDomainType();
+    dt.setName("XPathQueryables");
+    dt.getValue().add("allowed");
+    getRecords.getConstraint().add(dt);
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,"Failed to encode getRecords additional queriables",e);
+  }
+}

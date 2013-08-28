@@ -1,3 +1,26 @@
 {
   super(handler,null,null);
+  this.helper=new TranslatorHelper();
+  this.extensions=GeoServerExtensions.extensions(WCSExtendedCapabilitiesProvider.class);
+  NamespaceSupport namespaces=getNamespaceSupport();
+  namespaces.declarePrefix("wcscrs","http://www.opengis.net/wcs/service-extension/crs/1.0");
+  namespaces.declarePrefix("int","http://www.opengis.net/WCS_service-extension_interpolation/1.0");
+  for (  WCSExtendedCapabilitiesProvider cp : extensions) {
+    cp.registerNamespaces(namespaces);
+  }
+  this.translator=new ExtendedCapabilitiesProvider.Translator(){
+    @Override public void start(    String element,    Attributes attributes){
+      WCS20GetCapabilitiesTranslator.this.start(element,attributes);
+    }
+    @Override public void start(    String element){
+      WCS20GetCapabilitiesTranslator.this.start(element);
+    }
+    @Override public void end(    String element){
+      WCS20GetCapabilitiesTranslator.this.end(element);
+    }
+    @Override public void chars(    String text){
+      WCS20GetCapabilitiesTranslator.this.chars(text);
+    }
+  }
+;
 }

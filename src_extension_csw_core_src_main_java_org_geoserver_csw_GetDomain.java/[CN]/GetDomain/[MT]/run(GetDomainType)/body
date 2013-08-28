@@ -1,0 +1,45 @@
+{
+  try {
+    List<String> result=new ArrayList<String>();
+    if (request.getParameterName() != null && !request.getParameterName().isEmpty()) {
+      String parameterName=request.getParameterName();
+      if (parameterName.indexOf(".") > 0) {
+        final String operation=parameterName.split("\\.")[0];
+        final String parameter=parameterName.split("\\.")[1];
+        if (GetCapabilities.operationParameters.get(operation) != null) {
+          for (          DomainType param : GetCapabilities.operationParameters.get(operation)) {
+            if (param.getName().equalsIgnoreCase(parameter)) {
+              for (              Object value : param.getValue()) {
+                result.add((String)value);
+              }
+            }
+          }
+        }
+      }
+    }
+    if (request.getPropertyName() != null && !request.getPropertyName().isEmpty()) {
+      final String propertyName=request.getPropertyName();
+      String nameSpace="";
+      String localPart=null;
+      if (propertyName.indexOf(":") > 0) {
+        nameSpace=propertyName.split(":")[0];
+        localPart=propertyName.split(":")[1];
+      }
+ else {
+        if (propertyName.equalsIgnoreCase("anyText")) {
+          nameSpace=ns.getURI("csw");
+        }
+        localPart=propertyName;
+      }
+      Name attName=new NameImpl(ns.getURI(nameSpace),localPart);
+      Name typeName=attributeTypeMap.get(attName);
+      if (typeName != null) {
+        return this.store.getDomain(typeName,attName);
+      }
+    }
+    return new CloseableIteratorAdapter<String>(result.iterator());
+  }
+ catch (  Exception e) {
+    throw new ServiceException(e,"Failed to retrieve the domain values",ServiceException.NO_APPLICABLE_CODE);
+  }
+}

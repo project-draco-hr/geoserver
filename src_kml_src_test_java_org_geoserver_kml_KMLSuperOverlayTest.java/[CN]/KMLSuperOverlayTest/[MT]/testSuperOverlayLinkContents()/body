@@ -1,0 +1,16 @@
+{
+  Document document=getAsDOM("wms/kml?layers=" + getLayerId(MockData.BASIC_POLYGONS) + "&mode=superoverlay");
+  assertEquals("kml",document.getDocumentElement().getNodeName());
+  assertEquals("1",xpath.evaluate("count(//kml:Folder)",document));
+  assertEquals(3,document.getElementsByTagName("Region").getLength());
+  assertEquals("2",xpath.evaluate("count(//kml:NetworkLink)",document));
+  assertEquals("0",xpath.evaluate("count(//kml:GroundOverlay)",document));
+  String link0=xpath.evaluate("//kml:NetworkLink[kml:name='0']/kml:Link/kml:href",document);
+  Map<String,Object> kvp0=KvpUtils.parseQueryString(link0);
+  assertEquals(NetworkLinkMapOutputFormat.KML_MIME_TYPE,kvp0.get("format"));
+  assertEquals("-180.0,-90.0,0.0,90.0",kvp0.get("bbox"));
+  String link1=xpath.evaluate("//kml:NetworkLink[kml:name='1']/kml:Link/kml:href",document);
+  Map<String,Object> kvp1=KvpUtils.parseQueryString(link1);
+  assertEquals(NetworkLinkMapOutputFormat.KML_MIME_TYPE,kvp1.get("format"));
+  assertEquals("0.0,-90.0,180.0,90.0",kvp1.get("bbox"));
+}

@@ -1,0 +1,28 @@
+{
+  if (rule.symbolizers.size() != 1) {
+    return null;
+  }
+  Graphic g=rule.symbolizers.get(0).getGraphic();
+  if (g == null) {
+    return null;
+  }
+  if (g.graphicalSymbols().size() != 1) {
+    return null;
+  }
+  GraphicalSymbol gSym=g.graphicalSymbols().get(0);
+  if (!(gSym instanceof ExternalGraphic)) {
+    return null;
+  }
+  ExternalGraphic exGraphic=(ExternalGraphic)gSym;
+  try {
+    Double opacity=g.getOpacity().evaluate(feature,Double.class);
+    Double size=1d * Icons.getExternalSize(exGraphic,feature);
+    if (size != null)     size=size / Icons.DEFAULT_SYMBOL_SIZE;
+    Double rotation=g.getRotation().evaluate(feature,Double.class);
+    Expression urlExpression=ExpressionExtractor.extractCqlExpressions(exGraphic.getLocation().toExternalForm());
+    return IconProperties.externalReference(opacity,size,rotation,urlExpression.evaluate(feature,String.class));
+  }
+ catch (  MalformedURLException e) {
+    throw new RuntimeException(e);
+  }
+}

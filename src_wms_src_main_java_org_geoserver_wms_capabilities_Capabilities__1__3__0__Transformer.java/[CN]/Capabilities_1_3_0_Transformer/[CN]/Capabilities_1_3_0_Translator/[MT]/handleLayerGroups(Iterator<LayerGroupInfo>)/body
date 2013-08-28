@@ -5,7 +5,19 @@
   }
   List<LayerGroupInfo> topLevelGroups=filterNestedGroups(layerGroups);
   for (  LayerGroupInfo group : topLevelGroups) {
-    handleLayerGroup(group,layersAlreadyProcessed);
+    try {
+      mark();
+      handleLayerGroup(group,layersAlreadyProcessed);
+      commit();
+    }
+ catch (    Exception e) {
+      if (skipping) {
+        reset();
+      }
+ else {
+        throw new ServiceException("Error occurred trying to write out metadata for layer group: " + group.getName(),e);
+      }
+    }
   }
   return layersAlreadyProcessed;
 }

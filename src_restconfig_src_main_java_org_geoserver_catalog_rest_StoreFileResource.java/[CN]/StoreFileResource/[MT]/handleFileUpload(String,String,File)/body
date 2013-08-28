@@ -20,7 +20,12 @@
     }
   }
  catch (  Throwable t) {
-    throw new RestletException("Error while storing uploaded file:",Status.SERVER_ERROR_INTERNAL,t);
+    if (t instanceof RestletException) {
+      throw (RestletException)t;
+    }
+ else {
+      throw new RestletException("Error while storing uploaded file:",Status.SERVER_ERROR_INTERNAL,t);
+    }
   }
   if (mediaType != null && RESTUtils.isZipMediaType(mediaType)) {
     if (!uploadedFile.getName().endsWith(".zip")) {

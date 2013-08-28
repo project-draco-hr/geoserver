@@ -1,0 +1,17 @@
+{
+  if (transform == null) {
+    CoordinateReferenceSystem source=this.source;
+    if (source == null) {
+      source=oldFeature.getType().getCoordinateReferenceSystem();
+    }
+    if (source == null) {
+      throw new IllegalStateException("Unable to determine source projection");
+    }
+    transform=CRS.findMathTransform(source,target,true);
+  }
+  Geometry g=(Geometry)feature.getDefaultGeometry();
+  if (g != null) {
+    feature.setDefaultGeometry(JTS.transform(g,transform));
+  }
+  return feature;
+}

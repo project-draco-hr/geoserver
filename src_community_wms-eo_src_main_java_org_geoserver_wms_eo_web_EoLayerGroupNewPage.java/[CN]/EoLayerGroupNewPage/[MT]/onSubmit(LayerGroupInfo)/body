@@ -1,0 +1,23 @@
+{
+  LayerGroupInfo preExisting;
+  String lgName=lg.getName();
+  if (lg.getWorkspace() != null) {
+    String wsName=lg.getWorkspace().getName();
+    preExisting=getCatalog().getLayerGroupByName(wsName,lgName);
+    if (preExisting != null) {
+      error(new ParamResourceModel("layerGroupAlreadyExistsInWorkspace",this,lgName,wsName).getString());
+      return;
+    }
+  }
+ else {
+    preExisting=getCatalog().getLayerGroupByName(lgName);
+    if (preExisting != null) {
+      error(new ParamResourceModel("layerGroupAlreadyExists",this,lgName).getString());
+      return;
+    }
+  }
+  Catalog catalog=getCatalog();
+  catalog.add(lg);
+  lg=catalog.getLayerGroup(lg.getId());
+  doReturn();
+}

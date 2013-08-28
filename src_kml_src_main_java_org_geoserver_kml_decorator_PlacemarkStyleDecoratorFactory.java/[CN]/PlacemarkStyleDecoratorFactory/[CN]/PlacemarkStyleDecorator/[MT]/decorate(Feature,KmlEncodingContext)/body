@@ -1,0 +1,42 @@
+{
+  Placemark pm=(Placemark)feature;
+  Style style=pm.createAndAddStyle();
+  List<Symbolizer> symbolizers=context.getCurrentSymbolizers();
+  SimpleFeature sf=context.getCurrentFeature();
+  if (symbolizers.size() > 0 && sf.getDefaultGeometry() != null) {
+    Map<Class,List<Symbolizer>> classified=classifySymbolizers(symbolizers);
+    List<Symbolizer> points=classified.get(PointSymbolizer.class);
+    if (points.size() == 0) {
+      if (context.isDescriptionEnabled()) {
+        setDefaultIconStyle(style,sf,context);
+      }
+    }
+ else {
+      org.geotools.styling.Style wholeStyle=context.getCurrentLayer().getStyle();
+      IconProperties properties=IconPropertyExtractor.extractProperties(wholeStyle,sf);
+      setIconStyle(style,wholeStyle,properties,context);
+    }
+    List<Symbolizer> texts=classified.get(TextSymbolizer.class);
+    if (texts.size() == 0) {
+      if (context.isDescriptionEnabled()) {
+        setDefaultLabelStyle(style);
+      }
+    }
+ else {
+      TextSymbolizer lastTextSymbolizer=(TextSymbolizer)texts.get(texts.size() - 1);
+      setLabelStyle(style,sf,lastTextSymbolizer);
+    }
+    List<Symbolizer> lines=classified.get(LineSymbolizer.class);
+    if (lines.size() > 0) {
+      LineSymbolizer lastLineSymbolizer=(LineSymbolizer)lines.get(lines.size() - 1);
+      setLineStyle(style,sf,lastLineSymbolizer.getStroke());
+    }
+    boolean forceOutiline=lines.size() == 0;
+    List<Symbolizer> polygons=classified.get(PolygonSymbolizer.class);
+    if (polygons.size() > 0) {
+      PolygonSymbolizer lastPolygonSymbolizer=(PolygonSymbolizer)polygons.get(polygons.size() - 1);
+      setPolygonStyle(style,sf,lastPolygonSymbolizer,forceOutiline);
+    }
+  }
+  return feature;
+}

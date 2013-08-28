@@ -3,24 +3,31 @@
     throw new IllegalArgumentException(new StringBuffer("Not a DescribeCoverageType: ").append(o).toString());
   }
   this.request=(DescribeCoverageType)o;
-  final AttributesImpl attributes=WCS20Const.getDefaultNamespaces();
-  attributes.addAttribute("","xmlns:swe","xmlns:swe","","http://www.opengis.net/swe/2.0");
-  attributes.addAttribute("","xmlns:wcsgs","xmlns:wcsgs","","http://www.geoserver.org/wcsgs/2.0");
-  List<LayerInfo> coverages=new ArrayList<LayerInfo>();
+  List<CoverageInfo> coverages=new ArrayList<CoverageInfo>();
   for (  String encodedCoverageId : (List<String>)request.getCoverageId()) {
     LayerInfo layer=NCNameResourceCodec.getCoverage(catalog,encodedCoverageId);
     if (layer != null) {
-      coverages.add(layer);
+      coverages.add((CoverageInfo)layer.getResource());
     }
  else {
       throw new IllegalArgumentException("Failed to locate coverage " + encodedCoverageId + ", unexpected, the coverage existance has been "+ "checked earlier in the request lifecycle");
     }
   }
+  NamespaceSupport namespaces=getNamespaceSupport();
+  namespaces.declarePrefix("swe","http://www.opengis.net/swe/2.0");
+  namespaces.declarePrefix("wcsgs","http://www.geoserver.org/wcsgs/2.0");
+  for (  WCS20CoverageMetadataProvider cp : extensions) {
+    cp.registerNamespaces(namespaces);
+  }
+  final AttributesImpl attributes=WCS20Const.getDefaultNamespaces();
+  helper.registerNamespaces(getNamespaceSupport(),attributes);
+  String location=buildSchemaLocation(request.getBaseUrl(),WCS.NAMESPACE,"http://schemas.opengis.net/wcs/2.0/wcsDescribeCoverage.xsd");
+  attributes.addAttribute("","xsi:schemaLocation","xsi:schemaLocation","",location);
   start("wcs:CoverageDescriptions",attributes);
-  for (  LayerInfo layer : coverages) {
-    CoverageInfo ci=catalog.getCoverageByName(layer.prefixedName());
+  for (  CoverageInfo ci : coverages) {
     try {
-      handleCoverageDescription(ci);
+      String encodedId=NCNameResourceCodec.encode(ci);
+      handleCoverageDescription(encodedId,ci);
     }
  catch (    Exception e) {
       throw new RuntimeException("Unexpected error occurred during describe coverage xml encoding",e);

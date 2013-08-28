@@ -1,0 +1,33 @@
+{
+  Catalog cat=getCatalog();
+  File dir=unpack("shape/archsites_epsg_prj.zip");
+  SpatialFile file=new SpatialFile(new File(dir,"archsites.shp"));
+  file.prepare();
+  ImportContext context=importer.createContext(file,store);
+  assertEquals(1,context.getTasks().size());
+  context.setTargetStore(store);
+  ImportTask task=context.getTasks().get(0);
+  task.getTransform().add(new IntegerFieldToDateTransform("CAT_ID"));
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  FeatureTypeInfo ft=cat.getFeatureTypeByDataStore(store,"archsites");
+  assertNotNull(ft);
+  SimpleFeatureType schema=(SimpleFeatureType)ft.getFeatureType();
+  assertEquals(Timestamp.class,schema.getDescriptor("CAT_ID").getType().getBinding());
+  FeatureIterator it=ft.getFeatureSource(null,null).getFeatures().features();
+  int year=2;
+  Calendar cal=Calendar.getInstance();
+  cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+  try {
+    assertTrue(it.hasNext());
+    it.next();
+    while (it.hasNext()) {
+      SimpleFeature f=(SimpleFeature)it.next();
+      cal.setTime((Date)f.getAttribute("CAT_ID"));
+      assertEquals(year++,cal.get(Calendar.YEAR));
+    }
+  }
+  finally {
+    it.close();
+  }
+}

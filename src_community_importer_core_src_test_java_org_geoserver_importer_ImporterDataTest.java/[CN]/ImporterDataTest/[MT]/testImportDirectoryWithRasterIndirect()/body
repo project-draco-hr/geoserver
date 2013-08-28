@@ -1,0 +1,37 @@
+{
+  DataStoreInfo ds=createH2DataStore(getCatalog().getDefaultWorkspace().getName(),"shapes");
+  File dir=tmpDir();
+  unpack("shape/archsites_epsg_prj.zip",dir);
+  unpack("shape/bugsites_esri_prj.tar.gz",dir);
+  unpack("geotiff/EmissiveCampania.tif.bz2",dir);
+  ImportContext context=importer.createContext(new Directory(dir),ds);
+  assertEquals(3,context.getTasks().size());
+  assertTrue(context.getData() instanceof Directory);
+  ImportTask task=Iterables.find(context.getTasks(),new Predicate<ImportTask>(){
+    @Override public boolean apply(    ImportTask input){
+      return "archsites".equals(input.getLayer().getResource().getName());
+    }
+  }
+);
+  assertEquals(ImportTask.State.READY,task.getState());
+  assertTrue(task.getData() instanceof SpatialFile);
+  assertEquals("Shapefile",task.getData().getFormat().getName());
+  task=Iterables.find(context.getTasks(),new Predicate<ImportTask>(){
+    @Override public boolean apply(    ImportTask input){
+      return "bugsites".equals(input.getLayer().getResource().getName());
+    }
+  }
+);
+  assertEquals(ImportTask.State.READY,task.getState());
+  assertTrue(task.getData() instanceof SpatialFile);
+  assertEquals("Shapefile",task.getData().getFormat().getName());
+  task=Iterables.find(context.getTasks(),new Predicate<ImportTask>(){
+    @Override public boolean apply(    ImportTask input){
+      return "EmissiveCampania".equals(input.getLayer().getResource().getName());
+    }
+  }
+);
+  assertEquals(ImportTask.State.BAD_FORMAT,task.getState());
+  assertTrue(task.getData() instanceof SpatialFile);
+  assertEquals("GeoTIFF",task.getData().getFormat().getName());
+}

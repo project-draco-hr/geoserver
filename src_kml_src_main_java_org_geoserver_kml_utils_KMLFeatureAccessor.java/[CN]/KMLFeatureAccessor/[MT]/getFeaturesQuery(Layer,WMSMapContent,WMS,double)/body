@@ -1,0 +1,36 @@
+{
+  SimpleFeatureType schema=((SimpleFeatureSource)layer.getFeatureSource()).getSchema();
+  ReferencedEnvelope aoi=mapContent.getRenderingArea();
+  Filter filter=createBBoxFilter(schema,aoi);
+  Query q=new Query(schema.getTypeName());
+  q.setFilter(filter);
+  q=DataUtilities.mixQueries(q,layer.getQuery(),"KMLEncoder");
+  RegionatingStrategy regionatingStrategy=null;
+  String stratname=(String)mapContent.getRequest().getFormatOptions().get("regionateBy");
+  if (("auto").equals(stratname)) {
+    Catalog catalog=wms.getGeoServer().getCatalog();
+    Name name=layer.getFeatureSource().getName();
+    stratname=catalog.getFeatureTypeByName(name).getMetadata().get("kml.regionateStrategy",String.class);
+    if (stratname == null || "".equals(stratname)) {
+      stratname="best_guess";
+      LOGGER.log(Level.FINE,"No default regionating strategy has been configured in " + name + "; using automatic best-guess strategy.");
+    }
+  }
+  Filter regionatingFilter=Filter.INCLUDE;
+  if (stratname != null) {
+    regionatingStrategy=findStrategyByName(stratname);
+    if (regionatingStrategy == null) {
+      throw new ServiceException("Unknown regionating strategy " + stratname);
+    }
+ else {
+      regionatingFilter=regionatingStrategy.getFilter(mapContent,layer);
+    }
+  }
+  Filter ruleFilter=getStyleFilter(schema,layer.getStyle(),scaleDenominator);
+  Filter finalFilter=joinFilters(q.getFilter(),ruleFilter,regionatingFilter);
+  if (finalFilter == Filter.EXCLUDE) {
+    return null;
+  }
+  q.setFilter(finalFilter);
+  return q;
+}

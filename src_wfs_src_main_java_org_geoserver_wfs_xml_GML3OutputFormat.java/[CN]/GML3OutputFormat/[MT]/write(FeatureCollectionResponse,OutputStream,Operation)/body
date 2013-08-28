@@ -1,20 +1,20 @@
 {
   List featureCollections=results.getFeature();
   GetFeatureRequest request=GetFeatureRequest.adapt(getFeature.getParameters()[0]);
-  HashMap<String,Set<FeatureTypeInfo>> ns2metas=new HashMap<String,Set<FeatureTypeInfo>>();
+  HashMap<String,Set<ResourceInfo>> ns2metas=new HashMap<String,Set<ResourceInfo>>();
   for (int fcIndex=0; fcIndex < featureCollections.size(); fcIndex++) {
     if (request != null) {
       List<Query> queries=request.getQueries();
       Query queryType=queries.get(fcIndex);
       for (      QName name : queryType.getTypeNames()) {
         Name featureTypeName=new NameImpl(name.getNamespaceURI(),name.getLocalPart());
-        FeatureTypeInfo meta=catalog.getFeatureTypeByName(featureTypeName);
+        ResourceInfo meta=catalog.getResourceByName(featureTypeName,ResourceInfo.class);
         if (meta == null) {
           throw new WFSException(request,"Could not find feature type " + featureTypeName + " in the GeoServer catalog");
         }
-        Set<FeatureTypeInfo> metas=ns2metas.get(featureTypeName.getNamespaceURI());
+        Set<ResourceInfo> metas=ns2metas.get(featureTypeName.getNamespaceURI());
         if (metas == null) {
-          metas=new HashSet<FeatureTypeInfo>();
+          metas=new HashSet<ResourceInfo>();
           ns2metas.put(featureTypeName.getNamespaceURI(),metas);
         }
         metas.add(meta);
@@ -69,19 +69,22 @@
     Set metas=(Set)entry.getValue();
     StringBuffer typeNames=new StringBuffer();
     for (Iterator m=metas.iterator(); m.hasNext(); ) {
-      FeatureTypeInfo meta=(FeatureTypeInfo)m.next();
-      FeatureType featureType=meta.getFeatureType();
-      Object userSchemaLocation=featureType.getUserData().get("schemaURI");
-      if (userSchemaLocation != null && userSchemaLocation instanceof Map) {
-        Map<String,String> schemaURIs=(Map<String,String>)userSchemaLocation;
-        for (        String namespace : schemaURIs.keySet()) {
-          encoder.setSchemaLocation(namespace,schemaURIs.get(namespace));
+      ResourceInfo ri=(ResourceInfo)m.next();
+      if (ri instanceof FeatureTypeInfo) {
+        FeatureTypeInfo meta=(FeatureTypeInfo)ri;
+        FeatureType featureType=meta.getFeatureType();
+        Object userSchemaLocation=featureType.getUserData().get("schemaURI");
+        if (userSchemaLocation != null && userSchemaLocation instanceof Map) {
+          Map<String,String> schemaURIs=(Map<String,String>)userSchemaLocation;
+          for (          String namespace : schemaURIs.keySet()) {
+            encoder.setSchemaLocation(namespace,schemaURIs.get(namespace));
+          }
         }
-      }
  else {
-        typeNames.append(meta.getPrefixedName());
-        if (m.hasNext()) {
-          typeNames.append(",");
+          typeNames.append(meta.getPrefixedName());
+          if (m.hasNext()) {
+            typeNames.append(",");
+          }
         }
       }
     }

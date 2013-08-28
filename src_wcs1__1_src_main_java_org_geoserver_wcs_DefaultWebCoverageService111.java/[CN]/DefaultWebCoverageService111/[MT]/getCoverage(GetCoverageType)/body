@@ -15,7 +15,7 @@
     checkDomainSubset(meta,request.getDomainSubset(),wcs);
     checkRangeSubset(meta,request.getRangeSubset());
     checkOutput(meta,request.getOutput());
-    final AbstractGridCoverage2DReader reader=(AbstractGridCoverage2DReader)meta.getGridCoverageReader(null,WCSUtils.getReaderHints(wcs));
+    final GridCoverage2DReader reader=(GridCoverage2DReader)meta.getGridCoverageReader(null,WCSUtils.getReaderHints(wcs));
     final GeneralEnvelope originalEnvelope=reader.getOriginalEnvelope();
     final BoundingBoxType bbox=request.getDomainSubset().getBoundingBox();
     final CoordinateReferenceSystem nativeCRS=originalEnvelope.getCoordinateReferenceSystem();
@@ -116,6 +116,7 @@
     if (filter != null) {
       readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,filter,"FILTER","Filter");
     }
+    readParameters=WCSUtils.replaceParameter(readParameters,Boolean.FALSE,AbstractGridFormat.USE_JAI_IMAGEREAD);
     coverage=(GridCoverage2D)reader.read(readParameters);
     if ((coverage == null) || !(coverage instanceof GridCoverage2D)) {
       throw new IOException("The requested coverage could not be found.");
