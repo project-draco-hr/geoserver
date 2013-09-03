@@ -14,7 +14,14 @@
     System.arraycopy(delimArray,0,array,pos,1);
     pos++;
     System.arraycopy(password,0,array,pos,password.length);
-    return new String(Hex.encode(digest.digest(SecurityUtils.toBytes(array,charSet))));
+    MessageDigest md=null;
+    try {
+      md=(MessageDigest)digest.clone();
+    }
+ catch (    CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+    return new String(Hex.encode(md.digest(SecurityUtils.toBytes(array,charSet))));
   }
   finally {
     if (array != null)     manager.disposePassword(array);

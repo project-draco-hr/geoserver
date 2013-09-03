@@ -1,0 +1,13 @@
+{
+  ExecutorService executor=Executors.newFixedThreadPool(NTHREADS);
+  List<Future<Boolean>> list=new ArrayList<Future<Boolean>>();
+  for (int i=0; i < 600; i++) {
+    Callable<Boolean> worker=new AuthenticationCallable(authenticationFilter);
+    Future<Boolean> submit=executor.submit(worker);
+    list.add(submit);
+  }
+  for (  Future<Boolean> future : list) {
+    future.get();
+  }
+  executor.shutdown();
+}
