@@ -1,4 +1,10 @@
 {
+  Map<String,String> interpolationProperties=new HashMap<String,String>();
+  String baseUrl=(String)q.getHints().get(GetRecords.KEY_BASEURL);
+  if (baseUrl != null) {
+    interpolationProperties.put("url.wfs",ResponseUtils.buildURL(baseUrl,"wfs",null,URLType.SERVICE));
+    interpolationProperties.put("url.wms",ResponseUtils.buildURL(baseUrl,"wms",null,URLType.SERVICE));
+  }
   CatalogStoreMapping mapping=getMapping(q.getTypeName());
   int startIndex=0;
   if (q.getStartIndex() != null) {
@@ -15,7 +21,7 @@
   }
   FeatureCollection records;
   if (q.getSortBy() != null && q.getSortBy().length > 0) {
-    records=new CatalogStoreFeatureCollection(startIndex,Integer.MAX_VALUE,null,unmapped,catalog,mapping,rd);
+    records=new CatalogStoreFeatureCollection(startIndex,Integer.MAX_VALUE,null,unmapped,catalog,mapping,rd,interpolationProperties);
     Feature[] features=(Feature[])records.toArray(new Feature[records.size()]);
     Comparator<Feature> comparator=ComplexComparatorFactory.buildComparator(q.getSortBy());
     Arrays.sort(features,comparator);
@@ -25,7 +31,7 @@
     }
   }
  else {
-    records=new CatalogStoreFeatureCollection(startIndex,q.getMaxFeatures(),null,unmapped,catalog,mapping,rd);
+    records=new CatalogStoreFeatureCollection(startIndex,q.getMaxFeatures(),null,unmapped,catalog,mapping,rd,interpolationProperties);
   }
   return records;
 }
