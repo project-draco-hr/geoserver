@@ -1,6 +1,18 @@
 {
-  CatalogFacade catalogFacade=catalog.getFacade();
-  layerIt=catalogFacade.list(ResourceInfo.class,filter,offset,count,sortOrder);
+  this.offset=offset;
+  this.count=count;
+  this.sortOrder=sortOrder;
+  this.filter=filter;
+  catalogFacade=catalog.getFacade();
   this.mapping=mapping;
+  layerIt=catalogFacade.list(ResourceInfo.class,filter,null,null,sortOrder);
+  nextLayer();
+  layerGroupIt=catalogFacade.list(LayerGroupInfo.class,filter,null,null,sortOrder);
+  nextLayerGroup();
+  comparator=sortOrder == null || sortOrder.length == 0 ? null : CatalogComparatorFactory.buildComparator(sortOrder);
+  index=0;
+  while (index < offset && hasNext()) {
+    nextInternal();
+  }
   builder=new GenericRecordBuilder(recordDescriptor);
 }
