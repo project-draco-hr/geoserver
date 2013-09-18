@@ -1,36 +1,15 @@
 {
+  expectCatalogGetListeners();
 switch (type) {
 case ADD:
-    getCatalog().fireAdded((CatalogInfo)info(id));
+    catListener.handleAddEvent((CatalogAddEvent)catEvent(info));
   break;
 case MODIFY:
-getCatalog().firePostModified((CatalogInfo)info(id));
+catListener.handlePostModifyEvent((CatalogPostModifyEvent)catEvent(info));
 break;
 case REMOVE:
-getCatalog().fireRemoved((CatalogInfo)info(id));
+catListener.handleRemoveEvent((CatalogRemoveEvent)catEvent(id));
 break;
 }
-return expectLastCall().andAnswer(new IAnswer<Object>(){
-@Override public Object answer() throws Throwable {
-switch (type) {
-case ADD:
-CatalogAddEventImpl addEvt=new CatalogAddEventImpl();
-addEvt.setSource(info);
-sync.handleAddEvent(addEvt);
-break;
-case MODIFY:
-CatalogPostModifyEventImpl modEvt=new CatalogPostModifyEventImpl();
-modEvt.setSource(info);
-sync.handlePostModifyEvent(modEvt);
-break;
-case REMOVE:
-CatalogRemoveEventImpl remEvt=new CatalogRemoveEventImpl();
-remEvt.setSource(info);
-sync.handleRemoveEvent(remEvt);
-break;
-}
-return null;
-}
-}
-);
+return expectLastCall();
 }
