@@ -1,0 +1,23 @@
+{
+  ServiceInfo service=new WMSInfoImpl();
+  ((WMSInfoImpl)service).setId("WMS-TEST");
+  service.setName("WMS");
+  service.setMaintainer("Foo");
+  service=database.add(service);
+  assertEquals(service.getMaintainer(),"Foo");
+  Connection conn=testSupport.getDataSource().getConnection();
+  try {
+    Statement stmt=conn.createStatement();
+    assertEquals(1,stmt.executeUpdate("UPDATE object SET blob=(SELECT replace(blob, '<maintainer>Foo</maintainer>', '<maintainer>Bar</maintainer>') FROM object WHERE id = '" + service.getId() + "');"));
+  }
+  finally {
+    conn.close();
+  }
+  service=database.getById(service.getId(),ServiceInfo.class);
+  assertEquals("Foo",service.getMaintainer());
+  for (  ConfigurationListener l : database.getGeoServer().getListeners()) {
+    l.handlePostServiceChange(service);
+  }
+  service=database.getById(service.getId(),ServiceInfo.class);
+  assertEquals("Bar",service.getMaintainer());
+}
