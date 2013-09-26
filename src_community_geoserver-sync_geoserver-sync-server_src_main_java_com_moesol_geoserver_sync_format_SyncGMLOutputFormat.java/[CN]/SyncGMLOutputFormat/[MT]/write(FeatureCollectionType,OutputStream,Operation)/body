@@ -1,0 +1,93 @@
+{
+  List featureCollections=results.getFeature();
+  Function syncFunction=null;
+  HashMap<String,Set<FeatureTypeInfo>> ns2metas=new HashMap<String,Set<FeatureTypeInfo>>();
+  for (int fcIndex=0; fcIndex < featureCollections.size(); fcIndex++) {
+    if (getFeature.getParameters()[0] instanceof GetFeatureType) {
+      GetFeatureType request=(GetFeatureType)OwsUtils.parameter(getFeature.getParameters(),GetFeatureType.class);
+      QueryType queryType=(QueryType)request.getQuery().get(fcIndex);
+      if (queryType.getFunction().size() > 0) {
+        syncFunction=(Function)queryType.getFunction().get(0);
+      }
+      for (      QName name : (List<QName>)queryType.getTypeName()) {
+        Name featureTypeName=new NameImpl(name.getNamespaceURI(),name.getLocalPart());
+        FeatureTypeInfo meta=catalog.getFeatureTypeByName(featureTypeName);
+        if (meta == null) {
+          throw new WFSException("Could not find feature type " + featureTypeName + " in the GeoServer catalog");
+        }
+        Set<FeatureTypeInfo> metas=ns2metas.get(featureTypeName.getNamespaceURI());
+        if (metas == null) {
+          metas=new HashSet<FeatureTypeInfo>();
+          ns2metas.put(featureTypeName.getNamespaceURI(),metas);
+        }
+        metas.add(meta);
+      }
+    }
+ else {
+      FeatureType featureType=((FeatureCollection)featureCollections.get(fcIndex)).getSchema();
+      String namespaceURI=featureType.getName().getNamespaceURI();
+      FeatureTypeInfo meta=catalog.getFeatureTypeByName(featureType.getName());
+      if (meta == null)       throw new WFSException("Could not find feature type " + featureType.getName() + " in the GeoServer catalog");
+      Set metas=ns2metas.get(namespaceURI);
+      if (metas == null) {
+        metas=new HashSet();
+        ns2metas.put(namespaceURI,metas);
+      }
+      metas.add(meta);
+    }
+  }
+  if (wfs.isFeatureBounding()) {
+    configuration.getProperties().remove(GMLConfiguration.NO_FEATURE_BOUNDS);
+  }
+ else {
+    configuration.getProperties().add(GMLConfiguration.NO_FEATURE_BOUNDS);
+  }
+  Encoder encoder=new Encoder(configuration,configuration.schema());
+  encoder.setEncoding(Charset.forName(global.getCharset()));
+{
+    NamespaceSupport nss=encoder.getNamespaces();
+    for (    FeatureCollection fc : (List<FeatureCollection>)featureCollections)     loadNamespaceBindings(nss,fc);
+  }
+  BaseRequestType gft=(BaseRequestType)getFeature.getParameters()[0];
+  encoder.setSchemaLocation(org.geoserver.wfs.xml.v1_1_0.WFS.NAMESPACE,buildSchemaURL(gft.getBaseUrl(),"wfs/1.1.0/wfs.xsd"));
+  Map<String,String> params=params("service","WFS","version","1.1.0","request","DescribeFeatureType");
+  for (Iterator i=ns2metas.entrySet().iterator(); i.hasNext(); ) {
+    Map.Entry entry=(Map.Entry)i.next();
+    String namespaceURI=(String)entry.getKey();
+    Set metas=(Set)entry.getValue();
+    StringBuffer typeNames=new StringBuffer();
+    String userSchemaLocation=null;
+    for (Iterator m=metas.iterator(); m.hasNext(); ) {
+      FeatureTypeInfo meta=(FeatureTypeInfo)m.next();
+      if (userSchemaLocation == null) {
+        FeatureType featureType=meta.getFeatureType();
+        Object schemaUri=featureType.getUserData().get("schemaURI");
+        if (schemaUri != null) {
+          userSchemaLocation=schemaUri.toString();
+        }
+      }
+      typeNames.append(meta.getPrefixedName());
+      if (m.hasNext()) {
+        typeNames.append(",");
+      }
+    }
+    params.put("typeName",typeNames.toString());
+    if (userSchemaLocation != null) {
+      encoder.setSchemaLocation(namespaceURI,userSchemaLocation);
+    }
+ else {
+      String schemaLocation=buildURL(gft.getBaseUrl(),"wfs",params,URLType.SERVICE);
+      LOGGER.finer("Unable to find user-defined schema location for: " + namespaceURI + ". Using a built schema location by default: "+ schemaLocation);
+      encoder.setSchemaLocation(namespaceURI,schemaLocation);
+    }
+  }
+  if (syncFunction != null) {
+    List<FeatureCollection> filtered=new ArrayList<FeatureCollection>();
+    FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+    Filter f=ff.equal(ff.literal("true"),syncFunction,false);
+    for (    FeatureCollection fc : (List<FeatureCollection>)results.getFeature())     filtered.add(new FilteringFeatureCollection<FeatureType,Feature>(fc,f));
+    results.getFeature().clear();
+    results.getFeature().addAll(filtered);
+  }
+  encoder.encode(results,org.geoserver.wfs.xml.v1_1_0.WFS.FEATURECOLLECTION,output);
+}

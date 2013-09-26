@@ -1,0 +1,28 @@
+{
+  FeatureCollectionType featureCollectionType=buildSomeFeatures("US");
+  List<Sha1SyncPositionHash> h=new ArrayList<Sha1SyncPositionHash>();
+  for (int i=0; i < 256; i++) {
+    h.add(new Sha1SyncPositionHash().position(String.format("%02x",i)));
+  }
+  m_sha1Sync.setCollection(featureCollectionType);
+  Sha1SyncJson client=new Sha1SyncJson().level(1).hashes(h);
+  m_sha1Sync.parseSha1SyncJson(client.toString());
+  Sha1SyncJson sync=m_sha1Sync.compute();
+  System.out.println("send: " + client.toString().length());
+  System.out.println("recv: " + sync.toString().length());
+  assertEquals(2,sync.level());
+  assertEquals("result: " + sync,256,sync.hashes().size());
+  for (int i=0; i < 256; i++) {
+switch (i) {
+case 86:
+      check(sync,i,"56e8","23130043fa5b0d0aa126d4cab1e4553617bf7276");
+    break;
+case 237:
+  check(sync,i,"ed3c","279bd935a280bd6f5f5ff49fe17fc1feab25fb3a");
+break;
+default :
+check(sync,i,String.format("%02x",i),null);
+}
+}
+assertEquals(1L,sync.max());
+}

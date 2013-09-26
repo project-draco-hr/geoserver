@@ -1,0 +1,47 @@
+{
+  final SimulationEngine engine=new SimulationEngine(1000);
+  FeatureCollectionType client=make();
+  Map<Identifier,FeatureAccessor> clientMap=asMap(client);
+  GeoserverClientSynchronizer synchronizer=new GeoserverClientSynchronizer(makeConfiguration(),"url",SimulatedRequestBuilder.POST_TEMPLATE);
+  RecordingFeatureChangeListener listener=new RecordingFeatureChangeListener(synchronizer.getListener());
+  synchronizer.setListener(listener);
+  System.out.println(",ec,sc,eu,su,ed,sd,e#,s#");
+  long lastOutput=0;
+  for (int i=0; i < 1000; i++) {
+    engine.makeSomeChanges();
+    listener.reset();
+    FeatureCollectionType server=make(engine.getFeatures());
+    final SimulatedRequestBuilder builder=new SimulatedRequestBuilder(server);
+    synchronizer.setRoundListener(new RoundListener(){
+      @Override public void beforeRound(      int r){
+      }
+      @Override public void afterRound(      int r){
+        if (random.nextBoolean()) {
+          return;
+        }
+        try {
+          engine.makeSomeChanges();
+          builder.setServer(make(engine.getFeatures()));
+        }
+ catch (        Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      @Override public void afterSynchronize(){
+      }
+      @Override public void sha1Collision(){
+      }
+    }
+);
+    synchronizer.setRequestBuilder(builder);
+    synchronizer.synchronize(clientMap);
+    if (System.currentTimeMillis() - lastOutput > 1000) {
+      System.out.printf("%d,%d,%d,%d,%d,%d,%d,%d,%d%n",i,engine.getNumCreated(),synchronizer.getNumCreates(),engine.getNumUpdated(),synchronizer.getNumUpdates(),engine.getNumDeleted(),synchronizer.getNumDeletes(),engine.getFeatures().length,clientMap.size());
+      lastOutput=System.currentTimeMillis();
+    }
+    engine.resetCounts();
+  }
+  synchronizer.setRoundListener(mock(RoundListener.class));
+  synchronizer.synchronize(clientMap);
+  assertFeaturesEq(Arrays.asList(engine.getFeatures()),clientMap);
+}

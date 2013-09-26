@@ -1,0 +1,14 @@
+{
+  FeatureCollectionType client=make(f("F1",0));
+  FeatureCollectionType server=make(f("F2",1));
+  GeoserverClientSynchronizer synchronizer=new GeoserverClientSynchronizer(makeConfiguration(),"url",SimulatedRequestBuilder.POST_TEMPLATE);
+  Map<Identifier,FeatureAccessor> clientMap=asMap(client);
+  RequestBuilder builder=new SimulatedRequestBuilder(server);
+  synchronizer.setRequestBuilder(builder);
+  synchronizer.synchronize(clientMap);
+  assertEquals(1,clientMap.size());
+  assertEquals(1,synchronizer.getNumCreates());
+  assertEquals(0,synchronizer.getNumUpdates());
+  assertEquals(1,synchronizer.getNumDeletes());
+  assertEquals(2,synchronizer.getNumRounds());
+}

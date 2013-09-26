@@ -1,0 +1,21 @@
+{
+  List<Feature> filtered=new ArrayList<Feature>();
+  @SuppressWarnings("unchecked") List<FeatureCollection<?,?>> list=server.getFeature();
+  FeatureCollection<?,?> collection=list.get(0);
+  @SuppressWarnings("unchecked") FeatureIterator<Feature> iterator=(FeatureIterator<Feature>)collection.features();
+  try {
+    while (iterator.hasNext()) {
+      Feature next=iterator.next();
+      Object r=filter.evaluate(next);
+      if ("true".equals(r)) {
+        filtered.add(next);
+      }
+    }
+  }
+  finally {
+    Sha1SyncFilterFunction.clearThreadLocals();
+    iterator.close();
+  }
+  FeatureCollectionType serverResp=make(filtered.toArray(new Feature[filtered.size()]));
+  return serverResp;
+}

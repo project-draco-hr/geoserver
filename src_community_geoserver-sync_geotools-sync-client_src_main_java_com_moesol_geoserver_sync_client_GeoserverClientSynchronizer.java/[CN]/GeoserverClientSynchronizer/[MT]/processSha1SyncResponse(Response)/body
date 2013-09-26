@@ -1,0 +1,26 @@
+{
+  int expected=m_server.level() + 1;
+  CountingInputStream counter=new CountingInputStream(response.getResultStream());
+  InputStreamReader reader=new InputStreamReader(new BufferedInputStream(counter),UTF8.UTF8);
+  try {
+    m_server=new Gson().fromJson(reader,Sha1SyncJson.class);
+    if (expected != m_server.level()) {
+      throw new IllegalStateException("Level warp! expected(" + expected + "), actual("+ m_server.level()+ ")");
+    }
+    if (!versionFeatures.getToken().equals(m_server.version())) {
+      throw new IllegalStateException("Version warp! expected(" + versionFeatures.getToken() + "), actual("+ m_server.version()+ ")");
+    }
+    if (isServerEmpty()) {
+      clearLocal();
+      return true;
+    }
+    if (isServerHashesEmpty()) {
+      return true;
+    }
+    return false;
+  }
+  finally {
+    m_rxBytes+=counter.getByteCount();
+    reader.close();
+  }
+}

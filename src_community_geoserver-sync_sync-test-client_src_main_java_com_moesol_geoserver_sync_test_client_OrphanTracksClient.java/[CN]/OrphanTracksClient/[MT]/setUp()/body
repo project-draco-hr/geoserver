@@ -1,0 +1,16 @@
+{
+  maybeLoadPostTemplateFromFile();
+  maybeLoadProperties();
+  LOGGER.log(Level.INFO,"template {0}",m_postTemplate);
+  m_namespace=m_properties.getProperty("namespace","http://www.openplans.org/topp");
+  String schemaLocation=m_properties.getProperty("schemaLocation","http://localhost/geoserver/ows?service=WFS&version=1.0.0&request=DescribeFeatureType&typeName=topp:states&maxFeatures=50");
+  ComplexConfiguration configuration=new ComplexConfiguration(m_namespace,schemaLocation);
+  String wfsUrl=m_properties.getProperty("url","http://localhost:80/geoserver/wfs");
+  synchronizer=new GeoserverClientSynchronizer(configuration,wfsUrl,m_postTemplate);
+  String cycleMillis=m_properties.getProperty("cycleMillis","10000");
+  m_cycleMillis=Long.parseLong(cycleMillis);
+  m_printProperty=m_properties.getProperty("printProperty","name");
+  LOGGER.log(Level.INFO,"namespace({0}), schemaLocation({1}), url({2}), cycleMillis({3})",new Object[]{m_namespace,schemaLocation,wfsUrl,m_cycleMillis});
+  m_scheduler=Executors.newScheduledThreadPool(1);
+  m_scheduler.scheduleWithFixedDelay(this,0L,m_cycleMillis,TimeUnit.MILLISECONDS);
+}

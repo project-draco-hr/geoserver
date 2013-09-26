@@ -1,0 +1,18 @@
+{
+  FeatureCollection coll=(FeatureCollection)node.getChildValue(FeatureCollection.class);
+  List<Node> featureMembers=node.getChildren("featureMember");
+  if (coll == null) {
+    FeatureType type=null;
+    if (featureMembers.size() > 0) {
+      Feature f=(Feature)featureMembers.get(0).getChildValue(Feature.class);
+      if (f != null) {
+        type=f.getType();
+      }
+    }
+    coll=new ComplexFeatureCollection(null,type);
+  }
+  for (  Node n : featureMembers) {
+    coll.addAll(n.getChildValues(Feature.class));
+  }
+  return coll;
+}

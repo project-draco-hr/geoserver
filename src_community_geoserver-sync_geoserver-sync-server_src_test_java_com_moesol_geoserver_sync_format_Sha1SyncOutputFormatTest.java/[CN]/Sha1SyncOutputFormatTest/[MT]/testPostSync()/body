@@ -1,0 +1,13 @@
+{
+  String tmpl="<wfs:GetFeature " + "service=\"WFS\" " + "outputFormat=\"SyncChecksum\" "+ "version=\"1.1.0\" "+ "xmlns:cdf=\"http://www.opengis.net/cite/data\" "+ "xmlns:ogc=\"http://www.opengis.net/ogc\" "+ "xmlns:wfs=\"http://www.opengis.net/wfs\" "+ "> "+ "<wfs:Query typeName=\"cite:Buildings\"> "+ "<ogc:Filter>"+ "<ogc:PropertyIsEqualTo> "+ "<ogc:Function name=\"sha1Sync\"> "+ "<ogc:Literal>-all</ogc:Literal> "+ "<ogc:Literal>%s</ogc:Literal> "+ "</ogc:Function> "+ "<ogc:Literal>true</ogc:Literal> "+ "</ogc:PropertyIsEqualTo> "+ "</ogc:Filter> "+ "</wfs:Query> "+ "</wfs:GetFeature>";
+  Sha1SyncJson client=new Sha1SyncJson().level(0).hashes(new Sha1SyncPositionHash().position("").summary("abc123"));
+  String clientJson=new Gson().toJson(client);
+  String xml=String.format(tmpl,clientJson);
+  String result=postAsServletResponse("wfs",xml).getOutputStreamContent();
+  Sha1SyncJson sync=new Gson().fromJson(result,Sha1SyncJson.class);
+  assertEquals(1,sync.level());
+  assertEquals(2,sync.hashes().size());
+  assertEquals("14",sync.hashes().get(0).position());
+  assertEquals("6e772c327cc8944c9f6d8ccfc82a6e6aabb4b840",sync.hashes().get(0).summary());
+  assertEquals(1L,sync.max());
+}

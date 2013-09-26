@@ -1,0 +1,21 @@
+{
+  StringBuilder sb=new StringBuilder();
+  for (int i=0; i < 10000; i++) {
+    UUID id=UUID.randomUUID();
+    sb.append(id);
+    sb.append(',');
+  }
+  String result=sb.toString();
+  Deflater deflate=new Deflater();
+  try {
+    byte[] compressed=new byte[512000];
+    deflate.setInput(result.getBytes());
+    deflate.finish();
+    System.out.printf("in=%d out=%d%n",deflate.getBytesRead(),deflate.getBytesWritten());
+    deflate.deflate(compressed);
+    System.out.printf("in=%d out=%d%n",deflate.getBytesRead(),deflate.getBytesWritten());
+  }
+  finally {
+    deflate.end();
+  }
+}

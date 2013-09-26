@@ -1,0 +1,13 @@
+{
+  List<FeatureCollection<?,?>> resultsList=m_featureCollection.getFeature();
+  processAllCollections(resultsList);
+  Sha1JsonLevelGrouper grouper=new Sha1JsonLevelGrouper(versionFeatures,m_featureSha1s);
+  grouper.groupForLevel(m_remoteSha1SyncJson.level());
+  Sha1SyncJson localSha1SyncJson=grouper.getJson();
+  grouper.groupForLevel(m_remoteSha1SyncJson.level() + 1);
+  Sha1SyncJson outputSha1SyncJson=grouper.getJson();
+  ServerReconciler recon=new ServerReconciler(localSha1SyncJson,m_remoteSha1SyncJson);
+  recon.filterDownNextLevel(outputSha1SyncJson);
+  LOGGER.log(Level.FINER,"attributes({0}), local({1}), remote({2})",new Object[]{m_featureSha1Sync.getAttributesToInclude(),localSha1SyncJson,m_remoteSha1SyncJson});
+  return outputSha1SyncJson;
+}

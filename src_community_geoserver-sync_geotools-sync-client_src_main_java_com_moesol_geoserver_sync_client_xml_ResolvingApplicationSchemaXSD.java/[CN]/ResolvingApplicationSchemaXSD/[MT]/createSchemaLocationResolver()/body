@@ -1,0 +1,36 @@
+{
+  return new SchemaLocationResolver(this){
+    @Override public String resolveSchemaLocation(    XSDSchema schema,    String uri,    String location){
+      if (location == null) {
+        return null;
+      }
+      String schemaLocation;
+      if (schema == null) {
+        schemaLocation=getSchemaLocation();
+        return null;
+      }
+ else {
+        schemaLocation=schema.getSchemaLocation();
+      }
+      if (schemaLocation == null) {
+        try {
+          return new URL(location).toString();
+        }
+ catch (        MalformedURLException e) {
+          LOG.warn("Can't resolve " + location + " to an absolute location.");
+          return null;
+        }
+      }
+ else {
+        try {
+          return new URL(new URL(schemaLocation),location).toExternalForm();
+        }
+ catch (        MalformedURLException e) {
+          LOG.warn("Can't resolve " + location + " against "+ schemaLocation,e);
+          return null;
+        }
+      }
+    }
+  }
+;
+}

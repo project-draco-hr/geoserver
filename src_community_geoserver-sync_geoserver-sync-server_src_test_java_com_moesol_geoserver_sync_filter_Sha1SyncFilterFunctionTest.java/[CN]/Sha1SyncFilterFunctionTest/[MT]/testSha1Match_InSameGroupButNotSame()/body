@@ -1,0 +1,22 @@
+{
+  Sha1Value featureSha1=new Sha1Value("F6e82e2d2452830bbdb9bc1ce353a2e159996308");
+  MessageDigest SHA1=MessageDigest.getInstance("SHA-1");
+  Sha1Value sha1OfSha1=new Sha1Value(SHA1.digest(featureSha1.get()));
+  List<Sha1SyncPositionHash> hashes=new ArrayList<Sha1SyncPositionHash>();
+  hashes.add(new Sha1SyncPositionHash().position("").summary(sha1OfSha1.toString()));
+  Sha1SyncJson sync=new Sha1SyncJson().level(0).max(1).hashes(hashes);
+  List<Expression> args=new ArrayList<Expression>();
+  args.add(ff.literal("-all"));
+  args.add(ff.literal(new Gson().toJson(sync)));
+  Sha1SyncFilterFunction func=new Sha1SyncFilterFunction("sha1Sync",args);
+  Object result;
+  result=func.evaluate(feature());
+  assertEquals("true",result.toString());
+  assertEquals(1,func.getFeatureSha1s().size());
+  assertEquals("ee99b7fbcfd28b5a84fd478d8c92d574d3e4875a",v1(func.getFeatureSha1s().get(0)).toString());
+  result=func.evaluate(feature());
+  assertEquals("true",result.toString());
+  assertEquals(2,func.getFeatureSha1s().size());
+  assertEquals("ee99b7fbcfd28b5a84fd478d8c92d574d3e4875a",v1(func.getFeatureSha1s().get(0)).toString());
+  assertEquals("ee99b7fbcfd28b5a84fd478d8c92d574d3e4875a",v1(func.getFeatureSha1s().get(1)).toString());
+}

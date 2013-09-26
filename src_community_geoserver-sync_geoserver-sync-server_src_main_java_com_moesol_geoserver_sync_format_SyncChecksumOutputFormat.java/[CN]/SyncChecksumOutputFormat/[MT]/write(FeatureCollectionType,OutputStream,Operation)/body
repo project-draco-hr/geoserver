@@ -1,0 +1,36 @@
+{
+  GetFeatureType gft=(GetFeatureType)getFeature.getParameters()[0];
+  String atts=(String)gft.getFormatOptions().get("ATTRIBUTES");
+  String sha1SyncJson=(String)gft.getFormatOptions().get("SYNC");
+  if (sha1SyncJson == null) {
+    sha1SyncJson=JUNIT_SHA1_SYNC.get();
+  }
+  if (getFeature.getParameters()[0] instanceof GetFeatureType) {
+    GetFeatureType request=(GetFeatureType)OwsUtils.parameter(getFeature.getParameters(),GetFeatureType.class);
+    QueryType queryType=(QueryType)request.getQuery().get(0);
+    if (queryType.getFunction().size() > 0) {
+      Function syncFunction=(Function)queryType.getFunction().get(0);
+      List<FeatureCollection> filtered=new ArrayList<FeatureCollection>();
+      FilterFactory ff=CommonFactoryFinder.getFilterFactory(null);
+      Filter f=ff.equal(ff.literal("true"),syncFunction,false);
+      for (      FeatureCollection fc : (List<FeatureCollection>)featureCollection.getFeature()) {
+        filtered.add(new FilteringFeatureCollection<FeatureType,Feature>(fc,f));
+      }
+      featureCollection.getFeature().clear();
+      featureCollection.getFeature().addAll(filtered);
+      for (      FeatureCollection fc : (List<FeatureCollection>)featureCollection.getFeature()) {
+        FeatureIterator fi=fc.features();
+        try {
+          while (fi.hasNext())           fi.next();
+        }
+  finally {
+          fi.close();
+        }
+      }
+    }
+  }
+  FeatureCollectionSha1Sync writer=new FeatureCollectionSha1Sync(output);
+  writer.parseAttributesToInclude(atts);
+  writer.parseSha1SyncJson(sha1SyncJson);
+  writer.write(featureCollection);
+}

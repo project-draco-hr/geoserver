@@ -1,0 +1,38 @@
+{
+  int i=0;
+  int j=0;
+  int local_size=m_local.h.size();
+  int remote_size=m_remote.h == null ? 0 : m_remote.h.size();
+  while (i < local_size && j < remote_size) {
+    Sha1SyncPositionHash localHashPos=m_local.h.get(i);
+    Sha1SyncPositionHash remoteHashPos=m_remote.h.get(j);
+    int cmp=localHashPos.position().compareTo(remoteHashPos.position());
+    if (cmp < 0) {
+      remoteMissingPosition(localHashPos.position(),localHashPos);
+      i++;
+      continue;
+    }
+    if (cmp > 0) {
+      localMissingPosition(remoteHashPos.position(),remoteHashPos);
+      j++;
+      continue;
+    }
+    String position=localHashPos.position();
+    if (localHashPos.summary().equals(remoteHashPos.summary())) {
+      matchAtPosition(position);
+    }
+ else {
+      differentAtPosition(position,localHashPos,remoteHashPos);
+    }
+    i++;
+    j++;
+  }
+  for (; i < local_size; i++) {
+    Sha1SyncPositionHash localHashPos=m_local.h.get(i);
+    remoteMissingPosition(localHashPos.position(),localHashPos);
+  }
+  for (; j < remote_size; j++) {
+    Sha1SyncPositionHash remoteHashPos=m_remote.h.get(j);
+    localMissingPosition(remoteHashPos.position(),remoteHashPos);
+  }
+}

@@ -1,0 +1,39 @@
+{
+  if (!shouldSha1Property(p)) {
+    return;
+  }
+  Object value=p.getValue();
+  if (value == null) {
+    LOGGER.log(Level.FINER,"No attribute value for {0}, skipping",p);
+    return;
+  }
+  if (value instanceof Geometry) {
+    LOGGER.log(Level.FINER,"Geometry skipped {0}",value);
+    return;
+  }
+  if ("name".equals(p.getName().toString()) && !SHA1_KEEP_NAME) {
+    LOGGER.log(Level.FINER,"Name skipped {0}",value);
+    return;
+  }
+  if (value instanceof com.vividsolutions.jts.geom.Geometry) {
+    LOGGER.log(Level.FINER,"Geometry skipped {0}",value);
+    return;
+  }
+  if (value instanceof Timestamp) {
+    Timestamp ts=(Timestamp)value;
+    value=ts.getTime();
+  }
+  if (value instanceof Calendar) {
+    Calendar cal=(Calendar)value;
+    value=cal.getTime();
+  }
+  if (value instanceof Date) {
+    Date date=(Date)value;
+    value=date.getTime();
+  }
+  Level level=Level.FINER;
+  if (LOGGER.isLoggable(level)) {
+    LOGGER.log(level,"sha1 += {0}({1})<{2}>",new Object[]{p.getName(),value,value == null ? "null" : value.getClass()});
+  }
+  m_sha1.update(value.toString().getBytes(UTF8));
+}

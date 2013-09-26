@@ -1,0 +1,38 @@
+{
+  AttributeDescriptor ad=null;
+  try {
+    ad=registry.getDescriptor(new NameImpl(instance.getNamespace(),instance.getName()));
+  }
+ catch (  Throwable t) {
+    LOG.warn("Getting descriptor: ",t);
+  }
+  FeatureType featureType=(FeatureType)(ad == null ? (FeatureType)getType(instance) : ad.getType());
+  String sfid=(String)node.getAttributeValue("id");
+  if (sfid == null)   sfid=(String)node.getAttributeValue("fid");
+  FeatureId fid=new FeatureIdImpl(sfid == null ? UUID.randomUUID().toString() : sfid);
+  List<Property> props=new ArrayList<Property>();
+  for (  Node n : (List<Node>)node.getChildren()) {
+    String name=n.getComponent().getName();
+    String namespace=n.getComponent().getNamespace();
+    AttributeDescriptor descriptor=(AttributeDescriptor)featureType.getDescriptor(new NameImpl(namespace,name));
+    if (n.getValue() instanceof Property) {
+      Property p=(Property)n.getValue();
+      if (p instanceof Feature)       props.add(new FeatureImpl(((Feature)p).getProperties(),descriptor,((Feature)p).getIdentifier()));
+ else       if (p instanceof ComplexAttribute)       props.add(new ComplexAttributeImpl(((ComplexAttribute)p).getProperties(),descriptor,((ComplexAttribute)p).getIdentifier()));
+ else       if (p instanceof Attribute)       props.add(new AttributeImpl(((Attribute)p).getValue(),descriptor,((Attribute)p).getIdentifier()));
+    }
+ else     if (descriptor != null) {
+      try {
+        props.add(new AttributeImpl(n.getValue(),descriptor,null));
+      }
+ catch (      IllegalAttributeException e) {
+        LOG.warn(n.getValue().getClass() + " cannot be assigned to attribute " + descriptor.getName().getLocalPart()+ " of feature type "+ featureType.getName().getLocalPart(),e);
+      }
+    }
+ else {
+      LOG.warn("Skipping unknown attribute: " + n.getComponent().getName() + " for type: "+ featureType.getName());
+    }
+  }
+  if (ad == null)   return new FeatureImpl(props,featureType,fid);
+ else   return new FeatureImpl(props,ad,fid);
+}

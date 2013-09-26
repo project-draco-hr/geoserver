@@ -1,0 +1,37 @@
+{
+  FeatureCollectionType client=make(f("U1",100),f("U2",200),f("U3",300),f("U4",400));
+  FeatureCollectionType server=make(f("U1",101),f("U2",201),f("U3",301),f("U4",401));
+  GeoserverClientSynchronizer synchronizer=new GeoserverClientSynchronizer(makeConfiguration(),"url",SimulatedRequestBuilder.POST_TEMPLATE);
+  Map<Identifier,FeatureAccessor> clientMap=asMap(client);
+  final SimulatedRequestBuilder builder=new SimulatedRequestBuilder(server);
+  synchronizer.setRequestBuilder(builder);
+  synchronizer.setRoundListener(new RoundListener(){
+    @Override public void beforeRound(    int r){
+    }
+    @Override public void afterRound(    int r){
+      if (r != 1) {
+        return;
+      }
+      try {
+        builder.setServer(make(f("U1",102),f("U2",202),f("U4",402),f("C1",502)));
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    @Override public void afterSynchronize(){
+    }
+    @Override public void sha1Collision(){
+    }
+  }
+);
+  synchronizer.synchronize(clientMap);
+  assertEquals(4,clientMap.size());
+  assertEquals(0,synchronizer.getNumCreates());
+  assertEquals(4,synchronizer.getNumUpdates());
+  assertEquals(0,synchronizer.getNumDeletes());
+  assertEquals(2,synchronizer.getNumRounds());
+  assertFeaturesEq(Arrays.asList(f("U1",101),f("U2",201),f("U3",301),f("U4",401)),clientMap);
+  synchronizer.synchronize(clientMap);
+  assertFeaturesEq(Arrays.asList(f("U1",102),f("U2",202),f("U4",402),f("C1",502)),clientMap);
+}

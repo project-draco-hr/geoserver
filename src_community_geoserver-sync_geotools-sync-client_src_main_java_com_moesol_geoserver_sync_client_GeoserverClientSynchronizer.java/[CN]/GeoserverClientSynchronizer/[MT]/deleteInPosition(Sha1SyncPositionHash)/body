@@ -1,0 +1,16 @@
+{
+  Sha1Value prefix=new Sha1Value(position.position());
+  HashAndFeatureValue find=new HashAndFeatureValue(prefix,null,null);
+  int i=Collections.binarySearch(m_featureSha1s,find,new IdAndValueSha1Comparator(versionFeatures));
+  if (i < 0) {
+    i=-i - 1;
+  }
+  for (; i < m_featureSha1s.size(); i++) {
+    HashAndFeatureValue value=m_featureSha1s.get(i);
+    if (!versionFeatures.getBucketPrefixSha1(value).isPrefixMatch(prefix.get())) {
+      break;
+    }
+    FeatureId fid=value.getFeature().getIdentifier();
+    m_potentialDeletes.add(fid);
+  }
+}

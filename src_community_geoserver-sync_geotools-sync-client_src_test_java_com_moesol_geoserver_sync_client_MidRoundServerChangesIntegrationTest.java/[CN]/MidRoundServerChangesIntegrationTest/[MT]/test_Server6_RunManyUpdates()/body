@@ -1,0 +1,69 @@
+{
+  final Feature[] serverFeatures=new Feature[]{f("F1",0),f("F2",1),f("F3",2),f("F4",3),f("F5",4),f("F6",5)};
+  FeatureCollectionType client=make(f("F1",0),f("F2",1),f("F3",2),f("F4",3),f("F5",4),f("F6",5));
+  Map<Identifier,FeatureAccessor> clientMap=asMap(client);
+  final List<Map<Identifier,FeatureAccessor>> changes=new ArrayList<Map<Identifier,FeatureAccessor>>();
+  GeoserverClientSynchronizer synchronizer=new GeoserverClientSynchronizer(makeConfiguration(),"url",SimulatedRequestBuilder.POST_TEMPLATE);
+  RecordingFeatureChangeListener listener=new RecordingFeatureChangeListener(synchronizer.getListener());
+  synchronizer.setListener(listener);
+  long lastOutput=0;
+  for (int i=0; i < 10000; i++) {
+    Map<Identifier,FeatureAccessor> oldClientMap=new HashMap<Identifier,FeatureAccessor>(clientMap);
+    UpdateRecords changed=randomlyChangeFeatures(serverFeatures);
+    listener.reset();
+    FeatureCollectionType server=make(serverFeatures);
+    changes.clear();
+    changes.add(asMap(server));
+    final SimulatedRequestBuilder builder=new SimulatedRequestBuilder(server);
+    synchronizer.setRoundListener(new RoundListener(){
+      @Override public void beforeRound(      int r){
+      }
+      @Override public void afterRound(      int r){
+        if (random.nextBoolean()) {
+          return;
+        }
+        try {
+          randomlyChangeFeatures(serverFeatures);
+          FeatureCollectionType changedFeatures=make(serverFeatures);
+          changes.add(asMap(changedFeatures));
+          builder.setServer(changedFeatures);
+        }
+ catch (        Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      @Override public void afterSynchronize(){
+      }
+      @Override public void sha1Collision(){
+      }
+    }
+);
+    synchronizer.setRequestBuilder(builder);
+    synchronizer.synchronize(clientMap);
+    if (System.currentTimeMillis() - lastOutput > 1000) {
+      System.out.println("desc: " + asString(clientMap) + " n: "+ synchronizer.getNumUpdates()+ " i: "+ i);
+      lastOutput=System.currentTimeMillis();
+    }
+    if (clientMap.size() != 6) {
+      System.out.println("run: " + i);
+      System.out.println("changed: " + changed);
+      System.out.println("old: " + asString(oldClientMap));
+      for (int j=0; j < changes.size(); j++) {
+        System.out.printf("chg[%d]=%s",j,asString(changes.get(j)));
+      }
+      System.out.println("new: " + asString(clientMap));
+      System.out.println("deleted: " + synchronizer.getNumDeletes());
+      System.out.println("listener: " + asString(listener));
+      assertEquals("run: " + i + " changed: "+ changed+ " listener: "+ asString(listener),changed.getFeaturesUpdated().size(),synchronizer.getNumUpdates());
+    }
+    assertEquals(6,clientMap.size());
+    assertEquals("run: " + i,0,synchronizer.getNumCreates());
+    assertEquals("run: " + i,0,synchronizer.getNumDeletes());
+    if (changed.getFeaturesUpdated().size() != 4) {
+      continue;
+    }
+    if (synchronizer.getNumUpdates() < changed.getFeaturesUpdated().size()) {
+      fail("to few updates detected");
+    }
+  }
+}

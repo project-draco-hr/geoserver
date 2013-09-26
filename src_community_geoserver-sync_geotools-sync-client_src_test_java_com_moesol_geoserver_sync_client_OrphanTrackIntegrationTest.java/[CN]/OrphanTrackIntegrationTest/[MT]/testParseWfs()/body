@@ -1,0 +1,27 @@
+{
+  m_engine.parseAttributesToInclude("-all");
+  GeoserverClientSynchronizer clientSynchronizer=new GeoserverClientSynchronizer(makeConfiguration(),"",POST_TEMPLATE);
+  InputStream is=loadResource("orphantracks.xml");
+  ComplexFeatureCollection features=(ComplexFeatureCollection)clientSynchronizer.parseWfs(is);
+  assertEquals(2,features.size());
+  FeatureIterator<?> it=features.features();
+  try {
+    int i=0;
+    while (it.hasNext()) {
+      Feature feature=it.next();
+      Sha1Value sha1One=m_engine.computeValueSha1(feature);
+switch (i) {
+case 0:
+        assertEquals("eef5926af1da677907eb3efbeaf18c086571b5d7",sha1One.toString());
+      break;
+case 1:
+    assertEquals("570aaf1496af083b6fcbd25012ab4eb9b70b26fe",sha1One.toString());
+  break;
+}
+i++;
+}
+}
+  finally {
+it.close();
+}
+}
