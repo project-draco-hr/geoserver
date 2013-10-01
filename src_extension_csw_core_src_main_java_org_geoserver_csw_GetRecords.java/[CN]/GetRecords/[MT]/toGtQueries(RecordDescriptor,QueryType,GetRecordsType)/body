@@ -1,0 +1,30 @@
+{
+  Filter filter=query.getConstraint() != null ? query.getConstraint().getFilter() : null;
+  Set<Name> supportedTypes=getSupportedTypes();
+  if (filter != null) {
+    filter=(Filter)filter.accept(new CaseInsenstiveFilterTransformer(),null);
+  }
+  List<Query> result=new ArrayList<Query>();
+  for (  QName qName : query.getTypeNames()) {
+    Name typeName=new NameImpl(qName);
+    if (!supportedTypes.contains(typeName)) {
+      throw new ServiceException("Unsupported record type " + typeName,ServiceException.INVALID_PARAMETER_VALUE,"typeNames");
+    }
+    Query q=new Query(typeName.getLocalPart());
+    q.setFilter(filter);
+    q.setProperties(getPropertyNames(rd,query));
+    q.setSortBy(query.getSortBy());
+    try {
+      q.setNamespace(new URI(typeName.getNamespaceURI()));
+    }
+ catch (    URISyntaxException e) {
+    }
+    Query adapted=rd.adaptQuery(q);
+    if (q.getFilter() != null) {
+      rd.verifySpatialFilters(q.getFilter());
+    }
+    adapted.getHints().put(KEY_BASEURL,request.getBaseUrl());
+    result.add(adapted);
+  }
+  return result;
+}
