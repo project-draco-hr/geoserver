@@ -1,0 +1,78 @@
+{
+  final int numDimensions=getNumDimensions();
+  final int[] dimSize=new int[numDimensions];
+  int iDim=0;
+  for (  NetCDFDimensionManager manager : dimensionMapping.values()) {
+    dimSize[iDim++]=getDimensionSize(manager.getName());
+  }
+  final Variable var=writer.findVariable(sampleGranule.getName().toString());
+  if (var == null) {
+    throw new IllegalArgumentException("The requested variable doesn't exists: " + sampleGranule.getName());
+  }
+  final int imageDataType=sampleGranule.getRenderedImage().getSampleModel().getDataType();
+  final DataType netCDFDataType=NCUtilities.transcodeImageDataType(imageDataType);
+  final Array matrix=NCUtilities.getArray(dimSize,netCDFDataType);
+  for (  GridCoverage2D gridCoverage : granuleStack.getGranules()) {
+    final RenderedImage ri=gridCoverage.getRenderedImage();
+    int width=ri.getWidth();
+    int height=ri.getHeight();
+    int minX=ri.getMinX();
+    int minY=ri.getMinY();
+    int maxX=minX + width - 1;
+    int maxY=minY + height - 1;
+    int tileWidth=Math.min(ri.getTileWidth(),width);
+    int tileHeight=Math.min(ri.getTileHeight(),height);
+    int minTileX=minX / tileWidth - (minX < 0 ? (-minX % tileWidth > 0 ? 1 : 0) : 0);
+    int minTileY=minY / tileHeight - (minY < 0 ? (-minY % tileHeight > 0 ? 1 : 0) : 0);
+    int maxTileX=maxX / tileWidth - (maxX < 0 ? (-maxX % tileWidth > 0 ? 1 : 0) : 0);
+    int maxTileY=maxY / tileHeight - (maxY < 0 ? (-maxY % tileHeight > 0 ? 1 : 0) : 0);
+    final Index matrixIndex=matrix.getIndex();
+    final int indexing[]=new int[numDimensions];
+    updateIndexing(indexing,gridCoverage);
+    final RandomIter data=RandomIterFactory.create(ri,null);
+    for (int tileY=minTileY; tileY <= maxTileY; tileY++) {
+      for (int tileX=minTileX; tileX <= maxTileX; tileX++) {
+        for (int trow=0; trow < tileHeight; trow++) {
+          int j=(tileY * tileHeight) + trow;
+          if ((j >= minY) && (j <= maxY)) {
+            for (int tcol=0; tcol < tileWidth; tcol++) {
+              int col=(tileX * tileWidth) + tcol;
+              if ((col >= minX) && (col <= maxX)) {
+                int k=col;
+                final int yPos=height - j + minY - 1;
+                indexing[numDimensions - 1]=k - minX;
+                indexing[numDimensions - 2]=yPos;
+                matrixIndex.set(indexing);
+switch (netCDFDataType) {
+case BYTE:
+                  byte sampleByte=(byte)data.getSampleFloat(k,j,0);
+                matrix.setByte(matrixIndex,sampleByte);
+              break;
+case SHORT:
+            short sampleShort=(short)data.getSampleFloat(k,j,0);
+          matrix.setShort(matrixIndex,sampleShort);
+        break;
+case INT:
+      int sampleInt=(int)data.getSampleFloat(k,j,0);
+    matrix.setInt(matrixIndex,sampleInt);
+  break;
+case FLOAT:
+float sampleFloat=data.getSampleFloat(k,j,0);
+matrix.setFloat(matrixIndex,sampleFloat);
+break;
+case DOUBLE:
+double sampleDouble=data.getSampleDouble(k,j,0);
+matrix.setDouble(matrixIndex,sampleDouble);
+break;
+}
+}
+}
+}
+}
+}
+}
+data.done();
+}
+writer.write(var,matrix);
+writer.flush();
+}
