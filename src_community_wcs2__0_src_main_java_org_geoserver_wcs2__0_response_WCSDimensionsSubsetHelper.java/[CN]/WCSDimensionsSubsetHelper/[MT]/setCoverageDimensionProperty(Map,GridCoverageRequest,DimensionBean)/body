@@ -1,0 +1,23 @@
+{
+  Utilities.ensureNonNull("properties",properties);
+  Utilities.ensureNonNull("coverageDimension",coverageDimension);
+  final DimensionType dimensionType=coverageDimension.getDimensionType();
+  Object value=null;
+switch (dimensionType) {
+case TIME:
+    value=coverageRequest.getTemporalSubset();
+  break;
+case ELEVATION:
+value=coverageRequest.getElevationSubset();
+break;
+case CUSTOM:
+Map<String,List<Object>> dimensionsSubset=coverageRequest.getDimensionsSubset();
+List<Object> elements=dimensionsSubset.get(coverageDimension.getName().toUpperCase());
+if (elements.size() > 1) {
+throw new UnsupportedOperationException("Multiple elements in additional dimensions are not supported on splitted requests");
+}
+value=elements.get(0);
+break;
+}
+properties.put(coverageDimension.getName(),value);
+}

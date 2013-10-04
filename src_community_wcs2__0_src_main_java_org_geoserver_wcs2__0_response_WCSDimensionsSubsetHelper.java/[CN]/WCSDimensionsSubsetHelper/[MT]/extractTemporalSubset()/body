@@ -11,8 +11,8 @@
       }
       if (dim instanceof DimensionTrimType) {
         final DimensionTrimType trim=(DimensionTrimType)dim;
-        final Date low=XML_CONVERTER.parseDateTime(trim.getTrimLow()).getTime();
-        final Date high=XML_CONVERTER.parseDateTime(trim.getTrimHigh()).getTime();
+        final Date low=PARSER.parseDateTime(trim.getTrimLow());
+        final Date high=PARSER.parseDateTime(trim.getTrimHigh());
         if (low.compareTo(high) > 0) {
           throw new WCS20Exception("Low greater than High: " + trim.getTrimLow() + ", "+ trim.getTrimHigh(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
         }
@@ -21,17 +21,17 @@
  else       if (dim instanceof DimensionSliceType) {
         final DimensionSliceType slicing=(DimensionSliceType)dim;
         final String slicePointS=slicing.getSlicePoint();
-        final Date slicePoint=XML_CONVERTER.parseDateTime(slicePointS).getTime();
+        final Date slicePoint=PARSER.parseDateTime(slicePointS);
         timeSubset=new DateRange(slicePoint,slicePoint);
       }
  else {
         throw new WCS20Exception("Invalid element found while attempting to parse dimension subsetting request: " + dim.getClass().toString(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
       }
     }
-    if (timeSubset != null && !timeSubset.getMinValue().equals(timeSubset.getMaxValue())) {
-      throw new WCS20Exception("Trimming on time is not supported at the moment, only slicing is");
+    if (!(reader instanceof StructuredGridCoverage2DReader) && timeSubset != null && !timeSubset.getMinValue().equals(timeSubset.getMaxValue())) {
+      throw new WCS20Exception("Trimming on time is not supported at the moment on not StructuredGridCoverage2DReaders, only slicing is");
     }
-    if (timeSubset != null) {
+    if (timeSubset != null && timeSubset.getMinValue().equals(timeSubset.getMaxValue())) {
       timeSubset=interpolateTime(timeSubset,accessor);
     }
   }

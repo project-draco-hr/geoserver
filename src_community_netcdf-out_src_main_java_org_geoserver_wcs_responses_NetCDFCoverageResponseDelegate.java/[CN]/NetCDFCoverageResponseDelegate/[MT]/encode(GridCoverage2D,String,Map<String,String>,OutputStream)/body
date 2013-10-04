@@ -1,0 +1,28 @@
+{
+  if (sourceCoverage == null) {
+    throw new IllegalStateException(new StringBuffer("It seems prepare() has not been called").append(" or has not succeed").toString());
+  }
+  if (!(sourceCoverage instanceof GranuleStack)) {
+    throw new IllegalArgumentException("NetCDF encoding only supports granuleStack coverages");
+  }
+  GranuleStack granuleStack=(GranuleStack)sourceCoverage;
+  File tempFile=null;
+  NetCDFOutputManager manager=null;
+  try {
+    tempFile=File.createTempFile("tempNetCDF",".nc");
+    manager=new NetCDFOutputManager(granuleStack,tempFile);
+    manager.write();
+    streamBack(tempFile,output);
+  }
+ catch (  InvalidRangeException e) {
+    throw new IOException(e);
+  }
+ finally {
+    sourceCoverage.dispose(true);
+    boolean deleted=FileUtils.deleteQuietly(tempFile);
+    if (!deleted) {
+      LOGGER.warning("Could not delete temp file: " + tempFile.getAbsolutePath());
+    }
+    manager.close();
+  }
+}
