@@ -2,16 +2,16 @@
   ScanlineProvider scanlines=ScanlineProviderFactory.getProvider(image);
   ColorModel colorModel=image.getColorModel();
   boolean indexed=colorModel instanceof IndexColorModel;
-  boolean hasAlpha=colorModel.hasAlpha();
   int numColorComponents=colorModel.getNumColorComponents();
   boolean grayscale=!indexed && numColorComponents < 3;
   byte bitDepth=scanlines.getBitDepth();
+  boolean hasAlpha=!indexed && colorModel.hasAlpha();
   ImageInfo ii=new ImageInfo(image.getWidth(),image.getHeight(),bitDepth,hasAlpha,grayscale,indexed);
   PngWriter pw=new PngWriter(outStream,ii);
   pw.setShouldCloseStream(false);
   try {
     pw.setCompLevel(level);
-    pw.setFilterType(ar.com.hjg.pngj.FilterType.FILTER_NONE);
+    pw.setFilterType(filterType);
     if (indexed) {
       IndexColorModel icm=(IndexColorModel)colorModel;
       PngChunkPLTE palette=pw.getMetadata().createPLTEChunk();
