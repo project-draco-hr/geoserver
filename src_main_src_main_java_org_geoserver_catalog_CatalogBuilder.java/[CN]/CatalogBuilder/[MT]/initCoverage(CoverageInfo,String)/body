@@ -1,0 +1,40 @@
+{
+  CoverageStoreInfo csinfo=(CoverageStoreInfo)store;
+  GridCoverage2DReader reader=(GridCoverage2DReader)catalog.getResourcePool().getGridCoverageReader(csinfo,GeoTools.getDefaultHints());
+  if (coverageName != null) {
+    reader=SingleGridCoverage2DReader.wrap(reader,coverageName);
+  }
+  initResourceInfo(cinfo);
+  if (reader == null)   throw new Exception("Unable to acquire a reader for this coverage with format: " + csinfo.getFormat().getName());
+  if (cinfo.getNativeCRS() == null) {
+    cinfo.setNativeCRS(reader.getCoordinateReferenceSystem());
+  }
+  CoordinateReferenceSystem nativeCRS=cinfo.getNativeCRS();
+  if (cinfo.getSRS() == null) {
+    cinfo.setSRS(nativeCRS.getIdentifiers().toArray()[0].toString());
+  }
+  if (cinfo.getProjectionPolicy() == null) {
+    if (nativeCRS != null && !nativeCRS.getIdentifiers().isEmpty()) {
+      cinfo.setProjectionPolicy(ProjectionPolicy.REPROJECT_TO_DECLARED);
+    }
+    if (nativeCRS == null) {
+      cinfo.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+    }
+  }
+  if (cinfo.getLatLonBoundingBox() == null && cinfo.getNativeBoundingBox() == null) {
+    GeneralEnvelope envelope=reader.getOriginalEnvelope();
+    cinfo.setNativeBoundingBox(new ReferencedEnvelope(envelope));
+    cinfo.setLatLonBoundingBox(new ReferencedEnvelope(CoverageStoreUtils.getWGS84LonLatEnvelope(envelope)));
+  }
+ else   if (cinfo.getLatLonBoundingBox() == null) {
+    setupBounds(cinfo);
+  }
+ else   if (cinfo.getNativeBoundingBox() == null && cinfo.getNativeCRS() != null) {
+    ReferencedEnvelope boundsLatLon=cinfo.getLatLonBoundingBox();
+    cinfo.setNativeBoundingBox(boundsLatLon.transform(cinfo.getNativeCRS(),true));
+  }
+  if (cinfo.getGrid() == null) {
+    GridEnvelope originalRange=reader.getOriginalGridRange();
+    cinfo.setGrid(new GridGeometry2D(originalRange,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),nativeCRS));
+  }
+}
