@@ -1,0 +1,23 @@
+{
+  File script;
+  try {
+    script=scriptMgr.findOrCreateScriptFile(path);
+  }
+ catch (  IOException e) {
+    throw new RestletException(format("Error creating script file %s",path),Status.SERVER_ERROR_INTERNAL,e);
+  }
+  try {
+    BufferedWriter w=new BufferedWriter(new FileWriter(script));
+    try {
+      IOUtils.copy(getRequest().getEntity().getStream(),w);
+      w.flush();
+      getResponse().setStatus(Status.SUCCESS_CREATED);
+    }
+  finally {
+      IOUtils.closeQuietly(w);
+    }
+  }
+ catch (  IOException e) {
+    throw new RestletException(format("Error writing script file %s",path),Status.SERVER_ERROR_INTERNAL,e);
+  }
+}
