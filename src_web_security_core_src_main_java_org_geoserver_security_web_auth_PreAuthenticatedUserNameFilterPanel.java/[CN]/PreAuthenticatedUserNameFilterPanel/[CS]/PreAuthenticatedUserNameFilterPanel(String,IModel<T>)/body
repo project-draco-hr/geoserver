@@ -1,32 +1,19 @@
 {
   super(id,model);
   add(new HelpLink("roleSourceHelp",this).setDialog(dialog));
-  add(roleSourceChoice=new DropDownChoice<RoleSource>("roleSource",Arrays.asList(RoleSource.values()),new EnumChoiceRenderer<RoleSource>()));
+  createRoleSourceDropDown();
   roleSourceChoice.setNullValid(false);
   roleSourceChoice.add(new OnChangeAjaxBehavior(){
     @Override protected void onUpdate(    AjaxRequestTarget target){
-      Panel p;
-switch (roleSourceChoice.getModelObject()) {
-case UserGroupService:
-        p=new UserGroupServicePanel("panel");
-      break;
-case RoleService:
-    p=new RoleServicePanel("panel");
-  break;
-default :
-p=new HeaderPanel("panel");
-}
-WebMarkupContainer c=(WebMarkupContainer)get("container");
-c.addOrReplace(p);
-target.addComponent(c);
-}
-}
+      Panel p=getRoleSourcePanel(roleSourceChoice.getModelObject());
+      WebMarkupContainer c=(WebMarkupContainer)get("container");
+      c.addOrReplace(p);
+      target.addComponent(c);
+    }
+  }
 );
-WebMarkupContainer container=new WebMarkupContainer("container");
-add(container.setOutputMarkupId(true));
-RoleSource rs=model.getObject().getRoleSource();
-if (RoleSource.Header.equals(rs)) container.addOrReplace(new HeaderPanel("panel"));
-if (RoleSource.UserGroupService.equals(rs)) container.addOrReplace(new UserGroupServicePanel("panel"));
-if (RoleSource.RoleService.equals(rs)) container.addOrReplace(new RoleServicePanel("panel"));
-if (rs == null) container.add(new UserGroupServicePanel("panel"));
+  WebMarkupContainer container=new WebMarkupContainer("container");
+  add(container.setOutputMarkupId(true));
+  RoleSource rs=model.getObject().getRoleSource();
+  addRoleSourceDropDown(container,rs);
 }
