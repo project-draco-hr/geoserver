@@ -1,0 +1,22 @@
+{
+  for (  NetCDFDimensionManager manager : dimensionMapping.values()) {
+    Dimension dimension=manager.getNetCDFDimension();
+    if (dimension == null) {
+      throw new IllegalArgumentException("No Dimension found for this manager: " + manager.getName());
+    }
+    final String dimensionName=dimension.getShortName();
+    Variable var=writer.findVariable(dimensionName);
+    if (var == null) {
+      throw new IllegalArgumentException("Unable to find the specified coordinate variable: " + dimensionName);
+    }
+    writer.write(var,manager.getDimensionData(false));
+    DimensionBean coverageDimension=manager.getCoverageDimension();
+    if (coverageDimension != null) {
+      boolean isRange=coverageDimension.isRange();
+      if (isRange) {
+        var=writer.findVariable(dimensionName + NCUtilities.BOUNDS_SUFFIX);
+        writer.write(var,manager.getDimensionData(true));
+      }
+    }
+  }
+}

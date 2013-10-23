@@ -1,0 +1,15 @@
+{
+  WMS wms=getWMS();
+  WMSInfo info=wms.getServiceInfo();
+  MetadataMap mm=info.getMetadata();
+  mm.put(WMS.SCALEHINT_MAPUNITS_PIXEL,scaleHintUnitsPerDiaPixel);
+  info.getGeoServer().save(info);
+  GetCapabilitiesTransformer tr=new GetCapabilitiesTransformer(wms,BASE_URL,FORMATS,LEGEND_FORMAT,null);
+  GetCapabilitiesRequest req=new GetCapabilitiesRequest();
+  req.setBaseUrl(BASE_URL);
+  req.setVersion(WMS.VERSION_1_1_1.toString());
+  Document dom=WMSTestSupport.transform(req,tr);
+  Element root=dom.getDocumentElement();
+  Assert.assertEquals(WMS.VERSION_1_1_1.toString(),root.getAttribute("version"));
+  return dom;
+}
