@@ -1,0 +1,43 @@
+{
+  MigrationHelper mh=new MigrationHelper(){
+    @Override public void migrationPersister(    XStreamPersister xp){
+      xp.getXStream().registerConverter(new Converter(){
+        @Override public boolean canConvert(        Class cls){
+          return cls.isAssignableFrom(RoleSource.class);
+        }
+        @Override public void marshal(        Object rs,        HierarchicalStreamWriter writer,        MarshallingContext ctx){
+          if (rs != null) {
+            writer.setValue(rs.toString());
+          }
+        }
+        @Override public Object unmarshal(        HierarchicalStreamReader reader,        UnmarshallingContext ctx){
+          if (reader.getValue() != null) {
+            return J2EERoleSource.valueOf(reader.getValue());
+          }
+          return null;
+        }
+      }
+);
+    }
+  }
+;
+  for (  String fName : listFilters()) {
+    SecurityFilterConfig fConfig=loadFilterConfig(fName,mh);
+    if (fConfig != null) {
+      if (fConfig instanceof J2eeAuthenticationBaseFilterConfig) {
+        J2eeAuthenticationBaseFilterConfig j2eeConfig=(J2eeAuthenticationBaseFilterConfig)fConfig;
+        if (j2eeConfig.getRoleSource() == null) {
+          j2eeConfig.setRoleSource(J2EERoleSource.J2EE);
+        }
+      }
+ else       if (fConfig instanceof PreAuthenticatedUserNameFilterConfig) {
+        PreAuthenticatedUserNameFilterConfig userNameConfig=(PreAuthenticatedUserNameFilterConfig)fConfig;
+        RoleSource rs=userNameConfig.getRoleSource();
+        if (rs != null) {
+          userNameConfig.setRoleSource(PreAuthenticatedUserNameRoleSource.valueOf(rs.toString()));
+        }
+      }
+      saveFilter(fConfig,mh);
+    }
+  }
+}

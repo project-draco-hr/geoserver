@@ -3,7 +3,7 @@
   config.setClassName(GeoServerX509CertificateAuthenticationFilter.class.getName());
   config.setName(testFilterName8);
   config.setRoleServiceName("rs1");
-  config.setRoleSource(org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource.RoleService);
+  config.setRoleSource(org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.J2EERoleSource.RoleService);
   config.setUserGroupServiceName("ug1");
   config.setRolesHeaderAttribute("roles");
   getSecurityManager().saveFilter(config);
@@ -18,14 +18,18 @@
   SecurityContext ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
-  for (  org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource rs : org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource.values()) {
+  for (  org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.J2EERoleSource rs : org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.J2EERoleSource.values()) {
     config.setRoleSource(rs);
     getSecurityManager().saveFilter(config);
     request=createRequest("/foo/bar");
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
-    if (rs == RoleSource.Header) {
+    if (rs == J2EERoleSource.Header) {
       request.setHeader("roles",derivedRole + ";" + rootRole);
+    }
+    if (rs == J2EERoleSource.J2EE) {
+      request.setUserInRole(derivedRole,true);
+      request.setUserInRole(rootRole,false);
     }
     setCertifacteForUser(testUserName,request);
     getProxy().doFilter(request,response,chain);
@@ -40,13 +44,17 @@
     assertTrue(auth.getAuthorities().contains(new GeoServerRole(rootRole)));
     assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
   }
-  for (  org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource rs : org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource.values()) {
+  for (  org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.J2EERoleSource rs : org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.J2EERoleSource.values()) {
     config.setRoleSource(rs);
     getSecurityManager().saveFilter(config);
     config.setRoleSource(rs);
     request=createRequest("/foo/bar");
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
+    if (rs == J2EERoleSource.J2EE) {
+      request.setUserInRole(derivedRole,false);
+      request.setUserInRole(rootRole,false);
+    }
     setCertifacteForUser("unknown",request);
     getProxy().doFilter(request,response,chain);
     assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
@@ -59,7 +67,7 @@
     assertEquals("unknown",auth.getPrincipal());
   }
   updateUser("ug1",testUserName,false);
-  config.setRoleSource(org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.RoleSource.UserGroupService);
+  config.setRoleSource(org.geoserver.security.config.X509CertificateAuthenticationFilterConfig.J2EERoleSource.UserGroupService);
   getSecurityManager().saveFilter(config);
   request=createRequest("/foo/bar");
   response=new MockHttpServletResponse();

@@ -1,0 +1,19 @@
+{
+  SecurityConfigValidator validator=SecurityConfigValidator.getConfigurationValiator(GeoServerSecurityFilter.class,config.getClassName());
+  boolean fireChanged=false;
+  if (config.getId() == null) {
+    config.initBeforeSave();
+    validator.validateAddFilter(config);
+  }
+ else {
+    validator.validateModifiedFilter(config,filterHelper.loadConfig(config.getName(),migrationHelper));
+    getAuthenticationCache().removeAll(config.getName());
+    if (!securityConfig.getFilterChain().patternsForFilter(config.getName(),true).isEmpty()) {
+      fireChanged=true;
+    }
+  }
+  filterHelper.saveConfig(config);
+  if (fireChanged) {
+    fireChanged();
+  }
+}
