@@ -1,0 +1,33 @@
+{
+  try {
+    boolean ready=false;
+    for (    NotificationPublisher publisher : publishers) {
+      ready|=publisher.isReady();
+    }
+    if (!(ready || publishDebug)) {
+      LOG.debug("No publishers ready, skipping notification.");
+      return;
+    }
+    if (serializer == null) {
+      return;
+    }
+    final TransactionStatus ts=statuses.get(event.getRequest());
+    if (ts == null)     return;
+    ts.setTransaction(event.getTransaction());
+    if (event.getType() == TransactionEventType.PRE_INSERT) {
+      preInsert(event,ts);
+    }
+ else     if (event.getType() == TransactionEventType.PRE_DELETE) {
+      preDelete(event,ts);
+    }
+ else     if (event.getType() == TransactionEventType.POST_INSERT) {
+      postInsert(event,ts);
+    }
+ else     if (event.getType() == TransactionEventType.PRE_UPDATE) {
+      preUpdate(event,ts);
+    }
+  }
+ catch (  Throwable t) {
+    handleException(t);
+  }
+}
