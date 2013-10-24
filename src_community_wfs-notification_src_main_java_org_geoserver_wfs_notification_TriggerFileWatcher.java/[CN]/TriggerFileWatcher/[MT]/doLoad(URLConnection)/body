@@ -1,0 +1,32 @@
+{
+  Triggers triggers=null;
+  InputStream inputStream=null;
+  try {
+    Unmarshaller unm=CTX.createUnmarshaller();
+    try {
+      unm.setProperty("com.sun.xml.bind.ObjectFactory",new ObjectFactoryEx());
+    }
+ catch (    PropertyException pe) {
+      try {
+        unm.setProperty("com.sun.xml.internal.bind.ObjectFactory",new ObjectFactoryEx());
+      }
+ catch (      PropertyException pe2) {
+      }
+    }
+    inputStream=conn.getInputStream();
+    triggers=unm.unmarshal(new StreamSource(inputStream),Triggers.class).getValue();
+  }
+ catch (  JAXBException e) {
+    e.printStackTrace();
+  }
+catch (  IOException e) {
+    e.printStackTrace();
+  }
+ finally {
+    IOUtils.closeQuietly(inputStream);
+  }
+  if (triggers == null)   return Collections.EMPTY_MAP;
+  final HashMap<QName,List<Trigger>> map=new HashMap<QName,List<Trigger>>(triggers.getFeature().size());
+  for (  Feature f : triggers.getFeature())   map.put(f.getType(),f.getTrigger());
+  return Collections.unmodifiableMap(map);
+}

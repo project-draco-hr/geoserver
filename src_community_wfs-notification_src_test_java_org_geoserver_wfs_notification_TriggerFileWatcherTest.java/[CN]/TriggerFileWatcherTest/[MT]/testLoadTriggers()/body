@@ -1,0 +1,33 @@
+{
+  TriggerFileWatcher triggers=new TriggerFileWatcher(10000,WFSNotifyTest.class.getResource("triggers.xml"));
+  Map<QName,List<Trigger>> map=triggers.load();
+  assertTrue(map.containsKey(QN_TRACK));
+  List<Trigger> list=map.get(QN_TRACK);
+  assertEquals(1,list.size());
+  Trigger t=list.get(0);
+  assertTrue(t.isSilent());
+  assertEquals(2,t.getLink().size());
+  Link fl=t.getLink().get(0);
+  assertEquals(0,fl.getTrigger().size());
+  assertEquals(LOCAL_KEY,fl.getKey());
+  assertEquals(LOCAL_KEY,fl.getForeign());
+  assertEquals(QN_OTHERTYPE,fl.getDest());
+  fl=t.getLink().get(1);
+  assertEquals(1,fl.getTrigger().size());
+  assertEquals(LOCAL_KEY2,fl.getKey());
+  assertEquals(FOREIGN_KEY,fl.getForeign());
+  assertEquals(QN_THIRDTYPE,fl.getDest());
+  Trigger t2=fl.getTrigger().get(0);
+  assertEquals(2,t2.getLink().size());
+  assertFalse(t2.isSilent());
+  fl=t2.getLink().get(0);
+  assertEquals(0,fl.getTrigger().size());
+  assertEquals(LOCAL_KEY,fl.getKey());
+  assertEquals(LOCAL_KEY,fl.getForeign());
+  assertEquals(QN_OTHERTYPE,fl.getDest());
+  fl=t2.getLink().get(1);
+  assertEquals(0,fl.getTrigger().size());
+  assertEquals(LOCAL_KEY2,fl.getKey());
+  assertEquals(FOREIGN_KEY,fl.getForeign());
+  assertEquals(QN_THIRDTYPE,fl.getDest());
+}

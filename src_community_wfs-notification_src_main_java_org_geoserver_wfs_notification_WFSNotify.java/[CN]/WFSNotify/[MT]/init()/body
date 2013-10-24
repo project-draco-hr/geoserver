@@ -1,0 +1,31 @@
+{
+  if (tm == null) {
+    throw new IllegalStateException("TriggerManager was not set, which is required.");
+  }
+  List<NotificationSerializer> serializers=GeoServerExtensions.extensions(NotificationSerializer.class);
+  if (serializers.isEmpty()) {
+    LOG.warn("No WFS notification serializers found.");
+  }
+ else {
+    if (serializers.size() > 1) {
+      StringBuilder msg=new StringBuilder("Multiple WFS notification serializers found:\n");
+      for (      NotificationSerializer serializer : serializers) {
+        msg.append('\t').append(serializer.getClass().getName()).append('\n');
+      }
+      msg.append("Using first.");
+      LOG.warn(msg);
+    }
+    serializer=serializers.get(0);
+  }
+  publishers=GeoServerExtensions.extensions(NotificationPublisher.class);
+  if (publishers.isEmpty()) {
+    LOG.info("No notification publishers found.");
+  }
+ else {
+    StringBuilder msg=new StringBuilder("Using the following WFS notification publisher(s):\n");
+    for (    NotificationPublisher publisher : publishers) {
+      msg.append('\t').append(publisher.getClass().getName()).append('\n');
+    }
+    LOG.info(msg);
+  }
+}
