@@ -2,10 +2,10 @@
   URL url=getClass().getResource("allsymbolizers.sld");
   final String requestUrl="wms/reflect?layers=" + getLayerId(MockData.BASIC_POLYGONS) + "&format_options=KMSCORE:0;mode:refresh&format= "+ KMLMapOutputFormat.MIME_TYPE+ "&sld="+ url.toExternalForm();
   Document dom=getAsDOM(requestUrl);
-  print(dom);
   assertXpathEvaluatesTo("1","count(//kml:Folder/kml:GroundOverlay)",dom);
   String href=XMLUnit.newXpathEngine().evaluate("//kml:Folder/kml:GroundOverlay/kml:Icon/kml:href",dom);
-  href=URLDecoder.decode(href,"UTF-8");
+  href=URLKvpParser.fixURL(URLDecoder.decode(href,"UTF-8"));
+  System.out.println(href);
   assertTrue(href.startsWith("http://localhost:8080/geoserver/wms"));
   assertTrue(href.contains("request=GetMap"));
   assertTrue(href.contains("format=image/png"));
