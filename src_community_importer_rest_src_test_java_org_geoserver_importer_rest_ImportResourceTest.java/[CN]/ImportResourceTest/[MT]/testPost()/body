@@ -1,0 +1,11 @@
+{
+  MockHttpServletResponse resp=postAsServletResponse("/rest/imports","");
+  assertEquals(201,resp.getStatusCode());
+  assertNotNull(resp.getHeader("Location"));
+  int id=lastId();
+  assertTrue(resp.getHeader("Location").endsWith("/imports/" + id));
+  JSONObject json=(JSONObject)json(resp);
+  JSONObject imprt=json.getJSONObject("import");
+  assertEquals(ImportContext.State.PENDING.name(),imprt.get("state"));
+  assertEquals(id,imprt.getInt("id"));
+}

@@ -1,0 +1,24 @@
+{
+  File dir=tmpDir();
+  unpack("shape/archsites_epsg_prj.zip",dir);
+  unpack("shape/bugsites_esri_prj.tar.gz",dir);
+  unpack("geotiff/EmissiveCampania.tif.bz2",dir);
+  ImportContext context=importer.createContext(new Directory(dir));
+  assertEquals(3,context.getTasks().size());
+  assertTrue(context.getData() instanceof Directory);
+  ImportTask task=context.getTasks().get(0);
+  assertEquals(ImportTask.State.READY,task.getState());
+  assertEquals("archsites",task.getLayer().getResource().getName());
+  assertTrue(task.getData() instanceof SpatialFile);
+  assertEquals("Shapefile",task.getData().getFormat().getName());
+  task=context.getTasks().get(1);
+  assertEquals(ImportTask.State.READY,task.getState());
+  assertEquals("bugsites",task.getLayer().getResource().getName());
+  assertTrue(task.getData() instanceof SpatialFile);
+  assertEquals("Shapefile",task.getData().getFormat().getName());
+  task=context.getTasks().get(2);
+  assertEquals(ImportTask.State.READY,task.getState());
+  assertEquals("EmissiveCampania",task.getLayer().getResource().getName());
+  assertTrue(task.getData() instanceof SpatialFile);
+  assertEquals("GeoTIFF",task.getData().getFormat().getName());
+}

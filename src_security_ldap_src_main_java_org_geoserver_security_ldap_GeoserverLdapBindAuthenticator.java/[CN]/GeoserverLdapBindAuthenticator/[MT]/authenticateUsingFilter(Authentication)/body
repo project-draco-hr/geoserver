@@ -2,6 +2,7 @@
   DirContextOperations user=null;
   Assert.isInstanceOf(UsernamePasswordAuthenticationToken.class,authentication,"Can only process UsernamePasswordAuthenticationToken objects");
   String username=authentication.getName();
+  String originalUser=username;
   String password=(String)authentication.getCredentials();
   if (userFormat != null && !userFormat.equals("")) {
     username=MessageFormat.format(userFormat,username);
@@ -18,7 +19,7 @@
     logger.debug("Retrieving user object using filter...");
     SearchControls searchCtls=new SearchControls();
     searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-    user=SpringSecurityLdapTemplate.searchForSingleEntryInternal(ctx,searchCtls,"",userFilter,new Object[]{username});
+    user=SpringSecurityLdapTemplate.searchForSingleEntryInternal(ctx,searchCtls,"",userFilter,new Object[]{username,originalUser});
     userDnStr=user.getDn().toString();
     if (ppolicy != null) {
       user.setAttributeValue(ppolicy.getID(),ppolicy);

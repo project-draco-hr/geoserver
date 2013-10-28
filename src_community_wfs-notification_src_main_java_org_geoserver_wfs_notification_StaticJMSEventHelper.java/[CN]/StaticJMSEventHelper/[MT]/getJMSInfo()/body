@@ -1,0 +1,39 @@
+{
+  if (waitUntil > 0 && System.currentTimeMillis() < waitUntil) {
+    return null;
+  }
+  Properties p=null;
+  if (propertiesFileWatcher != null) {
+    try {
+      p=propertiesFileWatcher.load();
+      setProperties(p);
+    }
+ catch (    IOException e) {
+      LOG.warn("Unable to load JNDI properties from file " + propertiesFileWatcher.getURL() + " -- continuing with old file.",e);
+    }
+  }
+ else {
+    p=properties;
+  }
+  if (p == null) {
+    LOG.warn("No properties available for JMS configuration.");
+    return null;
+  }
+  JMSInfo info=this.info;
+  if (info == null || info.closed || p != properties) {
+    try {
+      info=createJMSInfo(p);
+    }
+ catch (    Throwable e) {
+      LOG.warn("Unable to load JNDI properties from bean definition. Continuing with previous JMS connection.",e);
+    }
+  }
+  registerJMSConnection(info);
+  if (info == null || info.closed) {
+    waitUntil=System.currentTimeMillis() + checkInterval;
+  }
+ else {
+    waitUntil=-1;
+  }
+  return info;
+}

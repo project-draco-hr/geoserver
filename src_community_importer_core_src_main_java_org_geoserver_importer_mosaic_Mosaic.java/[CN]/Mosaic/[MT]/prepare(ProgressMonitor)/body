@@ -1,0 +1,27 @@
+{
+  super.prepare(m);
+  files.removeAll(Collections2.filter(files,new Predicate<FileData>(){
+    @Override public boolean apply(    FileData input){
+      File f=input.getFile();
+      String basename=FilenameUtils.getBaseName(f.getName());
+      if (new File(f.getParentFile(),basename + ".shp").exists() || new File(f.getParentFile(),basename + ".properties").exists()) {
+        return true;
+      }
+      if ("sample_image".equals(basename)) {
+        return true;
+      }
+      return false;
+    }
+  }
+));
+  if (!files.isEmpty()) {
+    DataFormat format=format();
+    if (format == null) {
+      throw new IllegalArgumentException("Unable to determine format for mosaic files");
+    }
+    if (!(format instanceof RasterFormat)) {
+      throw new IllegalArgumentException("Mosaic directory must contain only raster files");
+    }
+  }
+  setFormat(new MosaicFormat());
+}

@@ -1,0 +1,29 @@
+{
+  StructuredGridCoverage2DReader structuredReader=null;
+  if (reader instanceof StructuredGridCoverage2DReader) {
+    structuredReader=(StructuredGridCoverage2DReader)reader;
+  }
+ else {
+    throw new IllegalArgumentException("The method is only supported for StructuredGridCoverage2DReaders");
+  }
+  final String coverageName=coverageInfo.getName();
+  final GranuleSource source=structuredReader.getGranules(coverageName,true);
+  if (source == null) {
+    throw new IllegalArgumentException("No granule source available for that coverageName");
+  }
+  final Query query=prepareDimensionsQuery(structuredReader,coverageName,gridCoverageRequest,source);
+  final SimpleFeatureCollection collection=source.getGranules(query);
+  final SimpleFeatureIterator iterator=collection.features();
+  final List<GridCoverageRequest> requests=new ArrayList<GridCoverageRequest>();
+  while (iterator.hasNext()) {
+    final SimpleFeature feature=iterator.next();
+    final GridCoverageRequest subRequest=new GridCoverageRequest();
+    subRequest.setOutputCRS(gridCoverageRequest.getOutputCRS());
+    subRequest.setSpatialInterpolation(gridCoverageRequest.getSpatialInterpolation());
+    subRequest.setSpatialSubset(gridCoverageRequest.getSpatialSubset());
+    subRequest.setTemporalInterpolation(gridCoverageRequest.getTemporalInterpolation());
+    updateDimensions(subRequest,feature,structuredReader,coverageName);
+    requests.add(subRequest);
+  }
+  return requests;
+}

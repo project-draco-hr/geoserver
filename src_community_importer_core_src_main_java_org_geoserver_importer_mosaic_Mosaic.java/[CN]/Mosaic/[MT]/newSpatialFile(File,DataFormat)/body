@@ -1,0 +1,25 @@
+{
+  if (format instanceof GridFormat) {
+    Granule g=new Granule(super.newSpatialFile(f,format));
+    try {
+      AbstractGridCoverage2DReader r=((GridFormat)format).gridReader(g);
+      try {
+        GridCoverage2D cov=r.read(null);
+        g.setEnvelope(cov.getEnvelope2D());
+        g.setGrid(cov.getGridGeometry());
+        cov.dispose(false);
+        g.setTimestamp(timeHandler.computeTimestamp(g));
+        return g;
+      }
+  finally {
+        if (r != null) {
+          r.dispose();
+        }
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"Could not read file " + f + ", unable to get coverage info");
+    }
+  }
+  return super.newSpatialFile(f,format);
+}

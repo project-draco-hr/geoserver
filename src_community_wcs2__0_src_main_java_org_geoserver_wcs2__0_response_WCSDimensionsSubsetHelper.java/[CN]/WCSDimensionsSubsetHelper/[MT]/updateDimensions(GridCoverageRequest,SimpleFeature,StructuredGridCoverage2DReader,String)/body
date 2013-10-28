@@ -1,0 +1,54 @@
+{
+  String startTimeAttribute=null;
+  String endTimeAttribute=null;
+  DimensionDescriptor timeDescriptor=WCSDimensionsHelper.getDimensionDescriptor(reader,coverageName,"TIME");
+  if (timeDescriptor != null) {
+    startTimeAttribute=timeDescriptor.getStartAttribute();
+    endTimeAttribute=timeDescriptor.getEndAttribute();
+    Date startDate=(Date)feature.getAttribute(startTimeAttribute);
+    Date endDate=(endTimeAttribute != null) ? (Date)feature.getAttribute(endTimeAttribute) : startDate;
+    DateRange range=new DateRange(startDate,endDate);
+    subRequest.setTemporalSubset(range);
+  }
+  String startElevationAttribute=null;
+  String endElevationAttribute=null;
+  DimensionDescriptor elevationDescriptor=WCSDimensionsHelper.getDimensionDescriptor(reader,coverageName,"ELEVATION");
+  if (elevationDescriptor != null) {
+    startElevationAttribute=elevationDescriptor.getStartAttribute();
+    endElevationAttribute=elevationDescriptor.getEndAttribute();
+    Number startValue=(Number)feature.getAttribute(startElevationAttribute);
+    Number endValue=(endElevationAttribute != null) ? (Number)feature.getAttribute(endElevationAttribute) : startValue;
+    NumberRange range=new NumberRange(startValue.getClass(),startValue,endValue);
+    subRequest.setElevationSubset(range);
+  }
+  List<String> customDomains=(List<String>)(accessor != null ? accessor.getCustomDomains() : Collections.emptyList());
+  Map<String,List<Object>> dimensionsSubset=new HashMap<String,List<Object>>();
+  for (  String customDomain : customDomains) {
+    String startAttribute=null;
+    String endAttribute=null;
+    DimensionDescriptor descriptor=WCSDimensionsHelper.getDimensionDescriptor(reader,coverageName,customDomain);
+    if (descriptor != null) {
+      startAttribute=descriptor.getStartAttribute();
+      endAttribute=descriptor.getEndAttribute();
+      Object value=feature.getAttribute(startAttribute);
+      if (endAttribute != null) {
+        Object endValue=feature.getAttribute(endAttribute);
+        Class objectClass=endValue.getClass();
+        String classDataType=objectClass.toString();
+        if (classDataType.endsWith("Timestamp")) {
+          value=new DateRange(new Date(((Timestamp)value).getTime()),new Date(((Timestamp)endValue).getTime()));
+        }
+ else         if (classDataType.endsWith("Date")) {
+          value=new DateRange((Date)value,(Date)endValue);
+        }
+ else {
+          value=new NumberRange(objectClass,(Number)value,(Number)endValue);
+        }
+      }
+      List<Object> dimensionValues=new ArrayList<Object>();
+      dimensionValues.add(value);
+      dimensionsSubset.put(descriptor.getName().toUpperCase(),dimensionValues);
+    }
+  }
+  subRequest.setDimensionsSubset(dimensionsSubset);
+}

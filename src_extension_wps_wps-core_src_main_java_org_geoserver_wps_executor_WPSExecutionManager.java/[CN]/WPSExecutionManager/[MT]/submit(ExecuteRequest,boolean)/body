@@ -5,6 +5,9 @@
   String executionId=resourceManager.getExecutionId(synchronous);
   final AsynchronousProcessContext context=new AsynchronousProcessContext(request,executionId,inputs,processManager,applicationContext);
   contexts.put(executionId,context);
+  if (!synchronous) {
+    LOGGER.log(Level.INFO,"Submitting new asynch process " + processName.getURI() + " with execution id "+ executionId);
+  }
   processManager.submit(executionId,processName,inputs,request.isAsynchronous());
   if (request.isAsynchronous()) {
     storedResponseWriters.submit(new Runnable(){

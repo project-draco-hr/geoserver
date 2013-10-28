@@ -1,0 +1,30 @@
+{
+  super(id,model);
+  Form form=new Form("form");
+  add(form);
+  form.add(new CRSPanel("crs",new SRSToCRSModel(new PropertyModel(model,"layer.resource.sRS"))){
+    @Override protected CoordinateReferenceSystem fromSRS(    String srs){
+      try {
+        return CRS.decode(srs);
+      }
+ catch (      Exception e) {
+        error(e);
+        return null;
+      }
+    }
+  }
+);
+  form.add(new AjaxSubmitLink("apply"){
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      target.addComponent(feedbackPanel);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      target.addComponent(feedbackPanel);
+      ImportTask item=model.getObject();
+      ImporterWebUtils.importer().changed(item);
+      target.addComponent(ImportTaskTable.this);
+      onItemFixed(item,target);
+    }
+  }
+);
+}

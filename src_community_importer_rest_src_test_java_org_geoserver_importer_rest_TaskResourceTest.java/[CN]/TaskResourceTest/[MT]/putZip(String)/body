@@ -1,0 +1,29 @@
+{
+  File file=new File(path);
+  InputStream stream;
+  if (file.exists()) {
+    stream=new FileInputStream(file);
+  }
+ else {
+    stream=ImporterTestSupport.class.getResourceAsStream("../test-data/" + path);
+  }
+  MockHttpServletResponse resp=postAsServletResponse("/rest/imports","");
+  assertEquals(201,resp.getStatusCode());
+  assertNotNull(resp.getHeader("Location"));
+  String[] split=resp.getHeader("Location").split("/");
+  Integer id=Integer.parseInt(split[split.length - 1]);
+  ImportContext context=importer.getContext(id);
+  MockHttpServletRequest req=createRequest("/rest/imports/" + id + "/tasks/"+ file.getName());
+  req.setContentType("application/zip");
+  req.addHeader("Content-Type","application/zip");
+  req.setMethod("PUT");
+  req.setBodyContent(org.apache.commons.io.IOUtils.toByteArray(stream));
+  resp=dispatch(req);
+  assertEquals(201,resp.getStatusCode());
+  context=importer.getContext(context.getId());
+  assertNull(context.getData());
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertTrue(task.getData() instanceof SpatialFile);
+  return id;
+}

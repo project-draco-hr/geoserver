@@ -1,0 +1,30 @@
+{
+  if (top) {
+    json.object().key("layer");
+  }
+  LayerInfo layer=task.getLayer();
+  ResourceInfo r=layer.getResource();
+  json.object().key("name").value(layer.getName()).key("href").value(page.rootURI(pathTo(task) + "/layer"));
+  if (expand > 0) {
+    json.key("originalName").value(task.getOriginalLayerName());
+    if (r != null) {
+      json.key("nativeName").value(r.getNativeName());
+      if (r.getSRS() != null) {
+        json.key("srs").value(r.getSRS());
+      }
+      if (r.getNativeBoundingBox() != null) {
+        json.key("bbox");
+        bbox(json,r.getNativeBoundingBox());
+      }
+    }
+    StyleInfo s=layer.getDefaultStyle();
+    if (s != null) {
+      style(s,task,false,expand - 1);
+    }
+  }
+  json.endObject();
+  if (top) {
+    json.endObject();
+  }
+  json.flush();
+}

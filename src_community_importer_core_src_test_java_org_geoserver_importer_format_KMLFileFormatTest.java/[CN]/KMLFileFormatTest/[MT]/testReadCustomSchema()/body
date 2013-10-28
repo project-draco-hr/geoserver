@@ -1,0 +1,14 @@
+{
+  String kmlInput=DOC_EL + "<Schema name=\"myschema\">" + "<SimpleField type=\"int\" name=\"foo\"></SimpleField>"+ "</Schema>"+ "<myschema><foo>7</foo></myschema>"+ "</kml>";
+  List<SimpleFeatureType> featureTypes=kmlFileFormat.parseFeatureTypes("custom-schema",IOUtils.toInputStream(kmlInput));
+  assertEquals("Unexpected number of feature types",1,featureTypes.size());
+  SimpleFeatureType featureType=featureTypes.get(0);
+  Map<Object,Object> userData=featureType.getUserData();
+  List<String> schemaNames=(List<String>)userData.get("schemanames");
+  assertEquals(1,schemaNames.size());
+  assertEquals("Did not find expected schema name metadata","myschema",schemaNames.get(0));
+  FeatureReader<SimpleFeatureType,SimpleFeature> reader=kmlFileFormat.read(featureType,IOUtils.toInputStream(kmlInput));
+  SimpleFeature feature=reader.next();
+  assertNotNull("Expecting feature",feature);
+  assertEquals("Invalid ext attr foo",7,feature.getAttribute("foo"));
+}

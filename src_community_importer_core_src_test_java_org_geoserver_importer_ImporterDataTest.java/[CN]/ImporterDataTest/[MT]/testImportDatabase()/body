@@ -1,0 +1,31 @@
+{
+  File dir=unpack("h2/cookbook.zip");
+  Map params=new HashMap();
+  params.put(H2DataStoreFactory.DBTYPE.key,"h2");
+  params.put(H2DataStoreFactory.DATABASE.key,new File(dir,"cookbook").getAbsolutePath());
+  ImportContext context=importer.createContext(new Database(params));
+  assertEquals(3,context.getTasks().size());
+  assertEquals(ImportTask.State.READY,context.getTasks().get(0).getState());
+  assertEquals(ImportTask.State.READY,context.getTasks().get(1).getState());
+  assertEquals(ImportTask.State.READY,context.getTasks().get(2).getState());
+  Catalog cat=getCatalog();
+  assertNull(cat.getDataStoreByName(cat.getDefaultWorkspace(),"cookbook"));
+  assertNull(cat.getLayerByName("point"));
+  assertNull(cat.getLayerByName("line"));
+  assertNull(cat.getLayerByName("polygon"));
+  importer.run(context);
+  assertEquals(ImportTask.State.COMPLETE,context.getTasks().get(0).getState());
+  assertEquals(ImportTask.State.COMPLETE,context.getTasks().get(1).getState());
+  assertEquals(ImportTask.State.COMPLETE,context.getTasks().get(2).getState());
+  assertNotNull(cat.getDataStoreByName(cat.getDefaultWorkspace(),"cookbook"));
+  DataStoreInfo ds=cat.getDataStoreByName(cat.getDefaultWorkspace(),"cookbook");
+  assertNotNull(cat.getFeatureTypeByDataStore(ds,"point"));
+  assertNotNull(cat.getFeatureTypeByDataStore(ds,"line"));
+  assertNotNull(cat.getFeatureTypeByDataStore(ds,"polygon"));
+  assertNotNull(cat.getLayerByName("point"));
+  assertNotNull(cat.getLayerByName("line"));
+  assertNotNull(cat.getLayerByName("polygon"));
+  runChecks("point");
+  runChecks("line");
+  runChecks("polygon");
+}

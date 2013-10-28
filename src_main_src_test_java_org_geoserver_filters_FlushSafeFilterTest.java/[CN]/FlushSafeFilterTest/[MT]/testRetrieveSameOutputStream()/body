@@ -1,0 +1,16 @@
+{
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain(){
+    @Override public void doFilter(    ServletRequest request,    ServletResponse response) throws IOException, ServletException {
+      ServletOutputStream os1=response.getOutputStream();
+      ServletOutputStream os2=response.getOutputStream();
+      assertSame(os1,os2);
+      assertTrue(os1 instanceof FlushSafeResponse.FlushSafeServletOutputStream);
+    }
+  }
+;
+  FlushSafeFilter filter=new FlushSafeFilter();
+  filter.init(new MockFilterConfig());
+  filter.doFilter(request,response,chain);
+}

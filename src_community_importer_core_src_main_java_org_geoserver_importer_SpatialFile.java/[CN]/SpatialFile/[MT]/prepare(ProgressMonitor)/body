@@ -1,0 +1,34 @@
+{
+  suppFiles=new ArrayList();
+  prjFile=null;
+  final String baseName=getBaseName(file.getName());
+  for (  File f : file.getParentFile().listFiles()) {
+    if (f.equals(file)) {
+      continue;
+    }
+    if (!f.getName().startsWith(baseName)) {
+      continue;
+    }
+    if (!f.isFile()) {
+      continue;
+    }
+    String ext=f.getName().substring(baseName.length());
+    if (ext.charAt(0) == '.') {
+      if (".prj".equalsIgnoreCase(ext)) {
+        prjFile=f;
+      }
+ else {
+        suppFiles.add(f);
+      }
+    }
+  }
+  if (format == null) {
+    format=DataFormat.lookup(file);
+  }
+  try {
+    fixPrjFile();
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error fixing prj file",e);
+  }
+}

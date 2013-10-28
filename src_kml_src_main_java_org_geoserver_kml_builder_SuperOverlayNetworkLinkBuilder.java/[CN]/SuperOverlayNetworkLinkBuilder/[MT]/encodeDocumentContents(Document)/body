@@ -1,7 +1,7 @@
 {
   boolean cachedMode="cached".equals(context.getSuperOverlayMode());
   Tile tile=new Tile(new ReferencedEnvelope(request.getBbox(),Tile.WGS84));
-  if (!tile.getEnvelope().contains(request.getBbox()) && tile.getZ() > 0) {
+  while (tile.getZ() > 0 && !tile.getEnvelope().contains(request.getBbox())) {
     tile=tile.getParent();
   }
   Envelope normalizedEnvelope=null;
@@ -12,7 +12,7 @@
     normalizedEnvelope=KmlEncodingContext.WORLD_BOUNDS_WGS84;
   }
   int zoomLevel=(int)tile.getZ();
-  addRegion(container,normalizedEnvelope,256,-1);
+  addRegion(container,normalizedEnvelope,Integer.MAX_VALUE,-1);
   List<MapLayerInfo> layers=request.getLayers();
   for (int i=0; i < layers.size(); i++) {
     MapLayerInfo layer=layers.get(i);

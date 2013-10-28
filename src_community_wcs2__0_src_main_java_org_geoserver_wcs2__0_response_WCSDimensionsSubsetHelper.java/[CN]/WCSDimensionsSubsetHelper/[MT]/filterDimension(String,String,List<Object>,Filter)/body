@@ -1,0 +1,40 @@
+{
+  Filter localFilter=null;
+  if (dimensionValues != null && !dimensionValues.isEmpty()) {
+    Object element=(Object)dimensionValues.get(0);
+    Object min=null;
+    Object max=null;
+    if (element instanceof DateRange) {
+      DateRange dateRange=(DateRange)element;
+      min=dateRange.getMinValue();
+      max=dateRange.getMaxValue();
+    }
+ else     if (element instanceof NumberRange) {
+      NumberRange numberRange=(NumberRange)element;
+      min=numberRange.getMinValue();
+      max=numberRange.getMaxValue();
+    }
+ else     if (element instanceof Date || element instanceof Number || element instanceof String) {
+      min=element;
+      max=element;
+    }
+ else {
+      throw new IllegalArgumentException("Unsupported object type");
+    }
+    if (endAttribute == null) {
+      localFilter=ff.between(ff.property(startAttribute),ff.literal(min),ff.literal(max));
+    }
+ else {
+      Filter f1=ff.lessOrEqual(ff.property(startAttribute),ff.literal(max));
+      Filter f2=ff.greaterOrEqual(ff.property(endAttribute),ff.literal(min));
+      localFilter=ff.and(Arrays.asList(f1,f2));
+    }
+    if (filter == null) {
+      filter=localFilter;
+    }
+ else {
+      filter=ff.and(filter,localFilter);
+    }
+  }
+  return filter;
+}

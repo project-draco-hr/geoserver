@@ -1,0 +1,20 @@
+{
+  File dir=tmpDir();
+  unpack("shape/archsites_epsg_prj.zip",dir);
+  unpack("shape/bugsites_esri_prj.tar.gz",dir);
+  ImportContext context=importer.createContext(new Directory(dir));
+  importer.run(context);
+  runChecks("gs:archsites");
+  runChecks("gs:bugsites");
+  DataStoreInfo store=(DataStoreInfo)context.getTasks().get(0).getStore();
+  assertNotNull(store);
+  assertEquals(2,getCatalog().getFeatureTypesByDataStore(store).size());
+  context=importer.createContext(new Database(getConnectionParams()),store);
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertEquals(ImportTask.State.READY,task.getState());
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  assertEquals(3,getCatalog().getFeatureTypesByDataStore(store).size());
+  runChecks("gs:" + tableName("widgets"));
+}

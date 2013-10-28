@@ -1,0 +1,18 @@
+{
+  ImportTask task=importer.getContext(0).getTasks().get(0);
+  writer.task(task,true,1);
+  JSONObject json=buffer();
+  JSONObject target=new JSONObject();
+  JSONObject dataStore=new JSONObject();
+  JSONObject workspace=new JSONObject();
+  dataStore.put("name","foobar");
+  workspace.put("name",getCatalog().getDefaultWorkspace().getName());
+  dataStore.put("workspace",workspace);
+  target.put("dataStore",dataStore);
+  json.getJSONObject("task").put("target",target);
+  ImportTask parsed=reader(json).task();
+  StoreInfo store=parsed.getStore();
+  assertNotNull(store);
+  assertEquals("foobar",store.getName());
+  assertEquals(getCatalog().getDefaultWorkspace().getName(),store.getWorkspace().getName());
+}

@@ -1,0 +1,19 @@
+{
+  JMSInfo info;
+  while ((info=getJMSInfo()) != null) {
+    info.lock();
+    try {
+      if (info.closed)       continue;
+      if (fireNotification(byteString,info))       return;
+      if (info.closed)       continue;
+    }
+  finally {
+      info.unlock();
+    }
+  }
+  dropped.incrementAndGet();
+  if (lastWarnDropped.get() + DROPPED_WARN_MS < System.currentTimeMillis()) {
+    lastWarnDropped.set(System.currentTimeMillis());
+    LOG.warn("No session available; messages will be dropped. " + dropped.get() + " have been dropped so far.");
+  }
+}

@@ -1,0 +1,41 @@
+{
+  File file=getFileFromData(data);
+  CatalogBuilder cb=new CatalogBuilder(catalog);
+  String baseName=typeNameFromFile(file);
+  CatalogFactory factory=catalog.getFactory();
+  Collection<SimpleFeatureType> featureTypes=parseFeatureTypes(baseName,file);
+  List<ImportTask> result=new ArrayList<ImportTask>(featureTypes.size());
+  for (  SimpleFeatureType featureType : featureTypes) {
+    String name=featureType.getName().getLocalPart();
+    FeatureTypeInfo ftinfo=factory.createFeatureType();
+    ftinfo.setEnabled(true);
+    ftinfo.setNativeName(name);
+    ftinfo.setName(name);
+    ftinfo.setTitle(name);
+    ftinfo.setNamespace(catalog.getDefaultNamespace());
+    List<AttributeTypeInfo> attributes=ftinfo.getAttributes();
+    for (    AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
+      AttributeTypeInfo att=factory.createAttribute();
+      att.setName(ad.getLocalName());
+      att.setBinding(ad.getType().getBinding());
+      attributes.add(att);
+    }
+    LayerInfo layer=cb.buildLayer((ResourceInfo)ftinfo);
+    ResourceInfo resource=layer.getResource();
+    resource.setSRS(KML_SRS);
+    resource.setNativeCRS(KML_CRS);
+    resource.setNativeBoundingBox(EMPTY_BOUNDS);
+    resource.setLatLonBoundingBox(EMPTY_BOUNDS);
+    resource.getMetadata().put("recalculate-bounds",Boolean.TRUE);
+    Map<Object,Object> userData=featureType.getUserData();
+    if (userData.containsKey("schemanames")) {
+      MetadataMap metadata=resource.getMetadata();
+      metadata.put("importschemanames",(Serializable)userData.get("schemanames"));
+    }
+    ImportTask task=new ImportTask(data);
+    task.setLayer(layer);
+    task.getMetadata().put(FeatureType.class,featureType);
+    result.add(task);
+  }
+  return Collections.unmodifiableList(result);
+}

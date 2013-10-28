@@ -1,14 +1,17 @@
 {
-  FeatureTypeInfo featureTypeInfo=catalog.getFeatureTypeByName(typeName.getNamespaceURI(),typeName.getLocalPart());
   String name="";
   if (bbox instanceof ReferencedEnvelope3D) {
     return filterFactory.bbox(name,(ReferencedEnvelope3D)bbox);
   }
   String epsgCode=null;
-  if (bbox instanceof ReferencedEnvelope) {
+  if (bbox instanceof SRSEnvelope) {
+    SRSEnvelope se=(SRSEnvelope)bbox;
+    epsgCode=se.getSrs();
+  }
+ else   if (bbox instanceof ReferencedEnvelope) {
     CoordinateReferenceSystem crs=((ReferencedEnvelope)bbox).getCoordinateReferenceSystem();
     if (crs != null) {
-      epsgCode=GML2EncodingUtils.crs(crs);
+      epsgCode=GML2EncodingUtils.toURI(crs);
     }
   }
   return filterFactory.bbox(name,bbox.getMinX(),bbox.getMinY(),bbox.getMaxX(),bbox.getMaxY(),epsgCode);

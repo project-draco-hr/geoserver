@@ -1,0 +1,20 @@
+{
+  File dir=tmpDir();
+  unpack("shape/archsites_no_crs.zip",dir);
+  unpack("shape/bugsites_esri_prj.tar.gz",dir);
+  ImportContext context=importer.createContext(new Directory(dir));
+  assertEquals(2,context.getTasks().size());
+  ImportTask task1=context.getTasks().get(0);
+  assertEquals(ImportTask.State.NO_CRS,task1.getState());
+  assertEquals("archsites",task1.getLayer().getResource().getName());
+  ImportTask task2=context.getTasks().get(1);
+  assertEquals(ImportTask.State.READY,task2.getState());
+  assertEquals("bugsites",task2.getLayer().getResource().getName());
+  importer.run(context);
+  Catalog cat=getCatalog();
+  assertNull(cat.getLayerByName("archsites"));
+  assertNotNull(cat.getLayerByName("bugsites"));
+  assertEquals(ImportTask.State.NO_CRS,task1.getState());
+  assertEquals(ImportTask.State.COMPLETE,task2.getState());
+  runChecks("bugsites");
+}

@@ -29,20 +29,13 @@
   }
   int maxRadius=wms.getMaxBuffer();
   if (maxRadius > 0 && radius > maxRadius)   radius=maxRadius;
-  Polygon pixelRect=getEnvelopeFilter(x,y,width,height,bbox,radius);
+  ReferencedEnvelope queryEnvelope=getEnvelopeFilter(x,y,width,height,bbox,radius);
   if ((requestedCRS != null) && !CRS.equalsIgnoreMetadata(dataCRS,requestedCRS)) {
-    try {
-      MathTransform transform=CRS.findMathTransform(requestedCRS,dataCRS,true);
-      pixelRect=(Polygon)JTS.transform(pixelRect,transform);
+    if (dataCRS.getCoordinateSystem().getDimension() == 3 && requestedCRS.getCoordinateSystem().getDimension() == 2) {
+      queryEnvelope=JTS.transformTo3D(queryEnvelope,dataCRS,true,10);
     }
- catch (    MismatchedDimensionException e) {
-      LOGGER.severe(e.getLocalizedMessage());
-    }
-catch (    TransformException e) {
-      LOGGER.severe(e.getLocalizedMessage());
-    }
-catch (    FactoryException e) {
-      LOGGER.severe(e.getLocalizedMessage());
+ else {
+      queryEnvelope=queryEnvelope.transform(dataCRS,true);
     }
   }
   final FeatureSource<? extends FeatureType,? extends Feature> featureSource;
@@ -52,7 +45,8 @@ catch (    FactoryException e) {
   try {
     GeometryDescriptor geometryDescriptor=schema.getGeometryDescriptor();
     String localName=geometryDescriptor.getLocalName();
-    getFInfoFilter=ff.intersects(ff.property(localName),ff.literal(pixelRect));
+    Polygon queryPolygon=JTS.toGeometry(queryEnvelope);
+    getFInfoFilter=ff.intersects(ff.property(localName),ff.literal(queryPolygon));
   }
  catch (  IllegalFilterException e) {
     e.printStackTrace();

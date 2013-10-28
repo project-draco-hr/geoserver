@@ -1,0 +1,20 @@
+{
+  File file=getFileFromData(data);
+  SimpleFeatureType ft=(SimpleFeatureType)task.getMetadata().get(FeatureType.class);
+  if (ft == null) {
+    FeatureTypeInfo fti=(FeatureTypeInfo)task.getLayer().getResource();
+    SimpleFeatureTypeBuilder ftb=new SimpleFeatureTypeBuilder();
+    ftb.setName(fti.getName());
+    List<AttributeTypeInfo> attributes=fti.getAttributes();
+    for (    AttributeTypeInfo attr : attributes) {
+      ftb.add(attr.getName(),attr.getBinding());
+    }
+    ft=ftb.buildFeatureType();
+    MetadataMap metadata=fti.getMetadata();
+    if (metadata.containsKey("importschemanames")) {
+      Map<Object,Object> userData=ft.getUserData();
+      userData.put("schemanames",metadata.get("importschemanames"));
+    }
+  }
+  return read(ft,file);
+}

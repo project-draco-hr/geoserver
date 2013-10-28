@@ -1,0 +1,15 @@
+{
+  Mosaic m=new Mosaic(json.has("location") ? new File(json.getString("location")) : Directory.createNew(importer.getUploadRoot()).getFile());
+  if (json.has("name")) {
+    m.setName(json.getString("name"));
+  }
+  if (json.containsKey("time")) {
+    JSONObject time=json.getJSONObject("time");
+    if (!time.containsKey("mode")) {
+      throw new IllegalArgumentException("time object must specific mode property as " + "one of " + TimeMode.values());
+    }
+    m.setTimeMode(TimeMode.valueOf(time.getString("mode").toUpperCase()));
+    m.getTimeHandler().init(time);
+  }
+  return m;
+}

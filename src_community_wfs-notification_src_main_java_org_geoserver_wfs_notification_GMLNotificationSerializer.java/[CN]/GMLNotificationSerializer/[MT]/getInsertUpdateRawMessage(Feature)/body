@@ -1,0 +1,40 @@
+{
+  final StringBuilderWriter sw=new StringBuilderWriter();
+  long start=System.nanoTime();
+  boolean success=true;
+  try {
+    long modCount=catalogModCount.get();
+    if (modCount != catalogModCountLocal.get().longValue()) {
+      catalogModCountLocal.set(modCount);
+      encoder.remove();
+    }
+    final Encoder encoder=this.encoder.get();
+    TransformerHandler handler=STF.newTransformerHandler();
+    handler.setResult(new StreamResult(sw));
+    encoder.setInline(true);
+    loadNamespaceBindings(encoder.getNamespaces(),feature,xmlConfig.getXSD().getSchema());
+    encoder.encode(feature,GML._Feature,handler);
+    return sw.toString();
+  }
+ catch (  Exception e) {
+    success=false;
+    throw new WFSException(e);
+  }
+ finally {
+    if (success) {
+      double millis=((double)System.nanoTime() - start) / 1000000;
+      Name name=WFSNotify.getTypeName(feature);
+      serializationMillis.add(millis);
+      serializationChars.add(sw.getBuilder().length());
+      Statistics statsByType=serializationMillisByType.get(name);
+      if (statsByType == null) {
+        Statistics newStats=new Statistics();
+        statsByType=serializationMillisByType.put(name,newStats);
+        if (statsByType == null) {
+          statsByType=newStats;
+        }
+      }
+      statsByType.add(millis);
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  if (task.getStore().getId() == null) {
+    StoreInfo store=task.getStore();
+    store.setName(findUniqueStoreName(task.getStore()));
+    if (!store.getConnectionParameters().containsKey("namespace")) {
+      WorkspaceInfo ws=task.getContext().getTargetWorkspace();
+      if (ws == null && task.getContext().getTargetStore() != null) {
+        ws=task.getContext().getTargetStore().getWorkspace();
+      }
+      if (ws != null) {
+        NamespaceInfo ns=catalog.getNamespaceByPrefix(ws.getName());
+        if (ns != null) {
+          store.getConnectionParameters().put("namespace",ns.getURI());
+        }
+      }
+    }
+    catalog.add(task.getStore());
+  }
+  task.setState(ImportTask.State.RUNNING);
+  try {
+    TransformChain tx=(TransformChain)task.getTransform();
+    if (!doPreTransform(task,task.getData(),tx)) {
+      return;
+    }
+    addToCatalog(task);
+    if (!doPostTransform(task,task.getData(),tx)) {
+      return;
+    }
+    task.setState(ImportTask.State.COMPLETE);
+  }
+ catch (  Exception e) {
+    task.setState(ImportTask.State.ERROR);
+    task.setError(e);
+  }
+}

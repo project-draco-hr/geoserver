@@ -1,0 +1,17 @@
+{
+  MockHttpServletResponse resp=putAsServletResponse("/rest/imports/8675309");
+  assertEquals(201,resp.getStatusCode());
+  resp=getAsServletResponse("/rest/imports/8675309");
+  assertEquals(200,resp.getStatusCode());
+  JSONObject json=(JSONObject)json(resp);
+  JSONObject imprt=json.getJSONObject("import");
+  assertEquals(8675309,imprt.getInt("id"));
+  resp=putAsServletResponse("/rest/imports/8675000");
+  assertEquals(201,resp.getStatusCode());
+  assertTrue(resp.getHeader("Location").endsWith("/rest/imports/8675310"));
+  resp=getAsServletResponse("/rest/imports/8675310");
+  assertEquals(200,resp.getStatusCode());
+  json=(JSONObject)json(resp);
+  imprt=json.getJSONObject("import");
+  assertEquals(8675310,imprt.getInt("id"));
+}

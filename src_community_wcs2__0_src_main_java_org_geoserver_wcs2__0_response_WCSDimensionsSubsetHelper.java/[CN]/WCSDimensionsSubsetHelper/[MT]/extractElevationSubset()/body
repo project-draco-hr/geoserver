@@ -11,8 +11,8 @@
       }
       if (dim instanceof DimensionTrimType) {
         final DimensionTrimType trim=(DimensionTrimType)dim;
-        final Double low=XML_CONVERTER.parseDouble(trim.getTrimLow());
-        final Double high=XML_CONVERTER.parseDouble(trim.getTrimHigh());
+        final Double low=PARSER.parseDouble(trim.getTrimLow());
+        final Double high=PARSER.parseDouble(trim.getTrimHigh());
         if (low > high) {
           throw new WCS20Exception("Low greater than High: " + trim.getTrimLow() + ", "+ trim.getTrimHigh(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
         }
@@ -21,17 +21,17 @@
  else       if (dim instanceof DimensionSliceType) {
         final DimensionSliceType slicing=(DimensionSliceType)dim;
         final String slicePointS=slicing.getSlicePoint();
-        final Double slicePoint=XML_CONVERTER.parseDouble(slicePointS);
+        final Double slicePoint=PARSER.parseDouble(slicePointS);
         elevationSubset=new NumberRange<Double>(Double.class,slicePoint,slicePoint);
       }
  else {
         throw new WCS20Exception("Invalid element found while attempting to parse dimension subsetting request: " + dim.getClass().toString(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");
       }
     }
-    if (elevationSubset != null && !elevationSubset.getMinValue().equals(elevationSubset.getMaxValue())) {
-      throw new WCS20Exception("Trimming on elevation is not supported at the moment, only slicing is");
+    if (!(reader instanceof StructuredGridCoverage2DReader) && elevationSubset != null && !elevationSubset.getMinValue().equals(elevationSubset.getMaxValue())) {
+      throw new WCS20Exception("Trimming on elevation is not supported at the moment on not StructuredGridCoverage2DReaders, only slicing is");
     }
-    if (elevationSubset != null) {
+    if (elevationSubset != null && elevationSubset.getMinValue().equals(elevationSubset.getMaxValue())) {
       interpolateElevation(elevationSubset,accessor);
     }
   }

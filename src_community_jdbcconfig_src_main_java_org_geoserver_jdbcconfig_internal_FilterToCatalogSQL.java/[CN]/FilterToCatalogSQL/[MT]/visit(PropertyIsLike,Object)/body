@@ -9,6 +9,19 @@
   final boolean matchCase=filter.isMatchingCase();
   final String pattern=LikeFilterImpl.convertToSQL92(esc,multi,single,matchCase,literal);
   String valueCol=matchCase ? "value" : "UPPER(value)";
-  StringBuilder builder=append(extraData,"oid IN (SELECT oid FROM object_property WHERE property_type IN (:",propertyTypesParam,") AND ",valueCol," LIKE '",pattern,"') /* ",filter.toString()," */ \n");
-  return builder;
+  StringBuilder builder;
+switch (matchAction) {
+case ALL:
+    builder=append(extraData,"oid NOT IN (SELECT oid FROM object_property WHERE property_type IN (:",propertyTypesParam,") AND NOT(",valueCol," LIKE '",pattern,"')) /* ",filter.toString()," */ \n");
+  break;
+case ANY:
+builder=append(extraData,"oid IN (SELECT oid FROM object_property WHERE property_type IN (:",propertyTypesParam,") AND ",valueCol," LIKE '",pattern,"') /* ",filter.toString()," */ \n");
+break;
+case ONE:
+builder=append(extraData,"oid IN (SELECT oid FROM object_property WHERE property_type IN (:",propertyTypesParam,") AND ",valueCol," LIKE '",pattern,"' ","GROUP BY (oid) HAVING COUNT(oid)=1 ) /* ",filter.toString()," */ \n");
+break;
+default :
+throw new IllegalArgumentException("MatchAction: " + matchAction);
+}
+return builder;
 }

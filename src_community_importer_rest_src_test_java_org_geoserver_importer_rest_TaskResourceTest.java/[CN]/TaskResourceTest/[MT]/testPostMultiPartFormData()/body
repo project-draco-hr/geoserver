@@ -1,0 +1,27 @@
+{
+  MockHttpServletResponse resp=postAsServletResponse("/rest/imports","");
+  assertEquals(201,resp.getStatusCode());
+  assertNotNull(resp.getHeader("Location"));
+  String[] split=resp.getHeader("Location").split("/");
+  Integer id=Integer.parseInt(split[split.length - 1]);
+  ImportContext context=importer.getContext(id);
+  assertNull(context.getData());
+  assertTrue(context.getTasks().isEmpty());
+  File dir=unpack("shape/archsites_epsg_prj.zip");
+  Part[] parts=new Part[]{new FilePart("archsites.shp",new File(dir,"archsites.shp")),new FilePart("archsites.dbf",new File(dir,"archsites.dbf")),new FilePart("archsites.shx",new File(dir,"archsites.shx")),new FilePart("archsites.prj",new File(dir,"archsites.prj"))};
+  MultipartRequestEntity multipart=new MultipartRequestEntity(parts,new PostMethod().getParams());
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  multipart.writeRequest(bout);
+  MockHttpServletRequest req=createRequest("/rest/imports/" + id + "/tasks");
+  req.setContentType(multipart.getContentType());
+  req.addHeader("Content-Type",multipart.getContentType());
+  req.setMethod("POST");
+  req.setBodyContent(bout.toByteArray());
+  resp=dispatch(req);
+  context=importer.getContext(context.getId());
+  assertNull(context.getData());
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertTrue(task.getData() instanceof SpatialFile);
+  assertEquals(ImportTask.State.READY,task.getState());
+}

@@ -1,0 +1,33 @@
+{
+  Session session=null;
+  for (int i=0; i < 5 && !info.closed; ++i) {
+    session=info.getSession();
+    if (session == null) {
+      continue;
+    }
+    try {
+      MessageProducer producer=session.createProducer(null);
+      Message message=session.createTextMessage(byteString);
+      for (      Destination d : info.destinations) {
+        producer.send(d,message);
+      }
+      return true;
+    }
+ catch (    Exception e) {
+      recordFailure(e);
+      info.invalidateSession(session);
+      session=null;
+      continue;
+    }
+ finally {
+      try {
+        if (session != null) {
+          info.returnSession(session);
+        }
+      }
+ catch (      Exception e) {
+      }
+    }
+  }
+  return false;
+}

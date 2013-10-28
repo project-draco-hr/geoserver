@@ -1,0 +1,24 @@
+{
+  if (closed)   return;
+  try {
+    if (!lock.writeLock().tryLock(30,TimeUnit.MILLISECONDS)) {
+      LOG.warn("Waited 30 seconds trying to close JMS connection! Abandoning!");
+      return;
+    }
+  }
+ catch (  InterruptedException e1) {
+    LOG.warn("Interrupted before write lock obtained while trying to close JMS session. Leaving JMS session open.");
+    return;
+  }
+  if (closed)   return;
+  try {
+    connection.close();
+    closed=true;
+  }
+ catch (  JMSException e) {
+    LOG.warn("Error closing JMS connection " + connection,e);
+  }
+ finally {
+    lock.writeLock().unlock();
+  }
+}

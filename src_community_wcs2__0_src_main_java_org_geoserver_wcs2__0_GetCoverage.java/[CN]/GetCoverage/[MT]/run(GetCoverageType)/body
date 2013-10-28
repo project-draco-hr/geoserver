@@ -7,27 +7,36 @@
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Executing GetCoverage request on coverage :" + linfo.toString());
   }
-  GridCoverage2D coverage=null;
+  GridCoverage coverage=null;
   try {
     Map<String,ExtensionItemType> extensions=extractExtensions(request);
     final Hints hints=GeoTools.getDefaultHints();
     hints.add(WCSUtils.getReaderHints(wcs));
     hints.add(new RenderingHints(JAI.KEY_BORDER_EXTENDER,BorderExtender.createInstance(BorderExtender.BORDER_COPY)));
     final GridCoverage2DReader reader=(GridCoverage2DReader)cinfo.getGridCoverageReader(new DefaultProgressListener(),hints);
-    GridCoverageRequest gcr=parseGridCoverageRequest(cinfo,reader,request,extensions);
-    coverage=readCoverage(cinfo,gcr,reader,hints);
-    if (coverage == null) {
-      throw new IllegalStateException("Unable to read a coverage for the current request" + request.toString());
+    WCSDimensionsSubsetHelper helper=parseGridCoverageRequest(cinfo,reader,request,extensions);
+    GridCoverageRequest gcr=helper.getGridCoverageRequest();
+    if (reader instanceof StructuredGridCoverage2DReader && formatSupportMDOutput(request.getFormat())) {
+      final List<GridCoverageRequest> requests=helper.splitRequest();
+      if (requests == null || requests.isEmpty()) {
+        throw new IllegalArgumentException("Splitting requests returned nothing");
+      }
+ else {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Splitting request generated " + requests.size() + " sub requests");
+        }
+      }
+      final List<DimensionBean> dimensions=helper.setupDimensions();
+      GranuleStackImpl stack=new GranuleStackImpl(cinfo.getName(),reader.getCoordinateReferenceSystem(),dimensions);
+      for (      GridCoverageRequest subRequest : requests) {
+        GridCoverage2D singleCoverage=setupCoverage(helper,subRequest,request,reader,hints,extensions,dimensions);
+        stack.addCoverage(singleCoverage);
+      }
+      coverage=stack;
     }
-    coverage=handleRangeSubsettingExtension(coverage,extensions,hints);
-    coverage=handleSubsettingExtension(coverage,gcr.getSpatialSubset(),hints);
-    coverage=handleScaling(coverage,extensions,gcr.getSpatialInterpolation(),hints);
-    coverage=handleReprojection(coverage,gcr.getOutputCRS(),gcr.getSpatialInterpolation(),hints);
-    final boolean enforceLatLonAxesOrder=requestingLatLonAxesOrder(gcr.getOutputCRS());
-    if (enforceLatLonAxesOrder) {
-      coverage=enforceLatLongOrder(coverage,hints,gcr.getOutputCRS());
+ else {
+      coverage=setupCoverage(helper,gcr,request,reader,hints,extensions,null);
     }
-    WCSUtils.checkOutputLimits(wcs,coverage.getGridGeometry().getGridRange2D(),coverage.getRenderedImage().getSampleModel());
   }
  catch (  ServiceException e) {
     throw e;

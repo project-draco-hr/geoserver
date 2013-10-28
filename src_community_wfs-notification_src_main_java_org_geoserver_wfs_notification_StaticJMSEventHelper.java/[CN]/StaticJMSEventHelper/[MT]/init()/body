@@ -1,0 +1,31 @@
+{
+  if (properties == null) {
+    if (propertiesFileName == null) {
+      throw new IllegalArgumentException("One of properties or propertiesFileName must be supplied to this bean.");
+    }
+    String propertiesFileName=this.propertiesFileName;
+    propertiesURL=interpretAsURL(propertiesFileName);
+    if (propertiesURL == null) {
+      throw new IllegalArgumentException("Couldn't interpret " + propertiesFileName + " as a File, classpath entry, or URL.");
+    }
+    propertiesFileWatcher=new AbstractFileWatcher<Properties>(checkInterval,null,propertiesURL){
+      protected boolean shouldUpdate(      URLConnection conn){
+        return getData() == null || super.shouldUpdate(conn);
+      }
+      @Override protected Properties doLoad(      URLConnection conn) throws IOException {
+        try {
+          Properties p=new Properties();
+          p.load(propertiesURL.openStream());
+          return p;
+        }
+ catch (        IOException e) {
+          throw e;
+        }
+catch (        Throwable e) {
+          throw new IOException(e);
+        }
+      }
+    }
+;
+  }
+}

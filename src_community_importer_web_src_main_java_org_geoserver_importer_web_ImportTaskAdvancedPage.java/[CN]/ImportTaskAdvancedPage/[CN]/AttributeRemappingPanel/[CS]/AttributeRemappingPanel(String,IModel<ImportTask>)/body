@@ -1,0 +1,77 @@
+{
+  super(id,itemModel);
+  setOutputMarkupId(true);
+  FeatureTypeInfo featureType=(FeatureTypeInfo)itemModel.getObject().getLayer().getResource();
+  final List atts=new ArrayList();
+  for (  AttributeTypeInfo at : featureType.getAttributes()) {
+    atts.add(at.getName());
+  }
+  final List<Class> types=(List)Arrays.asList(Integer.class,Double.class,Date.class);
+  final WebMarkupContainer remapContainer=new WebMarkupContainer("remapsContainer");
+  remapContainer.setOutputMarkupId(true);
+  add(remapContainer);
+  remaps=itemModel.getObject().getTransform().getAll(AttributeRemapTransform.class);
+  remapList=new ListView<AttributeRemapTransform>("remaps",remaps){
+    @Override protected void populateItem(    final ListItem<AttributeRemapTransform> item){
+      final DropDownChoice<String> attChoice=new DropDownChoice<String>("att",new PropertyModel(item.getModel(),"field"),atts);
+      item.add(attChoice);
+      final DropDownChoice<Class> typeChoice=new DropDownChoice<Class>("type",new PropertyModel(item.getModel(),"type"),types,new ChoiceRenderer<Class>(){
+        public Object getDisplayValue(        Class object){
+          return object.getSimpleName();
+        }
+      }
+);
+      item.add(typeChoice);
+      final TextField<String> dateFormatTextField=new TextField<String>("dateFormat",new Model());
+      dateFormatTextField.setOutputMarkupId(true);
+      item.add(dateFormatTextField);
+      typeChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+        @Override protected void onUpdate(        AjaxRequestTarget target){
+          dateFormatTextField.setEnabled(Date.class.equals(typeChoice.getModelObject()));
+          target.addComponent(dateFormatTextField);
+        }
+      }
+);
+      item.add(new AjaxButton("apply"){
+        @Override protected void onSubmit(        AjaxRequestTarget target,        Form<?> form){
+          attChoice.processInput();
+          typeChoice.processInput();
+          dateFormatTextField.processInput();
+          AttributeRemapTransform tx=item.getModelObject();
+          String field=tx.getField();
+          Class type=typeChoice.getModelObject();
+          if (Date.class.equals(type)) {
+            String dateFormat=dateFormatTextField.getModelObject();
+            if (dateFormat == null || "".equals(dateFormat.trim())) {
+              dateFormat=null;
+            }
+            item.setModelObject(new DateFormatTransform(field,dateFormat));
+          }
+ else           if (Number.class.isAssignableFrom(type)) {
+            item.setModelObject(new NumberFormatTransform(field,type));
+          }
+          target.addComponent(remapContainer);
+        }
+      }
+.setDefaultFormProcessing(false));
+      item.add(new AjaxButton("cancel"){
+        @Override protected void onSubmit(        AjaxRequestTarget target,        Form<?> form){
+          remaps.remove(item.getModelObject());
+          target.addComponent(remapContainer);
+        }
+      }
+.setDefaultFormProcessing(false));
+    }
+  }
+;
+  remapList.setOutputMarkupId(true);
+  remapContainer.add(remapList);
+  add(new AjaxLink<ImportTask>("add",itemModel){
+    @Override public void onClick(    AjaxRequestTarget target){
+      ImportTask task=getModelObject();
+      remaps.add(new AttributeRemapTransform(null,null));
+      target.addComponent(remapContainer);
+    }
+  }
+);
+}

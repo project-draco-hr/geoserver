@@ -1,0 +1,15 @@
+{
+  StringWriter buffer=new StringWriter();
+  Importer im=createNiceMock(Importer.class);
+  PageInfo pi=createNiceMock(PageInfo.class);
+  replay(im,pi);
+  ImportJSONWriter jsonio=new ImportJSONWriter(im,pi,buffer);
+  ImportContext c=new ImportContext(0);
+  c.addTask(new ImportTask());
+  jsonio.transform(transform,0,c.task(0),true,1);
+  ImportTransform transform2=new ImportJSONReader(im,buffer.toString()).transform();
+  PropertyDescriptor[] pd=BeanUtils.getPropertyDescriptors(transform.getClass());
+  for (int i=0; i < pd.length; i++) {
+    assertEquals("expected same value of " + pd[i].getName(),pd[i].getReadMethod().invoke(transform),pd[i].getReadMethod().invoke(transform2));
+  }
+}

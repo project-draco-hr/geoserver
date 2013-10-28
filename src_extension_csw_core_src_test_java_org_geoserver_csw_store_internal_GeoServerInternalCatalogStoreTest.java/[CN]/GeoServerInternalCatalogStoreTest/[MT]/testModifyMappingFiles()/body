@@ -1,0 +1,19 @@
+{
+  File root=testData.getDataDirectoryRoot();
+  File csw=new File(root,"csw");
+  if (csw.exists()) {
+    csw.delete();
+  }
+  InternalCatalogStore store=new GeoServerInternalCatalogStore(this.getGeoServer());
+  File record=new File(csw,"Record.properties");
+  assertTrue(record.exists());
+  assertNotNull(store.getMapping("MD_Metadata").getElement("fileIdentifier.CharacterString"));
+  assertNotNull(store.getMapping("Record").getElement("identifier.value"));
+  assertNull(store.getMapping("Record").getElement("format.value"));
+  Thread.sleep(1001);
+  PrintWriter out=new PrintWriter(new BufferedWriter(new FileWriter(record,true)));
+  out.println("\nformat.value='img/jpeg'");
+  out.close();
+  Thread.sleep(1001);
+  assertEquals("img/jpeg",store.getMapping("Record").getElement("format.value").getContent().toString());
+}

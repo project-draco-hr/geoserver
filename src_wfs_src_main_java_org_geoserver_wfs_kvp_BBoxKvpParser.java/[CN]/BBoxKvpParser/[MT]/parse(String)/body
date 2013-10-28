@@ -38,7 +38,7 @@
   if (minz > maxz) {
     throw new ServiceException("illegal bbox, minZ: " + minz + " is "+ "greater than maxZ: "+ maxz);
   }
-  CoordinateReferenceSystem crs=null;
+  String srs=null;
   if (unparsed.size() > countco) {
     StringBuilder sb=new StringBuilder();
     for (int i=countco; i < unparsed.size(); i++) {
@@ -47,14 +47,13 @@
         sb.append(",");
       }
     }
-    crs=CRS.decode(sb.toString());
-  }
- else {
+    srs=sb.toString();
   }
   if (countco == 6) {
+    CoordinateReferenceSystem crs=srs != null ? CRS.decode(srs) : null;
     return new ReferencedEnvelope3D(minx,maxx,miny,maxy,minz,maxz,crs);
   }
  else {
-    return new ReferencedEnvelope(minx,maxx,miny,maxy,crs);
+    return new SRSEnvelope(minx,maxx,miny,maxy,srs);
   }
 }

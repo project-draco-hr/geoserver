@@ -1,0 +1,28 @@
+{
+  File dir=unpack("shape/archsites_epsg_prj.zip");
+  ImportContext context=importer.createContext(new Directory(dir));
+  assertEquals(1,context.getTasks().size());
+  for (int i=0; i < context.getTasks().size(); i++) {
+    assertNotNull(context.getTasks().get(i).getStore());
+    assertNotNull(context.getTasks().get(i).getStore().getCatalog());
+  }
+  CountingVisitor cv=new CountingVisitor();
+  store.add(context);
+  assertNotNull(context.getId());
+  assertNotNull(context.getTasks().get(0).getLayer());
+  ImportContext context2=store.get(context.getId());
+  assertNotNull(context2);
+  assertEquals(context.getId(),context2.getId());
+  store.query(cv);
+  assertEquals(1,cv.getCount());
+  SearchingVisitor sv=new SearchingVisitor(context.getId());
+  store.query(sv);
+  assertTrue(sv.isFound());
+  importer.reattach(context2);
+  assertEquals(1,context2.getTasks().size());
+  for (int i=0; i < context2.getTasks().size(); i++) {
+    assertNotNull(context2.getTasks().get(i).getStore());
+    assertNotNull(context2.getTasks().get(i).getStore().getCatalog());
+  }
+  assertNotNull(context2.getTasks().get(0).getLayer());
+}

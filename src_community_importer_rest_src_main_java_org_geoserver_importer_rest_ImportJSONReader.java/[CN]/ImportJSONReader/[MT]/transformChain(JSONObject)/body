@@ -1,0 +1,18 @@
+{
+  String type=json.getString("type");
+  TransformChain chain=null;
+  if ("vector".equalsIgnoreCase(type) || "VectorTransformChain".equalsIgnoreCase(type)) {
+    chain=new VectorTransformChain();
+  }
+ else   if ("raster".equalsIgnoreCase(type) || "RasterTransformChain".equalsIgnoreCase(type)) {
+    chain=new RasterTransformChain();
+  }
+ else {
+    throw new IOException("Unable to parse transformChain of type " + type);
+  }
+  JSONArray transforms=json.getJSONArray("transforms");
+  for (int i=0; i < transforms.size(); i++) {
+    chain.add(transform(transforms.getJSONObject(i)));
+  }
+  return chain;
+}
