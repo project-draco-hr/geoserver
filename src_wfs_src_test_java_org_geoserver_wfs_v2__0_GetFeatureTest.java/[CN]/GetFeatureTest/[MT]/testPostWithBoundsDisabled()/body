@@ -1,26 +1,21 @@
 {
   WFSInfo wfs=getWFS();
   boolean oldFeatureBounding=wfs.isFeatureBounding();
-  wfs.setFeatureBounding(true);
+  wfs.setFeatureBounding(false);
   getGeoServer().save(wfs);
   try {
     String xml="<wfs:GetFeature service='WFS' version='2.0.0' " + "xmlns:cdf='http://www.opengis.net/cite/data' " + "xmlns:fes='" + FES.NAMESPACE + "' "+ "xmlns:wfs='"+ WFS.NAMESPACE+ "'> "+ "<wfs:Query typeNames='cdf:Other'> "+ "</wfs:Query> "+ "</wfs:GetFeature>";
     Document doc=postAsDOM("wfs",xml);
     assertGML32(doc);
     NodeList aggregatedBoundList=doc.getElementsByTagName("wfs:boundedBy");
-    assertFalse(aggregatedBoundList.getLength() == 0);
+    assertTrue(aggregatedBoundList.getLength() == 0);
     NodeList features=doc.getElementsByTagName("cdf:Other");
     assertFalse(features.getLength() == 0);
     for (int i=0; i < features.getLength(); i++) {
       Element feature=(Element)features.item(i);
       assertTrue(feature.hasAttribute("gml:id"));
       NodeList boundList=feature.getElementsByTagName("gml:boundedBy");
-      assertEquals(1,boundList.getLength());
-      Element boundedBy=(Element)boundList.item(0);
-      NodeList boxList=boundedBy.getElementsByTagName("gml:Envelope");
-      assertEquals(1,boxList.getLength());
-      Element box=(Element)boxList.item(0);
-      assertTrue(box.hasAttribute("srsName"));
+      assertEquals(0,boundList.getLength());
     }
   }
   finally {
