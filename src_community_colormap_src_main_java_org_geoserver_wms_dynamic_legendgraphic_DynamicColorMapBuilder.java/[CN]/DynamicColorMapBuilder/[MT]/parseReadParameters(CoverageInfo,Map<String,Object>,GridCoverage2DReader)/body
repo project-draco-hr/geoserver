@@ -1,0 +1,16 @@
+{
+  final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
+  GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,coverageInfo.getParameters(),false);
+  final List<GeneralParameterDescriptor> parameterDescriptors=new ArrayList<GeneralParameterDescriptor>(readParametersDescriptor.getDescriptor().descriptors());
+  Set<ParameterDescriptor<List>> dynamicParameters=reader.getDynamicParameters();
+  parameterDescriptors.addAll(dynamicParameters);
+  final ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
+  final MetadataMap metadata=coverageInfo.getMetadata();
+  final ReferencedEnvelope testEnvelope=createTestEnvelope(coverageInfo);
+  final GridGeometry2D gridGeometry=new GridGeometry2D(new GridEnvelope2D(new Rectangle(0,0,2,2)),testEnvelope);
+  readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,gridGeometry,AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString());
+  readParameters=parseTimeParameter(metadata,readParameters,parameterDescriptors,map);
+  readParameters=parseElevationParameter(metadata,readParameters,parameterDescriptors,map);
+  readParameters=parseCustomDomains(dimensions,metadata,readParameters,parameterDescriptors,map);
+  return readParameters;
+}

@@ -1,0 +1,66 @@
+{
+  GridCoverage2D coverage=null;
+  try {
+    ColorMap cmap=null;
+    FilterFunction_svgColorMap colorMapFilterFunction=new FilterFunction_svgColorMap();
+    FilterFunction_gridCoverageStats statsFilterFunction=new FilterFunction_gridCoverageStats();
+    String layerID="";
+    int digits=DEFAULT_DIGITS;
+    Set<String> params=map.keySet();
+    for (    String param : params) {
+      if (param.equalsIgnoreCase("LAYER")) {
+        layerID=(String)map.get("LAYER");
+      }
+ else       if (param.equalsIgnoreCase("DIGITS")) {
+        digits=Integer.parseInt((String)map.get("DIGITS"));
+      }
+    }
+    final int indexOf=layerID.indexOf(":");
+    final CoverageInfo coverageInfo=geoserverCatalog.getCoverageByName(new NameImpl(layerID.substring(0,indexOf),layerID.substring(indexOf + 1)));
+    List<CoverageDimensionInfo> dimensions=coverageInfo.getDimensions();
+    String unit="";
+    if (dimensions != null && !dimensions.isEmpty()) {
+      CoverageDimensionInfo dimensionInfo=dimensions.get(0);
+      unit=dimensionInfo.getUnit();
+    }
+    final CoverageStoreInfo storeInfo=coverageInfo.getStore();
+    final GridCoverage2DReader reader=(GridCoverage2DReader)geoserverCatalog.getResourcePool().getGridCoverageReader(storeInfo,null);
+    GeneralParameterValue[] parameters=parseReadParameters(coverageInfo,map,reader);
+    coverage=(GridCoverage2D)reader.read(parameters);
+    final double min=(Double)statsFilterFunction.evaluate(coverage,"minimum");
+    final double max=(Double)statsFilterFunction.evaluate(coverage,"maximum");
+    cmap=(ColorMap)colorMapFilterFunction.evaluate(colorMap,min,max);
+    final Builder cmapLegendBuilder=new ColorMapLegendCreator.Builder();
+    if (cmap != null && cmap.getColorMapEntries() != null && cmap.getColorMapEntries().length > 0) {
+      cmapLegendBuilder.setColorMapType(cmap.getType());
+      cmapLegendBuilder.setExtended(cmap.getExtendedColors());
+      cmapLegendBuilder.setRequestedDimension(new Dimension(request.getWidth(),request.getHeight()));
+      cmapLegendBuilder.setLabelFont(LegendUtils.getLabelFont(request));
+      cmapLegendBuilder.setLabelFontColor(LegendUtils.getLabelFontColor(request));
+      cmapLegendBuilder.setUnit(unit);
+      cmapLegendBuilder.setDigits(digits);
+      cmapLegendBuilder.setAlternativeColorMapEntryBuilder(true);
+      final ColorMapEntry[] colorMapEntries=cmap.getColorMapEntries();
+      for (      ColorMapEntry ce : colorMapEntries)       if (ce != null)       cmapLegendBuilder.addColorMapEntry(ce);
+      cmapLegendBuilder.checkAdditionalOptions();
+      ColorMapLegendCreator cMapLegendCreator=cmapLegendBuilder.create();
+      return new BufferedImageLegendGraphic(cMapLegendCreator.getLegend());
+    }
+    throw new RuntimeException("Unable to create a legend due to missing colorMap");
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+catch (  ParseException e) {
+    throw new RuntimeException(e);
+  }
+ finally {
+    if (coverage != null) {
+      try {
+        coverage.dispose(true);
+      }
+ catch (      Throwable t) {
+      }
+    }
+  }
+}
