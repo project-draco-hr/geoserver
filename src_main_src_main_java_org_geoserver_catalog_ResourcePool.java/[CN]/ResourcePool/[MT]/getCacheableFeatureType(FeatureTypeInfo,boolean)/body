@@ -1,23 +1,26 @@
 {
   String key=getFeatureTypeInfoKey(info,handleProjectionPolicy);
+  FeatureType ft=(FeatureType)featureTypeCache.get(key);
+  if (ft == null) {
 synchronized (featureTypeCache) {
-    FeatureType ft=(FeatureType)featureTypeCache.get(key);
-    if (ft == null) {
-      DataAccess<? extends FeatureType,? extends Feature> dataAccess=getDataStore(info.getStore());
-      if (isSQLView(info,dataAccess)) {
-        VirtualTable vt=info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class);
-        JDBCDataStore jstore=(JDBCDataStore)dataAccess;
-        if (!jstore.getVirtualTables().containsValue(vt)) {
-          jstore.addVirtualTable(vt);
+      ft=(FeatureType)featureTypeCache.get(key);
+      if (ft == null) {
+        DataAccess<? extends FeatureType,? extends Feature> dataAccess=getDataStore(info.getStore());
+        if (isSQLView(info,dataAccess)) {
+          VirtualTable vt=info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class);
+          JDBCDataStore jstore=(JDBCDataStore)dataAccess;
+          if (!jstore.getVirtualTables().containsValue(vt)) {
+            jstore.addVirtualTable(vt);
+          }
+          ft=jstore.getSchema(vt.getName());
         }
-        ft=jstore.getSchema(vt.getName());
-      }
  else {
-        ft=dataAccess.getSchema(info.getQualifiedNativeName());
+          ft=dataAccess.getSchema(info.getQualifiedNativeName());
+        }
+        ft=buildFeatureType(info,handleProjectionPolicy,ft);
+        featureTypeCache.put(key,ft);
       }
-      ft=buildFeatureType(info,handleProjectionPolicy,ft);
-      featureTypeCache.put(key,ft);
     }
-    return ft;
   }
+  return ft;
 }
