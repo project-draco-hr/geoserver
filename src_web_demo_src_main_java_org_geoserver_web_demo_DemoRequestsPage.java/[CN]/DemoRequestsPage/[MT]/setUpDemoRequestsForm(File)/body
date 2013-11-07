@@ -22,12 +22,26 @@
     @Override protected void onSubmit(    AjaxRequestTarget target){
       final String reqFileName=demoRequestsList.getModelValue();
       final String contents;
+      String proxyBaseUrl;
       final String baseUrl;
 {
         WebRequest request=(WebRequest)DemoRequestsPage.this.getRequest();
         HttpServletRequest httpServletRequest;
         httpServletRequest=((WebRequest)request).getHttpServletRequest();
-        baseUrl=ResponseUtils.baseURL(httpServletRequest);
+        proxyBaseUrl=GeoServerExtensions.getProperty("PROXY_BASE_URL");
+        if (StringUtils.isEmpty(proxyBaseUrl)) {
+          GeoServer gs=getGeoServer();
+          proxyBaseUrl=gs.getGlobal().getSettings().getProxyBaseUrl();
+          if (StringUtils.isEmpty(proxyBaseUrl)) {
+            baseUrl=ResponseUtils.baseURL(httpServletRequest);
+          }
+ else {
+            baseUrl=proxyBaseUrl;
+          }
+        }
+ else {
+          baseUrl=proxyBaseUrl;
+        }
       }
       try {
         contents=getFileContents(reqFileName);
@@ -38,13 +52,13 @@
       }
       boolean demoRequestIsHttpGet=reqFileName.endsWith(".url");
       final String service=reqFileName.substring(0,reqFileName.indexOf('_')).toLowerCase();
-      final String serviceUrl=baseUrl + service;
       if (demoRequestIsHttpGet) {
         String url=baseUrl + contents;
         urlTextField.setModelObject(url);
         body.setModelObject("");
       }
  else {
+        String serviceUrl=baseUrl + service;
         urlTextField.setModelObject(serviceUrl);
         body.setModelObject(contents);
       }
