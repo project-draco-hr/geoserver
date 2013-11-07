@@ -1,10 +1,11 @@
 {
-  GetFeatureType request=(GetFeatureType)OwsUtils.parameter(operation.getParameters(),GetFeatureType.class);
-  OgrFormat format=formats.get(request.getOutputFormat());
+  GetFeatureRequest request=GetFeatureRequest.adapt(operation.getParameters()[0]);
+  String outputFormat=request.getOutputFormat();
+  OgrFormat format=formats.get(outputFormat);
   if (format == null) {
-    throw new WFSException("Unknown output format " + request.getOutputFormat());
+    throw new WFSException("Unknown output format " + outputFormat);
   }
- else   if (format.singleFile && request.getQuery().size() <= 1) {
+ else   if (format.singleFile && request.getQueries().size() <= 1) {
     if (format.mimeType != null) {
       return format.mimeType;
     }

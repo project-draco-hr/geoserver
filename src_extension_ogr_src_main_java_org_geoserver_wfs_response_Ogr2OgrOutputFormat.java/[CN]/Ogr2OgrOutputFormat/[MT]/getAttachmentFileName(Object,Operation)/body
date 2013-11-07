@@ -1,11 +1,13 @@
 {
-  GetFeatureType request=(GetFeatureType)OwsUtils.parameter(operation.getParameters(),GetFeatureType.class);
-  OgrFormat format=formats.get(request.getOutputFormat());
+  GetFeatureRequest request=GetFeatureRequest.adapt(operation.getParameters()[0]);
+  String outputFormat=request.getOutputFormat();
+  OgrFormat format=formats.get(outputFormat);
+  List<Query> queries=request.getQueries();
   if (format == null) {
-    throw new WFSException("Unknown output format " + request.getOutputFormat());
+    throw new WFSException("Unknown output format " + outputFormat);
   }
- else   if (!format.singleFile || request.getQuery().size() > 1) {
-    String outputFileName=((QName)((QueryType)request.getQuery().get(0)).getTypeName().get(0)).getLocalPart();
+ else   if (!format.singleFile || queries.size() > 1) {
+    String outputFileName=queries.get(0).getTypeNames().get(0).getLocalPart();
     return outputFileName + ".zip";
   }
  else {
