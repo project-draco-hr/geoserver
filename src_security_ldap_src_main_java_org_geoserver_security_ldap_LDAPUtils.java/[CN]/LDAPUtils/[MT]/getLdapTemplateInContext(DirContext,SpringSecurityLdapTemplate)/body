@@ -1,0 +1,22 @@
+{
+  SpringSecurityLdapTemplate authTemplate;
+  if (ctx == null) {
+    authTemplate=template;
+    ((AbstractContextSource)authTemplate.getContextSource()).setAnonymousReadOnly(true);
+  }
+ else {
+    authTemplate=new SpringSecurityLdapTemplate(new ContextSource(){
+      @Override public DirContext getReadOnlyContext() throws NamingException {
+        return ctx;
+      }
+      @Override public DirContext getReadWriteContext() throws NamingException {
+        return ctx;
+      }
+      @Override public DirContext getContext(      String principal,      String credentials) throws NamingException {
+        return ctx;
+      }
+    }
+);
+  }
+  return authTemplate;
+}

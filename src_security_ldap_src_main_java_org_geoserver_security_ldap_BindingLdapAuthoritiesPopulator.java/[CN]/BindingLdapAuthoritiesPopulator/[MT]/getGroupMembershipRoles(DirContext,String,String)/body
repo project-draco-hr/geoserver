@@ -7,23 +7,7 @@
     logger.debug("Searching for roles for user '" + username + "', DN = "+ "'"+ userDn+ "', with filter "+ groupSearchFilter+ " in search base '"+ getGroupSearchBase()+ "'");
   }
   SpringSecurityLdapTemplate authTemplate;
-  if (ctx == null) {
-    authTemplate=ldapTemplate;
-  }
- else {
-    authTemplate=new SpringSecurityLdapTemplate(new ContextSource(){
-      @Override public DirContext getReadOnlyContext() throws NamingException {
-        return ctx;
-      }
-      @Override public DirContext getReadWriteContext() throws NamingException {
-        return ctx;
-      }
-      @Override public DirContext getContext(      String principal,      String credentials) throws NamingException {
-        return ctx;
-      }
-    }
-);
-  }
+  authTemplate=(SpringSecurityLdapTemplate)LDAPUtils.getLdapTemplateInContext(ctx,ldapTemplate);
   Set<String> userRoles=authTemplate.searchForSingleAttributeValues(getGroupSearchBase(),groupSearchFilter,new String[]{userDn,username},groupRoleAttribute);
   if (logger.isDebugEnabled()) {
     logger.debug("Roles from search: " + userRoles);

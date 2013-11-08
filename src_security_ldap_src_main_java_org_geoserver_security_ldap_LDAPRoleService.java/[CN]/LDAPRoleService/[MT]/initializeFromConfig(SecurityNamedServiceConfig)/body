@@ -1,0 +1,31 @@
+{
+  super.initializeFromConfig(config);
+  LDAPRoleServiceConfig ldapConfig=(LDAPRoleServiceConfig)config;
+  ldapContext=LDAPUtils.createLdapContext(ldapConfig);
+  if (ldapConfig.isBindBeforeGroupSearch()) {
+    user=ldapConfig.getUser();
+    password=ldapConfig.getPassword();
+    template=new BindingLdapTemplate(ldapContext);
+  }
+ else {
+    template=new SpringSecurityLdapTemplate(ldapContext);
+  }
+  this.groupSearchBase=ldapConfig.getGroupSearchBase();
+  if (isNotEmpty(ldapConfig.getGroupSearchFilter())) {
+    this.groupSearchFilter=ldapConfig.getGroupSearchFilter();
+    Matcher m=lookForMembershipAttribute.matcher(groupSearchFilter);
+    if (m.matches()) {
+      groupMembershipAttribute=m.group(1);
+      userMembershipPattern=Pattern.compile("^" + Pattern.quote(m.group(2)) + "(.*)"+ Pattern.quote(m.group(3))+ "$");
+    }
+  }
+  if (isNotEmpty(ldapConfig.getAllGroupsSearchFilter())) {
+    this.allGroupsSearchFilter=ldapConfig.getAllGroupsSearchFilter();
+  }
+  if (isNotEmpty(ldapConfig.getAdminGroup())) {
+    this.adminGroup=ldapConfig.getAdminGroup();
+  }
+  if (isNotEmpty(ldapConfig.getGroupAdminGroup())) {
+    this.groupAdminGroup=ldapConfig.getGroupAdminGroup();
+  }
+}
