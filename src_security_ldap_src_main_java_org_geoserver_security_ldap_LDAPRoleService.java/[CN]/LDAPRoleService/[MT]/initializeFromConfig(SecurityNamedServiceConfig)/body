@@ -16,7 +16,8 @@
     Matcher m=lookForMembershipAttribute.matcher(groupSearchFilter);
     if (m.matches()) {
       groupMembershipAttribute=m.group(1);
-      userMembershipPattern=Pattern.compile("^" + Pattern.quote(m.group(2)) + "(.*)"+ Pattern.quote(m.group(3))+ "$");
+      lookupUserForDn=m.group(3).equals("1");
+      userMembershipPattern=Pattern.compile("^" + Pattern.quote(m.group(2)) + "(.*)"+ Pattern.quote(m.group(4))+ "$");
     }
   }
   if (isNotEmpty(ldapConfig.getAllGroupsSearchFilter())) {
@@ -27,5 +28,13 @@
   }
   if (isNotEmpty(ldapConfig.getGroupAdminGroup())) {
     this.groupAdminGroup=ldapConfig.getGroupAdminGroup();
+  }
+  if (isNotEmpty(ldapConfig.getUserFilter())) {
+    this.userFilter=ldapConfig.getUserFilter();
+    Matcher m=lookForMembershipAttribute.matcher(userFilter);
+    if (m.matches()) {
+      userNameAttribute=m.group(1);
+      userNamePattern=Pattern.compile("^" + Pattern.quote(m.group(2)) + "(.*)"+ Pattern.quote(m.group(4))+ "$");
+    }
   }
 }

@@ -1,0 +1,20 @@
+{
+  try {
+    if (!portIsBusy("127.0.0.1",LDAP_SERVER_PORT)) {
+      startApacheDirectoryServer(10389,basePath,"test",LdapTestUtils.DEFAULT_PRINCIPAL,LdapTestUtils.DEFAULT_PASSWORD,allowAnonymous);
+      LdapContextSource contextSource=new LdapContextSource();
+      contextSource.setUrl(ldapServerUrl);
+      contextSource.setUserDn(LdapTestUtils.DEFAULT_PRINCIPAL);
+      contextSource.setPassword(LdapTestUtils.DEFAULT_PASSWORD);
+      contextSource.setPooled(false);
+      contextSource.afterPropertiesSet();
+      LdapTemplate template=new LdapTemplate(contextSource);
+      LdapTestUtils.cleanAndSetup(template.getContextSource(),new DistinguishedName("dc=example,dc=com"),new ClassPathResource(ldifPath));
+      return true;
+    }
+    return false;
+  }
+ catch (  Exception ee) {
+    return false;
+  }
+}
