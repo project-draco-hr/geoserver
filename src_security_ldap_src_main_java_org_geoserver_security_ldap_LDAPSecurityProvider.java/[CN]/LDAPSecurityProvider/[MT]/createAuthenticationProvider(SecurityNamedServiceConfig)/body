@@ -1,19 +1,6 @@
 {
   LDAPSecurityServiceConfig ldapConfig=(LDAPSecurityServiceConfig)config;
-  DefaultSpringSecurityContextSource ldapContext=new DefaultSpringSecurityContextSource(ldapConfig.getServerURL());
-  ldapContext.setCacheEnvironmentProperties(false);
-  ldapContext.setAuthenticationSource(new SpringSecurityAuthenticationSource());
-  if (ldapConfig.isUseTLS()) {
-    ldapContext.setPooled(false);
-    DefaultTlsDirContextAuthenticationStrategy tls=new DefaultTlsDirContextAuthenticationStrategy();
-    tls.setHostnameVerifier(new HostnameVerifier(){
-      @Override public boolean verify(      String hostname,      SSLSession session){
-        return true;
-      }
-    }
-);
-    ldapContext.setAuthenticationStrategy(tls);
-  }
+  LdapContextSource ldapContext=LDAPUtils.createLdapContext(ldapConfig);
   GeoserverLdapBindAuthenticator authenticator=new GeoserverLdapBindAuthenticator(ldapContext);
   authenticator.setUserFilter(ldapConfig.getUserFilter());
   authenticator.setUserFormat(ldapConfig.getUserFormat());

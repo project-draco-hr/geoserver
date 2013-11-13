@@ -1,0 +1,35 @@
+{
+  try {
+    DirContext ctx=getContextSource().getContext(username,password);
+    ContextExecutor ce=new ContextExecutor(){
+      public Object executeWithContext(      DirContext ctx) throws javax.naming.NamingException {
+        callback.executeWithContext(ctx,null);
+        return null;
+      }
+    }
+;
+    try {
+      ce.executeWithContext(ctx);
+    }
+ catch (    javax.naming.NamingException e) {
+      throw LdapUtils.convertLdapException(e);
+    }
+catch (    Exception e) {
+      throw e;
+    }
+ finally {
+      if (ctx != null) {
+        try {
+          ctx.close();
+        }
+ catch (        Exception e) {
+        }
+      }
+    }
+    return true;
+  }
+ catch (  Exception e) {
+    errorCallback.execute(e);
+    return false;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  final SortedSet<GeoServerRole> roles=new TreeSet<GeoServerRole>();
+  final Set<String> userDn=new HashSet<String>();
+  userDn.add(username);
+  if (lookupUserForDn && isNotEmpty(userFilter)) {
+    authenticateIfNeeded(new AuthenticatedLdapEntryContextCallback(){
+      @Override public void executeWithContext(      DirContext ctx,      LdapEntryIdentification ldapEntryIdentification){
+        try {
+          String dn=LDAPUtils.getLdapTemplateInContext(ctx,template).searchForSingleEntry("",userFilter,new String[]{username}).getDn().toString();
+          userDn.clear();
+          userDn.add(dn);
+        }
+ catch (        Exception e) {
+        }
+      }
+    }
+);
+  }
+  authenticateIfNeeded(new AuthenticatedLdapEntryContextCallback(){
+    @Override public void executeWithContext(    DirContext ctx,    LdapEntryIdentification ldapEntryIdentification){
+      fillRolesForUser(ctx,username,userDn.iterator().next(),roles);
+    }
+  }
+);
+  return Collections.unmodifiableSortedSet(roles);
+}
