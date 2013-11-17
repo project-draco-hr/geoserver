@@ -1,0 +1,27 @@
+{
+  Style externalGraphicStyle=readSLD("ExternalGraphicDemo.sld");
+  assertNotNull(externalGraphicStyle);
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  CoverageInfo cInfo=getCatalog().getCoverageByName("world");
+  assertNotNull(cInfo);
+  GridCoverage coverage=cInfo.getGridCoverage(null,null);
+  try {
+    req.setStyle(externalGraphicStyle);
+    req.setLayer(null);
+    req.setScale(1.0);
+    final int HEIGHT_HINT=30;
+    req.setHeight(HEIGHT_HINT);
+    this.legendProducer.buildLegendGraphic(req);
+    BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+    assertPixel(image,10,HEIGHT_HINT + HEIGHT_HINT / 2,Color.YELLOW);
+  }
+  finally {
+    RenderedImage ri=coverage.getRenderedImage();
+    if (coverage instanceof GridCoverage2D) {
+      ((GridCoverage2D)coverage).dispose(true);
+    }
+    if (ri instanceof PlanarImage) {
+      ImageUtilities.disposePlanarImageChain((PlanarImage)ri);
+    }
+  }
+}
