@@ -6,28 +6,7 @@
   List<MapLayerInfo> mapLayers=req.getLayers();
   Preconditions.checkState(layers.size() == mapLayers.size(),"Number of map layers not same as number of rendered layers");
   List<MapLayerInfo> tileLayers=new ArrayList();
-  Map formatOpts=req.getFormatOptions();
-  Mode mode=formatOpts.containsKey("mode") ? Mode.valueOf(((String)formatOpts.get("mode")).toUpperCase()) : Mode.VECTOR;
-  if (mode == Mode.TILED) {
-    tileLayers.addAll(mapLayers);
-  }
- else {
-    for (int i=0; i < layers.size(); i++) {
-      Layer layer=layers.get(i);
-      MapLayerInfo mapLayer=mapLayers.get(i);
-      if (layer instanceof GridCoverageLayer) {
-        if (mode == Mode.HYBRID) {
-          addCoverageLayer(geopkg,(GridCoverageLayer)layer,mapLayer,map);
-        }
- else {
-          tileLayers.add(mapLayer);
-        }
-      }
- else {
-        tileLayers.add(mapLayer);
-      }
-    }
-  }
+  tileLayers.addAll(mapLayers);
   addTileLayers(geopkg,tileLayers,map);
   geopkg.close();
   final File dbFile=geopkg.getFile();
