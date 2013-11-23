@@ -1,7 +1,20 @@
 {
-  GetFeatureTypeImpl gft=(GetFeatureTypeImpl)getFeature.getParameters()[0];
-  String atts=(String)gft.getFormatOptions().get("ATTRIBUTES");
-  String sha1SyncJson=(String)gft.getFormatOptions().get("SYNC");
+  Object p0=getFeature.getParameters()[0];
+  String atts;
+  String sha1SyncJson;
+  if (p0 instanceof net.opengis.wfs.impl.GetFeatureTypeImpl) {
+    net.opengis.wfs.impl.GetFeatureTypeImpl gft=(net.opengis.wfs.impl.GetFeatureTypeImpl)p0;
+    atts=(String)gft.getFormatOptions().get("ATTRIBUTES");
+    sha1SyncJson=(String)gft.getFormatOptions().get("SYNC");
+  }
+ else   if (p0 instanceof net.opengis.wfs20.impl.GetFeatureTypeImpl) {
+    net.opengis.wfs20.impl.GetFeatureTypeImpl gft=(net.opengis.wfs20.impl.GetFeatureTypeImpl)p0;
+    atts=(String)gft.getFormatOptions().get("ATTRIBUTES");
+    sha1SyncJson=(String)gft.getFormatOptions().get("SYNC");
+  }
+ else {
+    throw new IllegalArgumentException("unknown type: " + p0);
+  }
   if (sha1SyncJson == null) {
     sha1SyncJson=JUNIT_SHA1_SYNC.get();
   }
