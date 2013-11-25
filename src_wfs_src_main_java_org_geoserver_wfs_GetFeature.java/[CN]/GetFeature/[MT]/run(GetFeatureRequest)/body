@@ -33,18 +33,13 @@
   }
   int count=0;
   int totalCount=0;
-  if (!request.getVersion().startsWith("2")) {
-    totalCount=-1;
-  }
-  if (totalCount > -1 && maxFeatures == Integer.MAX_VALUE) {
-    totalCount=-1;
-  }
   int totalOffset=request.getStartIndex() != null ? request.getStartIndex().intValue() : -1;
   if (totalOffset == -1 && request.getVersion().startsWith("2") && wfs.isCiteCompliant()) {
     totalOffset=0;
   }
   int offset=totalOffset;
   List results=new ArrayList();
+  List<CountExecutor> totalCountExecutors=new ArrayList<CountExecutor>();
   try {
     for (int i=0; (i < queries.size()) && (count < maxFeatures); i++) {
       Query query=queries.get(i);
@@ -176,14 +171,12 @@
             }
           }
         }
-        if (totalCount > -1) {
-          if (calculateSize && queryMaxFeatures == Integer.MAX_VALUE && offset == 0) {
-            totalCount+=size;
-          }
+        if (calculateSize && queryMaxFeatures == Integer.MAX_VALUE && offset == 0) {
+          totalCountExecutors.add(new CountExecutor(size));
+        }
  else {
-            org.geotools.data.Query q2=toDataQuery(query,filter,0,Integer.MAX_VALUE,source,request,allPropNames.get(0),viewParam,joins);
-            totalCount+=source.getFeatures(q2).size();
-          }
+          org.geotools.data.Query qTotal=toDataQuery(query,filter,0,Integer.MAX_VALUE,source,request,allPropNames.get(0),viewParam,joins);
+          totalCountExecutors.add(new CountExecutor(source,qTotal));
         }
         List<PropertyName> metaPropNames=propNames.get(0);
         if (features.getSchema() instanceof SimpleFeatureType && metaPropNames != null && metaPropNames.size() < allPropNames.get(0).size()) {
@@ -204,6 +197,26 @@
           e.setLocator(query.getHandle());
         }
         throw e;
+      }
+    }
+    if (!request.getVersion().startsWith("2")) {
+      totalCount=-1;
+    }
+ else {
+      if (count < maxFeatures) {
+        totalCount=count;
+      }
+ else {
+        for (        CountExecutor q : totalCountExecutors) {
+          int result=q.getCount();
+          if (result == -1) {
+            totalCount=-1;
+            break;
+          }
+ else {
+            totalCount+=result;
+          }
+        }
       }
     }
   }

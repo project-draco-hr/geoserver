@@ -1,0 +1,33 @@
+{
+  WFSInfo wfs=getWFS();
+  int oldMaxFeatures=wfs.getMaxFeatures();
+  boolean hitsIgnoreMaxFeatures=wfs.isHitsIgnoreMaxFeatures();
+  try {
+    wfs.setMaxFeatures(1);
+    wfs.setHitsIgnoreMaxFeatures(true);
+    getGeoServer().save(wfs);
+    Document doc=getAsDOM("wfs?request=GetFeature&typename=cdf:Seven&version=2.0.0&resultType=hits&service=wfs");
+    assertGML32(doc);
+    print(doc);
+    assertEquals("7",doc.getDocumentElement().getAttribute("numberMatched"));
+    assertEquals("0",doc.getDocumentElement().getAttribute("numberReturned"));
+    doc=getAsDOM("wfs?request=GetFeature&typename=cdf:Seven&version=2.0.0&resultType=results&service=wfs");
+    assertGML32(doc);
+    assertEquals("7",doc.getDocumentElement().getAttribute("numberMatched"));
+    assertEquals("1",doc.getDocumentElement().getAttribute("numberReturned"));
+    doc=getAsDOM("wfs?request=GetFeature&typename=cdf:Seven&version=2.0.0&resultType=hits&service=wfs");
+    wfs.setHitsIgnoreMaxFeatures(false);
+    getGeoServer().save(wfs);
+    assertEquals("7",doc.getDocumentElement().getAttribute("numberMatched"));
+    assertEquals("0",doc.getDocumentElement().getAttribute("numberReturned"));
+    doc=getAsDOM("wfs?request=GetFeature&typename=cdf:Seven&version=2.0.0&resultType=results&service=wfs");
+    assertGML32(doc);
+    assertEquals("7",doc.getDocumentElement().getAttribute("numberMatched"));
+    assertEquals("1",doc.getDocumentElement().getAttribute("numberReturned"));
+  }
+  finally {
+    wfs.setMaxFeatures(oldMaxFeatures);
+    wfs.setHitsIgnoreMaxFeatures(hitsIgnoreMaxFeatures);
+    getGeoServer().save(wfs);
+  }
+}
