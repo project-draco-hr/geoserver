@@ -1,0 +1,24 @@
+{
+  JMSInfo info=null;
+  Context ctx=new InitialContext(p);
+  ConnectionFactory factory=(ConnectionFactory)ctx.lookup(coalesce((String)p.getProperty("connectionFactoryName"),connectionFactoryName,"connectionFactory"));
+  Connection connection=factory.createConnection();
+  List<String> destinationNames=this.destinationNames;
+  if (destinationNames == null) {
+    destinationNames=new ArrayList<String>();
+    for (    String e : (((Map<String,String>)(Object)p).keySet())) {
+      if (e.startsWith(DESTINATION_PREFIX)) {
+        destinationNames.add(e.substring(DESTINATION_PREFIX.length()));
+      }
+    }
+  }
+  if (destinationNames.isEmpty()) {
+    throw new IllegalArgumentException("No destination names were provided or found.");
+  }
+  List<Destination> destinations=new ArrayList<Destination>(destinationNames.size());
+  for (  String name : destinationNames) {
+    destinations.add((Destination)ctx.lookup(name));
+  }
+  info=new JMSInfo(connection,destinations);
+  return info;
+}

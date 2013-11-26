@@ -1,11 +1,12 @@
 {
   HashMap kvp=new HashMap();
   URL url=GetMapKvpRequestReader.class.getResource("BasicPolygonsFeatureTypeConstaint.sld");
-  kvp.put("sld",URLDecoder.decode(url.toExternalForm(),"UTF-8"));
+  String decoded=URLDecoder.decode(url.toExternalForm(),"UTF-8");
+  kvp.put("sld",decoded);
   GetMapRequest request=(GetMapRequest)reader.createRequest();
   request=(GetMapRequest)reader.read(request,parseKvp(kvp),kvp);
   assertNotNull(request.getSld());
-  assertEquals(url,request.getSld());
+  assertEquals(URLKvpParser.fixURL(decoded),request.getSld().toExternalForm());
   final Style style=(Style)request.getStyles().get(0);
   assertNotNull(style);
   assertEquals("TheLibraryModeStyle",style.getName());

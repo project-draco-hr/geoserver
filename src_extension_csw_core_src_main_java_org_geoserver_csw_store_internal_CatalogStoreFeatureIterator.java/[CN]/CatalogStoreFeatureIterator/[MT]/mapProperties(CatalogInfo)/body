@@ -1,0 +1,26 @@
+{
+  String id=null;
+  for (  CatalogStoreMapping.CatalogStoreMappingElement mappingElement : mapping.elements()) {
+    Object value=mappingElement.getContent().evaluate(resource);
+    if (value != null) {
+      if (value instanceof Collection) {
+        ((Collection)value).removeAll(Collections.singleton(null));
+        if (((Collection)value).size() > 0) {
+          String[] elements=new String[((Collection)value).size()];
+          int i=0;
+          for (          Object element : (Collection)value) {
+            elements[i++]=interpolate(interpolationProperties,element.toString());
+          }
+          builder.addElement(mappingElement.getKey(),mappingElement.getSplitIndex(),elements);
+        }
+      }
+ else {
+        builder.addElement(mappingElement.getKey(),interpolate(interpolationProperties,value.toString()));
+      }
+      if (mappingElement == mapping.getIdentifierElement()) {
+        id=interpolate(interpolationProperties,value.toString());
+      }
+    }
+  }
+  return id;
+}

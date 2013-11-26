@@ -1,0 +1,16 @@
+{
+  GeoPackage geopkg=new GeoPackage();
+  for (  FeatureCollection collection : featureCollection.getFeatures()) {
+    FeatureEntry e=new FeatureEntry();
+    if (!(collection instanceof SimpleFeatureCollection)) {
+      throw new ServiceException("GeoPackage OutputFormat does not support Complex Features.");
+    }
+    geopkg.add(e,(SimpleFeatureCollection)collection);
+  }
+  geopkg.close();
+  InputStream temp=new FileInputStream(geopkg.getFile());
+  IOUtils.copy(temp,output);
+  output.flush();
+  temp.close();
+  geopkg.getFile().delete();
+}

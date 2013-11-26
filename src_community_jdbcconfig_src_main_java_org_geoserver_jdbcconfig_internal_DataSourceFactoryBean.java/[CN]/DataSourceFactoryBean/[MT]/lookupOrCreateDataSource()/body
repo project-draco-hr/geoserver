@@ -1,0 +1,22 @@
+{
+  DataSource ds=null;
+  boolean jndi=true;
+  ds=getJNDIDataSource(config.getJndiName()).orNull();
+  if (ds == null) {
+    jndi=false;
+    ds=createDataSource();
+  }
+  try {
+    ds.getConnection().close();
+  }
+ catch (  Exception ex) {
+    if (jndi) {
+      LOGGER.severe("Error connecting to JDBCConfig database. Verify the settings of your JNDI data source and that the database is available.");
+    }
+ else {
+      LOGGER.severe("Error connecting to JDBCConfig database. Verify the settings in jdbcconfig/jdbcconfig.properties and that the database is available.");
+    }
+    throw ex;
+  }
+  return ds;
+}

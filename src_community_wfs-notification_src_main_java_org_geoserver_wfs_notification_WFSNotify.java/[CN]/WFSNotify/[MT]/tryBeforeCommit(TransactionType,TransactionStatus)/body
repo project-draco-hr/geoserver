@@ -1,0 +1,55 @@
+{
+  for (  Entry<Name,Set<Identifier>> ent : ts.getAffected().entrySet()) {
+    Collection<Feature> features=new ArrayList(ent.getValue().size());
+    for (    Identifier id : ent.getValue()) {
+      features.add(ts.getFidMap().get(id));
+    }
+    try {
+      tm.triggerEvent(new CollectionsFeatureIterator<Feature>(features.iterator()),new QName(ent.getKey().getNamespaceURI(),ent.getKey().getLocalPart()),new TriggerCallback(){
+        @Override public void triggerEvent(        Feature f){
+          if (ts.checkFeature(f)) {
+            WFSNotify.this.triggerEvent(f);
+          }
+        }
+      }
+,ts.getTransaction());
+    }
+ catch (    IOException e) {
+      LOG.debug("Error checking modified features, notifications will be inaccurate:",e);
+    }
+  }
+  for (  Entry<Name,Set<Identifier>> ent : ts.getPotentiallyModified().entrySet()) {
+    try {
+      if (ent.getValue().isEmpty()) {
+        continue;
+      }
+      FeatureTypeInfo info=catalog.getFeatureTypeByName(ent.getKey());
+      if (info == null) {
+        continue;
+      }
+      Filter filter=FF.id(ent.getValue());
+      FeatureSource<? extends FeatureType,? extends Feature> source=info.getFeatureSource(null,null);
+      FeatureCollection<? extends FeatureType,? extends Feature> coll=source.getFeatures(filter);
+      FeatureIterator<? extends Feature> i=coll.features();
+      try {
+        while (i.hasNext()) {
+          Feature f=i.next();
+          if (ts.checkFeature(f)) {
+            triggerEvent(f);
+          }
+        }
+      }
+  finally {
+        i.close();
+      }
+    }
+ catch (    IOException e) {
+    }
+  }
+  for (  Entry<Name,Set<Identifier>> ent : ts.getPotentiallyModified().entrySet()) {
+    Name typeName=ent.getKey();
+    for (    Identifier id : ent.getValue()) {
+      triggerDeleteEvent(typeName,id);
+    }
+  }
+}

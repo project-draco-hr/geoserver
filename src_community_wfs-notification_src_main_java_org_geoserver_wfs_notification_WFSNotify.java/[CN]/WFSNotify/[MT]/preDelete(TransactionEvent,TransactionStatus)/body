@@ -1,0 +1,22 @@
+{
+  FeatureIterator<SimpleFeature> affected=getAffectedFeatures(event);
+  try {
+    affected=new FeatureIteratorWrapper<SimpleFeature>(affected){
+      @Override public SimpleFeature next() throws NoSuchElementException {
+        SimpleFeature next=super.next();
+        ts.affected(next);
+        return next;
+      }
+    }
+;
+    tm.triggerEvent(affected,getLayerName(event),new TriggerCallback(){
+      @Override public void triggerEvent(      Feature f){
+        ts.modified(f);
+      }
+    }
+,ts.getTransaction());
+  }
+  finally {
+    affected.close();
+  }
+}

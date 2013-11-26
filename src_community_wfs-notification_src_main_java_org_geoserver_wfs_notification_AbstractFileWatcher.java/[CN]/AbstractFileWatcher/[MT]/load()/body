@@ -1,0 +1,23 @@
+{
+  if (shouldCheck()) {
+    URLConnection conn=u.openConnection();
+    nextCheckTime=System.currentTimeMillis() + CHECK_PERIOD;
+    if (shouldUpdate(conn)) {
+      T newData;
+      try {
+        newData=doLoad(conn);
+        lastModTime=conn.getLastModified();
+      }
+ catch (      IOException e) {
+        if (data == null || !oldDataAcceptable) {
+          nextCheckTime=0;
+          throw e;
+        }
+        newData=data;
+        LOG.warn("Loading new data failed, using old data",e);
+      }
+      return data=newData;
+    }
+  }
+  return data;
+}

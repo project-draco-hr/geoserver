@@ -2,11 +2,16 @@
   Iterable<GeoServerTileLayer> tileLayers=getGeoServerTileLayers();
   List<GeoServerTileLayer> affected=new ArrayList<GeoServerTileLayer>();
   for (  GeoServerTileLayer tl : tileLayers) {
-    GeoServerTileLayerInfo info=tl.getInfo();
-    String defaultStyle=tl.getStyles();
-    Set<String> cachedStyles=info.cachedStyles();
-    if (styleName.equals(defaultStyle) || cachedStyles.contains(styleName)) {
-      affected.add(tl);
+    try {
+      GeoServerTileLayerInfo info=tl.getInfo();
+      String defaultStyle=tl.getStyles();
+      Set<String> cachedStyles=info.cachedStyles();
+      if (styleName.equals(defaultStyle) || cachedStyles.contains(styleName)) {
+        affected.add(tl);
+      }
+    }
+ catch (    Exception e) {
+      log.log(Level.SEVERE,"Failed to retrieve style info for layer" + tl.getName(),e);
     }
   }
   return affected;

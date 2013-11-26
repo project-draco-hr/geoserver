@@ -1,0 +1,27 @@
+{
+  Utilities.ensureNonNull("structuredReader",structuredReader);
+  final String coverageName=coverageInfo.getName();
+  final DimensionDescriptor descriptor=WCSDimensionsHelper.getDimensionDescriptor(structuredReader,coverageName,dimensionID);
+  if (descriptor == null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Unable to find a valid descriptor for the specified dimension ID: " + dimensionID + " for the specified coverage "+ coverageName+ "\n Returning no DimensionBean");
+    }
+    return null;
+  }
+  final String dimensionName=descriptor.getName();
+  final DimensionType dimensionType=dimensionID.equalsIgnoreCase("TIME") ? DimensionType.TIME : dimensionID.equalsIgnoreCase("ELEVATION") ? DimensionType.ELEVATION : DimensionType.CUSTOM;
+  final DimensionInfo info=enabledDimensions.get(dimensionID);
+  String units=null;
+  String symbol=null;
+  if (info != null) {
+    units=info.getUnits();
+    symbol=info.getUnitSymbol();
+  }
+  if (units == null) {
+    units=descriptor.getUnits();
+  }
+  if (symbol == null) {
+    symbol=descriptor.getUnitSymbol();
+  }
+  return new DimensionBean(dimensionName,units,symbol,accessor.getDomainDatatype(dimensionName),dimensionType,descriptor.getEndAttribute() != null);
+}

@@ -1,7 +1,7 @@
 {
   Map<String,List<Object>> dimensionSubset=new HashMap<String,List<Object>>();
-  if (dimensions != null && !dimensions.isEmpty()) {
-    Set<String> dimensionKeys=dimensions.keySet();
+  if (enabledDimensions != null && !enabledDimensions.isEmpty()) {
+    Set<String> dimensionKeys=enabledDimensions.keySet();
     for (    DimensionSubsetType dim : request.getDimensionSubset()) {
       String dimension=getDimensionName(dim);
       if (WCSDimensionsSubsetHelper.ELEVATION_NAMES.contains(dimension.toLowerCase()) || WCSDimensionsSubsetHelper.TIME_NAMES.contains(dimension.toLowerCase())) {
@@ -9,9 +9,13 @@
       }
       if (dimensionKeys.contains(dimension)) {
         List<Object> selectedValues=new ArrayList<Object>();
-        if (dim instanceof DimensionSliceType) {
+        if (dim instanceof DimensionTrimType) {
+          final DimensionTrimType trim=(DimensionTrimType)dim;
+          setSubsetRangeValue(dimension,trim.getTrimLow(),trim.getTrimHigh(),selectedValues);
+        }
+ else         if (dim instanceof DimensionSliceType) {
           final DimensionSliceType slicing=(DimensionSliceType)dim;
-          setSubsetValue(dimension,slicing,selectedValues);
+          setSubsetValue(dimension,slicing.getSlicePoint(),selectedValues);
         }
  else {
           throw new WCS20Exception("Invalid element found while attempting to parse dimension subsetting request: " + dim.getClass().toString(),WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"subset");

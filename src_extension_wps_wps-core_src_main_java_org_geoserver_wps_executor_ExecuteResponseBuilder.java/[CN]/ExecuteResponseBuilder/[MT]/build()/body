@@ -34,7 +34,15 @@
     }
  else     if (status.getPhase() == ProcessState.RUNNING) {
       ProcessStartedType startedType=f.createProcessStartedType();
-      int progressPercent=Math.round(status.getProgress() * 100);
+      int progressPercent=Math.round(status.getProgress());
+      if (progressPercent < 0) {
+        LOGGER.warning("Progress reported is below zero, fixing it to 0: " + progressPercent);
+        progressPercent=0;
+      }
+ else       if (progressPercent > 100) {
+        LOGGER.warning("Progress reported is above 100, fixing it to 100: " + progressPercent);
+        progressPercent=100;
+      }
       startedType.setPercentCompleted(new BigInteger(String.valueOf(progressPercent)));
       response.getStatus().setProcessStarted(startedType);
     }

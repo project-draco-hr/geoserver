@@ -3,17 +3,22 @@
   List<LayerInfo> result=new ArrayList<LayerInfo>();
 {
     for (    LayerInfo layer : getLayerInfos()) {
-      String name=layer.getDefaultStyle().getName();
-      if (styleName.equals(name)) {
-        result.add(layer);
-        continue;
-      }
-      for (      StyleInfo alternateStyle : layer.getStyles()) {
-        name=alternateStyle.getName();
+      try {
+        String name=layer.getDefaultStyle().getName();
         if (styleName.equals(name)) {
           result.add(layer);
-          break;
+          continue;
         }
+        for (        StyleInfo alternateStyle : layer.getStyles()) {
+          name=alternateStyle.getName();
+          if (styleName.equals(name)) {
+            result.add(layer);
+            break;
+          }
+        }
+      }
+ catch (      Exception e) {
+        log.log(Level.SEVERE,"Failed to retrieve style info for layer" + layer.getName(),e);
       }
     }
   }

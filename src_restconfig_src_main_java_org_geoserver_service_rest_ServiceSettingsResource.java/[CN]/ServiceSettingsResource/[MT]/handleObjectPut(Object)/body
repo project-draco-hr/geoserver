@@ -1,32 +1,23 @@
 {
   String workspace=getAttribute("workspace");
-  WorkspaceInfo ws=geoServer.getCatalog().getWorkspaceByName(workspace);
-  XStreamServiceLoader serviceLoader=null;
-  for (  XStreamServiceLoader<ServiceInfo> loader : loaders) {
-    if (loader.getFilename().equals(serviceXmlFileName)) {
-      serviceLoader=loader;
-    }
+  WorkspaceInfo ws=null;
+  if (workspace != null)   ws=geoServer.getCatalog().getWorkspaceByName(workspace);
+  ServiceInfo serviceInfo=(ServiceInfo)object;
+  ServiceInfo originalInfo;
+  if (ws != null) {
+    originalInfo=geoServer.getService(ws,clazz);
   }
-  ServiceInfo original=null;
-  File root=resourceLoader.find("");
-  File workspaces=resourceLoader.find("workspaces");
-  File workspaceDir=resourceLoader.find(workspaces + "/" + ws.getName());
-  if (workspace != null) {
-    if (geoServer.getService(ws,clazz) != null) {
-      original=serviceLoader.load(geoServer,workspaceDir);
-      OwsUtils.copy(object,original,clazz);
-      serviceLoader.save(original,geoServer,workspaceDir);
-    }
  else {
-      ServiceInfo serviceInfo=(ServiceInfo)object;
-      addDefaultsIfMissing(serviceInfo);
+    originalInfo=geoServer.getService(clazz);
+  }
+  if (originalInfo != null) {
+    OwsUtils.copy(serviceInfo,originalInfo,clazz);
+    geoServer.save(originalInfo);
+  }
+ else {
+    if (ws != null) {
       serviceInfo.setWorkspace(ws);
-      geoServer.add(serviceInfo);
     }
-  }
- else {
-    original=serviceLoader.load(geoServer,root);
-    OwsUtils.copy(object,original,clazz);
-    serviceLoader.save(original,geoServer,root);
+    geoServer.add(serviceInfo);
   }
 }

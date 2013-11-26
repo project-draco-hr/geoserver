@@ -1,7 +1,8 @@
 {
-  GetFeatureType gft=(GetFeatureType)getFeature.getParameters()[0];
-  OgrFormat format=formats.get(gft.getOutputFormat());
-  if (format == null)   throw new WFSException("Unknown output format " + gft.getOutputFormat());
+  GetFeatureRequest request=GetFeatureRequest.adapt(getFeature.getParameters()[0]);
+  String outputFormat=request.getOutputFormat();
+  OgrFormat format=formats.get(outputFormat);
+  if (format == null)   throw new WFSException("Unknown output format " + outputFormat);
   File tempGS=org.geoserver.data.util.IOUtils.createTempDirectory("ogrtmpin");
   File tempOGR=org.geoserver.data.util.IOUtils.createTempDirectory("ogrtmpout");
   OGRWrapper wrapper=new OGRWrapper(ogrExecutable,gdalData);
@@ -30,9 +31,15 @@
       }
     }
  else {
-      ZipOutputStream zipOut=new ZipOutputStream(output);
-      IOUtils.zipDirectory(tempOGR,zipOut,null);
-      zipOut.finish();
+      ZipOutputStream zipOut=null;
+      try {
+        zipOut=new ZipOutputStream(output);
+        IOUtils.zipDirectory(tempOGR,zipOut,null);
+        zipOut.finish();
+      }
+  finally {
+        org.apache.commons.io.IOUtils.closeQuietly(zipOut);
+      }
     }
     IOUtils.delete(tempGS);
     IOUtils.delete(tempOGR);

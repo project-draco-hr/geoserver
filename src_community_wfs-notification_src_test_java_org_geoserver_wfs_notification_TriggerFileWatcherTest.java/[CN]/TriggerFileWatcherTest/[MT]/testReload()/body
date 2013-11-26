@@ -1,0 +1,16 @@
+{
+  final long CHECK_TIME=1000;
+  File f=File.createTempFile("com.fsi.geoserver.wfs.triggers",".xml");
+  copyTriggers(f);
+  TriggerFileWatcher tfw=new TriggerFileWatcher(CHECK_TIME,f.toURI().toURL());
+  Object o1=tfw.load();
+  assertNotNull(o1);
+  copyTriggers(f);
+  Object o2=tfw.load();
+  assertSame(o1,o2);
+  Thread.sleep(CHECK_TIME * 2);
+  copyTriggers(f);
+  o2=tfw.load();
+  assertNotNull(o2);
+  assertNotSame(o1,o2);
+}

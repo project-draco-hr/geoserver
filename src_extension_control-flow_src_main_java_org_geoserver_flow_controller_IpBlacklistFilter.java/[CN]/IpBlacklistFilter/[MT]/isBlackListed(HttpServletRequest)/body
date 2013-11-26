@@ -2,7 +2,8 @@
   if (configFile != null && configFile.isStale()) {
 synchronized (configFile) {
       if (configFile.isStale()) {
-        this.blackListedAddresses=reloadConfiguration();
+        this.blackListedAddresses=reloadConfiguration(BLPROPERTY);
+        this.whiteListedAddresses=reloadConfiguration(WLPROPERTY);
       }
     }
   }
@@ -10,6 +11,20 @@ synchronized (configFile) {
     return false;
   }
   String incomingIp=IpFlowController.getRemoteAddr(httpRequest);
-  boolean blocked=blackListedAddresses.contains(incomingIp);
+  boolean blocked=false;
+  for (  String blackListRole : blackListedAddresses) {
+    if (incomingIp.matches(blackListRole)) {
+      blocked=true;
+      break;
+    }
+  }
+  if (blocked && !whiteListedAddresses.isEmpty()) {
+    for (    String whiteListRole : whiteListedAddresses) {
+      if (incomingIp.matches(whiteListRole)) {
+        blocked=false;
+        break;
+      }
+    }
+  }
   return blocked;
 }

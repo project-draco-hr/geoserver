@@ -1,0 +1,23 @@
+{
+  StructuredGridCoverage2DReader structuredReader=null;
+  if (reader instanceof StructuredGridCoverage2DReader) {
+    structuredReader=(StructuredGridCoverage2DReader)reader;
+  }
+ else {
+    throw new UnsupportedOperationException("Only structuredGridCoverage2DReaders are currently supported");
+  }
+  List<DimensionBean> dimensions=new ArrayList<DimensionBean>();
+  List<String> customDimensions=(List<String>)(accessor != null ? accessor.getCustomDomains() : Collections.emptyList());
+  for (  String customDimension : customDimensions) {
+    dimensions.add(setupDimensionBean(structuredReader,customDimension));
+  }
+  DimensionBean timeD=setupDimensionBean(structuredReader,"TIME");
+  if (timeD != null) {
+    dimensions.add(timeD);
+  }
+  DimensionBean elevationD=setupDimensionBean(structuredReader,"ELEVATION");
+  if (elevationD != null) {
+    dimensions.add(elevationD);
+  }
+  return dimensions;
+}

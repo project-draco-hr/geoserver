@@ -1,0 +1,16 @@
+{
+  check((PreAuthenticatedUserNameFilterConfig)config);
+  FilterConfigValidator validator=new FilterConfigValidator(getSecurityManager());
+  config.setRoleSource(J2EERoleSource.J2EE);
+  config.setRoleServiceName("blabla");
+  try {
+    validator.validateFilterConfig(config);
+    fail("unknown role service should fail");
+  }
+ catch (  FilterConfigException ex) {
+    assertEquals(FilterConfigException.UNKNOWN_ROLE_SERVICE,ex.getId());
+    assertEquals(1,ex.getArgs().length);
+    assertEquals("blabla",ex.getArgs()[0]);
+  }
+  config.setRoleServiceName(XMLRoleService.DEFAULT_NAME);
+}

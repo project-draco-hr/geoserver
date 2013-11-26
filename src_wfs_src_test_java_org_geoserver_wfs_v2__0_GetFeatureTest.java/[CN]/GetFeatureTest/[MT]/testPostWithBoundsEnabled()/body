@@ -4,9 +4,11 @@
   wfs.setFeatureBounding(true);
   getGeoServer().save(wfs);
   try {
-    String xml="<wfs:GetFeature service='WFS' version='2.0.0' " + "xmlns:cdf='http://www.opengis.net/cite/data' " + "xmlns:fes='" + FES.NAMESPACE + "' "+ "xmlns:wfs='"+ WFS.NAMESPACE+ "'> "+ "<wfs:Query typeNames='cdf:Other'> "+ "<wfs:PropertyName>cdf:string2</wfs:PropertyName> "+ "</wfs:Query> "+ "</wfs:GetFeature>";
+    String xml="<wfs:GetFeature service='WFS' version='2.0.0' " + "xmlns:cdf='http://www.opengis.net/cite/data' " + "xmlns:fes='" + FES.NAMESPACE + "' "+ "xmlns:wfs='"+ WFS.NAMESPACE+ "'> "+ "<wfs:Query typeNames='cdf:Other'> "+ "</wfs:Query> "+ "</wfs:GetFeature>";
     Document doc=postAsDOM("wfs",xml);
     assertGML32(doc);
+    NodeList aggregatedBoundList=doc.getElementsByTagName("wfs:boundedBy");
+    assertFalse(aggregatedBoundList.getLength() == 0);
     NodeList features=doc.getElementsByTagName("cdf:Other");
     assertFalse(features.getLength() == 0);
     for (int i=0; i < features.getLength(); i++) {
