@@ -1,6 +1,6 @@
 {
   super(id);
-  Form form=new Form("layer.name.form");
+  final Form form=new Form("layer.name.form");
   IValidator<String> nameValidator=new IValidator<String>(){
     @Override public void validate(    IValidatable<String> text){
       final String value=text.getValue();
@@ -22,7 +22,30 @@
     }
   }
 ;
-  DropDownChoice workspaceChooser=new DropDownChoice("layer.workspace.field",new PropertyModel<String>(this,"workspace"),workspaces,workspaceRenderer);
+  final WebMarkupContainer warningContainer=new WebMarkupContainer("warningContainer");
+  warningContainer.setOutputMarkupId(true);
+  form.add(warningContainer);
+  final Label warning=new Label("workspaceWarning");
+  warning.setOutputMarkupId(true);
+  warning.setVisible(false);
+  warningContainer.add(warning);
+  final DropDownChoice<String> workspaceChooser=new DropDownChoice<String>("layer.workspace.field",new PropertyModel<String>(this,"workspace"),workspaces,workspaceRenderer);
+  workspaceChooser.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      LayerInfo layer=demo.getLayer();
+      WorkspaceInfo layerWorkspace=layer.getResource().getStore().getWorkspace();
+      String selected=workspaceChooser.getModelObject();
+      if (selected == null || selected.equals(layerWorkspace.getName())) {
+        warning.setVisible(false);
+      }
+ else {
+        warning.setDefaultModel(new Model("Warning, the layer " + layer.getName() + " is in workspace "+ layerWorkspace.getName()+ ",  cannot be used with a style in workspace "+ selected));
+        warning.setVisible(true);
+      }
+      target.addComponent(warningContainer);
+    }
+  }
+);
   form.add(workspaceChooser);
   TextField nameField=new TextField("layer.name.field",new PropertyModel<String>(this,"name"));
   nameField.add(nameValidator);
@@ -31,7 +54,7 @@
       if (demo.catalog().getStyleByName(workspace,name) != null) {
         throw new RuntimeException("Trying to create style with same name as existing one!");
       }
-      demo.createCssTemplate(name);
+      demo.createCssTemplate(workspace,name);
       PageParameters params=new PageParameters();
       params.put("layer",demo.getLayer().prefixedName());
       if (workspace == null) {

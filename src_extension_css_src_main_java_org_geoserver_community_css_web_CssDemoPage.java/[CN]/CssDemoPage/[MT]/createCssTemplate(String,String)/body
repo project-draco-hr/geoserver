@@ -1,16 +1,24 @@
 {
   try {
     Catalog catalog=getCatalog();
-    if (catalog.getStyleByName(name) == null) {
+    if (catalog.getStyleByName(workspace,name) == null) {
       StyleInfo style=catalog.getFactory().createStyle();
       style.setName(name);
       style.setFilename(name + ".sld");
+      if (workspace != null) {
+        WorkspaceInfo ws=catalog.getWorkspaceByName(workspace);
+        if (ws == null) {
+          throw new WicketRuntimeException("Workspace does not exist: " + workspace);
+        }
+        style.setWorkspace(ws);
+      }
       catalog.add(style);
-      File sld=findStyleFile(style.getFilename());
+      File sld=findStyleFile(style);
       if (sld == null || !sld.exists()) {
         catalog.getResourcePool().writeStyle(style,new ByteArrayInputStream(cssText2sldText(defaultStyle).getBytes()));
+        sld=findStyleFile(style);
       }
-      File css=findStyleFile(name + ".css");
+      File css=new File(sld.getParent(),name + ".css");
       if (!css.exists()) {
         FileWriter writer=new FileWriter(css);
         writer.write(defaultStyle);
