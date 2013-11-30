@@ -1,0 +1,72 @@
+{
+  int requestBuffer=params.getBuffer();
+  if (requestBuffer > 0) {
+    return (int)Math.ceil(requestBuffer / 2.0);
+  }
+  Integer layerBuffer=null;
+  final LayerInfo layerInfo=params.getLayer().getLayerInfo();
+  if (layerInfo != null) {
+    layerBuffer=layerInfo.getMetadata().get(LayerInfo.BUFFER,Integer.class);
+  }
+  if (layerBuffer != null && layerBuffer > 0) {
+    return (int)Math.round(layerBuffer / 2.0);
+  }
+  MetaBufferEstimator estimator=new MetaBufferEstimator();
+  for (  Rule rule : rules) {
+    rule.accept(estimator);
+  }
+  int estimatedRadius=estimator.getBuffer() / 2;
+  if (estimator.isEstimateAccurate()) {
+    if (estimatedRadius < MIN_BUFFER_SIZE) {
+      return MIN_BUFFER_SIZE;
+    }
+ else {
+      return estimatedRadius;
+    }
+  }
+ else {
+    DynamicSizeStyleExtractor extractor=new DynamicSizeStyleExtractor();
+    final List<Rule> dynamicRules=new ArrayList<Rule>();
+    for (    Rule rule : rules) {
+      rule.accept(extractor);
+      Rule copy=(Rule)extractor.getCopy();
+      if (copy != null) {
+        dynamicRules.add(copy);
+      }
+    }
+    if (dynamicRules.size() == 0) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("No dynamic rules found, even if the estimator initially though so, " + "using the static analysis result: " + estimatedRadius);
+      }
+      return estimatedRadius;
+    }
+    FeatureSource<?,?> fs=layer.getFeatureSource();
+    Envelope targetRasterSpace=new Envelope(-estimatedRadius,params.getWidth() + estimatedRadius,-estimatedRadius,params.getWidth() + estimatedRadius);
+    Envelope expanded=JTS.transform(targetRasterSpace,new AffineTransform2D(screenToWorld));
+    ReferencedEnvelope renderingBBOX=new ReferencedEnvelope(expanded,getMap.getCrs());
+    ReferencedEnvelope queryBBOX=renderingBBOX.transform(fs.getSchema().getCoordinateReferenceSystem(),true);
+    Query query=layer.getQuery();
+    BBOX bbox=FF.bbox(FF.property(""),queryBBOX);
+    if (query.getFilter() == null || query.getFilter() == Filter.INCLUDE) {
+      query.setFilter(bbox);
+    }
+ else {
+      Filter and=FF.and(query.getFilter(),bbox);
+      query.setFilter(and);
+    }
+    String[] dynamicProperties=getDynamicProperties(dynamicRules);
+    query.setPropertyNames(dynamicProperties);
+    final DynamicBufferEstimator dbe=new DynamicBufferEstimator();
+    fs.getFeatures(query).accepts(new FeatureVisitor(){
+      @Override public void visit(      Feature feature){
+        dbe.setFeature(feature);
+        for (        Rule rule : dynamicRules) {
+          rule.accept(dbe);
+        }
+      }
+    }
+,null);
+    int dynamicBuffer=dbe.getBuffer();
+    return Math.max(dynamicBuffer / 2,estimatedRadius);
+  }
+}

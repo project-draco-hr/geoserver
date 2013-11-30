@@ -1,0 +1,25 @@
+{
+  Raster raster=getRaster(bi);
+  int[] pixels=((java.awt.image.DataBufferInt)raster.getDataBuffer()).getData();
+  boolean hit=false;
+  for (int row=hitArea.y; row < (hitArea.y + hitArea.height); row++) {
+    int idx=row * scanlineStride + hitArea.x;
+    for (int col=hitArea.x; col < (hitArea.x + hitArea.width); col++) {
+      final int color=pixels[idx];
+      final int alpha=cm.getAlpha(color);
+      if (!hit && alpha > 0) {
+        hit=true;
+      }
+      pixels[idx]=0;
+      idx++;
+    }
+  }
+  if (hit) {
+    if (features.size() < maxFeatures) {
+      features.add(feature);
+    }
+ else {
+      renderer.stopRendering();
+    }
+  }
+}

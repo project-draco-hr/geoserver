@@ -1,0 +1,35 @@
+{
+  double radius;
+  int buffer=params.getBuffer();
+  if (buffer <= 0) {
+    Integer layerBuffer=null;
+    final LayerInfo layerInfo=layer.getLayerInfo();
+    if (layerInfo != null) {
+      layerBuffer=layerInfo.getMetadata().get(LayerInfo.BUFFER,Integer.class);
+    }
+    if (layerBuffer != null && layerBuffer > 0) {
+      radius=layerBuffer / 2.0;
+    }
+ else {
+      MetaBufferEstimator estimator=new MetaBufferEstimator();
+      for (      Rule rule : rules) {
+        rule.accept(estimator);
+      }
+      int estimatedRadius=estimator.getBuffer() / 2;
+      if (estimatedRadius < MIN_BUFFER_SIZE) {
+        radius=MIN_BUFFER_SIZE;
+      }
+ else {
+        radius=estimatedRadius;
+      }
+    }
+  }
+ else {
+    radius=buffer;
+  }
+  int maxRadius=wms.getMaxBuffer();
+  if (maxRadius > 0 && radius > maxRadius) {
+    radius=maxRadius;
+  }
+  return radius;
+}

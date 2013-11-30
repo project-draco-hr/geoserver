@@ -1,0 +1,24 @@
+{
+  geometriesOnLineSymbolizer.clear();
+  geometriesOnPolygonSymbolizer.clear();
+  super.visit(rule);
+  Rule copy=(Rule)pages.peek();
+  geometriesOnLineSymbolizer.removeAll(geometriesOnPolygonSymbolizer);
+  for (  Expression geom : geometriesOnLineSymbolizer) {
+    Object result=geom.evaluate(schema);
+    Class geometryType=getTargetGeometryType(result);
+    if (Polygon.class.isAssignableFrom(geometryType) || MultiPolygon.class.isAssignableFrom(geometryType)) {
+      copy.symbolizers().add(sb.createPolygonSymbolizer());
+    }
+ else     if (geometryType.equals(Geometry.class)) {
+      Filter polygon=ff.equal(ff.function("geometryType",geom),ff.literal("Polygon"),false);
+      Filter multiPolygon=ff.equal(ff.function("geometryType",geom),ff.literal("MultiPolygon"),false);
+      Filter geomCheck=ff.or(Arrays.asList(polygon,multiPolygon));
+      Filter ruleFilter=copy.getFilter();
+      Filter filter=ruleFilter == null || ruleFilter == Filter.INCLUDE ? geomCheck : ff.and(geomCheck,ruleFilter);
+      RuleImpl extra=new RuleImpl(copy);
+      extra.symbolizers().clear();
+      extraRules.add(extra);
+    }
+  }
+}

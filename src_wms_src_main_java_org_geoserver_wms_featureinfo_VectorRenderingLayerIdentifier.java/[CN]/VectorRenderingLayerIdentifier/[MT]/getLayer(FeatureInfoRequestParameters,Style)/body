@@ -1,0 +1,42 @@
+{
+  List<Object> times=params.getTimes();
+  List<Object> elevations=params.getElevations();
+  Filter layerFilter=params.getFilter();
+  MapLayerInfo layer=params.getLayer();
+  Filter dimensionFilter=wms.getTimeElevationToFilter(times,elevations,layer.getFeature());
+  Filter filter;
+  if (layerFilter == null) {
+    filter=dimensionFilter;
+  }
+ else   if (dimensionFilter == null) {
+    filter=layerFilter;
+  }
+ else {
+    filter=FF.and(Arrays.asList(layerFilter,dimensionFilter));
+  }
+  GetMapRequest getMap=params.getGetMapRequest();
+  FeatureSource<? extends FeatureType,? extends Feature> featureSource=layer.getFeatureSource(true);
+  final Query definitionQuery=new Query(featureSource.getSchema().getName().getLocalPart());
+  definitionQuery.setVersion(getMap.getFeatureVersion());
+  definitionQuery.setFilter(filter);
+  Map<String,String> viewParams=params.getViewParams();
+  if (viewParams != null) {
+    definitionQuery.setHints(new Hints(Hints.VIRTUAL_TABLE_PARAMETERS,viewParams));
+  }
+  final Integer startIndex=getMap.getStartIndex();
+  if (startIndex != null) {
+    QueryCapabilities queryCapabilities=featureSource.getQueryCapabilities();
+    if (queryCapabilities.isOffsetSupported()) {
+      definitionQuery.setStartIndex(startIndex);
+    }
+ else {
+      throw new ServiceException("startIndex is not supported for the " + layer.getName() + " layer");
+    }
+  }
+  int maxFeatures=getMap.getMaxFeatures() != null ? getMap.getMaxFeatures() : Integer.MAX_VALUE;
+  definitionQuery.setMaxFeatures(maxFeatures);
+  FeatureSource<? extends FeatureType,? extends Feature> allAttributesFeatureSource;
+  FeatureLayer result=new FeatureLayer(new AllAttributesFeatureSource(featureSource),style);
+  result.setQuery(definitionQuery);
+  return result;
+}

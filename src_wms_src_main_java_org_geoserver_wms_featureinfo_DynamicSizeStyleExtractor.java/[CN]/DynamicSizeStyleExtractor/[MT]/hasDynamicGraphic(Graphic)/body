@@ -1,0 +1,36 @@
+{
+  for (  GraphicalSymbol gs : gr.graphicalSymbols()) {
+    if (gs instanceof ExternalGraphic) {
+      ExternalGraphic eg=(ExternalGraphic)gs;
+      try {
+        Icon icon=null;
+        if (eg.getInlineContent() != null) {
+          icon=eg.getInlineContent();
+        }
+ else {
+          String location=eg.getLocation().toExternalForm();
+          Expression expanded=ExpressionExtractor.extractCqlExpressions(location);
+          if (!(expanded instanceof Literal)) {
+            return true;
+          }
+          Iterator<ExternalGraphicFactory> it=DynamicSymbolFactoryFinder.getExternalGraphicFactories();
+          while (it.hasNext()) {
+            try {
+              icon=it.next().getIcon(null,expanded,eg.getFormat(),16);
+            }
+ catch (            Exception e) {
+              LOGGER.log(Level.FINE,"Error occurred evaluating external graphic",e);
+            }
+          }
+          if (icon != null) {
+            break;
+          }
+        }
+      }
+ catch (      MalformedURLException e) {
+        LOGGER.log(Level.FINE,"Failed to check graphics for attribute embedded in the path " + eg,e);
+      }
+    }
+  }
+  return false;
+}

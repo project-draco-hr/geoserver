@@ -1,5 +1,4 @@
 {
-  final MapDecorationLayout layout=findDecorationLayout(mapContent,tiled);
   Rectangle paintArea=new Rectangle(0,0,mapContent.getMapWidth(),mapContent.getMapHeight());
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("setting up " + paintArea.width + "x"+ paintArea.height+ " image");
@@ -32,6 +31,7 @@
     long kbMax=maxMemory / KB;
     throw new ServiceException("Rendering request would use " + kbUsed + "KB, whilst the "+ "maximum memory allowed is "+ kbMax+ "KB");
   }
+  final MapDecorationLayout layout=findDecorationLayout(request,tiled);
   RenderedImage image=null;
   if (DefaultWebMapService.isDirectRasterPathEnabled() && mapContent.layers().size() == 1 && mapContent.getAngle() == 0.0 && (layout == null || layout.isEmpty())) {
     List<GridCoverage2D> renderedCoverages=new ArrayList<GridCoverage2D>(2);
@@ -105,11 +105,11 @@
   if (DefaultWebMapService.isContinuousMapWrappingEnabled()) {
     rendererParams.put(StreamingRenderer.CONTINUOUS_MAP_WRAPPING,true);
   }
-  if (mapContent.getRequest().getFormatOptions().get("dpi") != null) {
-    rendererParams.put(StreamingRenderer.DPI_KEY,((Integer)mapContent.getRequest().getFormatOptions().get("dpi")));
+  if (request.getFormatOptions().get("dpi") != null) {
+    rendererParams.put(StreamingRenderer.DPI_KEY,((Integer)request.getFormatOptions().get("dpi")));
   }
   boolean kmplacemark=false;
-  if (mapContent.getRequest().getFormatOptions().get("kmplacemark") != null)   kmplacemark=((Boolean)mapContent.getRequest().getFormatOptions().get("kmplacemark")).booleanValue();
+  if (request.getFormatOptions().get("kmplacemark") != null)   kmplacemark=((Boolean)request.getFormatOptions().get("kmplacemark")).booleanValue();
   if (kmplacemark) {
     KMLStyleFilteringVisitor dupVisitor=new KMLStyleFilteringVisitor();
     List<Layer> layers=mapContent.layers();
@@ -129,6 +129,7 @@
   final RenderExceptionStrategy nonIgnorableExceptionListener;
   nonIgnorableExceptionListener=new RenderExceptionStrategy(renderer);
   renderer.addRenderListener(nonIgnorableExceptionListener);
+  onBeforeRender(renderer);
   int maxRenderingTime=wms.getMaxRenderingTime() * 1000;
   RenderingTimeoutEnforcer timeout=new RenderingTimeoutEnforcer(maxRenderingTime,renderer,graphic);
   timeout.start();
@@ -157,8 +158,12 @@
   if (errorChecker.exceedsMaxErrors()) {
     throw new ServiceException("More than " + maxErrors + " rendering errors occurred, bailing out.",errorChecker.getLastException(),"internalError");
   }
-  if (palette != null && palette.getMapSize() < 256)   image=optimizeSampleModel(preparedImage);
- else   image=preparedImage;
+  if (palette != null && palette.getMapSize() < 256) {
+    image=optimizeSampleModel(preparedImage);
+  }
+ else {
+    image=preparedImage;
+  }
   RenderedImageMap map=buildMap(mapContent,image);
   return map;
 }

@@ -1,0 +1,54 @@
+{
+  try {
+    Expression grSize=gr.getSize();
+    if (grSize != null) {
+      Double size=grSize.evaluate(feature,Double.class);
+      if (size != null) {
+        buffer=Math.max(buffer,size);
+      }
+      return;
+    }
+    for (    GraphicalSymbol gs : gr.graphicalSymbols()) {
+      if (gs instanceof ExternalGraphic) {
+        ExternalGraphic eg=(ExternalGraphic)gs;
+        Icon icon=null;
+        if (eg.getInlineContent() != null) {
+          icon=eg.getInlineContent();
+        }
+ else {
+          String location=eg.getLocation().toExternalForm();
+          Expression expanded=ExpressionExtractor.extractCqlExpressions(location);
+          Iterator<ExternalGraphicFactory> it=DynamicSymbolFactoryFinder.getExternalGraphicFactories();
+          while (it.hasNext()) {
+            try {
+              icon=it.next().getIcon(feature,expanded,eg.getFormat(),-1);
+            }
+ catch (            Exception e) {
+              LOGGER.log(Level.FINE,"Error occurred evaluating external graphic",e);
+            }
+          }
+        }
+        if (icon != null) {
+          if (icon != null) {
+            int size=Math.max(icon.getIconHeight(),icon.getIconWidth());
+            if (size > buffer) {
+              buffer=size;
+            }
+            return;
+          }
+        }
+      }
+ else       if (gs instanceof Mark) {
+        if (SLDStyleFactory.DEFAULT_MARK_SIZE > buffer) {
+          buffer=SLDStyleFactory.DEFAULT_MARK_SIZE;
+        }
+      }
+    }
+  }
+ catch (  ClassCastException e) {
+    LOGGER.info("Could not parse graphic size, " + "it's a literal but not a Number...");
+  }
+catch (  Exception e) {
+    LOGGER.log(Level.INFO,"Error occured during the graphic size estimation, " + "meta buffer estimate cannot be performed",e);
+  }
+}

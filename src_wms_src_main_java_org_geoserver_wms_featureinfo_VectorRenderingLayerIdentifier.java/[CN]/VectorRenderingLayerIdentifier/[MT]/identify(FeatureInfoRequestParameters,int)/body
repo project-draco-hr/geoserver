@@ -1,0 +1,58 @@
+{
+  LOGGER.log(Level.FINER,"Appliying rendering based feature info identifier");
+  if (!(params.getLayer().getFeatureSource(true).getSchema() instanceof SimpleFeatureType)) {
+    return fallback.identify(params,maxFeatures);
+  }
+  final Style style=preprocessStyle(params.getStyle(),params.getLayer().getFeature().getFeatureType());
+  final int userBuffer=params.getBuffer() > 0 ? params.getBuffer() : MIN_BUFFER_SIZE;
+  final int buffer=Math.min(userBuffer,wms.getMaxBuffer());
+  final List<Rule> rules=getActiveRules(style,params.getScaleDenominator());
+  if (rules.size() == 0) {
+    return null;
+  }
+  GetMapRequest getMap=params.getGetMapRequest();
+  WMSMapContent mc=new WMSMapContent(getMap);
+  try {
+    AffineTransform worldToScreen=RendererUtilities.worldToScreenTransform(params.getRequestedBounds(),new Rectangle(params.getWidth(),params.getHeight()));
+    AffineTransform screenToWorld=worldToScreen.createInverse();
+    FeatureLayer layer=getLayer(params,style);
+    int radius=getSearchRadius(params,rules,layer,getMap,screenToWorld);
+    if (radius < buffer) {
+      radius=buffer;
+    }
+    Envelope targetRasterSpace=new Envelope(params.getX() - radius,params.getX() + radius,params.getY() - radius,params.getY() + radius);
+    Envelope targetModelSpace=JTS.transform(targetRasterSpace,new AffineTransform2D(screenToWorld));
+    int paintAreaSize=(int)radius * 2 + 1;
+    final BufferedImage image=ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_INT_ARGB).createBufferedImage(paintAreaSize,paintAreaSize);
+    image.setAccelerationPriority(0);
+    int mid=radius;
+    int hitAreaSize=buffer * 2 + 1;
+    Rectangle hitArea=new Rectangle(mid - buffer,mid - buffer,hitAreaSize,hitAreaSize);
+    final FeatureInfoRenderListener featureInfoListener=new FeatureInfoRenderListener(image,hitArea,maxFeatures);
+    mc.getViewport().setBounds(new ReferencedEnvelope(targetModelSpace,getMap.getCrs()));
+    mc.setMapWidth(paintAreaSize);
+    mc.setMapHeight(paintAreaSize);
+    mc.setTransparent(true);
+    mc.setBuffer(params.getBuffer());
+    mc.addLayer(layer);
+    RenderedImageMapOutputFormat rim=new RenderedImageMapOutputFormat(wms){
+      @Override protected RenderedImage prepareImage(      int width,      int height,      IndexColorModel palette,      boolean transparent){
+        return image;
+      }
+      @Override protected void onBeforeRender(      StreamingRenderer renderer){
+        Map hints=renderer.getRendererHints();
+        hints.put(StreamingRenderer.OPTIMIZE_FTS_RENDERING_KEY,Boolean.FALSE);
+        hints.put(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
+        featureInfoListener.setRenderer(renderer);
+        renderer.addRenderListener(featureInfoListener);
+      }
+    }
+;
+    rim.produceMap(mc);
+    List<SimpleFeature> features=featureInfoListener.getFeatures();
+    return aggregateByFeatureType(features);
+  }
+  finally {
+    mc.dispose();
+  }
+}

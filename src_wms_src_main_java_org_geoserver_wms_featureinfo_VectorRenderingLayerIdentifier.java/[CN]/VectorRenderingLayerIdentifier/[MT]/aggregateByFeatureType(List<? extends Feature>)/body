@@ -1,0 +1,24 @@
+{
+  Map<FeatureType,List<Feature>> map=new HashMap<FeatureType,List<Feature>>();
+  for (  Feature f : features) {
+    FeatureType type=f.getType();
+    List<Feature> list=map.get(type);
+    if (list == null) {
+      list=new ArrayList<Feature>();
+      map.put(type,list);
+    }
+    list.add(f);
+  }
+  List<FeatureCollection> result=new ArrayList<FeatureCollection>();
+  for (  Map.Entry<FeatureType,List<Feature>> entry : map.entrySet()) {
+    FeatureType type=entry.getKey();
+    List<Feature> list=entry.getValue();
+    if (type instanceof SimpleFeatureType) {
+      result.add(new ListFeatureCollection((SimpleFeatureType)type,new ArrayList<SimpleFeature>((List)list)));
+    }
+ else {
+      result.add(new ListComplexFeatureCollection(type,list));
+    }
+  }
+  return result;
+}
