@@ -2,8 +2,8 @@
   Fragment mainContent=new Fragment("main-content","normal",this);
   final ModalWindow popup=new ModalWindow("popup");
   mainContent.add(popup);
-  mainContent.add(new Label("style.name",new PropertyModel(style,"name")));
-  mainContent.add(new Label("layer.name",new PropertyModel(layer,"name")));
+  mainContent.add(new Label("style.name",new StyleNameModel(style)));
+  mainContent.add(new Label("layer.name",new PropertyModel(layer,"prefixedName")));
   mainContent.add(new AjaxLink("change.style",new ParamResourceModel("CssDemoPage.changeStyle",this)){
     public void onClick(    AjaxRequestTarget target){
       target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
@@ -32,7 +32,7 @@
       popup.setInitialHeight(200);
       popup.setInitialWidth(300);
       popup.setTitle(new Model("Choose name for new style"));
-      popup.setContent(new LayerNameInput(popup.getContentId(),CssDemoPage.this));
+      popup.setContent(new StyleNameInput(popup.getContentId(),CssDemoPage.this));
       popup.show(target);
     }
   }
@@ -50,7 +50,7 @@
 );
   final IModel<String> sldModel=new AbstractReadOnlyModel<String>(){
     public String getObject(){
-      File file=findStyleFile(style.getFilename());
+      File file=findStyleFile(style);
       if (file != null && file.isFile()) {
         BufferedReader reader=null;
         try {
@@ -125,8 +125,9 @@
   FeedbackPanel feedback2=new FeedbackPanel("feedback-low");
   feedback2.setOutputMarkupId(true);
   mainContent.add(feedback2);
-  String cssSource=style.getFilename().replaceFirst("(\\.sld)?$",".css");
-  mainContent.add(new StylePanel("style.editing",model,CssDemoPage.this,getFeedbackPanel(),cssSource));
+  File sldFile=findStyleFile(style);
+  File cssFile=new File(sldFile.getParentFile(),style.getName() + ".css");
+  mainContent.add(new StylePanel("style.editing",model,CssDemoPage.this,getFeedbackPanel(),cssFile));
   mainContent.add(new AjaxTabbedPanel("context",tabs));
   add(mainContent);
 }
