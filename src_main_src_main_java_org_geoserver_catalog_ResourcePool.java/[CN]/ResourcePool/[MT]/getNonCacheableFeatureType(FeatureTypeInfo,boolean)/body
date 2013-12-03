@@ -1,0 +1,25 @@
+{
+  FeatureType ft;
+  DataAccess<? extends FeatureType,? extends Feature> dataAccess=getDataStore(info.getStore());
+  String vtName=null;
+  if (isSQLView(info,dataAccess)) {
+    JDBCDataStore jstore=(JDBCDataStore)dataAccess;
+    VirtualTable vt=info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class);
+    final String[] typeNames=jstore.getTypeNames();
+    do {
+      vtName=UUID.randomUUID().toString();
+    }
+ while (Arrays.asList(typeNames).contains(vtName));
+    jstore.addVirtualTable(new VirtualTable(vtName,vt));
+    ft=jstore.getSchema(vtName);
+  }
+ else {
+    ft=dataAccess.getSchema(info.getQualifiedNativeName());
+  }
+  ft=buildFeatureType(info,handleProjectionPolicy,ft);
+  if (vtName != null) {
+    JDBCDataStore jstore=(JDBCDataStore)dataAccess;
+    jstore.removeVirtualTable(vtName);
+  }
+  return ft;
+}
