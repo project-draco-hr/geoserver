@@ -1,0 +1,34 @@
+{
+  if (ft instanceof SimpleFeatureType) {
+    SimpleFeatureType sft=(SimpleFeatureType)ft;
+    SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+    tb.setName(info.getName());
+    tb.setNamespaceURI(info.getNamespace().getURI());
+    if (info.getAttributes() == null || info.getAttributes().isEmpty()) {
+      for (      PropertyDescriptor pd : ft.getDescriptors()) {
+        if (!(pd instanceof AttributeDescriptor)) {
+          continue;
+        }
+        AttributeDescriptor ad=(AttributeDescriptor)pd;
+        if (handleProjectionPolicy) {
+          ad=handleDescriptor(ad,info);
+        }
+        tb.add(ad);
+      }
+    }
+ else {
+      for (      AttributeTypeInfo att : info.getAttributes()) {
+        String attName=att.getName();
+        PropertyDescriptor pd=ft.getDescriptor(attName);
+        if (pd == null || !(pd instanceof AttributeDescriptor)) {
+          throw new IOException("the SimpleFeatureType " + info.getPrefixedName() + " does not contains the configured attribute "+ attName+ ". Check your schema configuration");
+        }
+        AttributeDescriptor ad=(AttributeDescriptor)pd;
+        ad=handleDescriptor(ad,info);
+        tb.add((AttributeDescriptor)ad);
+      }
+    }
+    ft=tb.buildFeatureType();
+  }
+  return ft;
+}
