@@ -1,0 +1,27 @@
+{
+  List<Style> getMapStyles=request.getGetMapRequest().getStyles();
+  List<Style> styles=new ArrayList<Style>();
+  List<MapLayerInfo> getMapLayers=request.getGetMapRequest().getLayers();
+  for (int i=0; i < layers.size(); i++) {
+    final String targetLayer=layers.get(i).getName();
+    Style s=null;
+    for (int j=0; j < getMapLayers.size(); j++) {
+      if (getMapLayers.get(j).getName().equals(targetLayer)) {
+        if (getMapStyles != null && getMapStyles.size() > j) {
+          s=getMapStyles.get(j);
+        }
+ else {
+          s=getMapLayers.get(j).getDefaultStyle();
+        }
+        break;
+      }
+    }
+    if (s != null) {
+      styles.add(s);
+    }
+ else {
+      throw new ServiceException("Failed to locate style for layer " + targetLayer);
+    }
+  }
+  return styles;
+}
