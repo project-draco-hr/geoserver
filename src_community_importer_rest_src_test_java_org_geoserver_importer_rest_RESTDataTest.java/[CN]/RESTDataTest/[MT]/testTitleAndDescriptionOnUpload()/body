@@ -1,0 +1,13 @@
+{
+  int i=postNewImport();
+  int t=postNewTaskAsMultiPartForm(i,"shape/archsites_epsg_prj.zip");
+  JSONObject task=getTask(i,t);
+  assertEquals("READY",task.getString("state"));
+  putTaskLayer(i,t,"{\"title\":\"Archsites\", \"abstract\":\"Archeological Sites\"}");
+  postImport(i);
+  runChecks("archsites");
+  LayerInfo l=getCatalog().getLayerByName("archsites");
+  ResourceInfo r=l.getResource();
+  assertEquals("Archsites",r.getTitle());
+  assertEquals("Archeological Sites",r.getAbstract());
+}
