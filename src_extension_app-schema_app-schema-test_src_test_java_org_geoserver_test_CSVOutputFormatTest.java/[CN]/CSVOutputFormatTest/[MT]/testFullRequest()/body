@@ -1,0 +1,12 @@
+{
+  MockHttpServletResponse resp=getAsServletResponse("wfs?service=WFS&version=1.1.0&request=GetFeature&typename=gsmlp:BoreholeView&outputFormat=csv");
+  assertEquals("text/csv",resp.getContentType());
+  assertEquals("attachment; filename=BoreholeView.csv",resp.getHeader("Content-Disposition"));
+  List<String[]> lines=readLines(resp.getOutputStreamContent());
+  assertEquals(3,lines.size());
+  String[] header=new String[]{"gml:id","gsmlp:identifier","gsmlp:name","gsmlp:drillingMethod","gsmlp:driller","gsmlp:drillStartDate","gsmlp:startPoint","gsmlp:inclinationType","gsmlp:boreholeMaterialCustodian","gsmlp:boreholeLength_m","gsmlp:elevation_m","gsmlp:elevation_srs","gsmlp:specification_uri","gsmlp:metadata_uri","gsmlp:shape"};
+  assertTrue(Arrays.asList(lines.get(0)).containsAll(Arrays.asList(header)));
+  int headerCount=lines.get(0).length;
+  assertEquals(headerCount,lines.get(1).length);
+  assertEquals(headerCount,lines.get(2).length);
+}
