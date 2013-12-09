@@ -1,44 +1,82 @@
 {
   BufferedWriter w=new BufferedWriter(new OutputStreamWriter(output));
-  SimpleFeatureCollection fc=(SimpleFeatureCollection)featureCollection.getFeature().get(0);
-  SimpleFeatureType ft=fc.getSchema();
-  w.write("FID,");
-  for (int i=0; i < ft.getAttributeCount(); i++) {
-    AttributeDescriptor ad=ft.getDescriptor(i);
-    w.write(prepCSVField(ad.getLocalName()));
-    if (i < ft.getAttributeCount() - 1) {
-      w.write(",");
+  FeatureCollection<?,?> fc=(FeatureCollection<?,?>)featureCollection.getFeature().get(0);
+  if (fc.getSchema() instanceof SimpleFeatureType) {
+    SimpleFeatureType ft=(SimpleFeatureType)fc.getSchema();
+    w.write("FID,");
+    for (int i=0; i < ft.getAttributeCount(); i++) {
+      AttributeDescriptor ad=ft.getDescriptor(i);
+      w.write(prepCSVField(ad.getLocalName()));
+      if (i < ft.getAttributeCount() - 1) {
+        w.write(",");
+      }
+    }
+  }
+ else {
+    w.write("gml:id,");
+    int i=0;
+    for (    PropertyDescriptor att : fc.getSchema().getDescriptors()) {
+      if (!att.getName().getLocalPart().startsWith("FEATURE_LINK")) {
+        if (i > 0) {
+          w.write(",");
+        }
+        String elName=att.getName().toString();
+        Object xsd=att.getUserData().get(XSDElementDeclaration.class);
+        if (xsd != null && xsd instanceof XSDElementDeclarationImpl) {
+          XSDElementDeclarationImpl xsdEl=(XSDElementDeclarationImpl)xsd;
+          elName=xsdEl.getQName();
+        }
+        w.write(prepCSVField(elName));
+        i++;
+      }
     }
   }
   w.write("\r\n");
   NumberFormat coordFormatter=NumberFormat.getInstance(Locale.US);
   coordFormatter.setMaximumFractionDigits(getInfo().getGeoServer().getSettings().getNumDecimals());
   coordFormatter.setGroupingUsed(false);
-  SimpleFeatureIterator i=fc.features();
+  FeatureIterator<?> i=fc.features();
   try {
     while (i.hasNext()) {
-      SimpleFeature f=i.next();
-      w.write(prepCSVField(f.getID()));
+      Feature f=i.next();
+      w.write(prepCSVField(f.getIdentifier().getID()));
       w.write(",");
-      for (int j=0; j < f.getAttributeCount(); j++) {
-        Object att=f.getAttribute(j);
-        if (att != null) {
-          String value=null;
-          if (att instanceof Number) {
-            value=coordFormatter.format(att);
+      if (f instanceof SimpleFeature) {
+        for (int j=0; j < ((SimpleFeature)f).getAttributeCount(); j++) {
+          Object att=((SimpleFeature)f).getAttribute(j);
+          if (att != null) {
+            String value=formatToString(att,coordFormatter);
+            w.write(prepCSVField(value));
           }
- else           if (att instanceof Date) {
-            if (att instanceof java.sql.Date)             value=DateUtil.serializeSqlDate((java.sql.Date)att);
- else             if (att instanceof java.sql.Time)             value=DateUtil.serializeSqlTime((java.sql.Time)att);
- else             value=DateUtil.serializeDateTime((Date)att);
+          if (j < ((SimpleFeature)f).getAttributeCount() - 1) {
+            w.write(",");
           }
- else {
-            value=att.toString();
-          }
-          w.write(prepCSVField(value));
         }
-        if (j < f.getAttributeCount() - 1) {
-          w.write(",");
+      }
+ else {
+        Iterator<PropertyDescriptor> descriptors=fc.getSchema().getDescriptors().iterator();
+        int j=0;
+        while (descriptors.hasNext()) {
+          PropertyDescriptor desc=descriptors.next();
+          if (desc.getName().getLocalPart().startsWith("FEATURE_LINK")) {
+            continue;
+          }
+          if (j > 0) {
+            w.write(",");
+          }
+          j++;
+          Collection<Property> values=f.getProperties(desc.getName());
+          if (values.size() > 1) {
+            throw new UnsupportedOperationException("Multi valued properties aren't supported with CSV format!");
+          }
+          Object att=null;
+          if (!values.isEmpty()) {
+            att=values.iterator().next().getValue();
+          }
+          if (att != null) {
+            String value=formatToString(att,coordFormatter);
+            w.write(prepCSVField(value));
+          }
         }
       }
       w.write("\r\n");
