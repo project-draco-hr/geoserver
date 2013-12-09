@@ -1,0 +1,32 @@
+{
+  super.onSetUp(testData);
+  GWC.get().getConfig().setSecurityEnabled(true);
+  testData.addStyle("raster","raster.sld",SystemTestData.class,getCatalog());
+  Map properties=new HashMap();
+  properties.put(LayerProperty.STYLE,"raster");
+  testData.addRasterLayer(new QName(MockData.SF_URI,"mosaic",MockData.SF_PREFIX),"raster-filter-test.zip",null,properties,SystemTestData.class,getCatalog());
+  GeoServerUserGroupStore ugStore=getSecurityManager().loadUserGroupService(AbstractUserGroupService.DEFAULT_NAME).createStore();
+  ugStore.addUser(ugStore.createUserObject("cite","cite",true));
+  ugStore.addUser(ugStore.createUserObject("cite_nomosaic","cite",true));
+  ugStore.addUser(ugStore.createUserObject("cite_cropmosaic","cite",true));
+  ugStore.addUser(ugStore.createUserObject("cite_filtermosaic","cite",true));
+  ugStore.store();
+  GeoServerRoleStore roleStore=getSecurityManager().getActiveRoleService().createStore();
+  GeoServerRole role=roleStore.createRoleObject("ROLE_DUMMY");
+  roleStore.addRole(role);
+  roleStore.associateRoleToUser(role,"cite");
+  roleStore.associateRoleToUser(role,"cite_nomosaic");
+  roleStore.associateRoleToUser(role,"cite_cropmosaic");
+  roleStore.associateRoleToUser(role,"cite_filtermosaic");
+  roleStore.store();
+  Catalog catalog=getCatalog();
+  TestResourceAccessManager tam=(TestResourceAccessManager)applicationContext.getBean("testResourceAccessManager");
+  CoverageInfo coverage=catalog.getCoverageByName("sf:mosaic");
+  tam.putLimits("cite_nomosaic",coverage,new CoverageAccessLimits(CatalogMode.HIDE,Filter.EXCLUDE,null,null));
+  WKTReader wkt=new WKTReader();
+  MultiPolygon cropper=(MultiPolygon)wkt.read("MULTIPOLYGON(((140 -50, 150 -50, 150 -30, 140 -30, 140 -50)))");
+  tam.putLimits("cite_cropmosaic",coverage,new CoverageAccessLimits(CatalogMode.HIDE,Filter.INCLUDE,cropper,null));
+  FilterFactory2 ff=CommonFactoryFinder.getFilterFactory2(null);
+  Filter filter=ff.contains(ff.property("geometry"),ff.literal(cropper));
+  tam.putLimits("cite_filtermosaic",coverage,new CoverageAccessLimits(CatalogMode.HIDE,filter,null,null));
+}
