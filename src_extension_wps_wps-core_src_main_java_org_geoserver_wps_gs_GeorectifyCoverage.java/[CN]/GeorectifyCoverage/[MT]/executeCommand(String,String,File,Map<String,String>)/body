@@ -1,0 +1,38 @@
+{
+  final File logFile=File.createTempFile("LOG",".log",loggingFolder);
+  List<String> commands=new ArrayList<String>(Arrays.asList(argument.trim().split("\\s+")));
+  commands.add(0,gdalCommand);
+  ProcessBuilder builder=new ProcessBuilder(commands);
+  if (envVars != null) {
+    builder.environment().putAll(envVars);
+  }
+ else {
+    builder.environment().putAll(System.getenv());
+  }
+  builder.redirectErrorStream(true);
+  OutputStream log=null;
+  int exitValue=0;
+  try {
+    log=new FileOutputStream(logFile);
+    Process p=builder.start();
+    IOUtils.copy(p.getInputStream(),log);
+    p.waitFor();
+    log.flush();
+    exitValue=p.exitValue();
+  }
+ catch (  Exception e) {
+    throw new WPSException("Error launching OS command: " + gdalCommand + " with arguments "+ argument+ " and env vars "+ envVars,e);
+  }
+ finally {
+    if (exitValue != 0) {
+      if (logFile.exists() && logFile.canRead()) {
+        String error=getError(logFile);
+        throw new WPSException("Error launching OS command: '" + gdalCommand + "' with arguments '"+ argument+ "' and env vars '"+ envVars+ "': \n"+ error);
+      }
+    }
+    if (logFile != null) {
+      logFile.delete();
+    }
+    IOUtils.closeQuietly(log);
+  }
+}
