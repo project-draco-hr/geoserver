@@ -1,0 +1,65 @@
+{
+  Map parameters=KvpUtils.normalize(rawRequest.getParameterMap());
+  if (rawRequest.getPathInfo().toLowerCase().startsWith("/service/wms")) {
+    Dispatcher.REQUEST.get().setService("wms");
+    Dispatcher.REQUEST.get().setRequest((String)parameters.get("REQUEST"));
+    String layerstr=(String)parameters.get("LAYERS");
+    String bboxstr=(String)parameters.get("BBOX");
+    String srs=(String)parameters.get("SRS");
+    if (layerstr != null) {
+      ReferencedEnvelope bbox=null;
+      try {
+        bbox=(ReferencedEnvelope)new BBoxKvpParser().parse(bboxstr);
+      }
+ catch (      Exception e) {
+        throw new ServiceException("Invalid bbox: " + bboxstr,e,"MissingOrInvalidParameter");
+      }
+      if (srs != null) {
+        try {
+          bbox=new ReferencedEnvelope(bbox,CRS.decode(srs));
+        }
+ catch (        Exception e) {
+          throw new ServiceException("Invalid srs: " + srs,e,"MissingOrInvalidParameter");
+        }
+      }
+      String[] layers=layerstr.split(",");
+      for (      String layerName : layers) {
+        layerName=layerName.trim();
+        GWC.get().verifyAccessLayer(layerName,bbox);
+      }
+    }
+  }
+ else   if (rawRequest.getPathInfo().toLowerCase().startsWith("/service/wmts")) {
+    String layer=(String)parameters.get("LAYER");
+    if (layer != null) {
+      GWC.get().verifyAccessLayer(layer,null);
+    }
+  }
+ else   if (rawRequest.getPathInfo().toLowerCase().startsWith("/service/tms/1.0.0/")) {
+    String layer=rawRequest.getPathInfo().toLowerCase().substring("/service/tms/1.0.0/".length());
+    if (layer.indexOf('/') >= 0) {
+      layer=layer.substring(0,layer.indexOf('/'));
+    }
+    if (layer.indexOf('@') >= 0) {
+      layer=layer.substring(0,layer.indexOf('@'));
+    }
+    GWC.get().verifyAccessLayer(layer,null);
+  }
+ else   if (rawRequest.getPathInfo().toLowerCase().startsWith("/service/kml/")) {
+    String layer=rawRequest.getPathInfo().toLowerCase().substring("/service/kml/".length());
+    if (layer.indexOf('.') >= 0) {
+      layer=layer.substring(0,layer.indexOf('.'));
+    }
+    GWC.get().verifyAccessLayer(layer,null);
+  }
+ else   if (rawRequest.getPathInfo().toLowerCase().startsWith("/service/gmaps") || rawRequest.getPathInfo().toLowerCase().startsWith("/service/ve")) {
+    String layerstr=(String)parameters.get("LAYERS");
+    if (layerstr != null) {
+      String[] layers=layerstr.split(",");
+      for (      String layerName : layers) {
+        layerName=layerName.trim();
+        GWC.get().verifyAccessLayer(layerName,null);
+      }
+    }
+  }
+}

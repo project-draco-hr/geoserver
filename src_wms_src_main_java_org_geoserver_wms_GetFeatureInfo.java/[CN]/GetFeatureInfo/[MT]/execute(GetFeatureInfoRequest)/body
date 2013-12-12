@@ -1,33 +1,23 @@
 {
-  List<MapLayerInfo> layers=request.getQueryLayers();
-  List filterList=request.getGetMapRequest().getFilter();
-  Filter[] filters;
-  if (filterList != null && filterList.size() > 0) {
-    filters=(Filter[])filterList.toArray(new Filter[filterList.size()]);
-  }
- else {
-    filters=new Filter[layers.size()];
-  }
-  List<Style> getMapStyles=request.getGetMapRequest().getStyles();
-  Style[] styles=new Style[layers.size()];
-  for (int i=0; i < styles.length; i++) {
-    List<MapLayerInfo> getMapLayers=request.getGetMapRequest().getLayers();
-    final String targetLayer=layers.get(i).getName();
-    for (int j=0; j < getMapLayers.size(); j++) {
-      if (getMapLayers.get(j).getName().equals(targetLayer)) {
-        if (getMapStyles != null && getMapStyles.size() > 0)         styles[i]=(Style)getMapStyles.get(j);
-        if (styles[i] == null)         styles[i]=getMapLayers.get(j).getDefaultStyle();
+  final List<MapLayerInfo> requestedLayers=request.getQueryLayers();
+  FeatureInfoRequestParameters requestParams=new FeatureInfoRequestParameters(request);
+  List<FeatureCollection> results=new ArrayList<FeatureCollection>(requestedLayers.size());
+  int maxFeatures=request.getFeatureCount();
+  List<LayerIdentifier> identifiers=GeoServerExtensions.extensions(LayerIdentifier.class);
+  for (int i=0; i < requestedLayers.size(); i++) {
+    final MapLayerInfo layer=requestedLayers.get(i);
+    LayerIdentifier identifier=getLayerIdentifier(layer,identifiers);
+    List<FeatureCollection> identifiedCollections=identifier.identify(requestParams,maxFeatures);
+    if (identifiedCollections != null) {
+      for (      FeatureCollection identifierCollection : identifiedCollections) {
+        FeatureCollection fc=selectProperties(requestParams,identifierCollection);
+        maxFeatures=addToResults(fc,results,layer,request,maxFeatures);
+      }
+      if (maxFeatures <= 0) {
         break;
       }
     }
+    requestParams.nextLayer();
   }
-  try {
-    return execute(request,styles,filters);
-  }
- catch (  ServiceException se) {
-    throw se;
-  }
-catch (  Exception e) {
-    throw new ServiceException("Internal error occurred",e);
-  }
+  return results;
 }

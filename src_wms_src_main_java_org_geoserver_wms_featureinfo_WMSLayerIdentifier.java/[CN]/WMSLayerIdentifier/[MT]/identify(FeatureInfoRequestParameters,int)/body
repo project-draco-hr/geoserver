@@ -1,0 +1,51 @@
+{
+  final int x=params.getX();
+  final int y=params.getY();
+  WMSLayerInfo info=(WMSLayerInfo)params.getLayer().getResource();
+  WebMapServer wms=info.getStore().getWebMapServer(null);
+  Layer layer=info.getWMSLayer(null);
+  CoordinateReferenceSystem crs=params.getRequestedCRS();
+  if (crs == null) {
+    crs=info.getCRS();
+  }
+  ReferencedEnvelope bbox=params.getRequestedBounds();
+  int width=params.getWidth();
+  int height=params.getHeight();
+  if (!layer.isQueryable()) {
+    return null;
+  }
+  List<String> infoFormats;
+  infoFormats=wms.getCapabilities().getRequest().getGetFeatureInfo().getFormats();
+  if (!infoFormats.contains("application/vnd.ogc.gml")) {
+    return null;
+  }
+  WMSLayer ml=new WMSLayer(wms,layer);
+  final InputStream is=ml.getFeatureInfo(bbox,width,height,x,y,"application/vnd.ogc.gml",maxFeatures);
+  List<FeatureCollection> results=new ArrayList<FeatureCollection>();
+  try {
+    Parser parser=new Parser(new WFSConfiguration());
+    parser.setStrict(false);
+    Object result=parser.parse(is);
+    if (result instanceof FeatureCollectionType) {
+      FeatureCollectionType fcList=(FeatureCollectionType)result;
+      List<SimpleFeatureCollection> rawResults=fcList.getFeature();
+      for (      SimpleFeatureCollection fc : rawResults) {
+        SimpleFeatureType ft=fc.getSchema();
+        SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+        builder.init(ft);
+        builder.setName(info.getName());
+        builder.setNamespaceURI(info.getNamespace().getURI());
+        SimpleFeatureType targetFeatureType=builder.buildFeatureType();
+        FeatureCollection rfc=new ReTypingFeatureCollection(fc,targetFeatureType);
+        results.add(rfc);
+      }
+    }
+  }
+ catch (  Throwable t) {
+    LOGGER.log(Level.SEVERE,"Tried to parse GML2 response, but failed",t);
+  }
+ finally {
+    is.close();
+  }
+  return results;
+}

@@ -1,0 +1,18 @@
+{
+  GetFeatureRequest request=GetFeatureRequest.adapt(operation.getParameters()[0]);
+  if (request.getHandle() != null) {
+    LOGGER.log(Level.FINE,"Using handle for file name: " + request.getHandle());
+    return request.getHandle();
+  }
+  List<String> names=new ArrayList<String>();
+  for (  Query query : request.getQueries()) {
+    addLayerNames(names,query,false);
+  }
+  String layerNames=StringUtils.join(names.toArray(),'_');
+  LOGGER.log(Level.FINE,"Using layer names for file name: " + layerNames);
+  if (layerNames.length() > 20) {
+    LOGGER.log(Level.WARNING,"Calculated filename too long. Returing a shorter one: " + layerNames.substring(0,20));
+    return layerNames.substring(0,20);
+  }
+  return layerNames;
+}

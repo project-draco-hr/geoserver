@@ -1,0 +1,15 @@
+{
+  setRequestAuth("cite","cite");
+  String path="gwc/service/wms?bgcolor=0x000000&LAYERS=sf:mosaic&STYLES=&FORMAT=image/png&SERVICE=WMS&VERSION=1.1.1" + "&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,-90,180,90&WIDTH=256&HEIGHT=256&transparent=false";
+  MockHttpServletResponse response=getAsServletResponse(path);
+  assertEquals("image/png",response.getContentType());
+  setRequestAuth("cite_filtermosaic","cite");
+  path="gwc/service/wms?bgcolor=0x000000&LAYERS=sf:mosaic&STYLES=&FORMAT=image/png&SERVICE=WMS&VERSION=1.1.1" + "&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,-90,180,90&WIDTH=256&HEIGHT=256&transparent=false";
+  response=getAsServletResponse(path);
+  assertEquals("application/xml",response.getContentType());
+  String str=string(getBinaryInputStream(response));
+  assertTrue(str.contains("org.geotools.ows.ServiceException: Access denied to bounding box on layer sf:mosaic"));
+  path="gwc/service/wms?bgcolor=0x000000&LAYERS=sf:mosaic&STYLES=&FORMAT=image/png&SERVICE=WMS&VERSION=1.1.1" + "&REQUEST=GetMap&SRS=EPSG:4326&BBOX=143.4375,-42.1875,146.25,-39.375&WIDTH=256&HEIGHT=256&transparent=false";
+  response=getAsServletResponse(path);
+  assertEquals("image/png",response.getContentType());
+}

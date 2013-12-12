@@ -1,0 +1,21 @@
+{
+  if (collection != null) {
+    if (!(collection.getSchema() instanceof SimpleFeatureType)) {
+      Name name=new NameImpl(layer.getFeature().getNamespace().getName(),layer.getFeature().getName());
+      collection=new FeatureCollectionDecorator(name,collection);
+    }
+    int size=collection.size();
+    if (size != 0) {
+      if (!(collection instanceof SimpleFeatureCollection)) {
+        collection.getSchema().getUserData().put("targetCrs",request.getGetMapRequest().getCrs());
+        collection.getSchema().getUserData().put("targetVersion","wms:getfeatureinfo");
+      }
+      results.add(collection);
+      maxFeatures-=size;
+      if (maxFeatures <= 0) {
+        return 0;
+      }
+    }
+  }
+  return maxFeatures;
+}
