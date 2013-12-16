@@ -7,7 +7,7 @@
       fis=new FileInputStream(configFile);
       props.load(fis);
       Iterator<Object> keys=props.keySet().iterator();
-      envVariables=new ArrayList<Variable>();
+      envVariables=Maps.newHashMap();
       while (keys.hasNext()) {
         String key=(String)keys.next();
         if (key.equalsIgnoreCase(GRKeys.GDAL_CACHEMAX)) {
@@ -16,10 +16,7 @@
             cacheMax=(String)props.get(GRKeys.GDAL_CACHEMAX);
             if (cacheMax != null) {
               int gdalCacheMaxMemory=Integer.parseInt(cacheMax);
-              Variable var=new Variable();
-              var.setKey(GRKeys.GDAL_CACHEMAX);
-              var.setValue(cacheMax);
-              envVariables.add(var);
+              envVariables.put(GRKeys.GDAL_CACHEMAX,cacheMax);
             }
           }
  catch (          NumberFormatException nfe) {
@@ -33,10 +30,7 @@
           if (path != null) {
             final File directory=new File(path);
             if (directory.exists() && directory.isDirectory() && ((key.equalsIgnoreCase(GRKeys.GDAL_DATA) && directory.canRead()) || directory.canWrite())) {
-              Variable var=new Variable();
-              var.setKey(key);
-              var.setValue(path);
-              envVariables.add(var);
+              envVariables.put(key,path);
             }
  else {
               if (LOGGER.isLoggable(Level.WARNING)) {
@@ -73,10 +67,7 @@
  else         if (key.endsWith("PATH")) {
           String param=(String)props.get(key);
           if (param != null) {
-            Variable var=new Variable();
-            var.setKey(key);
-            var.setValue(param);
-            envVariables.add(var);
+            envVariables.put(key,param);
           }
         }
       }
