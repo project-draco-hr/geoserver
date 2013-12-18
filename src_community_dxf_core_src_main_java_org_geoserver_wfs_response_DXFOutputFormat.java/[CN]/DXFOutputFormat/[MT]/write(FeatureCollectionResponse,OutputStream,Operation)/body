@@ -19,7 +19,8 @@
   String colors=(String)gft.getFormatOptions().get("COLORS");
   String ltypes=(String)gft.getFormatOptions().get("LTYPES");
   String layerNames=(String)gft.getFormatOptions().get("LAYERS");
-  LOGGER.log(Level.FINE,"Format options: " + version + "; "+ blocks+ "; "+ colors+ "; "+ ltypes+ "; "+ layerNames);
+  String writeAttributes=(String)gft.getFormatOptions().get("WITHATTRIBUTES");
+  LOGGER.log(Level.FINE,"Format options: " + version + "; "+ blocks+ "; "+ colors+ "; "+ ltypes+ "; "+ layerNames+ "; "+ writeAttributes);
   DXFWriter dxfWriter=DXFWriterFinder.getWriter(version,w);
   if (dxfWriter != null) {
     LOGGER.log(Level.INFO,"DXFWriter: " + dxfWriter.getDescription());
@@ -28,6 +29,9 @@
  else     layers=getLayerNames(gft.getQueries());
     LOGGER.log(Level.FINE,"Layers names: " + StringUtils.join(layers,","));
     dxfWriter.setOption("layers",layers);
+    if (writeAttributes != null) {
+      dxfWriter.setOption("writeattributes",writeAttributes.toLowerCase().equals("true"));
+    }
     if (blocks != null && blocks.toLowerCase().equals("true"))     dxfWriter.setOption("geometryasblock",true);
     if (colors != null) {
       try {

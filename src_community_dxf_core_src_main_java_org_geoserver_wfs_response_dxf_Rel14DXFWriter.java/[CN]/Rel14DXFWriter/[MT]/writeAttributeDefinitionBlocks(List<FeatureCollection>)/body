@@ -1,0 +1,20 @@
+{
+  LOGGER.warning("Rel14DXFWriter.writeAttributeDefinitionBlocks");
+  for (  FeatureCollection coll : featureList) {
+    String fid=coll.hashCode() + "";
+    if (blockNames.containsKey(coll.hashCode() + "")) {
+      String ownerHandle=blockHandles.get(coll.hashCode() + "");
+      String name=blockNames.get(coll.hashCode() + "");
+      String startHandle=getNewHandle("Block");
+      String endHandle=getNewHandle("Block");
+      writeStartBlock(startHandle,ownerHandle,false,"0",name);
+      String attributesLayer=getLayerName(coll) + "_attributes";
+      writeGeometryStart("CIRCLE",attributesLayer,ownerHandle);
+      writeSubClass("AcDbCircle");
+      writePoint(0.0,0.0,0.0);
+      writeDoubleGroup(40,1.0);
+      writeAttributeDefinitions(attributesLayer,ownerHandle,coll);
+      writeEndBlock(endHandle,ownerHandle,false,"0",name);
+    }
+  }
+}
