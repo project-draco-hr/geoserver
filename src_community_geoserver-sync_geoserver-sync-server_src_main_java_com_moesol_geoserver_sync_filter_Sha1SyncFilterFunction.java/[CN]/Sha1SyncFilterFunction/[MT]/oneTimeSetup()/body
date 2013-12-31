@@ -1,0 +1,15 @@
+{
+  List<Expression> args=getParameters();
+  if (args.size() < 2) {
+    throw new IllegalArgumentException("sha1Sync requires two arguments {attributes}, and {sha1SyncJson}");
+  }
+  String atts=args.get(0).toString();
+  String json=args.get(1).toString();
+  m_featureSha1Evaluator.parseAttributesToInclude(atts);
+  Sha1SyncJson remoteSha1Sync=new Gson().fromJson(json,Sha1SyncJson.class);
+  versionFeatures=VersionFeatures.fromSha1SyncJson(remoteSha1Sync);
+  FORMAT_OPTIONS.set(atts);
+  REMOTE_SHA1_SYNC.set(remoteSha1Sync);
+  FEATURE_SHA1S.set(m_featureSha1s);
+  LOGGER.log(Level.FINER,"Recorded: {0}/{1}/{2}",new Object[]{FORMAT_OPTIONS.get(),REMOTE_SHA1_SYNC.get(),FEATURE_SHA1S.get()});
+}

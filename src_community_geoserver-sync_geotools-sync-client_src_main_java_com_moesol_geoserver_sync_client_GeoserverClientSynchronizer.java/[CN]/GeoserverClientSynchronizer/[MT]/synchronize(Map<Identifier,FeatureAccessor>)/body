@@ -1,0 +1,25 @@
+{
+  m_features=features;
+  checkThread();
+  resetCounters();
+  m_potentialDeletes.clear();
+  m_featureSha1Sync.parseAttributesToInclude(m_attributesToInclude);
+  computeSha1s();
+  m_server=new Sha1SyncJson().level(0).max(Long.MAX_VALUE);
+  long s=System.currentTimeMillis();
+  try {
+    for (int i=0; i < MAX_ROUNDS; i++) {
+      if (processRound(i)) {
+        return;
+      }
+    }
+    LOGGER.log(Level.WARNING,"Failed after {0} rounds, SHA-1 collision?",MAX_ROUNDS);
+    m_roundListener.sha1Collision();
+  }
+  finally {
+    realizePotentialDeletes();
+    long totalMillis=System.currentTimeMillis() - s;
+    LOGGER.log(Level.INFO,"total({0}ms), parse({1}ms), rounds({2}), creates({3}), updates({4}), deletes({5}), tx({6}), rx({7}), gml({8})",new Object[]{totalMillis,m_parseMillis,m_numRounds,m_numCreates,m_numUpdates,m_numDeletes,m_txBytes,m_rxBytes,m_rxGml});
+    m_roundListener.afterSynchronize();
+  }
+}

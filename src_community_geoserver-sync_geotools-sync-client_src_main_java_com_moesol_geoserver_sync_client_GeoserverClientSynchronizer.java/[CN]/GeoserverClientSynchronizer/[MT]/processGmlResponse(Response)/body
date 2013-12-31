@@ -1,0 +1,31 @@
+{
+  FeatureCollection<?,?> features;
+  if (response instanceof ResponseFeatureCollection) {
+    ResponseFeatureCollection responseFeatures=(ResponseFeatureCollection)response;
+    features=responseFeatures.getFeatureCollection();
+  }
+ else {
+    CountingInputStream counter=new CountingInputStream(response.getResultStream());
+    features=(FeatureCollection<?,?>)parseWfs(counter);
+    m_rxGml+=counter.getByteCount();
+  }
+  FeatureIterator<?> it=features.features();
+  try {
+    while (it.hasNext()) {
+      Feature feature=it.next();
+      FeatureId fid=feature.getIdentifier();
+      m_potentialDeletes.remove(fid);
+      if (!m_features.containsKey(fid)) {
+        m_listener.featureCreate(fid,feature);
+        m_numCreates++;
+      }
+ else {
+        m_listener.featureUpdate(fid,feature);
+        m_numUpdates++;
+      }
+    }
+  }
+  finally {
+    it.close();
+  }
+}

@@ -1,0 +1,22 @@
+{
+  SimpleFeatureBuilder builder=new SimpleFeatureBuilder(m_samples.getFlagType());
+  builder.add(firstFlag);
+  builder.add(1);
+  builder.add(20.5);
+  builder.add(makePoint("POINT(1 2)"));
+  SimpleFeature f1=builder.buildFeature("fid-0001");
+  builder.add("JA");
+  builder.add(2);
+  builder.add(20.5);
+  builder.add(makePoint("POINT (1 2)"));
+  SimpleFeature f2=builder.buildFeature("fid-0002");
+  MemoryDataStore data=new MemoryDataStore();
+  data.createSchema(m_samples.getFlagType());
+  data.addFeature(f1);
+  data.addFeature(f2);
+  FeatureSource<SimpleFeatureType,SimpleFeature> fs=data.getFeatureSource(m_samples.getFlagType().getName());
+  FeatureCollectionType fct=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  addFeaturesFromSource(fct,fs);
+  FeatureCollectionResponse fcr=FeatureCollectionResponse.adapt(fct);
+  return fcr;
+}

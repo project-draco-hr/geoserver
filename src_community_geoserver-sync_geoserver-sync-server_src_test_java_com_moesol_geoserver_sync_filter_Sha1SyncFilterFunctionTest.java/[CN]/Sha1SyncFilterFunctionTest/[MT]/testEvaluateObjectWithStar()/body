@@ -1,0 +1,20 @@
+{
+  Sha1SyncJson sync=new Sha1SyncJson().level(0).max(0);
+  List<Expression> args=new ArrayList<Expression>();
+  args.add(ff.literal("*"));
+  args.add(ff.literal(new Gson().toJson(sync)));
+  Sha1SyncFilterFunction func=new Sha1SyncFilterFunction();
+  func.setParameters(args);
+  Object result;
+  Object feature=feature();
+  result=func.evaluate(feature);
+  assertEquals("true",result.toString());
+  assertEquals(1,func.getFeatureSha1s().size());
+  System.out.println("EVALUATE OBJECT: " + func.getFeatureSha1s());
+  assertEquals("feature: " + feature + ",sha1s: "+ func.getFeatureSha1s(),"ee99b7fbcfd28b5a84fd478d8c92d574d3e4875a",v1(func.getFeatureSha1s().get(0)).toString());
+  result=func.evaluate(feature);
+  assertEquals("true",result.toString());
+  assertEquals(2,func.getFeatureSha1s().size());
+  assertEquals("ee99b7fbcfd28b5a84fd478d8c92d574d3e4875a",v1(func.getFeatureSha1s().get(0)).toString());
+  assertEquals("ee99b7fbcfd28b5a84fd478d8c92d574d3e4875a",v1(func.getFeatureSha1s().get(1)).toString());
+}

@@ -1,0 +1,17 @@
+{
+  m_lastOutputFormat=isReadyForGML(outputJson) ? GML3_OUTPUT_FORMAT : SHA1_SYNC_OUTPUT_FORMAT;
+  String json=new Gson().toJson(outputJson);
+  String xmlRequest=m_postTemplate.replaceAll(Pattern.quote("${outputFormat}"),m_lastOutputFormat);
+  xmlRequest=xmlRequest.replaceAll(Pattern.quote("${attributes}"),m_attributesToInclude);
+  xmlRequest=xmlRequest.replaceAll(Pattern.quote("${sha1Sync}"),json);
+  if (m_builder instanceof RequestBuilderJUnit) {
+    RequestBuilderJUnit reqJUnit=(RequestBuilderJUnit)m_builder;
+    reqJUnit.prePost(m_lastOutputFormat,m_attributesToInclude,json);
+  }
+  LOGGER.log(Level.FINE,"outputFormat({0}), attributes({1}), json({2})",new Object[]{m_lastOutputFormat,m_attributesToInclude,json});
+  if (TRACE_POST != null) {
+    outputJson.dumpSha1SyncJson("POST",TRACE_POST);
+  }
+  m_txBytes+=xmlRequest.length();
+  return m_builder.post(m_url,xmlRequest);
+}

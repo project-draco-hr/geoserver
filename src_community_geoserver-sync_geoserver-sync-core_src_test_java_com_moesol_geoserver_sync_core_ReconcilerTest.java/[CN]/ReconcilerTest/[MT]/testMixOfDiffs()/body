@@ -1,0 +1,20 @@
+{
+  local.h.add(makePosition("aa","0000"));
+  local.h.add(makePosition("bb","1111"));
+  local.h.add(makePosition("cc","2222"));
+  local.h.add(makePosition("dd","3333"));
+  remote.h.add(makePosition("aa","0000"));
+  remote.h.add(makePosition("bb","1111"));
+  remote.h.add(makePosition("cc","22dd"));
+  remote.h.add(makePosition("ee","4444"));
+  ReconcileNotices notices=mock(ReconcileNotices.class);
+  ReconcilerNotifier reconciler=new ReconcilerNotifier(local,remote,notices);
+  reconciler.reconcile();
+  InOrder inOrder=inOrder(notices);
+  inOrder.verify(notices).matchAtPosition("aa");
+  inOrder.verify(notices).matchAtPosition("bb");
+  inOrder.verify(notices).differentAtPosition("cc");
+  inOrder.verify(notices).remoteMissingPosition("dd");
+  inOrder.verify(notices).localMissingPosition("ee");
+  verifyNoMoreInteractions(notices);
+}

@@ -1,0 +1,14 @@
+{
+  FeatureCollectionType server=make(f("F1",0),f("F2",1),f("F3",2),f("F4",3));
+  FeatureCollectionResponse rserver=FeatureCollectionResponse.adapt(server);
+  m_sha1Sync.setCollection(rserver);
+  m_sha1Sync.parseSha1SyncJson("{l:0,h:[{p:'',s:'deadbeef'}]}");
+  Sha1SyncJson sync=m_sha1Sync.compute();
+  assertEquals(1,sync.level());
+  assertEquals("result: " + sync,4,sync.hashes().size());
+  check(sync,1,"99","8870ef04dbc5c827b87c34bf582f39442a78bbd9");
+  check(sync,0,"88","7ed2eeddc197ed77968204c8668ffc142b3f8878");
+  check(sync,2,"be","755774c7760c6184f154b25e88f81712f65bc712");
+  check(sync,3,"d0","55fb0480834cfd25152000bc6543d69f46ec3235");
+  assertEquals(1L,sync.max());
+}

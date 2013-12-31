@@ -1,0 +1,26 @@
+{
+  if (m_outputFormat.equals("SyncGML")) {
+    List<Expression> args=new ArrayList<Expression>();
+    args.add(ff.literal(m_atts));
+    args.add(ff.literal(m_json));
+    m_filter.setParameters(args);
+    FeatureCollectionType serverResp=applyFilter(m_server,m_filter);
+    TestResponseFeatureCollection respFeatureCollection=new TestResponseFeatureCollection();
+    respFeatureCollection.setFeatureCollection((FeatureCollection<?,?>)serverResp.getFeature().get(0));
+    return respFeatureCollection;
+  }
+  if (m_outputFormat.equals("SyncChecksum")) {
+    ByteArrayOutputStream output=new ByteArrayOutputStream();
+    FeatureCollectionSha1Sync sha1Sync=new FeatureCollectionSha1Sync(output);
+    sha1Sync.parseAttributesToInclude(m_atts);
+    sha1Sync.parseSha1SyncJson(m_json);
+    sha1Sync.write(FeatureCollectionResponse.adapt(m_server));
+    ByteArrayInputStream bais=new ByteArrayInputStream(output.toByteArray());
+    TestResponse response=new TestResponse();
+    response.setResponseCode(200);
+    response.setResponseMessage("OK");
+    response.setResultStream(bais);
+    return response;
+  }
+  throw new IllegalStateException("Unexpected output format: " + m_outputFormat);
+}

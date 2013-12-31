@@ -1,0 +1,33 @@
+{
+  maybeOneTimeSetup();
+  Feature feature=(Feature)object;
+  Sha1Value idSha1=m_featureSha1Evaluator.computeIdSha1(feature);
+  Sha1Value valueSha1=m_featureSha1Evaluator.computeValueSha1(feature);
+  IdAndValueSha1s pair=new IdAndValueSha1s(idSha1,valueSha1);
+  m_featureSha1s.add(pair);
+  Sha1Value prefixSha1=versionFeatures.getBucketPrefixSha1(pair);
+  Sha1SyncJson remoteSha1Sync=REMOTE_SHA1_SYNC.get();
+  if (remoteSha1Sync.max() > 1) {
+    return LITERAL_TRUE;
+  }
+  if (remoteSha1Sync.hashes() == null) {
+    return LITERAL_TRUE;
+  }
+  Sha1SyncPositionHash sha1Position=new Sha1SyncPositionHash().position(prefixSha1.toString());
+  int idx=Collections.binarySearch(remoteSha1Sync.hashes(),sha1Position,POSITION_COMPARATOR);
+  if (idx < 0) {
+    idx=-idx - 2;
+  }
+  if (idx < 0 || remoteSha1Sync.hashes().size() < idx) {
+    return LITERAL_FALSE;
+  }
+  Sha1SyncPositionHash remoteGroup=remoteSha1Sync.hashes().get(idx);
+  if (!prefixSha1.toString().startsWith(remoteGroup.position())) {
+    return LITERAL_FALSE;
+  }
+  Sha1Value sha1OfSha1=m_featureSha1Evaluator.sha1OfSha1(valueSha1);
+  if (sha1OfSha1.toString().equals(remoteGroup.summary())) {
+    return LITERAL_FALSE;
+  }
+  return LITERAL_TRUE;
+}
