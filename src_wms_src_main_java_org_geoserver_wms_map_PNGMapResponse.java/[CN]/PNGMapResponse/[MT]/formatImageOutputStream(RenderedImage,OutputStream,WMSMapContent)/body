@@ -3,14 +3,21 @@
     LOGGER.fine("Writing png image ...");
   }
   image=applyPalette(image,mapContent,"image/png8",true);
-  Boolean PNGNativeAcc=wms.getPNGNativeAcceleration();
   float quality=(100 - wms.getPngCompression()) / 100.0f;
-  SampleModel sm=image.getSampleModel();
-  int numBits=sm.getSampleSize(0);
-  boolean nativeAcceleration=PNGNativeAcc.booleanValue() && !(numBits > 1 && numBits < 8);
-  ImageWorker iw=new ImageWorker(image);
-  iw.writePNG(outStream,"FILTERED",quality,nativeAcceleration,false);
-  RasterCleaner.addImage(iw.getRenderedImage());
+  JAIInfo.PngEncoderType encoder=wms.getPNGEncoderType();
+  if (encoder == JAIInfo.PngEncoderType.PNGJ) {
+    image=new PNGJWriter().writePNG(image,outStream,quality,mapContent);
+    RasterCleaner.addImage(image);
+  }
+ else {
+    Boolean PNGNativeAcc=(encoder == JAIInfo.PngEncoderType.NATIVE);
+    SampleModel sm=image.getSampleModel();
+    int numBits=sm.getSampleSize(0);
+    boolean nativeAcceleration=PNGNativeAcc.booleanValue() && !(numBits > 1 && numBits < 8);
+    ImageWorker iw=new ImageWorker(image);
+    iw.writePNG(outStream,"FILTERED",quality,nativeAcceleration,false);
+    RasterCleaner.addImage(iw.getRenderedImage());
+  }
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Writing png image ... done!");
   }
