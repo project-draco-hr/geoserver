@@ -1,0 +1,21 @@
+{
+  File template=null;
+  try {
+    String layerId=getLayerId(MockData.POINTS);
+    FeatureTypeInfo resource=getCatalog().getResourceByName(layerId,FeatureTypeInfo.class);
+    File parent=getDataDirectory().findOrCreateResourceDir(resource);
+    template=new File(parent,"height.ftl");
+    FileUtils.write(template,"${altitude.value}");
+    final String requestUrl="wms/kml?layers=" + layerId + "&mode=download";
+    Document doc=getAsDOM(requestUrl);
+    String base="//kml:Placemark[@id='Points.0']/kml:Point";
+    XMLAssert.assertXpathEvaluatesTo("1","count(" + base + ")",doc);
+    XMLAssert.assertXpathEvaluatesTo("1",base + "/kml:extrude",doc);
+    XMLAssert.assertXpathEvaluatesTo("relativeToGround",base + "/kml:altitudeMode",doc);
+  }
+  finally {
+    if (template != null) {
+      template.delete();
+    }
+  }
+}
