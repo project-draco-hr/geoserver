@@ -1,0 +1,23 @@
+{
+  MBTilesMetadata metadata=new MBTilesMetadata();
+  metadata.setName(name);
+  metadata.setVersion("0");
+  if (mapLayers.size() == 1) {
+    ResourceInfo r=mapLayers.get(0).getResource();
+    metadata.setDescription(r.getDescription());
+    metadata.setType(MBTilesMetadata.t_type.BASE_LAYER);
+  }
+ else {
+    String descr="";
+    for (    MapLayerInfo l : mapLayers) {
+      descr+=l.getResource().getDescription() + ", ";
+    }
+    descr=descr.substring(0,descr.length() - 2);
+    metadata.setDescription(descr);
+    metadata.setType(MBTilesMetadata.t_type.OVERLAY);
+  }
+  metadata.setBounds(box);
+  metadata.setFormat(JPEG_MIME_TYPE.equals(imageFormat) ? MBTilesMetadata.t_format.JPEG : MBTilesMetadata.t_format.PNG);
+  LOGGER.fine("Creating tile entry" + metadata.getName());
+  mbTiles.saveMetaData(metadata);
+}

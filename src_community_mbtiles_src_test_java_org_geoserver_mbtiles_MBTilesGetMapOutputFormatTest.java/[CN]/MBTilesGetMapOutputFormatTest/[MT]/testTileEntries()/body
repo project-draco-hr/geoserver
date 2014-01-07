@@ -1,0 +1,25 @@
+{
+  WMSMapContent mapContent=createMapContent(WORLD,LAKES);
+  mapContent.getRequest().setBbox(new Envelope(-0.17578125,-0.087890625,0.17578125,0.087890625));
+  mapContent.getRequest().getFormatOptions().put("min_zoom","10");
+  mapContent.getRequest().getFormatOptions().put("max_zoom","11");
+  WebMap map=format.produceMap(mapContent);
+  MBTilesFile mbtiles=createMbTilesFiles(map);
+  MBTilesMetadata metadata=mbtiles.loadMetaData();
+  assertEquals("World_Lakes",metadata.getName());
+  assertEquals("0",metadata.getVersion());
+  assertEquals("World, null",metadata.getDescription());
+  assertEquals("-180.0,89.82421875,-179.82421875,90.0",metadata.getBoundsStr());
+  assertEquals(MBTilesMetadata.t_type.OVERLAY,metadata.getType());
+  assertEquals(MBTilesMetadata.t_format.PNG,metadata.getFormat());
+  assertEquals(1,mbtiles.numberOfTiles());
+  MBTilesFile.TileIterator tiles=mbtiles.tiles();
+  assertTrue(tiles.hasNext());
+  MBTilesTile e=tiles.next();
+  assertEquals(10,e.getZoomLevel());
+  assertEquals(0,e.getTileColumn());
+  assertEquals(1023,e.getTileRow());
+  assertNotNull(e.getData());
+  tiles.close();
+  mbtiles.close();
+}
