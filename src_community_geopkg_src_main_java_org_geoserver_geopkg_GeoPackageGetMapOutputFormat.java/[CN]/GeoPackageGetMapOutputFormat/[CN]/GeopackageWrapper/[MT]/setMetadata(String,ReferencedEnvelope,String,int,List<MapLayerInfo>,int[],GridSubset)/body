@@ -1,0 +1,25 @@
+{
+  e.setTableName(name);
+  if (mapLayers.size() == 1) {
+    ResourceInfo r=mapLayers.get(0).getResource();
+    e.setIdentifier(r.getTitle());
+    e.setDescription(r.getAbstract());
+  }
+  e.setBounds(box);
+  e.setSrid(srid);
+  GridSet gridSet=gridSubset.getGridSet();
+  for (int z=minmax[0]; z < minmax[1]; z++) {
+    Grid g=gridSet.getGrid(z);
+    TileMatrix m=new TileMatrix();
+    m.setZoomLevel(z);
+    m.setMatrixWidth((int)g.getNumTilesWide());
+    m.setMatrixHeight((int)g.getNumTilesHigh());
+    m.setTileWidth(gridSubset.getTileWidth());
+    m.setTileHeight(gridSubset.getTileHeight());
+    m.setXPixelSize(g.getResolution());
+    m.setYPixelSize(g.getResolution());
+    e.getTileMatricies().add(m);
+  }
+  LOGGER.fine("Creating tile entry" + e.getTableName());
+  geopkg.create(e);
+}
