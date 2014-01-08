@@ -16,7 +16,12 @@
     metadata.setDescription(descr);
     metadata.setType(MBTilesMetadata.t_type.OVERLAY);
   }
-  metadata.setBounds(box);
+  try {
+    metadata.setBounds(box.transform(WGS_84,true));
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Failed to transform bounding box",e);
+  }
   metadata.setFormat(JPEG_MIME_TYPE.equals(imageFormat) ? MBTilesMetadata.t_format.JPEG : MBTilesMetadata.t_format.PNG);
   LOGGER.fine("Creating tile entry" + metadata.getName());
   mbTiles.saveMetaData(metadata);
