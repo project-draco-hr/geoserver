@@ -27,6 +27,32 @@
   ResourceInfo r=l.getResource();
   r.setStore(task.getStore());
   r.setNamespace(catalog.getNamespaceByPrefix(task.getStore().getWorkspace().getName()));
+  if (l.getDefaultStyle() == null) {
+    try {
+      StyleInfo style=null;
+      if (r instanceof FeatureTypeInfo) {
+        FeatureType featureType=(FeatureType)task.getMetadata().get(FeatureType.class);
+        if (featureType != null) {
+          style=styleGen.createStyle((FeatureTypeInfo)r,featureType);
+        }
+ else {
+          throw new RuntimeException("Unable to compute style");
+        }
+      }
+ else       if (r instanceof CoverageInfo) {
+        style=styleGen.createStyle((CoverageInfo)r);
+      }
+ else {
+        throw new RuntimeException("Unknown resource type :" + r.getClass());
+      }
+      l.setDefaultStyle(style);
+    }
+ catch (    Exception e) {
+      task.setError(e);
+      task.setState(ImportTask.State.ERROR);
+      return false;
+    }
+  }
   if (r.getSRS() == null) {
     task.setState(ImportTask.State.NO_CRS);
     return false;
@@ -46,28 +72,6 @@
   if (r.getNativeBoundingBox() == null) {
     task.setState(ImportTask.State.NO_BOUNDS);
     return false;
-  }
-  if (l.getDefaultStyle() == null) {
-    try {
-      StyleInfo style=null;
-      if (r instanceof FeatureTypeInfo) {
-        FeatureType featureType=(FeatureType)task.getMetadata().get(FeatureType.class);
-        if (featureType != null) {
-          style=styleGen.createStyle((FeatureTypeInfo)r,featureType);
-        }
-      }
- else       if (r instanceof CoverageInfo) {
-        style=styleGen.createStyle((CoverageInfo)r);
-      }
- else {
-      }
-      l.setDefaultStyle(style);
-    }
- catch (    Exception e) {
-      task.setError(e);
-      task.setState(ImportTask.State.ERROR);
-      return false;
-    }
   }
   task.setState(ImportTask.State.READY);
   return true;

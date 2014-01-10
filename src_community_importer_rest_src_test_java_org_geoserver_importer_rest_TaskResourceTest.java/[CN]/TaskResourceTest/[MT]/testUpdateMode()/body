@@ -1,0 +1,13 @@
+{
+  createH2DataStore(getCatalog().getDefaultWorkspace().getName(),"foo");
+  ImportContext session=importer.getContext(0);
+  assertEquals(UpdateMode.CREATE,session.getTasks().get(0).getUpdateMode());
+  String update="{\"task\": { \"updateMode\" : \"APPEND\" }}";
+  put("/rest/imports/0/tasks/0",update,MediaType.APPLICATION_JSON.toString());
+  session=importer.getContext(0);
+  assertEquals(UpdateMode.APPEND,session.getTasks().get(0).getUpdateMode());
+  update="{\"task\": {}}";
+  put("/rest/imports/0/tasks/0",update,MediaType.APPLICATION_JSON.toString());
+  session=importer.getContext(0);
+  assertEquals(UpdateMode.APPEND,session.getTasks().get(0).getUpdateMode());
+}
