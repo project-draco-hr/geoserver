@@ -1,0 +1,32 @@
+{
+  kwidth=interp.getWidth();
+  kheight=interp.getHeight();
+  if (interp != null) {
+    lpad=interp.getLeftPadding();
+    rpad=interp.getRightPadding();
+    tpad=interp.getTopPadding();
+    bpad=interp.getBottomPadding();
+  }
+ else {
+    lpad=rpad=tpad=bpad=0;
+  }
+  if (extender == null) {
+    extender=GridCoverage2DRIA.DEFAULT_BORDEREXTENDER;
+  }
+  PlanarImage srcImage=PlanarImage.wrapRenderedImage(src.getRenderedImage());
+  if (!(lpad == rpad && rpad == tpad && tpad == bpad && bpad == 0)) {
+    minX=srcImage.getMinX();
+    maxX=srcImage.getMaxX() - 1;
+    minY=srcImage.getMinY();
+    maxY=srcImage.getMaxY() - 1;
+    Rectangle bounds=new Rectangle(srcImage.getMinX() - lpad,srcImage.getMinY() - tpad,srcImage.getWidth() + lpad + rpad,srcImage.getHeight() + tpad + bpad);
+    iter=RandomIterFactory.create(srcImage.getExtendedData(bounds,extender),bounds);
+  }
+ else {
+    minX=srcImage.getMinX();
+    maxX=srcImage.getMaxX() - 1;
+    minY=srcImage.getMinY();
+    maxY=srcImage.getMaxY() - 1;
+    iter=RandomIterFactory.create(srcImage,srcImage.getBounds());
+  }
+}
