@@ -2,6 +2,7 @@
   String workspace=getAttribute("workspace");
   String coveragestore=getAttribute("coveragestore");
   boolean recurse=getQueryStringValue("recurse",Boolean.class,false);
+  String deleteType=getQueryStringValue("purge",String.class,"none");
   CoverageStoreInfo cs=catalog.getCoverageStoreByName(workspace,coveragestore);
   if (!recurse) {
     if (!catalog.getCoveragesByCoverageStore(cs).isEmpty()) {
@@ -12,6 +13,7 @@
  else {
     new CascadeDeleteVisitor(catalog).visit(cs);
   }
+  delete(deleteType,cs);
   clear(cs);
   LOGGER.info("DELETE coverage store " + workspace + ","+ coveragestore);
 }

@@ -1,0 +1,27 @@
+{
+  File dir=new File("./target/mosaicfordelete");
+  dir.mkdir();
+  dir.deleteOnExit();
+  File f=new File(dir,"mosaic.zip");
+  f.deleteOnExit();
+  FileOutputStream fout=new FileOutputStream(f);
+  IOUtils.copy(getClass().getResourceAsStream("test-data/mosaic.zip"),fout);
+  fout.flush();
+  fout.close();
+  final int length=(int)f.length();
+  byte[] zipData=new byte[length];
+  FileInputStream fis=new FileInputStream(f);
+  fis.read(zipData);
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/wcs/coveragestores/mosaicfordelete/file.imagemosaic",zipData,"application/zip");
+  assertEquals(201,response.getStatusCode());
+  Document dom=getAsDOM("/rest/workspaces/wcs/coveragestores/mosaicfordelete.xml");
+  assertXpathEvaluatesTo("true","/coverageStore/enabled",dom);
+  final File dataDir=GeoserverDataDirectory.getGeoserverDataDirectory();
+  final File storeDir=new File(dataDir,"data/wcs/mosaicfordelete");
+  File[] content=storeDir.listFiles();
+  assertEquals(11,content.length);
+  assertEquals(200,deleteAsServletResponse("/rest/workspaces/wcs/coveragestores/mosaicfordelete?recurse=true&purge=" + purge).getStatusCode());
+  content=storeDir.listFiles();
+  assertEquals(expectedFiles,content.length);
+  assertNull(catalog.getCoverageStoreByName("wcs","mosaicfordelete"));
+}
