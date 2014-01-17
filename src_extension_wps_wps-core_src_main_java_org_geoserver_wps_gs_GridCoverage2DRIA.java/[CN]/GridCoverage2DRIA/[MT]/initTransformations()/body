@@ -1,0 +1,39 @@
+{
+  g2wd=(AffineTransform)dstGridGeometry.getGridToCRS2D(PixelOrientation.UPPER_LEFT);
+  try {
+    w2gd=g2wd.createInverse();
+  }
+ catch (  NoninvertibleTransformException e) {
+    throw new IllegalArgumentException("Can't compute source W2G",e);
+  }
+  g2ws=(AffineTransform)src.getGridGeometry().getGridToCRS2D(PixelOrientation.UPPER_LEFT);
+  try {
+    w2gs=g2ws.createInverse();
+  }
+ catch (  NoninvertibleTransformException e) {
+    throw new IllegalArgumentException("Can't compute source W2G",e);
+  }
+  try {
+    CoordinateReferenceSystem sourceCRS=src.getCoordinateReferenceSystem2D();
+    CoordinateReferenceSystem targetCRS=dstGridGeometry.getCoordinateReferenceSystem2D();
+    if (!CRS.equalsIgnoreMetadata(sourceCRS,targetCRS)) {
+      src2dstCRSTransform=CRS.findMathTransform(sourceCRS,targetCRS,true);
+      dst2srcCRSTransform=src2dstCRSTransform.inverse();
+      if (!src2dstCRSTransform.isIdentity()) {
+        needReprojection=true;
+        return;
+      }
+    }
+    needReprojection=false;
+    concatenatedForwardTransform=(AffineTransform)w2gd.clone();
+    concatenatedForwardTransform.concatenate(g2ws);
+    concatenatedBackwardTransform=concatenatedForwardTransform.createInverse();
+    if (XAffineTransform.isIdentity(concatenatedForwardTransform,1E-6)) {
+      concatenatedForwardTransform=new AffineTransform();
+      concatenatedBackwardTransform=new AffineTransform();
+    }
+  }
+ catch (  Exception e) {
+    throw new IllegalArgumentException("Can't create a transform between CRS",e);
+  }
+}

@@ -7,17 +7,19 @@
   }
   double coords[]=new double[]{srcPt.getX(),srcPt.getY()};
   try {
-    mapSrcPoint(coords);
+    mapSourcePoint(coords);
   }
  catch (  TransformException e) {
-    LOGGER.log(Level.WARNING,"Error transforming coords",e);
+    if (LOGGER.isLoggable(Level.WARNING)) {
+      LOGGER.log(Level.WARNING,"Error transforming coords",e);
+    }
     return null;
   }
   Point2D ret=((Point2D)srcPt.clone());
   ret.setLocation(coords[0],coords[1]);
-  if (inside(ret,src.getRenderedImage()))   return ret;
+  if (dstGridGeometry.getGridRange2D().contains(ret))   return ret;
  else {
-    LOGGER.log(Level.WARNING,"{0} mapped to {1} lies outside {2},{3}+{4}x{5}",new Object[]{srcPt,ret,src.getRenderedImage().getMinX(),src.getRenderedImage().getMinX(),src.getRenderedImage().getWidth(),src.getRenderedImage().getHeight()});
+    LOGGER.log(Level.WARNING,"{0} mapped to {1} lies outside {2},{3}+{4}x{5}",new Object[]{srcPt,ret,dstGridGeometry.getGridRange2D().x,dstGridGeometry.getGridRange2D().y,dstGridGeometry.getGridRange2D().width + dstGridGeometry.getGridRange2D().x,dstGridGeometry.getGridRange2D().height + dstGridGeometry.getGridRange2D().y});
     return null;
   }
 }
