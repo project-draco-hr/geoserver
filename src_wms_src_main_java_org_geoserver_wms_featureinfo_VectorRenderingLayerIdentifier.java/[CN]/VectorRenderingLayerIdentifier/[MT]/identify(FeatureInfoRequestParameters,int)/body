@@ -13,9 +13,16 @@
   GetMapRequest getMap=params.getGetMapRequest();
   WMSMapContent mc=new WMSMapContent(getMap);
   try {
+    mc.setTransparent(true);
+    mc.setBuffer(params.getBuffer());
+    mc.getViewport().setBounds(new ReferencedEnvelope(getMap.getBbox(),getMap.getCrs()));
+    mc.setMapWidth(getMap.getWidth());
+    mc.setMapWidth(getMap.getHeight());
+    FeatureLayer layer=getLayer(params,style);
+    mc.addLayer(layer);
+    RenderingVariables.setupEnvironmentVariables(mc);
     AffineTransform worldToScreen=RendererUtilities.worldToScreenTransform(params.getRequestedBounds(),new Rectangle(params.getWidth(),params.getHeight()));
     AffineTransform screenToWorld=worldToScreen.createInverse();
-    FeatureLayer layer=getLayer(params,style);
     int radius=getSearchRadius(params,rules,layer,getMap,screenToWorld);
     if (radius < buffer) {
       radius=buffer;
@@ -32,9 +39,6 @@
     mc.getViewport().setBounds(new ReferencedEnvelope(targetModelSpace,getMap.getCrs()));
     mc.setMapWidth(paintAreaSize);
     mc.setMapHeight(paintAreaSize);
-    mc.setTransparent(true);
-    mc.setBuffer(params.getBuffer());
-    mc.addLayer(layer);
     RenderedImageMapOutputFormat rim=new RenderedImageMapOutputFormat(wms){
       @Override protected RenderedImage prepareImage(      int width,      int height,      IndexColorModel palette,      boolean transparent){
         return image;

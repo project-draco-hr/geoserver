@@ -146,18 +146,7 @@
       throw new IllegalArgumentException("Unkown layer type " + layerType);
     }
   }
-  EnvFunction.setLocalValue("wms_bbox",mapContent.getRenderingArea());
-  EnvFunction.setLocalValue("wms_crs",mapContent.getRenderingArea().getCoordinateReferenceSystem());
-  EnvFunction.setLocalValue("wms_srs",mapContent.getRequest().getSRS());
-  EnvFunction.setLocalValue("wms_width",mapContent.getMapWidth());
-  EnvFunction.setLocalValue("wms_height",mapContent.getMapHeight());
-  try {
-    double scaleDenominator=RendererUtilities.calculateOGCScale(mapContent.getRenderingArea(),mapContent.getMapWidth(),null);
-    EnvFunction.setLocalValue("wms_scale_denominator",scaleDenominator);
-  }
- catch (  Exception e) {
-    LOGGER.log(Level.SEVERE,"Failed to compute the scale denominator, wms_scale_denominator env variable is unset",e);
-  }
+  RenderingVariables.setupEnvironmentVariables(mapContent);
   setupRenderingBuffer(mapContent,layers);
   mapContent=fireBeforeRender(mapContent);
   WebMap map=delegate.produceMap(mapContent);
