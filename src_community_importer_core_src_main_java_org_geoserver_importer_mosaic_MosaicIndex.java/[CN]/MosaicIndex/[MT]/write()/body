@@ -23,6 +23,19 @@
   if (mosaic.getTimeMode() != TimeMode.NONE) {
     typeBuilder.add("time",Date.class);
   }
+  File indexerFile=new File(mosaic.getFile(),"indexer.properties");
+  Properties indexer=new Properties();
+  indexer.put(Utils.Prop.NAME,mosaic.getName());
+  indexer.put(Utils.Prop.INDEX_NAME,mosaic.getName());
+  indexer.put(Utils.Prop.USE_EXISTING_SCHEMA,"true");
+  FileOutputStream ifos=null;
+  try {
+    ifos=new FileOutputStream(indexerFile);
+    indexer.store(ifos,null);
+  }
+  finally {
+    IOUtils.closeQuietly(ifos);
+  }
   ShapefileDataStoreFactory shpFactory=new ShapefileDataStoreFactory();
   DirectoryDataStore dir=new DirectoryDataStore(mosaic.getFile(),new ShapefileDataStoreFactory.ShpFileStoreFactory(shpFactory,new HashMap()));
   try {
@@ -50,22 +63,25 @@
   finally {
     dir.dispose();
   }
-  double width=first.getGrid().getGridRange2D().getWidth();
-  double height=first.getGrid().getGridRange2D().getHeight();
-  Properties props=new Properties();
-  props.setProperty("Name",mosaic.getName());
-  props.setProperty("Levels",String.format("%f,%f",first.getEnvelope().getWidth() / width,first.getEnvelope().getHeight() / height));
-  props.setProperty("LevelsNum","1");
-  props.setProperty("LocationAttribute","location");
+  ImageMosaicFormat format=new ImageMosaicFormat();
+  ImageMosaicReader reader=format.getReader(mosaic.getFile());
+  reader.dispose();
   if (mosaic.getTimeMode() != TimeMode.NONE) {
-    props.setProperty("TimeAttribute","time");
-  }
-  FileOutputStream fout=new FileOutputStream(new File(mosaic.getFile(),mosaic.getName() + ".properties"));
-  try {
-    props.store(fout,null);
-    fout.flush();
-  }
+    File propertyFile=new File(mosaic.getFile(),mosaic.getName() + ".properties");
+    FileInputStream fis=null;
+    FileOutputStream fos=null;
+    try {
+      fis=new FileInputStream(propertyFile);
+      Properties props=new Properties();
+      props.load(fis);
+      fis.close();
+      props.setProperty("TimeAttribute","time");
+      fos=new FileOutputStream(propertyFile);
+      props.store(fos,null);
+    }
   finally {
-    fout.close();
+      IOUtils.closeQuietly(fis);
+      IOUtils.closeQuietly(fos);
+    }
   }
 }
