@@ -1,0 +1,27 @@
+{
+  Catalog cat=getCatalog();
+  StoreInfo store=cat.getStoreByName(workspaceName,name,StoreInfo.class);
+  if (store == null) {
+    return;
+  }
+  Map<String,Serializable> params=store.getConnectionParameters();
+  String databaseLocation=null;
+  if ("h2".equals(params.get("dbtype"))) {
+    databaseLocation=(String)params.get("database");
+  }
+  CascadeDeleteVisitor v=new CascadeDeleteVisitor(getCatalog());
+  store.accept(v);
+  if (databaseLocation != null) {
+    final File dbFile=new File(databaseLocation);
+    File container=dbFile.getParentFile();
+    File[] dbFiles=container.listFiles(new FilenameFilter(){
+      @Override public boolean accept(      File dir,      String name){
+        return name.startsWith(dbFile.getName());
+      }
+    }
+);
+    for (    File f : dbFiles) {
+      assertTrue(f.delete());
+    }
+  }
+}
