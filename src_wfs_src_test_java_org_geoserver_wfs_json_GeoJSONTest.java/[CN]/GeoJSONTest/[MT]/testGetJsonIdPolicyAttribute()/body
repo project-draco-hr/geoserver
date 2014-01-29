@@ -1,0 +1,15 @@
+{
+  MockHttpServletResponse response=getAsServletResponse("wfs?request=GetFeature&version=1.0.0&typename=sf:PrimitiveGeoFeature&maxfeatures=1&outputformat=" + JSONType.simple_json + "&format_options="+ JSONType.ID_POLICY+ ":name");
+  assertEquals("application/json",response.getContentType());
+  String out=response.getOutputStreamContent();
+  JSONObject rootObject=JSONObject.fromObject(out);
+  assertEquals(rootObject.get("type"),"FeatureCollection");
+  JSONArray featureCol=rootObject.getJSONArray("features");
+  JSONObject aFeature=featureCol.getJSONObject(0);
+  assertTrue("id",aFeature.containsKey("id"));
+  Object id=aFeature.get("id");
+  assertNotNull("id",id);
+  assertEquals("name-f001",id);
+  JSONObject properties=aFeature.getJSONObject("properties");
+  assertFalse(properties.containsKey("name"));
+}

@@ -2,6 +2,11 @@
   if (LOGGER.isLoggable(Level.INFO))   LOGGER.info("about to encode JSON");
   WFSInfo wfs=getInfo();
   boolean featureBounding=wfs.isFeatureBounding();
+  String id_option=null;
+  Request request=Dispatcher.REQUEST.get();
+  if (request != null) {
+    id_option=JSONType.getIdPolicy((Map<String,String>)request.getKvp());
+  }
   OutputStreamWriter osw=null;
   Writer outWriter=null;
   boolean hasGeom=false;
@@ -27,10 +32,10 @@
     }
     jsonWriter.key("features");
     jsonWriter.array();
-    List resultsList=featureCollection.getFeature();
+    List<FeatureCollection> resultsList=featureCollection.getFeature();
     CoordinateReferenceSystem crs=null;
     for (int i=0; i < resultsList.size(); i++) {
-      FeatureCollection collection=(FeatureCollection)resultsList.get(i);
+      FeatureCollection collection=resultsList.get(i);
       FeatureIterator iterator=collection.features();
       try {
         SimpleFeatureType fType;
@@ -39,9 +44,15 @@
           SimpleFeature feature=(SimpleFeature)iterator.next();
           jsonWriter.object();
           jsonWriter.key("type").value("Feature");
-          jsonWriter.key("id").value(feature.getID());
           fType=feature.getFeatureType();
           types=fType.getAttributeDescriptors();
+          if (id_option == null) {
+            jsonWriter.key("id").value(feature.getID());
+          }
+ else           if (id_option.length() != 0) {
+            Object value=feature.getAttribute(id_option);
+            jsonWriter.key("id").value(value);
+          }
           GeometryDescriptor defaultGeomType=fType.getGeometryDescriptor();
           if (crs == null && defaultGeomType != null)           crs=fType.getGeometryDescriptor().getCoordinateReferenceSystem();
           jsonWriter.key("geometry");
@@ -67,6 +78,9 @@
           for (int j=0; j < types.size(); j++) {
             Object value=feature.getAttribute(j);
             AttributeDescriptor ad=types.get(j);
+            if (id_option != null && id_option.equals(ad.getLocalName())) {
+              continue;
+            }
             if (value != null) {
               if (value instanceof Geometry) {
                 if (ad.equals(defaultGeomType)) {
