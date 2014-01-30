@@ -1,0 +1,28 @@
+{
+  List<String> customDomains=new ArrayList(dimensions.getCustomDomains());
+  if (customDomains != null && customDomains.size() > 0) {
+    Set<String> params=map.keySet();
+    for (    String paramName : params) {
+      if (paramName.regionMatches(true,0,"dim_",0,4)) {
+        String name=paramName.substring(4);
+        name=caseInsensitiveLookup(customDomains,name);
+        if (name != null) {
+          final DimensionInfo customInfo=metadata.get(ResourceInfo.CUSTOM_DIMENSION_PREFIX + name,DimensionInfo.class);
+          if (dimensions.hasDomain(name) && customInfo != null && customInfo.isEnabled()) {
+            final ArrayList<String> val=new ArrayList<String>(1);
+            String value=(String)map.get(paramName);
+            if (value.indexOf(",") > 0) {
+              String[] elements=value.split(",");
+              val.addAll(Arrays.asList(elements));
+            }
+ else {
+              val.add(value);
+            }
+            readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,val,name);
+          }
+        }
+      }
+    }
+  }
+  return readParameters;
+}

@@ -1,0 +1,43 @@
+{
+  final ColorMapEntry previousCME=mapEntries.get(0);
+  final ColorMapEntry currentCME=mapEntries.get(1);
+  boolean leftEdge;
+  if (previousCME == null)   leftEdge=true;
+ else   leftEdge=false;
+  Color color=LegendUtils.color(currentCME);
+  final double opacity=LegendUtils.getOpacity(currentCME);
+  color=new Color(color.getRed(),color.getGreen(),color.getBlue(),(int)(255 * opacity));
+  super.add(new ColorManager.SimpleColorManager(color,opacity,requestedDimension,borderColor));
+  String label=currentCME.getLabel();
+  double quantity1=leftEdge ? LegendUtils.getQuantity(currentCME) : LegendUtils.getQuantity(previousCME);
+  double quantity2=LegendUtils.getQuantity(currentCME);
+  String rule;
+  String symbol1=null, symbol2=null;
+  if (formatQuantity) {
+    rule="";
+    if (opacity > 0) {
+      if (leftEdge)       symbol1=" < ";
+ else {
+        symbol1=" <= ";
+        symbol2=" < ";
+      }
+      String value1=formatQuantity(quantity1,digits,unit);
+      String value2=formatQuantity(quantity2,digits,unit);
+      rule=leftEdge ? value1 + " " + symbol1+ " x" : value1 + " " + symbol1+ " x "+ symbol2+ " "+ value2;
+    }
+  }
+ else {
+    if (leftEdge)     symbol1=" < ";
+ else {
+      symbol1=" <= ";
+      symbol2=" < ";
+    }
+    rule=leftEdge ? Double.toString(quantity1) + " " + symbol1+ " x" : Double.toString(quantity1) + " " + symbol1+ " x "+ symbol2+ " "+ Double.toString(quantity2);
+  }
+  super.add(new TextManager(rule,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));
+  if (label != null) {
+    hasLabel=true;
+    super.add(new TextManager(label,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));
+  }
+ else   super.add(null);
+}

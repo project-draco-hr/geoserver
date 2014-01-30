@@ -1,0 +1,17 @@
+{
+  CoverageStoreInfo storeInfo=catalog.getCoverageStoreByName(COVERAGE_NAME);
+  assertNotNull(storeInfo);
+  CoverageInfo ci=catalog.getCoverageByName(COVERAGE_NAME);
+  assertNotNull(ci);
+  assertEquals(storeInfo,ci.getStore());
+  FilterFunction_gridCoverageStats funcStat=new FilterFunction_gridCoverageStats();
+  GridCoverageReader reader=ci.getGridCoverageReader(null,null);
+  GridCoverage2D gridCoverage=(GridCoverage2D)reader.read(null);
+  double min=(Double)funcStat.evaluate(gridCoverage,"minimum");
+  double max=(Double)funcStat.evaluate(gridCoverage,"maximum");
+  assertEquals(min,13.1369,TOLERANCE);
+  assertEquals(max,20.665,TOLERANCE);
+  ImageIOUtilities.disposeImage(gridCoverage.getRenderedImage());
+  MockHttpServletResponse response=deleteAsServletResponse("/rest/workspaces/gs/coveragestores/watertemp_dynamic?recurse=true");
+  assertEquals(200,response.getStatusCode());
+}
