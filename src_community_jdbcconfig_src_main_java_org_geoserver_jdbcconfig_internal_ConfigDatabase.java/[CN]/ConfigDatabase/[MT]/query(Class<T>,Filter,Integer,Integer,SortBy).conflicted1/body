@@ -33,13 +33,9 @@
   }
  else {
     Iterator<T> iterator=lazyTransformed.iterator();
-    if (offset != null) {
-      Iterators.skip(iterator,offset.intValue());
-    }
-    if (limit != null) {
-      iterator=Iterators.limit(iterator,limit.intValue());
-    }
     result=CloseableIteratorAdapter.filter(iterator,filter);
+    assert(!sqlBuilder.isOffsetLimitApplied());
+    result=applyOffsetLimit(result,offset,limit);
   }
   return result;
 }
