@@ -1,0 +1,39 @@
+{
+  CoverageInfo coverage=null;
+  try {
+    coverage=builder.buildCoverage(reader,coverageName,null);
+    if (format instanceof ImageMosaicFormat) {
+      coverage.getParameters().put(AbstractGridFormat.USE_JAI_IMAGEREAD.getName().getCode(),Boolean.FALSE);
+    }
+    coverage.setName(name);
+    coverage.setTitle(name);
+    coverage.setDescription(name);
+    coverage.setEnabled(true);
+    CoverageInfo cov=catalog.getCoverageByCoverageStore(store,name);
+    if (cov == null) {
+      catalog.add(coverage);
+    }
+ else {
+      builder.updateCoverage(cov,coverage);
+      catalog.save(cov);
+      coverage=cov;
+    }
+    LayerInfo layer=catalog.getLayerByName(new NameImpl(qName));
+    if (layer == null) {
+      layer=catalog.getFactory().createLayer();
+    }
+    layer.setResource(coverage);
+    layer.setDefaultStyle(catalog.getStyleByName(LayerProperty.STYLE.get(props,DEFAULT_RASTER_STYLE)));
+    layer.setType(LayerInfo.Type.RASTER);
+    layer.setEnabled(true);
+    if (layer.getId() == null) {
+      catalog.add(layer);
+    }
+ else {
+      catalog.save(layer);
+    }
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+}
