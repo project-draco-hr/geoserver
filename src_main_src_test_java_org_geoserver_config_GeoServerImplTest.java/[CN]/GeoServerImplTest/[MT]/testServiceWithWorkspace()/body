@@ -1,0 +1,28 @@
+{
+  WorkspaceInfo ws1=geoServer.getCatalog().getFactory().createWorkspace();
+  ws1.setName("TEST-WORKSPACE-1");
+  geoServer.getCatalog().add(ws1);
+  ServiceInfo newService1=geoServer.getFactory().createService();
+  newService1.setWorkspace(ws1);
+  newService1.setName("SERVICE-1-WS-1");
+  newService1.setTitle("Service for WS1");
+  geoServer.add(newService1);
+  ServiceInfo globalService=geoServer.getFactory().createService();
+  globalService.setName("SERVICE-2-GLOBAL");
+  globalService.setTitle("Global Service");
+  geoServer.add(globalService);
+  WorkspaceInfo ws2=geoServer.getCatalog().getFactory().createWorkspace();
+  ws2.setName("TEST-WORKSPACE-2");
+  geoServer.getCatalog().add(ws2);
+  ServiceInfo newService2=geoServer.getFactory().createService();
+  newService2.setWorkspace(ws2);
+  newService2.setName("SERVICE-3-WS-2");
+  newService2.setTitle("Service for WS2");
+  geoServer.add(newService2);
+  assertThat(geoServer.getService(ServiceInfo.class),equalTo(globalService));
+  assertThat(geoServer.getService(ws1,ServiceInfo.class),equalTo(newService1));
+  assertThat(geoServer.getService(ws2,ServiceInfo.class),equalTo(newService2));
+  assertThat((Collection<ServiceInfo>)geoServer.getServices(),hasItem(globalService));
+  assertThat((Collection<ServiceInfo>)geoServer.getServices(ws1),hasItem(newService1));
+  assertThat((Collection<ServiceInfo>)geoServer.getServices(ws2),hasItem(newService2));
+}
