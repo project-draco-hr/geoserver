@@ -1,0 +1,29 @@
+{
+  if (context instanceof WebApplicationContext) {
+    ServletContext servletContext=((WebApplicationContext)context).getServletContext();
+    String filepath=servletContext.getRealPath(path);
+    if (filepath != null) {
+      File file=new File(filepath);
+      if (file.exists()) {
+        return file;
+      }
+    }
+ else {
+      List<String> items=Paths.names(path);
+      int index=0;
+      if (index < items.size()) {
+        filepath=servletContext.getRealPath(items.get(index));
+        index++;
+        if (filepath != null) {
+          File file=new File(filepath);
+          while (index < items.size()) {
+            file=new File(file,items.get(index));
+            index++;
+          }
+          return file;
+        }
+      }
+    }
+  }
+  return null;
+}
