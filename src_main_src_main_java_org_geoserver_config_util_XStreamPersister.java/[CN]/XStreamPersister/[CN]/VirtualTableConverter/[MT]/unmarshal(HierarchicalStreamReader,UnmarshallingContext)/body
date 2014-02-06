@@ -1,14 +1,7 @@
 {
   String name=readValue("name",String.class,reader);
   String sql=readValue("sql",String.class,reader);
-  boolean escapeSql;
-  try {
-    escapeSql=Boolean.valueOf(readValue("escapeSql",String.class,reader));
-  }
- catch (  IllegalArgumentException e) {
-    escapeSql=false;
-  }
-  VirtualTable vt=new VirtualTable(name,sql,escapeSql);
+  VirtualTable vt=new VirtualTable(name,sql,false);
   List<String> primaryKeys=new ArrayList<String>();
   while (reader.hasMoreChildren()) {
     reader.moveDown();
@@ -37,6 +30,9 @@
         reader.moveUp();
       }
       vt.addParameter(new VirtualTableParameter(pname,defaultValue,validator));
+    }
+ else     if (reader.getNodeName().equals("escapeSql")) {
+      vt.setEscapeSql(Boolean.valueOf(reader.getValue()));
     }
     reader.moveUp();
   }
