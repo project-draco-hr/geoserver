@@ -1,12 +1,17 @@
 {
-  Filter filter=acceptAll();
-  if (workspace != null && workspace != ANY_WORKSPACE) {
-    filter=equal("workspace.id",workspace.getId());
+  Filter filter=filterForWorkspace(workspace);
+  CloseableIterator<T> it=filterServices(clazz,db.query(ServiceInfo.class,filter,null,null,(SortBy)null));
+  T service;
+  if (it.hasNext()) {
+    service=it.next();
   }
-  try {
-    return get(clazz,filter);
-  }
- catch (  IllegalArgumentException multipleResults) {
+ else {
+    if (LOGGER.isLoggable(Level.FINE))     LOGGER.log(Level.FINE,"Could not find service of type " + clazz + " in "+ workspace);
     return null;
   }
+  if (it.hasNext()) {
+    LOGGER.log(Level.WARNING,"Found multiple services of type " + clazz + " in "+ workspace);
+    return null;
+  }
+  return service;
 }
