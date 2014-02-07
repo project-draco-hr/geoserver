@@ -1,0 +1,24 @@
+{
+  Map<Object,Object> rendererParams=new HashMap<Object,Object>();
+  Integer requestedDpi=((Integer)params.getGetMapRequest().getFormatOptions().get("dpi"));
+  if (requestedDpi != null) {
+    rendererParams.put(StreamingRenderer.DPI_KEY,requestedDpi);
+  }
+  double standardDpi=RendererUtilities.getDpi(rendererParams);
+  if (requestedDpi != null && standardDpi != requestedDpi) {
+    double scaleFactor=requestedDpi / standardDpi;
+    DpiRescaleStyleVisitor dpiVisitor=new GraphicsAwareDpiRescaleStyleVisitor(scaleFactor);
+    for (int i=0; i < rules.size(); i++) {
+      rules.get(i).accept(dpiVisitor);
+      Rule rescaled=(Rule)dpiVisitor.getCopy();
+      rules.set(i,rescaled);
+    }
+  }
+  double pixelsPerMeters=RendererUtilities.calculatePixelsPerMeterRatio(params.getScaleDenominator(),rendererParams);
+  UomRescaleStyleVisitor uomVisitor=new UomRescaleStyleVisitor(pixelsPerMeters);
+  for (int i=0; i < rules.size(); i++) {
+    rules.get(i).accept(uomVisitor);
+    Rule rescaled=(Rule)uomVisitor.getCopy();
+    rules.set(i,rescaled);
+  }
+}

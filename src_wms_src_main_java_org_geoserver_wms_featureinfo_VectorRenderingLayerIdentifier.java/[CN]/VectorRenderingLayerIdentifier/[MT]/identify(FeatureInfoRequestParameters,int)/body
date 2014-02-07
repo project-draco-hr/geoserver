@@ -17,12 +17,13 @@
     mc.setBuffer(params.getBuffer());
     mc.getViewport().setBounds(new ReferencedEnvelope(getMap.getBbox(),getMap.getCrs()));
     mc.setMapWidth(getMap.getWidth());
-    mc.setMapWidth(getMap.getHeight());
+    mc.setMapHeight(getMap.getHeight());
     FeatureLayer layer=getLayer(params,style);
     mc.addLayer(layer);
     RenderingVariables.setupEnvironmentVariables(mc);
     AffineTransform worldToScreen=RendererUtilities.worldToScreenTransform(params.getRequestedBounds(),new Rectangle(params.getWidth(),params.getHeight()));
     AffineTransform screenToWorld=worldToScreen.createInverse();
+    rescaleRules(rules,params);
     int radius=getSearchRadius(params,rules,layer,getMap,screenToWorld);
     if (radius < buffer) {
       radius=buffer;
