@@ -11,5 +11,22 @@
       throw new IllegalArgumentException("Layer named '" + layer.getName() + "' already exists.");
     }
   }
+  if (layer.getDefaultStyle() == null) {
+    try {
+      LOGGER.log(Level.INFO,"Layer " + layer.prefixedName() + " is missing the default style, assigning one automatically");
+      StyleInfo style=new CatalogBuilder(this).getDefaultStyle(layer.getResource());
+      layer.setDefaultStyle(style);
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.WARNING,"Layer " + layer.prefixedName() + " is missing the default style, "+ "failed to associate one automatically",e);
+    }
+  }
+  Set<StyleInfo> styles=layer.getStyles();
+  for (Iterator it=styles.iterator(); it.hasNext(); ) {
+    StyleInfo styleInfo=(StyleInfo)it.next();
+    if (styleInfo == null) {
+      it.remove();
+    }
+  }
   return postValidate(layer,isNew);
 }
