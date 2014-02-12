@@ -16,6 +16,7 @@
     final GridCoverage2DReader reader=(GridCoverage2DReader)cinfo.getGridCoverageReader(new DefaultProgressListener(),hints);
     WCSDimensionsSubsetHelper helper=parseGridCoverageRequest(cinfo,reader,request,extensions);
     GridCoverageRequest gcr=helper.getGridCoverageRequest();
+    final GridCoverageFactory coverageFactory=CoverageFactoryFinder.getGridCoverageFactory(hints);
     if (reader instanceof StructuredGridCoverage2DReader && formatSupportMDOutput(request.getFormat())) {
       final List<GridCoverageRequest> requests=helper.splitRequest();
       if (requests == null || requests.isEmpty()) {
@@ -36,7 +37,7 @@
       ImageSizeRecorder incrementalInputSize=new ImageSizeRecorder(inputLimit,true);
       int numRequests=requests.size();
       GridCoverageRequest firstRequest=requests.remove(0);
-      GridCoverage2D firstCoverage=setupCoverage(helper,firstRequest,request,reader,hints,extensions,dimensions,incrementalOutputSize,incrementalInputSize);
+      GridCoverage2D firstCoverage=setupCoverage(helper,firstRequest,request,reader,hints,extensions,dimensions,incrementalOutputSize,incrementalInputSize,coverageFactory);
       long actual=incrementalInputSize.finalSize();
       long estimatedSize=actual * numRequests;
       if (outputLimit > 0 && estimatedSize > outputLimit) {
@@ -44,13 +45,13 @@
       }
       stack.addCoverage(firstCoverage);
       for (      GridCoverageRequest subRequest : requests) {
-        GridCoverage2D singleCoverage=setupCoverage(helper,subRequest,request,reader,hints,extensions,dimensions,incrementalOutputSize,incrementalInputSize);
+        GridCoverage2D singleCoverage=setupCoverage(helper,subRequest,request,reader,hints,extensions,dimensions,incrementalOutputSize,incrementalInputSize,coverageFactory);
         stack.addCoverage(singleCoverage);
       }
       coverage=stack;
     }
  else {
-      coverage=setupCoverage(helper,gcr,request,reader,hints,extensions,null,null,null);
+      coverage=setupCoverage(helper,gcr,request,reader,hints,extensions,null,null,null,coverageFactory);
     }
   }
  catch (  ServiceException e) {

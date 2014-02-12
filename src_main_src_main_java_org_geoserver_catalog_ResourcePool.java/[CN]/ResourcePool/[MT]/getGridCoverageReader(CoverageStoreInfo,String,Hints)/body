@@ -57,9 +57,13 @@ synchronized (hints != null ? hintCoverageReaderCache : coverageReaderCache) {
     }
   }
   if (coverageName != null) {
-    return SingleGridCoverage2DReader.wrap((GridCoverage2DReader)reader,coverageName);
+    return CoverageDimensionCustomizerReader.wrap((GridCoverage2DReader)reader,coverageName,info);
   }
  else {
+    final int numCoverages=((GridCoverage2DReader)reader).getGridCoverageCount();
+    if (numCoverages == 1) {
+      return CoverageDimensionCustomizerReader.wrap((GridCoverage2DReader)reader,null,info);
+    }
     return (GridCoverage2DReader)reader;
   }
 }

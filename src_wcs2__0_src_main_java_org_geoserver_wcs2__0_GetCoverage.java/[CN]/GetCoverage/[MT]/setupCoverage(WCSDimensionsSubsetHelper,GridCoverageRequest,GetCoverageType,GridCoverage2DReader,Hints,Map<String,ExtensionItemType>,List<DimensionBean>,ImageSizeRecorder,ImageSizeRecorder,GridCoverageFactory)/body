@@ -1,0 +1,29 @@
+{
+  GridCoverage2D coverage=null;
+  coverage=readCoverage(helper.getCoverageInfo(),gridCoverageRequest,reader,hints,incrementalInputSize);
+  if (coverage == null) {
+    throw new IllegalStateException("Unable to read a coverage for the current request" + coverageType.toString());
+  }
+  coverage=handleRangeSubsettingExtension(coverage,extensions,hints);
+  coverage=handleSubsettingExtension(coverage,gridCoverageRequest.getSpatialSubset(),hints);
+  coverage=handleScaling(coverage,extensions,gridCoverageRequest.getSpatialInterpolation(),hints);
+  coverage=handleReprojection(coverage,gridCoverageRequest.getOutputCRS(),gridCoverageRequest.getSpatialInterpolation(),hints);
+  final boolean enforceLatLonAxesOrder=requestingLatLonAxesOrder(gridCoverageRequest.getOutputCRS());
+  if (enforceLatLonAxesOrder) {
+    coverage=enforceLatLongOrder(coverage,hints,gridCoverageRequest.getOutputCRS());
+  }
+  if (incrementalOutputSize == null) {
+    WCSUtils.checkOutputLimits(wcs,coverage.getGridGeometry().getGridRange2D(),coverage.getRenderedImage().getSampleModel());
+  }
+ else {
+    incrementalOutputSize.addSize(coverage);
+  }
+  if (reader instanceof StructuredGridCoverage2DReader && coverageDimensions != null) {
+    Map map=coverage.getProperties();
+    for (    DimensionBean coverageDimension : coverageDimensions) {
+      helper.setCoverageDimensionProperty(map,gridCoverageRequest,coverageDimension);
+    }
+    coverage=coverageFactory.create(coverage.getName(),coverage.getRenderedImage(),coverage.getEnvelope(),coverage.getSampleDimensions(),null,map);
+  }
+  return coverage;
+}
