@@ -1,0 +1,46 @@
+{
+  startTime=System.currentTimeMillis();
+  FeatureCollection<?,?> collection=layer.getFeatures();
+  FeatureIterator<?> iterator=collection.features();
+  try {
+    SimpleFeature feature;
+    SimpleFeatureType fType;
+    List<AttributeDescriptor> types;
+    while (iterator.hasNext()) {
+      feature=(SimpleFeature)iterator.next();
+      fType=feature.getFeatureType();
+      types=fType.getAttributeDescriptors();
+      Geometry geometry=null;
+      String id=null;
+      String classname=null;
+      String mesh_ref=null;
+      for (int j=0; j < types.size(); j++) {
+        Object value=feature.getAttribute(j);
+        if (value != null) {
+          if (types.get(j).getLocalName().equalsIgnoreCase("mesh_ref")) {
+            mesh_ref=(String)value;
+          }
+          if (value instanceof Geometry) {
+            id=layer.getLayerInfo().getRequestName() + ":" + getObjectID(layer,feature);
+            classname=getObjectClass(layer,feature);
+            geometry=(Geometry)value;
+          }
+        }
+      }
+      addGeometry(geometry,id,mesh_ref,classname);
+    }
+    iterator.close();
+    iterator=null;
+  }
+ catch (  Exception exception) {
+    ServiceException serviceException=new ServiceException("Error: " + exception.getMessage());
+    serviceException.initCause(exception);
+    throw serviceException;
+  }
+ finally {
+    if (iterator != null) {
+      iterator.close();
+      iterator=null;
+    }
+  }
+}

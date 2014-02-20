@@ -1,0 +1,61 @@
+{
+  XML3DNode rootNode=null;
+  List<Double> vertexNormals=null;
+  List<Double> textureCoordinates=null;
+  if (geometryType == GeometryType.POLYGON) {
+    vertexNormals=computeVertexNormals();
+    textureCoordinates=computeTextureCoordinates();
+  }
+  DecimalFormat decimalFormat=new DecimalFormat("0.0#####");
+  rootNode=new XML3DNode("mesh");
+  if (geometryType == GeometryType.LINESTRING) {
+    rootNode.addXML3DAttribute(new XML3DAttribute("type","line"));
+  }
+ else {
+    rootNode.addXML3DAttribute(new XML3DAttribute("type","triangles"));
+  }
+  if (indices != null) {
+    StringBuilder strBuilder=new StringBuilder();
+    XML3DNode indicesNode=new XML3DNode("int");
+    indicesNode.addXML3DAttribute(new XML3DAttribute("name","index"));
+    for (int i=0; i < indices.size(); i++) {
+      strBuilder.append(indices.get(i) + " ");
+    }
+    indicesNode.addNodeValues(strBuilder.toString());
+    rootNode.addXML3DNode(indicesNode);
+    indices.clear();
+  }
+  if (vertices != null) {
+    StringBuilder strBuilder=new StringBuilder();
+    XML3DNode verticesNode=new XML3DNode("float3");
+    verticesNode.addXML3DAttribute(new XML3DAttribute("name","position"));
+    for (int i=0; i < vertices.size(); i++) {
+      strBuilder.append(vertices.get(i).toString() + " ");
+    }
+    verticesNode.addNodeValues(strBuilder.toString());
+    rootNode.addXML3DNode(verticesNode);
+    vertices.clear();
+  }
+  if (vertexNormals != null) {
+    StringBuilder strBuilder=new StringBuilder();
+    XML3DNode normalsNode=new XML3DNode("float3");
+    normalsNode.addXML3DAttribute(new XML3DAttribute("name","normal"));
+    for (int i=0; i < vertexNormals.size(); i++) {
+      strBuilder.append(decimalFormat.format(vertexNormals.get(i)) + " ");
+    }
+    normalsNode.addNodeValues(strBuilder.toString());
+    rootNode.addXML3DNode(normalsNode);
+  }
+  if (textureCoordinates != null) {
+    StringBuilder strBuilder=new StringBuilder();
+    XML3DNode texCoordsNode=new XML3DNode("float2");
+    texCoordsNode.addXML3DAttribute(new XML3DAttribute("name","texcoord"));
+    for (int i=0; i < textureCoordinates.size(); i++) {
+      strBuilder.append(decimalFormat.format(textureCoordinates.get(i)) + " ");
+    }
+    texCoordsNode.addNodeValues(strBuilder.toString());
+    rootNode.addXML3DNode(texCoordsNode);
+  }
+  verticesHashMap.clear();
+  return rootNode;
+}
