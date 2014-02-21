@@ -1,0 +1,11 @@
+{
+  MockHttpServletResponse response=getAsServletResponse("wms?" + "service=WMS" + "&version=1.1.1"+ "&request=GetMap"+ "&layers=sf:states"+ "&bbox=-10700000,-10700000,14700000,14700000,EPSG:5041"+ "&width=200"+ "&height=200"+ "&srs=EPSG:5041"+ "&format=image%2Fpng");
+  checkImage(response,"image/png",200,200);
+  String testName="testPolarStereographic";
+  BufferedImage image=ImageIO.read(getBinaryInputStream(response));
+  assertNotBlank(testName,image);
+  assertNotBlank(testName,image.getSubimage(0,0,100,100));
+  assertEquals(0,countNonBlankPixels(testName,image.getSubimage(0,0,200,50),BG_COLOR));
+  assertEquals(0,countNonBlankPixels(testName,image.getSubimage(100,0,100,200),BG_COLOR));
+  assertEquals(0,countNonBlankPixels(testName,image.getSubimage(0,130,200,70),BG_COLOR));
+}
