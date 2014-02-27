@@ -1,5 +1,17 @@
 {
-  int level=Math.round(9 * (1f - quality));
   FilterType filterType=getFilterType(mapContent);
-  return writePNG(image,outStream,level,filterType);
+  PNGWriter writer=new PNGWriter();
+  boolean isScanlineSupported=writer.isScanlineSupported(image);
+  if (!isScanlineSupported) {
+    image=new ImageWorker(image).rescaleToBytes().forceComponentColorModel().getRenderedImage();
+  }
+  RenderedImage output=null;
+  try {
+    output=writer.writePNG(image,outStream,quality,filterType);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to encode the PNG",e);
+    throw new ServiceException(e);
+  }
+  return output;
 }
