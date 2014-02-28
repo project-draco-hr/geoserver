@@ -1,6 +1,21 @@
 {
   startTime=System.currentTimeMillis();
-  FeatureCollection<?,?> collection=layer.getFeatures();
+  FeatureCollection<?,?> collection=null;
+  if (layer.haveLODs()) {
+    if (LOD != null) {
+      FilterFactory2 ff=CommonFactoryFinder.getFilterFactory2();
+      Filter filter=ff.equals(ff.property("lod"),ff.literal(LOD));
+      collection=layer.getFeatures(filter);
+    }
+ else {
+      FilterFactory2 ff=CommonFactoryFinder.getFilterFactory2();
+      Filter filter=ff.equals(ff.property("lod"),ff.literal(10));
+      collection=layer.getFeatures(filter);
+    }
+  }
+ else {
+    collection=layer.getFeatures();
+  }
   FeatureIterator<?> iterator=collection.features();
   try {
     SimpleFeature feature;
