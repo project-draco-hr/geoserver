@@ -1,0 +1,25 @@
+{
+  AbstractCatalogStore store=new AbstractCatalogStore(){
+{
+      support(CSWRecordDescriptor.getInstance());
+      support(GSRecordDescriptor.getInstance());
+    }
+    @Override public FeatureCollection getRecordsInternal(    RecordDescriptor rd,    RecordDescriptor rdOutput,    Query q,    Transaction t) throws IOException {
+      if (rd == GSRecordDescriptor.getInstance()) {
+        return new MemoryFeatureCollection(GSRecordDescriptor.getInstance().getFeatureType());
+      }
+ else {
+        throw new RuntimeException("Was expecting the geoserver record descriptor");
+      }
+    }
+  }
+;
+  RecordDescriptor[] descriptors=store.getRecordDescriptors();
+  assertEquals(2,descriptors.length);
+  assertEquals(CSWRecordDescriptor.getInstance(),descriptors[0]);
+  assertEquals(GSRecordDescriptor.getInstance(),descriptors[1]);
+  Query query=new Query("Record");
+  query.setNamespace(new URI(GSRecordDescriptor.GS_NAMESPACE));
+  FeatureCollection records=store.getRecords(query,Transaction.AUTO_COMMIT,null);
+  assertEquals(GSRecordDescriptor.getInstance().getFeatureType(),records.getSchema());
+}
