@@ -1,0 +1,29 @@
+{
+  SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+  builder.setCRS(null);
+  builder.add("geometry",Polygon.class);
+  builder.add("distance",Float.class);
+  builder.setName("schema");
+  SimpleFeatureType schema=builder.buildFeatureType();
+  Coordinate[] coords=new Coordinate[5];
+  coords[0]=new Coordinate(0,0);
+  coords[1]=new Coordinate(10,0);
+  coords[2]=new Coordinate(10,10);
+  coords[3]=new Coordinate(0,10);
+  coords[4]=new Coordinate(0,0);
+  Object[] attributes=new Object[2];
+  GeometryFactory gf=new GeometryFactory(new PrecisionModel());
+  LinearRing ring=gf.createLinearRing(coords);
+  attributes[0]=gf.createPolygon(ring,null);
+  attributes[1]=new Float(100.0);
+  SimpleFeature feature=SimpleFeatureBuilder.build(schema,attributes,null);
+  FilterFactory filterFactory=CommonFactoryFinder.getFilterFactory(null);
+  PropertyName geometryProperty=filterFactory.property("geometry");
+  PropertyName distanceProperty=filterFactory.property("distance");
+  Expression[] expressions=new Expression[]{geometryProperty,distanceProperty};
+  Function buffer=functionFactory.function("buffer",Arrays.asList(expressions),null);
+  assertNotNull(buffer);
+  Object result=buffer.evaluate(feature);
+  assertTrue(result instanceof Polygon);
+  assertTrue(((Polygon)result).getArea() > 35314);
+}

@@ -9,11 +9,31 @@
  else {
     throw new ScriptException("Couldn't get exports for function.");
   }
+  Scriptable scope=exports.getParentScope();
+  Context.enter();
+  Object geoObject;
   try {
-    results=invocable.invokeMethod(exports,"run",value,args);
+    geoObject=GeoObject.javaToJS(object,scope);
+  }
+ catch (  Exception e) {
+    geoObject=object;
+  }
+  Object geoArgs;
+  try {
+    geoArgs=GeoObject.javaToJS(args,scope);
+  }
+ catch (  Exception e) {
+    geoArgs=args;
+  }
+  try {
+    results=invocable.invokeMethod(exports,"run",geoObject,geoArgs);
+    results=GeoObject.jsToJava(results);
   }
  catch (  NoSuchMethodException e) {
     throw new ScriptException(e);
+  }
+ finally {
+    Context.exit();
   }
   return results;
 }
