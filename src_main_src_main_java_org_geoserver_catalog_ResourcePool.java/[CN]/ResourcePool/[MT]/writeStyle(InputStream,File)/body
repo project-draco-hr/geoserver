@@ -1,0 +1,20 @@
+{
+  final File temporaryFile=File.createTempFile(styleFile.getName(),null,styleFile.getParentFile());
+  BufferedOutputStream out=null;
+  try {
+    out=new BufferedOutputStream(new FileOutputStream(temporaryFile));
+    IOUtils.copy(in,out);
+    out.flush();
+  }
+  finally {
+    out.close();
+  }
+  try {
+    org.geoserver.data.util.IOUtils.rename(temporaryFile,styleFile);
+  }
+  finally {
+    if (temporaryFile.exists()) {
+      temporaryFile.delete();
+    }
+  }
+}
