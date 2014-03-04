@@ -30,14 +30,27 @@
       final String nativeName=cinfo.getNativeCoverageName();
       final String coverageName=nativeName != null ? nativeName : reader.getGridCoverageNames()[0];
       final GranuleStackImpl stack=new GranuleStackImpl(coverageName,reader.getCoordinateReferenceSystem(),dimensions);
+      long outputLimit=wcs.getMaxOutputMemory() * 1024;
+      long inputLimit=wcs.getMaxInputMemory() * 1024;
+      ImageSizeRecorder incrementalOutputSize=new ImageSizeRecorder(outputLimit,false);
+      ImageSizeRecorder incrementalInputSize=new ImageSizeRecorder(inputLimit,true);
+      int numRequests=requests.size();
+      GridCoverageRequest firstRequest=requests.remove(0);
+      GridCoverage2D firstCoverage=setupCoverage(helper,firstRequest,request,reader,hints,extensions,dimensions,incrementalOutputSize,incrementalInputSize);
+      long actual=incrementalInputSize.finalSize();
+      long estimatedSize=actual * numRequests;
+      if (outputLimit > 0 && estimatedSize > outputLimit) {
+        throw new WcsException("This request is trying to generate too much data, " + "the limit is " + formatBytes(outputLimit) + " but the estimated amount of bytes to be "+ "written in the output is "+ formatBytes(estimatedSize));
+      }
+      stack.addCoverage(firstCoverage);
       for (      GridCoverageRequest subRequest : requests) {
-        GridCoverage2D singleCoverage=setupCoverage(helper,subRequest,request,reader,hints,extensions,dimensions);
+        GridCoverage2D singleCoverage=setupCoverage(helper,subRequest,request,reader,hints,extensions,dimensions,incrementalOutputSize,incrementalInputSize);
         stack.addCoverage(singleCoverage);
       }
       coverage=stack;
     }
  else {
-      coverage=setupCoverage(helper,gcr,request,reader,hints,extensions,null);
+      coverage=setupCoverage(helper,gcr,request,reader,hints,extensions,null,null,null);
     }
   }
  catch (  ServiceException e) {

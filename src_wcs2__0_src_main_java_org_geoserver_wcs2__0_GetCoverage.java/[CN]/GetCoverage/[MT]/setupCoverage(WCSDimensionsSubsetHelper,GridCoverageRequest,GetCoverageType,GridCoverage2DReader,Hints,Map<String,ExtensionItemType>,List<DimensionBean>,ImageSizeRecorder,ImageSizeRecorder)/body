@@ -1,6 +1,6 @@
 {
   GridCoverage2D coverage=null;
-  coverage=readCoverage(helper.getCoverageInfo(),gridCoverageRequest,reader,hints);
+  coverage=readCoverage(helper.getCoverageInfo(),gridCoverageRequest,reader,hints,incrementalInputSize);
   if (coverage == null) {
     throw new IllegalStateException("Unable to read a coverage for the current request" + coverageType.toString());
   }
@@ -12,7 +12,12 @@
   if (enforceLatLonAxesOrder) {
     coverage=enforceLatLongOrder(coverage,hints,gridCoverageRequest.getOutputCRS());
   }
-  WCSUtils.checkOutputLimits(wcs,coverage.getGridGeometry().getGridRange2D(),coverage.getRenderedImage().getSampleModel());
+  if (incrementalOutputSize == null) {
+    WCSUtils.checkOutputLimits(wcs,coverage.getGridGeometry().getGridRange2D(),coverage.getRenderedImage().getSampleModel());
+  }
+ else {
+    incrementalOutputSize.addSize(coverage);
+  }
   if (reader instanceof StructuredGridCoverage2DReader && coverageDimensions != null) {
     Map map=coverage.getProperties();
     for (    DimensionBean coverageDimension : coverageDimensions) {
