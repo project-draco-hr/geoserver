@@ -1,0 +1,29 @@
+{
+  GridSet gridSet=gridSubset.getGridSet();
+  Map formatOpts=req.getFormatOptions();
+  Integer minZoom=null;
+  if (formatOpts.containsKey("min_zoom")) {
+    minZoom=Integer.parseInt(formatOpts.get("min_zoom").toString());
+  }
+  if (minZoom == null) {
+    minZoom=findClosestZoom(gridSet,req);
+  }
+  Integer maxZoom=null;
+  if (formatOpts.containsKey("max_zoom")) {
+    maxZoom=Integer.parseInt(formatOpts.get("max_zoom").toString());
+  }
+ else   if (formatOpts.containsKey("num_zooms")) {
+    maxZoom=minZoom + Integer.parseInt(formatOpts.get("num_zooms").toString());
+  }
+  if (maxZoom == null) {
+    maxZoom=findMaxZoomAuto(gridSubset,minZoom,req);
+  }
+  if (maxZoom < minZoom) {
+    throw new ServiceException(format("maxZoom (%d) can not be less than minZoom (%d)",maxZoom,minZoom));
+  }
+  if (maxZoom > gridSet.getNumLevels()) {
+    LOGGER.warning(format("Max zoom (%d) can't be greater than number of zoom levels (%d)",maxZoom,gridSet.getNumLevels()));
+    maxZoom=gridSet.getNumLevels();
+  }
+  return new int[]{minZoom,maxZoom};
+}
