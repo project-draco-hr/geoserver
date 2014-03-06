@@ -5,7 +5,13 @@
     if (!(collection instanceof SimpleFeatureCollection)) {
       throw new ServiceException("GeoPackage OutputFormat does not support Complex Features.");
     }
-    geopkg.add(e,(SimpleFeatureCollection)collection);
+    SimpleFeatureCollection features=(SimpleFeatureCollection)collection;
+    FeatureTypeInfo meta=lookupFeatureType(features);
+    if (meta != null) {
+      e.setIdentifier(meta.getTitle());
+      e.setDescription(abstractOrDescription(meta));
+    }
+    geopkg.add(e,features);
   }
   geopkg.close();
   InputStream temp=new FileInputStream(geopkg.getFile());
