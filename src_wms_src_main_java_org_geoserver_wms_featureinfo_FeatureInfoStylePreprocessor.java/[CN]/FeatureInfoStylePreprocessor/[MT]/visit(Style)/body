@@ -1,0 +1,18 @@
+{
+  super.visit(style);
+  Style copy=(Style)pages.peek();
+  List<FeatureTypeStyle> featureTypeStyles=copy.featureTypeStyles();
+  List<FeatureTypeStyle> reduced=new ArrayList<FeatureTypeStyle>();
+  FeatureTypeStyle current=null;
+  for (  FeatureTypeStyle fts : featureTypeStyles) {
+    if (current == null || !sameTranformation(current.getTransformation(),fts.getTransformation())) {
+      current=fts;
+      reduced.add(current);
+    }
+ else {
+      current.rules().addAll(fts.rules());
+    }
+  }
+  copy.featureTypeStyles().clear();
+  copy.featureTypeStyles().addAll(reduced);
+}
