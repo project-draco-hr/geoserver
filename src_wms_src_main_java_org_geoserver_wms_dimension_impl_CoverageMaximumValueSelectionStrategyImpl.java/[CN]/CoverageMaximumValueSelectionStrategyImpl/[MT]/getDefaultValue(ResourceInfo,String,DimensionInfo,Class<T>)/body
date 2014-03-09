@@ -1,0 +1,34 @@
+{
+  Object retval=null;
+  try {
+    GridCoverage2DReader reader=(GridCoverage2DReader)((CoverageInfo)resource).getGridCoverageReader(null,null);
+    ReaderDimensionsAccessor dimAccessor=new ReaderDimensionsAccessor(reader);
+    if (dimensionName.equals(ResourceInfo.TIME)) {
+      retval=dimAccessor.getMaxTime();
+    }
+ else     if (dimensionName.equals(ResourceInfo.ELEVATION)) {
+      retval=dimAccessor.getMaxElevation();
+    }
+ else     if (dimensionName.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+      String custDimName=dimensionName.substring(ResourceInfo.CUSTOM_DIMENSION_PREFIX.length());
+      String maximum=reader.getMetadataValue(custDimName.toUpperCase() + "_DOMAIN_MAXIMUM");
+      if (maximum != null) {
+        retval=maximum;
+      }
+ else {
+        List<String> domain=dimAccessor.getDomain(custDimName);
+        if (domain.isEmpty()) {
+          retval=null;
+        }
+ else {
+          Collections.sort(domain);
+          retval=domain.get(domain.size() - 1);
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.FINER,e.getMessage(),e);
+  }
+  return Converters.convert(retval,clz);
+}

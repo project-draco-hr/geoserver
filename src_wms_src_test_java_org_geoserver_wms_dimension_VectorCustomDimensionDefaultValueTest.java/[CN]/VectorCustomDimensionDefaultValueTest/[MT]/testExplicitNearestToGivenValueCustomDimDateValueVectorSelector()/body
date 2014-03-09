@@ -1,0 +1,23 @@
+{
+  int fid=1000;
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.NEAREST);
+  String referenceStr="2014-01-20T00:00:00Z";
+  defaultValueSetting.setReferenceValue(referenceStr);
+  setupFeatureCustomDimension(REFERENCE_TIME_DIMENSION,"referenceTime",defaultValueSetting);
+  FeatureTypeInfo timeElevationCustom=getCatalog().getFeatureTypeByName(TIME_ELEVATION_CUSTOM.getLocalPart());
+  Date originallyBiggest=Date.valueOf("2011-04-23");
+  java.util.Date d=wms.getDefaultCustomDimensionValue(REFERENCE_TIME_DIMENSION,timeElevationCustom,java.util.Date.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the closest one",d.getTime() == originallyBiggest.getTime());
+  Date biggerThanOriginal=Date.valueOf("2012-01-01");
+  addFeatureWithReferenceTime(fid++,biggerThanOriginal);
+  d=wms.getDefaultCustomDimensionValue(REFERENCE_TIME_DIMENSION,timeElevationCustom,java.util.Date.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the closest one",d.getTime() == biggerThanOriginal.getTime());
+  Date biggerThanReference=Date.valueOf("2014-06-01");
+  addFeatureWithReferenceTime(fid++,biggerThanReference);
+  d=wms.getDefaultCustomDimensionValue(REFERENCE_TIME_DIMENSION,timeElevationCustom,java.util.Date.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the closest one",d.getTime() == biggerThanReference.getTime());
+}

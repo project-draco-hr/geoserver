@@ -1,0 +1,75 @@
+{
+  DimensionDefaultValueSelectionStrategy retval=null;
+  String referenceValue=null;
+switch (setting.getStrategyType()) {
+case NEAREST:
+{
+      Date refDate;
+      String capabilitiesValue=null;
+      referenceValue=setting.getReferenceValue();
+      if (referenceValue != null) {
+        if (referenceValue.equalsIgnoreCase(DimensionDefaultValueSetting.TIME_CURRENT)) {
+          refDate=new Date();
+          capabilitiesValue=DimensionDefaultValueSetting.TIME_CURRENT;
+        }
+ else {
+          try {
+            refDate=new Date(DateUtil.parseDateTime(referenceValue));
+          }
+ catch (          IllegalArgumentException e) {
+            throw new ServiceException("Unable to parse time dimension default value reference '" + referenceValue + "' as date, an ISO 8601 datetime format is expected",e);
+          }
+        }
+        if (resource instanceof FeatureTypeInfo) {
+          retval=featureNearestValueStrategyFactory.createNearestValueStrategy(refDate,capabilitiesValue);
+        }
+ else         if (resource instanceof CoverageInfo) {
+          retval=coverageNearestValueStrategyFactory.createNearestValueStrategy(refDate,capabilitiesValue);
+        }
+      }
+ else {
+        throw new ServiceException("No reference value given for time dimension default value 'nearest' strategy");
+      }
+      break;
+    }
+case MINIMUM:
+{
+    if (resource instanceof FeatureTypeInfo) {
+      retval=featureTimeMinimumStrategy;
+    }
+ else     if (resource instanceof CoverageInfo) {
+      retval=coverageTimeMinimumStrategy;
+    }
+    break;
+  }
+case MAXIMUM:
+{
+  if (resource instanceof FeatureTypeInfo) {
+    retval=featureTimeMaximumStrategy;
+  }
+ else   if (resource instanceof CoverageInfo) {
+    retval=coverageTimeMaximumStrategy;
+  }
+  break;
+}
+case FIXED:
+{
+Date refDate;
+referenceValue=setting.getReferenceValue();
+if (referenceValue != null) {
+  try {
+    refDate=new Date(DateUtil.parseDateTime(referenceValue));
+  }
+ catch (  IllegalArgumentException e) {
+    throw new ServiceException("Unable to parse time dimension default value reference '" + referenceValue + "' as date, an ISO 8601 datetime format is expected",e);
+  }
+  retval=fixedValueStrategyFactory.createFixedValueStrategy(refDate);
+}
+ else {
+  throw new ServiceException("No reference value given for time dimension default value 'fixed' strategy");
+}
+break;
+}
+}
+return retval;
+}

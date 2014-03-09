@@ -1,0 +1,21 @@
+{
+  FeatureTypeInfo timeElevationCustom=getCatalog().getFeatureTypeByName(TIME_ELEVATION_CUSTOM.getLocalPart());
+  FeatureStore fs=(FeatureStore)timeElevationCustom.getFeatureSource(null,null);
+  SimpleFeatureType type=(SimpleFeatureType)timeElevationCustom.getFeatureType();
+  MemoryFeatureCollection coll=new MemoryFeatureCollection(type);
+  StringBuffer content=new StringBuffer();
+  content.append(id);
+  content.append('|');
+  content.append(time.toString());
+  content.append('|');
+  content.append(elevation);
+  content.append('|');
+  content.append(referenceTime.toString());
+  content.append('|');
+  content.append(scanningAngle);
+  SimpleFeature f=DataUtilities.createFeature(type,content.toString());
+  coll.add(f);
+  org.geotools.data.Transaction tx=fs.getTransaction();
+  fs.addFeatures(coll);
+  tx.commit();
+}

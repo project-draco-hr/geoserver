@@ -1,0 +1,40 @@
+{
+  SimpleDateFormat tsFormatter=new SimpleDateFormat("yyyyMMdd");
+  Calendar cal=Calendar.getInstance();
+  cal.set(Calendar.HOUR_OF_DAY,cal.getActualMinimum(Calendar.HOUR_OF_DAY));
+  cal.set(Calendar.MINUTE,cal.getActualMinimum(Calendar.MINUTE));
+  cal.set(Calendar.SECOND,cal.getActualMinimum(Calendar.SECOND));
+  cal.set(Calendar.MILLISECOND,cal.getActualMinimum(Calendar.MILLISECOND));
+  long justPast=cal.getTimeInMillis();
+  cal.set(Calendar.MONTH,cal.get(Calendar.MONTH) + 1);
+  long oneMonthInFuture=cal.getTimeInMillis();
+  cal.set(Calendar.MONTH,cal.get(Calendar.MONTH) - 1);
+  cal.set(Calendar.HOUR_OF_DAY,cal.getActualMinimum(Calendar.HOUR_OF_DAY));
+  cal.set(Calendar.MINUTE,cal.getActualMinimum(Calendar.MINUTE));
+  cal.set(Calendar.SECOND,cal.getActualMinimum(Calendar.SECOND));
+  cal.set(Calendar.MILLISECOND,cal.getActualMinimum(Calendar.MILLISECOND));
+  cal.set(Calendar.YEAR,cal.get(Calendar.YEAR) + 1);
+  long oneYearInFuture=cal.getTimeInMillis();
+  GeoServerResourceLoader loader=getCatalog().getResourceLoader();
+  File targetDir=loader.createDirectory(getDataDirectory().root(),coverageName.getPrefix() + File.separator + coverageName.getLocalPart());
+  File target=new File(targetDir,coverageName.getLocalPart() + ".zip");
+  loader.copyFromClassPath("org/geoserver/wms/dimension/watertemp.zip",target);
+  IOUtils.decompress(target,targetDir);
+  target.delete();
+  File input=null;
+  File output=null;
+  FilenameFilter tiffFilter=new DefaultFileFilter("*.tiff");
+  String[] tiffnames=targetDir.list(tiffFilter);
+  if (tiffnames != null) {
+    if (tiffnames.length > 0) {
+      input=new File(targetDir,tiffnames[0]);
+      output=new File(targetDir,"DUMMY_watertemp_000_" + tsFormatter.format(new Date(justPast)) + "T0000000_12.tiff");
+      FileUtils.copyFile(input,output);
+      output=new File(targetDir,"DUMMY_watertemp_000_" + tsFormatter.format(new Date(oneMonthInFuture)) + "T0000000_12.tiff");
+      FileUtils.copyFile(input,output);
+      output=new File(targetDir,"DUMMY_watertemp_000_" + tsFormatter.format(new Date(oneYearInFuture)) + "T0000000_12.tiff");
+      FileUtils.copyFile(input,output);
+    }
+  }
+  addRasterLayerFromDataDir(WATTEMP_FUTURE,getCatalog());
+}

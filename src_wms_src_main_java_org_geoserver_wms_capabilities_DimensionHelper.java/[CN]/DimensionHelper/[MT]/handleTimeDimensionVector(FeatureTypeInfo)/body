@@ -1,12 +1,17 @@
 {
   TreeSet<Date> values=wms.getFeatureTypeTimes(typeInfo);
   String timeMetadata;
+  Date defaultValue=null;
   if (values != null && !values.isEmpty()) {
     DimensionInfo timeInfo=typeInfo.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
     timeMetadata=getTemporalDomainRepresentation(timeInfo,values);
+    DimensionDefaultValueSetting defaultSetting=timeInfo.getDefaultValue();
+    if ((defaultSetting != null) && !((defaultSetting.getStrategyType() == Strategy.NEAREST) && defaultSetting.getReferenceValue().equalsIgnoreCase(DimensionDefaultValueSetting.TIME_CURRENT))) {
+      defaultValue=wms.getDefaultTime(typeInfo);
+    }
   }
  else {
     timeMetadata="";
   }
-  writeTimeDimension(timeMetadata);
+  writeTimeDimension(timeMetadata,defaultValue);
 }

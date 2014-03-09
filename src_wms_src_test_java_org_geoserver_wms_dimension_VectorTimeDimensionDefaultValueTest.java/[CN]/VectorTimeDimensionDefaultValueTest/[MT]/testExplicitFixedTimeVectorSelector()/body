@@ -1,0 +1,24 @@
+{
+  int fid=1000;
+  String fixedTimeStr="2012-06-01T03:00:00.000Z";
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.FIXED);
+  defaultValueSetting.setReferenceValue(fixedTimeStr);
+  long fixedTime=DateUtil.parseDateTime(fixedTimeStr);
+  setupFeatureTimeDimension(defaultValueSetting);
+  FeatureTypeInfo timeWithStartEnd=getCatalog().getFeatureTypeByName(TIME_WITH_START_END.getLocalPart());
+  Date twoDaysAgo=addFeatureWithTimeTwoDaysAgo(fid++);
+  this.addFeature(fid++,twoDaysAgo,Double.valueOf(0d));
+  java.util.Date d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the fixed one",d.getTime() == fixedTime);
+  addFeatureWithTimeDayAfterTomorrow(fid++);
+  addFeatureWithTimeOneYearFromNow(fid++);
+  d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the fixed one",d.getTime() == fixedTime);
+  addFeatureWithTimeTodayMidnight(fid++);
+  d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the fixed one",d.getTime() == fixedTime);
+}

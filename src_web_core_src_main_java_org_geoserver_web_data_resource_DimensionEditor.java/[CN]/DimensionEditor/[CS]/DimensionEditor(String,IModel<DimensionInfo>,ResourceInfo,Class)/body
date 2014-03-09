@@ -109,4 +109,55 @@
     resTime.setVisible(false);
     resElevation.setRequired(true);
   }
+  DimensionDefaultValueSetting defValueSetting=model.getObject().getDefaultValue();
+  if (defValueSetting == null) {
+    defValueSetting=new DimensionDefaultValueSetting();
+    model.getObject().setDefaultValue(defValueSetting);
+  }
+  final WebMarkupContainer defValueContainer=new WebMarkupContainer("defaultValueContainer");
+  defValueContainer.setOutputMarkupId(true);
+  configs.add(defValueContainer);
+  final WebMarkupContainer referenceValueContainer=new WebMarkupContainer("referenceValueContainer");
+  referenceValueContainer.setOutputMarkupId(true);
+  referenceValueContainer.setVisible((defValueSetting.getStrategyType() == Strategy.FIXED) || (defValueSetting.getStrategyType() == Strategy.NEAREST));
+  defValueContainer.add(referenceValueContainer);
+  defaultValueStrategies=new ArrayList<DimensionDefaultValueSetting.Strategy>(Arrays.asList(DimensionDefaultValueSetting.Strategy.values()));
+  IModel<DimensionDefaultValueSetting.Strategy> strategyModel=new PropertyModel<DimensionDefaultValueSetting.Strategy>(model.getObject().getDefaultValue(),"strategy");
+  defaultValueStrategy=new DropDownChoice<DimensionDefaultValueSetting.Strategy>("strategy",strategyModel,defaultValueStrategies,new DefaultValueStrategyRenderer());
+  configs.add(defaultValueStrategy);
+  defaultValueStrategy.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      boolean visible=(defaultValueStrategy.getModelObject() == Strategy.FIXED) || (defaultValueStrategy.getModelObject() == Strategy.NEAREST);
+      referenceValueContainer.setVisible(visible);
+      target.addComponent(defValueContainer);
+    }
+  }
+);
+  defValueContainer.add(defaultValueStrategy);
+  final Label refValueValidationMessage=new Label("refValueValidationMsg","");
+  refValueValidationMessage.setVisible(false);
+  IModel<String> refValueModel=new PropertyModel<String>(model.getObject().getDefaultValue(),"referenceValue");
+  referenceValue=new TextField<String>("referenceValue",refValueModel);
+  referenceValue.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    protected void onUpdate(    AjaxRequestTarget target){
+      refValueValidationMessage.setDefaultModelObject(null);
+      refValueValidationMessage.setVisible(false);
+      target.addComponent(referenceValueContainer);
+    }
+    @Override protected void onError(    AjaxRequestTarget target,    RuntimeException e){
+      super.onError(target,e);
+      if (referenceValue.hasErrorMessage()) {
+        refValueValidationMessage.setDefaultModelObject(referenceValue.getFeedbackMessage().getMessage());
+        refValueValidationMessage.setVisible(true);
+      }
+      target.addComponent(referenceValueContainer);
+    }
+  }
+);
+  referenceValue.add(new ReferenceValueValidator(id,strategyModel));
+  referenceValueContainer.add(referenceValue);
+  referenceValueContainer.add(refValueValidationMessage);
+  if ("time".equals(id) && refValueModel.getObject() == null && strategyModel.getObject() == Strategy.NEAREST) {
+    refValueModel.setObject(DimensionDefaultValueSetting.TIME_CURRENT);
+  }
 }

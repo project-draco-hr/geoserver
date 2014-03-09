@@ -1,0 +1,26 @@
+{
+  String attrName=dimension.getAttribute();
+  Class<?> attrType=String.class;
+  if (resource instanceof FeatureTypeInfo) {
+    List<AttributeTypeInfo> attrTypes;
+    try {
+      attrTypes=((FeatureTypeInfo)resource).attributes();
+      for (      AttributeTypeInfo attr : attrTypes) {
+        if (attr.getName().equals(attrName)) {
+          attrType=attr.getBinding();
+          break;
+        }
+      }
+    }
+ catch (    IOException e) {
+    }
+  }
+  final FeatureCalc nearest=NearestVisitorFactory.getNearestVisitor(dimension.getAttribute(),this.toMatch,attrType);
+  CalcResult res=getCalculatedResult((FeatureTypeInfo)resource,dimension,nearest);
+  if (res.equals(CalcResult.NULL_RESULT)) {
+    return null;
+  }
+ else {
+    return Converters.convert(res.getValue(),clz);
+  }
+}

@@ -1,0 +1,51 @@
+{
+  Date candidate=null;
+  TreeSet<Object> timeDomain=dimAccessor.getTimeDomain();
+  long shortestDistance=Long.MAX_VALUE;
+  long currentDistance=0;
+  for (  Object dateOrRange : timeDomain) {
+    if (dateOrRange instanceof Date) {
+      Date d=(Date)dateOrRange;
+      if (d.before(toMatch)) {
+        currentDistance=toMatch.getTime() - d.getTime();
+        if (currentDistance < shortestDistance) {
+          shortestDistance=currentDistance;
+          candidate=d;
+        }
+      }
+ else       if (d.after(toMatch)) {
+        currentDistance=d.getTime() - toMatch.getTime();
+        if (currentDistance < shortestDistance) {
+          candidate=d;
+        }
+        break;
+      }
+ else       if (d.equals(toMatch)) {
+        candidate=d;
+        break;
+      }
+    }
+ else     if (dateOrRange instanceof DateRange) {
+      DateRange d=(DateRange)dateOrRange;
+      if (d.getMaxValue().before(toMatch)) {
+        currentDistance=toMatch.getTime() - d.getMaxValue().getTime();
+        if (currentDistance < shortestDistance) {
+          shortestDistance=currentDistance;
+          candidate=d.getMaxValue();
+        }
+      }
+ else       if (d.getMinValue().after(toMatch)) {
+        currentDistance=d.getMinValue().getTime() - toMatch.getTime();
+        if (currentDistance < shortestDistance) {
+          candidate=d.getMinValue();
+        }
+        break;
+      }
+ else {
+        candidate=toMatch;
+        break;
+      }
+    }
+  }
+  return candidate;
+}

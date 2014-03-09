@@ -1,0 +1,22 @@
+{
+  int fid=1000;
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.MINIMUM);
+  setupFeatureTimeDimension(defaultValueSetting);
+  FeatureTypeInfo timeWithStartEnd=getCatalog().getFeatureTypeByName(TIME_WITH_START_END.getLocalPart());
+  Date smallest=Date.valueOf("2012-02-11");
+  Date twoDaysAgo=addFeatureWithTimeTwoDaysAgo(fid++);
+  this.addFeature(fid++,twoDaysAgo,Double.valueOf(0d));
+  java.util.Date d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the smallest one",d.getTime() == smallest.getTime());
+  addFeatureWithTimeDayAfterTomorrow(fid++);
+  addFeatureWithTimeOneYearFromNow(fid++);
+  d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the smallest one",d.getTime() == smallest.getTime());
+  addFeatureWithTimeTodayMidnight(fid++);
+  d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the smallest one",d.getTime() == smallest.getTime());
+}

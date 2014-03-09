@@ -1,0 +1,31 @@
+{
+  DimensionDefaultValueSelectionStrategy retval=getStrategyFromSetting(resource,dimensionName,dimensionInfo);
+  if (retval != null) {
+    return retval;
+  }
+  if (dimensionName.equals(ResourceInfo.TIME)) {
+    if (resource instanceof FeatureTypeInfo) {
+      retval=featureNearestValueStrategyFactory.createNearestValueStrategy(new Date(),DimensionDefaultValueSetting.TIME_CURRENT);
+    }
+ else     if (resource instanceof CoverageInfo) {
+      retval=coverageNearestValueStrategyFactory.createNearestValueStrategy(new Date(),DimensionDefaultValueSetting.TIME_CURRENT);
+    }
+  }
+ else   if (dimensionName.equals(ResourceInfo.ELEVATION)) {
+    if (resource instanceof FeatureTypeInfo) {
+      retval=featureElevationMinimumStrategy;
+    }
+ else     if (resource instanceof CoverageInfo) {
+      retval=coverageElevationMinimumStrategy;
+    }
+  }
+ else   if (dimensionName.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+    if (resource instanceof FeatureTypeInfo) {
+      retval=featureCustomDimensionMinimumStrategy;
+    }
+ else     if (resource instanceof CoverageInfo) {
+      retval=coverageCustomDimensionMinimumStrategy;
+    }
+  }
+  return retval;
+}

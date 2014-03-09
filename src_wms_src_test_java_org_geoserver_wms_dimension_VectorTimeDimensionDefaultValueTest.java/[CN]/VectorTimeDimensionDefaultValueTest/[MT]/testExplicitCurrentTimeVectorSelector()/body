@@ -1,0 +1,22 @@
+{
+  int fid=1000;
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.NEAREST);
+  defaultValueSetting.setReferenceValue(DimensionDefaultValueSetting.TIME_CURRENT);
+  setupFeatureTimeDimension(defaultValueSetting);
+  FeatureTypeInfo timeWithStartEnd=getCatalog().getFeatureTypeByName(TIME_WITH_START_END.getLocalPart());
+  Date twoDaysAgo=addFeatureWithTimeTwoDaysAgo(fid++);
+  this.addFeature(fid++,twoDaysAgo,Double.valueOf(0d));
+  java.util.Date d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the closest one",d.getTime() == twoDaysAgo.getTime());
+  Date dayAfterTomorrow=addFeatureWithTimeDayAfterTomorrow(fid++);
+  addFeatureWithTimeOneYearFromNow(fid++);
+  d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the closest one",d.getTime() == dayAfterTomorrow.getTime());
+  Date todayMidnight=addFeatureWithTimeTodayMidnight(fid++);
+  d=wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Default time is null",d != null);
+  assertTrue("Default time should be the closest one",d.getTime() == todayMidnight.getTime());
+}

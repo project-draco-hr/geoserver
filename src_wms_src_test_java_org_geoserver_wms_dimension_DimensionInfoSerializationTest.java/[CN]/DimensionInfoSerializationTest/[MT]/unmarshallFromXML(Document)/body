@@ -1,0 +1,12 @@
+{
+  TransformerFactory tFactory=TransformerFactory.newInstance();
+  Transformer transformer=tFactory.newTransformer();
+  DOMSource source=new DOMSource(doc);
+  ByteArrayOutputStream baos=new ByteArrayOutputStream();
+  StreamResult result=new StreamResult(baos);
+  transformer.transform(source,result);
+  XStreamPersisterFactory xpf=GeoServerExtensions.bean(XStreamPersisterFactory.class);
+  XStreamPersister persister=xpf.createXMLPersister();
+  ByteArrayInputStream bais=new ByteArrayInputStream(baos.toByteArray());
+  return persister.load(bais,DimensionInfo.class);
+}

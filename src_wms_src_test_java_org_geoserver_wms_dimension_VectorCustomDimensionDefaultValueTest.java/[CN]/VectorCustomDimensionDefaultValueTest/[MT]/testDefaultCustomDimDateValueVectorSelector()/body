@@ -1,0 +1,19 @@
+{
+  int fid=1000;
+  setupFeatureCustomDimension(REFERENCE_TIME_DIMENSION,"referenceTime",null);
+  FeatureTypeInfo timeElevationCustom=getCatalog().getFeatureTypeByName(TIME_ELEVATION_CUSTOM.getLocalPart());
+  Date originallySmallest=Date.valueOf("2011-04-20");
+  java.util.Date d=wms.getDefaultCustomDimensionValue(REFERENCE_TIME_DIMENSION,timeElevationCustom,java.util.Date.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the smallest one",d.getTime() == originallySmallest.getTime());
+  Date biggest=Date.valueOf("2021-01-01");
+  addFeatureWithReferenceTime(fid++,biggest);
+  d=wms.getDefaultCustomDimensionValue(REFERENCE_TIME_DIMENSION,timeElevationCustom,java.util.Date.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the smallest one",d.getTime() == originallySmallest.getTime());
+  Date smaller=Date.valueOf("2010-01-01");
+  addFeatureWithReferenceTime(fid++,smaller);
+  d=wms.getDefaultCustomDimensionValue(REFERENCE_TIME_DIMENSION,timeElevationCustom,java.util.Date.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the smallest one",d.getTime() == smaller.getTime());
+}

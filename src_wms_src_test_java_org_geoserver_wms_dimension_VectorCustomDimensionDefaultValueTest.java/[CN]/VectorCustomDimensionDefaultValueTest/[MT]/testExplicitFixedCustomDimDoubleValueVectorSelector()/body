@@ -1,0 +1,23 @@
+{
+  int fid=1000;
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.FIXED);
+  String fixedStr="42.1";
+  defaultValueSetting.setReferenceValue(fixedStr);
+  double fixed=Double.parseDouble(fixedStr);
+  setupFeatureCustomDimension(SCANNING_ANGLE_DIMENSION,"scanningAngle",defaultValueSetting);
+  FeatureTypeInfo timeElevationCustom=getCatalog().getFeatureTypeByName(TIME_ELEVATION_CUSTOM.getLocalPart());
+  Double d=wms.getDefaultCustomDimensionValue(SCANNING_ANGLE_DIMENSION,timeElevationCustom,Double.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the smallest one",Math.abs(d.doubleValue() - fixed) < 0.0001);
+  Double biggest=Double.valueOf(2.1d);
+  addFeatureWithScanningAngle(fid++,biggest);
+  d=wms.getDefaultCustomDimensionValue(SCANNING_ANGLE_DIMENSION,timeElevationCustom,Double.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the smallest one",Math.abs(d.doubleValue() - fixed) < 0.0001);
+  Double smaller=Double.valueOf(1.8);
+  addFeatureWithScanningAngle(fid++,smaller);
+  d=wms.getDefaultCustomDimensionValue(SCANNING_ANGLE_DIMENSION,timeElevationCustom,Double.class);
+  assertTrue("Default value is null",d != null);
+  assertTrue("Default value should be the smallest one",Math.abs(d.doubleValue() - fixed) < 0.0001);
+}

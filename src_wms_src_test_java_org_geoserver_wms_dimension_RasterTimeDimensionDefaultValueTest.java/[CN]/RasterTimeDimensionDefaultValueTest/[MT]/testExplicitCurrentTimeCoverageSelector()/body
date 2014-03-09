@@ -1,0 +1,16 @@
+{
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.NEAREST);
+  defaultValueSetting.setReferenceValue(DimensionDefaultValueSetting.TIME_CURRENT);
+  setupCoverageTimeDimension(WATTEMP_FUTURE,defaultValueSetting);
+  Calendar cal=Calendar.getInstance();
+  cal.set(Calendar.HOUR_OF_DAY,cal.getActualMinimum(Calendar.HOUR_OF_DAY));
+  cal.set(Calendar.MINUTE,cal.getActualMinimum(Calendar.MINUTE));
+  cal.set(Calendar.SECOND,cal.getActualMinimum(Calendar.SECOND));
+  cal.set(Calendar.MILLISECOND,cal.getActualMinimum(Calendar.MILLISECOND));
+  long todayMidnight=cal.getTimeInMillis();
+  CoverageInfo coverage=getCatalog().getCoverageByName(WATTEMP_FUTURE.getLocalPart());
+  java.util.Date d=wms.getDefaultTime(coverage);
+  assertTrue("Returns a valid Default time",d != null);
+  assertTrue("Default time should be the closest one",d.getTime() == todayMidnight);
+}

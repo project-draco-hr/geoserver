@@ -1,0 +1,21 @@
+{
+  int fid=1000;
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.MAXIMUM);
+  setupFeatureElevationDimension(defaultValueSetting);
+  FeatureTypeInfo elevationWithStartEnd=getCatalog().getFeatureTypeByName(ELEVATION_WITH_START_END.getLocalPart());
+  Double originallyBiggest=Double.valueOf(2d);
+  Double e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the biggest one",Math.abs(e.doubleValue() - originallyBiggest.doubleValue()) < 0.00001);
+  Double smaller=Double.valueOf(originallyBiggest.doubleValue() - 1);
+  addFeatureWithElevation(fid++,smaller.doubleValue());
+  e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the biggest one",Math.abs(e.doubleValue() - originallyBiggest.doubleValue()) < 0.00001);
+  Double bigger=Double.valueOf(originallyBiggest.doubleValue() + 1);
+  addFeatureWithElevation(fid++,bigger.doubleValue());
+  e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the biggest one",Math.abs(e.doubleValue() - bigger.doubleValue()) < 0.00001);
+}

@@ -1,0 +1,21 @@
+{
+  DimensionDefaultValueSetting setting=new DimensionDefaultValueSetting();
+  setting.setStrategyType(used);
+  if (referenceValue != null) {
+    setting.setReferenceValue(referenceValue);
+  }
+  DimensionInfo di=new DimensionInfoImpl();
+  di.setDefaultValue(setting);
+  Document diDOM=marshallToXML(di);
+  assertXpathExists("//defaultValue/strategy",diDOM);
+  assertXpathEvaluatesTo(used.name(),"//defaultValue/strategy",diDOM);
+  if (referenceValue != null) {
+    assertXpathExists("//defaultValue/referenceValue",diDOM);
+    assertXpathEvaluatesTo(referenceValue,"//defaultValue/referenceValue",diDOM);
+  }
+  DimensionInfo di2=unmarshallFromXML(diDOM);
+  assertTrue("Unmarshalled strategy does not match the original one",di2.getDefaultValue().getStrategyType() == used);
+  if (referenceValue != null) {
+    assertTrue("Unmarshalled referenceValue does not match the original one",di2.getDefaultValue().getReferenceValue().equals(referenceValue));
+  }
+}

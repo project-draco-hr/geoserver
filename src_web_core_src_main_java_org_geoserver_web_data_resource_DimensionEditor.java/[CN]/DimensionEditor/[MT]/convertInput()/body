@@ -3,7 +3,7 @@
     setConvertedInput(new DimensionInfoImpl());
   }
  else {
-    DimensionInfoImpl info=new DimensionInfoImpl();
+    DimensionInfoImpl info=new DimensionInfoImpl(this.getModelObject());
     info.setEnabled(true);
     attribute.processInput();
     endAttribute.processInput();
@@ -34,6 +34,22 @@
         resElevation.processInput();
         info.setResolution(resElevation.getModelObject());
       }
+    }
+    DimensionDefaultValueSetting defValueSetting=new DimensionDefaultValueSetting();
+    defaultValueStrategy.processInput();
+    defValueSetting.setStrategyType(defaultValueStrategy.getModelObject());
+    if (defValueSetting.getStrategyType() == Strategy.FIXED || defValueSetting.getStrategyType() == Strategy.NEAREST) {
+      referenceValue.processInput();
+      if (referenceValue.hasErrorMessage()) {
+        System.out.println("About to accept erroneous value " + referenceValue.getModelObject());
+      }
+      defValueSetting.setReferenceValue(referenceValue.getModelObject());
+    }
+    if (defValueSetting.getStrategyType() != Strategy.BUILTIN) {
+      info.setDefaultValue(defValueSetting);
+    }
+ else {
+      info.setDefaultValue(null);
     }
     setConvertedInput(info);
   }

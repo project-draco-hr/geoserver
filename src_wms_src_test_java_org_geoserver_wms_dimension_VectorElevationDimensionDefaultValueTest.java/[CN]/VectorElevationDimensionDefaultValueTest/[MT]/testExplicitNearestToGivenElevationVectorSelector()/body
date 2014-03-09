@@ -1,0 +1,23 @@
+{
+  int fid=1000;
+  String referenceElevationStr="1.6";
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.NEAREST);
+  defaultValueSetting.setReferenceValue(referenceElevationStr);
+  Double referenceElevation=Double.parseDouble(referenceElevationStr);
+  setupFeatureElevationDimension(defaultValueSetting);
+  FeatureTypeInfo elevationWithStartEnd=getCatalog().getFeatureTypeByName(ELEVATION_WITH_START_END.getLocalPart());
+  Double expected=Double.valueOf(2d);
+  Double e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the nearest one to " + referenceElevation.doubleValue(),Math.abs(e.doubleValue() - expected.doubleValue()) < 0.00001);
+  expected=Double.valueOf(1.8d);
+  addFeatureWithElevation(fid++,expected);
+  e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the nearest one to " + referenceElevation.doubleValue(),Math.abs(e.doubleValue() - expected.doubleValue()) < 0.00001);
+  addFeatureWithElevation(fid++,1.3d);
+  e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the nearest one to " + referenceElevation.doubleValue(),Math.abs(e.doubleValue() - expected.doubleValue()) < 0.00001);
+}

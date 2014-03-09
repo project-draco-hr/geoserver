@@ -1,0 +1,18 @@
+{
+  FeatureTypeInfo timeWithStartEnd=getCatalog().getFeatureTypeByName(ELEVATION_WITH_START_END.getLocalPart());
+  FeatureStore fs=(FeatureStore)timeWithStartEnd.getFeatureSource(null,null);
+  SimpleFeatureType type=(SimpleFeatureType)timeWithStartEnd.getFeatureType();
+  MemoryFeatureCollection coll=new MemoryFeatureCollection(type);
+  StringBuffer content=new StringBuffer();
+  content.append(id);
+  content.append('|');
+  content.append(time.toString());
+  content.append("||");
+  content.append(elevation);
+  content.append('|');
+  SimpleFeature f=DataUtilities.createFeature(type,content.toString());
+  coll.add(f);
+  org.geotools.data.Transaction tx=fs.getTransaction();
+  fs.addFeatures(coll);
+  tx.commit();
+}

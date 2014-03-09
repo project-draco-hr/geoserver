@@ -1,0 +1,78 @@
+{
+  DimensionDefaultValueSelectionStrategy retval=null;
+  String referenceValue=null;
+switch (setting.getStrategyType()) {
+case NEAREST:
+{
+      Number refNumber;
+      referenceValue=setting.getReferenceValue();
+      if (referenceValue != null) {
+        try {
+          refNumber=Long.parseLong(referenceValue);
+        }
+ catch (        NumberFormatException fne) {
+          try {
+            refNumber=Double.parseDouble(referenceValue);
+          }
+ catch (          NumberFormatException e) {
+            throw new ServiceException("Unable to parse elevation dimension default value reference '" + referenceValue + "' as long or double",e);
+          }
+        }
+        if (resource instanceof FeatureTypeInfo) {
+          retval=featureNearestValueStrategyFactory.createNearestValueStrategy(refNumber);
+        }
+ else         if (resource instanceof CoverageInfo) {
+          retval=coverageNearestValueStrategyFactory.createNearestValueStrategy(refNumber);
+        }
+      }
+ else {
+        throw new ServiceException("No reference value given for elevation dimension default value 'nearest' strategy");
+      }
+      break;
+    }
+case MINIMUM:
+{
+    if (resource instanceof FeatureTypeInfo) {
+      retval=featureElevationMinimumStrategy;
+    }
+ else     if (resource instanceof CoverageInfo) {
+      retval=coverageElevationMinimumStrategy;
+    }
+    break;
+  }
+case MAXIMUM:
+{
+  if (resource instanceof FeatureTypeInfo) {
+    retval=featureElevationMaximumStrategy;
+  }
+ else   if (resource instanceof CoverageInfo) {
+    retval=coverageElevationMaximumStrategy;
+  }
+  break;
+}
+case FIXED:
+{
+Number refNumber;
+referenceValue=setting.getReferenceValue();
+if (referenceValue != null) {
+  try {
+    refNumber=Long.parseLong(referenceValue);
+  }
+ catch (  NumberFormatException fne) {
+    try {
+      refNumber=Double.parseDouble(referenceValue);
+    }
+ catch (    NumberFormatException e) {
+      throw new ServiceException("Unable to parse elevation dimension default value reference '" + referenceValue + "' as long or double",e);
+    }
+  }
+}
+ else {
+  throw new ServiceException("No reference value given for elevation dimension default value 'fixed' strategy");
+}
+retval=fixedValueStrategyFactory.createFixedValueStrategy(refNumber);
+break;
+}
+}
+return retval;
+}

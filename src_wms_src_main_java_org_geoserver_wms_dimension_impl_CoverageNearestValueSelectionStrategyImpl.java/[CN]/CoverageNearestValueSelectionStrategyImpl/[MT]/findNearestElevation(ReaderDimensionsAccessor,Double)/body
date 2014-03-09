@@ -1,0 +1,59 @@
+{
+  Double candidate=null;
+  TreeSet<Object> elevDomain=dimAccessor.getElevationDomain();
+  double shortestDistance=Double.MAX_VALUE;
+  double currentDistance=0d;
+  for (  Object doubleOrRange : elevDomain) {
+    if (doubleOrRange instanceof Double) {
+      Double d=(Double)doubleOrRange;
+      int comp=d.compareTo(toMatch);
+      if (comp < 0) {
+        currentDistance=toMatch.doubleValue() - d.doubleValue();
+        if (currentDistance < shortestDistance) {
+          shortestDistance=currentDistance;
+          candidate=d;
+        }
+      }
+ else       if (comp > 0) {
+        currentDistance=d.doubleValue() - toMatch.doubleValue();
+        if (currentDistance < shortestDistance) {
+          candidate=d;
+        }
+        break;
+      }
+ else {
+        candidate=d;
+        break;
+      }
+    }
+ else     if (doubleOrRange instanceof NumberRange<?>) {
+      NumberRange<Double> d=null;
+      NumberRange<?> maybeD=(NumberRange<?>)doubleOrRange;
+      if (maybeD.getElementClass().equals(Double.class)) {
+        d=(NumberRange<Double>)maybeD;
+      }
+ else {
+        d=maybeD.castTo(Double.class);
+      }
+      if (d.getMaxValue().doubleValue() < toMatch.doubleValue()) {
+        currentDistance=toMatch.doubleValue() - d.getMaxValue().doubleValue();
+        if (currentDistance < shortestDistance) {
+          shortestDistance=currentDistance;
+          candidate=d.getMaxValue();
+        }
+      }
+ else       if (d.getMinValue().doubleValue() > toMatch.doubleValue()) {
+        currentDistance=d.getMinValue().doubleValue() - toMatch.doubleValue();
+        if (currentDistance < shortestDistance) {
+          candidate=d.getMinValue();
+        }
+        break;
+      }
+ else {
+        candidate=toMatch;
+        break;
+      }
+    }
+  }
+  return candidate;
+}

@@ -1,0 +1,88 @@
+{
+  DimensionDefaultValueSelectionStrategy retval=null;
+  String referenceValue=null;
+switch (setting.getStrategyType()) {
+case NEAREST:
+{
+      Object refValue;
+      referenceValue=setting.getReferenceValue();
+      if (referenceValue != null) {
+        try {
+          refValue=new Date(DateUtil.parseDateTime(referenceValue));
+        }
+ catch (        IllegalArgumentException e) {
+          try {
+            refValue=Long.parseLong(referenceValue);
+          }
+ catch (          NumberFormatException nfe) {
+            try {
+              refValue=Double.parseDouble(referenceValue);
+            }
+ catch (            NumberFormatException nfe2) {
+              refValue=referenceValue;
+            }
+          }
+        }
+        if (resource instanceof FeatureTypeInfo) {
+          retval=featureNearestValueStrategyFactory.createNearestValueStrategy(refValue);
+        }
+ else         if (resource instanceof CoverageInfo) {
+          retval=coverageNearestValueStrategyFactory.createNearestValueStrategy(refValue);
+        }
+      }
+ else {
+        throw new ServiceException("No reference value given for custom dimension default value 'nearest' strategy");
+      }
+      break;
+    }
+case MINIMUM:
+{
+    if (resource instanceof FeatureTypeInfo) {
+      retval=featureCustomDimensionMinimumStrategy;
+    }
+ else     if (resource instanceof CoverageInfo) {
+      retval=coverageCustomDimensionMinimumStrategy;
+    }
+    break;
+  }
+case MAXIMUM:
+{
+  if (resource instanceof FeatureTypeInfo) {
+    retval=featureCustomDimensionMaximumStrategy;
+  }
+ else   if (resource instanceof CoverageInfo) {
+    retval=coverageCustomDimensionMaximumStrategy;
+  }
+  break;
+}
+case FIXED:
+{
+Object refValue;
+referenceValue=setting.getReferenceValue();
+if (referenceValue != null) {
+  try {
+    refValue=new Date(DateUtil.parseDateTime(referenceValue));
+  }
+ catch (  IllegalArgumentException e) {
+    try {
+      refValue=Long.parseLong(referenceValue);
+    }
+ catch (    NumberFormatException nfe) {
+      try {
+        refValue=Double.parseDouble(referenceValue);
+      }
+ catch (      NumberFormatException nfe2) {
+        refValue=referenceValue;
+      }
+    }
+  }
+}
+ else {
+  throw new ServiceException("No reference value given for custom dimension default value 'fixed' strategy");
+}
+retval=fixedValueStrategyFactory.createFixedValueStrategy(refValue);
+break;
+}
+}
+return retval;
+}

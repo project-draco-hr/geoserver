@@ -1,0 +1,24 @@
+{
+  int fid=1000;
+  String fixedElevationStr="550";
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.FIXED);
+  defaultValueSetting.setReferenceValue(fixedElevationStr);
+  Double fixedElevation=Double.parseDouble(fixedElevationStr);
+  setupFeatureElevationDimension(defaultValueSetting);
+  FeatureTypeInfo elevationWithStartEnd=getCatalog().getFeatureTypeByName(ELEVATION_WITH_START_END.getLocalPart());
+  Double originallyBiggest=Double.valueOf(3d);
+  Double e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the fixed one",Math.abs(e.doubleValue() - fixedElevation.doubleValue()) < 0.00001);
+  Double smaller=Double.valueOf(originallyBiggest.doubleValue() - 1);
+  addFeatureWithElevation(fid++,smaller.doubleValue());
+  e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the fixed one",Math.abs(e.doubleValue() - fixedElevation.doubleValue()) < 0.00001);
+  Double bigger=Double.valueOf(originallyBiggest.doubleValue() + 1);
+  addFeatureWithElevation(fid++,bigger.doubleValue());
+  e=wms.getDefaultElevation(elevationWithStartEnd);
+  assertTrue("Default elevation is null",e != null);
+  assertTrue("Default elevation should be the fixed one",Math.abs(e.doubleValue() - fixedElevation.doubleValue()) < 0.00001);
+}
