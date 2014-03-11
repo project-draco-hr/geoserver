@@ -23,21 +23,53 @@
 );
   result.add(new AbstractProperty<CoverageDimensionInfo>("nullValues"){
     @Override public Object getPropertyValue(    CoverageDimensionInfo item){
-      List<Double> values=item.getNullValues();
-      if (values == null || values.isEmpty()) {
-        return "-";
-      }
- else {
-        StringBuilder sb=new StringBuilder();
-        final int size=values.size();
-        for (int i=0; i < size; i++) {
-          sb.append(values.get(i));
-          if (i < size - 1) {
-            sb.append(", ");
+      return item.getNullValues();
+    }
+  }
+);
+  result.add(new AbstractProperty<CoverageDimensionInfo>("minRange"){
+    @Override public Object getPropertyValue(    final CoverageDimensionInfo item){
+      return new IModel<Double>(){
+        @Override public void detach(){
+        }
+        @Override public Double getObject(){
+          if (item.getRange() == null) {
+            return null;
+          }
+          return item.getRange().getMinimum(true);
+        }
+        @Override public void setObject(        Double min){
+          if (min != null) {
+            NumberRange range=item.getRange();
+            NumberRange<Double> newRange=NumberRange.create(min,range != null ? range.getMaximum() : min);
+            item.setRange(newRange);
           }
         }
-        return sb.toString();
       }
+;
+    }
+  }
+);
+  result.add(new AbstractProperty<CoverageDimensionInfo>("maxRange"){
+    @Override public Object getPropertyValue(    final CoverageDimensionInfo item){
+      return new IModel<Double>(){
+        @Override public void detach(){
+        }
+        @Override public Double getObject(){
+          if (item.getRange() == null) {
+            return null;
+          }
+          return item.getRange().getMaximum();
+        }
+        @Override public void setObject(        Double max){
+          if (max != null) {
+            NumberRange range=item.getRange();
+            NumberRange<Double> newRange=NumberRange.create(range != null ? range.getMinimum() : max,max);
+            item.setRange(newRange);
+          }
+        }
+      }
+;
     }
   }
 );

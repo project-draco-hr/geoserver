@@ -1,0 +1,22 @@
+{
+  Utilities.ensureNonNull("storeInfo",storeInfo);
+  final Catalog catalog=storeInfo.getCatalog();
+  if (coverageName != null) {
+    info=catalog.getCoverageByName(coverageName);
+  }
+  if (info == null) {
+    final List<CoverageInfo> coverages=catalog.getCoveragesByStore(storeInfo);
+    if (coverageName != null) {
+      for (      CoverageInfo coverage : coverages) {
+        if (coverage.getNativeName().equalsIgnoreCase(coverageName)) {
+          info=coverage;
+          break;
+        }
+      }
+    }
+    if (info == null && coverages != null && coverages.size() == 1) {
+      info=coverages.get(0);
+    }
+  }
+  return info;
+}
