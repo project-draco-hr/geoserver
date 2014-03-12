@@ -1,0 +1,39 @@
+{
+  String property=GeoServerExtensions.getProperty(GEOSERVER_NODE_OPTS);
+  if (property == null) {
+    NODE_ID=null;
+    NODE_ID_STYLE=null;
+  }
+ else {
+    try {
+      Map<String,String> options=parseProperties(property);
+      String id=(String)options.get("id");
+      if (id != null) {
+        if (id.contains("$host_ip")) {
+          InetAddress address=getLocalHostLANAddress();
+          id=id.replace("$host_ip",address.getHostAddress());
+        }
+ else         if (id.contains("$host_name")) {
+          InetAddress address=getLocalHostLANAddress();
+          id=id.replace("$host_name",address.getHostName());
+        }
+      }
+      NODE_ID=id;
+      String bgcolor=(String)options.get("background");
+      if (bgcolor == null) {
+        bgcolor="#dadada";
+      }
+      String style=DEFAULT_NODE_ID_TEMPLATE.replace("$background",bgcolor);
+      String color=(String)options.get("color");
+      if (color == null) {
+        color="#0076a1";
+      }
+      NODE_ID_STYLE=style.replace("$color",color);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Failed to parse GEOSERVER_NODE_OPTS, expected syntax is id:<nodeid>;color:<css_color>, but got " + property + " instead. Disabling NODE_ID GUI element");
+      NODE_ID=null;
+      NODE_ID_STYLE=null;
+    }
+  }
+}
