@@ -1,8 +1,7 @@
 {
   File file=maybeFile(data).get();
-  SimpleFeature first=sniff(file);
-  Preconditions.checkNotNull(first);
-  SimpleFeatureType featureType=first.getFeatureType();
+  SimpleFeatureType featureType=new FeatureJSON().readFeatureCollectionSchema(file,false);
+  System.out.println(featureType);
   SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
   tb.init(featureType);
   tb.setName(FilenameUtils.getBaseName(file.getName()));
@@ -26,7 +25,9 @@
     ft.setSRS(srs);
   }
   ReferencedEnvelope bounds=new ReferencedEnvelope(crs);
-  FeatureIterator<SimpleFeature> it=new FeatureJSON().streamFeatureCollection(file);
+  FeatureJSON reader=new FeatureJSON();
+  reader.setFeatureType(featureType);
+  FeatureIterator<SimpleFeature> it=reader.streamFeatureCollection(file);
   while (it.hasNext()) {
     SimpleFeature f=it.next();
     bounds.include(f.getBounds());
