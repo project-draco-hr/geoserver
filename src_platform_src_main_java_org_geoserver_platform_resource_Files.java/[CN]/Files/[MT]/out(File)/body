@@ -1,0 +1,26 @@
+{
+  final File temp=new File(file.getParentFile(),file.getName() + ".tmp");
+  if (temp.exists()) {
+    temp.delete();
+  }
+  return new OutputStream(){
+    FileOutputStream delegate=new FileOutputStream(temp);
+    @Override public void close() throws IOException {
+      delegate.close();
+      Files.move(temp,file);
+    }
+    @Override public void write(    byte[] b,    int off,    int len) throws IOException {
+      delegate.write(b,off,len);
+    }
+    @Override public void flush() throws IOException {
+      delegate.flush();
+    }
+    @Override public void write(    byte[] b) throws IOException {
+      delegate.write(b);
+    }
+    @Override public void write(    int b) throws IOException {
+      delegate.write(b);
+    }
+  }
+;
+}

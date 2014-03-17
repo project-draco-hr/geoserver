@@ -1,41 +1,7 @@
 {
   if (LOGGER.isLoggable(Level.FINEST)) {
-    LOGGER.finest("Looking up resource " + location + " with parent "+ (parent != null ? parent.getPath() : "null"));
+    LOGGER.finest("Looking up resource " + location + " with parent "+ (parentFile != null ? parentFile.getPath() : "null"));
   }
-  File file=parent != null ? new File(parent,location) : new File(location);
-  if (file.exists()) {
-    return file;
-  }
-  if (file.isAbsolute()) {
-    return file.exists() ? file : null;
-  }
- else {
-    if (parent == null) {
-      for (Iterator f=searchLocations.iterator(); f.hasNext(); ) {
-        File base=(File)f.next();
-        file=new File(base,location);
-        try {
-          if (file.exists()) {
-            return file;
-          }
-        }
- catch (        SecurityException e) {
-          LOGGER.warning("Failed attemp to check existance of " + file.getAbsolutePath());
-        }
-      }
-    }
- else {
-      file=new File(baseDirectory,file.getPath());
-      if (file.exists()) {
-        return file;
-      }
-    }
-  }
-  if (parent == null) {
-    Resource resource=getResource(location);
-    if (resource.exists()) {
-      return resource.getFile();
-    }
-  }
-  return null;
+  Resource resource=get(Paths.convert(getBaseDirectory(),parentFile,location));
+  return Resources.find(resource);
 }

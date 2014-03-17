@@ -1,0 +1,24 @@
+{
+  if (base == null) {
+    throw new NullPointerException("Base directory required for relative path");
+  }
+  List<String> folderPath=names(convert(base,folder));
+  List<String> filePath=names(convert(fileLocation));
+  List<String> resolvedPath=new ArrayList<String>(folderPath.size() + filePath.size());
+  resolvedPath.addAll(folderPath);
+  for (  String item : filePath) {
+    if (item == null)     continue;
+    if (item.equals("."))     continue;
+    if (item.equals("..")) {
+      if (!resolvedPath.isEmpty()) {
+        resolvedPath.remove(resolvedPath.size() - 1);
+        continue;
+      }
+ else {
+        throw new IllegalStateException("File location " + fileLocation + " outside of "+ base.getPath());
+      }
+    }
+    resolvedPath.add(item);
+  }
+  return toPath(resolvedPath);
+}

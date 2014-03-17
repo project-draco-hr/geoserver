@@ -1,27 +1,4 @@
 {
-  File file=find(parent,location);
-  if (file != null) {
-    if (file.isDirectory()) {
-      String msg=location + " already exists and is a directory";
-      throw new IOException(msg);
-    }
-    return file;
-  }
-  file=parent != null ? new File(parent,location) : new File(location);
-  if (file.isAbsolute()) {
-    file.createNewFile();
-    return file;
-  }
-  if (parent == null) {
-    if (baseDirectory == null) {
-      String msg="No base location set, could not create file: " + location;
-      throw new IOException(msg);
-    }
-    file=new File(baseDirectory,location);
-    if (!file.getParentFile().exists()) {
-      file.getParentFile().mkdirs();
-    }
-    file.createNewFile();
-  }
-  return file;
+  Resource resource=get(Paths.convert(getBaseDirectory(),parentFile,location));
+  return Resources.createNewFile(resource);
 }

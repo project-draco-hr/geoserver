@@ -4,7 +4,15 @@
   WorkspaceInfo ws=getCatalog().getDefaultWorkspace();
   File f=new File(dataDirRoot,"workspaces" + "/" + ws.getName() + "/service.xml");
   assertTrue(f.exists());
-  ServiceInfo s=geoServer.getServiceByName(ws,"foo",ServiceInfo.class);
-  geoServer.remove(s);
-  assertFalse(f.exists());
+  Logger logger=Logging.getLogger(GeoServerImpl.class);
+  Level level=logger.getLevel();
+  try {
+    logger.setLevel(Level.OFF);
+    ServiceInfo s=geoServer.getServiceByName(ws,"foo",ServiceInfo.class);
+    geoServer.remove(s);
+    assertFalse(f.exists());
+  }
+  finally {
+    logger.setLevel(level);
+  }
 }

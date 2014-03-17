@@ -2,7 +2,14 @@
   ApplicationContext appContext=createMock(ApplicationContext.class);
   GeoServerExtensions gse=new GeoServerExtensions();
   gse.setApplicationContext(null);
-  assertNull(GeoServerExtensions.bean("beanName"));
+  Level level=GeoServerExtensions.LOGGER.getLevel();
+  try {
+    GeoServerExtensions.LOGGER.setLevel(Level.SEVERE);
+    assertNull(GeoServerExtensions.bean("beanName"));
+  }
+  finally {
+    GeoServerExtensions.LOGGER.setLevel(level);
+  }
   gse.setApplicationContext(appContext);
   expect(appContext.isSingleton((String)anyObject())).andReturn(true).anyTimes();
   expect(appContext.getBean("beanName")).andReturn(null);

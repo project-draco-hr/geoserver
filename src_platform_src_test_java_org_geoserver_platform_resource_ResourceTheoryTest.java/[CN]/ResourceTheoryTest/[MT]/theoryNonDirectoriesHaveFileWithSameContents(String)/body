@@ -1,0 +1,22 @@
+{
+  Resource res=getResource(path);
+  assumeThat(res,not(directory()));
+  byte[] test={42,29,32,120,69,0,1};
+  OutputStream ostream=res.out();
+  try {
+    ostream.write(test);
+  }
+  finally {
+    ostream.close();
+  }
+  byte[] result=new byte[test.length];
+  InputStream istream=new FileInputStream(res.file());
+  try {
+    istream.read(result);
+    assertThat(istream.read(),is(-1));
+  }
+  finally {
+    istream.close();
+  }
+  assertThat(result,equalTo(test));
+}

@@ -1,0 +1,21 @@
+{
+  if (source == null || !source.exists()) {
+    throw new NullPointerException("File source required");
+  }
+  if (dest == null) {
+    throw new NullPointerException("File dest required");
+  }
+  if (source.getCanonicalPath().equalsIgnoreCase(dest.getCanonicalPath())) {
+    return true;
+  }
+  boolean win=System.getProperty("os.name").startsWith("Windows");
+  if (win && dest.exists()) {
+    if (!dest.delete()) {
+      throw new IOException("Failed to move " + source.getAbsolutePath() + " - unable to remove existing: "+ dest.getCanonicalPath());
+    }
+  }
+  if (!source.renameTo(dest)) {
+    throw new IOException("Failed to move " + source.getAbsolutePath() + " to "+ dest.getAbsolutePath());
+  }
+  return true;
+}
