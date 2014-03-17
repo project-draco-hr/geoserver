@@ -3,10 +3,18 @@
   if (!actualFile.exists()) {
     throw new IllegalStateException("File not found " + actualFile);
   }
+  final Lock lock=lock();
   try {
-    return new FileInputStream(file);
+    return new FileInputStream(file){
+      @Override public void close() throws IOException {
+        super.close();
+        lock.release();
+      }
+    }
+;
   }
  catch (  FileNotFoundException e) {
+    lock.release();
     throw new IllegalStateException("File not found " + actualFile,e);
   }
 }
