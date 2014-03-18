@@ -1,30 +1,3 @@
 {
-  start("swe:nilValues");
-  start("swe:NilValues");
-  if (gc2d.getProperties().containsKey("GC_NODATA")) {
-    String nodata=(String)gc2d.getProperties().get("GC_NODATA");
-    final AttributesImpl nodataAttr=new AttributesImpl();
-    nodataAttr.addAttribute("","reason","reason","","http://www.opengis.net/def/nil/OGC/0/unknown");
-    element("swe:nilValue",nodata,nodataAttr);
-    return;
-  }
- else {
-    final double nodataValues[]=sd.getNoDataValues();
-    if (nodataValues != null && nodataValues.length > 0) {
-      for (      double nodata : nodataValues) {
-        final AttributesImpl nodataAttr=new AttributesImpl();
-        nodataAttr.addAttribute("","reason","reason","","http://www.opengis.net/def/nil/OGC/0/unknown");
-        element("swe:nilValue",String.valueOf(nodata),nodataAttr);
-      }
-      return;
-    }
- else {
-      Number nodata=CoverageUtilities.suggestNoDataValue(gc2d.getRenderedImage().getSampleModel().getDataType());
-      final AttributesImpl nodataAttr=new AttributesImpl();
-      nodataAttr.addAttribute("","reason","reason","","http://www.opengis.net/def/nil/OGC/0/unknown");
-      element("swe:nilValue",nodata.toString(),nodataAttr);
-    }
-  }
-  end("swe:NilValues");
-  end("swe:nilValues");
+  handleSampleDimensionNilValues(gc2d,sd != null ? sd.getNoDataValues() : null);
 }
