@@ -1,10 +1,39 @@
 {
-  File actualFile=file();
+  final File actualFile=file();
   if (!actualFile.exists()) {
     throw new IllegalStateException("Cannot access " + actualFile);
   }
   try {
-    return Files.out(actualFile);
+    final File temp=new File(actualFile.getParentFile(),actualFile.getName() + ".tmp");
+    if (temp.exists()) {
+      temp.delete();
+    }
+    return new OutputStream(){
+      FileOutputStream delegate=new FileOutputStream(temp);
+      @Override public void close() throws IOException {
+        delegate.close();
+        Lock lock=lock();
+        try {
+          Files.move(temp,actualFile);
+        }
+  finally {
+          lock.release();
+        }
+      }
+      @Override public void write(      byte[] b,      int off,      int len) throws IOException {
+        delegate.write(b,off,len);
+      }
+      @Override public void flush() throws IOException {
+        delegate.flush();
+      }
+      @Override public void write(      byte[] b) throws IOException {
+        delegate.write(b);
+      }
+      @Override public void write(      int b) throws IOException {
+        delegate.write(b);
+      }
+    }
+;
   }
  catch (  FileNotFoundException e) {
     throw new IllegalStateException("Cannot access " + actualFile,e);

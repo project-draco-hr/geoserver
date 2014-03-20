@@ -9,7 +9,14 @@
         }
       }
       if (parent.isDirectory()) {
-        boolean created=file.mkdir();
+        Lock lock=lock();
+        boolean created;
+        try {
+          created=file.mkdir();
+        }
+  finally {
+          lock.release();
+        }
         if (!created) {
           throw new FileNotFoundException("Unable to create " + file.getAbsolutePath());
         }
