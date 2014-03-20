@@ -1,0 +1,20 @@
+{
+  LockProvider delegate;
+  if (lockProviderName == null) {
+    delegate=new MemoryLockProvider();
+  }
+ else {
+    Object provider=GeoServerExtensions.bean(lockProviderName);
+    if (provider == null) {
+      throw new IllegalStateException("Could not find " + lockProviderName + " lock provider in spring application context");
+    }
+ else     if (!(provider instanceof LockProvider)) {
+      throw new IllegalStateException("Found " + lockProviderName + "("+ provider.getClass().getName()+ ") in application context, but it was not a LockProvider");
+    }
+    delegate=(LockProvider)provider;
+  }
+  GlobalLockProvider lockProvider=(GlobalLockProvider)GeoServerExtensions.bean("lockProvider");
+  if (lockProvider.getDelegate() != delegate) {
+    lockProvider.setDelegate(delegate);
+  }
+}

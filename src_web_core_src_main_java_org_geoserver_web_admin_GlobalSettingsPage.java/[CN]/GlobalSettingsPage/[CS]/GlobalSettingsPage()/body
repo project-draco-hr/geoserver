@@ -18,6 +18,14 @@
   form.add(xmlPostRequestLogBufferSize);
   form.add(new CheckBox("xmlExternalEntitiesEnabled"));
   form.add(new TextField<Integer>("featureTypeCacheSize").add(new MinimumValidator<Integer>(0)));
+  IModel<String> lockProviderModel=new PropertyModel<String>(globalInfoModel,"lockProviderName");
+  ApplicationContext applicationContext=GeoServerApplication.get().getApplicationContext();
+  List<String> providers=new ArrayList<String>(Arrays.asList(applicationContext.getBeanNamesForType(LockProvider.class)));
+  providers.remove("lockProvider");
+  Collections.sort(providers);
+  ;
+  DropDownChoice<String> lockProviderChoice=new DropDownChoice<String>("lockProvider",lockProviderModel,providers,new LocalizedChoiceRenderer(this));
+  form.add(lockProviderChoice);
   Button submit=new Button("submit",new StringResourceModel("submit",this,null)){
     @Override public void onSubmit(){
       GeoServer gs=getGeoServer();
