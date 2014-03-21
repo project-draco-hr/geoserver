@@ -1,0 +1,43 @@
+{
+  final int nameIndex=changedProperties.indexOf("name");
+  final String oldWorkspaceName=(String)oldValues.get(nameIndex);
+  final String newWorkspaceName=(String)newValues.get(nameIndex);
+  CloseableIterator<LayerInfo> layers=catalog.list(LayerInfo.class,Predicates.equal("resource.store.workspace.name",newWorkspaceName));
+  try {
+    while (layers.hasNext()) {
+      LayerInfo layer=layers.next();
+      String oldName=oldWorkspaceName + ":" + layer.getName();
+      String newName=newWorkspaceName + ":" + layer.getName();
+      TileLayer tl;
+      try {
+        tl=mediator.getTileLayerByName(oldName);
+        if (!(tl instanceof GeoServerTileLayer)) {
+          continue;
+        }
+      }
+ catch (      IllegalArgumentException e) {
+        continue;
+      }
+      try {
+        if (layer.getType() == Type.VECTOR && ((FeatureTypeInfo)layer.getResource()).getFeatureType().getGeometryDescriptor() == null) {
+          continue;
+        }
+      }
+ catch (      IOException e) {
+        log.log(Level.FINE,"Failed to determine if layer" + layer + " is geometryless while renaming tile layers for workspace name change "+ oldName+ " -> "+ newName,e);
+      }
+      try {
+        if (tl instanceof GeoServerTileLayer) {
+          GeoServerTileLayer gstl=(GeoServerTileLayer)tl;
+          renameTileLayer(gstl.getInfo(),oldName,newName);
+        }
+      }
+ catch (      Exception e) {
+        log.log(Level.WARNING,"Failed to rename tile layer for geoserver layer " + layer + " while renaming tile layers for workspace name change "+ oldName+ " -> "+ newName,e);
+      }
+    }
+  }
+  finally {
+    layers.close();
+  }
+}

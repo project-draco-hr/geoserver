@@ -1,0 +1,32 @@
+{
+  String wsName=MockData.CITE_PREFIX;
+  String wsRenamed=MockData.CITE_PREFIX + "Renamed";
+  Catalog catalog=getCatalog();
+  WorkspaceInfo ws=catalog.getWorkspaceByName(wsName);
+  try {
+    List<String> layerNames=new ArrayList<String>();
+    for (    LayerInfo layer : catalog.getLayers()) {
+      if (wsName.equals(layer.getResource().getStore().getWorkspace().getName())) {
+        String prefixedName=layer.prefixedName();
+        try {
+          GWC.get().getTileLayerByName(prefixedName);
+          layerNames.add(layer.getName());
+        }
+ catch (        IllegalArgumentException e) {
+        }
+      }
+    }
+    ws.setName(wsRenamed);
+    catalog.save(ws);
+    for (    String name : layerNames) {
+      String prefixedName=wsRenamed + ":" + name;
+      GWC.get().getTileLayerByName(prefixedName);
+    }
+  }
+  finally {
+    if (wsRenamed.equals(ws.getName())) {
+      ws.setName(wsName);
+      catalog.save(ws);
+    }
+  }
+}

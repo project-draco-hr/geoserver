@@ -1,13 +1,13 @@
 {
   final CatalogInfo source=event.getSource();
-  if (!(source instanceof LayerInfo || source instanceof LayerGroupInfo || source instanceof FeatureTypeInfo|| source instanceof CoverageInfo|| source instanceof WMSLayerInfo)) {
+  if (!(source instanceof LayerInfo || source instanceof LayerGroupInfo || source instanceof FeatureTypeInfo|| source instanceof CoverageInfo|| source instanceof WMSLayerInfo|| source instanceof WorkspaceInfo)) {
     return;
   }
   final GeoServerTileLayerInfo tileLayerInfo=PRE_MODIFY_TILELAYER.get();
   PRE_MODIFY_TILELAYER.remove();
   final CatalogModifyEvent preModifyEvent=PRE_MODIFY_EVENT.get();
   PRE_MODIFY_EVENT.remove();
-  if (tileLayerInfo == null) {
+  if (tileLayerInfo == null && !(source instanceof WorkspaceInfo)) {
     return;
   }
   if (preModifyEvent == null) {
@@ -20,6 +20,11 @@
   if (source instanceof FeatureTypeInfo || source instanceof CoverageInfo || source instanceof WMSLayerInfo|| source instanceof LayerGroupInfo) {
     if (changedProperties.contains("name") || changedProperties.contains("namespace") || changedProperties.contains("workspace")) {
       handleRename(tileLayerInfo,source,changedProperties,oldValues,newValues);
+    }
+  }
+ else   if (source instanceof WorkspaceInfo) {
+    if (changedProperties.contains("name")) {
+      handleWorkspaceRename(source,changedProperties,oldValues,newValues);
     }
   }
   if (source instanceof LayerInfo) {

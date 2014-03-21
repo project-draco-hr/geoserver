@@ -1,0 +1,16 @@
+{
+  tileLayerInfo.setName(newLayerName);
+  GridSetBroker gridSetBroker=mediator.getGridSetBroker();
+  final GeoServerTileLayer oldTileLayer=(GeoServerTileLayer)mediator.getTileLayerByName(oldLayerName);
+  checkState(null != oldTileLayer,"handleRename: old tile layer not found: '" + oldLayerName + "'. New name: '"+ newLayerName+ "'");
+  final GeoServerTileLayer modifiedTileLayer;
+  if (oldTileLayer.getLayerInfo() != null) {
+    LayerInfo layerInfo=oldTileLayer.getLayerInfo();
+    modifiedTileLayer=new GeoServerTileLayer(layerInfo,gridSetBroker,tileLayerInfo);
+  }
+ else {
+    LayerGroupInfo layerGroup=oldTileLayer.getLayerGroupInfo();
+    modifiedTileLayer=new GeoServerTileLayer(layerGroup,gridSetBroker,tileLayerInfo);
+  }
+  mediator.save(modifiedTileLayer);
+}
