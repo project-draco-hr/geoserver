@@ -1,0 +1,33 @@
+{
+  WFSInfo wfs=getGeoServer().getService(WFSInfo.class);
+  wfs.getSRS().add("4326");
+  wfs.getSRS().add("3857");
+  wfs.getSRS().add("3003");
+  try {
+    getGeoServer().save(wfs);
+    Document doc=getAsDOM("wfs?service=WFS&version=2.0.0&request=getCapabilities");
+    final List<FeatureTypeInfo> enabledTypes=getCatalog().getFeatureTypes();
+    for (Iterator<FeatureTypeInfo> it=enabledTypes.iterator(); it.hasNext(); ) {
+      FeatureTypeInfo ft=it.next();
+      if (ft.enabled()) {
+        String prefixedName=ft.prefixedName();
+        String base="//wfs:FeatureType[wfs:Name =\"" + prefixedName + "\"]";
+        XMLAssert.assertXpathExists(base,doc);
+        boolean wgs84Native="EPSG:4326".equals(ft.getSRS());
+        if (wgs84Native) {
+          XMLAssert.assertXpathEvaluatesTo("2","count(" + base + "/wfs:OtherCRS)",doc);
+        }
+ else {
+          XMLAssert.assertXpathEvaluatesTo("3","count(" + base + "/wfs:OtherCRS)",doc);
+          XMLAssert.assertXpathExists(base + "[wfs:OtherCRS = 'urn:ogc:def:crs:EPSG::4326']",doc);
+        }
+        XMLAssert.assertXpathExists(base + "[wfs:OtherCRS = 'urn:ogc:def:crs:EPSG::3003']",doc);
+        XMLAssert.assertXpathExists(base + "[wfs:OtherCRS = 'urn:ogc:def:crs:EPSG::3857']",doc);
+      }
+    }
+  }
+  finally {
+    wfs.getSRS().clear();
+    getGeoServer().save(wfs);
+  }
+}

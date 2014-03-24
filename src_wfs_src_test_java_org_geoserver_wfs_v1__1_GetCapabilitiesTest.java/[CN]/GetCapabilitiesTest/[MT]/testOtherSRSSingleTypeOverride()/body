@@ -1,0 +1,26 @@
+{
+  WFSInfo wfs=getGeoServer().getService(WFSInfo.class);
+  wfs.getSRS().add("EPSG:4326");
+  wfs.getSRS().add("EPSG:3857");
+  wfs.getSRS().add("EPSG:3003");
+  String polygonsName=getLayerId(MockData.POLYGONS);
+  FeatureTypeInfo polygons=getCatalog().getFeatureTypeByName(polygonsName);
+  polygons.getResponseSRS().add("EPSG:32632");
+  polygons.setOverridingServiceSRS(true);
+  try {
+    getGeoServer().save(wfs);
+    getCatalog().save(polygons);
+    Document doc=getAsDOM("wfs?service=WFS&version=1.1.0&request=getCapabilities");
+    String base="/wfs:WFS_Capabilities/wfs:FeatureTypeList/" + "wfs:FeatureType[wfs:Name =\"" + polygonsName + "\"]";
+    XMLAssert.assertXpathExists(base,doc);
+    XMLAssert.assertXpathEvaluatesTo("1","count(" + base + "/wfs:OtherSRS)",doc);
+    XMLAssert.assertXpathExists(base + "[wfs:OtherSRS = 'urn:x-ogc:def:crs:EPSG:32632']",doc);
+  }
+  finally {
+    wfs.getSRS().clear();
+    getGeoServer().save(wfs);
+    polygons.setOverridingServiceSRS(false);
+    polygons.getResponseSRS().clear();
+    getCatalog().save(polygons);
+  }
+}

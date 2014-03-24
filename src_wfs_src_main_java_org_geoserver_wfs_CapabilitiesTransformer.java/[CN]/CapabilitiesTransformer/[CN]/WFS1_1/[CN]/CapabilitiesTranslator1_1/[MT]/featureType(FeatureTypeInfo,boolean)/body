@@ -8,14 +8,26 @@
   element("Abstract",featureType.getAbstract());
   keywords(featureType.getKeywords());
   String srs=featureType.getSRS();
-  if (srs != null && srs.matches("(?ui)EPSG:[0-9]+")) {
-    srs=gml.getSrsNameStyle().getPrefix() + srs.substring(5);
-  }
+  srs=applySRSNameStyle(gml,srs);
   if (crs) {
     element("DefaultCRS",srs);
   }
  else {
     element("DefaultSRS",srs);
+  }
+  List<String> otherSRSes=getOtherSRS(featureType);
+  for (  String otherSRS : otherSRSes) {
+    if (otherSRS != null) {
+      otherSRS=applySRSNameStyle(gml,otherSRS);
+      if (!otherSRS.equals(srs)) {
+        if (crs) {
+          element("OtherCRS",otherSRS);
+        }
+ else {
+          element("OtherSRS",otherSRS);
+        }
+      }
+    }
   }
   Envelope bbox=null;
   bbox=featureType.getLatLonBoundingBox();
