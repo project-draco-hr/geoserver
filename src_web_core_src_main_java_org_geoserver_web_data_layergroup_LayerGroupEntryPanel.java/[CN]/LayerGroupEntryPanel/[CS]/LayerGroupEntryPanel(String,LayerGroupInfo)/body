@@ -7,6 +7,8 @@
     items.add(new LayerGroupEntry(layer,style));
   }
   add(popupWindow=new ModalWindow("popup"));
+  add(dialog=new GeoServerDialog("dialog"));
+  add(new HelpLink("layersHelp").setDialog(dialog));
   entryProvider=new LayerGroupEntryProvider(items);
   add(layerTable=new GeoServerTablePanel<LayerGroupEntry>("layers",entryProvider){
     @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<LayerGroupEntry> property){
@@ -25,7 +27,23 @@
       if (property == LayerGroupEntryProvider.POSITION) {
         return positionPanel(id,itemModel);
       }
+      if (property == LayerGroupEntryProvider.RENDERING_ORDER) {
+        return new Label(id,new Model());
+      }
       return null;
+    }
+    protected void onPopulateItem(    GeoServerDataProvider.Property<LayerGroupEntry> property,    org.apache.wicket.markup.html.list.ListItem item){
+      if (property == LayerGroupEntryProvider.RENDERING_ORDER) {
+        Label label=(Label)item.get(0);
+        OddEvenItem rowContainer=(OddEvenItem)item.getParent().getParent();
+        label.setDefaultModel(new Model(rowContainer.getIndex() + 1));
+        item.add(new AbstractBehavior(){
+          public void onComponentTag(          Component component,          ComponentTag tag){
+            tag.put("style","width:1%");
+          }
+        }
+);
+      }
     }
   }
 .setFilterable(false));
