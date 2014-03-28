@@ -1,0 +1,16 @@
+{
+  FormTester form=tester.newFormTester("form");
+  File styleFile=new File(new java.io.File(getClass().getResource("default_point.sld").toURI()));
+  String sld=IOUtils.toString(new FileReader(styleFile)).replaceAll("\r\n","\n").replaceAll("\r","\n");
+  form.setValue("styleEditor:editorContainer:editorParent:editor",sld);
+  form.setValue("name","repeatedname");
+  form.submit();
+  tester.assertRenderedPage(StylePage.class);
+  tester.startPage(StyleNewPage.class);
+  form=tester.newFormTester("form");
+  form.setValue("styleEditor:editorContainer:editorParent:editor",sld);
+  form.setValue("name","repeatedname");
+  form.submit();
+  tester.assertRenderedPage(StyleNewPage.class);
+  tester.assertErrorMessages(new String[]{"java.lang.IllegalArgumentException: Style named 'repeatedname' already exists"});
+}

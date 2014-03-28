@@ -1,0 +1,44 @@
+{
+  if (legendInfo == null) {
+    return null;
+  }
+  String onlineResource=legendInfo.getOnlineResource();
+  String baseUrl=request.getBaseUrl();
+  if (onlineResource == null) {
+    return null;
+  }
+  URL url=null;
+  try {
+    URI uri=new URI(onlineResource);
+    if (uri.isAbsolute()) {
+      if (baseUrl != null && onlineResource.startsWith(baseUrl + "styles/")) {
+        onlineResource=onlineResource.substring(baseUrl.length() + 7);
+      }
+ else {
+        return legendInfo;
+      }
+    }
+    GeoServerResourceLoader resources=wms.getCatalog().getResourceLoader();
+    File styles=resources.findOrCreateDirectory("styles");
+    URL base=DataUtilities.fileToURL(styles);
+    url=new URL(base,onlineResource);
+  }
+ catch (  MalformedURLException invalid) {
+    LOGGER.log(Level.FINER,"Unable to resolve " + onlineResource + " locally",invalid);
+    return null;
+  }
+catch (  IOException access) {
+    LOGGER.log(Level.FINER,"Unable to resolve " + onlineResource + " locally",access);
+    return null;
+  }
+catch (  URISyntaxException syntax) {
+    LOGGER.log(Level.FINER,"Unable to resolve " + onlineResource + " locally",syntax);
+    return null;
+  }
+  LegendInfoImpl resolved=new LegendInfoImpl();
+  resolved.setOnlineResource(url.toExternalForm());
+  resolved.setFormat(legendInfo.getFormat());
+  resolved.setHeight(legendInfo.getHeight());
+  resolved.setWidth(legendInfo.getWidth());
+  return resolved;
+}

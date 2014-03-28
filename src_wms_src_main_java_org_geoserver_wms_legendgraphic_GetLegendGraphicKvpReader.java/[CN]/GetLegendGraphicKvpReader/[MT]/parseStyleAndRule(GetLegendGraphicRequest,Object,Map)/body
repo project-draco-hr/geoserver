@@ -37,25 +37,69 @@
       }
  else {
         sldStyles.add(wms.getStyleByName(styleName));
+        if (infoObj instanceof LayerInfo) {
+          StyleInfo styleInfo=wms.getCatalog().getStyleByName(styleName);
+          if (styleInfo != null) {
+            LegendInfo legend=resolveLegendInfo(styleInfo.getLegend(),req);
+            if (legend != null) {
+              LayerInfo layerInfo=(LayerInfo)infoObj;
+              Name name=layerInfo.getResource().getQualifiedName();
+              LegendRequest legendRequest=req.getLegend(name);
+              if (legendRequest != null) {
+                legendRequest.setLegendInfo(legend);
+              }
+ else {
+                LOGGER.log(Level.FINE,"Unable to set LegendInfo for " + name);
+              }
+            }
+          }
+        }
       }
       pos++;
     }
   }
  else {
     if (infoObj instanceof LayerInfo) {
-      sldStyles.add(getStyleFromLayer((LayerInfo)infoObj));
+      LayerInfo layerInfo=(LayerInfo)infoObj;
+      sldStyles.add(getStyleFromLayer(layerInfo));
+      StyleInfo defaultStyle=layerInfo.getDefaultStyle();
+      LegendInfo legend=defaultStyle.getLegend();
+      if (legend != null) {
+        Name name=layerInfo.getResource().getQualifiedName();
+        LegendRequest legendRequest=req.getLegend(name);
+        if (legendRequest != null) {
+          legendRequest.setLegendInfo(legend);
+        }
+ else {
+          LOGGER.log(Level.FINE,"Unable to set LegendInfo for " + name);
+        }
+      }
     }
  else     if (infoObj instanceof LayerGroupInfo) {
       LayerGroupInfo layerGroupInfo=(LayerGroupInfo)infoObj;
       List<LayerInfo> groupLayers=layerGroupInfo.layers();
       List<StyleInfo> groupStyles=layerGroupInfo.styles();
       for (int count=0; count < groupLayers.size(); count++) {
+        LayerInfo layerInfo=groupLayers.get(count);
+        StyleInfo styleInfo=null;
         if (count < groupStyles.size() && groupStyles.get(count) != null) {
-          sldStyles.add(groupStyles.get(count).getStyle());
+          styleInfo=groupStyles.get(count);
+          sldStyles.add(styleInfo.getStyle());
         }
  else {
-          LayerInfo layerInfo=groupLayers.get(count);
           sldStyles.add(getStyleFromLayer(layerInfo));
+          styleInfo=layerInfo.getDefaultStyle();
+        }
+        LegendInfo legend=resolveLegendInfo(styleInfo.getLegend(),req);
+        if (legend != null) {
+          Name name=layerInfo.getResource().getQualifiedName();
+          LegendRequest legendRequest=req.getLegend(name);
+          if (legendRequest != null) {
+            legendRequest.setLegendInfo(legend);
+          }
+ else {
+            LOGGER.log(Level.FINE,"Unable to set LegendInfo for " + name);
+          }
         }
       }
     }

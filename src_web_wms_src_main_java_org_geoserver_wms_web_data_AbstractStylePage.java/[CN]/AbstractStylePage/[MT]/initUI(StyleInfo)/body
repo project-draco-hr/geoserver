@@ -1,6 +1,9 @@
 {
-  IModel<StyleInfo> styleModel=new CompoundPropertyModel(style != null ? new StyleDetachableModel(style) : getCatalog().getFactory().createStyle());
+  CompoundPropertyModel<StyleInfo> styleModel=new CompoundPropertyModel(style != null ? new StyleDetachableModel(style) : getCatalog().getFactory().createStyle());
   format=style != null ? style.getFormat() : getCatalog().getFactory().createStyle().getFormat();
+  if (null == styleModel.getObject().getLegend()) {
+    styleModel.getObject().setLegend(getCatalog().getFactory().createLegend());
+  }
   styleForm=new Form("form",styleModel){
     @Override protected void onSubmit(){
       super.onSubmit();
@@ -43,6 +46,9 @@
   editor.setOutputMarkupId(true);
   editor.setRequired(true);
   styleForm.add(editor);
+  ExternalGraphicPanel legendPanel=new ExternalGraphicPanel("legendPanel",styleModel,styleForm);
+  legendPanel.setOutputMarkupId(true);
+  styleForm.add(legendPanel);
   if (style != null) {
     try {
       setRawStyle(readFile(style));
@@ -97,11 +103,11 @@
   legendContainer=new WebMarkupContainer("legendContainer");
   legendContainer.setOutputMarkupId(true);
   add(legendContainer);
-  legend=new Image("legend");
-  legendContainer.add(legend);
-  legend.setVisible(false);
-  legend.setOutputMarkupId(true);
-  legend.setImageResource(new DynamicWebResource(){
+  this.legendImg=new Image("legendImg");
+  legendContainer.add(this.legendImg);
+  this.legendImg.setVisible(false);
+  this.legendImg.setOutputMarkupId(true);
+  this.legendImg.setImageResource(new DynamicWebResource(){
     @Override protected ResourceState getResourceState(){
       return new ResourceState(){
         @Override public byte[] getData(){
@@ -121,8 +127,8 @@
              Style style=dd.parsedStyle(si);
             if (style != null) {
               GetLegendGraphicRequest request=new GetLegendGraphicRequest();
-              request.setStyle(style);
               request.setLayer(null);
+              request.setStyle(style);
               request.setStrict(false);
               Map<String,String> legendOptions=new HashMap<String,String>();
               legendOptions.put("forceLabels","on");

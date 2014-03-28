@@ -1,0 +1,19 @@
+{
+  String base="wms?service=WMS&version=1.1.1&request=GetLegendGraphic" + "&layer=sf:states&style=custom" + "&format=image/png&width=22&height=22";
+  BufferedImage image=getAsImage(base,"image/png");
+  Resource resource=getResourceLoader().get("styles/legend.png");
+  BufferedImage expected=ImageIO.read(resource.file());
+  assertEquals(getPixelColor(expected,10,2).getRGB(),getPixelColor(image,10,2).getRGB());
+  base="wms?service=WMS&version=1.1.1&request=GetLegendGraphic" + "&layer=sf:states&style=custom" + "&format=image/png&width=16&height=16";
+  image=getAsImage(base,"image/png");
+  String user_home=System.getProperty("user.home");
+  File home=new File(user_home);
+  ImageIO.write(expected,"png",new File(home,"expected.png"));
+  ImageIO.write(image,"png",new File(home,"actual.png"));
+  Color expectedColor=getPixelColor(expected,11,11);
+  Color actualColor=getPixelColor(image,8,8);
+  assertEquals("red",expectedColor.getRed(),actualColor.getRed());
+  assertEquals("green",expectedColor.getGreen(),actualColor.getGreen());
+  assertEquals("blue",expectedColor.getBlue(),actualColor.getBlue());
+  assertEquals("alpha",expectedColor.getAlpha(),actualColor.getAlpha());
+}
