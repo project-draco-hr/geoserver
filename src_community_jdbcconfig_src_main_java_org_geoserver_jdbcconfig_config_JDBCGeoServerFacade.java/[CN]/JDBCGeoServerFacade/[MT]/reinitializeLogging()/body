@@ -1,0 +1,33 @@
+{
+  try {
+    LoggingInfo realLogInfo=this.getLogging();
+    LoggingInfo startLogInfo=LoggingStartupContextListener.getLogging(resourceLoader);
+    ClassProperties properties=OwsUtils.getClassProperties(LoggingInfo.class);
+    List<String> propertyNames=new ArrayList<String>(properties.properties().size());
+    List<Object> newValues=new ArrayList<Object>(properties.properties().size());
+    List<Object> oldValues=new ArrayList<Object>(properties.properties().size());
+    final Level propertyTableLevel=Level.FINE;
+    LOGGER.log(propertyTableLevel,"Checking Logging configuration in case it neeeds to be reinitialized");
+    for (    String propName : properties.properties()) {
+      Method read=properties.getter(propName,null);
+      Object newVal=read.invoke(realLogInfo);
+      Object oldVal=read.invoke(startLogInfo);
+      if ((newVal == null && oldVal == null) || (newVal != null && newVal.equals(oldVal))) {
+        LOGGER.log(propertyTableLevel,"=== {0} (logging.xml: {1}, JDBCConfig: {2})",new Object[]{read.getName(),oldVal,newVal});
+      }
+ else {
+        propertyNames.add(propName);
+        newValues.add(newVal);
+        oldValues.add(oldVal);
+        LOGGER.log(propertyTableLevel,"=/= {0} (logging.xml: {1}, JDBCConfig: {2})",new Object[]{read.getName(),oldVal,newVal});
+      }
+    }
+    if (!(propertyNames.isEmpty() || (propertyNames.size() == 1 && propertyNames.get(0).equals("Id")))) {
+      LOGGER.log(Level.WARNING,"Start up logging config does not match that in JDBCConfig.  Reconfiguring now.  Logs preceding this message may reflect a different configuration.");
+      LoggingUtils.initLogging(resourceLoader,realLogInfo.getLevel(),!realLogInfo.isStdOutLogging(),realLogInfo.getLocation());
+    }
+  }
+ catch (  Exception ex) {
+    LOGGER.log(Level.SEVERE,"Problem while reinitializing Logging from JDBC Config.  Log configuration may not be correct.",ex);
+  }
+}
