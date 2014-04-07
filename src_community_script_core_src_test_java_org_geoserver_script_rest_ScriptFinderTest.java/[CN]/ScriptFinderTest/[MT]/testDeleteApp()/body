@@ -1,0 +1,14 @@
+{
+  MockHttpServletResponse resp=getAsServletResponse("/rest/scripts/apps/app1/main.py");
+  assertEquals(404,resp.getStatusCode());
+  File dir=scriptMgr.findOrCreateScriptDir("apps/app1");
+  FileUtils.writeStringToFile(new File(dir,"main.py"),"print 'foo'");
+  resp=getAsServletResponse("/rest/scripts/apps/app1/main.py");
+  assertEquals(200,resp.getStatusCode());
+  assertEquals("print 'foo'",resp.getOutputStreamContent());
+  resp=deleteAsServletResponse("/rest/scripts/apps/app1/main.py");
+  assertEquals(200,resp.getStatusCode());
+  resp=getAsServletResponse("/rest/scripts/apps/app1/main.py");
+  assertEquals(404,resp.getStatusCode());
+  assertFalse(dir.exists());
+}

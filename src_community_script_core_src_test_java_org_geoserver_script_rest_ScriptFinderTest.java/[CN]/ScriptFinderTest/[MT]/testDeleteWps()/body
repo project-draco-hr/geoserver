@@ -1,0 +1,13 @@
+{
+  MockHttpServletResponse resp=getAsServletResponse("/rest/scripts/wps/foo.py");
+  assertEquals(404,resp.getStatusCode());
+  File dir=scriptMgr.findOrCreateScriptDir("wps");
+  FileUtils.writeStringToFile(new File(dir,"foo.py"),"print 'foo'");
+  resp=getAsServletResponse("/rest/scripts/wps/foo.py");
+  assertEquals(200,resp.getStatusCode());
+  assertEquals("print 'foo'",resp.getOutputStreamContent());
+  resp=deleteAsServletResponse("/rest/scripts/wps/foo.py");
+  assertEquals(200,resp.getStatusCode());
+  resp=getAsServletResponse("/rest/scripts/wps/foo.py");
+  assertEquals(404,resp.getStatusCode());
+}

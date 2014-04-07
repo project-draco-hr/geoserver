@@ -7,7 +7,7 @@
  catch (  IOException e) {
     throw new RestletException(format("Error looking up script dir %s",path),Status.SERVER_ERROR_INTERNAL,e);
   }
-  JSONArray arr=new JSONArray();
+  List<Script> scripts=Lists.newArrayList();
   if (dir != null) {
     FileFilter filter=type != null ? new FileFilter(){
       @Override public boolean accept(      File pathname){
@@ -21,11 +21,15 @@
     }
 ;
     for (    File f : dir.listFiles(filter)) {
-      arr.add(f.getName());
+      String name=f.getName();
+      if (path.equals("apps")) {
+        File mainScript=scriptMgr.findAppMainScript(f);
+        name=mainScript.getAbsolutePath().substring(f.getParentFile().getAbsolutePath().length() + 1).replace("\\","/");
+      }
+      scripts.add(new Script(name));
     }
   }
  else {
   }
-  getResponse().setEntity(new StringRepresentation(arr.toString()));
-  getResponse().setStatus(Status.SUCCESS_OK);
+  return scripts;
 }

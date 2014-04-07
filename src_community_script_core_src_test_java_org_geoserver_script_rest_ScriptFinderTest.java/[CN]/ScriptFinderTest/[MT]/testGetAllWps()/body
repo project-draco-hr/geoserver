@@ -1,0 +1,29 @@
+{
+  JSON json=getAsJSON("/rest/scripts/wps.json");
+  assertTrue(((JSONObject)json).getString("scripts").isEmpty());
+  File dir=scriptMgr.findOrCreateScriptDir("wps");
+  FileUtils.writeStringToFile(new File(dir,"foo.py"),"print 'foo'");
+  FileUtils.writeStringToFile(new File(dir,"bar.py"),"print 'bar'");
+  json=getAsJSON("/rest/scripts/wps.json");
+  JSONArray scripts=((JSONObject)json).getJSONObject("scripts").getJSONArray("script");
+  assertEquals(2,scripts.size());
+  for (int i=0; i < scripts.size(); i++) {
+    JSONObject script=scripts.getJSONObject(i);
+    assertTrue(script.containsKey("name"));
+    assertTrue(script.containsKey("href"));
+    String name=script.getString("name");
+    assertTrue(name.equals("foo.py") || name.equals("bar.py"));
+    String href=script.getString("href");
+    assertTrue(href.equals("http://localhost/geoserver/rest/scripts/wps/foo.py") || href.equals("http://localhost/geoserver/rest/scripts/wps/bar.py"));
+  }
+  Document doc=getAsDOM("/rest/scripts/wps.xml");
+  assertEquals("scripts",doc.getDocumentElement().getTagName());
+  NodeList scriptNodes=doc.getElementsByTagName("script");
+  assertEquals(2,scriptNodes.getLength());
+  Document htmlDom=getAsDOM("/rest/scripts/wps.html");
+  NodeList links=xp.getMatchingNodes("//html:a",htmlDom);
+  assertEquals(2,links.getLength());
+  htmlDom=getAsDOM("/rest/scripts/wps");
+  links=xp.getMatchingNodes("//html:a",htmlDom);
+  assertEquals(2,links.getLength());
+}
