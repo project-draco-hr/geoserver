@@ -1,0 +1,22 @@
+{
+  SecureCatalogImpl sc;
+  final SecureCatalogImpl[] scHolder=new SecureCatalogImpl[1];
+  ResourceAccessManager manager=buildManager(propertyFile,new IAnswer<SecureCatalogImpl>(){
+    @Override public SecureCatalogImpl answer() throws Throwable {
+      return scHolder[0];
+    }
+  }
+);
+  if (wrapper != null) {
+    wrapper.setDelegate(manager);
+    manager=wrapper;
+  }
+  sc=new SecureCatalogImpl(catalog,manager){
+    @Override protected boolean isAdmin(    Authentication authentication){
+      return false;
+    }
+  }
+;
+  scHolder[0]=sc;
+  return sc;
+}

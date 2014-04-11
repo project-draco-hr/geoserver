@@ -1,19 +1,12 @@
 {
-  ResourceAccessManager manager=buildManager("publicRead.properties");
   CatalogFilterAccessManager filter=new CatalogFilterAccessManager();
-  filter.setDelegate(manager);
   Catalog withLayers=new AbstractCatalogDecorator(catalog){
-    @Override public <T extends CatalogInfo>CloseableIterator<T> list(    Class<T> of,    Filter filter,    Integer offset,    Integer count,    SortBy sortBy){
+    @SuppressWarnings("unchecked") @Override public <T extends CatalogInfo>CloseableIterator<T> list(    Class<T> of,    Filter filter,    Integer offset,    Integer count,    SortBy sortBy){
       return new CloseableIteratorAdapter<T>((Iterator<T>)layers.iterator());
     }
   }
 ;
-  SecureCatalogImpl sc=new SecureCatalogImpl(withLayers,filter){
-    @Override protected boolean isAdmin(    Authentication authentication){
-      return false;
-    }
-  }
-;
+  SecureCatalogImpl sc=this.buildTestObject("publicRead.properties",withLayers,filter);
   assertTrue(layers.size() > 1);
   assertTrue(sc.getLayers().size() > 1);
   filter.setCatalogFilters(Collections.singletonList(new AbstractCatalogFilter(){
