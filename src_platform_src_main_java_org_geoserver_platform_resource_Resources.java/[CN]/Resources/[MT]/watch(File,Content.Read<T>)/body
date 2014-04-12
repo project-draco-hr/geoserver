@@ -1,6 +1,12 @@
 {
   return new Content<T>(){
     @Override public T content(){
+      if (!file.exists()) {
+        return null;
+      }
+      if (file.isDirectory()) {
+        throw new IllegalStateException("Unable to read content from a directory");
+      }
       InputStream in;
       try {
         in=new FileInputStream(file);
@@ -11,7 +17,10 @@
       try {
         return content.read(in);
       }
-  finally {
+ catch (      Exception unexpected) {
+        throw new IllegalStateException(unexpected);
+      }
+ finally {
         try {
           in.close();
         }
