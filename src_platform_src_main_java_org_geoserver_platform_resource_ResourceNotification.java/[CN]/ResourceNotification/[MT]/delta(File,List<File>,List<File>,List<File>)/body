@@ -1,0 +1,29 @@
+{
+  if (created == null) {
+    created=Collections.emptyList();
+  }
+  if (removed == null) {
+    removed=Collections.emptyList();
+  }
+  if (modified == null) {
+    modified=Collections.emptyList();
+  }
+  int size=created.size() + removed.size() + modified.size();
+  if (size == 0) {
+    return null;
+  }
+  List<Event> delta=new ArrayList<Event>(size);
+  for (  File file : created) {
+    String newPath=Paths.convert(baseDirectory,file);
+    delta.add(new Event(newPath,Kind.ENTRY_CREATE));
+  }
+  for (  File file : removed) {
+    String deletePath=Paths.convert(baseDirectory,file);
+    delta.add(new Event(deletePath,Kind.ENTRY_DELETE));
+  }
+  for (  File file : modified) {
+    String changedPath=Paths.convert(baseDirectory,file);
+    delta.add(new Event(changedPath,Kind.ENTRY_MODIFY));
+  }
+  return delta;
+}

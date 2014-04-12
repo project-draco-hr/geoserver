@@ -1,0 +1,84 @@
+{
+  if (!file.exists()) {
+    if (exsists) {
+      exsists=false;
+      if (contents != null) {
+        List<File> deleted=Arrays.asList(contents);
+        this.last=now;
+        this.contents=null;
+        return new Delta(file,Kind.ENTRY_DELETE,null,deleted,null);
+      }
+ else {
+        this.last=now;
+        return new Delta(file,Kind.ENTRY_DELETE);
+      }
+    }
+ else {
+      return null;
+    }
+  }
+  if (file.isFile()) {
+    long fileModified=file.lastModified();
+    if (fileModified > last || !exsists) {
+      if (exsists) {
+        this.last=fileModified;
+        return new Delta(file,Kind.ENTRY_MODIFY);
+      }
+ else {
+        exsists=true;
+        this.last=fileModified;
+        return new Delta(file,Kind.ENTRY_CREATE);
+      }
+    }
+ else {
+      return null;
+    }
+  }
+  if (file.isDirectory()) {
+    Kind kind=null;
+    long fileModified=file.lastModified();
+    if (fileModified > last || !exsists) {
+      kind=exsists ? Kind.ENTRY_MODIFY : Kind.ENTRY_CREATE;
+      exsists=true;
+    }
+ else {
+    }
+    File[] files=file.listFiles();
+    List<File> removed=new ArrayList<File>(files.length);
+    List<File> created=new ArrayList<File>(files.length);
+    List<File> modified=new ArrayList<File>(files.length);
+    removed.addAll(Arrays.asList(this.contents));
+    removed.removeAll(Arrays.asList(files));
+    if (!removed.isEmpty()) {
+      fileModified=Math.max(fileModified,last + 1);
+    }
+    created.addAll(Arrays.asList(files));
+    created.removeAll(Arrays.asList(this.contents));
+    for (    File check : created) {
+      long checkModified=check.lastModified();
+      fileModified=Math.max(fileModified,checkModified);
+    }
+    List<File> review=new ArrayList<File>(files.length);
+    review.addAll(Arrays.asList(files));
+    review.removeAll(created);
+    for (    File check : review) {
+      long checkModified=check.lastModified();
+      if (checkModified > last) {
+        modified.add(check);
+        fileModified=Math.max(fileModified,checkModified);
+      }
+    }
+    if (kind == null) {
+      if (removed.isEmpty() && created.isEmpty() && modified.isEmpty()) {
+        return null;
+      }
+ else {
+        kind=Kind.ENTRY_MODIFY;
+      }
+    }
+    this.last=fileModified;
+    this.contents=files;
+    return new Delta(file,kind,created,removed,modified);
+  }
+  return null;
+}

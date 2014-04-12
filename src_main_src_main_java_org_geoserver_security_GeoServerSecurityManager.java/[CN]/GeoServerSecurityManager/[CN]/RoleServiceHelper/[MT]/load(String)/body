@@ -29,12 +29,12 @@
     FileBasedSecurityServiceConfig fileConfig=(FileBasedSecurityServiceConfig)config;
     if (fileConfig.getCheckInterval() > 0) {
       File file=new File(fileConfig.getFileName());
-      if (file.isAbsolute() == false)       file=new File(new File(getRoleRoot(),name),file.getPath());
-      if (file.canRead() == false) {
-        throw new IOException("Cannot read file: " + file.getCanonicalPath());
+      Resource resource=getConfigFile(fileConfig.getFileName());
+      if (resource == null) {
+        String path=Paths.path("security/role",name,fileConfig.getFileName());
+        resource=get(path);
       }
-      RoleFileWatcher watcher=new RoleFileWatcher(file.getCanonicalPath(),service,file.lastModified());
-      watcher.setDelay(fileConfig.getCheckInterval());
+      RoleFileWatcher watcher=new RoleFileWatcher(resource,service,resource.lastmodified());
       service.registerRoleLoadedListener(watcher);
       watcher.start();
       fileWatchers.add(watcher);

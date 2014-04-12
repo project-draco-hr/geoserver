@@ -1,0 +1,20 @@
+{
+  final long DELAY=unit.convert(howlong,TimeUnit.MILLISECONDS);
+  lock.lock();
+  try {
+    if (this.event == null) {
+      long mark=System.currentTimeMillis();
+      while (this.event == null) {
+        long check=System.currentTimeMillis();
+        if (mark + DELAY < check) {
+          return null;
+        }
+        boolean signal=condition.await(1,TimeUnit.SECONDS);
+      }
+    }
+  }
+  finally {
+    lock.unlock();
+  }
+  return this.event;
+}

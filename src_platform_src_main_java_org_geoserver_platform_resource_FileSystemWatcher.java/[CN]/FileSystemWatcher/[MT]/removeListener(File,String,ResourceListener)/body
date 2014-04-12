@@ -1,0 +1,22 @@
+{
+  if (file == null) {
+    throw new NullPointerException("File to watch is required");
+  }
+  if (path == null) {
+    throw new NullPointerException("Path for notification is required");
+  }
+  Watch watch=watch(file,path);
+  boolean removed=false;
+  if (watch != null) {
+    watch.removeListener(listener);
+    if (watch.getListeners().isEmpty()) {
+      removed=watchers.remove(watch);
+    }
+  }
+  if (removed && watchers.isEmpty()) {
+    if (monitor != null) {
+      monitor.cancel(false);
+      monitor=null;
+    }
+  }
+}

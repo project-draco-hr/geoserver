@@ -1,19 +1,7 @@
 {
-  File configFile=loader.find("monitoring","filter.properties");
-  if (configFile == null) {
-    configFile=loader.createFile("monitoring","filter.properties");
-    loader.copyFromClassPath("filter.properties",configFile,getClass());
+  Resource configFile=loader.get(Paths.path("monitoring","filter.properties"));
+  if (configFile.getType() == Type.UNDEFINED) {
+    loader.copyFromClassPath("filter.properties",configFile.file(),getClass());
   }
-  watcher=new FileWatcher<List<Filter>>(configFile){
-    @Override protected List<Filter> parseFileContents(    InputStream in) throws IOException {
-      List<Filter> filters=new ArrayList();
-      BufferedReader r=new BufferedReader(new InputStreamReader(in));
-      String line=null;
-      while ((line=r.readLine()) != null) {
-        filters.add(new Filter(line));
-      }
-      return filters;
-    }
-  }
-;
+  watcher=new FilterPropertyFileWatcher(configFile);
 }

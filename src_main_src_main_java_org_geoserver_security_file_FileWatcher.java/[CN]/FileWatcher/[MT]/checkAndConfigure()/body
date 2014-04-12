@@ -1,15 +1,15 @@
 {
   boolean fileExists;
   try {
-    fileExists=file.exists();
+    fileExists=resource.getType() == Type.RESOURCE;
   }
  catch (  SecurityException e) {
-    LOGGER.warning("Was not allowed to read check file existance, file:[" + filename + "].");
+    LOGGER.warning("Was not allowed to read check file existance, file:[" + path + "].");
     setTerminate(true);
     return;
   }
   if (fileExists) {
-    long l=file.lastModified();
+    long l=resource.lastmodified();
     if (testAndSetLastModified(l)) {
       doOnChange();
       warnedAlready=false;
@@ -17,7 +17,7 @@
   }
  else {
     if (!warnedAlready) {
-      LOGGER.warning("[" + filename + "] does not exist.");
+      LOGGER.warning("[" + path + "] does not exist.");
       warnedAlready=true;
     }
   }
