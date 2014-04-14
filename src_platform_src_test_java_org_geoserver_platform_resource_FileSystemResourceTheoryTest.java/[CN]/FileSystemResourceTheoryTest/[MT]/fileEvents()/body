@@ -1,0 +1,22 @@
+{
+  File fileD=Paths.toFile(store.baseDirectory,"DirC/FileD");
+  AwaitResourceListener listener=new AwaitResourceListener();
+  store.get("DirC/FileD").addListener(listener);
+  store.watcher.schedule(30,TimeUnit.MILLISECONDS);
+  long before=fileD.lastModified();
+  long after=touch(fileD);
+  assertTrue("touched",after > before);
+  ResourceNotification n=listener.await(5,TimeUnit.SECONDS);
+  assertNotNull("detected event",n);
+  assertEquals("file modified",Kind.ENTRY_MODIFY,n.getKind());
+  assertTrue("Resource only",n.events().isEmpty());
+  listener.reset();
+  fileD.delete();
+  n=listener.await(5,TimeUnit.SECONDS);
+  assertEquals("file removed",Kind.ENTRY_DELETE,n.getKind());
+  listener.reset();
+  fileD.createNewFile();
+  n=listener.await(5,TimeUnit.SECONDS);
+  assertEquals("file created",Kind.ENTRY_CREATE,n.getKind());
+  store.get("DirC/FileD").removeListener(listener);
+}

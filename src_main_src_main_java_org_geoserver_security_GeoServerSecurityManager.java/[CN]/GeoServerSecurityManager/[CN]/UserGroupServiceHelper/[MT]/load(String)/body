@@ -26,13 +26,12 @@
   if (config instanceof FileBasedSecurityServiceConfig) {
     FileBasedSecurityServiceConfig fileConfig=(FileBasedSecurityServiceConfig)config;
     if (fileConfig.getCheckInterval() > 0) {
-      File file=new File(fileConfig.getFileName());
-      if (file.isAbsolute() == false)       file=new File(new File(getUserGroupRoot(),name),file.getPath());
-      if (file.canRead() == false) {
-        throw new IOException("Cannot read file: " + file.getCanonicalPath());
+      Resource resource=getConfigFile(fileConfig.getFileName());
+      if (resource == null) {
+        String path=Paths.path("security/usergroup",name,fileConfig.getFileName());
+        resource=get(path);
       }
-      UserGroupFileWatcher watcher=new UserGroupFileWatcher(file.getCanonicalPath(),service,file.lastModified());
-      watcher.setDelay(fileConfig.getCheckInterval());
+      UserGroupFileWatcher watcher=new UserGroupFileWatcher(resource,service);
       service.registerUserGroupLoadedListener(watcher);
       watcher.start();
       fileWatchers.add(watcher);

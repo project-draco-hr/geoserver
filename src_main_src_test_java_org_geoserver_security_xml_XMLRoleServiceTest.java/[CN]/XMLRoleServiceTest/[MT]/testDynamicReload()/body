@@ -1,27 +1,39 @@
 {
-  File xmlFile=File.createTempFile("roles",".xml");
-  FileUtils.copyURLToFile(getClass().getResource("rolesTemplate.xml"),xmlFile);
-  GeoServerRoleService service1=createRoleService("reload1",xmlFile.getCanonicalPath());
-  GeoServerRoleService service2=createRoleService("reload2",xmlFile.getCanonicalPath());
-  GeoServerRoleStore store1=createStore(service1);
-  GeoServerRole role_test1=store1.createRoleObject("ROLE_TEST1");
-  checkEmpty(service1);
-  checkEmpty(service2);
-  RoleLoadedListener listener=new RoleLoadedListener(){
-    @Override public void rolesChanged(    RoleLoadedEvent event){
+  Files.schedule(200,TimeUnit.MILLISECONDS);
+  try {
+    File xmlFile=File.createTempFile("roles",".xml");
+    FileUtils.copyURLToFile(getClass().getResource("rolesTemplate.xml"),xmlFile);
+    GeoServerRoleService service1=createRoleService("reload1",xmlFile.getCanonicalPath());
+    GeoServerRoleService service2=createRoleService("reload2",xmlFile.getCanonicalPath());
+    GeoServerRoleStore store1=createStore(service1);
+    GeoServerRole role_test1=store1.createRoleObject("ROLE_TEST1");
+    checkEmpty(service1);
+    checkEmpty(service2);
+class CheckRoleLoaded implements RoleLoadedListener {
+      public int notified=0;
+      @Override public void rolesChanged(      RoleLoadedEvent event){
 synchronized (this) {
-        this.notifyAll();
+          this.notifyAll();
+          notified++;
+        }
       }
     }
-  }
-;
-  service2.registerRoleLoadedListener(listener);
-  store1.addRole(role_test1);
-  store1.store();
-  assertTrue(service1.getRoles().size() == 1);
-  xmlFile.setLastModified(xmlFile.lastModified() + 1000);
+    ;
+    CheckRoleLoaded listener=new CheckRoleLoaded();
+    service2.registerRoleLoadedListener(listener);
+    store1.addRole(role_test1);
+    store1.store();
+    assertTrue(service1.getRoles().size() == 1);
+    xmlFile.setLastModified(xmlFile.lastModified() + 1000);
 synchronized (listener) {
-    listener.wait();
+      if (listener.notified == 0) {
+        listener.wait();
+      }
+    }
+    assertTrue("notification expected",listener.notified > 0);
+    assertTrue(service2.getRoles().size() == 1);
   }
-  assertTrue(service2.getRoles().size() == 1);
+  finally {
+    Files.schedule(10,TimeUnit.SECONDS);
+  }
 }

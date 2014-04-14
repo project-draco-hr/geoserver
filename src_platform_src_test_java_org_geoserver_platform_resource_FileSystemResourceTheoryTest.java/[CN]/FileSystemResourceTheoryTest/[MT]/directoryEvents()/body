@@ -1,0 +1,37 @@
+{
+  File fileA=Paths.toFile(store.baseDirectory,"FileA");
+  File fileB=Paths.toFile(store.baseDirectory,"FileB");
+  File dirC=Paths.toFile(store.baseDirectory,"DirC");
+  File fileD=Paths.toFile(store.baseDirectory,"DirC/FileD");
+  File dirE=Paths.toFile(store.baseDirectory,"DirE");
+  AwaitResourceListener listener=new AwaitResourceListener();
+  store.get(Paths.BASE).addListener(listener);
+  store.watcher.schedule(30,TimeUnit.MILLISECONDS);
+  long before=fileB.lastModified();
+  long after=touch(fileB);
+  assertTrue("touched",after > before);
+  ResourceNotification n=listener.await(5,TimeUnit.SECONDS);
+  assertEquals(Kind.ENTRY_MODIFY,n.getKind());
+  assertEquals(Paths.BASE,n.getPath());
+  assertEquals(1,n.events().size());
+  Event e=n.events().get(0);
+  assertEquals(Kind.ENTRY_MODIFY,e.getKind());
+  assertEquals("FileB",e.getPath());
+  listener.reset();
+  fileA.delete();
+  n=listener.await(5,TimeUnit.SECONDS);
+  assertEquals(Kind.ENTRY_MODIFY,n.getKind());
+  assertEquals(Paths.BASE,n.getPath());
+  e=n.events().get(0);
+  assertEquals(Kind.ENTRY_DELETE,e.getKind());
+  assertEquals("FileA",e.getPath());
+  listener.reset();
+  fileA.createNewFile();
+  n=listener.await(5,TimeUnit.SECONDS);
+  assertEquals(Kind.ENTRY_MODIFY,n.getKind());
+  assertEquals(Paths.BASE,n.getPath());
+  e=n.events().get(0);
+  assertEquals(Kind.ENTRY_CREATE,e.getKind());
+  assertEquals("FileA",e.getPath());
+  store.get(Paths.BASE).removeListener(listener);
+}

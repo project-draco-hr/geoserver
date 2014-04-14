@@ -1,14 +1,15 @@
 {
+  Files.schedule(100,TimeUnit.MILLISECONDS);
   try {
     File ugFile=File.createTempFile("users",".xml");
     ugFile.deleteOnExit();
     File gaFile=File.createTempFile("roles",".xml");
     gaFile.deleteOnExit();
-    RoleFileWatcher gaWatcher=new RoleFileWatcher(gaFile.getCanonicalPath(),gaService);
+    RoleFileWatcher gaWatcher=new RoleFileWatcher(gaFile,gaService);
     assertEquals(1,gaCounter);
     gaWatcher.setDelay(10);
     gaWatcher.start();
-    UserGroupFileWatcher ugWatcher=new UserGroupFileWatcher(ugFile.getCanonicalPath(),ugService);
+    UserGroupFileWatcher ugWatcher=new UserGroupFileWatcher(ugFile,ugService);
     assertEquals(1,ugCounter);
     ugWatcher.setDelay(10);
     ugWatcher.start();
@@ -33,7 +34,7 @@
     ugFile.delete();
     gaFile.delete();
   }
- catch (  Exception ex) {
-    Assert.fail(ex.getMessage());
+  finally {
+    Files.schedule(10,TimeUnit.SECONDS);
   }
 }
