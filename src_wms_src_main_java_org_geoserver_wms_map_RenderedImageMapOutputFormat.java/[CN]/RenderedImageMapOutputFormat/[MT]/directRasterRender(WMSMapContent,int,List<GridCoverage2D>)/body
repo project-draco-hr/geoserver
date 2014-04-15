@@ -1,21 +1,16 @@
 {
-  List<RasterSymbolizer> symbolizers=getRasterSymbolizers(mapContent,0);
+  double scaleDenominator=mapContent.getScaleDenominator();
+  Layer layer=mapContent.layers().get(layerIndex);
+  FeatureType featureType=layer.getFeatureSource().getSchema();
+  Style style=layer.getStyle();
+  RasterSymbolizerVisitor visitor=new RasterSymbolizerVisitor(scaleDenominator,featureType);
+  style.accept(visitor);
+  List<RasterSymbolizer> symbolizers=visitor.getRasterSymbolizers();
   if (symbolizers.size() != 1) {
     return null;
   }
   RasterSymbolizer symbolizer=symbolizers.get(0);
-  final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
-  final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
-  final Object params=feature.getProperty("params").getValue();
-  final int tileSizeX;
-  final int tileSizeY;
-  if (mapContent.getTileSize() != -1) {
-    tileSizeX=tileSizeY=mapContent.getTileSize();
-  }
- else {
-    tileSizeX=mapContent.getMapWidth();
-    tileSizeY=mapContent.getMapHeight();
-  }
+  Expression transformation=visitor.getRasterRenderingTransformation();
   final int mapWidth=mapContent.getMapWidth();
   final int mapHeight=mapContent.getMapHeight();
   final ReferencedEnvelope mapEnvelope=mapContent.getRenderingArea();
@@ -30,7 +25,7 @@
  else {
     bgColor=new Color(bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),255);
   }
-  Interpolation interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+  final Interpolation interpolation;
   if (wms != null) {
     if (WMSInterpolation.Nearest.equals(wms.getInterpolation())) {
       interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
@@ -41,8 +36,14 @@
  else     if (WMSInterpolation.Bicubic.equals(wms.getInterpolation())) {
       interpolation=Interpolation.getInstance(Interpolation.INTERP_BICUBIC);
     }
+ else {
+      interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+    }
   }
-  final CoordinateReferenceSystem coverageCRS=reader.getCoordinateReferenceSystem();
+ else {
+    interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+  }
+  final CoordinateReferenceSystem coverageCRS=layer.getFeatureSource().getSchema().getCoordinateReferenceSystem();
   final GridGeometry2D readGG;
   final boolean equalsMetadata=CRS.equalsIgnoreMetadata(mapCRS,coverageCRS);
   boolean sameCRS;
@@ -71,16 +72,50 @@
       throw ioe;
     }
   }
+  final int tileSizeX;
+  final int tileSizeY;
+  if (mapContent.getTileSize() != -1) {
+    tileSizeX=tileSizeY=mapContent.getTileSize();
+  }
+ else {
+    tileSizeX=mapContent.getMapWidth();
+    tileSizeY=mapContent.getMapHeight();
+  }
   RenderedImage image=null;
+  GridCoverage2D coverage;
+  RenderingHints interpolationHints=new RenderingHints(JAI.KEY_INTERPOLATION,interpolation);
   try {
     final Color readerBgColor=transparent ? null : bgColor;
-    final GridCoverage2D coverage=readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
+    if (transformation == null) {
+      final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
+      final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
+      final Object params=feature.getProperty("params").getValue();
+      coverage=readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
+    }
+ else {
+      RenderingTransformationHelper helper=new RenderingTransformationHelper(){
+        protected GridCoverage2D readCoverage(        GridCoverage2DReader reader,        Object params,        GridGeometry2D readGG) throws IOException {
+          return readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
+        }
+      }
+;
+      Object result=helper.applyRenderingTransformation(transformation,layer.getFeatureSource(),layer.getQuery(),Query.ALL,readGG,coverageCRS,interpolationHints);
+      if (result == null) {
+        coverage=null;
+      }
+ else       if (result instanceof GridCoverage2D) {
+        coverage=(GridCoverage2D)result;
+      }
+ else {
+        return null;
+      }
+    }
     try {
       if (coverage == null) {
         image=createBkgImage((float)mapWidth,(float)mapHeight,bgColor,null);
       }
  else {
-        final GridCoverageRenderer gcr=new GridCoverageRenderer(mapCRS,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),worldToScreen,new RenderingHints(JAI.KEY_INTERPOLATION,interpolation));
+        final GridCoverageRenderer gcr=new GridCoverageRenderer(mapCRS,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),worldToScreen,interpolationHints);
         image=gcr.renderImage(coverage,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
       }
     }

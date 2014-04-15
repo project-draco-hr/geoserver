@@ -1,5 +1,25 @@
 {
-  if ((featureType.getName().getLocalPart() != null) && (featureType.getName().getLocalPart().equalsIgnoreCase(fts.getFeatureTypeName()) || FeatureTypes.isDecendedFrom(featureType,null,fts.getFeatureTypeName()))) {
-    for (    Rule r : fts.rules())     r.accept(this);
+  if (featureType == null || (featureType.getName().getLocalPart() != null) && (featureType.getName().getLocalPart().equalsIgnoreCase(fts.getFeatureTypeName()) || FeatureTypes.isDecendedFrom(featureType,null,fts.getFeatureTypeName()))) {
+    Expression tx=fts.getTransformation();
+    if (tx != null) {
+      boolean rasterTransformation=false;
+      if (tx instanceof Function) {
+        Function f=(Function)tx;
+        FunctionName name=f.getFunctionName();
+        if (name != null) {
+          Parameter<?> result=name.getReturn();
+          if (result != null) {
+            if (GridCoverage2D.class.isAssignableFrom(result.getType())) {
+              rasterTransformation=true;
+              this.rasterTransformation=tx;
+            }
+          }
+        }
+      }
+      otherRenderingTransformations|=!rasterTransformation;
+    }
+    for (    Rule r : fts.rules()) {
+      r.accept(this);
+    }
   }
 }
