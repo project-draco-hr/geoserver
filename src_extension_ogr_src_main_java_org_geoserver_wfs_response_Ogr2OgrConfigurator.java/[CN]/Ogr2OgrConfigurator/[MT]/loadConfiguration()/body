@@ -1,9 +1,15 @@
 {
   OgrConfiguration configuration=OgrConfiguration.DEFAULT;
   try {
-    if (configFile.exists()) {
-      XStream xstream=buildXStream();
-      configuration=(OgrConfiguration)xstream.fromXML(new FileInputStream(configFile));
+    if (configFile.getType() == Type.RESOURCE) {
+      InputStream in=configFile.in();
+      try {
+        XStream xstream=buildXStream();
+        configuration=(OgrConfiguration)xstream.fromXML(in);
+      }
+  finally {
+        in.close();
+      }
     }
   }
  catch (  Exception e) {

@@ -1,14 +1,15 @@
 {
   File wpsStore=null;
   try {
-    File temp=GeoserverDataDirectory.findCreateConfigDir("temp");
-    wpsStore=new File(temp,"wps");
-    if (!wpsStore.exists()) {
-      mkdir(wpsStore);
-    }
+    GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+    Resource wps=loader.get("temp/wps");
+    wpsStore=wps.dir();
   }
  catch (  Exception e) {
-    throw new WcsException("Could not create the temporary storage directory for WPS");
+    throw new ServiceException("Could not create the temporary storage directory for WPS");
+  }
+  if (wpsStore == null || !wpsStore.exists()) {
+    throw new ServiceException("Could not create the temporary storage directory for WPS");
   }
   return wpsStore;
 }

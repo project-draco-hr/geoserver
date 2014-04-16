@@ -7,7 +7,7 @@
     names=null;
   }
   if (names == null) {
-    checkContext(context);
+    checkContext(context,extensionPoint.getSimpleName());
     if (context != null) {
       try {
         names=context.getBeanNamesForType(extensionPoint);
@@ -34,13 +34,13 @@
  else {
     filters=extensions(ExtensionFilter.class,context);
   }
-  List result=new ArrayList(names.length);
+  List<T> result=new ArrayList<T>(names.length);
   for (  String name : names) {
     Object bean=getBean(context,name);
-    if (!excludeBean(name,bean,filters))     result.add(bean);
+    if (!excludeBean(name,bean,filters))     result.add((T)bean);
   }
   if (!ExtensionProvider.class.isAssignableFrom(extensionPoint) && !ExtensionFilter.class.isAssignableFrom(extensionPoint)) {
-    List secondary=new ArrayList();
+    List<Object> secondary=new ArrayList<Object>();
     for (    ExtensionProvider xp : extensions(ExtensionProvider.class,context)) {
       try {
         if (extensionPoint.isAssignableFrom(xp.getExtensionPoint())) {
@@ -63,7 +63,7 @@
     spiCache.put(extensionPoint,spiExtensions);
   }
   filter(spiExtensions,filters,result);
-  Collections.sort(result,new Comparator(){
+  Collections.sort(result,new Comparator<Object>(){
     public int compare(    Object o1,    Object o2){
       int p1=ExtensionPriority.LOWEST;
       if (o1 instanceof ExtensionPriority) {

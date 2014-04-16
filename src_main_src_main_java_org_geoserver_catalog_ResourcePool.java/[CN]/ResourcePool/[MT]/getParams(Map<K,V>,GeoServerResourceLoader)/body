@@ -1,0 +1,28 @@
+{
+  @SuppressWarnings("unchecked") Map<K,V> params=Collections.synchronizedMap(new HashMap<K,V>(m));
+  for (  Entry<K,V> entry : params.entrySet()) {
+    String key=(String)entry.getKey();
+    Object value=entry.getValue();
+    if ((key != null) && key.matches(".* *url") && value instanceof String) {
+      String path=(String)value;
+      if (path.startsWith("file:")) {
+        File fixedPath=loader.url(path);
+        URL url=DataUtilities.fileToURL(fixedPath);
+        entry.setValue((V)url.toExternalForm());
+      }
+    }
+ else     if (value instanceof URL && ((URL)value).getProtocol().equals("file")) {
+      URL url=(URL)value;
+      File fixedPath=loader.url(url.toString());
+      entry.setValue((V)DataUtilities.fileToURL(fixedPath));
+    }
+ else     if ((key != null) && key.equals("directory") && value instanceof String) {
+      String path=(String)value;
+      if (path.startsWith("file:")) {
+        File fixedPath=loader.url(path);
+        entry.setValue((V)fixedPath.toString());
+      }
+    }
+  }
+  return params;
+}

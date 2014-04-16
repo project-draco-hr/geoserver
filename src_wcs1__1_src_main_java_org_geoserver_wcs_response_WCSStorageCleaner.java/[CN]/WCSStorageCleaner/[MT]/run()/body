@@ -1,12 +1,16 @@
 {
   try {
-    File temp=GeoserverDataDirectory.findConfigDir(GeoserverDataDirectory.getGeoserverDataDirectory(),"temp");
-    if (temp == null || !temp.exists())     return;
-    File wcsTemp=new File(temp,"wcs");
-    if (!wcsTemp.exists())     return;
+    GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+    Resource wcs=loader.get("temp/wcs");
+    if (wcs.getType() != Type.DIRECTORY) {
+      return;
+    }
+    File wcsTemp=wcs.dir();
     long now=System.currentTimeMillis();
     for (    File f : wcsTemp.listFiles()) {
-      if (now - f.lastModified() > (expirationDelay * 1000))       f.delete();
+      if (now - f.lastModified() > (expirationDelay * 1000)) {
+        f.delete();
+      }
     }
   }
  catch (  Exception e) {

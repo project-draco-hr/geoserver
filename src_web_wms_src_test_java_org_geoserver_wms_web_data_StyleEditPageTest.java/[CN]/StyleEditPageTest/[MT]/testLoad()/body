@@ -4,9 +4,12 @@
   tester.assertComponent("form:name",TextField.class);
   tester.assertComponent("form:SLD:editorContainer:editor",TextArea.class);
   tester.assertModelValue("form:name","Buildings");
-  File styleFile=GeoserverDataDirectory.findStyleFile(buildingsStyle.getFilename());
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  assertNotNull(loader);
+  String path=Paths.path("styles",Paths.convert(buildingsStyle.getFilename()));
+  Resource styleFile=loader.get(path);
   DocumentBuilder db=DocumentBuilderFactory.newInstance().newDocumentBuilder();
-  Document d1=db.parse(new FileInputStream(styleFile));
+  Document d1=db.parse(styleFile.in());
   String xml=tester.getComponentFromLastRenderedPage("form:SLD").getDefaultModelObjectAsString();
   xml=xml.replaceAll("&lt;","<").replaceAll("&gt;",">").replaceAll("&quot;","\"");
   Document d2=db.parse(new ByteArrayInputStream(xml.getBytes()));

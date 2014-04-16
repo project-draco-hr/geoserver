@@ -11,22 +11,18 @@
       return entry.icm;
     }
   }
-  final File root=GeoserverDataDirectory.getGeoserverDataDirectory();
-  final File paletteDir=GeoserverDataDirectory.findConfigDir(root,"palettes");
-  final String[] names=new String[]{name + ".gif",name + ".png",name + ".pal",name + ".tif"};
-  final File[] paletteFiles=paletteDir.listFiles(new FilenameFilter(){
-    public boolean accept(    File dir,    String name){
-      for (int i=0; i < names.length; i++) {
-        if (name.toLowerCase().equals(names[i])) {
-          return true;
-        }
-      }
-      return false;
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  Resource palettes=loader.get("palettes");
+  Set<String> names=new HashSet<String>();
+  names.addAll(Arrays.asList(new String[]{name + ".gif",name + ".png",name + ".pal",name + ".tif"}));
+  List<Resource> paletteFiles=new ArrayList<Resource>();
+  for (  Resource item : palettes.list()) {
+    if (names.contains(item.name().toLowerCase())) {
+      paletteFiles.add(item);
     }
   }
-);
-  for (int i=0; i < paletteFiles.length; i++) {
-    final File file=paletteFiles[i];
+  for (  Resource resource : paletteFiles) {
+    final File file=resource.file();
     final String fileName=file.getName();
     if (fileName.endsWith("pal")) {
       final IndexColorModel icm=new PALFileLoader(file).getIndexColorModel();
@@ -49,7 +45,7 @@
         }
       }
     }
-    LOG.warning("Skipping paletteInverter file " + file.getName() + " since color model is not indexed (no 256 colors paletteInverter)");
+    LOG.warning("Skipping paletteInverter file " + fileName + " since color model is not indexed (no 256 colors paletteInverter)");
   }
   return null;
 }
