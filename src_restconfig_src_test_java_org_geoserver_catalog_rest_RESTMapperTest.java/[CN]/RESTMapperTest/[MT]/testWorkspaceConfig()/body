@@ -1,0 +1,19 @@
+{
+  String root=getTestData().getDataDirectoryRoot().getAbsolutePath();
+  String xml="<workspace>" + "<name>test</name>" + "</workspace>";
+  MockHttpServletResponse responseBefore=postAsServletResponse("/rest/workspaces",xml,"text/xml");
+  assertEquals(201,responseBefore.getStatusCode());
+  assertNotNull(responseBefore.getHeader("Location"));
+  assertTrue(responseBefore.getHeader("Location").endsWith("/workspaces/test"));
+  WorkspaceInfo ws=getCatalog().getWorkspaceByName("test");
+  assertNotNull(ws);
+  SettingsInfoImpl info=new SettingsInfoImpl();
+  if (info.getMetadata() == null) {
+    info.setMetadata(new MetadataMap());
+  }
+  MetadataMap map=info.getMetadata();
+  map.put(RESTUtils.ROOT_KEY,root);
+  info.setWorkspace(ws);
+  getGeoServer().add(info);
+  testFile(root,"test","usa2");
+}

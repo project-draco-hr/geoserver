@@ -25,12 +25,27 @@
   info.setType(coverageFormat.getName());
   URL uploadedFileURL=DataUtilities.fileToURL(uploadedFile);
   if (isInlineUpload(method)) {
+    String defaultRoot=File.separator + "data" + File.separator+ workspace+ File.separator+ coveragestore;
+    StringBuilder fileBuilder=new StringBuilder(uploadedFile.getAbsolutePath());
     String url;
     if (uploadedFile.isDirectory() && uploadedFile.getName().equals(coveragestore)) {
-      url="file:data/" + workspace + "/"+ coveragestore;
+      int def=fileBuilder.indexOf(defaultRoot);
+      if (def >= 0) {
+        url="file:data/" + workspace + "/"+ coveragestore;
+      }
+ else {
+        url=fileBuilder.toString();
+      }
     }
  else {
-      url="file:data/" + workspace + "/"+ coveragestore+ "/"+ uploadedFile.getName();
+      int def=fileBuilder.indexOf(defaultRoot);
+      if (def >= 0) {
+        String itemPath=fileBuilder.substring(def + defaultRoot.length());
+        url="file:data/" + workspace + "/"+ coveragestore+ "/"+ itemPath;
+      }
+ else {
+        url=fileBuilder.toString();
+      }
     }
     if (url.contains("+")) {
       url=url.replace("+","%2B");
