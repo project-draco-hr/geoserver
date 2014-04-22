@@ -23,6 +23,10 @@
   }
   Query reprojected=reprojectFilter(query);
   Query newQuery=adaptQuery(reprojected,schema);
+  for (  Entry<String,Object> e : metadata.entrySet()) {
+    ConfigurationMetadataKey key=ConfigurationMetadataKey.get(e.getKey());
+    newQuery.getHints().put(key,e.getValue());
+  }
   CoordinateReferenceSystem targetCRS=query.getCoordinateSystemReproject();
   try {
     SimpleFeatureCollection fc=source.getFeatures(newQuery);
