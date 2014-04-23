@@ -1,16 +1,20 @@
 {
   ProxyConfig retval;
+  Resource.Lock lock=null;
   try {
-    File proxyConfFile=getConfigFile();
-    InputStream proxyConfStream=new FileInputStream(proxyConfFile);
+    GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+    Resource configFile=loader.get("proxy/proxy.xml");
+    lock=configFile.lock();
+    InputStream proxyConfStream=configFile.in();
     XStream xs=new XStream();
-    configReadLock.lock();
     retval=(ProxyConfig)(xs.fromXML(proxyConfStream));
-    configReadLock.unlock();
   }
  catch (  Exception e) {
     LOG.warning("Failed to open configuration for Proxy module. Using default. Exception:" + e.toString());
     retval=DEFAULT;
+  }
+ finally {
+    if (lock != null)     lock.release();
   }
   return retval;
 }

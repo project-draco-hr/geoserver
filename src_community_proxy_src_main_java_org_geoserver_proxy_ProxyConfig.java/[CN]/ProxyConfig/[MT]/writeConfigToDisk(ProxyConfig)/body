@@ -1,17 +1,21 @@
 {
+  Resource.Lock lock=null;
   try {
-    File proxyConfFile=getConfigFile();
+    GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+    Resource configFile=loader.get("proxy/proxy.xml");
     XStream xs=new XStream();
     String xml=xs.toXML(pc);
-    FileWriter fw=new FileWriter(proxyConfFile,false);
-    configWriteLock.lock();
+    FileWriter fw=new FileWriter(configFile.file(),false);
+    lock=configFile.lock();
     fw.write(xml);
     fw.close();
-    configWriteLock.unlock();
     return true;
   }
  catch (  Exception e) {
     LOG.warning("Failed to save configuration for Proxy module. Exception:" + e.toString());
     return false;
+  }
+ finally {
+    if (lock != null)     lock.release();
   }
 }
