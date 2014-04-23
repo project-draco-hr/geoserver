@@ -1,0 +1,23 @@
+{
+  ArrayList<DefaultValueConfiguration> result=new ArrayList<DefaultValueConfiguration>();
+  DefaultValueConfigurations configs=configModel.getObject();
+  if (configs != null) {
+    result.addAll(configs.getConfigurations());
+  }
+ else {
+    configs=new DefaultValueConfigurations(new ArrayList<DefaultValueConfiguration>());
+  }
+  Set<String> dimensionNames=getEnabledDimensionNames(layerModel.getObject());
+  for (  String dimensionName : dimensionNames) {
+    addIfMissing(dimensionName,result);
+  }
+  for (Iterator it=result.iterator(); it.hasNext(); ) {
+    DefaultValueConfiguration config=(DefaultValueConfiguration)it.next();
+    if (!dimensionNames.contains(config.getDimension())) {
+      it.remove();
+    }
+  }
+  configs.getConfigurations().clear();
+  configs.getConfigurations().addAll(result);
+  return result;
+}

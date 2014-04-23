@@ -1,0 +1,96 @@
+{
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Building dynamic defaults for resource " + resource.prefixedName());
+  }
+  List<DefaultValueConfiguration> configurations=filterConfigurations(configsBean,resource);
+  Map<String,Object> result;
+  result=new HashMap<String,Object>();
+  Map<String,List<? extends Object>> incompleteSpecs=new HashMap<String,List<? extends Object>>();
+  for (  Map.Entry<String,Serializable> entry : resource.getMetadata().entrySet()) {
+    String key=entry.getKey();
+    Serializable metadata=entry.getValue();
+    if (metadata instanceof DimensionInfo) {
+      DimensionInfo di=(DimensionInfo)metadata;
+      if (!di.isEnabled()) {
+        continue;
+      }
+      String dimensionName;
+      if (key.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+        dimensionName=key.substring(ResourceInfo.CUSTOM_DIMENSION_PREFIX.length());
+      }
+ else {
+        dimensionName=key;
+      }
+      boolean foundExplicitDefault=false;
+      if (ResourceInfo.TIME.equals(dimensionName) && getMap.getRawKvp().get("time") != null) {
+        List<Object> times=getMap.getTime();
+        addExplicitValues(dimensionName,times,result,incompleteSpecs);
+        foundExplicitDefault=true;
+      }
+ else       if (ResourceInfo.ELEVATION.equals(dimensionName) && getMap.getRawKvp().get("elevation") != null) {
+        List<Object> elevations=getMap.getElevation();
+        addExplicitValues(dimensionName,elevations,result,incompleteSpecs);
+        foundExplicitDefault=true;
+      }
+ else       if (getMap.getRawKvp().get("dim_" + dimensionName) != null) {
+        List<String> customDimensions=getMap.getCustomDimension(dimensionName);
+        addExplicitValues(dimensionName,customDimensions,result,incompleteSpecs);
+        foundExplicitDefault=true;
+      }
+      if (!foundExplicitDefault) {
+        if (!hasDynamicConfiguration(configurations,dimensionName)) {
+          DimensionDefaultValueSelectionStrategy strategy=delegate.getStrategy(resource,key,di);
+          if (strategy == null) {
+            LOGGER.warning("Skipping static setting of default dimension value for dimension " + dimensionName + " in layer "+ resource.prefixedName()+ " as the default value strategy could not be found");
+          }
+ else {
+            Object staticDefault=strategy.getDefaultValue(resource,dimensionName,di,getDimensionClass(dimensionName));
+            if (staticDefault != null) {
+              result.put(dimensionName,wrapIntoList(staticDefault));
+            }
+ else {
+              LOGGER.warning("Skipping static setting of default dimension value for dimension " + dimensionName + " in layer "+ resource.prefixedName()+ " as the default value strategy "+ strategy+ "returned a null value");
+            }
+          }
+        }
+      }
+    }
+  }
+  if (!incompleteSpecs.isEmpty()) {
+    for (    DefaultValueConfiguration config : configurations) {
+      String dimensionName=config.getDimension();
+      if (!incompleteSpecs.containsKey(dimensionName)) {
+        continue;
+      }
+      List<Object> values=(List<Object>)incompleteSpecs.remove(dimensionName);
+      List<Object> defaulted=new ArrayList<Object>(values.size());
+      for (int i=0; i < values.size(); i++) {
+        Object v=values.get(i);
+        if (v != null) {
+          defaulted.add(v);
+        }
+ else {
+          Object dynamicValue=getDynamicDefault(resource,result,config,dimensionName);
+          if (dynamicValue != null) {
+            defaulted.add(dynamicValue);
+          }
+        }
+        result.put(dimensionName,defaulted);
+      }
+    }
+    result.putAll(incompleteSpecs);
+  }
+  for (  DefaultValueConfiguration config : configurations) {
+    String dimensionName=config.getDimension();
+    if (result.containsKey(dimensionName)) {
+      continue;
+    }
+ else {
+      Object value=getDynamicDefault(resource,result,config,dimensionName);
+      if (value != null) {
+        result.put(dimensionName,value);
+      }
+    }
+  }
+  return result;
+}

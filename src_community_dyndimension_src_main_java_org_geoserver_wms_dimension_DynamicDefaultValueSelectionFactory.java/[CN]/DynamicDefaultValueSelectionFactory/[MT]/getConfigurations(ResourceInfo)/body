@@ -1,0 +1,18 @@
+{
+  DefaultValueConfigurations configurations=resource.getMetadata().get(DefaultValueConfigurations.KEY,DefaultValueConfigurations.class);
+  if (configurations == null) {
+    return null;
+  }
+  List<DefaultValueConfiguration> list=configurations.getConfigurations();
+  if (list == null || list.isEmpty()) {
+    LOGGER.fine("Skipping dynamic dimension configuration as it is empty");
+    return null;
+  }
+  for (  DefaultValueConfiguration config : list) {
+    if (config.getPolicy() != null && config.getPolicy() != DefaultValuePolicy.STANDARD) {
+      return configurations;
+    }
+  }
+  LOGGER.fine("Skipping dynamic dimension cconfiguration as all dimensions are " + "using the standard policy (e.g. there is nothing dynamic there");
+  return null;
+}
