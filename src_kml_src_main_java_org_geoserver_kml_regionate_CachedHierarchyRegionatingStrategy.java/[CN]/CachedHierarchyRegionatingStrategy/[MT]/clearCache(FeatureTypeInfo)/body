@@ -1,6 +1,11 @@
 {
   try {
-    DeleteDbFiles.execute(GeoserverDataDirectory.findCreateConfigDir("geosearch").getCanonicalPath(),"h2cache_" + getDatabaseName(cfg),true);
+    GeoServerResourceLoader loader=gs.getCatalog().getResourceLoader();
+    Resource geosearch=loader.get("geosearch");
+    if (geosearch.getType() == Type.DIRECTORY) {
+      File directory=geosearch.dir();
+      DeleteDbFiles.execute(directory.getCanonicalPath(),"h2cache_" + getDatabaseName(cfg),true);
+    }
   }
  catch (  Exception ioe) {
     LOGGER.severe("Couldn't clear out config dir due to: " + ioe);

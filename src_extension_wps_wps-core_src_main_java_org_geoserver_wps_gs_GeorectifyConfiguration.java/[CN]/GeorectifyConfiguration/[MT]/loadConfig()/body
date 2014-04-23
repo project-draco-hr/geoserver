@@ -1,10 +1,10 @@
 {
-  final boolean hasPropertiesFile=configFile != null && configFile.exists() && configFile.canRead() && configFile.isFile();
+  final boolean hasPropertiesFile=configFile != null && configFile.getType() == Type.RESOURCE;
   if (hasPropertiesFile) {
     Properties props=new Properties();
-    FileInputStream fis=null;
+    InputStream fis=null;
     try {
-      fis=new FileInputStream(configFile);
+      fis=configFile.in();
       props.load(fis);
       Iterator<Object> keys=props.keySet().iterator();
       envVariables=Maps.newHashMap();
@@ -74,12 +74,12 @@
     }
  catch (    FileNotFoundException e) {
       if (LOGGER.isLoggable(Level.WARNING)) {
-        LOGGER.log(Level.WARNING,"Unable to parse the config file: " + configFile.getAbsolutePath(),e);
+        LOGGER.log(Level.WARNING,"Unable to parse the config file: " + configFile.path(),e);
       }
     }
 catch (    IOException e) {
       if (LOGGER.isLoggable(Level.WARNING)) {
-        LOGGER.log(Level.WARNING,"Unable to parse the config file: " + configFile.getAbsolutePath(),e);
+        LOGGER.log(Level.WARNING,"Unable to parse the config file: " + configFile.path(),e);
       }
     }
  finally {

@@ -1,13 +1,16 @@
 {
   super.setUp();
+  GeoServerExtensionsHelper.init(null);
   DeleteDbFiles.execute("target","bar",false);
+  GeoServerResourceLoader resourceLoader=scriptMgr.getDataDirectory().getResourceLoader();
   cat=new CatalogImpl();
-  cat.setResourceLoader(scriptMgr.getDataDirectory().getResourceLoader());
+  cat.setResourceLoader(resourceLoader);
   ApplicationContext context=createNiceMock(ApplicationContext.class);
   expect(context.getBean("catalog")).andReturn(cat).anyTimes();
-  expect(context.getBeanNamesForType((Class)anyObject())).andReturn(new String[]{}).anyTimes();
+  expect(context.getBean("resourceLoader")).andReturn(resourceLoader);
+  expect(context.getBeanNamesForType(GeoServerResourceLoader.class)).andReturn(new String[]{"resourceLoader"}).anyTimes();
+  expect(context.getBeanNamesForType((Class<?>)anyObject())).andReturn(new String[]{}).anyTimes();
   replay(context);
-  new GeoServerExtensions().setApplicationContext(context);
+  GeoServerExtensionsHelper.init(context);
   e=scriptMgr.createNewEngine("py");
-  GeoserverDataDirectory.setResourceLoader(scriptMgr.getDataDirectory().getResourceLoader());
 }

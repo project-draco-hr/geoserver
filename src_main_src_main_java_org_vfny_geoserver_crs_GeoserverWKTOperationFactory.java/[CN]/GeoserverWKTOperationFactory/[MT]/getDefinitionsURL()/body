@@ -1,10 +1,20 @@
 {
-  File file=new File(GeoserverDataDirectory.getGeoserverDataDirectory(),"user_projections/" + FILENAME);
-  if (file.exists()) {
-    return DataUtilities.fileToURL(file);
-  }
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  if (loader != null) {
+    Resource definition=loader.get("user_projections/" + FILENAME);
+    if (definition.getType() == Type.RESOURCE) {
+      File file=definition.file();
+      URL url=DataUtilities.fileToURL(file);
+      if (url != null) {
+        return url;
+      }
  else {
-    LOGGER.info(file.getAbsolutePath() + " was not found, using the default set of " + "coordinate operation overrides (normally empty)");
-    return GeoserverOverridingWKTFactory.class.getResource(FILENAME);
+        LOGGER.log(Level.SEVERE,"Had troubles converting file name to URL");
+      }
+    }
+ else {
+      LOGGER.info(definition.path() + " was not found, using the default set of " + "coordinate operation overrides (normally empty)");
+    }
   }
+  return GeoserverOverridingWKTFactory.class.getResource(FILENAME);
 }

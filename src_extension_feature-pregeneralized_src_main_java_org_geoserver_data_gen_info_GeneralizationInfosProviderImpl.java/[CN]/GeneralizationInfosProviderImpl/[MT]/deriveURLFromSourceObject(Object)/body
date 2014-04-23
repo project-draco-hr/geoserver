@@ -1,13 +1,17 @@
 {
-  if (source == null)   throw new IOException("Cannot read from null");
+  if (source == null) {
+    throw new IOException("Cannot read from null");
+  }
   if (source instanceof String) {
-    File f=GeoserverDataDirectory.findDataFile((String)source);
+    String path=(String)source;
+    GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+    File f=loader.url(path);
     URL url=null;
-    if (f.exists()) {
+    if (f != null && f.exists()) {
       url=f.toURI().toURL();
     }
  else {
-      url=new URL((String)source);
+      url=new URL(path);
     }
     url=new URL(URLDecoder.decode(url.toExternalForm(),"UTF8"));
     return url;

@@ -1,8 +1,12 @@
 {
   if (grid == null)   return null;
-  File gridfile=new File(GeoserverDataDirectory.getGeoserverDataDirectory(),"user_projections/" + grid);
-  if (gridfile.exists()) {
-    return DataUtilities.fileToURL(gridfile);
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  if (loader == null) {
+    return null;
+  }
+  Resource gridfile=loader.get("user_projections/" + grid);
+  if (gridfile.getType() == Type.RESOURCE) {
+    return DataUtilities.fileToURL(gridfile.file());
   }
  else {
     return null;

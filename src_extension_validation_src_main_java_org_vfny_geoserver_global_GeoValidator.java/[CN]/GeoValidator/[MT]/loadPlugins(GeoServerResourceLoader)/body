@@ -1,0 +1,20 @@
+{
+  Map plugIns=null;
+  Map testSuites=null;
+  try {
+    File plugInDir=loader.get("plugIns").dir();
+    File validationDir=loader.get("validation").dir();
+    if (plugInDir != null && plugInDir.exists()) {
+      plugIns=XMLReader.loadPlugIns(plugInDir);
+      if (validationDir != null && validationDir.exists()) {
+        testSuites=XMLReader.loadValidations(validationDir,plugIns);
+      }
+    }
+  }
+ catch (  Exception e) {
+    org.geotools.util.logging.Logging.getLogger("org.vfny.geoserver.global").log(Level.WARNING,"loading plugins",e);
+  }
+  if (testSuites == null)   testSuites=new HashMap();
+  if (plugIns == null)   plugIns=new HashMap();
+  load(testSuites,plugIns);
+}

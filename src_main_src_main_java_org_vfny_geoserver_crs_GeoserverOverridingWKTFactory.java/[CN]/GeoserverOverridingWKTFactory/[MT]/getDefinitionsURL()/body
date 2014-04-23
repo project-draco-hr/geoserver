@@ -1,15 +1,24 @@
 {
   String cust_proj_file=System.getProperty(SYSTEM_DEFAULT_USER_PROJ_FILE);
   if (cust_proj_file == null) {
-    cust_proj_file=new File(GeoserverDataDirectory.getGeoserverDataDirectory(),"user_projections/epsg_overrides.properties").getAbsolutePath();
-  }
-  File proj_file=new File(cust_proj_file);
-  if (proj_file.exists()) {
-    try {
-      return proj_file.toURL();
+    GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+    if (loader != null) {
+      Resource custom_proj=loader.get("user_projections/epsg_overrides.properties");
+      if (custom_proj.getType() == Type.RESOURCE) {
+        cust_proj_file=custom_proj.file().getAbsolutePath();
+      }
     }
- catch (    MalformedURLException e) {
-      LOGGER.log(Level.SEVERE,"Had troubles converting file name to URL",e);
+  }
+  if (cust_proj_file != null) {
+    File proj_file=new File(cust_proj_file);
+    if (proj_file.exists()) {
+      URL url=DataUtilities.fileToURL(proj_file);
+      if (url != null) {
+        return url;
+      }
+ else {
+        LOGGER.log(Level.SEVERE,"Had troubles converting " + cust_proj_file + " to URL");
+      }
     }
   }
   cust_proj_file="override_epsg.properties";

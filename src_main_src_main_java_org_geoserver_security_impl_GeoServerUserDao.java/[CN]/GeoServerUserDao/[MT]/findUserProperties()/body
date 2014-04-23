@@ -1,0 +1,49 @@
+{
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  Resource propFile=loader.get("security/users.properties");
+  InputStream is=null;
+  OutputStream os=null;
+  try {
+    if (propFile.getType() == Type.RESOURCE) {
+      Properties p=new Properties();
+      GeoServerInfo global=GeoServerExtensions.bean(GeoServer.class).getGlobal();
+      if ((global != null) && (global.getAdminUsername() != null) && !global.getAdminUsername().trim().equals("")) {
+        p.put(global.getAdminUsername(),global.getAdminPassword() + ",ROLE_ADMINISTRATOR");
+      }
+ else {
+        p.put("admin","geoserver,ROLE_ADMINISTRATOR");
+      }
+      os=propFile.out();
+      p.store(os,"Format: name=password,ROLE1,...,ROLEN");
+      os.close();
+      Resource serviceFile=loader.get("security/service.properties");
+      os=serviceFile.out();
+      is=GeoServerUserDao.class.getResourceAsStream("serviceTemplate.properties");
+      byte[] buffer=new byte[1024];
+      int count=0;
+      while ((count=is.read(buffer)) > 0) {
+        os.write(buffer,0,count);
+      }
+      return propFile;
+    }
+ else {
+      throw new FileNotFoundException("Unable to find security/users.properties");
+    }
+  }
+  finally {
+    if (is != null) {
+      try {
+        is.close();
+      }
+ catch (      IOException ei) {
+      }
+    }
+    if (os != null) {
+      try {
+        os.close();
+      }
+ catch (      IOException eo) {
+      }
+    }
+  }
+}

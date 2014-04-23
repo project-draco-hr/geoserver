@@ -29,7 +29,14 @@
   }
  catch (  URISyntaxException e) {
   }
-  File relFile=GeoserverDataDirectory.findDataFile(uriSpec);
+  File relFile=null;
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  if (baseDirectory != null) {
+    relFile=Files.url(baseDirectory,uriSpec);
+  }
+ else   if (loader != null) {
+    relFile=loader.url(uriSpec);
+  }
   if (relFile == null || !relFile.exists()) {
     error(validatable,"FileExistsValidator.fileNotFoundError",Collections.singletonMap("file",uriSpec));
   }
