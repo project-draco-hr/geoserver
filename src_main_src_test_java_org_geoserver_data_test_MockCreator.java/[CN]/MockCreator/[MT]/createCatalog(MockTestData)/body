@@ -1,7 +1,5 @@
 {
-  File data=testData.getDataDirectoryRoot();
-  GeoServerResourceLoader loader=new GeoServerResourceLoader(data);
-  GeoServerExtensions.init("resourceLoader",loader);
+  GeoServerResourceLoader loader=createResourceLoader(testData);
   final Catalog catalog=createMock(Catalog.class);
   expect(catalog.getFactory()).andReturn(new CatalogFactoryImpl(catalog)).anyTimes();
   expect(catalog.getResourceLoader()).andReturn(loader).anyTimes();
@@ -15,7 +13,7 @@
     }
   }
 ).anyTimes();
-  MockCatalogBuilder b=new MockCatalogBuilder(catalog,data);
+  MockCatalogBuilder b=new MockCatalogBuilder(catalog,loader.getBaseDirectory());
   b.setCallback(this);
   b.style(DEFAULT_VECTOR_STYLE);
   createWorkspace(DEFAULT_PREFIX,DEFAULT_URI,null,b);

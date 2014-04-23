@@ -2,7 +2,7 @@
   ApplicationContext appContext=createMock(ApplicationContext.class);
   GeoServerExtensions gse=new GeoServerExtensions();
   gse.setApplicationContext(appContext);
-  assertEquals(0,gse.extensionsCache.size());
+  assertEquals(0,GeoServerExtensions.extensionsCache.size());
   expect(appContext.getBeanNamesForType(ExtensionFilter.class)).andReturn(new String[0]);
   expect(appContext.getBeanNamesForType(GeoServerExtensionsTest.class)).andReturn(new String[]{"testKey","fakeKey"});
   expect(appContext.getBeanNamesForType(ExtensionProvider.class)).andReturn(new String[0]);
@@ -10,14 +10,14 @@
   expect(appContext.isSingleton((String)anyObject())).andReturn(true).anyTimes();
   expect(appContext.getBean("fakeKey")).andReturn(null);
   replay(appContext);
-  List<GeoServerExtensionsTest> extensions=gse.extensions(GeoServerExtensionsTest.class);
+  List<GeoServerExtensionsTest> extensions=GeoServerExtensions.extensions(GeoServerExtensionsTest.class);
   assertNotNull(extensions);
   assertEquals(2,extensions.size());
   assertTrue(extensions.contains(this));
   assertTrue(extensions.contains(null));
-  assertEquals(3,gse.extensionsCache.size());
-  assertTrue(gse.extensionsCache.containsKey(GeoServerExtensionsTest.class));
-  assertNotNull(gse.extensionsCache.get(GeoServerExtensionsTest.class));
-  assertEquals(2,gse.extensionsCache.get(GeoServerExtensionsTest.class).length);
+  assertEquals(3,GeoServerExtensions.extensionsCache.size());
+  assertTrue(GeoServerExtensions.extensionsCache.containsKey(GeoServerExtensionsTest.class));
+  assertNotNull(GeoServerExtensions.extensionsCache.get(GeoServerExtensionsTest.class));
+  assertEquals(2,GeoServerExtensions.extensionsCache.get(GeoServerExtensionsTest.class).length);
   verify(appContext);
 }
