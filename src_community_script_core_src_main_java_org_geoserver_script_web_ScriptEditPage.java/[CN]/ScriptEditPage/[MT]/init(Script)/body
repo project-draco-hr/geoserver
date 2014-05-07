@@ -1,0 +1,37 @@
+{
+  scriptModel=new ScriptDetachableModel(script);
+  Form form=new Form("form",new CompoundPropertyModel(scriptModel)){
+    protected void onSubmit(){
+      try {
+        saveScript();
+        doReturn(ScriptPage.class);
+      }
+ catch (      RuntimeException e) {
+        LOGGER.log(Level.WARNING,"Failed to save script",e);
+        error(e.getMessage() == null ? "Failed to save script, no error message available, see logs for details" : e.getMessage());
+      }
+    }
+  }
+;
+  add(form);
+  Label nameLabel=new Label("nameLabel",new PropertyModel(scriptModel,"name"));
+  form.add(nameLabel);
+  HiddenField name=new HiddenField("name",new PropertyModel(scriptModel,"name"));
+  form.add(name);
+  Label typeLabel=new Label("typeLabel",new PropertyModel(scriptModel,"type"));
+  form.add(typeLabel);
+  HiddenField type=new HiddenField("type",new PropertyModel(scriptModel,"type"));
+  form.add(type);
+  Label extensionLabel=new Label("extensionLabel",new PropertyModel(scriptModel,"extension"));
+  form.add(extensionLabel);
+  HiddenField extension=new HiddenField("extension",new PropertyModel(scriptModel,"extension"));
+  form.add(extension);
+  TextArea content=new TextArea("contents",new PropertyModel(scriptModel,"contents"));
+  content.setRequired(true);
+  form.add(content);
+  add(dialog=new GeoServerDialog("dialog"));
+  SubmitLink submit=new SubmitLink("submit");
+  form.add(submit);
+  form.setDefaultButton(submit);
+  form.add(new BookmarkablePageLink("cancel",ScriptPage.class));
+}

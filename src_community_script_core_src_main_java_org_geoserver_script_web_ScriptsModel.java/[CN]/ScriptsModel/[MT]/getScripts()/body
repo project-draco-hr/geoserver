@@ -1,0 +1,22 @@
+{
+  List<Script> scripts=new ArrayList<Script>();
+  ScriptManager scriptManager=(ScriptManager)GeoServerExtensions.bean("scriptMgr");
+  try {
+    File[] dirs={scriptManager.getWpsRoot(),scriptManager.getWfsTxRoot(),scriptManager.getFunctionRoot(),scriptManager.getAppRoot()};
+    for (    File dir : dirs) {
+      File[] files=dir.listFiles();
+      for (      File file : files) {
+        if (dir.getName().equals("apps")) {
+          scripts.add(new Script(scriptManager.findAppMainScript(file)));
+        }
+ else {
+          scripts.add(new Script(file));
+        }
+      }
+    }
+  }
+ catch (  IOException ioe) {
+    ioe.printStackTrace();
+  }
+  return scripts;
+}

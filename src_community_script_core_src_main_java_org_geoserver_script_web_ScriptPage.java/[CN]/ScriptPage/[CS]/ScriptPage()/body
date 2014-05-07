@@ -1,0 +1,27 @@
+{
+  add(table=new GeoServerTablePanel<Script>("table",provider,true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<Script> property){
+      if (property == ScriptProvider.NAME) {
+        return scriptLink(id,itemModel);
+      }
+ else       if (property == ScriptProvider.TYPE) {
+        return new Label(id,ScriptProvider.TYPE.getModel(itemModel));
+      }
+ else       if (property == ScriptProvider.EXTENSION) {
+        return new Label(id,ScriptProvider.EXTENSION.getModel(itemModel));
+      }
+ else       if (property == ScriptProvider.FILE) {
+        return new Label(id,ScriptProvider.FILE.getModel(itemModel));
+      }
+      throw new IllegalArgumentException("No such property " + property.getName());
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      removal.setEnabled(table.getSelection().size() > 0);
+      target.addComponent(removal);
+    }
+  }
+);
+  table.setOutputMarkupId(true);
+  add(dialog=new GeoServerDialog("dialog"));
+  setHeaderPanel(headerPanel());
+}

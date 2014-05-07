@@ -1,0 +1,54 @@
+{
+  super();
+  Script script=new Script();
+  form=new Form("form",new CompoundPropertyModel(script)){
+    @Override protected void onSubmit(){
+      save();
+      doReturn(ScriptPage.class);
+    }
+  }
+;
+  add(form);
+  TextField name=new TextField("name",new PropertyModel(script,"name"));
+  name.setRequired(true);
+  name.add(new XMLNameValidator());
+  form.add(name);
+  DropDownChoice<String> typeDropDownChoice=new DropDownChoice<String>("type",new PropertyModel(script,"type"),new LoadableDetachableModel<List<String>>(){
+    @Override protected List<String> load(){
+      List<String> values=Lists.newArrayList();
+      for (      ScriptType type : ScriptType.values()) {
+        values.add(type.getLabel());
+      }
+      return values;
+    }
+  }
+);
+  typeDropDownChoice.setRequired(true);
+  form.add(typeDropDownChoice);
+  DropDownChoice<String> extensionDropDownChoice=new DropDownChoice<String>("extension",new PropertyModel(script,"extension"),new LoadableDetachableModel<List<String>>(){
+    @Override protected List<String> load(){
+      List<String> extensions=Lists.newArrayList();
+      ScriptManager scriptManager=(ScriptManager)GeoServerExtensions.bean("scriptMgr");
+      for (      ScriptPlugin plugin : scriptManager.getPlugins()) {
+        extensions.add(plugin.getExtension());
+      }
+      return extensions;
+    }
+  }
+);
+  extensionDropDownChoice.setRequired(true);
+  form.add(extensionDropDownChoice);
+  final TextArea content=new TextArea("contents",new PropertyModel(script,"contents"));
+  content.setRequired(true);
+  form.add(content);
+  SubmitLink submitLink=new SubmitLink("submit",form);
+  form.add(submitLink);
+  form.setDefaultButton(submitLink);
+  AjaxLink cancelLink=new AjaxLink("cancel"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      doReturn(ScriptPage.class);
+    }
+  }
+;
+  form.add(cancelLink);
+}
