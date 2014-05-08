@@ -1,0 +1,53 @@
+{
+  List<CoverageBand> bands=coverageView.getCoverageBands();
+  List<GridCoverage2D> coverages=new ArrayList<GridCoverage2D>();
+  List<SampleDimension> dims=new ArrayList<SampleDimension>();
+  CoveragesConsistencyChecker checker=null;
+  for (  CoverageBand band : bands) {
+    final InputCoverageBand inputBand=band.getInputCoverageBands().get(0);
+    final String coverageName=inputBand.getCoverageName();
+    final GridCoverage2DReader reader=wrap(delegate,coverageName,coverageInfo);
+    if (checker == null) {
+      checker=new CoveragesConsistencyChecker(reader);
+    }
+ else {
+      checker.checkConsistency(reader);
+    }
+    GridCoverage2D coverage=(GridCoverage2D)reader.read(parameters);
+    if (coverage != null) {
+      String selectedBand=inputBand.getBand();
+      if (BANDSELECT != null) {
+        final ParameterValueGroup param=BANDSELECT.getParameters();
+        param.parameter("Source").setValue(coverage);
+        param.parameter("SampleDimensions").setValue(new int[]{Integer.valueOf(selectedBand)});
+        coverage=(GridCoverage2D)PROCESSOR.doOperation(param,hints);
+      }
+      coverages.add(coverage);
+      dims.addAll(Arrays.asList(coverage.getSampleDimensions()));
+    }
+  }
+  if (coverages.isEmpty()) {
+    return null;
+  }
+  GridCoverage2D sampleCoverage=coverages.get(0);
+  RenderedImage image=null;
+  if (coverages.size() > 1) {
+    if (BANDMERGE != null) {
+      final ParameterValueGroup param=BANDMERGE.getParameters();
+      param.parameter("sources").setValue(coverages);
+      GridCoverage2D merge=(GridCoverage2D)PROCESSOR.doOperation(param,hints);
+      image=merge.getRenderedImage();
+    }
+ else {
+      final int coveragesSize=coverages.size();
+      image=sampleCoverage.getRenderedImage();
+      for (int i=1; i < coveragesSize; i++) {
+        image=BandMergeDescriptor.create(image,coverages.get(i).getRenderedImage(),hints);
+      }
+    }
+  }
+ else {
+    image=sampleCoverage.getRenderedImage();
+  }
+  return coverageFactory.create(coverageInfo.getName(),image,sampleCoverage.getGridGeometry(),dims.toArray(new GridSampleDimension[dims.size()]),null,null);
+}

@@ -1,0 +1,19 @@
+{
+  try {
+    final Catalog catalog=getCatalog();
+    final CatalogBuilder builder=new CatalogBuilder(catalog);
+    final CoverageStoreInfo coverageStoreInfo=catalog.getCoverageStore(storeId);
+    final CoverageView coverageView=buildCoverageView();
+    final List<CoverageBand> coverageBands=coverageView.getCoverageBands();
+    if (coverageBands == null || coverageBands.isEmpty()) {
+      throw new IllegalArgumentException("No output bands have been specified ");
+    }
+    coverageView.updateCoverageInfo(name,coverageStoreInfo,builder,coverageInfo);
+    previousPage.updateResource(coverageInfo);
+    setResponsePage(previousPage);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to create feature type",e);
+    error(new ParamResourceModel("creationFailure",this,getFirstErrorMessage(e)).getString());
+  }
+}

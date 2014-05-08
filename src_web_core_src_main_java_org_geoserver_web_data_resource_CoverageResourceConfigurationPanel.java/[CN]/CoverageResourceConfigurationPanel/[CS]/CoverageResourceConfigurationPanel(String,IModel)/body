@@ -12,6 +12,25 @@
     }
   }
 ;
+  WebMarkupContainer coverageViewContainer=new WebMarkupContainer("editCoverageViewContainer");
+  add(coverageViewContainer);
+  final CoverageView coverageView=coverage.getMetadata().get(CoverageView.COVERAGE_VIEW,CoverageView.class);
+  coverageViewContainer.add(new Link("editCoverageView"){
+    @Override public void onClick(){
+      CoverageInfo coverageInfo=(CoverageInfo)model.getObject();
+      try {
+        CoverageStoreInfo store=coverageInfo.getStore();
+        WorkspaceInfo workspace=store.getWorkspace();
+        setResponsePage(new CoverageViewEditPage(workspace.getName(),store.getName(),coverageInfo.getName(),coverageInfo,((ResourceConfigurationPage)this.getPage())));
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"Failure opening the Virtual Coverage edit page",e);
+        error(e.toString());
+      }
+    }
+  }
+);
+  coverageViewContainer.setVisible(coverageView != null);
   paramsList.setReuseItems(true);
   add(paramsList);
   if (keys.size() == 0)   setVisible(false);

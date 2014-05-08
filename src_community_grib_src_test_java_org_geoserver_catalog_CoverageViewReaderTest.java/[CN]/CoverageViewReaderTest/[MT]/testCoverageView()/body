@@ -1,0 +1,22 @@
+{
+  final Catalog cat=getCatalog();
+  final CoverageInfo coverageInfo=cat.getCoverageByName("regional_currents");
+  final MetadataMap metadata=coverageInfo.getMetadata();
+  final CoverageView metadataCoverageView=(CoverageView)metadata.get(CoverageView.COVERAGE_VIEW);
+  assertEquals(metadataCoverageView,coverageView);
+  final ResourcePool resPool=cat.getResourcePool();
+  final ReferencedEnvelope bbox=coverageInfo.getLatLonBoundingBox();
+  final GridCoverage coverage=resPool.getGridCoverage(coverageInfo,"regional_currents",bbox,null);
+  assertEquals(coverage.getNumSampleDimensions(),2);
+  ((GridCoverage2D)coverage).dispose(true);
+  final GridCoverageReader reader=resPool.getGridCoverageReader(coverageInfo,"regional_currents",null);
+  final GranuleStore granules=(GranuleStore)((StructuredGridCoverage2DReader)reader).getGranules("regional_currents",true);
+  SimpleFeatureCollection granulesCollection=granules.getGranules(null);
+  assertEquals(1,granulesCollection.size());
+  final Filter filter=FF.equal(FF.property("location"),FF.literal("sample.grb2"),true);
+  final int removed=granules.removeGranules(filter);
+  assertEquals(1,removed);
+  granulesCollection=granules.getGranules(null);
+  assertEquals(0,granulesCollection.size());
+  reader.dispose();
+}

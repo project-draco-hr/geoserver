@@ -1,0 +1,24 @@
+{
+  GranuleSource source=reader.getGranules(name,readOnly);
+  SimpleFeatureType inputSchema=source.getSchema();
+  List<AttributeDescriptor> descriptors=inputSchema.getAttributeDescriptors();
+  StringBuilder builder=new StringBuilder();
+  for (  AttributeDescriptor descriptor : descriptors) {
+    if (!descriptor.getLocalName().equalsIgnoreCase("imageIndex")) {
+      Class<?> binding=descriptor.getType().getBinding();
+      String bindingClass=binding.toString();
+      if (bindingClass.startsWith("class ")) {
+        bindingClass=bindingClass.substring(6,bindingClass.length());
+      }
+      builder.append(descriptor.getName()).append(":").append(bindingClass).append(",");
+    }
+  }
+  String schema=builder.toString();
+  schema=schema.substring(0,schema.length() - 1);
+  try {
+    return DataUtilities.createType(coverageView.getName(),schema);
+  }
+ catch (  SchemaException e) {
+    throw new IOException("Exception occurred while creating the schemaType",e);
+  }
+}

@@ -15,7 +15,8 @@
     namespace=catalog.getDefaultNamespace();
   }
   cinfo.setNamespace(namespace);
-  CoordinateReferenceSystem nativeCRS=reader.getOriginalEnvelope().getCoordinateReferenceSystem();
+  GeneralEnvelope envelope=reader.getOriginalEnvelope();
+  CoordinateReferenceSystem nativeCRS=envelope.getCoordinateReferenceSystem();
   cinfo.setNativeCRS(nativeCRS);
   if (nativeCRS != null && !nativeCRS.getIdentifiers().isEmpty()) {
     cinfo.setSRS(nativeCRS.getIdentifiers().toArray()[0].toString());
@@ -24,7 +25,6 @@
   if (nativeCRS == null) {
     cinfo.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
   }
-  GeneralEnvelope envelope=reader.getOriginalEnvelope();
   cinfo.setNativeBoundingBox(new ReferencedEnvelope(envelope));
   cinfo.setLatLonBoundingBox(new ReferencedEnvelope(CoverageStoreUtils.getWGS84LonLatEnvelope(envelope)));
   GridEnvelope originalRange=reader.getOriginalGridRange();

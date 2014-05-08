@@ -1,0 +1,22 @@
+{
+  final Catalog cat=getCatalog();
+  final CoverageStoreInfo storeInfo=cat.getCoverageStoreByName("watertemp");
+  final InputCoverageBand band=new InputCoverageBand("watertemp","0");
+  final CoverageBand outputBand=new CoverageBand(Collections.singletonList(band),"watertemp@0",0,CompositionType.BAND_SELECT);
+  final CoverageView coverageView=new CoverageView("waterView",Collections.singletonList(outputBand));
+  final CatalogBuilder builder=new CatalogBuilder(cat);
+  builder.setStore(storeInfo);
+  final CoverageInfo coverageInfo=coverageView.createCoverageInfo("waterView",storeInfo,builder);
+  coverageInfo.getParameters().put("USE_JAI_IMAGEREAD","false");
+  cat.add(coverageInfo);
+  final MetadataMap metadata=coverageInfo.getMetadata();
+  final CoverageView metadataCoverageView=(CoverageView)metadata.get(CoverageView.COVERAGE_VIEW);
+  assertEquals(metadataCoverageView,coverageView);
+  final ResourcePool resPool=cat.getResourcePool();
+  final ReferencedEnvelope bbox=coverageInfo.getLatLonBoundingBox();
+  final GridCoverage coverage=resPool.getGridCoverage(coverageInfo,"waterView",bbox,null);
+  assertEquals(coverage.getNumSampleDimensions(),1);
+  ((GridCoverage2D)coverage).dispose(true);
+  final GridCoverageReader reader=resPool.getGridCoverageReader(coverageInfo,null);
+  reader.dispose();
+}

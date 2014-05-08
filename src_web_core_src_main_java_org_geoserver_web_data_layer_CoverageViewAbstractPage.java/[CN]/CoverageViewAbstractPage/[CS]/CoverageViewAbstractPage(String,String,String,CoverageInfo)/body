@@ -1,0 +1,59 @@
+{
+  storeId=getCatalog().getStoreByName(workspaceName,storeName,CoverageStoreInfo.class).getId();
+  Catalog catalog=getCatalog();
+  CoverageStoreInfo store=catalog.getStore(storeId,CoverageStoreInfo.class);
+  GridCoverage2DReader reader=(GridCoverage2DReader)catalog.getResourcePool().getGridCoverageReader(store,null);
+  String[] coverageNames=reader.getGridCoverageNames();
+  if (availableCoverages == null) {
+    availableCoverages=new ArrayList<String>();
+  }
+  for (  String coverage : coverageNames) {
+    ImageLayout layout=reader.getImageLayout(coverage);
+    SampleModel sampleModel=layout.getSampleModel(null);
+    final int numBands=sampleModel.getNumBands();
+    for (int i=0; i < numBands; i++) {
+      availableCoverages.add(coverage + CoverageView.BAND_SEPARATOR + i);
+    }
+  }
+  Collections.sort(availableCoverages);
+  name=COVERAGE_VIEW_NAME;
+  if (coverageName != null) {
+    newCoverage=false;
+    coverageViewInfo=coverageInfo != null ? coverageInfo : catalog.getResourceByStore(store,coverageName,CoverageInfo.class);
+    CoverageView coverageView=coverageViewInfo.getMetadata().get(CoverageView.COVERAGE_VIEW,CoverageView.class);
+    if (coverageViewInfo != null) {
+      coverageInfoId=coverageViewInfo.getId();
+    }
+    if (coverageView == null) {
+      throw new IllegalArgumentException("The specified coverage does not have a coverage view attached to it");
+    }
+    outputBands=new ArrayList<CoverageBand>(coverageView.getCoverageBands());
+    name=coverageView.getName();
+  }
+ else {
+    outputBands=new ArrayList<CoverageBand>();
+    newCoverage=true;
+    coverageViewInfo=null;
+  }
+  selectedCoverages=new ArrayList<String>(availableCoverages);
+  Form form=new Form("form",new CompoundPropertyModel(this));
+  add(form);
+  final TextField nameField=new TextField("name");
+  nameField.setRequired(true);
+  nameField.add(new CoverageViewNameValidator());
+  form.add(nameField);
+  coverageEditor=new CoverageViewEditor("coverages",new PropertyModel(this,"selectedCoverages"),new PropertyModel(this,"outputBands"),availableCoverages);
+  form.add(coverageEditor);
+  form.add(new SubmitLink("save"){
+    @Override public void onSubmit(){
+      onSave();
+    }
+  }
+);
+  form.add(new Link("cancel"){
+    @Override public void onClick(){
+      onCancel();
+    }
+  }
+);
+}
