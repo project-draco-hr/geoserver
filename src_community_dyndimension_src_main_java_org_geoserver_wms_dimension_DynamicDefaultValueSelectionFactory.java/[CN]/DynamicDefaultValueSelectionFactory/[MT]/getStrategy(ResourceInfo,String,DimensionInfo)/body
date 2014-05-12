@@ -1,0 +1,25 @@
+{
+  Request request=Dispatcher.REQUEST.get();
+  DefaultValueConfigurations config=getConfigurations(resource);
+  if (config != null && request != null && ("GetMap".equalsIgnoreCase(request.getRequest()) || "GetFeatureInfo".equalsIgnoreCase(request.getRequest()))) {
+    GetMapRequest getMap=getGetMap(request);
+    try {
+      Map<String,Object> defaults=getDefaultValues(resource,getMap,config);
+      String key=dimensionName;
+      if (dimensionName.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+        key=dimensionName.substring(ResourceInfo.CUSTOM_DIMENSION_PREFIX.length());
+      }
+      if (defaults.containsKey(key)) {
+        Object defaultValue=defaults.get(key);
+        Object simple=getSimpleValue(defaultValue);
+        if (simple != null) {
+          return new DefaultFixedValueStrategyFactory().createFixedValueStrategy(simple);
+        }
+      }
+    }
+ catch (    IOException e) {
+      throw new ServiceException("Failed to setup dynamic dimension default values",e);
+    }
+  }
+  return delegate.getStrategy(resource,dimensionName,dimension);
+}

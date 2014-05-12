@@ -1,0 +1,25 @@
+{
+  if (ranges == null || ranges.size() == 0) {
+    return;
+  }
+  final List<Filter> timeFilters=new ArrayList<Filter>();
+  final PropertyName attribute=ff.property(startAttributeName);
+  final PropertyName endAttribute=endAttributeName == null ? null : ff.property(endAttributeName);
+  for (  Object datetime : ranges) {
+    timeFilters.add(buildDimensionFilter(datetime,attribute,endAttribute));
+  }
+  final int size=timeFilters.size();
+  Filter result;
+  if (size > 1) {
+    result=ff.or(timeFilters);
+  }
+ else {
+    result=timeFilters.get(0);
+  }
+  if (filter == null) {
+    filter=result;
+  }
+ else {
+    filter=ff.and(filter,result);
+  }
+}

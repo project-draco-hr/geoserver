@@ -1,0 +1,19 @@
+{
+  List<DefaultValueConfiguration> configs=configsBean.getConfigurations();
+  List<DefaultValueConfiguration> result=new ArrayList<DefaultValueConfiguration>(configs.size());
+  MetadataMap metadata=resource.getMetadata();
+  for (  DefaultValueConfiguration config : configs) {
+    String key=getDimensionMetadataKey(config.getDimension());
+    DimensionInfo di=metadata.get(key,DimensionInfo.class);
+    if (di == null) {
+      LOGGER.warning("Skipping dynamic default configuration for dimension " + config.getDimension() + " as the base dimension configuration is missing");
+    }
+ else     if (!di.isEnabled()) {
+      LOGGER.warning("Skipping dynamic default configuration for dimension " + config.getDimension() + " as the dimension is not enabled");
+    }
+ else {
+      result.add(config);
+    }
+  }
+  return result;
+}

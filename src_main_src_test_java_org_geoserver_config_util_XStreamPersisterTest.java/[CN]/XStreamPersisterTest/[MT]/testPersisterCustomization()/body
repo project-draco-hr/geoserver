@@ -1,0 +1,23 @@
+{
+  Catalog catalog=new CatalogImpl();
+  CatalogFactory cFactory=catalog.getFactory();
+  WorkspaceInfo ws=cFactory.createWorkspace();
+  ws.setName("foo");
+  ws.getMetadata().put("banana",new SweetBanana("Musa acuminata"));
+  XStreamPersisterFactory factory=new XStreamPersisterFactory();
+  factory.addInitializer(new XStreamPersisterInitializer(){
+    @Override public void init(    XStreamPersister persister){
+      persister.getXStream().alias("sweetBanana",SweetBanana.class);
+      persister.getXStream().aliasAttribute(SweetBanana.class,"scientificName","name");
+      persister.registerBreifMapComplexType("sweetBanana",SweetBanana.class);
+    }
+  }
+);
+  XStreamPersister persister=factory.createXMLPersister();
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  persister.save(ws,out);
+  WorkspaceInfo ws2=persister.load(in(out),WorkspaceInfo.class);
+  assertEquals(ws,ws2);
+  Document dom=dom(in(out));
+  XMLAssert.assertXpathEvaluatesTo("Musa acuminata","/workspace/metadata/entry[@key='banana']/sweetBanana/@name",dom);
+}

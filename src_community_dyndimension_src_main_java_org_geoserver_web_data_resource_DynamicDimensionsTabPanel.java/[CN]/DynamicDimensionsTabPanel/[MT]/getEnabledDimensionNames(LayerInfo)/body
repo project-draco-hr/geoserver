@@ -1,0 +1,22 @@
+{
+  Set<String> dimensionNames=new HashSet<String>();
+  for (  Map.Entry<String,Serializable> entry : layer.getResource().getMetadata().entrySet()) {
+    String key=entry.getKey();
+    Serializable md=entry.getValue();
+    if (md instanceof DimensionInfo) {
+      DimensionInfo di=(DimensionInfo)md;
+      if (!di.isEnabled()) {
+        continue;
+      }
+      String dimensionName;
+      if (key.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+        dimensionName=key.substring(ResourceInfo.CUSTOM_DIMENSION_PREFIX.length());
+      }
+ else {
+        dimensionName=key;
+      }
+      dimensionNames.add(dimensionName);
+    }
+  }
+  return dimensionNames;
+}

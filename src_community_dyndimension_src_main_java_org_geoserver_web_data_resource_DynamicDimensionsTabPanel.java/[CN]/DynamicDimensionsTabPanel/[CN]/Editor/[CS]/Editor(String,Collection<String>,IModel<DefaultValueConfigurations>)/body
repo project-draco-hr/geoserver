@@ -1,0 +1,77 @@
+{
+  super(id,model);
+  List<Property<DefaultValueConfiguration>> properties=Arrays.asList(DIMENSION,POLICY,DEFAULT_VALUE_EXPRESSION);
+  table=new ReorderableTablePanel<DefaultValueConfiguration>("defaultConfigs",configurations,properties){
+    @Override protected Component getComponentForProperty(    String id,    final IModel itemModel,    Property<DefaultValueConfiguration> property){
+      if (DEFAULT_VALUE_EXPRESSION.equals(property)) {
+        Fragment f=new Fragment(id,"ecqlEditor",DynamicDimensionsTabPanel.this);
+        TextArea<String> ta=new TextArea<String>("editor");
+        List<String> otherDimensions=new ArrayList<String>(enabledDimensionNames);
+        String currentDimension=((DefaultValueConfiguration)itemModel.getObject()).getDimension();
+        otherDimensions.remove(currentDimension);
+        ta.add(new ECQLValidator().setValidAttributes(otherDimensions));
+        ta.setModel(property.getModel(itemModel));
+        ta.setOutputMarkupId(true);
+        Object currentPolicy=POLICY.getModel(itemModel).getObject();
+        ta.setVisible(DefaultValuePolicy.EXPRESSION.equals(currentPolicy));
+        f.add(ta);
+        return f;
+      }
+ else       if (POLICY.equals(property)) {
+        Fragment f=new Fragment(id,"policyChoice",DynamicDimensionsTabPanel.this);
+        final DropDownChoice<DefaultValuePolicy> dd=new DropDownChoice<DefaultValueConfiguration.DefaultValuePolicy>("choice",Arrays.asList(DefaultValuePolicy.values()));
+        dd.setChoiceRenderer(new EnumChoiceRenderer(DynamicDimensionsTabPanel.this));
+        dd.setModel(property.getModel(itemModel));
+        f.add(dd);
+        return f;
+      }
+      return null;
+    }
+    @Override protected void onPopulateItem(    final Property<DefaultValueConfiguration> property,    final ListItem item){
+      super.onPopulateItem(property,item);
+      if (property == DEFAULT_VALUE_EXPRESSION) {
+        MarkupContainer parent=item.getParent();
+        final DropDownChoice dd=(DropDownChoice)((Fragment)((ListItem)parent.get(3)).get(0)).get(0);
+        final TextArea ta=(TextArea)((Fragment)((ListItem)parent.get(4)).get(0)).get(0);
+        dd.add(new OnChangeAjaxBehavior(){
+          @Override protected void onUpdate(          AjaxRequestTarget target){
+            DefaultValuePolicy currentPolicy=(DefaultValuePolicy)dd.getConvertedInput();
+            ta.setVisible(DefaultValuePolicy.EXPRESSION.equals(currentPolicy));
+            target.addComponent(ta);
+            target.addComponent(table);
+          }
+        }
+);
+      }
+      item.add(new AbstractBehavior(){
+        public void onComponentTag(        Component component,        ComponentTag tag){
+          if (property == DEFAULT_VALUE_EXPRESSION) {
+            tag.put("style","width:99%");
+          }
+ else {
+            tag.put("style","width:1%");
+          }
+        }
+      }
+);
+    }
+  }
+;
+  table.setFilterable(false);
+  table.setSortable(false);
+  table.setPageable(false);
+  table.setItemReuseStrategy(ReuseIfModelsEqualStrategy.getInstance());
+  table.setOutputMarkupId(true);
+  add(table);
+  add(new IValidator<DefaultValueConfigurations>(){
+    @Override public void validate(    IValidatable<DefaultValueConfigurations> validatable){
+      DefaultValueConfigurations configurations=validatable.getValue();
+      for (      DefaultValueConfiguration config : configurations.getConfigurations()) {
+        if (config.getPolicy() == DefaultValuePolicy.EXPRESSION && config.getDefaultValueExpression() == null) {
+          error(new ParamResourceModel("expressionRequired",DynamicDimensionsTabPanel.this).getString());
+        }
+      }
+    }
+  }
+);
+}

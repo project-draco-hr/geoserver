@@ -1,0 +1,38 @@
+{
+  Expression expression;
+  String expressionStr=config.getDefaultValueExpression();
+  try {
+    expression=ECQL.toExpression(expressionStr);
+  }
+ catch (  CQLException e) {
+    throw new ServiceException("Failed to parse default value expression " + expressionStr,e);
+  }
+  SimpleFeature values=buildSampleFeature(result);
+  String strValue=expression.evaluate(values,String.class);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Computed default value for dimension " + dimensionName + " using expression "+ expression+ " returned value "+ strValue);
+  }
+  try {
+    Object value;
+    if (strValue == null) {
+      value=null;
+    }
+ else     if (Date.class.isAssignableFrom(dimensionClass)) {
+      value=new TimeKvpParser("whatever").parse(strValue);
+    }
+ else     if (Double.class.isAssignableFrom(dimensionClass)) {
+      value=new ElevationKvpParser("whatever").parse(strValue);
+    }
+ else {
+      value=strValue;
+    }
+    value=getSimpleValue(value);
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Computed value " + strValue + " got parsed to "+ value);
+    }
+    return value;
+  }
+ catch (  ParseException e) {
+    throw new ServiceException("Failed to parse value returned from dynamic default value expression: " + strValue,e);
+  }
+}

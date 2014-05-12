@@ -1,0 +1,37 @@
+{
+  DimensionInfo di=resource.getMetadata().get(getDimensionMetadataKey(config.getDimension()),DimensionInfo.class);
+  DimensionDefaultValueSelectionStrategy strategy=delegate.getStrategy(resource,config.getDimension(),di);
+  Object time=restrictions.get(ResourceInfo.TIME);
+  List<Object> times=wrapIntoList(time);
+  Object elevation=restrictions.get(ResourceInfo.ELEVATION);
+  List<Object> elevations=wrapIntoList(elevation);
+  final Filter filter=wms.getTimeElevationToFilter(times,elevations,resource);
+  ResourceInfo restrictedResource;
+  if (filter != null && !Filter.INCLUDE.equals(filter)) {
+    restrictedResource=new DecoratingFeatureTypeInfo(resource){
+      @Override public FeatureSource getFeatureSource(      ProgressListener listener,      Hints hints) throws IOException {
+        FeatureSource fs=super.getFeatureSource(listener,hints);
+        if (!(fs instanceof SimpleFeatureSource)) {
+          throw new IllegalStateException("Cannot apply dynamic dimension restrictions to complex features");
+        }
+        SimpleFeatureSource simpleSource=(SimpleFeatureSource)fs;
+        try {
+          return new DefaultView(simpleSource,new Query(simpleSource.getSchema().getTypeName(),filter));
+        }
+ catch (        SchemaException e) {
+          throw new IOException("Failed to restrict the domain");
+        }
+      }
+    }
+;
+  }
+ else {
+    restrictedResource=resource;
+  }
+  Class<?> dimensionClass=getDimensionClass(config.getDimension());
+  Object result=strategy.getDefaultValue(restrictedResource,config.getDimension(),di,dimensionClass);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Computing default value for" + config.getDimension() + " in layer "+ resource.prefixedName()+ " using the following filter to restrict the domain: "+ filter);
+  }
+  return result;
+}

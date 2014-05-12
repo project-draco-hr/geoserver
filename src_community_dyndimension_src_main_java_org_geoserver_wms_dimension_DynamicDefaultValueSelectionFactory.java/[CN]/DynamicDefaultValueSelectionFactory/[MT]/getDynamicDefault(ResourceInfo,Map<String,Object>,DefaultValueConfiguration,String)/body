@@ -1,0 +1,35 @@
+{
+  DimensionInfo di=resource.getMetadata().get(getDimensionMetadataKey(config.getDimension()),DimensionInfo.class);
+  Class<?> dimensionClass=getDimensionClass(config.getDimension());
+  if (config.policy == DefaultValuePolicy.STANDARD) {
+    if (di == null) {
+      return null;
+    }
+ else {
+      DimensionDefaultValueSelectionStrategy strategy=delegate.getStrategy(resource,config.dimension,di);
+      Object value=strategy.getDefaultValue(resource,dimensionName,di,dimensionClass);
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Computed default value for dimension " + dimensionName + " using standard policy "+ strategy+ " which resulted in: "+ value);
+      }
+      return value;
+    }
+  }
+ else   if (config.policy == DefaultValuePolicy.EXPRESSION) {
+    return applyExpression(result,config,dimensionName,dimensionClass);
+  }
+ else   if (config.policy == DefaultValuePolicy.LIMIT_DOMAIN) {
+    if (resource instanceof FeatureTypeInfo) {
+      Object value=getVectorDefaultValue((FeatureTypeInfo)resource,config,result);
+      return value;
+    }
+ else     if (resource instanceof CoverageInfo) {
+      DimensionDefaultValueSelectionStrategy delegateStrategy=delegate.getStrategy(resource,getDimensionMetadataKey(config.getDimension()),di);
+      Object value=getRasterDefaultValue((CoverageInfo)resource,config,result,delegateStrategy);
+      return value;
+    }
+ else {
+      throw new IllegalArgumentException("Don't know how to handle domain restriction for layers of type " + resource.getClass());
+    }
+  }
+  return null;
+}
