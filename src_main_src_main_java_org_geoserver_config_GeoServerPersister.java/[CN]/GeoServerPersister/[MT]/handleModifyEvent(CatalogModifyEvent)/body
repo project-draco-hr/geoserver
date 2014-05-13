@@ -24,37 +24,39 @@
       i=event.getPropertyNames().indexOf("workspace");
       if (i > -1) {
         WorkspaceInfo newWorkspace=(WorkspaceInfo)event.getNewValues().get(i);
-        File oldDir=dir((StoreInfo)source);
-        oldDir.renameTo(new File(dir(newWorkspace),oldDir.getName()));
+        Resource oldDir=dd.get((StoreInfo)source);
+        moveResToDir(oldDir,dd.get(newWorkspace));
       }
     }
     if (source instanceof FeatureTypeInfo) {
       i=event.getPropertyNames().indexOf("store");
       if (i > -1) {
         StoreInfo newStore=(StoreInfo)event.getNewValues().get(i);
-        File oldDir=dir((FeatureTypeInfo)source);
-        oldDir.renameTo(new File(dir(newStore),oldDir.getName()));
+        Resource oldDir=dd.get((FeatureTypeInfo)source);
+        Resource newDir=dd.get(newStore);
+        moveResToDir(oldDir,newDir);
       }
     }
     if (source instanceof StyleInfo) {
       i=event.getPropertyNames().indexOf("workspace");
       if (i > -1) {
         WorkspaceInfo newWorkspace=(WorkspaceInfo)event.getNewValues().get(i);
-        File newDir=dd.styleDir(true,newWorkspace);
-        for (        File oldFile : resources((StyleInfo)source)) {
-          FileUtils.copyFile(oldFile,new File(newDir,oldFile.getName()));
+        Resource newDir=dd.getStyles(newWorkspace);
+        for (        Resource old : additionalResources((StyleInfo)source)) {
+          copyResToDir(old,newDir);
         }
-        for (        File oldFile : files((StyleInfo)source)) {
-          oldFile.renameTo(new File(newDir,oldFile.getName()));
+        for (        Resource old : baseResources((StyleInfo)source)) {
+          moveResToDir(old,newDir);
         }
       }
     }
     if (source instanceof LayerGroupInfo) {
       i=event.getPropertyNames().indexOf("workspace");
       if (i > -1) {
-        WorkspaceInfo newWorkspace=(WorkspaceInfo)event.getNewValues().get(i);
-        File oldFile=file((LayerGroupInfo)source);
-        oldFile.renameTo(new File(dd.layerGroupDir(true,newWorkspace),oldFile.getName()));
+        final WorkspaceInfo newWorkspace=(WorkspaceInfo)event.getNewValues().get(i);
+        final Resource oldRes=dd.config((LayerGroupInfo)source);
+        final Resource newDir=dd.getLayerGroups(newWorkspace);
+        moveResToDir(oldRes,newDir);
       }
     }
     if (source instanceof Catalog) {
@@ -62,8 +64,7 @@
       if (i > -1) {
         WorkspaceInfo defWorkspace=(WorkspaceInfo)event.getNewValues().get(i);
         if (defWorkspace != null) {
-          File d=rl.findOrCreateDirectory("workspaces");
-          persist(defWorkspace,new File(d,"default.xml"));
+          persist(defWorkspace,dd.getWorkspaces("default.xml"));
         }
       }
     }
