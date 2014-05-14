@@ -52,6 +52,7 @@
   add(uploadForm);
   uploadForm.add(fileUploadField=new FileUploadField("filename"));
   add(validateLink());
+  add(previewLink());
   Link cancelLink=new Link("cancel"){
     @Override public void onClick(){
       doReturn(StylePage.class);
@@ -59,4 +60,57 @@
   }
 ;
   add(cancelLink);
+  legendContainer=new WebMarkupContainer("legendContainer");
+  legendContainer.setOutputMarkupId(true);
+  add(legendContainer);
+  legend=new Image("legend");
+  legendContainer.add(legend);
+  legend.setVisible(false);
+  legend.setOutputMarkupId(true);
+  legend.setImageResource(new DynamicWebResource(){
+    @Override protected ResourceState getResourceState(){
+      return new ResourceState(){
+        @Override public byte[] getData(){
+          try {
+            ByteArrayInputStream input=new ByteArrayInputStream(lastStyle.getBytes());
+            EntityResolverProvider entityResolverProvider=new EntityResolverProvider(getGeoServer());
+            StyledLayerDescriptor sld=Styles.parse(input,entityResolverProvider.getEntityResolver());
+            if (sld != null && sld.getStyledLayers().length > 0) {
+              Style style=null;
+              StyledLayer sl=sld.getStyledLayers()[0];
+              if (sl instanceof UserLayer) {
+                style=((UserLayer)sl).getUserStyles()[0];
+              }
+ else {
+                style=((NamedLayer)sl).getStyles()[0];
+              }
+              GetLegendGraphicRequest request=new GetLegendGraphicRequest();
+              request.setStyle(style);
+              request.setLayer(null);
+              request.setStrict(false);
+              Map<String,String> legendOptions=new HashMap<String,String>();
+              legendOptions.put("forceLabels","on");
+              legendOptions.put("fontAntiAliasing","true");
+              request.setLegendOptions(legendOptions);
+              BufferedImageLegendGraphicBuilder builder=new BufferedImageLegendGraphicBuilder();
+              BufferedImage image=builder.buildLegendGraphic(request);
+              ByteArrayOutputStream bos=new ByteArrayOutputStream();
+              ImageIO.write(image,"PNG",bos);
+              return bos.toByteArray();
+            }
+            error("Failed to build legend preview");
+            return null;
+          }
+ catch (          IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+        @Override public String getContentType(){
+          return "image/png";
+        }
+      }
+;
+    }
+  }
+);
 }
