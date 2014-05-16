@@ -1,4 +1,5 @@
 {
+  boolean saveFile=files != null && request != null && request.getMethod().equals(Method.POST);
   final Enumeration<? extends ZipEntry> entries=archive.entries();
   try {
     while (entries.hasMoreElements()) {
@@ -10,6 +11,9 @@
         final File outFile=new File(outputDirectory,fileName != null ? new StringBuilder(fileName).append(".").append(ext).toString() : name);
         final OutputStream out=new BufferedOutputStream(new FileOutputStream(outFile));
         IOUtils.copyStream(in,out,true,true);
+        if (saveFile) {
+          files.add(outFile);
+        }
       }
  else {
         new File(outputDirectory,entry.getName()).mkdirs();

@@ -2,6 +2,7 @@
   getResponse().setStatus(Status.SUCCESS_ACCEPTED);
   MediaType mediaType=getRequest().getEntity().getMediaType();
   if (LOGGER.isLoggable(Level.INFO))   LOGGER.info("PUT file, mimetype: " + mediaType);
+  List<File> files=new ArrayList<File>();
   File uploadedFile=null;
   try {
     String method=(String)getRequest().getResourceRef().getLastSegment();
@@ -38,7 +39,7 @@
       uploadedFile=newUploadedFile;
     }
     try {
-      RESTUtils.unzipFile(uploadedFile,directory);
+      RESTUtils.unzipFile(uploadedFile,directory,getRequest(),files);
       File primaryFile=findPrimaryFile(directory,format);
       if (primaryFile != null) {
         uploadedFile=primaryFile;
@@ -54,5 +55,8 @@ catch (    Exception e) {
       throw new RestletException("Error occured unzipping file",Status.SERVER_ERROR_INTERNAL,e);
     }
   }
-  return uploadedFile;
+  if (files.isEmpty() && uploadedFile != null) {
+    files.add(uploadedFile);
+  }
+  return files;
 }
