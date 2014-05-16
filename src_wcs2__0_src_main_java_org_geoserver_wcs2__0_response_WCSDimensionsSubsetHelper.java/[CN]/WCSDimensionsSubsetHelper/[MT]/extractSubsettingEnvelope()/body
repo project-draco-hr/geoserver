@@ -4,7 +4,7 @@
   sourceEnvelopeInSubsettingCRS.setCoordinateReferenceSystem(sourceCRS);
   if (!(subsettingCRS == null || CRS.equalsIgnoreMetadata(subsettingCRS,sourceCRS))) {
     try {
-      sourceEnvelopeInSubsettingCRS=CRS.transform(CRS.findMathTransform(reader.getCoordinateReferenceSystem(),subsettingCRS),reader.getOriginalEnvelope());
+      sourceEnvelopeInSubsettingCRS=CRS.transform(reader.getOriginalEnvelope(),subsettingCRS);
       sourceEnvelopeInSubsettingCRS.setCoordinateReferenceSystem(subsettingCRS);
     }
  catch (    Exception e) {
@@ -96,9 +96,8 @@
   GeneralEnvelope sourceEnvelope=reader.getOriginalEnvelope();
   try {
     if (!CRS.equalsIgnoreMetadata(subsettingEnvelope.getCoordinateReferenceSystem(),reader.getOriginalEnvelope())) {
-      final MathTransform mathTransform=CRS.findMathTransform(subsettingCRS,sourceCRS);
-      if (!mathTransform.isIdentity()) {
-        final GeneralEnvelope subsettingEnvelopeInSourceCRS=CRS.transform(mathTransform,subsettingEnvelope);
+      if (!CRS.equalsIgnoreMetadata(subsettingCRS,sourceCRS)) {
+        final GeneralEnvelope subsettingEnvelopeInSourceCRS=CRS.transform(subsettingEnvelope,sourceCRS);
         subsettingEnvelopeInSourceCRS.setCoordinateReferenceSystem(sourceCRS);
         subsettingEnvelopeInSourceCRS.intersect(sourceEnvelope);
         subsettingEnvelopeInSourceCRS.setCoordinateReferenceSystem(sourceCRS);
@@ -115,12 +114,7 @@
     }
     return subsettingEnvelope;
   }
- catch (  FactoryException e) {
-    final WCS20Exception exception=new WCS20Exception("Unable to initialize subsetting envelope",WCS20Exception.WCS20ExceptionCode.SubsettingCrsNotSupported,subsettingCRS.toWKT());
-    exception.initCause(e);
-    throw exception;
-  }
-catch (  TransformException e) {
+ catch (  TransformException e) {
     final WCS20Exception exception=new WCS20Exception("Unable to initialize subsetting envelope",WCS20Exception.WCS20ExceptionCode.SubsettingCrsNotSupported,subsettingCRS.toWKT());
     exception.initCause(e);
     throw exception;

@@ -24,22 +24,11 @@
     throw ioe;
   }
   if (!CRS.equalsIgnoreMetadata(sourceCRS,destCRS)) {
-    MathTransform transform;
     try {
-      transform=CRS.findMathTransform(sourceCRS,destCRS,true);
+      envelope=CRS.transform(envelope,destCRS);
     }
- catch (    FactoryException e) {
-      final IOException ioe=new IOException("unable to determine coverage crs");
-      ioe.initCause(e);
-      throw ioe;
-    }
-    if (!transform.isIdentity()) {
-      try {
-        envelope=CRS.transform(transform,envelope);
-      }
- catch (      TransformException e) {
-        throw (IOException)new IOException("error occured transforming envelope").initCause(e);
-      }
+ catch (    TransformException e) {
+      throw (IOException)new IOException("error occured transforming envelope").initCause(e);
     }
   }
   envelope.intersect(coverageBounds);
