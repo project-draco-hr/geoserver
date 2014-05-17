@@ -4,9 +4,17 @@
 synchronized (styleCache) {
       style=styleCache.get(info);
       if (style == null) {
-        style=dataDir().parsedStyle(info,true);
+        style=dataDir().parsedStylePrepaired(info);
         style.setName(info.getName());
         styleCache.put(info,style);
+        final Resource styleResource=dataDir().style(info);
+        styleResource.addListener(new ResourceListener(){
+          @Override public void changed(          ResourceNotification notify){
+            styleCache.remove(info);
+            styleResource.removeListener(this);
+          }
+        }
+);
       }
     }
   }
