@@ -1,0 +1,31 @@
+{
+  final List<Resource> files=new ArrayList<Resource>();
+  final Resource baseDir=get(s);
+  try {
+    Style parsedStyle=parsedStyle(s);
+    parsedStyle.accept(new AbstractStyleVisitor(){
+      @Override public void visit(      ExternalGraphic exgr){
+        if (exgr.getOnlineResource() == null) {
+          return;
+        }
+        URI uri=exgr.getOnlineResource().getLinkage();
+        if (uri == null) {
+          return;
+        }
+        Resource r=null;
+        try {
+          r=uriToResource(baseDir,uri);
+          if (r != null && r.getType() != Type.UNDEFINED)           files.add(r);
+        }
+ catch (        IllegalArgumentException|MalformedURLException e) {
+          GeoServerPersister.LOGGER.log(Level.WARNING,"Error attemping to process SLD resource",e);
+        }
+      }
+    }
+);
+  }
+ catch (  IOException e) {
+    GeoServerPersister.LOGGER.log(Level.WARNING,"Error loading style",e);
+  }
+  return files;
+}
