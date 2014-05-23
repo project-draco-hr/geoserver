@@ -11,7 +11,7 @@
   add(styleForm);
   styleForm.add(nameTextField=new TextField("name"));
   nameTextField.setRequired(true);
-  DropDownChoice<WorkspaceInfo> wsChoice=new DropDownChoice("workspace",new WorkspacesModel(),new WorkspaceChoiceRenderer());
+  wsChoice=new DropDownChoice<WorkspaceInfo>("workspace",new WorkspacesModel(),new WorkspaceChoiceRenderer());
   wsChoice.setNullValid(true);
   if (!isAuthenticatedAsAdmin()) {
     wsChoice.setNullValid(false);
@@ -71,10 +71,18 @@
     @Override protected ResourceState getResourceState(){
       return new ResourceState(){
         @Override public byte[] getData(){
+          GeoServerDataDirectory dd=GeoServerExtensions.bean(GeoServerDataDirectory.class,getGeoServerApplication().getApplicationContext());
+          StyleInfo si=new StyleInfoImpl(getCatalog());
+          String styleName="tmp" + UUID.randomUUID().toString();
+          String styleFileName=styleName + ".sld";
+          si.setFilename(styleFileName);
+          si.setName(styleName);
+          si.setWorkspace(wsChoice.getModel().getObject());
+          File styleFile=null;
           try {
-            ByteArrayInputStream input=new ByteArrayInputStream(lastStyle.getBytes());
-            EntityResolverProvider entityResolverProvider=new EntityResolverProvider(getGeoServer());
-            StyledLayerDescriptor sld=Styles.parse(input,entityResolverProvider.getEntityResolver());
+            styleFile=dd.findOrCreateStyleSldFile(si);
+            FileUtils.writeStringToFile(styleFile,lastStyle);
+            StyledLayerDescriptor sld=Styles.parse(styleFile,null);
             if (sld != null && sld.getStyledLayers().length > 0) {
               Style style=null;
               StyledLayer sl=sld.getStyledLayers()[0];
@@ -103,6 +111,9 @@
           }
  catch (          IOException e) {
             throw new RuntimeException(e);
+          }
+ finally {
+            FileUtils.deleteQuietly(styleFile);
           }
         }
         @Override public String getContentType(){
