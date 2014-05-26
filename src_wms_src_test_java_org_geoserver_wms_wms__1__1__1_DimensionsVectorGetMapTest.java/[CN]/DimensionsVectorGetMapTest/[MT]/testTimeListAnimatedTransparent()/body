@@ -1,0 +1,26 @@
+{
+  setupVectorDimension(ResourceInfo.TIME,"time",DimensionPresentation.LIST,null,null,null);
+  MockHttpServletResponse response=getAsServletResponse("wms?service=WMS&version=1.1.1&request=GetMap" + "&bbox=-180,-90,180,90&styles=&Format=image/png&width=80&height=40&srs=EPSG:4326" + "&layers=" + getLayerId(V_TIME_ELEVATION) + "&time=2011-05-02,2011-05-04,2011-05-10&format="+ GIFMapResponse.IMAGE_GIF_SUBTYPE_ANIMATED+ "&TRANSPARENT=true&BGCOLOR=0xfffff");
+  assertEquals("image/gif",response.getContentType());
+  ByteArrayInputStream bis=getBinaryInputStream(response);
+  ImageInputStream iis=ImageIO.createImageInputStream(bis);
+  ImageReader reader=ImageIO.getImageReadersBySuffix("gif").next();
+  reader.setInput(iis);
+  assertEquals(3,reader.getNumImages(true));
+  int h=reader.getHeight(0);
+  int w=reader.getWidth(0);
+  int n=reader.getNumImages(true);
+  BufferedImage image=new BufferedImage(w * n,h,BufferedImage.TYPE_INT_ARGB);
+  Graphics2D g=image.createGraphics();
+  for (int i=0; i < n; i++) {
+    BufferedImage img=reader.read(i);
+    g.drawImage(img,w * i,0,null);
+  }
+  ColorModel cm=image.getColorModel();
+  assertTrue(cm.hasAlpha());
+  assertEquals(3,cm.getNumColorComponents());
+  assertPixelIsTransparent(image,20,10);
+  assertPixel(image,60,10,Color.BLACK);
+  assertPixelIsTransparent(image,100,10);
+  assertPixel(image,140,30,Color.BLACK);
+}
