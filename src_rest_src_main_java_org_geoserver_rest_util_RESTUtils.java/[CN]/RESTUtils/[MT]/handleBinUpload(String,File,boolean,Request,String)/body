@@ -1,0 +1,42 @@
+{
+  StringBuilder itemPath=new StringBuilder(fileName);
+  MediaType mediaType=request.getEntity().getMediaType();
+  if (mediaType == null || !isZipMediaType(mediaType)) {
+    String baseName=FilenameUtils.getBaseName(fileName);
+    String itemName=FilenameUtils.getName(fileName);
+    Map<String,String> storeParams=new HashMap<String,String>();
+    remapping(workSpace,baseName,itemPath,itemName,storeParams);
+  }
+  final File newFile=new File(directory,itemPath.toString());
+  if (newFile.exists()) {
+    if (deleteDirectoryContent) {
+      FileUtils.cleanDirectory(directory);
+    }
+ else {
+      newFile.delete();
+    }
+  }
+ else {
+    newFile.getParentFile().mkdirs();
+  }
+  final ReadableByteChannel source=request.getEntity().getChannel();
+  RandomAccessFile raf=null;
+  FileChannel outputChannel=null;
+  try {
+    raf=new RandomAccessFile(newFile,"rw");
+    outputChannel=raf.getChannel();
+    IOUtils.copyChannel(1024 * 1024,source,outputChannel);
+  }
+  finally {
+    try {
+      if (raf != null) {
+        raf.close();
+      }
+    }
+  finally {
+      IOUtils.closeQuietly(source);
+      IOUtils.closeQuietly(outputChannel);
+    }
+  }
+  return newFile;
+}

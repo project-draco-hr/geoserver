@@ -1,0 +1,24 @@
+{
+  StringBuilder itemPath=new StringBuilder(fileName);
+  MediaType mediaType=request.getEntity().getMediaType();
+  if (mediaType == null || !isZipMediaType(mediaType)) {
+    String baseName=FilenameUtils.getBaseName(fileName);
+    Map<String,String> storeParams=new HashMap<String,String>();
+    String itemName=FilenameUtils.getName(fileName);
+    remapping(workSpace,baseName,itemPath,itemName,storeParams);
+  }
+  File newFile=new File(directory,itemPath.toString());
+  final InputStream inStream=request.getEntity().getStream();
+  final String stringURL=IOUtils.getStringFromStream(inStream);
+  final URL fileURL=new URL(stringURL);
+  final File inputFile=IOUtils.URLToFile(fileURL);
+  if (inputFile != null && inputFile.exists() && inputFile.canRead()) {
+    IOUtils.copyFile(inputFile,newFile);
+  }
+ else {
+    final InputStream inputStream=fileURL.openStream();
+    final OutputStream outStream=new FileOutputStream(newFile);
+    IOUtils.copyStream(inputStream,outStream,true,true);
+  }
+  return newFile;
+}

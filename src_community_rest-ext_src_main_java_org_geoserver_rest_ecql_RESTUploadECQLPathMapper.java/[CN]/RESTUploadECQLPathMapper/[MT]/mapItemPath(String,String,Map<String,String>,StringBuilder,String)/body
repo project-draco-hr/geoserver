@@ -1,0 +1,40 @@
+{
+  Expression expression=null;
+  try {
+    expression=getExpression(workspace,store,catalog);
+  }
+ catch (  CQLException e) {
+    LOGGER.log(Level.WARNING,e.getMessage(),e);
+  }
+  if (expression == null) {
+    return;
+  }
+  expression.accept(extractor,null);
+  List<String> attributes=Arrays.asList(extractor.getAttributeNames());
+  SimpleFeature feature=null;
+  if (attributes != null) {
+    if (attributes.contains(PATH)) {
+      if (attributes.contains(NAME)) {
+        feature=SimpleFeatureBuilder.build(typeAll,new Object[]{itemPath.toString(),itemName},null);
+      }
+ else {
+        feature=SimpleFeatureBuilder.build(typePath,new Object[]{itemPath.toString()},null);
+      }
+    }
+ else     if (attributes.contains(NAME)) {
+      feature=SimpleFeatureBuilder.build(typeName,new Object[]{itemName},null);
+    }
+  }
+ else {
+    feature=SimpleFeatureBuilder.build(typeAll,new Object[]{itemPath.toString(),itemName},null);
+  }
+  if (feature == null) {
+    return;
+  }
+  String newPath=expression.evaluate(feature,String.class);
+  if (newPath == null || newPath.isEmpty()) {
+    return;
+  }
+  itemPath.setLength(0);
+  itemPath.append(newPath);
+}

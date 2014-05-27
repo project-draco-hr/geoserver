@@ -1,0 +1,12 @@
+{
+  if (getCatalog().getWorkspaceByName(workspace) != null) {
+    return;
+  }
+  String xml="<workspace>" + "<name>" + workspace + "</name>"+ "</workspace>";
+  MockHttpServletResponse responseBefore=postAsServletResponse("/rest/workspaces",xml,"text/xml");
+  assertEquals(201,responseBefore.getStatusCode());
+  assertNotNull(responseBefore.getHeader("Location"));
+  assertTrue(responseBefore.getHeader("Location").endsWith("/workspaces/" + workspace));
+  WorkspaceInfo ws=getCatalog().getWorkspaceByName(workspace);
+  assertNotNull(ws);
+}
