@@ -1,0 +1,27 @@
+{
+  initialSetup(expression);
+  URL zip=MockData.class.getResource("watertemp.zip");
+  InputStream is=null;
+  byte[] bytes;
+  try {
+    is=zip.openStream();
+    bytes=IOUtils.toByteArray(is);
+  }
+  finally {
+    IOUtils.closeQuietly(is);
+  }
+  createWorkSpace(workspace);
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/" + workspace + "/coveragestores/"+ coverageStore+ "/file.imagemosaic",bytes,"application/zip");
+  assertEquals(201,response.getStatusCode());
+  String content=response.getOutputStreamContent();
+  Document d=dom(new ByteArrayInputStream(content.getBytes()));
+  assertEquals("coverageStore",d.getDocumentElement().getNodeName());
+  CoverageStoreInfo cs=getCatalog().getCoverageStoreByName(workspace,coverageStore);
+  assertNotNull(cs);
+  CoverageInfo ci=getCatalog().getCoverageByName(workspace,coverageStore);
+  assertNotNull(ci);
+  for (  String fileName : fileNames) {
+    File finalFile=extractFile(expression,cs,fileName,fileName);
+    assertTrue(finalFile.exists());
+  }
+}

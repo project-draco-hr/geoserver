@@ -1,0 +1,38 @@
+{
+  boolean saveFile=files != null && request != null && request.getMethod().equals(Method.POST);
+  final Enumeration<? extends ZipEntry> entries=archive.entries();
+  try {
+    while (entries.hasMoreElements()) {
+      ZipEntry entry=(ZipEntry)entries.nextElement();
+      if (!entry.isDirectory()) {
+        final String name=entry.getName();
+        final String ext=FilenameUtils.getExtension(name);
+        final InputStream in=new BufferedInputStream(archive.getInputStream(entry));
+        StringBuilder itemPath=fileName != null ? new StringBuilder(fileName).append(".").append(ext) : new StringBuilder(name);
+        String initialFileName=fileName != null ? fileName + "." + ext : FilenameUtils.getName(name);
+        if (!external) {
+          Map<String,String> storeParams=new HashMap<String,String>();
+          RESTUtils.remapping(workspace,store,itemPath,initialFileName,storeParams);
+        }
+        final File outFile=new File(outputDirectory,itemPath.toString());
+        outFile.getParentFile().mkdirs();
+        final OutputStream out=new BufferedOutputStream(new FileOutputStream(outFile));
+        IOUtils.copyStream(in,out,true,true);
+        if (saveFile) {
+          files.add(outFile);
+        }
+      }
+ else {
+        new File(outputDirectory,entry.getName()).mkdirs();
+      }
+    }
+  }
+  finally {
+    try {
+      archive.close();
+    }
+ catch (    Throwable e) {
+      if (LOGGER.isLoggable(Level.FINE))       LOGGER.isLoggable(Level.FINE);
+    }
+  }
+}

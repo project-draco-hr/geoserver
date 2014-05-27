@@ -1,0 +1,19 @@
+{
+  tester.startPage(new WorkspaceEditPage(citeWorkspace));
+  tester.assertRenderedPage(WorkspaceEditPage.class);
+  tester.assertNoErrorMessage();
+  FormTester form=tester.newFormTester("form");
+  form.setValue("settings:enabled",true);
+  form.submit();
+  tester.assertNoErrorMessage();
+  GeoServer gs=getGeoServer();
+  assertNotNull(gs.getSettings(citeWorkspace));
+  tester.startPage(new WorkspaceEditPage(citeWorkspace));
+  tester.assertRenderedPage(WorkspaceEditPage.class);
+  String root=getTestData().getDataDirectoryRoot().getAbsolutePath();
+  FormTester form2=tester.newFormTester("form");
+  form2.setValue("settings:settingsContainer:otherSettings:extensions:0:content:rootdir",root);
+  form2.submit();
+  tester.assertNoErrorMessage();
+  assertEquals(gs.getSettings(citeWorkspace).getMetadata().get(RESTUtils.ROOT_KEY,String.class),root);
+}

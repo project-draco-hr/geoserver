@@ -1,0 +1,40 @@
+{
+  super(id,model);
+  final PropertyModel<MetadataMap> metadata=new PropertyModel<MetadataMap>(model,"metadata");
+  TextArea ecqlexp=new TextArea("ecqlexp",new MetadataMapModel(metadata,RESTUploadECQLPathMapper.EXPRESSION_KEY,String.class));
+  ecqlexp.add(new IValidator<String>(){
+    @Override public void validate(    IValidatable<String> validatable){
+      String expression=validatable.getValue();
+      Expression ecql=null;
+      try {
+        ecql=ECQL.toExpression(expression);
+      }
+ catch (      CQLException e) {
+        LOGGER.info("Unable to parse the following Expression");
+        error("Unable to parse the following Expression:" + e.getSyntaxError());
+      }
+      if (ecql != null) {
+        FilterAttributeExtractor filter=new FilterAttributeExtractor();
+        ecql.accept(filter,null);
+        List<String> attributes=Arrays.asList(filter.getAttributeNames());
+        List<String> invalid=new ArrayList<String>();
+        for (        String attribute : attributes) {
+          if (!(attribute.equalsIgnoreCase(RESTUploadECQLPathMapper.PATH) || attribute.equalsIgnoreCase(RESTUploadECQLPathMapper.NAME))) {
+            invalid.add(attribute);
+          }
+        }
+        if (!invalid.isEmpty()) {
+          StringBuilder string=new StringBuilder("Invalid Attributes: ");
+          for (          String attribute : invalid) {
+            string.append(attribute);
+            string.append(", ");
+          }
+          string.setLength(string.length() - 2);
+          error(invalid.toString());
+        }
+      }
+    }
+  }
+);
+  add(ecqlexp);
+}
