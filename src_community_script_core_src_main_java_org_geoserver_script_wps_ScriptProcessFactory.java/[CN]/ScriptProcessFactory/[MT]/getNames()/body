@@ -4,18 +4,22 @@
   Set<Name> names=new TreeSet<Name>();
   try {
     File wpsRoot=scriptMgr.getWpsRoot();
-    for (    String file : wpsRoot.list()) {
-      File f=new File(wpsRoot,file);
-      if (f.isHidden()) {
+    new CollectProcessNames(wpsRoot,scriptMgr,names){
+      @Override String getScriptNamespace(      File f){
+        return getExtension(f.getName());
+      }
+    }
+;
+    for (    final File directory : wpsRoot.listFiles()) {
+      if (directory.isHidden() || !directory.isDirectory()) {
         continue;
       }
-      WpsHook hook=scriptMgr.lookupWpsHook(f);
-      if (hook == null) {
-        LOGGER.fine("Skipping " + f.getName() + ", no hook found");
+      new CollectProcessNames(directory,scriptMgr,names){
+        @Override String getScriptNamespace(        File f){
+          return directory.getName();
+        }
       }
- else {
-        names.add(new NameImpl(getExtension(f.getName()),getBaseName(f.getName())));
-      }
+;
     }
   }
  catch (  IOException e) {
