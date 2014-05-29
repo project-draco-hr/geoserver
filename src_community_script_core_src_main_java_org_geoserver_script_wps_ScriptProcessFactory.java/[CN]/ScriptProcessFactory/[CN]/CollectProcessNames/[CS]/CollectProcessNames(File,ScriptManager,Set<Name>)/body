@@ -1,0 +1,18 @@
+{
+  for (  File f : directory.listFiles()) {
+    if (f.isHidden() || f.isDirectory()) {
+      continue;
+    }
+    WpsHook hook=scriptMgr.lookupWpsHook(f);
+    if (hook == null) {
+      LOGGER.fine("Skipping " + f.getName() + ", no hook found");
+    }
+ else {
+      NameImpl name=new NameImpl(getScriptNamespace(f),getBaseName(f.getName()));
+      if (names.contains(name)) {
+        throw new RuntimeException("Script " + f.getAbsolutePath() + " conflicts with an already existing process named "+ name);
+      }
+      names.add(name);
+    }
+  }
+}
