@@ -1,0 +1,26 @@
+{
+  try {
+    return new URL("resource",null,-1,String.format(res.getType() == Type.DIRECTORY ? "/%s/" : "/%s",res.path()),new URLStreamHandler(){
+      @Override protected URLConnection openConnection(      URL u) throws IOException {
+        return new URLConnection(u){
+          @Override public void connect() throws IOException {
+          }
+          @Override public long getLastModified(){
+            return res.lastmodified();
+          }
+          @Override public InputStream getInputStream() throws IOException {
+            return res.in();
+          }
+          @Override public OutputStream getOutputStream() throws IOException {
+            return res.out();
+          }
+        }
+;
+      }
+    }
+);
+  }
+ catch (  MalformedURLException e) {
+    throw new IllegalStateException("Should not happen",e);
+  }
+}

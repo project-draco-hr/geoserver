@@ -1,8 +1,12 @@
 {
-  Object[] obj=getVersionAndReader(input);
-  if (input instanceof File && obj[1] instanceof Reader) {
-    ((Reader)obj[1]).close();
-    obj[1]=input;
+  ResourceLocator locator;
+  if (input instanceof File) {
+    final java.net.URL surl=DataUtilities.fileToURL((File)input);
+    locator=new DefaultResourceLocator();
+    ((DefaultResourceLocator)locator).setSourceUrl(surl);
   }
-  return parse(obj[1],entityResolver,(Version)obj[0]);
+ else {
+    locator=null;
+  }
+  return parse(input,entityResolver,locator);
 }
