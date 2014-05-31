@@ -1,11 +1,25 @@
 {
   super(id,model);
   this.mode=mode;
+  boolean enableCodeMirror=isCodeMirrorSupported();
   container=new WebMarkupContainer("editorContainer");
   container.setOutputMarkupId(true);
   add(container);
+  WebMarkupContainer toolbar=new WebMarkupContainer("toolbar");
+  toolbar.setVisible(enableCodeMirror);
+  container.add(toolbar);
+  WebMarkupContainer editorParent=new WebMarkupContainer("editorParent");
+  if (enableCodeMirror) {
+    editorParent.add(new SimpleAttributeModifier("style","border: 1px solid black;"));
+  }
+  container.add(editorParent);
   editor=new TextArea<String>("editor",model);
-  container.add(editor);
+  editorParent.add(editor);
   editor.setOutputMarkupId(true);
-  editor.add(new CodeMirrorBehavior());
+  if (enableCodeMirror) {
+    editor.add(new CodeMirrorBehavior());
+  }
+ else {
+    editor.add(new SimpleAttributeModifier("style","width:100%"));
+  }
 }
