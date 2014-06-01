@@ -71,4 +71,26 @@
   kmScoreField.add(new RangeValidator<Integer>(0,100));
   form.add(kmScoreField);
   form.add(new CheckBox("scalehint.mapunitsPixel",defaultedModel(metadataModel,WMS.SCALEHINT_MAPUNITS_PIXEL,WMS.SCALEHINT_MAPUNITS_PIXEL_DEFAULT)));
+  TreeSet<String> getMapAllowed=new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+  getMapAvailable=new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+  for (  GetMapOutputFormat format : GeoServerExtensions.extensions(GetMapOutputFormat.class)) {
+    getMapAvailable.add(format.getMimeType());
+    if (WMS.get().isAllowedGetMapFormat(format))     getMapAllowed.add(format.getMimeType());
+  }
+  List<String> getMapSelected=new ArrayList<String>();
+  getMapSelected.addAll(getMapAllowed);
+  List<String> getMapChoices=new ArrayList<String>();
+  getMapChoices.addAll(getMapAvailable);
+  form.add(getMapMimeTypesComponent=new MimeTypesFormComponent("getMapMimeTypes",new ListModel<String>(getMapSelected),new CollectionModel<String>(getMapChoices)));
+  TreeSet<String> getFeatureInfoAllowed=new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+  getFeatureInfoAvailable=new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+  for (  GetFeatureInfoOutputFormat format : GeoServerExtensions.extensions(GetFeatureInfoOutputFormat.class)) {
+    getFeatureInfoAvailable.add(format.getContentType());
+    if (WMS.get().isAllowedGetFeatureInfoFormat(format))     getFeatureInfoAllowed.add(format.getContentType());
+  }
+  List<String> getFeatureInfoSelected=new ArrayList<String>();
+  getFeatureInfoSelected.addAll(getFeatureInfoAllowed);
+  List<String> getFeatureInfoChoices=new ArrayList<String>();
+  getFeatureInfoChoices.addAll(getFeatureInfoAvailable);
+  form.add(getFeatureInfoMimeTypesComponent=new MimeTypesFormComponent("getFeatureInfoMimeTypes",new ListModel<String>(getFeatureInfoSelected),new CollectionModel<String>(getFeatureInfoChoices)));
 }
