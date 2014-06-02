@@ -4,9 +4,15 @@
     throw new IllegalStateException("Cannot access " + actualFile);
   }
   try {
-    final File temp=new File(actualFile.getParentFile(),actualFile.getName() + ".tmp");
-    if (temp.exists()) {
-      temp.delete();
+    final File temp;
+synchronized (this) {
+      File tryTemp;
+      do {
+        UUID uuid=UUID.randomUUID();
+        tryTemp=new File(actualFile.getParentFile(),String.format("%s.%s.tmp",actualFile.getName(),uuid));
+      }
+ while (tryTemp.exists());
+      temp=tryTemp;
     }
     return new OutputStream(){
       FileOutputStream delegate=new FileOutputStream(temp);
