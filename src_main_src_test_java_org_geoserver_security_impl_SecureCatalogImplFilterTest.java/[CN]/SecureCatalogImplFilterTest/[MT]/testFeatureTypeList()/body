@@ -1,0 +1,41 @@
+{
+  Catalog catalog=createMock(Catalog.class);
+  manager=createMock(ResourceAccessManager.class);
+  Filter mockFilter=createMock(Filter.class);
+  expect(manager.getSecurityFilter(eq(anonymous),eq(FeatureTypeInfo.class))).andStubReturn(mockFilter);
+  final Capture<Filter> filterCapture=new Capture<Filter>();
+  final List<FeatureTypeInfo> source=new ArrayList<FeatureTypeInfo>();
+  WorkspaceInfo mockWSInfo=createMock(WorkspaceInfo.class);
+  expect(manager.getAccessLimits(eq(anonymous),eq(mockWSInfo))).andStubReturn(new WorkspaceAccessLimits(CatalogMode.HIDE,true,false,false));
+  FeatureTypeInfo mockFTInfo=createMockFeatureType("foo",mockWSInfo,CatalogMode.HIDE,mockFilter,true,false);
+  source.add(mockFTInfo);
+  replay(mockFTInfo);
+  mockFTInfo=createMockFeatureType("bar",mockWSInfo,CatalogMode.HIDE,mockFilter,false,false);
+  source.add(mockFTInfo);
+  replay(mockFTInfo);
+  mockFTInfo=createMockFeatureType("baz",mockWSInfo,CatalogMode.CHALLENGE,mockFilter,false,false);
+  source.add(mockFTInfo);
+  replay(mockFTInfo);
+  expect(catalog.list(eq(FeatureTypeInfo.class),capture(filterCapture),(Integer)isNull(),(Integer)isNull(),(SortBy)isNull())).andStubAnswer(new IAnswer<CloseableIterator<FeatureTypeInfo>>(){
+    @Override public CloseableIterator<FeatureTypeInfo> answer() throws Throwable {
+      Filter filter=filterCapture.getValue();
+      return CloseableIteratorAdapter.filter(source.iterator(),filter);
+    }
+  }
+);
+  replay(catalog,manager,mockFilter);
+  @SuppressWarnings("serial") SecureCatalogImpl sc=new SecureCatalogImpl(catalog,manager){
+    @Override protected boolean isAdmin(    Authentication authentication){
+      return false;
+    }
+    @Override protected <T extends CatalogInfo>T checkAccess(    Authentication user,    T info){
+      return info;
+    }
+  }
+;
+  SecurityContextHolder.getContext().setAuthentication(anonymous);
+  List<FeatureTypeInfo> ftResult=collectAndClose(sc.list(FeatureTypeInfo.class,Predicates.acceptAll()));
+  WorkspaceInfo foo=ftResult.get(0).getStore().getWorkspace();
+  assertThat(ftResult,contains(matchFT("foo",mockWSInfo),matchFT("baz",mockWSInfo)));
+  verify(catalog,manager);
+}

@@ -1,0 +1,59 @@
+{
+  org.opengis.filter.expression.Function visible;
+  if (ResourceInfo.class.isAssignableFrom(clazz)) {
+    visible=new InternalVolatileFunction(){
+      @Override public Boolean evaluate(      Object object){
+        return !hideResource((ResourceInfo)object);
+      }
+    }
+;
+  }
+ else   if (WorkspaceInfo.class.isAssignableFrom(clazz)) {
+    visible=new InternalVolatileFunction(){
+      @Override public Boolean evaluate(      Object object){
+        return !hideWorkspace((WorkspaceInfo)object);
+      }
+    }
+;
+  }
+ else   if (LayerGroupInfo.class.isAssignableFrom(clazz)) {
+    visible=new InternalVolatileFunction(){
+      @Override public Boolean evaluate(      Object object){
+        return !hideLayerGroup((LayerGroupInfo)object);
+      }
+    }
+;
+  }
+ else   if (StyleInfo.class.isAssignableFrom(clazz)) {
+    visible=new InternalVolatileFunction(){
+      @Override public Boolean evaluate(      Object object){
+        return !hideStyle((StyleInfo)object);
+      }
+    }
+;
+  }
+ else   if (LayerInfo.class.isAssignableFrom(clazz)) {
+    visible=new InternalVolatileFunction(){
+      @Override public Boolean evaluate(      Object object){
+        return !hideLayer((LayerInfo)object);
+      }
+    }
+;
+  }
+ else   if (NamespaceInfo.class.isAssignableFrom(clazz)) {
+    visible=new InternalVolatileFunction(){
+      @Override public Boolean evaluate(      Object object){
+        WorkspaceInfo wsInfo=getCatalog().getWorkspaceByName(((NamespaceInfo)object).getPrefix());
+        return !hideWorkspace(wsInfo);
+      }
+    }
+;
+  }
+ else {
+    LOGGER.log(Level.FINE,"CatalogFilter does not recognize interface {0} accepting all.",clazz);
+    return Predicates.acceptAll();
+  }
+  FilterFactory factory=Predicates.factory;
+  Filter filter=factory.equals(factory.literal(Boolean.TRUE),visible);
+  return filter;
+}
