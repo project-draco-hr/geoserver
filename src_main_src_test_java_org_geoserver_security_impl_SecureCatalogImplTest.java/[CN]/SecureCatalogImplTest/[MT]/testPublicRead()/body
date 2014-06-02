@@ -1,20 +1,16 @@
 {
-  ResourceAccessManager manager=buildManager("publicRead.properties");
-  SecureCatalogImpl sc=new SecureCatalogImpl(catalog,manager);
+  SecureCatalogImpl sc=buildTestObject("publicRead.properties",catalog);
   SecurityContextHolder.getContext().setAuthentication(roUser);
   assertSame(arcGrid,sc.getCoverageByName("nurc:arcgrid"));
   assertSame(arcGrid,sc.getResourceByName("nurc:arcgrid",CoverageInfo.class));
-  assertEquals(coverages,sc.getCoverages());
-  assertEquals(workspaces,sc.getWorkspaces());
   assertEquals(toppWs,sc.getWorkspaceByName("topp"));
   assertSame(arcGridStore,sc.getCoverageStoreByName("arcGrid"));
   assertNotNull(sc.getFeatureTypeByName("topp:states"));
   assertTrue(sc.getFeatureTypeByName("topp:states") instanceof SecuredFeatureTypeInfo);
   assertTrue(sc.getResourceByName("topp:states",FeatureTypeInfo.class) instanceof SecuredFeatureTypeInfo);
-  assertEquals(featureTypes.size(),sc.getFeatureTypes().size());
-  for (  FeatureTypeInfo ft : sc.getFeatureTypes()) {
-    assertTrue(ft instanceof SecuredFeatureTypeInfo);
-  }
+  assertThatBoth(sc.getFeatureTypes(),sc.list(FeatureTypeInfo.class,Predicates.acceptAll()),allOf((Matcher)hasSize(featureTypes.size()),(Matcher)everyItem(Matchers.<FeatureTypeInfo>instanceOf(SecuredFeatureTypeInfo.class))));
+  assertThatBoth(sc.getCoverages(),sc.list(CoverageInfo.class,Predicates.acceptAll()),equalTo(coverages));
+  assertThatBoth(sc.getWorkspaces(),sc.list(WorkspaceInfo.class,Predicates.acceptAll()),equalTo(workspaces));
   assertNotNull(sc.getLayerByName("topp:states"));
   assertTrue(sc.getLayerByName("topp:states") instanceof SecuredLayerInfo);
   assertTrue(sc.getDataStoreByName("states") instanceof SecuredDataStoreInfo);

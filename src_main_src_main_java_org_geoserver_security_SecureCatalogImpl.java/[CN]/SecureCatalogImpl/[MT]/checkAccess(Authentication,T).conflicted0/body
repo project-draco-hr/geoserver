@@ -1,18 +1,18 @@
 {
-  if (info == null)   return null;
-  WrapperPolicy policy=buildWrapperPolicy(user,info,info.getName());
+  if (store == null)   return null;
+  WrapperPolicy policy=buildWrapperPolicy(user,store.getWorkspace(),store.getName());
   if (policy.level == AccessLevel.HIDDEN)   return null;
- else   if (policy.level == AccessLevel.READ_WRITE && policy.getLimits() == null)   return info;
-  if (info instanceof FeatureTypeInfo) {
-    return (T)new SecuredFeatureTypeInfo((FeatureTypeInfo)info,policy);
+ else   if (policy.level == AccessLevel.READ_WRITE || (policy.level == AccessLevel.READ_ONLY && store instanceof CoverageStoreInfo))   return store;
+  if (store instanceof DataStoreInfo) {
+    return (T)new SecuredDataStoreInfo((DataStoreInfo)store,policy);
   }
- else   if (info instanceof CoverageInfo) {
-    return (T)new SecuredCoverageInfo((CoverageInfo)info,policy);
+ else   if (store instanceof CoverageStoreInfo) {
+    return (T)new SecuredCoverageStoreInfo((CoverageStoreInfo)store,policy);
   }
- else   if (info instanceof WMSLayerInfo) {
-    return (T)new SecuredWMSLayerInfo((WMSLayerInfo)info,policy);
+ else   if (store instanceof WMSStoreInfo) {
+    return store;
   }
  else {
-    throw new RuntimeException("Unknown resource type " + info.getClass());
+    throw new RuntimeException("Unknown store type " + store.getClass());
   }
 }
