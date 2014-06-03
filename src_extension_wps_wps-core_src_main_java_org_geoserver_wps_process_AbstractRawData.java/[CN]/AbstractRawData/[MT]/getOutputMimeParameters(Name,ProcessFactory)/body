@@ -1,0 +1,18 @@
+{
+  Map<String,Parameter<?>> resultInfo=pf.getResultInfo(processName,null);
+  Map<String,String> result=new HashMap<String,String>();
+  for (  Parameter p : resultInfo.values()) {
+    if (RawData.class.isAssignableFrom(p.getType())) {
+      String attribute=(String)p.metadata.get(SELECTION_ATTRIBUTE);
+      if (attribute != null) {
+        if (result.containsValue(attribute)) {
+          LOGGER.warning("In process " + processName + " two raw results parameter are using the same input attribute "+ attribute+ " to notify the process of the user chosen mime type");
+        }
+ else {
+          result.put(p.key,attribute);
+        }
+      }
+    }
+  }
+  return result;
+}

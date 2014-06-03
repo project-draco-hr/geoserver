@@ -33,9 +33,23 @@
       complex.setSupported(wpsf.createComplexDataCombinationsType());
       for (      ProcessParameterIO ppio : ppios) {
         ComplexPPIO cppio=(ComplexPPIO)ppio;
-        ComplexDataDescriptionType format=wpsf.createComplexDataDescriptionType();
-        format.setMimeType(cppio.getMimeType());
-        complex.getSupported().getFormat().add(format);
+        ComplexDataDescriptionType format=null;
+        if (ppio instanceof RawDataPPIO) {
+          String[] mimeTypes=AbstractRawData.getMimeTypes(p);
+          for (          String mimeType : mimeTypes) {
+            ComplexDataDescriptionType ddt=wpsf.createComplexDataDescriptionType();
+            ddt.setMimeType(mimeType);
+            complex.getSupported().getFormat().add(ddt);
+            if (format == null) {
+              format=ddt;
+            }
+          }
+        }
+ else {
+          format=wpsf.createComplexDataDescriptionType();
+          format.setMimeType(cppio.getMimeType());
+          complex.getSupported().getFormat().add(format);
+        }
         if (complex.getDefault() == null) {
           ComplexDataDescriptionType def=wpsf.createComplexDataDescriptionType();
           def.setMimeType(format.getMimeType());
