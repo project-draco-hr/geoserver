@@ -19,7 +19,19 @@
     return Predicates.equal("id",localWS.getId());
   }
  else   if (LayerGroupInfo.class.isAssignableFrom(clazz)) {
-    return standardFilter(clazz);
+    Filter filter=standardFilter(clazz);
+    Function subLayersHidden=new InternalVolatileFunction(){
+      @Override public Boolean evaluate(      Object object){
+        return !subLayersHidden((LayerGroupInfo)object);
+      }
+    }
+;
+    FilterFactory factory=Predicates.factory;
+    filter=Predicates.and(filter,factory.equals(factory.literal(Boolean.TRUE),subLayersHidden));
+    if (localLayer != null) {
+      filter=Predicates.and(filter,Predicates.equal("id",localLayer.getId()));
+    }
+    return filter;
   }
  else   if (StyleInfo.class.isAssignableFrom(clazz)) {
     return standardFilter(clazz);
