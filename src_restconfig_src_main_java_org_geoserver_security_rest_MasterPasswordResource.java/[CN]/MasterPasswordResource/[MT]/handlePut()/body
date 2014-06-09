@@ -1,0 +1,20 @@
+{
+  super.handlePut();
+  String current=(String)putMap.get(MP_CURRENT_KEY);
+  String newpass=(String)putMap.get(MP_NEW_KEY);
+  if (StringUtils.isNotBlank(current) == false)   throw new RestletException("no master password",Status.CLIENT_ERROR_BAD_REQUEST);
+  if (StringUtils.isNotBlank(newpass) == false)   throw new RestletException("no master password",Status.CLIENT_ERROR_BAD_REQUEST);
+  char[] currentArray=current.trim().toCharArray();
+  char[] newpassArray=newpass.trim().toCharArray();
+  GeoServerSecurityManager m=getManager();
+  try {
+    m.saveMasterPasswordConfig(m.loadMasterPasswordConfig(),currentArray,newpassArray,newpassArray);
+  }
+ catch (  Exception e) {
+    throw new RestletException("Cannot change master password",Status.CLIENT_ERROR_UNPROCESSABLE_ENTITY,e);
+  }
+ finally {
+    m.disposePassword(currentArray);
+    m.disposePassword(newpassArray);
+  }
+}

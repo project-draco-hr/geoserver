@@ -4,24 +4,9 @@
     return false;
   }
   String[][] allowedMethods=new String[][]{{"org.geoserver.security.GeoServerSecurityManagerTest","testMasterPasswordDump"},{"org.geoserver.security.web.passwd.MasterPasswordInfoPage","dumpMasterPassword"}};
-  StackTraceElement[] stackTraceElements=Thread.currentThread().getStackTrace();
-  boolean isAllowed=false;
-  int countMethodsToCheck=10;
-  for (int i=0; i < countMethodsToCheck; i++) {
-    StackTraceElement element=stackTraceElements[i];
-    for (    String[] methodEntry : allowedMethods) {
-      if (methodEntry[0].equals(element.getClassName()) && methodEntry[1].equals(element.getMethodName())) {
-        isAllowed=true;
-        break;
-      }
-    }
-  }
-  if (!isAllowed) {
-    LOGGER.warning("Dump master password is called by an unautorized method");
-    for (int i=0; i < countMethodsToCheck; i++) {
-      StackTraceElement element=stackTraceElements[i];
-      LOGGER.warning(element.getClassName() + " : " + element.getMethodName());
-    }
+  String result=checkStackTrace(10,allowedMethods);
+  if (result != null) {
+    LOGGER.warning("Dump master password is called by an unautorized method\n" + result);
     return false;
   }
   String message="The current master password is: ";
