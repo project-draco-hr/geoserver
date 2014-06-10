@@ -1,0 +1,23 @@
+{
+  InputStream is=null;
+  try {
+    is=rawData.getInputStream();
+    byte[] buffer=new byte[4096];
+    int read=0;
+    while ((read=is.read(buffer)) > 0) {
+      char[] chars;
+      if (read == 4096) {
+        chars=new String(Base64.encodeBase64(buffer)).toCharArray();
+      }
+ else {
+        byte[] reducedBuffer=new byte[read];
+        System.arraycopy(buffer,0,reducedBuffer,0,read);
+        chars=new String(Base64.encodeBase64(reducedBuffer)).toCharArray();
+      }
+      output.characters(chars,0,chars.length);
+    }
+  }
+  finally {
+    IOUtils.closeQuietly(is);
+  }
+}

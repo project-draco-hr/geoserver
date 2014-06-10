@@ -1,0 +1,68 @@
+{
+  URL resource=getClass().getResource("test-data/mosaic");
+  if (resource != null) {
+    File oldDir=DataUtilities.urlToFile(resource);
+    if (oldDir.exists()) {
+      FileUtils.deleteDirectory(oldDir);
+    }
+  }
+  File mosaic=readMosaic();
+  CatalogBuilder builder=new CatalogBuilder(getCatalog());
+  WorkspaceInfo ws=getCatalog().getWorkspaceByName("gs");
+  CoverageStoreInfo store=builder.buildCoverageStore("watertemp4");
+  store.setURL(DataUtilities.fileToURL(mosaic).toExternalForm());
+  store.setWorkspace(ws);
+  ImageMosaicFormat imageMosaicFormat=new ImageMosaicFormat();
+  store.setType((imageMosaicFormat.getName()));
+  getCatalog().add(store);
+  builder.setStore(store);
+  GridCoverage2DReader reader=null;
+  StructuredGridCoverage2DReader reader2=null;
+  try {
+    reader=(GridCoverage2DReader)imageMosaicFormat.getReader(DataUtilities.fileToURL(mosaic));
+    configureCoverageInfo(builder,store,reader);
+    CoverageStoreInfo storeInfo=getCatalog().getCoverageStoreByName("watertemp4");
+    assertNotNull(storeInfo);
+    CoverageInfo ci=getCatalog().getCoverageByName("mosaic");
+    assertNotNull(ci);
+    assertEquals(storeInfo,ci.getStore());
+    URL zipHarvest=getClass().getResource("test-data/harvesting.zip");
+    InputStream is=null;
+    byte[] bytes;
+    try {
+      is=zipHarvest.openStream();
+      bytes=IOUtils.toByteArray(is);
+    }
+  finally {
+      IOUtils.closeQuietly(is);
+    }
+    MockHttpServletRequest request=createRequest("/rest/workspaces/gs/coveragestores/watertemp4/file.imagemosaic");
+    request.setMethod("POST");
+    request.setContentType("application/zip");
+    request.setBodyContent(bytes);
+    request.setHeader("Content-type","application/zip");
+    MockHttpServletResponse response=dispatch(request);
+    reader2=(StructuredGridCoverage2DReader)storeInfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
+    String[] metadataNames=reader2.getMetadataNames();
+    assertNotNull(metadataNames);
+    assertEquals("true",reader2.getMetadataValue("HAS_TIME_DOMAIN"));
+    assertEquals("2008-10-31T00:00:00.000Z,2008-11-01T00:00:00.000Z,2008-11-02T00:00:00.000Z",reader2.getMetadataValue(metadataNames[0]));
+    reader2.delete(true);
+  }
+  finally {
+    if (reader != null) {
+      try {
+        reader.dispose();
+      }
+ catch (      Throwable t) {
+      }
+    }
+    if (reader2 != null) {
+      try {
+        reader2.dispose();
+      }
+ catch (      Throwable t) {
+      }
+    }
+  }
+}
