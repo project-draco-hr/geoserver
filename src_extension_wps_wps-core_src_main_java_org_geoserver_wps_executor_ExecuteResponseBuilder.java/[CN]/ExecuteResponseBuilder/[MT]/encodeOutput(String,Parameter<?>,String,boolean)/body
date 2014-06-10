@@ -31,7 +31,13 @@
       kvp.put("request","GetExecutionResult");
       kvp.put("executionId",executionId);
       kvp.put("outputId",file.getName());
-      kvp.put("mimetype",cppio.getMimeType());
+      if (o instanceof RawData) {
+        RawData rawData=(RawData)o;
+        kvp.put("mimetype",rawData.getMimeType());
+      }
+ else {
+        kvp.put("mimetype",cppio.getMimeType());
+      }
       outputReference.setHref(ResponseUtils.buildURL(request.getBaseUrl(),"ows",kvp,URLType.SERVICE));
       outputReference.setMimeType(cppio.getMimeType());
     }
@@ -52,13 +58,20 @@
         data.setComplexData(complex);
         ComplexPPIO cppio=(ComplexPPIO)ppio;
         complex.setMimeType(cppio.getMimeType());
-        if (cppio instanceof XMLPPIO) {
+        if (cppio instanceof RawDataPPIO) {
+          RawData rawData=(RawData)o;
+          complex.setMimeType(rawData.getMimeType());
+          complex.setEncoding("base64");
+          complex.getData().add(new RawDataEncoderDelegate(rawData));
+        }
+ else         if (cppio instanceof XMLPPIO) {
           complex.getData().add(new XMLEncoderDelegate((XMLPPIO)cppio,o));
         }
  else         if (cppio instanceof CDataPPIO) {
           complex.getData().add(new CDataEncoderDelegate((CDataPPIO)cppio,o));
         }
  else         if (cppio instanceof BinaryPPIO) {
+          complex.setEncoding("base64");
           complex.getData().add(new BinaryEncoderDelegate((BinaryPPIO)cppio,o));
         }
  else {

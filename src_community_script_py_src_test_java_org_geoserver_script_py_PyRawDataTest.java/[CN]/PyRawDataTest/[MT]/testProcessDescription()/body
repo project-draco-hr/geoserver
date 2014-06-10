@@ -1,0 +1,15 @@
+{
+  ScriptProcessFactory pf=new ScriptProcessFactory(scriptMgr);
+  Name raw=pf.getNames().iterator().next();
+  Map<String,Parameter<?>> inputs=pf.getParameterInfo(raw);
+  assertNotNull(inputs);
+  assertEquals(2,inputs.size());
+  Parameter<?> param=checkParameter(inputs,"input",RawData.class,"The raw data input",1,1);
+  assertEquals("application/json,text/xml",param.metadata.get("mimeTypes"));
+  checkParameter(inputs,"outputMimeType",String.class,"The user chosen output mime type",0,1);
+  Map<String,Parameter<?>> resultInfo=pf.getResultInfo(raw,null);
+  assertEquals(1,resultInfo.size());
+  param=checkParameter(resultInfo,"result",RawData.class,"The output",1,1);
+  assertEquals("application/json,text/xml",param.metadata.get("mimeTypes"));
+  assertEquals("outputMimeType",param.metadata.get("chosenMimeType"));
+}
