@@ -12,7 +12,12 @@
     throw Throwables.propagate(e);
   }
  finally {
-    Closeables.closeQuietly(stream);
+    try {
+      Closeables.close(stream,false);
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.FINE,"Ignoring exception thrown while closing " + resource + " in CatalogPropertyAccessor",e);
+    }
   }
   Map<String,String> map=Maps.fromProperties(properties);
   for (  Map.Entry<String,String> e : map.entrySet()) {
