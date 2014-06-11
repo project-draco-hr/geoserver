@@ -12,6 +12,10 @@
     response.sendError(HttpServletResponse.SC_MOVED_TEMPORARILY);
     return null;
   }
+  if (file != null && checkNotModified(request,file.lastModified())) {
+    response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+    return null;
+  }
   String mime=getServletContext().getMimeType(new File(url.getFile()).getName());
   if (mime != null) {
     response.setContentType(mime);
@@ -26,10 +30,7 @@
     }
     long lastModified=connection.getLastModified();
     if (lastModified > 0) {
-      SimpleDateFormat format=new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss",Locale.ENGLISH);
-      format.setTimeZone(TimeZone.getTimeZone("GMT"));
-      String formatted=format.format(new Date(lastModified)) + " GMT";
-      response.setHeader("Last-Modified",formatted);
+      response.setHeader("Last-Modified",lastModified(lastModified));
     }
     EncodingInfo encInfo=null;
     OutputStream output=null;
