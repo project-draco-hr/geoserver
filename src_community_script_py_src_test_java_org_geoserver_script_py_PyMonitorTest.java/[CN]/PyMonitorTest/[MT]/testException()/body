@@ -1,0 +1,23 @@
+{
+  ScriptProcessFactory pf=new ScriptProcessFactory(scriptMgr);
+  Name name=pf.getNames().iterator().next();
+  assertEquals(getNamespace(),name.getNamespaceURI());
+  assertEquals(getProcessName(),name.getLocalPart());
+  org.geotools.process.Process p=pf.create(name);
+  Geometry g=new WKTReader().read("POINT(0 0)");
+  Map inputs=new HashMap();
+  inputs.put("geom",g);
+  inputs.put("distance",-11);
+  try {
+    ProgressListener listener=new DefaultProgressListener();
+    p.execute(inputs,listener);
+    fail("Should have thrown a WPSException");
+  }
+ catch (  ProcessException processException) {
+    PyException pyException=(PyException)processException.getCause();
+    WPSException e=(WPSException)pyException.getCause();
+    assertEquals("Forbidden",e.getMessage());
+    assertEquals("userInput",e.getCode());
+    assertEquals("distance",e.getLocator());
+  }
+}

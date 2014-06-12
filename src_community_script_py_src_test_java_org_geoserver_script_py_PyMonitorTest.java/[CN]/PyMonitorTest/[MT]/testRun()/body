@@ -1,0 +1,17 @@
+{
+  ScriptProcessFactory pf=new ScriptProcessFactory(scriptMgr);
+  Name name=pf.getNames().iterator().next();
+  assertEquals(getNamespace(),name.getNamespaceURI());
+  assertEquals(getProcessName(),name.getLocalPart());
+  org.geotools.process.Process p=pf.create(name);
+  Geometry g=new WKTReader().read("POINT(0 0)");
+  Map inputs=new HashMap();
+  inputs.put("geom",g);
+  inputs.put("distance",1);
+  ProgressListener listener=new DefaultProgressListener();
+  Map outputs=p.execute(inputs,listener);
+  Geometry h=(Geometry)outputs.get("result");
+  assertTrue(h.equals(g.buffer(1)));
+  assertEquals("The task",listener.getTask().toString());
+  assertEquals(10f,listener.getProgress());
+}
