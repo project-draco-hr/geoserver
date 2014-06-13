@@ -1,16 +1,29 @@
 {
-  reset();
-  GeoServerLoaderProxy loader=GeoServerExtensions.bean(GeoServerLoaderProxy.class);
-synchronized (org.geoserver.config.GeoServer.CONFIGURATION_LOCK) {
-    getCatalog().getResourcePool().dispose();
-    loader.reload();
-  }
-  for (  GeoServerLifecycleHandler handler : GeoServerExtensions.extensions(GeoServerLifecycleHandler.class)) {
+  List<GeoServerLifecycleHandler> handlers=GeoServerExtensions.extensions(GeoServerLifecycleHandler.class);
+  for (  GeoServerLifecycleHandler handler : handlers) {
     try {
-      handler.onReload();
+      handler.beforeReload();
     }
  catch (    Throwable t) {
       LOGGER.log(Level.SEVERE,"A GeoServer lifecycle handler threw an exception during reload",t);
+    }
+  }
+  try {
+    reset();
+    GeoServerLoaderProxy loader=GeoServerExtensions.bean(GeoServerLoaderProxy.class);
+synchronized (org.geoserver.config.GeoServer.CONFIGURATION_LOCK) {
+      getCatalog().getResourcePool().dispose();
+      loader.reload();
+    }
+  }
+  finally {
+    for (    GeoServerLifecycleHandler handler : handlers) {
+      try {
+        handler.onReload();
+      }
+ catch (      Throwable t) {
+        LOGGER.log(Level.SEVERE,"A GeoServer lifecycle handler threw an exception during reload",t);
+      }
     }
   }
 }
