@@ -1,8 +1,45 @@
 {
-  try {
-    return new FileOutputStream(file);
+  final File temp;
+synchronized (this) {
+    File tryTemp;
+    do {
+      UUID uuid=UUID.randomUUID();
+      tryTemp=new File(file.getParentFile(),String.format("%s.%s.tmp",file.getName(),uuid));
+    }
+ while (tryTemp.exists());
+    temp=tryTemp;
   }
- catch (  FileNotFoundException e) {
-    throw new IllegalStateException(e);
+  try {
+    temp.createNewFile();
+    return new OutputStream(){
+      FileOutputStream delegate=new FileOutputStream(temp);
+      @Override public void close() throws IOException {
+        delegate.close();
+        Files.move(temp,file);
+      }
+      @Override public void write(      byte[] b,      int off,      int len) throws IOException {
+        delegate.write(b,off,len);
+      }
+      @Override public void flush() throws IOException {
+        delegate.flush();
+      }
+      @Override public void write(      byte[] b) throws IOException {
+        delegate.write(b);
+      }
+      @Override public void write(      int b) throws IOException {
+        delegate.write(b);
+      }
+    }
+;
+  }
+ catch (  IOException ex) {
+    LOGGER.log(Level.WARNING,"Could not create temporary file {0} writing directly to {1} instead.",new Object[]{temp,file});
+    try {
+      file.createNewFile();
+      return new FileOutputStream(file);
+    }
+ catch (    IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 }

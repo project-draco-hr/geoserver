@@ -1,0 +1,16 @@
+{
+  final Resource res=getResource(path);
+  assumeThat(res,resource());
+  final byte[] expectedContent;
+  try (InputStream in=res.in()){
+    expectedContent=IOUtils.toByteArray(in);
+  }
+   final Resource target=getUndefined();
+  assertThat(res.renameTo(target),is(true));
+  assertThat(target,resource());
+  final byte[] resultContent;
+  try (InputStream in=target.in()){
+    resultContent=IOUtils.toByteArray(in);
+  }
+   assertThat(resultContent,equalTo(expectedContent));
+}

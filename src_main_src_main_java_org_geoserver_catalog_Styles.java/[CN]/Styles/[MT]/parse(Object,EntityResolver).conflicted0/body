@@ -1,26 +1,8 @@
 {
-  SLDConfiguration sld;
-  if (input instanceof File) {
-    final java.net.URL surl=DataUtilities.fileToURL((File)input);
-    sld=new SLDConfiguration(){
-      protected void configureContext(      org.picocontainer.MutablePicoContainer container){
-        DefaultResourceLocator locator=new DefaultResourceLocator();
-        locator.setSourceUrl(surl);
-        container.registerComponentInstance(ResourceLocator.class,locator);
-      }
-    }
-;
+  Object[] obj=getVersionAndReader(input);
+  if (input instanceof File && obj[1] instanceof Reader) {
+    ((Reader)obj[1]).close();
+    obj[1]=input;
   }
- else {
-    sld=new SLDConfiguration();
-  }
-  try {
-    Parser parser=new Parser(sld);
-    parser.setEntityResolver(entityResolver);
-    return (StyledLayerDescriptor)parser.parse(toReader(input));
-  }
- catch (  Exception e) {
-    if (e instanceof IOException)     throw (IOException)e;
-    throw (IOException)new IOException().initCause(e);
-  }
+  return parse(obj[1],entityResolver,(Version)obj[0]);
 }

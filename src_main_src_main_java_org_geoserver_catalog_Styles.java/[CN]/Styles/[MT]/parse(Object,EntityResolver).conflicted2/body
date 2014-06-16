@@ -1,13 +1,12 @@
 {
-  SLDParser p=parser(input,entityResolver);
-  StyledLayerDescriptor sld=p.parseSLD();
-  if (sld.getStyledLayers().length == 0) {
-    Style[] style=p.readDOM();
-    if (style.length > 0) {
-      NamedLayer l=styleFactory.createNamedLayer();
-      l.addStyle(style[0]);
-      sld.addStyledLayer(l);
-    }
+  ResourceLocator locator;
+  if (input instanceof File) {
+    final java.net.URL surl=DataUtilities.fileToURL((File)input);
+    locator=new DefaultResourceLocator();
+    ((DefaultResourceLocator)locator).setSourceUrl(surl);
   }
-  return sld;
+ else {
+    locator=null;
+  }
+  return parse(input,entityResolver,locator);
 }
