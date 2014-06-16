@@ -1,0 +1,37 @@
+{
+  final List<Resource> resources=new ArrayList<Resource>();
+  final Resource baseDir=get(s);
+  try {
+    Style parsedStyle=parsedStyleResources(s);
+    parsedStyle.accept(new AbstractStyleVisitor(){
+      @Override public void visit(      ExternalGraphic exgr){
+        if (exgr.getOnlineResource() == null) {
+          return;
+        }
+        try {
+          Resource r=urlToResource(exgr.getLocation());
+          if (r != null && r.getType() != Type.UNDEFINED) {
+            resources.add(r);
+          }
+        }
+ catch (        IllegalArgumentException|MalformedURLException e) {
+          GeoServerPersister.LOGGER.log(Level.WARNING,"Error attemping to process SLD resource",e);
+        }
+      }
+      @Override public void visit(      ChannelSelection cs){
+        if (cs.getGrayChannel() != null) {
+          cs.getGrayChannel().accept(this);
+        }
+        final SelectedChannelType[] rgbChannels=cs.getRGBChannels();
+        for (        SelectedChannelType ch : rgbChannels) {
+          if (ch != null)           ch.accept(this);
+        }
+      }
+    }
+);
+  }
+ catch (  IOException e) {
+    GeoServerPersister.LOGGER.log(Level.WARNING,"Error loading style",e);
+  }
+  return resources;
+}

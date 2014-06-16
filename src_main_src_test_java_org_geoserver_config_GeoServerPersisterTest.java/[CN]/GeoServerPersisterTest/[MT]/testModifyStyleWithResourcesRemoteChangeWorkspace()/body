@@ -1,0 +1,25 @@
+{
+  testAddStyle();
+  File styleFile=new File(testData.getDataDirectoryRoot(),"styles/foostyle.sld");
+  FileUtils.copyURLToFile(getClass().getResource("burgRemoteReference.sld"),styleFile);
+  FileUtils.copyURLToFile(getClass().getResource("burg02.svg"),new File(testData.getDataDirectoryRoot(),"styles/burg02.svg"));
+  new File(testData.getDataDirectoryRoot(),"styles/burg03.svg").delete();
+  new File(testData.getDataDirectoryRoot(),"burg03.svg").delete();
+  assertThat(new File(testData.getDataDirectoryRoot(),"styles/foostyle.xml"),fileExists());
+  assertThat(new File(testData.getDataDirectoryRoot(),"styles/foostyle.sld"),fileExists());
+  assertThat(new File(testData.getDataDirectoryRoot(),"styles/burg02.svg"),fileExists());
+  assertThat(new File(testData.getDataDirectoryRoot(),"styles/burg03.svg"),not(fileExists()));
+  assertThat(new File(testData.getDataDirectoryRoot(),"burg03.svg"),not(fileExists()));
+  StyleInfo s=catalog.getStyleByName("foostyle");
+  s.setWorkspace(catalog.getDefaultWorkspace());
+  catalog.save(s);
+  assertThat(new File(testData.getDataDirectoryRoot(),"styles/foostyle.xml"),not(fileExists()));
+  assertThat(new File(testData.getDataDirectoryRoot(),"styles/foostyle.sld"),not(fileExists()));
+  assertThat(new File(testData.getDataDirectoryRoot(),"styles/burg02.svg"),fileExists());
+  assertThat(new File(testData.getDataDirectoryRoot(),"workspaces/gs/styles/foostyle.xml"),fileExists());
+  assertThat(new File(testData.getDataDirectoryRoot(),"workspaces/gs/styles/foostyle.sld"),fileExists());
+  assertThat(new File(testData.getDataDirectoryRoot(),"workspaces/gs/styles/burg03.svg"),not(fileExists()));
+  assertThat(new File(testData.getDataDirectoryRoot(),"workspaces/gs/burg03.svg"),not(fileExists()));
+  assertThat(new File(testData.getDataDirectoryRoot(),"workspaces/gs/example.com/burg03.svg"),not(fileExists()));
+  assertThat(new File(testData.getDataDirectoryRoot(),"workspaces/gs/styles/burg02.svg"),fileExists());
+}
