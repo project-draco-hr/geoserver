@@ -1,0 +1,28 @@
+{
+  super(id,new Model<String>());
+  add(new AjaxCheckBox("mimeTypeCheckingEnabled",new Model(isMimeTypeCheckingEnabled)){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      toggleVisibility(getModelObject());
+      target.addComponent(palette);
+    }
+  }
+);
+  add(palette=new Palette<String>("palette",model,choicesModel,new SimpleChoiceRenderer(),10,false){
+    private static final long serialVersionUID=1L;
+    @Override protected Recorder<String> newRecorderComponent(){
+      Recorder<String> rec=super.newRecorderComponent();
+      rec.add(toAdd.toArray(new IBehavior[toAdd.size()]));
+      toAdd.clear();
+      return rec;
+    }
+    @Override public Component newSelectedHeader(    final String componentId){
+      return new Label(componentId,new ResourceModel(getSelectedHeaderPropertyKey()));
+    }
+    @Override public Component newAvailableHeader(    final String componentId){
+      return new Label(componentId,new ResourceModel(getAvaliableHeaderPropertyKey()));
+    }
+  }
+);
+  palette.setOutputMarkupPlaceholderTag(true);
+  toggleVisibility(isMimeTypeCheckingEnabled);
+}
