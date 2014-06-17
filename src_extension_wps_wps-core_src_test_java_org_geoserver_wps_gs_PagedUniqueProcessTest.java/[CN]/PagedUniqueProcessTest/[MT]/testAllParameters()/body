@@ -1,0 +1,13 @@
+{
+  String xml=buildInputXml(FIELD_NAME,"*a*",1,2,"DESC");
+  String jsonString=string(post(root(),xml));
+  JSONObject json=(JSONObject)JSONSerializer.toJSON(jsonString);
+  JSONArray values=json.getJSONArray("values");
+  int size=json.getInt("size");
+  assertEquals(3,size);
+  assertEquals(2,values.size());
+  assertEquals(true,Ordering.natural().reverse().isOrdered(values));
+  for (int count=0; count < values.size(); count++) {
+    assertEquals(true,((String)values.get(count)).matches(".*(?i:a)?.*"));
+  }
+}

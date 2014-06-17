@@ -1,0 +1,46 @@
+{
+  if (features == null) {
+    throw new IllegalArgumentException("features param cannot be null");
+  }
+  if (fieldName == null || fieldName.isEmpty()) {
+    throw new IllegalArgumentException("Empty or null fieldName provided!");
+  }
+  SimpleFeatureType featureType=features.getSchema();
+  String featureTypeName=featureType.getTypeName();
+  LOGGER.fine("PagedUnique process called on resource: " + featureTypeName + " - field: "+ fieldName);
+  UniqueVisitor visitor=new UniqueVisitor(FF.property(fieldName));
+  Integer listSize=0;
+  List<String> list=new ArrayList<String>();
+  try {
+    features.accepts(visitor,null);
+    if (visitor.getResult() == null || visitor.getResult().toList() == null) {
+      listSize=0;
+      list=new ArrayList<String>(0);
+    }
+ else {
+      listSize=visitor.getResult().toList().size();
+      if (maxFeatures == null || maxFeatures > listSize) {
+        maxFeatures=listSize;
+      }
+      visitor.reset();
+      if (startIndex != null) {
+        visitor.setStartIndex(startIndex);
+      }
+      if (maxFeatures != null) {
+        visitor.setMaxFeatures(maxFeatures);
+      }
+      visitor.setPreserveOrder(true);
+      features.accepts(visitor,null);
+      if (visitor.getResult() == null || visitor.getResult().toList() == null) {
+        list=new ArrayList<String>(0);
+      }
+ else {
+        list=visitor.getResult().toList();
+      }
+    }
+    return new Results(featureTypeName,fieldName,listSize,list);
+  }
+ catch (  Exception e) {
+    throw new ProcessException("Error extracting unique values",e);
+  }
+}
