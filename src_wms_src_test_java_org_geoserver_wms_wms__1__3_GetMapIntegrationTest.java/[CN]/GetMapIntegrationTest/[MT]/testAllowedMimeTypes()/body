@@ -2,12 +2,14 @@
   WMSInfo wms=getWMS().getServiceInfo();
   GetMapOutputFormat format=new RenderedImageMapOutputFormat(getWMS());
   wms.getGetMapMimeTypes().add(format.getMimeType());
+  wms.setGetMapMimeTypeCheckingEnabled(true);
   getGeoServer().save(wms);
   MockHttpServletResponse response=getAsServletResponse("wms?bbox=" + bbox + "&styles=&layers="+ layers+ "&Format=image/png"+ "&request=GetMap"+ "&width=550"+ "&height=250"+ "&srs=EPSG:4326&version=1.3.0");
   checkImage(response);
   String result=getAsString("wms?bbox=" + bbox + "&styles=&layers="+ layers+ "&Format="+ OpenLayersMapOutputFormat.MIME_TYPE+ "&request=GetMap"+ "&width=550"+ "&height=250"+ "&srs=EPSG:4326&version=1.3.0");
   assertTrue(result.indexOf("ForbiddenFormat") > 0);
   wms.getGetMapMimeTypes().clear();
+  wms.setGetMapMimeTypeCheckingEnabled(false);
   getGeoServer().save(wms);
   result=getAsString("wms?bbox=" + bbox + "&styles=&layers="+ layers+ "&Format="+ OpenLayersMapOutputFormat.MIME_TYPE+ "&request=GetMap"+ "&width=550"+ "&height=250"+ "&srs=EPSG:4326&version=1.3.0");
   assertTrue(result.indexOf("OpenLayers") > 0);

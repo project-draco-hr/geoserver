@@ -2,6 +2,7 @@
   WMSInfo wms=getWMS().getServiceInfo();
   GetFeatureInfoOutputFormat format=new TextFeatureInfoOutputFormat(getWMS());
   wms.getGetFeatureInfoMimeTypes().add(format.getContentType());
+  wms.setGetFeatureInfoMimeTypeCheckingEnabled(true);
   getGeoServer().save(wms);
   String layer=getLayerId(MockData.FORESTS);
   String request="wms?version=1.1.1&bbox=-0.002,-0.002,0.002,0.002&styles=&format=jpeg" + "&info_format=text/plain&request=GetFeatureInfo&layers=" + layer + "&query_layers="+ layer+ "&width=20&height=20&x=10&y=10";
@@ -12,6 +13,7 @@
   result=getAsString(request);
   assertTrue(result.indexOf("ForbiddenFormat") > 0);
   wms.getGetFeatureInfoMimeTypes().clear();
+  wms.setGetFeatureInfoMimeTypeCheckingEnabled(false);
   getGeoServer().save(wms);
   request="wms?version=1.1.1&bbox=-0.002,-0.002,0.002,0.002&styles=&format=jpeg" + "&info_format=" + GML3FeatureInfoOutputFormat.FORMAT + "&request=GetFeatureInfo&layers="+ layer+ "&query_layers="+ layer+ "&width=20&height=20&x=10&y=10";
   result=getAsString(request);
