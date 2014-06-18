@@ -1,0 +1,16 @@
+{
+  for (  String[] path : paths) {
+    MockHttpServletResponse response=request(path,null);
+    String lastModified=response.getHeader("Last-Modified");
+    assertNotNull(lastModified);
+    response=request(path,lastModified);
+    assertEquals(304,response.getStatusCode());
+    long timeStamp=AbstractURLPublisher.lastModified(lastModified) + 10000;
+    response=request(path,AbstractURLPublisher.lastModified(timeStamp));
+    assertEquals(304,response.getStatusCode());
+    timeStamp-=20000;
+    response=request(path,AbstractURLPublisher.lastModified(timeStamp));
+    assertEquals(200,response.getErrorCode());
+    assertEquals(path[path.length - 1],response.getOutputStreamContent());
+  }
+}

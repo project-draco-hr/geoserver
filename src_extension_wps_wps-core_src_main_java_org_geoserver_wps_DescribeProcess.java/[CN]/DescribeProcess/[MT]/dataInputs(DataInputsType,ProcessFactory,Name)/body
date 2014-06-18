@@ -1,5 +1,9 @@
 {
+  Collection<String> outputMimeParameters=AbstractRawData.getOutputMimeParameters(name,pf).values();
   for (  Parameter<?> p : pf.getParameterInfo(name).values()) {
+    if (outputMimeParameters.contains(p.key)) {
+      continue;
+    }
     InputDescriptionType input=wpsf.createInputDescriptionType();
     inputs.getInput().add(input);
     input.setIdentifier(Ows11Util.code(p.key));
@@ -25,18 +29,25 @@
           literal.setDataType(Ows11Util.type("xs:" + typeName.getLocalPart()));
         }
       }
-      if (lppio.getType().isEnum()) {
+      if (p.metadata.get(Parameter.OPTIONS) != null) {
+        List<Object> options=(List<Object>)p.metadata.get(Parameter.OPTIONS);
+        Object[] optionsArray=(Object[])options.toArray(new Object[options.size()]);
+        addAllowedValues(literal,optionsArray);
+      }
+ else       if (lppio.getType().isEnum()) {
         Object[] enumValues=lppio.getType().getEnumConstants();
-        AllowedValuesType allowed=owsf.createAllowedValuesType();
-        for (        Object value : enumValues) {
-          ValueType vt=owsf.createValueType();
-          vt.setValue(value.toString());
-          allowed.getValue().add(vt);
-        }
-        literal.setAllowedValues(allowed);
+        addAllowedValues(literal,enumValues);
       }
  else {
         literal.setAnyValue(owsf.createAnyValueType());
+      }
+      try {
+        if (p.sample != null) {
+          literal.setDefaultValue(lppio.encode(p.sample));
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Failed to fill the default value for input " + p.key + " of process "+ name,e);
       }
     }
  else     if (ppios.get(0) instanceof BoundingBoxPPIO) {
@@ -48,9 +59,23 @@
       complex.setSupported(wpsf.createComplexDataCombinationsType());
       for (      ProcessParameterIO ppio : ppios) {
         ComplexPPIO cppio=(ComplexPPIO)ppio;
-        ComplexDataDescriptionType format=wpsf.createComplexDataDescriptionType();
-        format.setMimeType(cppio.getMimeType());
-        complex.getSupported().getFormat().add(format);
+        ComplexDataDescriptionType format=null;
+        if (ppio instanceof RawDataPPIO) {
+          String[] mimeTypes=AbstractRawData.getMimeTypes(p);
+          for (          String mimeType : mimeTypes) {
+            ComplexDataDescriptionType ddt=wpsf.createComplexDataDescriptionType();
+            ddt.setMimeType(mimeType);
+            complex.getSupported().getFormat().add(ddt);
+            if (format == null) {
+              format=ddt;
+            }
+          }
+        }
+ else {
+          format=wpsf.createComplexDataDescriptionType();
+          format.setMimeType(cppio.getMimeType());
+          complex.getSupported().getFormat().add(format);
+        }
         if (complex.getDefault() == null) {
           ComplexDataDescriptionType def=wpsf.createComplexDataDescriptionType();
           def.setMimeType(format.getMimeType());

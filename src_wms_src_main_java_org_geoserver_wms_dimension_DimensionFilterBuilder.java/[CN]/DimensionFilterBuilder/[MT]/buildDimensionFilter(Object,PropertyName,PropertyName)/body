@@ -1,0 +1,30 @@
+{
+  Filter filter;
+  if (value == null) {
+    filter=Filter.INCLUDE;
+  }
+ else   if (value instanceof Range) {
+    Range range=(Range)value;
+    if (endAttribute == null) {
+      filter=ff.between(attribute,ff.literal(range.getMinValue()),ff.literal(range.getMaxValue()));
+    }
+ else {
+      Literal qlower=ff.literal(range.getMinValue());
+      Literal qupper=ff.literal(range.getMaxValue());
+      Filter lower=ff.lessOrEqual(attribute,qupper);
+      Filter upper=ff.greaterOrEqual(endAttribute,qlower);
+      return ff.and(lower,upper);
+    }
+  }
+ else {
+    if (endAttribute == null) {
+      filter=ff.equal(attribute,ff.literal(value),true);
+    }
+ else {
+      Filter lower=ff.greaterOrEqual(ff.literal(value),attribute);
+      Filter upper=ff.lessOrEqual(ff.literal(value),endAttribute);
+      filter=ff.and(lower,upper);
+    }
+  }
+  return filter;
+}

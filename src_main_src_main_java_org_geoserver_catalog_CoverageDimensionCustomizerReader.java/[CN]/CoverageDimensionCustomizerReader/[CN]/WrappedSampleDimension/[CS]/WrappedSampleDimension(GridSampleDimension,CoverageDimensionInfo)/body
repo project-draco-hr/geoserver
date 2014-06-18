@@ -8,7 +8,7 @@
   this.configuredRange=info.getRange();
   this.customCategories=categories;
   final List<Double> nullValues=info.getNullValues();
-  if (nullValues != null) {
+  if (nullValues != null && nullValues.size() > 0) {
     final int size=nullValues.size();
     configuredNoDataValues=new double[size];
     for (int i=0; i < size; i++) {
@@ -23,8 +23,8 @@
     Category wrapped=null;
     for (    Category category : categories) {
       wrapped=category;
-      if (category.getName().equals(Category.NODATA.getName())) {
-        wrapped=new Category(Category.NODATA.getName(),category.getColors()[0],nullValues.get(0));
+      if (Category.NODATA.getName().equals(category.getName())) {
+        wrapped=new Category(Category.NODATA.getName(),category.getColors()[0],configuredNoDataValues != null && configuredNoDataValues.length > 0 ? configuredNoDataValues[0] : category.getRange().getMinimum());
       }
       customCategories.add(wrapped);
     }

@@ -11,7 +11,7 @@
   add(styleForm);
   styleForm.add(nameTextField=new TextField("name"));
   nameTextField.setRequired(true);
-  DropDownChoice<WorkspaceInfo> wsChoice=new DropDownChoice("workspace",new WorkspacesModel(),new WorkspaceChoiceRenderer());
+  wsChoice=new DropDownChoice<WorkspaceInfo>("workspace",new WorkspacesModel(),new WorkspaceChoiceRenderer());
   wsChoice.setNullValid(true);
   if (!isAuthenticatedAsAdmin()) {
     wsChoice.setNullValid(false);
@@ -52,6 +52,7 @@
   add(uploadForm);
   uploadForm.add(fileUploadField=new FileUploadField("filename"));
   add(validateLink());
+  add(previewLink());
   Link cancelLink=new Link("cancel"){
     @Override public void onClick(){
       doReturn(StylePage.class);
@@ -59,4 +60,68 @@
   }
 ;
   add(cancelLink);
+  legendContainer=new WebMarkupContainer("legendContainer");
+  legendContainer.setOutputMarkupId(true);
+  add(legendContainer);
+  legend=new Image("legend");
+  legendContainer.add(legend);
+  legend.setVisible(false);
+  legend.setOutputMarkupId(true);
+  legend.setImageResource(new DynamicWebResource(){
+    @Override protected ResourceState getResourceState(){
+      return new ResourceState(){
+        @Override public byte[] getData(){
+          GeoServerDataDirectory dd=GeoServerExtensions.bean(GeoServerDataDirectory.class,getGeoServerApplication().getApplicationContext());
+          StyleInfo si=new StyleInfoImpl(getCatalog());
+          String styleName="tmp" + UUID.randomUUID().toString();
+          String styleFileName=styleName + ".sld";
+          si.setFilename(styleFileName);
+          si.setName(styleName);
+          si.setWorkspace(wsChoice.getModel().getObject());
+          File styleFile=null;
+          try {
+            styleFile=dd.findOrCreateStyleSldFile(si);
+            FileUtils.writeStringToFile(styleFile,lastStyle);
+            StyledLayerDescriptor sld=Styles.parse(styleFile,null);
+            if (sld != null && sld.getStyledLayers().length > 0) {
+              Style style=null;
+              StyledLayer sl=sld.getStyledLayers()[0];
+              if (sl instanceof UserLayer) {
+                style=((UserLayer)sl).getUserStyles()[0];
+              }
+ else {
+                style=((NamedLayer)sl).getStyles()[0];
+              }
+              GetLegendGraphicRequest request=new GetLegendGraphicRequest();
+              request.setStyle(style);
+              request.setLayer(null);
+              request.setStrict(false);
+              Map<String,String> legendOptions=new HashMap<String,String>();
+              legendOptions.put("forceLabels","on");
+              legendOptions.put("fontAntiAliasing","true");
+              request.setLegendOptions(legendOptions);
+              BufferedImageLegendGraphicBuilder builder=new BufferedImageLegendGraphicBuilder();
+              BufferedImage image=builder.buildLegendGraphic(request);
+              ByteArrayOutputStream bos=new ByteArrayOutputStream();
+              ImageIO.write(image,"PNG",bos);
+              return bos.toByteArray();
+            }
+            error("Failed to build legend preview");
+            return null;
+          }
+ catch (          IOException e) {
+            throw new RuntimeException(e);
+          }
+ finally {
+            FileUtils.deleteQuietly(styleFile);
+          }
+        }
+        @Override public String getContentType(){
+          return "image/png";
+        }
+      }
+;
+    }
+  }
+);
 }

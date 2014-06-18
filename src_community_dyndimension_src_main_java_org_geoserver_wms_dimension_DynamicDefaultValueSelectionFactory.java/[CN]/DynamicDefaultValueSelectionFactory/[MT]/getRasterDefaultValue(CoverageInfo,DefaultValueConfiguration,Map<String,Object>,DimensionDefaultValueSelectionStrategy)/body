@@ -1,0 +1,47 @@
+{
+  String dimensionName=config.getDimension();
+  DimensionInfo di=resource.getMetadata().get(getDimensionMetadataKey(config.getDimension()),DimensionInfo.class);
+  if (delegateStrategy instanceof FixedValueStrategyImpl) {
+    Class<?> dimensionClass=getDimensionClass(config.getDimension());
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Dynamic domain restriction on dimension " + dimensionName + " in layer "+ resource.prefixedName()+ " not possible, the default value strategy is a fixed value one");
+    }
+    return delegateStrategy.getDefaultValue(resource,dimensionName,di,dimensionClass);
+  }
+  GridCoverageReader genericReader=resource.getGridCoverageReader(null,null);
+  if (!(genericReader instanceof StructuredGridCoverage2DReader)) {
+    throw new IllegalStateException("Cannot perform dynaminc domain restriction unless the reader is a structured one");
+  }
+  StructuredGridCoverage2DReader reader=(StructuredGridCoverage2DReader)genericReader;
+  String coverageName=resource.getNativeCoverageName();
+  if (coverageName == null) {
+    coverageName=reader.getGridCoverageNames()[0];
+  }
+  Map<String,DimensionDescriptor> descriptors=getDimensionDescriptors(reader,coverageName);
+  DimensionFilterBuilder builder=new DimensionFilterBuilder(ff);
+  for (  Map.Entry<String,Object> entry : restrictions.entrySet()) {
+    String name=entry.getKey();
+    Object value=entry.getValue();
+    List<Object> values=wrapIntoList(value);
+    DimensionDescriptor descriptor=descriptors.get(name);
+    if (descriptor == null) {
+      throw new ServiceException("Could not find dimension " + name + " in coverage reader backing "+ resource.prefixedName());
+    }
+    builder.appendFilters(descriptor.getStartAttribute(),descriptor.getEndAttribute(),values);
+  }
+  Filter domainRestriction=builder.getFilter();
+  GranuleSource granules=reader.getGranules(coverageName,true);
+  Query q=new Query(granules.getSchema().getTypeName(),domainRestriction);
+  SimpleFeatureCollection fc=granules.getGranules(q);
+  DimensionDescriptor dd=descriptors.get(dimensionName);
+  if (dd == null) {
+    throw new ServiceException("Could not find dimension " + dimensionName + " in coverage reader backing "+ resource.prefixedName());
+  }
+  FeatureCalc calc=getFeatureCalcForStrategy(delegateStrategy,dd);
+  fc.accepts(calc,null);
+  Object result=calc.getResult().getValue();
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Computed default value for " + dimensionName + " in layer "+ resource.prefixedName()+ " using "+ domainRestriction+ " to limit the domain resulted in value: "+ result);
+  }
+  return result;
+}

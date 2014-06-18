@@ -1,0 +1,12 @@
+{
+  tester.startPage(new GlobalSettingsPage());
+  tester.assertRenderedPage(GlobalSettingsPage.class);
+  tester.assertNoErrorMessage();
+  GeoServer gs=getGeoServer();
+  String expression="stringTemplate(path, '(\\w{4})_(\\w{7})_(\\d{3})_(\\d{4})(\\d{2})(\\d{2})T(\\d{7})_(\\d{2})\\.(\\w{4})', " + "'/${1}/${4}/${5}/${6}/${0}')";
+  FormTester form=tester.newFormTester("form");
+  form.setValue("extensions:0:content:ecqlexp",expression);
+  form.submit("submit");
+  tester.assertNoErrorMessage();
+  assertEquals(gs.getGlobal().getSettings().getMetadata().get(RESTUploadECQLPathMapper.EXPRESSION_KEY,String.class),expression);
+}

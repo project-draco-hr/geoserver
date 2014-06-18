@@ -6,9 +6,27 @@ synchronized (this) {
       if (process == null) {
         try {
           ScriptManager scriptMgr=scriptMgr();
-          File f=new File(scriptMgr.getWpsRoot(),name.getLocalPart() + "." + name.getNamespaceURI());
+          String localName=name.getLocalPart();
+          String namespace=name.getNamespaceURI();
+          File f=new File(scriptMgr.getWpsRoot(),localName + "." + namespace);
           if (!f.exists()) {
-            throw new FileNotFoundException(f.getPath());
+            File directory=new File(scriptMgr.getWpsRoot(),namespace);
+            if (!directory.exists()) {
+              throw new FileNotFoundException("Could not find script file " + f.getName() + " nor a directory of scripts named "+ directory.getName());
+            }
+            File script=null;
+            for (            File file : directory.listFiles()) {
+              if (file.isHidden() || !file.isFile()) {
+                continue;
+              }
+              if (localName.equals(getBaseName(file.getName()))) {
+                script=file;
+              }
+            }
+            if (script == null) {
+              throw new FileNotFoundException("Could not find script file " + f.getName() + " nor a script named "+ localName+ " in the "+ directory.getName()+ " sub-directory");
+            }
+            f=script;
           }
           process=new ScriptProcess(name,f,scriptMgr);
         }

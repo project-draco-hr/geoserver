@@ -1,7 +1,8 @@
 {
   final IModel globalInfoModel=getGlobalInfoModel();
   final IModel loggingInfoModel=getLoggingInfoModel();
-  Form form=new Form("form",new CompoundPropertyModel(globalInfoModel));
+  CompoundPropertyModel compoundPropertyModel=new CompoundPropertyModel(globalInfoModel);
+  Form form=new Form("form",compoundPropertyModel);
   add(form);
   form.add(new CheckBox("verbose"));
   form.add(new CheckBox("verboseExceptions"));
@@ -26,6 +27,9 @@
   ;
   DropDownChoice<String> lockProviderChoice=new DropDownChoice<String>("lockProvider",lockProviderModel,providers,new LocalizedChoiceRenderer(this));
   form.add(lockProviderChoice);
+  IModel<SettingsInfo> settingsModel=new PropertyModel<SettingsInfo>(globalInfoModel,"settings");
+  ListView extensions=SettingsPluginPanelInfo.createExtensions("extensions",settingsModel,getGeoServerApplication());
+  form.add(extensions);
   Button submit=new Button("submit",new StringResourceModel("submit",this,null)){
     @Override public void onSubmit(){
       GeoServer gs=getGeoServer();

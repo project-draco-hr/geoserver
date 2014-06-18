@@ -2,11 +2,16 @@
   File directory=null;
   if (isInlineUpload(method)) {
     try {
-      directory=catalog.getResourceLoader().findOrCreateDirectory("data",workspaceName,storeName);
+      if (method.startsWith("url.")) {
+        directory=createFinalRoot(null,null);
+      }
+ else {
+        directory=createFinalRoot(workspaceName,storeName);
+      }
     }
  catch (    IOException e) {
       throw new RestletException(e.getMessage(),Status.SERVER_ERROR_INTERNAL,e);
     }
   }
-  return handleFileUpload(storeName,format,directory);
+  return handleFileUpload(storeName,workspaceName,format,directory);
 }

@@ -1,0 +1,19 @@
+{
+  URL zip=getClass().getResource("test-data/usa.zip");
+  byte[] bytes=FileUtils.readFileToByteArray(DataUtilities.urlToFile(zip));
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/" + workspace + "/coveragestores/"+ coverageStore+ "/file.worldimage",bytes,"application/zip");
+  assertEquals(201,response.getStatusCode());
+  String content=response.getOutputStreamContent();
+  Document d=dom(new ByteArrayInputStream(content.getBytes()));
+  assertEquals("coverageStore",d.getDocumentElement().getNodeName());
+  CoverageStoreInfo cs=getCatalog().getCoverageStoreByName(workspace,coverageStore);
+  assertNotNull(cs);
+  CoverageInfo ci=getCatalog().getCoverageByName(workspace,"usa");
+  assertNotNull(ci);
+  String urlString=cs.getURL();
+  File urlFile=new File(urlString);
+  URL url=DataUtilities.fileToURL(urlFile);
+  File urlFileRoot=new File(DataUtilities.fileToURL(root).getPath());
+  URL urlRoot=DataUtilities.fileToURL(urlFileRoot);
+  assertTrue(url.toExternalForm().contains(urlRoot.toExternalForm()));
+}

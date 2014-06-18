@@ -1,0 +1,23 @@
+{
+  String sa=dd.getStartAttribute();
+  String ea=dd.getEndAttribute();
+  if (delegateStrategy instanceof CoverageMaximumValueSelectionStrategyImpl) {
+    if (ea != null) {
+      return new MaxVisitor(ea);
+    }
+ else {
+      return new MaxVisitor(sa);
+    }
+  }
+ else   if (delegateStrategy instanceof CoverageMinimumValueSelectionStrategyImpl) {
+    return new MinVisitor(sa);
+  }
+ else   if (delegateStrategy instanceof CoverageNearestValueSelectionStrategyImpl) {
+    CoverageNearestValueSelectionStrategyImpl impl=(CoverageNearestValueSelectionStrategyImpl)delegateStrategy;
+    Object targetValue=impl.getTargetValue();
+    return new NearestVisitor(ff.property(sa),targetValue);
+  }
+ else {
+    throw new ServiceException("Don't konw how to restrict the domain for strategy " + delegateStrategy);
+  }
+}

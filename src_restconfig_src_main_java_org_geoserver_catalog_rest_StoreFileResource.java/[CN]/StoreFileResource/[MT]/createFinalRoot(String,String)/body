@@ -1,0 +1,31 @@
+{
+  Method method=getRequest().getMethod();
+  boolean isPost=method.equals(Method.POST);
+  File directory=null;
+  if (isPost && storeName != null) {
+    CoverageStoreInfo coverage=catalog.getCoverageStoreByName(storeName);
+    if (coverage != null) {
+      if (workspaceName == null || (workspaceName != null && coverage.getWorkspace().getName().equalsIgnoreCase(workspaceName))) {
+        File dirFile=DataUtilities.urlToFile(new URL(coverage.getURL()));
+        if (!dirFile.exists()) {
+          directory=catalog.getResourceLoader().findOrCreateDirectory(dirFile,"");
+        }
+ else {
+          directory=dirFile;
+        }
+      }
+    }
+  }
+  if (directory == null) {
+    directory=catalog.getResourceLoader().findOrCreateDirectory("data",workspaceName,storeName);
+  }
+  StringBuilder root=new StringBuilder(directory.getAbsolutePath());
+  Map<String,String> storeParams=new HashMap<String,String>();
+  List<RESTUploadPathMapper> mappers=GeoServerExtensions.extensions(RESTUploadPathMapper.class);
+  for (  RESTUploadPathMapper mapper : mappers) {
+    mapper.mapStorePath(root,workspaceName,storeName,storeParams);
+  }
+  directory=new File(root.toString());
+  directory.mkdirs();
+  return directory;
+}

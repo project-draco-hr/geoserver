@@ -1,0 +1,24 @@
+{
+  String expression=validatable.getValue();
+  if (expression == null || expression.isEmpty() || expression.trim().isEmpty()) {
+    return;
+  }
+  Expression ecql=null;
+  try {
+    ecql=ECQL.toExpression(expression);
+  }
+ catch (  CQLException e) {
+    error(validatable,"ecql.invalidExpression",map("expression",expression,"error",e.getMessage()));
+  }
+  if (ecql != null && validAttributes != null) {
+    FilterAttributeExtractor filter=new FilterAttributeExtractor();
+    ecql.accept(filter,null);
+    List<String> invalids=new ArrayList<String>(Arrays.asList(filter.getAttributeNames()));
+    invalids.removeAll(validAttributes);
+    if (!invalids.isEmpty()) {
+      String invalidList=commaSeparated(invalids);
+      String validList=commaSeparated(validAttributes);
+      error(validatable,"ecql.invalidAttributes",map("expression",expression,"invalidAttributes",invalidList,"validAttributes",validList));
+    }
+  }
+}

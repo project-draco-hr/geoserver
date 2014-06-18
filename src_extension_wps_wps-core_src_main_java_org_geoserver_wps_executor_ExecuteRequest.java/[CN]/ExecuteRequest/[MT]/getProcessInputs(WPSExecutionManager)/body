@@ -6,6 +6,17 @@
   }
   final Map<String,Parameter<?>> parameters=pf.getParameterInfo(processName);
   Map<String,InputProvider> providers=new HashMap<String,InputProvider>();
+  Map<String,String> outputMimeParameters=AbstractRawData.getOutputMimeParameters(processName,pf);
+  if (!outputMimeParameters.isEmpty()) {
+    Map<String,String> requestedRawDataMimeTypes=getRequestedRawDataMimeTypes(outputMimeParameters.keySet(),processName,pf);
+    for (    Map.Entry<String,String> param : outputMimeParameters.entrySet()) {
+      String outputName=param.getKey();
+      String inputParameter=param.getValue();
+      String mime=requestedRawDataMimeTypes.get(outputName);
+      StringInputProvider provider=new StringInputProvider(mime,inputParameter);
+      providers.put(inputParameter,provider);
+    }
+  }
   for (Iterator i=request.getDataInputs().getInput().iterator(); i.hasNext(); ) {
     InputType input=(InputType)i.next();
     String inputId=input.getIdentifier().getValue();

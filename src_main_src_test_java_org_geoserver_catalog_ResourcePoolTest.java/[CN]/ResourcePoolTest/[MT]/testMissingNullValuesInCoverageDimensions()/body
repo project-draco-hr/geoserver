@@ -1,0 +1,24 @@
+{
+  CoverageInfo ci=getCatalog().getCoverageByName(getLayerId(MockData.TASMANIA_DEM));
+  List<CoverageDimensionInfo> dimensions=ci.getDimensions();
+  dimensions.get(0).getNullValues().clear();
+  getCatalog().save(ci);
+  ci=getCatalog().getCoverageByName(getLayerId(MockData.TASMANIA_DEM));
+  GridCoverageReader reader=ci.getGridCoverageReader(null,null);
+  GridCoverage2D gc=null;
+  try {
+    gc=(GridCoverage2D)reader.read(null);
+    assertEquals(-9999d,(Double)gc.getProperty("GC_NODATA"),0d);
+  }
+  finally {
+    if (gc != null) {
+      RenderedImage ri=gc.getRenderedImage();
+      if (gc instanceof GridCoverage2D) {
+        ((GridCoverage2D)gc).dispose(true);
+      }
+      if (ri instanceof PlanarImage) {
+        ImageUtilities.disposePlanarImageChain((PlanarImage)ri);
+      }
+    }
+  }
+}

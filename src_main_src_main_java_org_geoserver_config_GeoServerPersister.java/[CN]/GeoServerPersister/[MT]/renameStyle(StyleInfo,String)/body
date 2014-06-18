@@ -1,4 +1,17 @@
 {
   LOGGER.fine("Renameing style " + s.getName() + " to "+ newName);
   rename(file(s),newName + ".xml");
+  File styleFile=styleFile(s);
+  String sldFileName=newName + ".sld";
+  File target=new File(styleFile.getParent(),sldFileName);
+  int i=1;
+  while (target.exists() && i <= MAX_RENAME_ATTEMPTS) {
+    sldFileName=newName + i + ".sld";
+    target=new File(styleFile.getParent(),sldFileName);
+  }
+  if (i > MAX_RENAME_ATTEMPTS) {
+    throw new IOException("All target files between " + newName + "1.sld and "+ newName+ MAX_RENAME_ATTEMPTS+ ".sld are in use already, giving up");
+  }
+  rename(styleFile,target);
+  s.setFilename(sldFileName);
 }

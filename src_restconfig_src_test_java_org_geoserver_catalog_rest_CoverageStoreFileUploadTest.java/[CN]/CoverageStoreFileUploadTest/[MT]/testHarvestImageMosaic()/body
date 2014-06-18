@@ -1,0 +1,43 @@
+{
+  URL zip=MockData.class.getResource("watertemp.zip");
+  InputStream is=null;
+  byte[] bytes;
+  try {
+    is=zip.openStream();
+    bytes=IOUtils.toByteArray(is);
+  }
+  finally {
+    IOUtils.closeQuietly(is);
+  }
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/gs/coveragestores/watertemp2/file.imagemosaic",bytes,"application/zip");
+  assertEquals(201,response.getStatusCode());
+  String content=response.getOutputStreamContent();
+  Document d=dom(new ByteArrayInputStream(content.getBytes()));
+  XMLAssert.assertXpathEvaluatesTo("watertemp2","//coverageStore/name",d);
+  XMLAssert.assertXpathEvaluatesTo("ImageMosaic","//coverageStore/type",d);
+  CoverageStoreInfo storeInfo=getCatalog().getCoverageStoreByName("watertemp2");
+  assertNotNull(storeInfo);
+  CoverageInfo ci=getCatalog().getCoverageByName("watertemp2");
+  assertNotNull(ci);
+  assertEquals(storeInfo,ci.getStore());
+  URL zipHarvest=getClass().getResource("test-data/harvesting.zip");
+  is=null;
+  try {
+    is=zipHarvest.openStream();
+    bytes=IOUtils.toByteArray(is);
+  }
+  finally {
+    IOUtils.closeQuietly(is);
+  }
+  MockHttpServletRequest request=createRequest("/rest/workspaces/gs/coveragestores/watertemp2/file.imagemosaic");
+  request.setMethod("POST");
+  request.setContentType("application/zip");
+  request.setBodyContent(bytes);
+  request.setHeader("Content-type","application/zip");
+  response=dispatch(request);
+  GridCoverageReader reader=storeInfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
+  String[] metadataNames=reader.getMetadataNames();
+  assertNotNull(metadataNames);
+  assertEquals("true",reader.getMetadataValue("HAS_TIME_DOMAIN"));
+  assertEquals("2008-10-31T00:00:00.000Z,2008-11-01T00:00:00.000Z,2008-11-02T00:00:00.000Z",reader.getMetadataValue(metadataNames[0]));
+}

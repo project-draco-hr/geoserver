@@ -1,0 +1,18 @@
+{
+  checkValidationErrors(d);
+  assertXpathEvaluatesTo("http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsAll.xsd","/wps:Capabilities/@xsi:schemaLocation",d);
+  assertEquals("wps:Capabilities",d.getDocumentElement().getNodeName());
+  int np=d.getElementsByTagName("wps:Process").getLength();
+  assertTrue(np > 0);
+  String expectedOperationUrl="http://localhost:8080/geoserver/wps";
+  if (workspace != null) {
+    expectedOperationUrl="http://localhost:8080/geoserver/" + workspace + "/wps";
+  }
+  String[] operations=new String[]{"GetCapabilities","DescribeProcess","Execute"};
+  for (  String operation : operations) {
+    String getPath="//ows:Operation[@name='" + operation + "']/ows:DCP/ows:HTTP/ows:Get/@xlink:href";
+    assertXpathEvaluatesTo(expectedOperationUrl,getPath,d);
+    String postPath="//ows:Operation[@name='" + operation + "']/ows:DCP/ows:HTTP/ows:Post/@xlink:href";
+    assertXpathEvaluatesTo(expectedOperationUrl,postPath,d);
+  }
+}

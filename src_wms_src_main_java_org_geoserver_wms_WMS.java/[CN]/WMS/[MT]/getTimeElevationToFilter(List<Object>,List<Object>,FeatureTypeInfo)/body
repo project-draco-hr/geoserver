@@ -1,46 +1,27 @@
 {
   DimensionInfo timeInfo=typeInfo.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
   DimensionInfo elevationInfo=typeInfo.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
-  Filter result=null;
+  DimensionFilterBuilder builder=new DimensionFilterBuilder(ff);
   if (timeInfo != null && timeInfo.isEnabled() && times != null) {
-    final List<Filter> timeFilters=new ArrayList<Filter>();
-    final PropertyName attribute=ff.property(timeInfo.getAttribute());
-    final PropertyName endAttribute=timeInfo.getEndAttribute() == null ? null : ff.property(timeInfo.getEndAttribute());
+    List<Object> defaultedTimes=new ArrayList<Object>(times.size());
     for (    Object datetime : times) {
       if (datetime == null) {
         datetime=getDefaultTime(typeInfo);
       }
-      timeFilters.add(buildDimensionFilter(datetime,attribute,endAttribute));
+      defaultedTimes.add(datetime);
     }
-    final int sizeTime=timeFilters.size();
-    if (sizeTime > 1) {
-      result=ff.or(timeFilters);
-    }
- else     if (sizeTime == 1) {
-      result=timeFilters.get(0);
-    }
+    builder.appendFilters(timeInfo.getAttribute(),timeInfo.getEndAttribute(),defaultedTimes);
   }
   if (elevationInfo != null && elevationInfo.isEnabled() && elevations != null) {
-    final List<Filter> elevationFilters=new ArrayList<Filter>();
-    final PropertyName attribute=ff.property(elevationInfo.getAttribute());
-    final PropertyName endAttribute=elevationInfo.getEndAttribute() == null ? null : ff.property(elevationInfo.getEndAttribute());
+    List<Object> defaultedElevations=new ArrayList<Object>(elevations.size());
     for (    Object elevation : elevations) {
       if (elevation == null) {
         elevation=getDefaultElevation(typeInfo);
       }
-      elevationFilters.add(buildDimensionFilter(elevation,attribute,endAttribute));
+      defaultedElevations.add(elevation);
     }
-    final int size=elevationFilters.size();
-    Filter summary=null;
-    if (size > 1) {
-      summary=ff.or(elevationFilters);
-    }
- else     if (size == 1) {
-      summary=elevationFilters.get(0);
-    }
-    if (summary != null) {
-      result=Filters.and(ff,result,summary);
-    }
+    builder.appendFilters(elevationInfo.getAttribute(),elevationInfo.getEndAttribute(),defaultedElevations);
   }
+  Filter result=builder.getFilter();
   return result;
 }

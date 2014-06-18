@@ -1,3 +1,16 @@
 {
-  return new SLDValidator().validateSLD(new InputSource(toReader(input)));
+  SLDConfiguration sld=new SLDConfiguration();
+  Parser p=new Parser(sld);
+  p.setValidating(true);
+  p.setEntityResolver(entityResolver);
+  try {
+    p.parse(toReader(input));
+    return p.getValidationErrors();
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    List validationErrors=new ArrayList<Exception>(p.getValidationErrors());
+    validationErrors.add(0,e);
+    return validationErrors;
+  }
 }

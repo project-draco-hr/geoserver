@@ -1,0 +1,15 @@
+{
+  setupRasterDimension(TIME_ELEVATION_CUSTOM,ResourceInfo.ELEVATION,DimensionPresentation.LIST,null,UNITS,UNIT_SYMBOL);
+  setupRasterDimension(TIME_ELEVATION_CUSTOM,ResourceInfo.TIME,DimensionPresentation.LIST,null,null,null);
+  setupRasterDimension(TIME_ELEVATION_CUSTOM,CUSTOM_KEY,DimensionPresentation.LIST,null,null,null);
+  setupDynamicDimensions(TIME_ELEVATION_CUSTOM,new DefaultValueConfiguration(ResourceInfo.TIME,DefaultValuePolicy.LIMIT_DOMAIN),new DefaultValueConfiguration(CUSTOM,DefaultValuePolicy.LIMIT_DOMAIN));
+  assertEquals(0,getValueAt(baseFeatureInfo,90,45),0d);
+  assertEquals(100,getValueAt(baseFeatureInfo + "&elevation=1",90,45),0d);
+  assertEquals(200,getValueAt(baseFeatureInfo + "&elevation=2",90,45),0d);
+  assertEquals(100,getValueAt(baseFeatureInfo + "&elevation=1&time=2008-11-01",90,45),0d);
+  assertEquals(200,getValueAt(baseFeatureInfo + "&elevation=2&time=2008-11-02",90,45),0d);
+  assertNull(getValueAt(baseFeatureInfo + "&elevation=1&time=2008-11-02",90,45));
+  assertEquals(100,getValueAt(baseFeatureInfo + "&elevation=1&dim_custom=AB2",90,45),0d);
+  assertEquals(200,getValueAt(baseFeatureInfo + "&elevation=2&dim_custom=AB3",90,45),0d);
+  assertNull(getValueAt(baseFeatureInfo + "&elevation=1&dim_custom=AB3",90,45));
+}

@@ -1,18 +1,52 @@
 {
   engine.eval("import inspect");
   PyList args=(PyList)engine.eval("inspect.getargspec(run.func_closure[0].cell_contents)[0]");
+  PyTuple defaults=(PyTuple)engine.eval("inspect.getargspec(run.func_closure[0].cell_contents)[3]");
   PyDictionary inputs=(PyDictionary)process(engine).__getattr__("inputs");
   if (args.size() != inputs.size()) {
     throw new RuntimeException(String.format("process function specified %d arguments but" + " describes %d inputs",args.size(),inputs.size()));
   }
-  Map<String,Parameter<?>> map=new TreeMap<String,Parameter<?>>();
+  Map<String,Parameter<?>> map=new LinkedHashMap<String,Parameter<?>>();
   for (int i=0; i < args.size(); i++) {
     String arg=args.get(i).toString();
-    PyObject input=(PyObject)inputs.get(arg);
+    PyTuple input=(PyTuple)inputs.get(arg);
     if (input == null) {
       throw new RuntimeException(String.format("process function specified argument %s" + " but does not specify it as an input",arg));
     }
-    map.put(arg,parameter(arg,input.__getitem__(0),input.__getitem__(1)));
+    int min=1;
+    int max=1;
+    Object defaultValue=null;
+    Map metadata=null;
+    if (input.size() == 3) {
+      PyDictionary meta=(PyDictionary)input.get(2);
+      min=getParameter(meta,"min",Integer.class,1);
+      max=getParameter(meta,"max",Integer.class,1);
+      List<String> options=getParameter(meta,"domain",List.class,null);
+      if (options != null) {
+        metadata=new HashMap();
+        metadata.put(Parameter.OPTIONS,options);
+      }
+      HashSet<String> otherKeys=new HashSet<String>(meta.keySet());
+      otherKeys.remove("min");
+      otherKeys.remove("max");
+      otherKeys.remove("domain");
+      if (!otherKeys.isEmpty()) {
+        if (metadata == null) {
+          metadata=new HashMap();
+        }
+        for (        String key : otherKeys) {
+          metadata.put(key,meta.get(key));
+        }
+      }
+    }
+    if (defaults != null) {
+      int defaultIdx=defaults.size() - (args.size() - i);
+      if (defaultIdx >= 0) {
+        defaultValue=defaults.get(defaultIdx);
+      }
+    }
+    Parameter parameter=parameter(arg,input.__getitem__(0),min,max,input.__getitem__(1),defaultValue,metadata);
+    map.put(arg,parameter);
   }
   return map;
 }

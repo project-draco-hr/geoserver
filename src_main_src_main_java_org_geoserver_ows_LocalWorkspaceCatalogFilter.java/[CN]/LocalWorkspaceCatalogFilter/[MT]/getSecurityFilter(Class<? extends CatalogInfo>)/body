@@ -1,0 +1,53 @@
+{
+  WorkspaceInfo localWS=LocalWorkspace.get();
+  LayerInfo localLayer=LocalLayer.get();
+  if (localWS == null && localLayer == null) {
+    return Predicates.acceptAll();
+  }
+  if (ResourceInfo.class.isAssignableFrom(clazz)) {
+    Filter localLayerFilter;
+    if (localLayer == null) {
+      localLayerFilter=Predicates.acceptAll();
+    }
+ else {
+      return super.getSecurityFilter(clazz);
+    }
+    return Predicates.or(localLayerFilter,inWorkspace());
+  }
+ else   if (WorkspaceInfo.class.isAssignableFrom(clazz)) {
+    if (localWS == null)     return Predicates.acceptAll();
+    return Predicates.equal("id",localWS.getId());
+  }
+ else   if (LayerGroupInfo.class.isAssignableFrom(clazz)) {
+    Filter filter=standardFilter(clazz);
+    Function subLayersHidden=new InternalVolatileFunction(){
+      @Override public Boolean evaluate(      Object object){
+        return !subLayersHidden((LayerGroupInfo)object);
+      }
+    }
+;
+    FilterFactory factory=Predicates.factory;
+    filter=Predicates.and(filter,factory.equals(factory.literal(Boolean.TRUE),subLayersHidden));
+    if (localLayer != null) {
+      filter=Predicates.and(filter,Predicates.equal("id",localLayer.getId()));
+    }
+    return filter;
+  }
+ else   if (StyleInfo.class.isAssignableFrom(clazz)) {
+    return standardFilter(clazz);
+  }
+ else   if (LayerInfo.class.isAssignableFrom(clazz)) {
+    if (localLayer == null) {
+      return Predicates.acceptAll();
+    }
+ else {
+      return Predicates.equal("id",localLayer.getId());
+    }
+  }
+ else   if (NamespaceInfo.class.isAssignableFrom(clazz)) {
+    return super.getSecurityFilter(clazz);
+  }
+ else {
+    return super.getSecurityFilter(clazz);
+  }
+}

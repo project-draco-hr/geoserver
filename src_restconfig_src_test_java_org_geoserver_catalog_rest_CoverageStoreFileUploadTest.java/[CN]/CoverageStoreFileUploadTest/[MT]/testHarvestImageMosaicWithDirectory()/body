@@ -1,0 +1,42 @@
+{
+  URL zip=MockData.class.getResource("watertemp.zip");
+  InputStream is=null;
+  byte[] bytes;
+  try {
+    is=zip.openStream();
+    bytes=IOUtils.toByteArray(is);
+  }
+  finally {
+    IOUtils.closeQuietly(is);
+  }
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/gs/coveragestores/watertemp3/file.imagemosaic",bytes,"application/zip");
+  assertEquals(201,response.getStatusCode());
+  String content=response.getOutputStreamContent();
+  Document d=dom(new ByteArrayInputStream(content.getBytes()));
+  XMLAssert.assertXpathEvaluatesTo("watertemp3","//coverageStore/name",d);
+  XMLAssert.assertXpathEvaluatesTo("ImageMosaic","//coverageStore/type",d);
+  CoverageStoreInfo storeInfo=getCatalog().getCoverageStoreByName("watertemp3");
+  assertNotNull(storeInfo);
+  CoverageInfo ci=getCatalog().getCoverageByName("watertemp3");
+  assertNotNull(ci);
+  assertEquals(storeInfo,ci.getStore());
+  URL zipHarvest=getClass().getResource("test-data/harvesting.zip");
+  File zipFile=DataUtilities.urlToFile(zipHarvest);
+  File newZip=new File(zipFile.getParentFile(),"harvesting2.zip");
+  FileUtils.copyFile(zipFile,newZip);
+  File outputDirectory=new File(zipFile.getParentFile(),"harvesting");
+  outputDirectory.mkdir();
+  RESTUtils.unzipFile(newZip,outputDirectory);
+  MockHttpServletRequest request=createRequest("/rest/workspaces/gs/coveragestores/watertemp3/external.imagemosaic");
+  request.setMethod("POST");
+  request.setContentType("text/plain");
+  request.setBodyContent("file:///" + outputDirectory.getAbsolutePath());
+  request.setHeader("Content-type","text/plain");
+  response=dispatch(request);
+  GridCoverageReader reader=storeInfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
+  String[] metadataNames=reader.getMetadataNames();
+  assertNotNull(metadataNames);
+  assertEquals("true",reader.getMetadataValue("HAS_TIME_DOMAIN"));
+  assertEquals("2008-10-31T00:00:00.000Z,2008-11-01T00:00:00.000Z,2008-11-02T00:00:00.000Z",reader.getMetadataValue(metadataNames[0]));
+  FileUtils.deleteDirectory(outputDirectory);
+}
