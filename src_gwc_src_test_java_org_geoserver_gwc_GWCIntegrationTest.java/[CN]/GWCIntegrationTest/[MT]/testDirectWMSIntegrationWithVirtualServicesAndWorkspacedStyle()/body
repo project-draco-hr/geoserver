@@ -1,0 +1,20 @@
+{
+  final GWC gwc=GWC.get();
+  gwc.getConfig().setDirectWMSIntegrationEnabled(true);
+  final String qualifiedName=super.getLayerId(WORKSPACED_LAYER_QNAME);
+  final String localName=WORKSPACED_LAYER_QNAME.getLocalPart();
+  final TileLayer tileLayer=gwc.getTileLayerByName(qualifiedName);
+  assertNotNull(tileLayer);
+  boolean directWMSIntegrationEndpoint=true;
+  String request=TEST_WORKSPACE_NAME + "/" + buildGetMap(directWMSIntegrationEndpoint,localName,"EPSG:4326",null,tileLayer)+ "&tiled=true";
+  MockHttpServletResponse response=getAsServletResponse(request);
+  assertEquals(200,response.getStatusCode());
+  assertEquals("image/png",response.getContentType());
+  assertEquals(qualifiedName,response.getHeader("geowebcache-layer"));
+  assertThat(response.getHeader("geowebcache-cache-result"),equalToIgnoringCase("MISS"));
+  MockHttpServletResponse response2=getAsServletResponse(request);
+  assertEquals(200,response2.getStatusCode());
+  assertEquals("image/png",response2.getContentType());
+  assertEquals(qualifiedName,response2.getHeader("geowebcache-layer"));
+  assertThat(response2.getHeader("geowebcache-cache-result"),equalToIgnoringCase("HIT"));
+}
