@@ -9,9 +9,13 @@
   }
 ;
   add(form);
+  final List<String> extensions=getExtensions();
+  String mode=extensions.size() > 0 ? getModeFromExtension(extensions.get(0)) : "py";
+  final CodeMirrorEditor content=new CodeMirrorEditor("contents",mode,new PropertyModel(script,"contents"));
+  content.setRequired(true);
+  form.add(content);
   TextField name=new TextField("name",new PropertyModel(script,"name"));
   name.setRequired(true);
-  name.add(new XMLNameValidator());
   form.add(name);
   DropDownChoice<String> typeDropDownChoice=new DropDownChoice<String>("type",new PropertyModel(script,"type"),new LoadableDetachableModel<List<String>>(){
     @Override protected List<String> load(){
@@ -25,22 +29,23 @@
 );
   typeDropDownChoice.setRequired(true);
   form.add(typeDropDownChoice);
-  DropDownChoice<String> extensionDropDownChoice=new DropDownChoice<String>("extension",new PropertyModel(script,"extension"),new LoadableDetachableModel<List<String>>(){
+  final DropDownChoice<String> extensionDropDownChoice=new DropDownChoice<String>("extension",new PropertyModel(script,"extension"),new LoadableDetachableModel<List<String>>(){
     @Override protected List<String> load(){
-      List<String> extensions=Lists.newArrayList();
-      ScriptManager scriptManager=(ScriptManager)GeoServerExtensions.bean("scriptMgr");
-      for (      ScriptPlugin plugin : scriptManager.getPlugins()) {
-        extensions.add(plugin.getExtension());
-      }
       return extensions;
     }
   }
 );
   extensionDropDownChoice.setRequired(true);
+  extensionDropDownChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      int i=Integer.parseInt(extensionDropDownChoice.getValue());
+      String ext=extensions.get(i);
+      String mode=getModeFromExtension(ext);
+      content.setMode(mode);
+    }
+  }
+);
   form.add(extensionDropDownChoice);
-  final TextArea content=new TextArea("contents",new PropertyModel(script,"contents"));
-  content.setRequired(true);
-  form.add(content);
   SubmitLink submitLink=new SubmitLink("submit",form);
   form.add(submitLink);
   form.setDefaultButton(submitLink);
