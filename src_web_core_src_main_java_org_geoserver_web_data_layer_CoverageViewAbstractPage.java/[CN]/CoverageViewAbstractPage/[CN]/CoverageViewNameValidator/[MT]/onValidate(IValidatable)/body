@@ -1,0 +1,19 @@
+{
+  String vcName=(String)validatable.getValue();
+  final CoverageStoreInfo store=getCatalog().getStore(storeId,CoverageStoreInfo.class);
+  List<CoverageInfo> coverages=getCatalog().getCoveragesByCoverageStore(store);
+  for (  CoverageInfo curr : coverages) {
+    CoverageView currvc=curr.getMetadata().get(CoverageView.COVERAGE_VIEW,CoverageView.class);
+    if (currvc != null) {
+      if (coverageInfoId == null || !coverageInfoId.equals(curr.getId())) {
+        if (currvc.getName().equals(vcName) && newCoverage) {
+          Map<String,String> map=new HashMap<String,String>();
+          map.put("name",vcName);
+          map.put("coverageName",curr.getName());
+          error(validatable,"duplicateCoverageViewName",map);
+          return;
+        }
+      }
+    }
+  }
+}

@@ -54,7 +54,15 @@
         Catalog catalog=app.getCatalog();
         CatalogBuilder cb=new CatalogBuilder(catalog);
         cb.setStore(ci.getStore());
-        CoverageInfo rebuilt=cb.buildCoverage(nativeName);
+        MetadataMap metadata=ci.getMetadata();
+        CoverageInfo rebuilt=null;
+        if (metadata != null && metadata.containsKey(CoverageView.COVERAGE_VIEW)) {
+          GridCoverage2DReader reader=(GridCoverage2DReader)catalog.getResourcePool().getGridCoverageReader(ci,nativeName,GeoTools.getDefaultHints());
+          rebuilt=cb.buildCoverage(reader,nativeName,null);
+        }
+ else {
+          rebuilt=cb.buildCoverage(nativeName);
+        }
         ci.getDimensions().clear();
         ci.getDimensions().addAll(rebuilt.getDimensions());
         target.addComponent(bands);

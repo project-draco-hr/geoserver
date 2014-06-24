@@ -1,0 +1,31 @@
+{
+  AjaxButton button=new AjaxButton("addBand"){
+    @Override public void onSubmit(    AjaxRequestTarget target,    Form form){
+      List<String> selection=(List<String>)coveragesChoice.getModelObject();
+      compositionType=compositionChoice.getModelObject();
+      List<CoverageBand> bandsList=new ArrayList<CoverageBand>();
+      int i=currentOutputBands != null && !currentOutputBands.isEmpty() ? currentOutputBands.size() : 0;
+      for (Iterator<String> it=selection.iterator(); it.hasNext(); ) {
+        String coverage=it.next();
+        final int bandIndexChar=coverage.indexOf(CoverageView.BAND_SEPARATOR);
+        String coverageName=coverage;
+        String bandIndex="-1";
+        if (bandIndexChar != -1) {
+          coverageName=coverage.substring(0,bandIndexChar);
+          bandIndex=coverage.substring(bandIndexChar + 1,coverage.length());
+        }
+        CoverageBand band=new CoverageBand(Collections.singletonList(new InputCoverageBand(coverageName,bandIndex)),coverageName,i++,compositionType);
+        bandsList.add(band);
+      }
+      currentOutputBands.addAll(bandsList);
+      outputBandsChoice.setChoices(currentOutputBands);
+      outputBandsChoice.modelChanged();
+      coveragesChoice.setChoices(availableCoverages);
+      coveragesChoice.modelChanged();
+      target.addComponent(coveragesChoice);
+      target.addComponent(outputBandsChoice);
+    }
+  }
+;
+  return button;
+}

@@ -1,0 +1,30 @@
+{
+  GridSampleDimension[] wrappedDims=null;
+  CoverageInfo info=getInfo();
+  if (info != null) {
+    List<CoverageDimensionInfo> storedDimensions=info.getDimensions();
+    MetadataMap map=info.getMetadata();
+    if (map.containsKey(CoverageView.COVERAGE_VIEW)) {
+      CoverageView coverageView=(CoverageView)map.get(CoverageView.COVERAGE_VIEW);
+      List<CoverageBand> coverageBands=coverageView.getBands(getCoverageName());
+      wrappedDims=(coverageBands != null && !coverageBands.isEmpty()) ? new GridSampleDimension[coverageBands.size()] : null;
+      int i=0;
+      for (      CoverageBand band : coverageBands) {
+        if (storedDimensions != null && storedDimensions.size() > 0) {
+          CoverageDimensionInfo dimensionInfo=storedDimensions.get(band.getIndex());
+          wrappedDims[i]=new WrappedSampleDimension((GridSampleDimension)dims[i],dimensionInfo);
+        }
+ else {
+          CoverageDimensionInfo dimensionInfo=new CoverageDimensionImpl();
+          dimensionInfo.setName(band.getDefinition());
+          wrappedDims[i]=new WrappedSampleDimension((GridSampleDimension)dims[i],dimensionInfo);
+        }
+        i++;
+      }
+    }
+ else {
+      super.wrapDimensions(wrappedDims);
+    }
+  }
+  return wrappedDims;
+}
