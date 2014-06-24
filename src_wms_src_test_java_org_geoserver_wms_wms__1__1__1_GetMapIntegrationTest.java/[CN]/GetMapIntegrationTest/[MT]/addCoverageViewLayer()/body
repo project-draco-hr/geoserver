@@ -1,0 +1,22 @@
+{
+  final InputCoverageBand ib0=new InputCoverageBand("mosaic","2");
+  final CoverageBand b0=new CoverageBand(Collections.singletonList(ib0),"mosaic@2",0,CompositionType.BAND_SELECT);
+  final InputCoverageBand ib1=new InputCoverageBand("mosaic","1");
+  final CoverageBand b1=new CoverageBand(Collections.singletonList(ib1),"mosaic@1",1,CompositionType.BAND_SELECT);
+  final InputCoverageBand ib2=new InputCoverageBand("mosaic","0");
+  final CoverageBand b2=new CoverageBand(Collections.singletonList(ib2),"mosaic@0",2,CompositionType.BAND_SELECT);
+  final List<CoverageBand> coverageBands=new ArrayList<CoverageBand>(3);
+  coverageBands.add(b0);
+  coverageBands.add(b1);
+  coverageBands.add(b2);
+  CoverageView coverageView=new CoverageView("mosaic_shuffle",coverageBands);
+  Catalog cat=getCatalog();
+  final CoverageStoreInfo storeInfo=cat.getCoverageStoreByName("mosaic");
+  final CatalogBuilder builder=new CatalogBuilder(cat);
+  builder.setStore(storeInfo);
+  final CoverageInfo coverageInfoView=coverageView.createCoverageInfo("mosaic_shuffle",storeInfo,builder);
+  coverageInfoView.getParameters().put("USE_JAI_IMAGEREAD","false");
+  cat.add(coverageInfoView);
+  final LayerInfo layerInfoView=builder.buildLayer(coverageInfoView);
+  cat.add(layerInfoView);
+}

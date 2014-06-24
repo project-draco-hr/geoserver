@@ -1,0 +1,34 @@
+{
+  final InputCoverageBand u=new InputCoverageBand("u-component","0");
+  final InputCoverageBand v=new InputCoverageBand("u-component","0");
+  assertEquals(u,v);
+  final InputCoverageBand empty=new InputCoverageBand();
+  v.setCoverageName("v-component");
+  v.setBand("1");
+  assertNotEquals(u,v);
+  assertNotEquals(u,empty);
+  final CoverageBand outputBandU=new CoverageBand(Collections.singletonList(u),"u@1",0,CompositionType.BAND_SELECT);
+  final CoverageBand outputBandV=new CoverageBand();
+  outputBandV.setInputCoverageBands(Collections.singletonList(v));
+  outputBandV.setDefinition("v@0");
+  outputBandV.setIndex(1);
+  outputBandV.setCompositionType(CompositionType.BAND_SELECT);
+  assertNotEquals(outputBandU,outputBandV);
+  CompositionType defaultComposition=CompositionType.getDefault();
+  assertEquals("Band Selection",defaultComposition.displayValue());
+  assertEquals("BAND_SELECT",defaultComposition.toValue());
+  assertEquals(outputBandU.getCompositionType(),defaultComposition);
+  final List<CoverageBand> bands=new ArrayList<CoverageBand>();
+  bands.add(outputBandU);
+  bands.add(outputBandV);
+  final CoverageView coverageView=new CoverageView("wind",bands);
+  final CoverageView sameViewDifferentName=new CoverageView();
+  sameViewDifferentName.setName("winds");
+  sameViewDifferentName.setCoverageBands(bands);
+  assertNotEquals(coverageView,sameViewDifferentName);
+  assertEquals(coverageView.getBand(1),outputBandV);
+  assertEquals(outputBandU,coverageView.getBands("u-component").get(0));
+  assertEquals(2,coverageView.getSize());
+  assertEquals(2,coverageView.getCoverageBands().size());
+  assertEquals("wind",coverageView.getName());
+}

@@ -1,0 +1,39 @@
+{
+  GeneralEnvelope envelope=reader.getOriginalEnvelope();
+  GridEnvelope gridRange=reader.getOriginalGridRange();
+  CoordinateReferenceSystem crs=reader.getCoordinateReferenceSystem();
+  String[] metadataNames=reader.getMetadataNames();
+  Set<ParameterDescriptor<List>> dynamicParameters=reader.getDynamicParameters();
+  if (!envelope.equals(this.envelope,DELTA,true)) {
+    throw new IllegalArgumentException("The coverage envelope must be the same");
+  }
+  final Rectangle thisRectangle=new Rectangle(this.gridRange.getLow(0),this.gridRange.getLow(1),this.gridRange.getSpan(0),this.gridRange.getSpan(1));
+  final Rectangle thatRectangle=new Rectangle(gridRange.getLow(0),gridRange.getLow(1),gridRange.getSpan(0),gridRange.getSpan(1));
+  if (!thisRectangle.equals(thatRectangle)) {
+    throw new IllegalArgumentException("The coverage gridRange should be the same");
+  }
+  if (metadataNames.length != this.metadataNames.length) {
+    throw new IllegalArgumentException("The coverage metadataNames should have the same size");
+  }
+  final Set<String> metadataSet=new HashSet<String>(Arrays.asList(metadataNames));
+  for (  String metadataName : this.metadataNames) {
+    if (!metadataSet.contains(metadataName)) {
+      throw new IllegalArgumentException("The coverage metadata are different");
+    }
+  }
+  MathTransform destinationToSourceTransform=null;
+  if (!CRS.equalsIgnoreMetadata(crs,this.crs)) {
+    try {
+      destinationToSourceTransform=CRS.findMathTransform(crs,this.crs,true);
+    }
+ catch (    FactoryException e) {
+      throw new DataSourceException("Unable to inspect request CRS",e);
+    }
+  }
+  if (destinationToSourceTransform != null && !destinationToSourceTransform.isIdentity()) {
+    throw new IllegalArgumentException("The coverage coordinateReferenceSystem should be the same");
+  }
+  if (layout.getSampleModel(null).getDataType() != this.layout.getSampleModel(null).getDataType()) {
+    throw new IllegalArgumentException("The coverage dataType should be the same");
+  }
+}

@@ -1,0 +1,40 @@
+{
+  super(id,inputCoverages);
+  this.coverages=inputCoverages;
+  this.outputBands=bands;
+  this.availableCoverages=availableCoverages;
+  coveragesChoice=new ListMultipleChoice<String>("coveragesChoice",new Model(),new ArrayList<String>((List<String>)coverages.getObject()),new ChoiceRenderer<String>(){
+    @Override public Object getDisplayValue(    String coverage){
+      return coverage;
+    }
+  }
+);
+  coveragesChoice.setOutputMarkupId(true);
+  add(coveragesChoice);
+  new ArrayList<CoverageBand>();
+  outputBandsChoice=new ListMultipleChoice<CoverageBand>("outputBandsChoice",new Model(),new ArrayList<CoverageBand>((List<CoverageBand>)outputBands.getObject()),new ChoiceRenderer<CoverageBand>(){
+    @Override public Object getDisplayValue(    CoverageBand vcb){
+      return vcb.getDefinition();
+    }
+  }
+);
+  outputBandsChoice.setOutputMarkupId(true);
+  add(outputBandsChoice);
+  currentOutputBands=new ArrayList<CoverageBand>(outputBandsChoice.getChoices());
+  add(addBandButton());
+  definition=new TextField("definition",new Model());
+  definition.setOutputMarkupId(true);
+  definition.setEnabled(false);
+  compositionType=CompositionType.getDefault();
+  compositionChoice=new DropDownChoice("compositionType",new PropertyModel(this,"compositionType"),Arrays.asList(CompositionType.BAND_SELECT),new CompositionTypeRenderer());
+  compositionChoice.setOutputMarkupId(true);
+  compositionChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    private static final long serialVersionUID=1L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      compositionType=compositionChoice.getModelObject();
+    }
+  }
+);
+  add(addRemoveAllButton());
+  add(addRemoveButton());
+}

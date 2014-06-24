@@ -1,0 +1,67 @@
+{
+  final DefaultProgressListener listener=new DefaultProgressListener();
+  final ListFeatureCollection collection=new ListFeatureCollection(schema);
+  inputCollection.accepts(new AbstractFeatureVisitor(){
+    public void visit(    Feature feature){
+      if (feature instanceof SimpleFeature) {
+        final SimpleFeature sourceFeature=(SimpleFeature)feature;
+        Collection<Property> props=sourceFeature.getProperties();
+        Name propName=null;
+        Object propValue=null;
+        Filter filter=null;
+        for (        Property prop : props) {
+          propName=prop.getName();
+          if (!propName.getLocalPart().equalsIgnoreCase("imageIndex") && !propName.getLocalPart().equalsIgnoreCase("the_geom")) {
+            propValue=prop.getValue();
+            Filter updatedFilter=Utils.FF.equal(Utils.FF.property(propName),Utils.FF.literal(propValue),true);
+            if (filter == null) {
+              filter=updatedFilter;
+            }
+ else {
+              filter=FF.and(filter,updatedFilter);
+            }
+          }
+        }
+        Query query=new Query();
+        query.setFilter(filter);
+        SimpleFeatureCollection coverageCollection;
+        try {
+          coverageCollection=reader.getGranules(coverageName,readOnly).getGranules(query);
+          coverageCollection.accepts(new AbstractFeatureVisitor(){
+            public void visit(            Feature feature){
+              if (feature instanceof SimpleFeature) {
+                final SimpleFeature destFeature=DataUtilities.template(schema);
+                Collection<Property> props=destFeature.getProperties();
+                Name propName=null;
+                Object propValue=null;
+                for (                Property prop : props) {
+                  propName=prop.getName();
+                  propValue=((SimpleFeature)feature).getAttribute(propName);
+                  destFeature.setAttribute(propName,propValue);
+                }
+                collection.add(destFeature);
+                if (listener.isCanceled() || listener.hasExceptions()) {
+                  if (listener.hasExceptions())                   throw new RuntimeException(listener.getExceptions().peek());
+ else                   throw new IllegalStateException("Feature visitor has been canceled");
+                }
+              }
+            }
+          }
+,listener);
+        }
+ catch (        IOException e) {
+          LOGGER.log(Level.FINER,e.getMessage(),e);
+        }
+catch (        UnsupportedOperationException e) {
+          LOGGER.log(Level.FINER,e.getMessage(),e);
+        }
+        if (listener.isCanceled() || listener.hasExceptions()) {
+          if (listener.hasExceptions())           throw new RuntimeException(listener.getExceptions().peek());
+ else           throw new IllegalStateException("Feature visitor has been canceled");
+        }
+      }
+    }
+  }
+,listener);
+  return collection;
+}
