@@ -1,0 +1,41 @@
+{
+  try {
+    Class.forName(driver);
+  }
+ catch (  ClassNotFoundException cnfe) {
+    System.err.println("skipping " + name + " tests, enable via maven profile");
+    return;
+  }
+  if ("true".equals(System.getProperty("jdbcconfig." + name + ".skip"))) {
+    System.err.println("skipping " + name + " tests, enable via maven profile");
+    return;
+  }
+  DBConfig conf=new DBConfig();
+  conf.name=name;
+  conf.driver=driver;
+  conf.connectionUrl=connectionUrl;
+  conf.dbUser=System.getProperty("user.name");
+  conf.dbPasswd="";
+  connectionUrl=getProperty(name,"connectionUrl");
+  if (connectionUrl != null) {
+    conf.connectionUrl=connectionUrl;
+  }
+  String dbUser=getProperty(name,"dbUser");
+  if (dbUser != null) {
+    conf.dbUser=dbUser;
+  }
+  String dbPass=getProperty(name,"dbPasswd");
+  if (dbPass != null) {
+    conf.dbPasswd=dbPass;
+  }
+  try {
+    conf.dataSource();
+  }
+ catch (  Exception ex) {
+    System.err.println("Unable to connect to datastore, either disable test or specify correct configuration:");
+    System.out.println(ex.getMessage());
+    System.out.println("Current configuration : " + conf.detailString());
+    return;
+  }
+  configs.add(conf);
+}
