@@ -1,5 +1,13 @@
 {
-  File styles=catalog.getResourceLoader().findOrCreateDirectory(data,"styles");
+  GeoServerDataDirectory dd=new GeoServerDataDirectory(catalog.getResourceLoader());
+  File styles;
+  if (ws == null) {
+    styles=dd.findOrCreateStyleDir();
+  }
+ else {
+    styles=new File(dd.findOrCreateWorkspaceDir(ws),"styles");
+    styles.mkdir();
+  }
   String target=new File(filename).getName();
   catalog.getResourceLoader().copyFromClassPath(filename,new File(styles,target),scope);
   StyleInfo style=catalog.getStyleByName(ws,name);
