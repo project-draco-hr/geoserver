@@ -6,22 +6,22 @@
   table=new WebMarkupContainer("table");
   table.setOutputMarkupId(true);
   container.add(table);
-  links=new ListView("links",new PropertyModel(resourceModel,"metadataLinks")){
-    @Override protected void populateItem(    ListItem item){
+  links=new ListView<MetadataLinkInfo>("links",new PropertyModel<List<MetadataLinkInfo>>(resourceModel,"metadataLinks")){
+    @Override protected void populateItem(    ListItem<MetadataLinkInfo> item){
       item.add(new SimpleAttributeModifier("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
-      DropDownChoice dropDownChoice=new DropDownChoice("type",new PropertyModel(item.getModel(),"metadataType"),LINK_TYPES);
+      DropDownChoice<String> dropDownChoice=new DropDownChoice<>("type",new PropertyModel<String>(item.getModel(),"metadataType"),LINK_TYPES);
       dropDownChoice.setRequired(true);
       item.add(dropDownChoice);
       FormComponentFeedbackBorder urlBorder=new FormComponentFeedbackBorder("urlBorder");
       item.add(urlBorder);
-      TextField format=new TextField("format",new PropertyModel(item.getModel(),"type"));
+      TextField<String> format=new TextField<>("format",new PropertyModel<String>(item.getModel(),"type"));
       format.setRequired(true);
       item.add(format);
-      TextField url=new TextField("metadataLinkURL",new PropertyModel(item.getModel(),"content"));
+      TextField<String> url=new TextField<>("metadataLinkURL",new PropertyModel<String>(item.getModel(),"content"));
       url.add(new UrlValidator());
       url.setRequired(true);
       urlBorder.add(url);
-      AjaxLink link=new AjaxLink("removeLink",item.getModel()){
+      AjaxLink<MetadataLinkInfo> link=new AjaxLink<MetadataLinkInfo>("removeLink",item.getModel()){
         @Override public void onClick(        AjaxRequestTarget target){
           ResourceInfo ri=(ResourceInfo)resourceModel.getObject();
           ri.getMetadataLinks().remove(getModelObject());
@@ -40,7 +40,7 @@
   container.add(noMetadata);
   updateLinksVisibility();
   AjaxButton button=new AjaxButton("addlink"){
-    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       ResourceInfo ri=(ResourceInfo)resourceModel.getObject();
       MetadataLinkInfo link=ri.getCatalog().getFactory().createMetadataLink();
       ;
