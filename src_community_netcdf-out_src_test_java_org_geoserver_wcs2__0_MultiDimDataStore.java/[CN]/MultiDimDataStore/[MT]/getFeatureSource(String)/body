@@ -1,0 +1,36 @@
+{
+  return new AbstractFeatureSource(getSupportedHints()){
+{
+      queryCapabilities=new QueryCapabilities(){
+        @Override public boolean supportsSorting(        SortBy[] sortAttributes){
+          if (sortAttributes != null && sortAttributes.length == 1) {
+            if (sortAttributes[0].getPropertyName().getPropertyName().equals("timestamp")) {
+              return true;
+            }
+          }
+          return super.supportsSorting(sortAttributes);
+        }
+      }
+;
+    }
+    @Override public ReferencedEnvelope getBounds() throws IOException {
+      return TOTAL_BOUNDS;
+    }
+    public DataStore getDataStore(){
+      return MultiDimDataStore.this;
+    }
+    public String toString(){
+      return "AbstractDataStore.AbstractFeatureSource(" + TYPENAME + ")";
+    }
+    public void addFeatureListener(    FeatureListener listener){
+      listenerManager.addFeatureListener(this,listener);
+    }
+    public void removeFeatureListener(    FeatureListener listener){
+      listenerManager.removeFeatureListener(this,listener);
+    }
+    public SimpleFeatureType getSchema(){
+      return FEATURE_TYPE;
+    }
+  }
+;
+}
