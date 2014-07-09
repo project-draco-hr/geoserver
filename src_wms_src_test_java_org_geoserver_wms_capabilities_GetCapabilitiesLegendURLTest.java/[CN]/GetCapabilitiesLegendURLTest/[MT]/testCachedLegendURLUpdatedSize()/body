@@ -1,0 +1,21 @@
+{
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  File sldFile=loader.get(Paths.path("styles","Bridges.sld")).file();
+  File sampleFile=loader.get(Paths.path("styles","Bridges.png")).file();
+  long lastTime=sampleFile.lastModified();
+  long previousTime=sldFile.lastModified();
+  sldFile.setLastModified(lastTime + 1000);
+  ((LegendSampleImpl)GeoServerExtensions.bean(LegendSample.class)).reloaded();
+  TransformerBase tr=createTransformer();
+  tr.setIndentation(2);
+  Document dom=WMSTestSupport.transform(req,tr);
+  NodeList legendURLs=XPATH.getMatchingNodes(getLegendURLXPath("cite:Bridges"),dom);
+  assertEquals(1,legendURLs.getLength());
+  Element legendURL=(Element)legendURLs.item(0);
+  assertTrue(legendURL.hasAttribute("width"));
+  assertEquals("20",legendURL.getAttribute("width"));
+  assertTrue(legendURL.hasAttribute("height"));
+  assertEquals("20",legendURL.getAttribute("height"));
+  assertTrue(sampleFile.lastModified() > lastTime);
+  sldFile.setLastModified(previousTime);
+}

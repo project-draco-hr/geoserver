@@ -1,0 +1,56 @@
+{
+  String layerName=layer.getName();
+  if (legend != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("using user supplied legend URL");
+    }
+    AttributesImpl attrs=new AttributesImpl();
+    attrs.addAttribute("","width","width","",String.valueOf(legend.getWidth()));
+    attrs.addAttribute("","height","height","",String.valueOf(legend.getHeight()));
+    start("LegendURL",attrs);
+    element("Format",legend.getFormat());
+    attrs.clear();
+    attrs.addAttribute("","xmlns:xlink","xmlns:xlink","",XLINK_NS);
+    attrs.addAttribute(XLINK_NS,"type","xlink:type","","simple");
+    attrs.addAttribute(XLINK_NS,"href","xlink:href","",legend.getOnlineResource());
+    element("OnlineResource",null,attrs);
+    end("LegendURL");
+  }
+ else {
+    int legendWidth=GetLegendGraphicRequest.DEFAULT_WIDTH;
+    int legendHeight=GetLegendGraphicRequest.DEFAULT_HEIGHT;
+    if (sampleStyle != null) {
+      Dimension dimension=legendSample.getLegendURLSize(sampleStyle);
+      if (dimension != null) {
+        legendWidth=(int)dimension.getWidth();
+        legendHeight=(int)dimension.getHeight();
+      }
+    }
+    String defaultFormat=GetLegendGraphicRequest.DEFAULT_FORMAT;
+    if (null == wmsConfig.getLegendGraphicOutputFormat(defaultFormat)) {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.warning(new StringBuffer("Default legend format (").append(defaultFormat).append(")is not supported (jai not available?), can't add LegendURL element").toString());
+      }
+      return;
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Adding GetLegendGraphic call as LegendURL");
+    }
+    AttributesImpl attrs=new AttributesImpl();
+    attrs.addAttribute("","width","width","",String.valueOf(legendWidth));
+    attrs.addAttribute("","height","height","",String.valueOf(legendHeight));
+    start("LegendURL",attrs);
+    element("Format",defaultFormat);
+    attrs.clear();
+    Map<String,String> params=params("service","WMS","request","GetLegendGraphic","format",defaultFormat,"width",String.valueOf(legendWidth),"height",String.valueOf(legendHeight),"layer",layerName);
+    if (style != null) {
+      params.put("style",style.getName());
+    }
+    String legendURL=buildURL(request.getBaseUrl(),"ows",params,URLType.SERVICE);
+    attrs.addAttribute("","xmlns:xlink","xmlns:xlink","",XLINK_NS);
+    attrs.addAttribute(XLINK_NS,"type","xlink:type","","simple");
+    attrs.addAttribute(XLINK_NS,"href","xlink:href","",legendURL);
+    element("OnlineResource",null,attrs);
+    end("LegendURL");
+  }
+}
