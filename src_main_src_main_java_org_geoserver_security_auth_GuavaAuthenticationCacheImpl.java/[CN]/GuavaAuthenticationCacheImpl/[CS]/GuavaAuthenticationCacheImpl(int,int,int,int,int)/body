@@ -1,0 +1,12 @@
+{
+  this.timeToIdleSeconds=timeToIdleSeconds;
+  this.timeToLiveSeconds=timeToLiveSeconds;
+  cache=CacheBuilder.newBuilder().maximumSize(maxEntries).expireAfterAccess(timeToIdleSeconds,TimeUnit.SECONDS).expireAfterWrite(timeToLiveSeconds,TimeUnit.SECONDS).concurrencyLevel(concurrencyLevel).build();
+  if (LOGGER.isLoggable(Level.INFO)) {
+    LOGGER.info("AuthenticationCache Initialized with " + maxEntries + " Max Entries, "+ timeToIdleSeconds+ " seconds idle time, "+ timeToLiveSeconds+ " seconds time to live and "+ concurrencyLevel+ " concurrency level");
+  }
+  scheduler.scheduleAtFixedRate(evictionTask,cleanUpSeconds,cleanUpSeconds,TimeUnit.SECONDS);
+  if (LOGGER.isLoggable(Level.INFO)) {
+    LOGGER.info("AuthenticationCache Eviction Task created to run every " + cleanUpSeconds + " seconds");
+  }
+}
