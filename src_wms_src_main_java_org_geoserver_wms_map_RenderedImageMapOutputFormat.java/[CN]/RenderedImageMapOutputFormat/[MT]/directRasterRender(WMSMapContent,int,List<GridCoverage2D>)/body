@@ -13,8 +13,8 @@
   Expression transformation=visitor.getRasterRenderingTransformation();
   final int mapWidth=mapContent.getMapWidth();
   final int mapHeight=mapContent.getMapHeight();
-  final ReferencedEnvelope mapEnvelope=mapContent.getRenderingArea();
-  final CoordinateReferenceSystem mapCRS=mapContent.getCoordinateReferenceSystem();
+  final ReferencedEnvelope mapEnvelope=getEastNorthEnvelope(mapContent.getRenderingArea());
+  final CoordinateReferenceSystem mapCRS=mapEnvelope.getCoordinateReferenceSystem();
   final Rectangle mapRasterArea=new Rectangle(0,0,mapWidth,mapHeight);
   final AffineTransform worldToScreen=RendererUtilities.worldToScreenTransform(mapEnvelope,mapRasterArea);
   final boolean transparent=mapContent.isTransparent() && isTransparencySupported();
@@ -43,35 +43,6 @@
  else {
     interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
   }
-  final CoordinateReferenceSystem coverageCRS=layer.getFeatureSource().getSchema().getCoordinateReferenceSystem();
-  final GridGeometry2D readGG;
-  final boolean equalsMetadata=CRS.equalsIgnoreMetadata(mapCRS,coverageCRS);
-  boolean sameCRS;
-  try {
-    sameCRS=equalsMetadata ? true : CRS.findMathTransform(mapCRS,coverageCRS,true).isIdentity();
-  }
- catch (  FactoryException e1) {
-    final IOException ioe=new IOException();
-    ioe.initCause(e1);
-    throw ioe;
-  }
-  final boolean needsGutter=!sameCRS || !(interpolation instanceof InterpolationNearest);
-  if (!needsGutter) {
-    readGG=new GridGeometry2D(new GridEnvelope2D(mapRasterArea),mapEnvelope);
-  }
- else {
-    Rectangle bufferedTargetArea=(Rectangle)mapRasterArea.clone();
-    bufferedTargetArea.add(mapRasterArea.x + mapRasterArea.width + 10,mapRasterArea.y + mapRasterArea.height + 10);
-    bufferedTargetArea.add(mapRasterArea.x - 10,mapRasterArea.y - 10);
-    try {
-      readGG=new GridGeometry2D(new GridEnvelope2D(bufferedTargetArea),PixelInCell.CELL_CORNER,new AffineTransform2D(worldToScreen.createInverse()),mapCRS,null);
-    }
- catch (    Exception e) {
-      final IOException ioe=new IOException();
-      ioe.initCause(e);
-      throw ioe;
-    }
-  }
   final int tileSizeX;
   final int tileSizeY;
   if (mapContent.getTileSize() != -1) {
@@ -90,9 +61,45 @@
       final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
       final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
       final Object params=feature.getProperty("params").getValue();
-      coverage=readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
+      GeneralParameterValue[] readParameters=getReadParameters(params,null,null,interpolation,readerBgColor);
+      final GridCoverageRenderer gcr=new GridCoverageRenderer(mapEnvelope.getCoordinateReferenceSystem(),mapEnvelope,mapRasterArea,worldToScreen,interpolationHints);
+      gcr.setAdvancedProjectionHandlingEnabled(true);
+      gcr.setWrapEnabled(DefaultWebMapService.isContinuousMapWrappingEnabled());
+      image=gcr.renderImage(reader,readParameters,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
+      if (image == null) {
+        image=createBkgImage(mapWidth,mapHeight,bgColor,null);
+      }
     }
  else {
+      final CoordinateReferenceSystem coverageCRS=layer.getFeatureSource().getSchema().getCoordinateReferenceSystem();
+      final GridGeometry2D readGG;
+      final boolean equalsMetadata=CRS.equalsIgnoreMetadata(mapCRS,coverageCRS);
+      boolean sameCRS;
+      try {
+        sameCRS=equalsMetadata ? true : CRS.findMathTransform(mapCRS,coverageCRS,true).isIdentity();
+      }
+ catch (      FactoryException e1) {
+        final IOException ioe=new IOException();
+        ioe.initCause(e1);
+        throw ioe;
+      }
+      final boolean needsGutter=!sameCRS || !(interpolation instanceof InterpolationNearest);
+      if (!needsGutter) {
+        readGG=new GridGeometry2D(new GridEnvelope2D(mapRasterArea),mapEnvelope);
+      }
+ else {
+        Rectangle bufferedTargetArea=(Rectangle)mapRasterArea.clone();
+        bufferedTargetArea.add(mapRasterArea.x + mapRasterArea.width + 10,mapRasterArea.y + mapRasterArea.height + 10);
+        bufferedTargetArea.add(mapRasterArea.x - 10,mapRasterArea.y - 10);
+        try {
+          readGG=new GridGeometry2D(new GridEnvelope2D(bufferedTargetArea),PixelInCell.CELL_CORNER,new AffineTransform2D(worldToScreen.createInverse()),mapCRS,null);
+        }
+ catch (        Exception e) {
+          final IOException ioe=new IOException();
+          ioe.initCause(e);
+          throw ioe;
+        }
+      }
       RenderingTransformationHelper helper=new RenderingTransformationHelper(){
         protected GridCoverage2D readCoverage(        GridCoverage2DReader reader,        Object params,        GridGeometry2D readGG) throws IOException {
           return readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
@@ -109,18 +116,8 @@
  else {
         return null;
       }
-    }
-    try {
-      if (coverage == null) {
-        image=createBkgImage((float)mapWidth,(float)mapHeight,bgColor,null);
-      }
- else {
-        final GridCoverageRenderer gcr=new GridCoverageRenderer(mapCRS,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),worldToScreen,interpolationHints);
-        image=gcr.renderImage(coverage,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
-      }
-    }
-  finally {
-      if (coverage != null)       renderedCoverages.add(coverage);
+      final GridCoverageRenderer gcr=new GridCoverageRenderer(mapCRS,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),worldToScreen,interpolationHints);
+      image=gcr.renderImage(coverage,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
     }
   }
  catch (  Throwable e) {

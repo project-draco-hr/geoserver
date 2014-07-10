@@ -15,67 +15,8 @@
  catch (  Exception e) {
     LOGGER.log(Level.WARNING,"Failed to compare data and request envelopes, proceeding with rendering anyways",e);
   }
-  final Parameter<GridGeometry2D> readGG=(Parameter<GridGeometry2D>)AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
-  readGG.setValue(new GridGeometry2D(new GridEnvelope2D(requestedRasterArea),envelope));
-  final Parameter<Interpolation> readInterpolation=(Parameter<Interpolation>)ImageMosaicFormat.INTERPOLATION.createValue();
-  readInterpolation.setValue(interpolation);
-  final Parameter<Color> bgColorParam;
-  if (bgColor != null) {
-    bgColorParam=(Parameter<Color>)AbstractGridFormat.BACKGROUND_COLOR.createValue();
-    bgColorParam.setValue(bgColor);
-  }
- else {
-    bgColorParam=null;
-  }
-  GridCoverage2D coverage=null;
-  GeneralParameterValue[] readParams=(GeneralParameterValue[])params;
-  final int length=readParams == null ? 0 : readParams.length;
-  if (length > 0) {
-    final String readGGName=AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString();
-    final String readInterpolationName=ImageMosaicFormat.INTERPOLATION.getName().toString();
-    final String bgColorName=AbstractGridFormat.BACKGROUND_COLOR.getName().toString();
-    int i=0;
-    boolean foundInterpolation=false;
-    boolean foundGG=false;
-    boolean foundBgColor=false;
-    for (; i < length; i++) {
-      final String paramName=readParams[i].getDescriptor().getName().toString();
-      if (paramName.equalsIgnoreCase(readGGName)) {
-        ((Parameter)readParams[i]).setValue(readGG);
-        foundGG=true;
-      }
- else       if (paramName.equalsIgnoreCase(readInterpolationName)) {
-        ((Parameter)readParams[i]).setValue(interpolation);
-        foundInterpolation=true;
-      }
- else       if (paramName.equalsIgnoreCase(bgColorName) && bgColor != null) {
-        ((Parameter)readParams[i]).setValue(bgColor);
-        foundBgColor=true;
-      }
-    }
-    if (!foundGG || !foundInterpolation || !(foundBgColor && bgColor != null)) {
-      List<GeneralParameterValue> paramList=new ArrayList<GeneralParameterValue>();
-      paramList.addAll(Arrays.asList(readParams));
-      if (!foundGG) {
-        paramList.add(readGG);
-      }
-      if (!foundInterpolation) {
-        paramList.add(readInterpolation);
-      }
-      if (!foundBgColor && bgColor != null) {
-        paramList.add(bgColorParam);
-      }
-      readParams=(GeneralParameterValue[])paramList.toArray(new GeneralParameterValue[paramList.size()]);
-    }
-    coverage=(GridCoverage2D)reader.read(readParams);
-  }
- else {
-    if (bgColorParam != null) {
-      coverage=(GridCoverage2D)reader.read(new GeneralParameterValue[]{readGG,readInterpolation,bgColorParam});
-    }
- else {
-      coverage=(GridCoverage2D)reader.read(new GeneralParameterValue[]{readGG,readInterpolation});
-    }
-  }
+  GridCoverage2D coverage;
+  GeneralParameterValue[] readParams=getReadParameters(params,envelope,requestedRasterArea,interpolation,bgColor);
+  coverage=reader.read(readParams);
   return coverage;
 }

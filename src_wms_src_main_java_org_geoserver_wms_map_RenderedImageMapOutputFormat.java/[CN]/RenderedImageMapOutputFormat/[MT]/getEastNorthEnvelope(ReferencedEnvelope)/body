@@ -1,0 +1,14 @@
+{
+  CoordinateReferenceSystem crs=envelope.getCoordinateReferenceSystem();
+  if (CRS.getAxisOrder(crs) != AxisOrder.NORTH_EAST) {
+    return envelope;
+  }
+  Integer epsg=CRS.lookupEpsgCode(crs,false);
+  if (epsg == null) {
+    return envelope;
+  }
+ else {
+    CoordinateReferenceSystem eastNorthCrs=CRS.decode("EPSG:" + epsg,true);
+    return new ReferencedEnvelope(envelope.getMinY(),envelope.getMaxY(),envelope.getMinX(),envelope.getMaxX(),eastNorthCrs);
+  }
+}
