@@ -1,0 +1,24 @@
+{
+  Map<String,Object> input=new HashMap<String,Object>();
+  List<Object> list=Arrays.<Object>asList("quux",true,7,null);
+  Map<String,Object> map=new HashMap<String,Object>();
+  map.put("fleem","morx");
+  map.put("list",list);
+  input.put("map",map);
+  Object jsonObject=mapJSONFormat.toJSONObject(input);
+  assertTrue(jsonObject instanceof JSONObject);
+  JSONObject json=(JSONObject)jsonObject;
+  Object nestedMapObj=json.get("map");
+  assertTrue(nestedMapObj instanceof JSONObject);
+  JSONObject nestedJson=(JSONObject)nestedMapObj;
+  assertEquals("morx",nestedJson.getString("fleem"));
+  Object listObj=nestedJson.get("list");
+  assertTrue(listObj instanceof JSONArray);
+  JSONArray arrayList=(JSONArray)listObj;
+  assertEquals("quux",arrayList.getString(0));
+  assertTrue(arrayList.getBoolean(1));
+  assertEquals(7,arrayList.getInt(2));
+  Object nullObj=arrayList.get(3);
+  JSONObject jsonNull=(JSONObject)nullObj;
+  assertTrue(jsonNull.isNullObject());
+}
