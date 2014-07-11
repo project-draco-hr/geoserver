@@ -1,10 +1,16 @@
 {
   for (  StyleInfo style : catalog.getStyles()) {
 synchronized (style) {
-      File styleFile=getStyleResource(style,FileType.SLD).file();
-      Resource sampleResource=getStyleResource(style,FileType.SAMPLE);
-      if (styleFile.exists() && sampleResource.getType() == Resource.Type.RESOURCE && styleFile.lastModified() > sampleResource.file().lastModified()) {
-        sampleResource.file().delete();
+      Resource styleResource=getStyleResource(style);
+      File sampleFile;
+      try {
+        sampleFile=getSampleFile(style);
+        if (isStyleNewerThanSample(styleResource,sampleFile)) {
+          sampleFile.delete();
+        }
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.SEVERE,"Error cleaning invalid legend sample for " + style.getName(),e);
       }
     }
   }
