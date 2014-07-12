@@ -1,0 +1,33 @@
+{
+  Measure mt=info.getLinearizationTolerance();
+  if (mt == null) {
+    return null;
+  }
+  if (mt.getUnit() == null) {
+    return mt.doubleValue();
+  }
+  CoordinateReferenceSystem crs=info.getCRS();
+  if (crs == null) {
+    return mt.doubleValue();
+  }
+  SingleCRS horizontalCRS=CRS.getHorizontalCRS(crs);
+  Unit targetUnit;
+  if (horizontalCRS != null) {
+    targetUnit=getFirstAxisUnit(horizontalCRS.getCoordinateSystem());
+  }
+ else {
+    targetUnit=getFirstAxisUnit(crs.getCoordinateSystem());
+  }
+  if ((targetUnit != null && targetUnit == NonSI.DEGREE_ANGLE) || horizontalCRS instanceof GeographicCRS || crs instanceof GeographicCRS) {
+    UnitConverter converter=mt.getUnit().getConverterTo(SI.METER);
+    double tolMeters=converter.convert(mt.doubleValue());
+    return tolMeters * OGC_METERS_TO_DEGREES;
+  }
+ else   if (targetUnit != null && targetUnit.isCompatible(SI.METER)) {
+    UnitConverter converter=mt.getUnit().getConverterTo(targetUnit);
+    return converter.convert(mt.doubleValue());
+  }
+ else {
+    return mt.doubleValue();
+  }
+}
