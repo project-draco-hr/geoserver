@@ -1,0 +1,23 @@
+{
+  GetLegendGraphicRequest legendGraphicRequest=new GetLegendGraphicRequest();
+  File sampleLegendFolder=getSamplesFolder();
+  legendGraphicRequest.setLayers(Arrays.asList((FeatureType)null));
+  legendGraphicRequest.setStyles(Arrays.asList(style.getStyle()));
+  legendGraphicRequest.setFormat(pngOutputFormat.getContentType());
+  Object legendGraphic=pngOutputFormat.produceLegendGraphic(legendGraphicRequest);
+  if (legendGraphic instanceof BufferedImageLegendGraphic) {
+    BufferedImage image=((BufferedImageLegendGraphic)legendGraphic).getLegend();
+    PNGWriter writer=new PNGWriter();
+    FileOutputStream outStream=null;
+    try {
+      outStream=new FileOutputStream(sampleLegendFolder.getAbsolutePath() + File.separator + getSampleFileName(style));
+      writer.writePNG(image,outStream,0.0f,FilterType.FILTER_NONE);
+      removeStyleSampleInvalidation(style);
+      return new Dimension(image.getWidth(),image.getHeight());
+    }
+  finally {
+      outStream.close();
+    }
+  }
+  return null;
+}
