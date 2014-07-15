@@ -1,0 +1,29 @@
+{
+  final List<Script> selection=tablePanel.getSelection();
+  if (selection.size() == 0)   return;
+  dialog.setTitle(new ParamResourceModel("confirmRemoval",this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    protected Component getContents(    String id){
+      return new Label(id,"Do you want to delete these scripts?");
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      for (      Script script : selection) {
+        File file=script.getFile();
+        file.delete();
+        if (script.getType().equalsIgnoreCase(ScriptType.APP.getLabel())) {
+          file.getParentFile().delete();
+        }
+      }
+      tablePanel.clearSelection();
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (tablePanel.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(ScriptSelectionRemovalLink.this);
+        target.addComponent(tablePanel);
+      }
+    }
+  }
+);
+}

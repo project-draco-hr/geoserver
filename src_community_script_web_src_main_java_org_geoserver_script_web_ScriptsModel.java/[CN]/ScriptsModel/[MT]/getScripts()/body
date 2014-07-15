@@ -1,0 +1,42 @@
+{
+  List<Script> scripts=new ArrayList<Script>();
+  ScriptManager scriptManager=(ScriptManager)GeoServerExtensions.bean("scriptMgr");
+  try {
+    File[] dirs={scriptManager.getWpsRoot(),scriptManager.getWfsTxRoot(),scriptManager.getFunctionRoot(),scriptManager.getAppRoot()};
+    for (    File dir : dirs) {
+      File[] files=dir.listFiles();
+      for (      File file : files) {
+        if (dir.getName().equals("apps")) {
+          if (file.isDirectory()) {
+            File mainFile=scriptManager.findAppMainScript(file);
+            if (mainFile != null) {
+              Script script=new Script(mainFile);
+              scripts.add(script);
+            }
+ else {
+              LOGGER.info("Could not find main app file in " + file.getAbsolutePath());
+            }
+          }
+        }
+ else         if (dir.getName().equals("wps")) {
+          if (file.isDirectory()) {
+            File[] fs=file.listFiles();
+            for (            File f : fs) {
+              scripts.add(new Script(f));
+            }
+          }
+ else {
+            scripts.add(new Script(file));
+          }
+        }
+ else {
+          scripts.add(new Script(file));
+        }
+      }
+    }
+  }
+ catch (  IOException ioe) {
+    ioe.printStackTrace();
+  }
+  return scripts;
+}
