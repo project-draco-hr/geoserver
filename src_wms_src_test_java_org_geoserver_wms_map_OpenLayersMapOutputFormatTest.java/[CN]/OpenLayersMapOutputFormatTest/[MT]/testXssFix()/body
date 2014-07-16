@@ -1,0 +1,27 @@
+{
+  Catalog catalog=getCatalog();
+  final FeatureSource fs=catalog.getFeatureTypeByName(MockData.BASIC_POLYGONS.getPrefix(),MockData.BASIC_POLYGONS.getLocalPart()).getFeatureSource(null,null);
+  final Envelope env=fs.getBounds();
+  LOGGER.info("about to create map ctx for BasicPolygons with bounds " + env);
+  GetMapRequest request=createGetMapRequest(MockData.BASIC_POLYGONS);
+  request.getRawKvp().put("</script><script>alert('x-scripted');</script><script>","foo");
+  final WMSMapContent map=new WMSMapContent();
+  map.getViewport().setBounds(new ReferencedEnvelope(env,DefaultGeographicCRS.WGS84));
+  map.setMapWidth(300);
+  map.setMapHeight(300);
+  map.setBgColor(Color.red);
+  map.setTransparent(false);
+  map.setRequest(request);
+  StyleInfo styleByName=catalog.getStyleByName("Default");
+  Style basicStyle=styleByName.getStyle();
+  FeatureLayer layer=new FeatureLayer(fs,basicStyle);
+  layer.setTitle("Title");
+  map.addLayer(layer);
+  request.setFormat("application/openlayers");
+  RawMap rawMap=this.mapProducer.produceMap(map);
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  rawMap.writeTo(bos);
+  String htmlDoc=new String(bos.toByteArray(),"UTF-8");
+  int index=htmlDoc.replace("\\n","").replace("\\r","").indexOf("\"</script\\><script\\>alert(\\'x-scripted\\');</script\\><script\\>\": 'foo'");
+  assertTrue(index > -1);
+}
