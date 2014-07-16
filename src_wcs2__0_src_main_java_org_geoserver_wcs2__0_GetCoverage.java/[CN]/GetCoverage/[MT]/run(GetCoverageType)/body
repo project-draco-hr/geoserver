@@ -18,7 +18,7 @@
     GridCoverageRequest gcr=helper.getGridCoverageRequest();
     final GridCoverageFactory coverageFactory=CoverageFactoryFinder.getGridCoverageFactory(hints);
     if (reader instanceof StructuredGridCoverage2DReader && formatSupportMDOutput(request.getFormat())) {
-      final List<GridCoverageRequest> requests=helper.splitRequest();
+      final Set<GridCoverageRequest> requests=helper.splitRequestToSet();
       if (requests == null || requests.isEmpty()) {
         throw new IllegalArgumentException("Splitting requests returned nothing");
       }
@@ -35,8 +35,9 @@
       long inputLimit=wcs.getMaxInputMemory() * 1024;
       ImageSizeRecorder incrementalOutputSize=new ImageSizeRecorder(outputLimit,false);
       ImageSizeRecorder incrementalInputSize=new ImageSizeRecorder(inputLimit,true);
-      int numRequests=requests.size();
-      GridCoverageRequest firstRequest=requests.remove(0);
+      final int numRequests=requests.size();
+      final Iterator<GridCoverageRequest> requestsIterator=requests.iterator();
+      GridCoverageRequest firstRequest=requestsIterator.next();
       GridCoverage2D firstCoverage=setupCoverage(helper,firstRequest,request,reader,hints,extensions,dimensions,incrementalOutputSize,incrementalInputSize,coverageFactory);
       long actual=incrementalInputSize.finalSize();
       long estimatedSize=actual * numRequests;
@@ -44,7 +45,8 @@
         throw new WcsException("This request is trying to generate too much data, " + "the limit is " + formatBytes(outputLimit) + " but the estimated amount of bytes to be "+ "written in the output is "+ formatBytes(estimatedSize));
       }
       stack.addCoverage(firstCoverage);
-      for (      GridCoverageRequest subRequest : requests) {
+      while (requestsIterator.hasNext()) {
+        GridCoverageRequest subRequest=requestsIterator.next();
         GridCoverage2D singleCoverage=setupCoverage(helper,subRequest,request,reader,hints,extensions,dimensions,incrementalOutputSize,incrementalInputSize,coverageFactory);
         stack.addCoverage(singleCoverage);
       }
