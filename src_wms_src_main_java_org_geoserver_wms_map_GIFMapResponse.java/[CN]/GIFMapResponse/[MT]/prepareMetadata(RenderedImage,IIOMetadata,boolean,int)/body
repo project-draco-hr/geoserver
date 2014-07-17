@@ -4,9 +4,17 @@
   IIOMetadataNode graphicsControlExtensionNode=getNode(root,"GraphicControlExtension");
   graphicsControlExtensionNode.setAttribute("disposalMethod","none");
   graphicsControlExtensionNode.setAttribute("userInputFlag","FALSE");
-  graphicsControlExtensionNode.setAttribute("transparentColorFlag","FALSE");
   graphicsControlExtensionNode.setAttribute("delayTime",Integer.toString(timeBetweenFramesMS / 10));
-  graphicsControlExtensionNode.setAttribute("transparentColorIndex","0");
+  final IndexColorModel icm=(IndexColorModel)ri.getColorModel();
+  int transparentColorIndex=-1;
+  if (icm.getTransparency() == Transparency.BITMASK && (transparentColorIndex=icm.getTransparentPixel()) >= 0) {
+    graphicsControlExtensionNode.setAttribute("transparentColorIndex",String.valueOf(transparentColorIndex));
+    graphicsControlExtensionNode.setAttribute("transparentColorFlag","TRUE");
+  }
+ else {
+    graphicsControlExtensionNode.setAttribute("transparentColorIndex","0");
+    graphicsControlExtensionNode.setAttribute("transparentColorFlag","FALSE");
+  }
   IIOMetadataNode commentsNode=getNode(root,"CommentExtensions");
   commentsNode.setAttribute("CommentExtension","Created by MAH");
   IIOMetadataNode appEntensionsNode=getNode(root,"ApplicationExtensions");
@@ -14,7 +22,8 @@
   child.setAttribute("applicationID","NETSCAPE");
   child.setAttribute("authenticationCode","2.0");
   int loop=loopContinuously ? 0 : 1;
-  child.setUserObject(new byte[]{0x1,(byte)(loop & 0xFF),(byte)((loop >> 8) & 0xFF)});
+  final byte[] userObject=new byte[]{0x1,(byte)(loop & 0xFF),(byte)((loop >> 8) & 0xFF)};
+  child.setUserObject(userObject);
   appEntensionsNode.appendChild(child);
   imageMetadata.setFromTree(metaFormatName,root);
 }
