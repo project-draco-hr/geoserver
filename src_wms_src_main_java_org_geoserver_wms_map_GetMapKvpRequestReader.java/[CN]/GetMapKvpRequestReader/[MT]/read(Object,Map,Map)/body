@@ -58,13 +58,13 @@
     }
     if (getMap.getValidateSchema().booleanValue()) {
       ByteArrayInputStream stream=new ByteArrayInputStream(getMap.getSldBody().getBytes());
-      List errors=validateSld(stream,getMap);
+      List errors=validateStyle(stream,getMap);
       if (errors.size() != 0) {
         throw new ServiceException(SLDValidator.getErrorMessage(new ByteArrayInputStream(getMap.getSldBody().getBytes()),errors));
       }
     }
     InputStream input=new ByteArrayInputStream(getMap.getSldBody().getBytes());
-    StyledLayerDescriptor sld=parseSld(getMap,input);
+    StyledLayerDescriptor sld=parseStyle(getMap,input);
     processSld(getMap,requestedLayerInfos,sld,styleNameList);
     getMap.setFilter(filters);
   }
@@ -72,18 +72,18 @@
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.fine("Getting layers and styles from reomte SLD");
     }
-    URL sldUrl=getMap.getSld();
+    URL styleUrl=getMap.getStyleUrl();
     if (getMap.getValidateSchema().booleanValue()) {
-      InputStream input=Requests.getInputStream(sldUrl);
+      InputStream input=Requests.getInputStream(styleUrl);
       List errors=null;
       try {
-        errors=validateSld(input,getMap);
+        errors=validateStyle(input,getMap);
       }
   finally {
         input.close();
       }
       if ((errors != null) && (errors.size() != 0)) {
-        input=Requests.getInputStream(sldUrl);
+        input=Requests.getInputStream(styleUrl);
         try {
           throw new ServiceException(SLDValidator.getErrorMessage(input,errors));
         }
@@ -92,9 +92,9 @@
         }
       }
     }
-    InputStream input=Requests.getInputStream(sldUrl);
+    InputStream input=Requests.getInputStream(styleUrl);
     try {
-      StyledLayerDescriptor sld=parseSld(getMap,input);
+      StyledLayerDescriptor sld=parseStyle(getMap,input);
       processSld(getMap,requestedLayerInfos,sld,styleNameList);
     }
   finally {

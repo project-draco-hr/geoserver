@@ -26,53 +26,43 @@
     }
     return style.getName();
   }
- else   if (object instanceof Style) {
-    Style style=(Style)object;
+ else   if (object instanceof Style || object instanceof InputStream) {
     String name=getRequest().getResourceRef().getQueryAsForm().getFirstValue("name");
+    ;
     if (name == null) {
-      name=style.getName();
-    }
-    if (name == null) {
-      throw new RestletException("Style must have a name.",Status.CLIENT_ERROR_BAD_REQUEST);
+      name=findNameFromObject(object);
     }
     if (catalog.getStyleByName(workspace,name) != null) {
       throw new RestletException("Style " + name + " already exists.",Status.CLIENT_ERROR_FORBIDDEN);
     }
-    GeoServerResourceLoader loader=catalog.getResourceLoader();
-    String path="styles/" + name + ".sld";
-    if (workspace != null) {
-      path="workspaces/" + workspace + "/"+ path;
-    }
-    File f;
-    try {
-      f=loader.find(path);
-    }
- catch (    IOException e) {
-      throw new RestletException("Error looking up file",Status.SERVER_ERROR_INTERNAL,e);
-    }
-    if (f != null) {
-      String msg="SLD file " + path + ".sld already exists.";
-      throw new RestletException(msg,Status.CLIENT_ERROR_FORBIDDEN);
-    }
-    try {
-      f=loader.createFile(path);
-      BufferedOutputStream out=new BufferedOutputStream(new FileOutputStream(f));
-      SLDFormat format=new SLDFormat(true);
-      format.toRepresentation(style).write(out);
-      out.flush();
-      out.close();
-    }
- catch (    IOException e) {
-      throw new RestletException("Error creating file",Status.SERVER_ERROR_INTERNAL,e);
-    }
+    StyleHandler styleFormat=((StyleFormat)getFormatPostOrPut()).getHandler();
     StyleInfo sinfo=catalog.getFactory().createStyle();
     sinfo.setName(name);
-    sinfo.setFilename(f.getName());
+    sinfo.setFilename(name + "." + styleFormat.getFileExtension());
+    sinfo.setFormat(styleFormat.getFormat());
+    sinfo.setFormatVersion(styleFormat.versionForMimeType(getRequest().getEntity().getMediaType().getName()));
     if (workspace != null) {
       sinfo.setWorkspace(catalog.getWorkspaceByName(workspace));
     }
+    GeoServerDataDirectory dataDir=new GeoServerDataDirectory(catalog.getResourceLoader());
+    if (dataDir.style(sinfo).getType() != Resource.Type.UNDEFINED) {
+      String msg="Style resource " + sinfo.getFilename() + " already exists.";
+      throw new RestletException(msg,Status.CLIENT_ERROR_FORBIDDEN);
+    }
+    ResourcePool resourcePool=catalog.getResourcePool();
+    try {
+      if (object instanceof Style) {
+        resourcePool.writeStyle(sinfo,(Style)object);
+      }
+ else {
+        resourcePool.writeStyle(sinfo,(InputStream)object);
+      }
+    }
+ catch (    IOException e) {
+      throw new RestletException("Error writing style",Status.SERVER_ERROR_INTERNAL,e);
+    }
     catalog.add(sinfo);
-    LOGGER.info("POST SLD " + name);
+    LOGGER.info("POST Style " + name);
     return name;
   }
   return null;

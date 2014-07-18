@@ -1,8 +1,9 @@
 {
   tester.assertRenderedPage(StyleEditPage.class);
   tester.assertNoErrorMessage();
+  tester.debugComponentTrees();
   tester.assertComponent("form:name",TextField.class);
-  tester.assertComponent("form:SLD:editorContainer:editorParent:editor",TextArea.class);
+  tester.assertComponent("form:styleEditor:editorContainer:editorParent:editor",TextArea.class);
   tester.assertModelValue("form:name","Buildings");
   GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
   assertNotNull(loader);
@@ -10,7 +11,7 @@
   Resource styleFile=loader.get(path);
   DocumentBuilder db=DocumentBuilderFactory.newInstance().newDocumentBuilder();
   Document d1=db.parse(styleFile.in());
-  String xml=tester.getComponentFromLastRenderedPage("form:SLD").getDefaultModelObjectAsString();
+  String xml=tester.getComponentFromLastRenderedPage("form:styleEditor").getDefaultModelObjectAsString();
   xml=xml.replaceAll("&lt;","<").replaceAll("&gt;",">").replaceAll("&quot;","\"");
   Document d2=db.parse(new ByteArrayInputStream(xml.getBytes()));
   assertXMLEqual(d1,d2);

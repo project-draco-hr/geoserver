@@ -1,0 +1,21 @@
+{
+  Properties props=new Properties();
+  props.put("type","point");
+  props.put("color","ff0000");
+  StringWriter out=new StringWriter();
+  props.store(out,"comment!");
+  MockHttpServletResponse response=postAsServletResponse("/rest/styles?name=foo&raw=true",out.toString(),PropertyStyleHandler.MIMETYPE);
+  assertEquals(201,response.getStatusCode());
+  assertNotNull(response.getHeader("Location"));
+  assertTrue(response.getHeader("Location").endsWith("/styles/foo"));
+  Resource style=getDataDirectory().style(getCatalog().getStyleByName("foo"));
+  InputStream in=style.in();
+  try {
+    out=new StringWriter();
+    IOUtils.copy(style.in(),out);
+    assertTrue(out.toString().startsWith("#comment!"));
+  }
+  finally {
+    in.close();
+  }
+}

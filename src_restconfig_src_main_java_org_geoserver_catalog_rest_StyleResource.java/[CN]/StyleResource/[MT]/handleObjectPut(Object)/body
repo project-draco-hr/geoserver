@@ -12,9 +12,15 @@
     new CatalogBuilder(catalog).updateStyle(original,s);
     catalog.save(original);
   }
- else   if (object instanceof Style) {
+ else   if (object instanceof Style || object instanceof InputStream) {
     StyleInfo s=catalog.getStyleByName(workspace,style);
-    catalog.getResourcePool().writeStyle(s,(Style)object,true);
+    ResourcePool resourcePool=catalog.getResourcePool();
+    if (object instanceof Style) {
+      resourcePool.writeStyle(s,(Style)object,true);
+    }
+ else {
+      resourcePool.writeStyle(s,(InputStream)object);
+    }
     catalog.save(s);
   }
   LOGGER.info("PUT style " + style);

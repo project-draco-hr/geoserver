@@ -1,0 +1,40 @@
+{
+  Properties p=new Properties();
+  p.load(toReader(input));
+  Color color=color(p.getProperty("color"),Color.BLACK);
+  Symbolizer sym=null;
+  String type=p.getProperty("type");
+  if ("line".equalsIgnoreCase(type)) {
+    LineSymbolizer ls=styleFactory.createLineSymbolizer();
+    ls.setStroke(styleFactory.createStroke(filterFactory.literal(color),filterFactory.literal(2)));
+    sym=ls;
+  }
+ else   if ("polygon".equalsIgnoreCase(type)) {
+    PolygonSymbolizer ps=styleFactory.createPolygonSymbolizer();
+    ps.setFill(styleFactory.createFill(filterFactory.literal(color)));
+    sym=ps;
+  }
+ else   if ("raster".equalsIgnoreCase(type)) {
+    RasterSymbolizer rs=styleFactory.createRasterSymbolizer();
+    sym=rs;
+  }
+ else {
+    Mark mark=styleFactory.createMark();
+    mark.setFill(styleFactory.createFill(filterFactory.literal(color)));
+    PointSymbolizer ps=styleFactory.createPointSymbolizer();
+    ps.setGraphic(styleFactory.createDefaultGraphic());
+    ps.getGraphic().graphicalSymbols().add(mark);
+    sym=ps;
+  }
+  Rule r=styleFactory.createRule();
+  r.symbolizers().add(sym);
+  FeatureTypeStyle fts=styleFactory.createFeatureTypeStyle();
+  fts.rules().add(r);
+  Style s=styleFactory.createStyle();
+  s.featureTypeStyles().add(fts);
+  UserLayer l=styleFactory.createUserLayer();
+  l.userStyles().add(s);
+  StyledLayerDescriptor sld=styleFactory.createStyledLayerDescriptor();
+  sld.layers().add(l);
+  return sld;
+}

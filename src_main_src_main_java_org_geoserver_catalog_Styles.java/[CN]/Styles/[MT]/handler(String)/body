@@ -1,0 +1,41 @@
+{
+  if (format == null) {
+    throw new IllegalArgumentException("Style format must not be null");
+  }
+  List<StyleHandler> allHandlers=handlers();
+  List<StyleHandler> matches=new ArrayList();
+  for (  StyleHandler h : allHandlers) {
+    if (format.equalsIgnoreCase(h.getFormat())) {
+      matches.add(h);
+    }
+  }
+  if (matches.isEmpty()) {
+    for (    StyleHandler h : allHandlers) {
+      for (      Version ver : h.getVersions()) {
+        if (h.mimeType(ver).equals(format)) {
+          matches.add(h);
+        }
+      }
+    }
+  }
+  if (matches.isEmpty()) {
+    for (    StyleHandler h : allHandlers) {
+      if (format.equalsIgnoreCase(h.getFileExtension())) {
+        matches.add(h);
+      }
+    }
+  }
+  if (matches.isEmpty()) {
+    throw new RuntimeException("No such style handler: format = " + format);
+  }
+  if (matches.size() == 1) {
+    return matches.get(0);
+  }
+  List<String> handlerNames=Lists.transform(matches,new Function<StyleHandler,String>(){
+    @Nullable @Override public String apply(    @Nullable StyleHandler styleHandler){
+      return styleHandler.getName();
+    }
+  }
+);
+  throw new IllegalArgumentException("Multiple style handlers: " + handlerNames + " found for format: "+ format);
+}
