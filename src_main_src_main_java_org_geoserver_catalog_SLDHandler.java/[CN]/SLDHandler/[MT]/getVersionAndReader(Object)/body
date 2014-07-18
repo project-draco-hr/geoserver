@@ -1,0 +1,37 @@
+{
+  BufferedReader reader=null;
+  if (input instanceof InputStream) {
+    reader=RequestUtils.getBufferedXMLReader((InputStream)input,XML_LOOKAHEAD);
+  }
+ else {
+    reader=RequestUtils.getBufferedXMLReader(toReader(input),XML_LOOKAHEAD);
+  }
+  if (!reader.ready()) {
+    return null;
+  }
+  String version;
+  try {
+    XmlPullParserFactory factory=XmlPullParserFactory.newInstance();
+    factory.setNamespaceAware(true);
+    factory.setValidating(false);
+    XmlPullParser parser=factory.newPullParser();
+    parser.setInput(reader);
+    parser.nextTag();
+    version=null;
+    for (int i=0; i < parser.getAttributeCount(); i++) {
+      if ("version".equals(parser.getAttributeName(i))) {
+        version=parser.getAttributeValue(i);
+      }
+    }
+    parser.setInput(null);
+  }
+ catch (  XmlPullParserException e) {
+    throw (IOException)new IOException("Error parsing content").initCause(e);
+  }
+  reader.reset();
+  if (version == null) {
+    LOGGER.warning("Could not determine SLD version from content. Assuming 1.0.0");
+    version="1.0.0";
+  }
+  return new Object[]{new Version(version),reader};
+}

@@ -1,0 +1,29 @@
+{
+  testPostAsPSL();
+  Properties props=new Properties();
+  props.put("type","line");
+  props.put("color","00ff00");
+  StringWriter out=new StringWriter();
+  props.store(out,"comment!");
+  MockHttpServletResponse response=putAsServletResponse("/rest/styles/foo?raw=true",out.toString(),PropertyStyleHandler.MIMETYPE);
+  assertEquals(200,response.getStatusCode());
+  Resource style=getDataDirectory().style(getCatalog().getStyleByName("foo"));
+  InputStream in=style.in();
+  try {
+    props=new Properties();
+    props.load(in);
+    assertEquals("line",props.getProperty("type"));
+  }
+  finally {
+    in.close();
+  }
+  in=style.in();
+  try {
+    out=new StringWriter();
+    IOUtils.copy(style.in(),out);
+    assertTrue(out.toString().startsWith("#comment!"));
+  }
+  finally {
+    in.close();
+  }
+}
