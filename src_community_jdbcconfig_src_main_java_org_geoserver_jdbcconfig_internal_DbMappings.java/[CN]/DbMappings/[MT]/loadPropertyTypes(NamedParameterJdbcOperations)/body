@@ -3,12 +3,15 @@
   RowMapper<PropertyType> rowMapper=new RowMapper<PropertyType>(){
     @Override public PropertyType mapRow(    ResultSet rs,    int rowNum) throws SQLException {
       Integer oid=rs.getInt(1);
-      Integer targetPropertyOid=(Integer)rs.getObject(2);
+      Number targetPropertyOid=(Number)rs.getObject(2);
       Integer objectTypeOid=rs.getInt(3);
       String propertyName=rs.getString(4);
       Boolean collectionProperty=rs.getBoolean(5);
       Boolean textProperty=rs.getBoolean(6);
-      PropertyType pt=new PropertyType(oid,targetPropertyOid,objectTypeOid,propertyName,collectionProperty,textProperty);
+      if (targetPropertyOid != null) {
+        targetPropertyOid=targetPropertyOid.intValue();
+      }
+      PropertyType pt=new PropertyType(oid,(Integer)targetPropertyOid,objectTypeOid,propertyName,collectionProperty,textProperty);
       return pt;
     }
   }

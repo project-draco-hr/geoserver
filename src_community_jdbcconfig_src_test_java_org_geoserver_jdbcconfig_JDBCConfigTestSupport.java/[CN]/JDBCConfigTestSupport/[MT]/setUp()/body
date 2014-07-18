@@ -5,29 +5,13 @@
   GeoServerExtensionsHelper.init(appContext);
   configureAppContext(appContext);
   replay(appContext);
-  dataSource=new BasicDataSource();
-  dataSource.setDriverClassName(driver);
-  dataSource.setUrl(connectionUrl.replace("${DATA_DIR}",resourceLoader.getBaseDirectory().getAbsolutePath()));
-  dataSource.setUsername(dbUser);
-  dataSource.setPassword(dbPasswd);
-  dataSource.setMinIdle(3);
-  dataSource.setMaxActive(10);
-  try {
-    Connection connection=dataSource.getConnection();
-    connection.close();
-  }
- catch (  Exception e) {
-    throw new RuntimeException(e);
-  }
-  try {
-    dropDb(dataSource);
-  }
- catch (  Exception ignored) {
-  }
-  initDb(dataSource);
-  XStreamInfoSerialBinding binding=new XStreamInfoSerialBinding(new XStreamPersisterFactory());
+  dataSource=dbConfig.dataSource();
+  dropDb();
+  initDb();
+  AnnotationConfigApplicationContext context=new AnnotationConfigApplicationContext(Config.class);
+  context.getBean(Config.class).real=dataSource;
+  configDb=context.getBean(ConfigDatabase.class);
   catalog=new CatalogImpl();
-  configDb=new ConfigDatabase(dataSource,binding);
   configDb.setCatalog(catalog);
   configDb.initDb(null);
 }

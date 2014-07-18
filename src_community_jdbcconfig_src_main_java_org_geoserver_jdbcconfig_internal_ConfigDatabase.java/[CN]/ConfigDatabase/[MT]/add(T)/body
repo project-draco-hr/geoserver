@@ -8,10 +8,10 @@
   final Class<T> interf=ClassMappings.fromImpl(info.getClass()).getInterface();
   final Integer typeId=dbMappings.getTypeId(interf);
   Map<String,?> params=params("type_id",typeId,"id",id,"blob",blob);
-  final String statement="insert into object (type_id, id, blob) values (:type_id, :id, :blob)";
+  final String statement=String.format("insert into object (oid, type_id, id, blob) values (%s, :type_id, :id, :blob)",dialect.nextVal("seq_OBJECT"));
   logStatement(statement,params);
   KeyHolder keyHolder=new GeneratedKeyHolder();
-  int updateCount=template.update(statement,new MapSqlParameterSource(params),keyHolder);
+  int updateCount=template.update(statement,new MapSqlParameterSource(params),keyHolder,new String[]{"oid"});
   checkState(updateCount == 1,"Insert statement failed");
   Number key=(Number)keyHolder.getKeys().get("oid");
   if (key == null) {

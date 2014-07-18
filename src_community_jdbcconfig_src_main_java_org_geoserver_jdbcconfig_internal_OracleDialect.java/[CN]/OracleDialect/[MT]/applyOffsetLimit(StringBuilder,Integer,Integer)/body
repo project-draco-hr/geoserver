@@ -1,0 +1,18 @@
+{
+  if (offset != null && limit == null) {
+    limit=Integer.MAX_VALUE;
+  }
+  if (limit != null && offset == null) {
+    offset=0;
+    limit+=1;
+  }
+  if (offset != null && limit != null) {
+    sql.insert(0,"select * from ( select query.*, rownum rnum from (\n");
+    sql.append(") query\n");
+    if (limit != Integer.MAX_VALUE) {
+      limit=offset + limit;
+    }
+    sql.append("where rownum <= ").append(limit).append(")\n");
+    sql.append("where rnum > ").append(offset);
+  }
+}

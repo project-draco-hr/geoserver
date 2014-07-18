@@ -1,0 +1,17 @@
+{
+  if (dataSource != null)   return dataSource;
+  dataSource=new BasicDataSource(){
+    @Override public synchronized void close() throws SQLException {
+    }
+  }
+;
+  dataSource.setDriverClassName(driver);
+  dataSource.setUrl(connectionUrl.replace("${DATA_DIR}",createTempDir().getAbsolutePath()));
+  dataSource.setUsername(dbUser);
+  dataSource.setPassword(dbPasswd);
+  dataSource.setMinIdle(3);
+  dataSource.setMaxActive(10);
+  Connection connection=dataSource.getConnection();
+  connection.close();
+  return dataSource;
+}

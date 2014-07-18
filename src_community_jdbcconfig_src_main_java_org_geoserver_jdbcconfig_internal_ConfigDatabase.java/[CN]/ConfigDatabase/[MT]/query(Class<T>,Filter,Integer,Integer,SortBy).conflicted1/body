@@ -3,7 +3,7 @@
   checkNotNull(filter);
   checkArgument(offset == null || offset.intValue() >= 0);
   checkArgument(limit == null || limit.intValue() >= 0);
-  QueryBuilder<T> sqlBuilder=QueryBuilder.forIds(of,dbMappings).filter(filter).offset(offset).limit(limit).sortOrder(sortOrder);
+  QueryBuilder<T> sqlBuilder=QueryBuilder.forIds(dialect,of,dbMappings).filter(filter).offset(offset).limit(limit).sortOrder(sortOrder);
   final StringBuilder sql=sqlBuilder.build();
   final Map<String,Object> namedParameters=sqlBuilder.getNamedParameters();
   final Filter unsupportedFilter=sqlBuilder.getUnsupportedFilter();
@@ -15,7 +15,12 @@
   }
   logStatement(sql,namedParameters);
   Stopwatch sw=Stopwatch.createStarted();
-  List<String> ids=template.queryForList(sql.toString(),namedParameters,String.class);
+  List<String> ids=template.query(sql.toString(),namedParameters,new RowMapper<String>(){
+    @Override public String mapRow(    ResultSet rs,    int rowNum) throws SQLException {
+      return rs.getString(1);
+    }
+  }
+);
   sw.stop();
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine(Joiner.on("").join("query returned ",ids.size()," records in ",sw.toString()));

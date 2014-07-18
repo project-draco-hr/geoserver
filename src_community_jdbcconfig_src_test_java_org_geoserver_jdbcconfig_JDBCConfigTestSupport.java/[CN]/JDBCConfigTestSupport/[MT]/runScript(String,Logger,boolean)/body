@@ -1,0 +1,28 @@
+{
+  final URL url=JDBCGeoServerLoader.class.getResource(dbScriptName);
+  if (url == null) {
+    throw new IllegalArgumentException("Script not found: " + getClass().getName() + "/"+ dbScriptName);
+  }
+  if (!tx) {
+    NamedParameterJdbcTemplate template=new NamedParameterJdbcTemplate(dataSource);
+    Util.runScript(url,template.getJdbcOperations(),null);
+  }
+ else {
+    DataSourceTransactionManager transactionManager=new DataSourceTransactionManager(dataSource);
+    NamedParameterJdbcTemplate template=new NamedParameterJdbcTemplate(transactionManager.getDataSource());
+    TransactionTemplate transactionTemplate=new TransactionTemplate(transactionManager);
+    final JdbcOperations jdbcOperations=template.getJdbcOperations();
+    transactionTemplate.execute(new TransactionCallback<Object>(){
+      @Override public Object doInTransaction(      TransactionStatus ts){
+        try {
+          Util.runScript(url,jdbcOperations,null);
+        }
+ catch (        IOException ex) {
+          throw new RuntimeException(ex);
+        }
+        return null;
+      }
+    }
+);
+  }
+}

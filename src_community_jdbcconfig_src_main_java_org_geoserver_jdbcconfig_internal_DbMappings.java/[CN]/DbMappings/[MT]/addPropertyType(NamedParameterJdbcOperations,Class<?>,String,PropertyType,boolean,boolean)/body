@@ -16,11 +16,11 @@
   if (exists == 0) {
     log("Adding ",propertyName);
     Integer targetPropertyOid=targetProperty == null ? null : targetProperty.getOid();
-    String insert="insert into property_type (target_property, type_id, name, collection, text) " + "values (:target, :type, :name, :collection, :isText)";
+    String insert=String.format("insert into property_type (oid, target_property, type_id, name, collection, text) " + "values (%s, :target, :type, :name, :collection, :isText)",dialect.nextVal("seq_PROPERTY_TYPE"));
     params=params("target",targetPropertyOid,"type",typeId,"name",propertyName,"collection",isCollection,"isText",isText);
     logStatement(insert,params);
     KeyHolder keyHolder=new GeneratedKeyHolder();
-    template.update(insert,new MapSqlParameterSource(params),keyHolder);
+    template.update(insert,new MapSqlParameterSource(params),keyHolder,new String[]{"oid"});
     Number pTypeKey=(Number)keyHolder.getKeys().get("oid");
     if (pTypeKey == null) {
       pTypeKey=keyHolder.getKey();
