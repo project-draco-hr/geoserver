@@ -18,6 +18,7 @@
     }
     buf.append(sql).append(" ");
     if (sql.endsWith(";")) {
+      buf.setLength(buf.length() - 2);
       String stmt=buf.toString();
       boolean skipError=stmt.startsWith("?");
       if (skipError) {
@@ -28,6 +29,9 @@
         jdbc.update(stmt);
       }
  catch (      DataAccessException e) {
+        if (logger != null) {
+          logger.warning(e.getMessage());
+        }
         if (!skipError) {
           throw e;
         }
