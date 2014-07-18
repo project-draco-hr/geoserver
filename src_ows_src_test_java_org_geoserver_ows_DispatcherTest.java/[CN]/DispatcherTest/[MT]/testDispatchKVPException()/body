@@ -1,0 +1,30 @@
+{
+  URL url=getClass().getResource("applicationContext4.xml");
+  FileSystemXmlApplicationContext context=new FileSystemXmlApplicationContext(url.toString());
+  Dispatcher dispatcher=(Dispatcher)context.getBean("dispatcher");
+  MockHttpServletRequest request=new MockHttpServletRequest(){
+    String encoding;
+    public int getServerPort(){
+      return 8080;
+    }
+    public String getCharacterEncoding(){
+      return encoding;
+    }
+    public void setCharacterEncoding(    String encoding){
+      this.encoding=encoding;
+    }
+  }
+;
+  request.setScheme("http");
+  request.setServerName("localhost");
+  request.setContextPath("/geoserver");
+  request.setMethod("GET");
+  request.setupAddParameter("request","Hello");
+  request.setRequestURI("http://localhost/geoserver/hello");
+  request.setQueryString("message=Hello World!");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  response=new MockHttpServletResponse();
+  ModelAndView mov=dispatcher.handleRequestInternal(request,response);
+  assertNull(mov);
+  assertTrue(response.getOutputStreamContent().contains("Could not parse the KVP"));
+}
