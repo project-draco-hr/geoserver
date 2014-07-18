@@ -34,9 +34,12 @@
  else {
       Object requestBean=null;
       Throwable t=null;
+      boolean kvpParsed=false;
+      boolean xmlParsed=false;
       if (req.getKvp() != null && req.getKvp().size() > 0) {
         try {
           requestBean=parseRequestKVP(parameterType,req);
+          kvpParsed=true;
         }
  catch (        Exception e) {
           t=e;
@@ -44,12 +47,21 @@
       }
       if (req.getInput() != null) {
         requestBean=parseRequestXML(requestBean,req.getInput(),req);
+        xmlParsed=true;
       }
       if (requestBean == null) {
         if (t != null) {
           throw t;
         }
-        throw new ServiceException("Could not find request reader (either kvp or xml) for: " + parameterType.getName());
+        if (kvpParsed && xmlParsed || (!kvpParsed && !xmlParsed)) {
+          throw new ServiceException("Could not find request reader (either kvp or xml) for: " + parameterType.getName());
+        }
+ else         if (kvpParsed) {
+          throw new ServiceException("Could not parse the KVP for: " + parameterType.getName());
+        }
+ else {
+          throw new ServiceException("Could not parse the XML for: " + parameterType.getName());
+        }
       }
       Method setBaseUrl=OwsUtils.setter(requestBean.getClass(),"baseUrl",String.class);
       if (setBaseUrl != null) {
