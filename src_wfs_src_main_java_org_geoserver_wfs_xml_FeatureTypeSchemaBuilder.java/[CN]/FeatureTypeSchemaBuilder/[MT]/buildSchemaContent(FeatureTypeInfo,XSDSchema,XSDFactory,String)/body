@@ -1,6 +1,10 @@
 {
   if (!findTypeInSchema(featureTypeMeta,schema,factory)) {
-    XSDComplexTypeDefinition xsdComplexType=buildComplexSchemaContent(featureTypeMeta.getFeatureType(),schema,factory);
+    FeatureType featureType=featureTypeMeta.getFeatureType();
+    if (featureTypeMeta.isCircularArcPresent() && this.getClass().equals(GML3.class)) {
+      featureType=new CurveTypeWrapper(featureType,true);
+    }
+    XSDComplexTypeDefinition xsdComplexType=buildComplexSchemaContent(featureType,schema,factory);
     XSDElementDeclaration element=factory.createXSDElementDeclaration();
     element.setName(featureTypeMeta.getName());
     element.setTargetNamespace(featureTypeMeta.getNamespace().getURI());

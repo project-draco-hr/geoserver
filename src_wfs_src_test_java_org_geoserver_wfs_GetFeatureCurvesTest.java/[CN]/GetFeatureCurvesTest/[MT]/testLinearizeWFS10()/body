@@ -1,0 +1,15 @@
+{
+  Document dom=getAsDOM("wfs?service=wfs&version=1.0&request=GetFeature&typeName=" + getLayerId(CURVELINES));
+  assertEquals("1",xpath.evaluate("count(//gml:featureMember/cite:curvelines[@fid='cp.1']/cite:geom/gml:LineString)",dom));
+  assertEquals("1",xpath.evaluate("count(//gml:featureMember/cite:curvelines[@fid='cp.2']/cite:geom/gml:LineString)",dom));
+  assertEquals("1",xpath.evaluate("count(//gml:featureMember/cite:curvelines[@fid='cp.3']/cite:geom/gml:LineString)",dom));
+  String coords=xpath.evaluate("//gml:featureMember/cite:curvelines[@fid='cp.2']/cite:geom/gml:LineString/gml:coordinates",dom);
+  int coordCountDefault=coords.split("\\s+").length;
+  FeatureTypeInfo ft=getCatalog().getFeatureTypeByName(getLayerId(CURVELINES));
+  ft.setCircularArcPresent(true);
+  ft.setLinearizationTolerance(new Measure(1,SI.METER));
+  getCatalog().save(ft);
+  dom=getAsDOM("wfs?service=wfs&version=1.0&request=GetFeature&typeName=" + getLayerId(CURVELINES));
+  int coordCount100m=countCoordinates(dom,xpath,"//gml:featureMember/cite:curvelines[@fid='cp.2']/cite:geom/gml:LineString/gml:coordinates");
+  assertTrue(coordCount100m > coordCountDefault);
+}
