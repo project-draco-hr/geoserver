@@ -1,0 +1,25 @@
+{
+  JoinExtractingVisitor visitor=new JoinExtractingVisitor(Arrays.asList(lakes,forests,buildings),Arrays.asList("a","b","c"));
+  Filter fj1=ff.equals(ff.property("a/FID"),ff.property("b/FID"));
+  Filter fj2=ff.equals(ff.property("b/FID"),ff.property("c/FID"));
+  Filter f1=ff.equals(ff.property("a/FID"),ff.literal("Lakes.10"));
+  Filter f2=ff.equals(ff.property("b/FID"),ff.literal("Forests.10"));
+  Filter f3=ff.equals(ff.property("c/FID"),ff.literal("Buildings.10"));
+  Filter f=ff.and(Arrays.asList(f1,f2,f3,fj1,fj2));
+  f.accept(visitor,null);
+  assertEquals("b",visitor.getPrimaryAlias());
+  Filter primary=visitor.getPrimaryFilter();
+  assertEquals(ff.equals(ff.property("FID"),ff.literal("Forests.10")),primary);
+  List<Join> joins=visitor.getJoins();
+  assertEquals(2,joins.size());
+  Join j1=joins.get(0);
+  assertEquals("Lakes",j1.getTypeName());
+  assertEquals("a",j1.getAlias());
+  assertEquals(ff.equals(ff.property("a.FID"),ff.property("b.FID")),j1.getJoinFilter());
+  assertEquals(ff.equals(ff.property("FID"),ff.literal("Lakes.10")),j1.getFilter());
+  Join j2=joins.get(1);
+  assertEquals("Buildings",j2.getTypeName());
+  assertEquals("c",j2.getAlias());
+  assertEquals(ff.equals(ff.property("b.FID"),ff.property("c.FID")),j2.getJoinFilter());
+  assertEquals(ff.equals(ff.property("FID"),ff.literal("Buildings.10")),j2.getFilter());
+}

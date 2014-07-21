@@ -14,10 +14,10 @@
   CoordinateReferenceSystem declaredCRS=WFSReprojectionUtil.getDeclaredCrs(crs,wfsVersion);
   Filter transformedFilter=filter;
   if (declaredCRS != null)   transformedFilter=WFSReprojectionUtil.normalizeFilterCRS(filter,source.getSchema(),declaredCRS);
-  QName typeName=query.getTypeNames().get(0);
+  QName typeName=primaryTypeName;
   org.geotools.data.Query dataQuery=new org.geotools.data.Query(typeName.getLocalPart(),transformedFilter,maxFeatures,props,query.getHandle());
-  if (!query.getAliases().isEmpty()) {
-    dataQuery.setAlias(query.getAliases().get(0));
+  if (primaryAlias != null) {
+    dataQuery.setAlias(primaryAlias);
   }
   CoordinateReferenceSystem target;
   URI srsName=query.getSrsName();
@@ -38,7 +38,7 @@
   }
   List<SortBy> sortBy=query.getSortBy();
   if (sortBy != null) {
-    dataQuery.setSortBy((SortBy[])sortBy.toArray(new SortBy[sortBy.size()]));
+    dataQuery.setSortBy(sortBy.toArray(new SortBy[sortBy.size()]));
   }
   String featureVersion=query.getFeatureVersion();
   if (featureVersion != null) {
