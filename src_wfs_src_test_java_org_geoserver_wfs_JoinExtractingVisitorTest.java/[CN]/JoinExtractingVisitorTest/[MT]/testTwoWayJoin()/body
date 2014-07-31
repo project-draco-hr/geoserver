@@ -1,0 +1,14 @@
+{
+  JoinExtractingVisitor visitor=new JoinExtractingVisitor(Arrays.asList(lakes,forests),Arrays.asList("a","b"));
+  Filter f=ff.equals(ff.property("a/FID"),ff.property("b/FID"));
+  f.accept(visitor,null);
+  assertEquals("a",visitor.getPrimaryAlias());
+  Filter primary=visitor.getPrimaryFilter();
+  assertNull(primary);
+  List<Join> joins=visitor.getJoins();
+  assertEquals(1,joins.size());
+  Join join=joins.get(0);
+  assertEquals("Forests",join.getTypeName());
+  assertEquals("b",join.getAlias());
+  assertEquals(ff.equals(ff.property("a.FID"),ff.property("b.FID")),join.getJoinFilter());
+}
