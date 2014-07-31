@@ -1,0 +1,33 @@
+{
+  final File xml=new File("./src/test/resources/requestGetCoverageAcrossDatelineMercatorPacific.xml");
+  final String request=FileUtils.readFileToString(xml);
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("polar_gtiff","polar_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  GeoTiffReader readerTarget=new GeoTiffReader(file);
+  GridCoverage2D targetCoverage=null;
+  try {
+    targetCoverage=readerTarget.read(null);
+    Envelope2D envelope=targetCoverage.getEnvelope2D();
+    assertEquals(160,envelope.getMinX(),0d);
+    assertEquals(0,envelope.getMinY(),0d);
+    assertEquals(200,envelope.getMaxX(),0d);
+    assertEquals(40,envelope.getMaxY(),0d);
+    assertTrue(CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84,targetCoverage.getCoordinateReferenceSystem2D()));
+    Raster data=targetCoverage.getRenderedImage().getData();
+    double[] pixel=new double[1];
+    for (int i=data.getMinY(); i < data.getMinY() + data.getHeight(); i++) {
+      for (int j=data.getMinX(); j < data.getMinX() + data.getWidth(); j++) {
+        data.getPixel(i,j,pixel);
+        double d=pixel[0];
+        assertTrue(String.valueOf(d),d > 500 && d < 5500);
+      }
+    }
+  }
+  finally {
+    readerTarget.dispose();
+    scheduleForCleaning(targetCoverage);
+  }
+}

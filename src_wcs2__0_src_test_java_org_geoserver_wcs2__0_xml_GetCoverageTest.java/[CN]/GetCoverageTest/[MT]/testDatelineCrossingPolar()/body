@@ -1,0 +1,24 @@
+{
+  final File xml=new File("./src/test/resources/requestGetCoverageAcrossDatelinePolar.xml");
+  final String request=FileUtils.readFileToString(xml);
+  MockHttpServletResponse response=postAsServletResponse("wcs",request);
+  assertEquals("image/tiff",response.getContentType());
+  byte[] tiffContents=getBinary(response);
+  File file=File.createTempFile("polar_gtiff","polar_gtiff.tiff",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,tiffContents);
+  GeoTiffReader readerTarget=new GeoTiffReader(file);
+  GridCoverage2D targetCoverage=null;
+  try {
+    targetCoverage=readerTarget.read(null);
+    Envelope2D envelope=targetCoverage.getEnvelope2D();
+    assertEquals(-1139998,envelope.getMinX(),1d);
+    assertEquals(-3333134,envelope.getMinY(),1d);
+    assertEquals(1139998,envelope.getMaxX(),1d);
+    assertEquals(-1023493,envelope.getMaxY(),1d);
+    assertTrue(CRS.equalsIgnoreMetadata(CRS.decode("EPSG:3031",true),targetCoverage.getCoordinateReferenceSystem2D()));
+  }
+  finally {
+    readerTarget.dispose();
+    scheduleForCleaning(targetCoverage);
+  }
+}

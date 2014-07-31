@@ -2,73 +2,41 @@
   Interpolation spatialInterpolation=request.getSpatialInterpolation();
   Utilities.ensureNonNull("interpolation",spatialInterpolation);
   final CoordinateReferenceSystem coverageCRS=reader.getCoordinateReferenceSystem();
-  GeneralEnvelope subset=request.getSpatialSubset();
-  if (!CRS.equalsIgnoreMetadata(subset.getCoordinateReferenceSystem(),coverageCRS)) {
-    subset=CRS.transform(subset,coverageCRS);
-    subset.setCoordinateReferenceSystem(coverageCRS);
-  }
-  final GridGeometry2D readGG;
-  CoordinateReferenceSystem outputCRS=request.getOutputCRS();
-  final boolean equalsMetadata=CRS.equalsIgnoreMetadata(outputCRS,coverageCRS);
-  boolean sameCRS;
-  try {
-    sameCRS=equalsMetadata ? true : CRS.findMathTransform(outputCRS,coverageCRS,true).isIdentity();
-  }
- catch (  FactoryException e1) {
-    final IOException ioe=new IOException();
-    ioe.initCause(e1);
-    throw ioe;
-  }
-  final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
-  GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,cinfo.getParameters());
-  readParameters=(readParameters != null ? readParameters : new GeneralParameterValue[0]);
-  readParameters=WCSUtils.replaceParameter(readParameters,Boolean.FALSE,AbstractGridFormat.USE_JAI_IMAGEREAD);
-  if (request.getTemporalSubset() != null) {
-    List<GeneralParameterDescriptor> descriptors=readParametersDescriptor.getDescriptor().descriptors();
-    List<Object> times=new ArrayList<Object>();
-    times.add(request.getTemporalSubset());
-    readParameters=CoverageUtils.mergeParameter(descriptors,readParameters,times,"TIME","Time");
-  }
-  if (request.getElevationSubset() != null) {
-    List<GeneralParameterDescriptor> descriptors=readParametersDescriptor.getDescriptor().descriptors();
-    List<Object> elevations=new ArrayList<Object>();
-    elevations.add(request.getElevationSubset());
-    readParameters=CoverageUtils.mergeParameter(descriptors,readParameters,elevations,"ELEVATION","Elevation");
-  }
-  if (request.getFilter() != null) {
-    List<GeneralParameterDescriptor> descriptors=readParametersDescriptor.getDescriptor().descriptors();
-    readParameters=CoverageUtils.mergeParameter(descriptors,readParameters,request.getFilter(),"Filter");
-  }
-  if (request.getDimensionsSubset() != null && !request.getDimensionsSubset().isEmpty()) {
-    final List<GeneralParameterDescriptor> descriptors=new ArrayList<GeneralParameterDescriptor>(readParametersDescriptor.getDescriptor().descriptors());
-    Set<ParameterDescriptor<List>> dynamicParameters=reader.getDynamicParameters();
-    descriptors.addAll(dynamicParameters);
-    Map<String,List<Object>> dimensionsSubset=request.getDimensionsSubset();
-    Set<String> dimensionKeys=dimensionsSubset.keySet();
-    for (    String key : dimensionKeys) {
-      List<Object> dimValues=dimensionsSubset.get(key);
-      readParameters=CoverageUtils.mergeParameter(descriptors,readParameters,dimValues,key);
-    }
-  }
-  GridCoverage2D coverage=null;
-  if (sameCRS) {
-    readGG=new GridGeometry2D(PixelInCell.CELL_CENTER,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),subset,hints);
+  WCSEnvelope subset=request.getSpatialSubset();
+  List<GridCoverage2D> result=new ArrayList<GridCoverage2D>();
+  List<GeneralEnvelope> readEnvelopes=new ArrayList<GeneralEnvelope>();
+  if (subset.isCrossingDateline()) {
+    GeneralEnvelope[] envelopes=subset.getNormalizedEnvelopes();
+    addEnvelopes(envelopes[0],readEnvelopes,coverageCRS);
+    addEnvelopes(envelopes[1],readEnvelopes,coverageCRS);
   }
  else {
-    Rectangle rasterRange=CRS.transform(reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER).inverse(),subset).toRectangle2D().getBounds();
-    rasterRange.setBounds(rasterRange.x - 10,rasterRange.y - 10,rasterRange.width + 20,rasterRange.height + 20);
-    rasterRange=rasterRange.intersection((GridEnvelope2D)reader.getOriginalGridRange());
-    readGG=new GridGeometry2D(new GridEnvelope2D(rasterRange),PixelInCell.CELL_CENTER,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),coverageCRS,hints);
+    addEnvelopes(subset,readEnvelopes,coverageCRS);
   }
-  WCSUtils.checkInputLimits(wcs,cinfo,reader,readGG);
-  coverage=RequestUtils.readBestCoverage(reader,readParameters,readGG,spatialInterpolation,hints);
-  if (coverage != null) {
-    if (incrementalInputSize == null) {
-      WCSUtils.checkInputLimits(wcs,coverage);
+  List<GridCoverage2D> readCoverages=new ArrayList<>();
+  for (  GeneralEnvelope readEnvelope : readEnvelopes) {
+    boolean skip=false;
+    GridCoverage2D cov=null;
+    BoundingBox readBoundingBox=new Envelope2D(readEnvelope);
+    for (    GridCoverage2D gc : readCoverages) {
+      Envelope2D gce=gc.getEnvelope2D();
+      if (gce.contains(readBoundingBox)) {
+        cov=gc;
+        break;
+      }
+    }
+    if (cov == null) {
+      cov=readCoverage(cinfo,request,reader,hints,incrementalInputSize,spatialInterpolation,coverageCRS,readEnvelope);
+      readCoverages.add(cov);
+    }
+    Envelope2D covEnvelope=cov.getEnvelope2D();
+    if (covEnvelope.contains(readBoundingBox) && (covEnvelope.getWidth() > readBoundingBox.getWidth() || covEnvelope.getHeight() > readBoundingBox.getHeight())) {
+      GridCoverage2D cropped=cropOnEnvelope(cov,readEnvelope);
+      result.add(cropped);
     }
  else {
-      incrementalInputSize.addSize(coverage);
+      result.add(cov);
     }
   }
-  return coverage;
+  return result;
 }

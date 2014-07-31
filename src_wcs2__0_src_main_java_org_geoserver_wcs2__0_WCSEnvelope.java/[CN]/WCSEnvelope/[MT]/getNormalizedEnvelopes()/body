@@ -1,0 +1,25 @@
+{
+  if (!isCrossingDateline()) {
+    return new GeneralEnvelope[]{new GeneralEnvelope(this)};
+  }
+ else {
+    GeneralEnvelope e1=new GeneralEnvelope(crs);
+    GeneralEnvelope e2=new GeneralEnvelope(crs);
+    for (int i=0; i < dimensions; i++) {
+      if (i == longitudeDimension) {
+        e1.setRange(i,getMinimum(i),180);
+        if (getSpan(longitudeDimension) < 0) {
+          e2.setRange(i,-180,getMaximum(i));
+        }
+ else {
+          e2.setRange(i,-180,getMaximum(i) - 360);
+        }
+      }
+ else {
+        e1.setRange(i,getMinimum(i),getMaximum(i));
+        e2.setRange(i,getMinimum(i),getMaximum(i));
+      }
+    }
+    return new GeneralEnvelope[]{e1,e2};
+  }
+}
