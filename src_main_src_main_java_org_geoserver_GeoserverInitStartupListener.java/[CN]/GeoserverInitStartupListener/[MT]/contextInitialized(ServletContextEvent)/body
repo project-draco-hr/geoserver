@@ -3,11 +3,24 @@
   JAI.getDefaultInstance().setImagingListener(new ImagingListener(){
     final Logger LOGGER=Logging.getLogger("javax.media.jai");
     @Override public boolean errorOccurred(    String message,    Throwable thrown,    Object where,    boolean isRetryable) throws RuntimeException {
-      if (message.contains("Continuing in pure Java mode")) {
+      if (isSerializableRenderedImageFinalization(where,thrown)) {
+        LOGGER.log(Level.FINEST,message,thrown);
+      }
+ else       if (message.contains("Continuing in pure Java mode")) {
         LOGGER.log(Level.FINE,message,thrown);
       }
  else {
         LOGGER.log(Level.INFO,message,thrown);
+      }
+      return false;
+    }
+    private boolean isSerializableRenderedImageFinalization(    Object where,    Throwable t){
+      if (!(where instanceof SerializableRenderedImage)) {
+        return false;
+      }
+      StackTraceElement[] elements=t.getStackTrace();
+      for (      StackTraceElement element : elements) {
+        if (element.getMethodName().equals("finalize") && element.getClassName().endsWith("SerializableRenderedImage"))         return true;
       }
       return false;
     }
