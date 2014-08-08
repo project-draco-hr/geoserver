@@ -1,16 +1,21 @@
 {
   DataStoreInfo info=catalog.getDataStore(id);
-  String name=null;
+  final String name;
   if (info != null) {
     name=info.getName();
     LOGGER.info("Disposing datastore '" + name + "'");
-    fireDisposed(info,da);
+    fireDisposed(info,dataAccess);
   }
+ else {
+    name="Untracked";
+  }
+  final String implementation=dataAccess.getClass().getSimpleName();
   try {
-    da.dispose();
+    LOGGER.info("Dispose data access '" + name + "' "+ implementation);
+    dataAccess.dispose();
   }
  catch (  Exception e) {
-    LOGGER.warning("Error occured disposing datastore '" + name + "'");
+    LOGGER.warning("Error occured disposing data access '" + name + "' "+ implementation);
     LOGGER.log(Level.FINE,"",e);
   }
 }
