@@ -40,9 +40,17 @@ if (queue.contains(removeEvent)) {
 LOGGER.fine(format("%s - Ignoring event %s, a remove is queued.",nodeId(),event));
 continue;
 }
-String message=format("%s - Error processing event %s but object not found in catalog",nodeId(),event);
+Catalog rawCatalog=cluster.getRawCatalog();
+subj=getCatalogInfo(rawCatalog,id,clazz);
+if (subj == null) {
+String message=format("%s - Error processing event %s: object not found in catalog",nodeId(),event);
 LOGGER.warning(message);
 continue;
+}
+ else {
+String message=format("%s - Object for event %s not found in secured catalog but found in RAW catalog!",nodeId(),event);
+LOGGER.info(message);
+}
 }
 evt.setSource(subj);
 try {
