@@ -1,0 +1,34 @@
+{
+  if (accessMethod == null) {
+    LOGGER.finest("Using " + wrapper.getName() + " does not have accessMethod to unwrap "+ target.getSimpleName());
+    return null;
+  }
+  try {
+    Object result=accessMethod.invoke(conn,(Object[])null);
+    if (result == null) {
+      LOGGER.finest("Using " + wrapper.getName() + "."+ accessMethod.getName()+ "() to unwrap "+ target.getSimpleName()+ " produced a null");
+      return null;
+    }
+    if (result == conn) {
+      LOGGER.finest("Using " + wrapper.getName() + "."+ accessMethod.getName()+ "() to unwrap did not result in native "+ target.getSimpleName()+ ": "+ result.getClass().getSimpleName());
+      return null;
+    }
+    if (!target.isInstance(result)) {
+      LOGGER.finest("Using " + wrapper.getName() + "."+ accessMethod.getName()+ "() to unwrap did not result in native "+ target.getSimpleName()+ ": "+ result.getClass().getSimpleName());
+      return null;
+    }
+    return target.cast(result);
+  }
+ catch (  IllegalArgumentException e) {
+    LOGGER.log(Level.FINEST,"Using " + wrapper.getName() + "."+ accessMethod.getName()+ "() to unwrap "+ target.getSimpleName()+ " failed: "+ e);
+    return null;
+  }
+catch (  IllegalAccessException e) {
+    LOGGER.log(Level.FINEST,"Using " + wrapper.getName() + "."+ accessMethod.getName()+ "() to unwrap "+ target.getSimpleName()+ " failed: "+ e);
+    return null;
+  }
+catch (  InvocationTargetException e) {
+    LOGGER.log(Level.FINEST,"Using " + wrapper.getName() + "."+ accessMethod.getName()+ "() to unwrap "+ target.getSimpleName()+ " failed: "+ e);
+    return null;
+  }
+}
