@@ -1,0 +1,35 @@
+{
+  Class<?> implementation=conn.getClass();
+  if (methods.containsKey(implementation)) {
+    Method accessMethod=methods.get(implementation);
+    if (accessMethod == IGNORE) {
+      return null;
+    }
+    T unwrapped=unwrapInternal(target,conn,implementation,accessMethod);
+    return unwrapped;
+  }
+ else {
+    for (    Entry<Class<?>,Method> entry : methods.entrySet()) {
+      Class<?> wrapper=entry.getKey();
+      Method accessMethod=entry.getValue();
+      if (wrapper.isInstance(conn)) {
+        T unwrapped=unwrapInternal(target,conn,wrapper,accessMethod);
+        if (unwrapped != null) {
+          methods.put(implementation,accessMethod);
+          return unwrapped;
+        }
+      }
+    }
+    for (    Method method : implementation.getMethods()) {
+      if (target.isAssignableFrom(method.getReturnType()) && method.getParameterTypes().length == 0 && method.isAccessible()) {
+        T unwrapped=unwrapInternal(target,conn,implementation,method);
+        if (unwrapped != null) {
+          methods.put(implementation,method);
+          return unwrapped;
+        }
+      }
+    }
+    methods.put(implementation,IGNORE);
+  }
+  return null;
+}
