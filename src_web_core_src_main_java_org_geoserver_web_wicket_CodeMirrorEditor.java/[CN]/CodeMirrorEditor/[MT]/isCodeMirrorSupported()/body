@@ -3,17 +3,20 @@
   WebClientInfo clientInfo=(WebClientInfo)WebRequestCycle.get().getClientInfo();
   ClientProperties clientProperties=clientInfo.getProperties();
   if (clientProperties.isBrowserInternetExplorer()) {
-    enableCodeMirror=clientProperties.getBrowserVersionMajor() >= 8;
+    ClientProperties props=extractIEVersion(clientProperties.getNavigatorUserAgent());
+    enableCodeMirror=clientProperties.getBrowserVersionMajor() >= 8 || props.getBrowserVersionMajor() >= 8;
   }
  else   if (clientProperties.isBrowserMozillaFirefox()) {
-    enableCodeMirror=clientProperties.getBrowserVersionMajor() >= 3;
+    ClientProperties props=extractFirefoxVersion(clientProperties.getNavigatorUserAgent());
+    enableCodeMirror=clientProperties.getBrowserVersionMajor() >= 3 || props.getBrowserVersionMajor() >= 3;
   }
  else   if (clientProperties.isBrowserSafari()) {
-    ClientProperties props=extractVersion(clientProperties.getNavigatorAppVersion());
+    ClientProperties props=extractSafariVersion(clientProperties.getNavigatorAppVersion());
     enableCodeMirror=clientProperties.getBrowserVersionMajor() > 5 || (clientProperties.getBrowserVersionMajor() == 5 && clientProperties.getBrowserVersionMinor() >= 2) || props.getBrowserVersionMajor() > 5 || (props.getBrowserVersionMajor() == 5 && props.getBrowserVersionMinor() >= 2);
   }
  else   if (clientProperties.isBrowserOpera()) {
-    enableCodeMirror=clientProperties.getBrowserVersionMajor() >= 9;
+    ClientProperties props=extractOperaVersion(clientProperties.getNavigatorAppVersion());
+    enableCodeMirror=clientProperties.getBrowserVersionMajor() >= 9 || props.getBrowserVersionMajor() >= 9;
   }
   return enableCodeMirror;
 }
