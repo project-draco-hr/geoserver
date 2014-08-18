@@ -1,7 +1,22 @@
 {
+  super.setUpInternal(data);
   File security=new File(getTestData().getDataDirectoryRoot(),"security");
   security.mkdir();
   File layers=new File(security,"layers.properties");
   IOUtils.copy(GeoJSONTest.class.getResourceAsStream("layers_ro.properties"),layers);
   data.addVectorLayer(LINE3D,Collections.EMPTY_MAP,getClass(),getCatalog());
+  data.addVectorLayer(POINT_LATLON,Collections.EMPTY_MAP,getClass(),getCatalog());
+  CoordinateReferenceSystem crsLatLon=CRS.decode("urn:ogc:def:crs:EPSG::4326");
+  FeatureTypeInfo pointLatLon=getCatalog().getFeatureTypeByName(POINT_LATLON.getPrefix(),POINT_LATLON.getLocalPart());
+  pointLatLon.setNativeCRS(crsLatLon);
+  pointLatLon.setSRS("urn:ogc:def:crs:EPSG::4326");
+  pointLatLon.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  getCatalog().save(pointLatLon);
+  data.addVectorLayer(POINT_LONLAT,Collections.EMPTY_MAP,getClass(),getCatalog());
+  CoordinateReferenceSystem crsLonLat=CRS.decode("EPSG:4326",true);
+  FeatureTypeInfo pointLonLat=getCatalog().getFeatureTypeByName(POINT_LONLAT.getPrefix(),POINT_LONLAT.getLocalPart());
+  pointLatLon.setNativeCRS(crsLonLat);
+  pointLatLon.setSRS("EPSG:4326");
+  pointLatLon.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  getCatalog().save(pointLonLat);
 }
