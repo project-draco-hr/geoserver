@@ -1,0 +1,17 @@
+{
+  assertThat(CRS.getAxisOrder(getCatalog().getFeatureTypeByName(layer.getPrefix(),layer.getLocalPart()).getCRS()),is(sourceOrder));
+  JSONObject collection=(JSONObject)getAsJSON("wfs?request=GetFeature&version=1.0.0&typename=" + getLayerId(layer) + "&outputformat="+ JSONType.json);
+  assertThat(collection.getInt("totalFeatures"),is(3));
+  JSONArray features=collection.getJSONArray("features");
+  assertThat((Collection<?>)features,Matchers.hasSize(3));
+  JSONObject feature=features.getJSONObject(0);
+  JSONObject geometry=feature.getJSONObject("geometry");
+  assertThat(geometry.getString("type"),is("Point"));
+  JSONArray coords=geometry.getJSONArray("coordinates");
+  assertThat((Iterable<?>)coords,contains((Object)120,0));
+  JSONArray bbox=collection.getJSONArray("bbox");
+  assertThat((Iterable<?>)bbox,Matchers.contains((Object)(-170),-30,120,45));
+  CoordinateReferenceSystem expectedCrs=CRS.decode("EPSG:4326");
+  JSONObject aCRS=collection.getJSONObject("crs");
+  assertThat(aCRS,encodesCRS(expectedCrs));
+}

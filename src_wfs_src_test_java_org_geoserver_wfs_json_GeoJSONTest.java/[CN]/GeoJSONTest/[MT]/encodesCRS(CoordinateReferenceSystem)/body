@@ -1,0 +1,30 @@
+{
+  return new org.hamcrest.BaseMatcher<JSONObject>(){
+    @Override public boolean matches(    Object item){
+      CoordinateReferenceSystem decodedDefault=decodeCRS((JSONObject)item,false);
+      if (CRS.equalsIgnoreMetadata(crs,decodedDefault))       return true;
+      CoordinateReferenceSystem decodedXY=decodeCRS((JSONObject)item,true);
+      if (CRS.equalsIgnoreMetadata(crs,decodedXY))       return true;
+      String identifier=((JSONObject)item).getJSONObject("properties").getString("name");
+      Pattern p=Pattern.compile("^urn:ogc:def:crs:EPSG:[^:]*:(\\d+)$");
+      Matcher m=p.matcher(identifier);
+      if (m.matches()) {
+        String code="EPSG:" + m.group(1);
+        CoordinateReferenceSystem decodedStripped;
+        try {
+          decodedStripped=CRS.decode(code,true);
+        }
+ catch (        FactoryException e) {
+          throw new IllegalStateException(e);
+        }
+        if (CRS.equalsIgnoreMetadata(crs,decodedStripped))         return true;
+      }
+      return false;
+    }
+    @Override public void describeTo(    Description description){
+      description.appendText("JSON representation of CRS ");
+      description.appendValue(crs);
+    }
+  }
+;
+}
