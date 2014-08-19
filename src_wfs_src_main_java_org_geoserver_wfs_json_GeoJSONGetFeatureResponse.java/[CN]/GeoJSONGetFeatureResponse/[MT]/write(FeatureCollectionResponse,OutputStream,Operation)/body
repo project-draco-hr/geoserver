@@ -54,9 +54,14 @@
             jsonWriter.key("id").value(value);
           }
           GeometryDescriptor defaultGeomType=fType.getGeometryDescriptor();
-          CoordinateReferenceSystem featureCrs=fType.getGeometryDescriptor().getCoordinateReferenceSystem();
-          jsonWriter.setAxisOrder(CRS.getAxisOrder(featureCrs));
-          if (crs == null && defaultGeomType != null)           crs=fType.getGeometryDescriptor().getCoordinateReferenceSystem();
+          if (defaultGeomType != null) {
+            CoordinateReferenceSystem featureCrs=defaultGeomType.getCoordinateReferenceSystem();
+            jsonWriter.setAxisOrder(CRS.getAxisOrder(featureCrs));
+            if (crs == null)             crs=featureCrs;
+          }
+ else {
+            jsonWriter.setAxisOrder(CRS.AxisOrder.EAST_NORTH);
+          }
           jsonWriter.key("geometry");
           Geometry aGeom=(Geometry)feature.getDefaultGeometry();
           if (aGeom == null) {
