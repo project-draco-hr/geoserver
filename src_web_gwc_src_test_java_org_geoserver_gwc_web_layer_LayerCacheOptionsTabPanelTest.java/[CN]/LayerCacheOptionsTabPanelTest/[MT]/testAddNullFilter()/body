@@ -1,0 +1,17 @@
+{
+  FormTestPage page=new FormTestPage(new ComponentBuilder(){
+    private static final long serialVersionUID=-5907648151984337786L;
+    public Component buildComponent(    final String id){
+      return new LayerCacheOptionsTabPanel(id,layerModel,tileLayerModel);
+    }
+  }
+);
+  tester.startPage(page);
+  tester.assertComponent("form:panel:tileLayerEditor",GeoServerTileLayerEditor.class);
+  FormTester form=tester.newFormTester("form");
+  tester.executeAjaxEvent("form:panel:tileLayerEditor:container:configs:parameterFilters:addFilter","onclick");
+  tester.assertComponent("form:panel:tileLayerEditor",GeoServerTileLayerEditor.class);
+  tester.assertErrorMessages(new String[]{"Filter should not be empty"});
+  form.submit();
+  tester.assertNoErrorMessage();
+}
