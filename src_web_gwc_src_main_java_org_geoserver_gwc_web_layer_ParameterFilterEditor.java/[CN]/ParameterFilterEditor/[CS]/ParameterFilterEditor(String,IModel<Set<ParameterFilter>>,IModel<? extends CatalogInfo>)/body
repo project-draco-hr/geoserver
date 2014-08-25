@@ -99,27 +99,33 @@
       availableFilterTypes.processInput();
       newFilterKey.processInput();
       String key=newFilterKey.getModelObject();
-      Class<? extends ParameterFilter> type=availableFilterTypes.getModelObject();
-      try {
-        ParameterFilter newFilter=type.getConstructor().newInstance();
-        newFilter.setKey(key);
-        addFilter(newFilter);
-        newFilterKey.setModel(Model.of(""));
+      if (key == null || key.isEmpty()) {
+        ParamResourceModel rm=new ParamResourceModel("ParameterFilterEditor.nonEmptyFilter",null,"");
+        error(rm.getString());
       }
- catch (      NoSuchMethodException ex) {
-        LOGGER.log(Level.WARNING,"No Default Constructor for " + type,ex);
-      }
-catch (      InvocationTargetException ex) {
-        LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
-      }
-catch (      SecurityException ex) {
-        LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
-      }
-catch (      InstantiationException ex) {
-        LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
-      }
-catch (      IllegalAccessException ex) {
-        LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+ else {
+        Class<? extends ParameterFilter> type=availableFilterTypes.getModelObject();
+        try {
+          ParameterFilter newFilter=type.getConstructor().newInstance();
+          newFilter.setKey(key);
+          addFilter(newFilter);
+          newFilterKey.setModel(Model.of(""));
+        }
+ catch (        NoSuchMethodException ex) {
+          LOGGER.log(Level.WARNING,"No Default Constructor for " + type,ex);
+        }
+catch (        InvocationTargetException ex) {
+          LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+        }
+catch (        SecurityException ex) {
+          LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+        }
+catch (        InstantiationException ex) {
+          LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+        }
+catch (        IllegalAccessException ex) {
+          LOGGER.log(Level.WARNING,"Could not execute default Constructor for " + type,ex);
+        }
       }
       target.addComponent(container);
     }
