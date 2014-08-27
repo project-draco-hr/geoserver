@@ -11,6 +11,22 @@
     throw new ServiceException("Cannot combine layers into BIL output");
   }
   MapLayerInfo mapLayerInfo=reqlayers.get(0);
+  MetadataMap metadata=mapLayerInfo.getResource().getMetadata();
+  String defaultDataType=(String)metadata.get(BilConfig.DEFAULT_DATA_TYPE);
+  String byteOrder=(String)metadata.get(BilConfig.BYTE_ORDER);
+  Double outNoData=null;
+  Object noDataParam=metadata.get(BilConfig.NO_DATA_OUTPUT);
+  if (noDataParam instanceof Number) {
+    outNoData=((Number)noDataParam).doubleValue();
+  }
+ else   if (noDataParam instanceof String) {
+    try {
+      outNoData=Double.parseDouble((String)noDataParam);
+    }
+ catch (    NumberFormatException e) {
+      LOGGER.warning("Can't parse output no data attribute: " + e.getMessage());
+    }
+  }
   GridCoverageReader coverageReader=mapLayerInfo.getCoverageReader();
   GridCoverage2D subCov=null;
   try {
@@ -29,21 +45,38 @@ catch (  TransformException e) {
     image=subCov.getRenderedImage();
     if (image != null) {
       int dtype=image.getData().getDataBuffer().getDataType();
-      RenderedOp formcov=null;
+      RenderedImage transformedImage=image;
+      final double[] inNoDataValues=CoverageUtilities.getBackgroundValues((GridCoverage2D)subCov);
+      if (inNoDataValues != null && outNoData != null) {
+        final double inNoData=inNoDataValues[0];
+        if (inNoData != outNoData) {
+          ParameterBlock param=new ParameterBlock().addSource(image);
+          param=param.add(inNoData);
+          param=param.add(outNoData);
+          transformedImage=JAI.create(RecodeRaster.OPERATION_NAME,param,null);
+        }
+      }
+      if (defaultDataType != null && ((bilEncoding.equals("application/bil") || bilEncoding.equals("image/bil")))) {
+        bilEncoding=defaultDataType;
+      }
       if ((bilEncoding.equals("application/bil32")) && (dtype != DataBuffer.TYPE_FLOAT)) {
-        formcov=FormatDescriptor.create(image,DataBuffer.TYPE_FLOAT,null);
+        transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_FLOAT,null);
       }
       if ((bilEncoding.equals("application/bil16")) && (dtype != DataBuffer.TYPE_SHORT)) {
-        formcov=FormatDescriptor.create(image,DataBuffer.TYPE_SHORT,null);
+        transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_SHORT,null);
       }
       if ((bilEncoding.equals("application/bil8")) && (dtype != DataBuffer.TYPE_BYTE)) {
-        formcov=FormatDescriptor.create(image,DataBuffer.TYPE_BYTE,null);
+        transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_BYTE,null);
       }
-      TiledImage tiled=null;
-      if (formcov != null)       tiled=new TiledImage(formcov,width,height);
- else       tiled=new TiledImage(image,width,height);
+      TiledImage tiled=new TiledImage(transformedImage,width,height);
       final ImageOutputStream imageOutStream=ImageIO.createImageOutputStream(outStream);
       final ImageWriter writer=writerSPI.createWriterInstance();
+      if (ByteOrder.LITTLE_ENDIAN.toString().equals(byteOrder)) {
+        imageOutStream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
+      }
+ else       if (ByteOrder.BIG_ENDIAN.toString().equals(byteOrder)) {
+        imageOutStream.setByteOrder(ByteOrder.BIG_ENDIAN);
+      }
       writer.setOutput(imageOutStream);
       writer.write(tiled);
       imageOutStream.flush();
