@@ -1,13 +1,28 @@
 {
-  GridCoverage2D coverage=null;
-  coverage=readCoverage(helper.getCoverageInfo(),gridCoverageRequest,reader,hints,incrementalInputSize);
-  if (coverage == null) {
+  List<GridCoverage2D> coverages=null;
+  coverages=readCoverage(helper.getCoverageInfo(),gridCoverageRequest,reader,hints,incrementalInputSize);
+  if (coverages == null || coverages.isEmpty()) {
     throw new IllegalStateException("Unable to read a coverage for the current request" + coverageType.toString());
   }
-  coverage=handleRangeSubsettingExtension(coverage,extensions,hints);
-  coverage=handleSubsettingExtension(coverage,gridCoverageRequest.getSpatialSubset(),hints);
-  coverage=handleScaling(coverage,extensions,gridCoverageRequest.getSpatialInterpolation(),hints);
-  coverage=handleReprojection(coverage,gridCoverageRequest.getOutputCRS(),gridCoverageRequest.getSpatialInterpolation(),hints);
+  for (int i=0; i < coverages.size(); i++) {
+    GridCoverage2D rangeSubsetted=handleRangeSubsettingExtension(coverages.get(i),extensions,hints);
+    coverages.set(i,rangeSubsetted);
+  }
+  List<GridCoverage2D> temp=new ArrayList<>();
+  for (int i=0; i < coverages.size(); i++) {
+    List<GridCoverage2D> subsetted=handleSubsettingExtension(coverages.get(i),gridCoverageRequest.getSpatialSubset(),hints);
+    temp.addAll(subsetted);
+  }
+  coverages=temp;
+  for (int i=0; i < coverages.size(); i++) {
+    GridCoverage2D scaled=handleScaling(coverages.get(i),extensions,gridCoverageRequest.getSpatialInterpolation(),hints);
+    coverages.set(i,scaled);
+  }
+  for (int i=0; i < coverages.size(); i++) {
+    GridCoverage2D reprojected=handleReprojection(coverages.get(i),gridCoverageRequest.getOutputCRS(),gridCoverageRequest.getSpatialInterpolation(),hints);
+    coverages.set(i,reprojected);
+  }
+  GridCoverage2D coverage=mosaicCoverages(coverages,hints);
   final boolean enforceLatLonAxesOrder=requestingLatLonAxesOrder(gridCoverageRequest.getOutputCRS());
   if (enforceLatLonAxesOrder) {
     coverage=enforceLatLongOrder(coverage,hints,gridCoverageRequest.getOutputCRS());
