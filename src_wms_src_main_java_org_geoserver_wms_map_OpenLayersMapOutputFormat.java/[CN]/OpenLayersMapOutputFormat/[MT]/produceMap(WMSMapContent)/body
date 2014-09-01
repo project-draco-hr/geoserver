@@ -1,14 +1,23 @@
 {
   try {
-    Template template=cfg.getTemplate("OpenLayersMapTemplate.ftl");
+    String templateName;
+    boolean useOpenLayers3=isOL3Enabled(mapContent) && browserSupportsOL3(mapContent);
+    if (useOpenLayers3) {
+      templateName="OpenLayers3MapTemplate.ftl";
+    }
+ else {
+      templateName="OpenLayers2MapTemplate.ftl";
+    }
+    Template template=cfg.getTemplate(templateName);
     HashMap<String,Object> map=new HashMap<String,Object>();
     map.put("context",mapContent);
     map.put("pureCoverage",hasOnlyCoverages(mapContent));
     map.put("styles",styleNames(mapContent));
-    map.put("request",mapContent.getRequest());
-    map.put("yx",String.valueOf(isWms13FlippedCRS(mapContent.getRequest().getCrs())));
+    GetMapRequest request=mapContent.getRequest();
+    map.put("request",request);
+    map.put("yx",String.valueOf(isWms13FlippedCRS(request.getCrs())));
     map.put("maxResolution",new Double(getMaxResolution(mapContent.getRenderingArea())));
-    String baseUrl=ResponseUtils.buildURL(mapContent.getRequest().getBaseUrl(),"/",null,URLType.RESOURCE);
+    String baseUrl=ResponseUtils.buildURL(request.getBaseUrl(),"/",null,URLType.RESOURCE);
     map.put("baseUrl",canonicUrl(baseUrl));
     String servicePath="wms";
     if (LocalLayer.get() != null) {
@@ -18,8 +27,8 @@
       servicePath=LocalWorkspace.get().getName() + "/" + servicePath;
     }
     map.put("servicePath",servicePath);
-    map.put("parameters",getLayerParameter(mapContent.getRequest().getRawKvp()));
-    map.put("units",getOLUnits(mapContent.getRequest()));
+    map.put("parameters",getLayerParameter(request.getRawKvp()));
+    map.put("units",useOpenLayers3 ? getOL3Units(request) : getOL2Units(request));
     if (mapContent.layers().size() == 1) {
       map.put("layerName",mapContent.layers().get(0).getTitle());
     }
