@@ -1,0 +1,31 @@
+{
+  final Catalog catalog=getCatalog();
+  final CoverageStoreInfo storeInfo=catalog.getCoverageStoreByName("watertemp");
+  final InputCoverageBand band=new InputCoverageBand("watertemp","0");
+  final CoverageBand outputBand=new CoverageBand(Collections.singletonList(band),"watertemp@0",0,CompositionType.BAND_SELECT);
+  final CoverageView coverageView=new CoverageView("waterView",Collections.singletonList(outputBand));
+  final CatalogBuilder builder=new CatalogBuilder(catalog);
+  builder.setStore(storeInfo);
+  final String layerName="waterview";
+  final CoverageInfo coverageInfo=coverageView.createCoverageInfo(layerName,storeInfo,builder);
+  coverageInfo.getParameters().put("USE_JAI_IMAGEREAD","false");
+  coverageInfo.getMetadata().put(WCSEOMetadata.DATASET.key,true);
+  catalog.add(coverageInfo);
+  LayerInfo layer=catalog.getLayerByName(layerName);
+  if (layer == null) {
+    layer=catalog.getFactory().createLayer();
+  }
+  layer.setResource(coverageInfo);
+  setupRasterDimension(layerName,ResourceInfo.TIME,DimensionPresentation.LIST,null);
+  enableEODataset(layerName);
+  layer.setType(LayerInfo.Type.RASTER);
+  layer.setEnabled(true);
+  if (layer.getId() == null) {
+    catalog.add(layer);
+  }
+ else {
+    catalog.save(layer);
+  }
+  Document dom=getAsDOM("wcs?service=WCS&version=2.0.1&request=DescribeEOCoverageSet&eoId=sf__waterview_dss");
+  assertEquals("4",xpath.evaluate("count(//wcs:CoverageDescriptions/wcs:CoverageDescription)",dom));
+}
