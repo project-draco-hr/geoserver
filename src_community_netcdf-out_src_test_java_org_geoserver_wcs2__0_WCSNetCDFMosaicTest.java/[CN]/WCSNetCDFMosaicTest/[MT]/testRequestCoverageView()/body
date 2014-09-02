@@ -1,0 +1,11 @@
+{
+  MockHttpServletResponse response=getAsServletResponse("ows?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__dummyView&format=application/x-netcdf&subset=http://www.opengis.net/def/axis/OGC/0/time(\"2013-01-08T00:00:00.000Z\")");
+  assertNotNull(response);
+  assertEquals("application/x-netcdf",response.getContentType());
+  byte[] netcdfOut=getBinary(response);
+  File file=File.createTempFile("netcdf","out.nc",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,netcdfOut);
+  NetcdfDataset dataset=NetcdfDataset.openDataset(file.getAbsolutePath());
+  assertNotNull(dataset);
+  dataset.close();
+}
