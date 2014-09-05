@@ -1,0 +1,17 @@
+{
+  ContactInfo contact=geoServer.getSettings().getContact();
+  GpxEncoder encoder=new GpxEncoder(true);
+  encoder.setCreator(contact.getContactOrganization());
+  encoder.setLink(contact.getOnlineResource());
+  try {
+    SimpleFeatureCollection fc=(SimpleFeatureCollection)input;
+    CoordinateReferenceSystem crs=fc.getSchema().getCoordinateReferenceSystem();
+    if (crs != null && !CRS.equalsIgnoreMetadata(crs,DefaultGeographicCRS.WGS84)) {
+      fc=new ReprojectingFeatureCollection(fc,DefaultGeographicCRS.WGS84);
+    }
+    encoder.encode(os,fc);
+  }
+ catch (  Exception e) {
+    throw new IOException("Unable to encode in GPX",e);
+  }
+}
