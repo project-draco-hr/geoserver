@@ -1,0 +1,13 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName(getLayerId(MockData.POINTS));
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)fti.getFeatureSource(null,null).getFeatures();
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  ppio.encode(fc,bos);
+  Document dom=dom(new ByteArrayInputStream(bos.toByteArray()));
+  checkValidationErorrs(dom,"./src/test/resources/org/geoserver/wps/ppio/gpx.xsd");
+  assertEquals("GeoServer",xpath.evaluate("/gpx:gpx/@creator",dom));
+  assertEquals("GeoServer",xpath.evaluate("/gpx:gpx/gpx:metadata/gpx:link/gpx:text",dom));
+  assertEquals("http://www.geoserver.org",xpath.evaluate("/gpx:gpx/gpx:metadata/gpx:link/@href",dom));
+  assertEquals(1,xpath.getMatchingNodes("/gpx:gpx/gpx:wpt",dom).getLength());
+  assertEquals("t0000",xpath.evaluate("/gpx:gpx/gpx:wpt[1]/gpx:extensions/att:id",dom));
+}
