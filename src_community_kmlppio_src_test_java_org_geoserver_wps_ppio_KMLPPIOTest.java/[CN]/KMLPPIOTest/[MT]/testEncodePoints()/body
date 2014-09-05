@@ -1,0 +1,12 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName(getLayerId(MockData.POINTS));
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)fti.getFeatureSource(null,null).getFeatures();
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  ppio.encode(fc,bos);
+  Document dom=dom(new ByteArrayInputStream(bos.toByteArray()));
+  checkValidationErorrs(dom,"./src/test/resources/org/geoserver/wps/ppio/ogckml22.xsd");
+  assertEquals(1,xpath.getMatchingNodes("//kml:Placemark",dom).getLength());
+  assertEquals("t0000",xpath.evaluate("//kml:ExtendedData/kml:SchemaData/kml:SimpleData[@name='id']",dom));
+  assertEquals("-92.99954926766114,4.52401492058674",xpath.evaluate("//kml:Point/kml:coordinates",dom));
+  assertEquals("t0000",xpath.evaluate("//kml:ExtendedData/kml:SchemaData/kml:SimpleData[@name='id']",dom));
+}
