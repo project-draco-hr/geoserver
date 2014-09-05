@@ -1,0 +1,10 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName(getLayerId(MockData.LINES));
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)fti.getFeatureSource(null,null).getFeatures();
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  ppio.encode(fc,bos);
+  Document dom=dom(new ByteArrayInputStream(bos.toByteArray()));
+  checkValidationErorrs(dom,"./src/test/resources/org/geoserver/wps/ppio/ogckml22.xsd");
+  assertEquals("-92.99887316950249,4.523788751137377 -92.99842243632469,4.524241087719057",xpath.evaluate("//kml:LineString/kml:coordinates",dom));
+  assertEquals("t0001 ",xpath.evaluate("//kml:ExtendedData/kml:SchemaData/kml:SimpleData[@name='id']",dom));
+}
