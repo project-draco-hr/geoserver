@@ -1,0 +1,14 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName(getLayerId(MockData.ROAD_SEGMENTS));
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)fti.getFeatureSource(null,null).getFeatures();
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  ppio.encode(fc,bos);
+  Document dom=dom(new ByteArrayInputStream(bos.toByteArray()));
+  checkValidationErorrs(dom,"./src/test/resources/org/geoserver/wps/ppio/gpx.xsd");
+  assertEquals("GeoServer",xpath.evaluate("/gpx:gpx/@creator",dom));
+  assertEquals("GeoServer",xpath.evaluate("/gpx:gpx/gpx:metadata/gpx:link/gpx:text",dom));
+  assertEquals("http://www.geoserver.org",xpath.evaluate("/gpx:gpx/gpx:metadata/gpx:link/@href",dom));
+  assertEquals(5,xpath.getMatchingNodes("/gpx:gpx/gpx:trk",dom).getLength());
+  assertEquals("102",xpath.evaluate("/gpx:gpx/gpx:trk[1]/gpx:extensions/att:FID",dom));
+  assertEquals("Route 5",xpath.evaluate("/gpx:gpx/gpx:trk[1]/gpx:extensions/att:NAME",dom));
+}
