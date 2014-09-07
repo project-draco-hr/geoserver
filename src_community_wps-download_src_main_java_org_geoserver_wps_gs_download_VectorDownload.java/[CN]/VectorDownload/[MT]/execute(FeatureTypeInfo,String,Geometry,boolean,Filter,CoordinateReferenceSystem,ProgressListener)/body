@@ -1,0 +1,73 @@
+{
+  CoordinateReferenceSystem nativeCRS=DownloadUtilities.getNativeCRS(resourceInfo);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Native CRS is " + nativeCRS.toWKT());
+  }
+  ROIManager roiManager=null;
+  if (roi != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Pushing ROI to native CRS");
+    }
+    CoordinateReferenceSystem roiCRS=(CoordinateReferenceSystem)roi.getUserData();
+    roiManager=new ROIManager(roi,roiCRS);
+    roiManager.useNativeCRS(nativeCRS);
+  }
+  final SimpleFeatureSource featureSource=(SimpleFeatureSource)resourceInfo.getFeatureSource(null,GeoTools.getDefaultHints());
+  Filter ra=Filter.INCLUDE;
+  if (filter != null) {
+    ra=filter;
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Using filter " + ra);
+    }
+  }
+  SimpleFeatureCollection originalFeatures;
+  final boolean hasROI=roiManager != null;
+  if (hasROI) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Adding Geometry filter with ROI");
+    }
+    final String dataGeomName=featureSource.getSchema().getGeometryDescriptor().getLocalName();
+    final Intersects intersectionFilter=FeatureUtilities.DEFAULT_FILTER_FACTORY.intersects(FeatureUtilities.DEFAULT_FILTER_FACTORY.property(dataGeomName),FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(roiManager.getSafeRoiInNativeCRS()));
+    ra=FeatureUtilities.DEFAULT_FILTER_FACTORY.and(ra,intersectionFilter);
+  }
+  ra=(Filter)ra.accept(new SimplifyingFilterVisitor(),null);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Reading the filtered features");
+  }
+  originalFeatures=featureSource.getFeatures(ra);
+  DownloadUtilities.checkIsEmptyFeatureCollection(originalFeatures);
+  SimpleFeatureCollection reprojectedFeatures;
+  if (targetCRS != null && !CRS.equalsIgnoreMetadata(nativeCRS,targetCRS)) {
+    roiManager.useTargetCRS(targetCRS);
+    final MathTransform targetTX=CRS.findMathTransform(nativeCRS,targetCRS,true);
+    if (!targetTX.isIdentity()) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Reprojecting features");
+      }
+      reprojectedFeatures=new ReprojectingFeatureCollection(originalFeatures,targetCRS);
+    }
+ else {
+      reprojectedFeatures=originalFeatures;
+      DownloadUtilities.checkIsEmptyFeatureCollection(reprojectedFeatures);
+    }
+  }
+ else {
+    reprojectedFeatures=originalFeatures;
+    if (hasROI) {
+      roiManager.useTargetCRS(nativeCRS);
+    }
+  }
+  SimpleFeatureCollection clippedFeatures;
+  if (clip && roi != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Clipping features");
+    }
+    final ClipProcess clipProcess=new ClipProcess();
+    clippedFeatures=clipProcess.execute(reprojectedFeatures,roiManager.getSafeRoiInTargetCRS(),true);
+    DownloadUtilities.checkIsEmptyFeatureCollection(clippedFeatures);
+  }
+ else {
+    clippedFeatures=reprojectedFeatures;
+  }
+  return writeVectorOutput(clippedFeatures,resourceInfo.getName(),mimeType);
+}

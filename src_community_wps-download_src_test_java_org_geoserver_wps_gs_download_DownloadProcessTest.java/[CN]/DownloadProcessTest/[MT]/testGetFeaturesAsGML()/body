@@ -1,0 +1,19 @@
+{
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(),getGeoServer());
+  final WPSResourceManager resourceManager=new WPSResourceManager();
+  DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  FeatureTypeInfo ti=getCatalog().getFeatureTypeByName(getLayerId(MockData.POLYGONS));
+  SimpleFeatureCollection rawSource=(SimpleFeatureCollection)ti.getFeatureSource(null,null).getFeatures();
+  File gml2Zip=downloadProcess.execute(getLayerId(MockData.POLYGONS),null,"application/wfs-collection-1.0",null,CRS.decode("EPSG:32615"),roi,false,new NullProgressListener());
+  Assert.assertNotNull(gml2Zip);
+  File[] files=exctractGMLFile(gml2Zip);
+  SimpleFeatureCollection rawTarget=(SimpleFeatureCollection)new WFSPPIO.WFS10().decode(new FileInputStream(files[0]));
+  Assert.assertNotNull(rawTarget);
+  Assert.assertEquals(rawSource.size(),rawTarget.size());
+  File gml3Zip=downloadProcess.execute(getLayerId(MockData.POLYGONS),null,"application/wfs-collection-1.1",null,CRS.decode("EPSG:32615"),roi,false,new NullProgressListener());
+  Assert.assertNotNull(gml3Zip);
+  files=exctractGMLFile(gml2Zip);
+  rawTarget=(SimpleFeatureCollection)new WFSPPIO.WFS11().decode(new FileInputStream(files[0]));
+  Assert.assertNotNull(rawTarget);
+  Assert.assertEquals(rawSource.size(),rawTarget.size());
+}

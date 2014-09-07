@@ -1,0 +1,32 @@
+{
+  final CoordinateReferenceSystem geometryCRS=(CoordinateReferenceSystem)geometry.getUserData();
+  MathTransform targetTX=null;
+  if (!CRS.equalsIgnoreMetadata(geometry,crs)) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Geometry CRS is not equal to the target CRS, we might have to reproject");
+    }
+    try {
+      targetTX=CRS.findMathTransform(geometryCRS,crs,true);
+    }
+ catch (    Exception e) {
+      throw new IOException(e);
+    }
+    if (!targetTX.isIdentity()) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"CRS transform is not an identity, we have to reproject the Geometry");
+      }
+      try {
+        geometry=JTS.transform(geometry,targetTX);
+      }
+ catch (      Exception e) {
+        throw new IOException(e);
+      }
+      if (geometry == null) {
+        throw new IllegalStateException("The Region of Interest is null after going back to native CRS!");
+      }
+      geometry.setUserData(crs);
+      DownloadUtilities.checkPolygonROI(geometry);
+    }
+  }
+  return geometry;
+}
