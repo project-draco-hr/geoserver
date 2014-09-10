@@ -1,0 +1,27 @@
+{
+  final UUID evendId=event.getUUID();
+  final int maxWaitMillis=2000;
+  final int waitInterval=100;
+  LOGGER.finer("Waiting for acks on " + evendId);
+  final AtomicInteger countDown=ackListener.expectedAckCounters.get(evendId);
+  int waited=0;
+  try {
+    while (waited < maxWaitMillis) {
+      int remainingAcks=countDown.get();
+      if (remainingAcks <= 0) {
+        return;
+      }
+      try {
+        Thread.sleep(waitInterval);
+        waited+=waitInterval;
+      }
+ catch (      InterruptedException ex) {
+        return;
+      }
+    }
+    LOGGER.warning(format("%s - After %dms, %d acks missing for event %s",nodeId(),maxWaitMillis,countDown.get(),event));
+  }
+  finally {
+    ackListener.expectedAckCounters.remove(evendId);
+  }
+}

@@ -1,101 +1,27 @@
 {
-  Catalog cat=gs.getCatalog();
   Iterator<Event> it=q.iterator();
   while (it.hasNext() && isStarted()) {
     final Event event=it.next();
-    it.remove();
-    LOGGER.fine(format("%s - Processing event %s",nodeId(),event));
-    if (event instanceof ConfigChangeEvent) {
+    try {
+      it.remove();
+      LOGGER.fine(format("%s - Processing event %s",nodeId(),event));
+      if (!(event instanceof ConfigChangeEvent)) {
+        return;
+      }
       ConfigChangeEvent ce=(ConfigChangeEvent)event;
-      Type t=ce.getChangeType();
       Class<? extends Info> clazz=ce.getObjectInterface();
-      String id=ce.getObjectId();
-      String name=ce.getObjectName();
       if (CatalogInfo.class.isAssignableFrom(clazz)) {
-        CatalogInfo subj;
-        Method notifyMethod;
-        CatalogEventImpl evt;
-switch (t) {
-case ADD:
-          subj=getCatalogInfo(cat,id,clazz);
-        notifyMethod=CatalogListener.class.getMethod("handleAddEvent",CatalogAddEvent.class);
-      evt=new CatalogAddEventImpl();
-    break;
-case MODIFY:
-  subj=getCatalogInfo(cat,id,clazz);
-notifyMethod=CatalogListener.class.getMethod("handlePostModifyEvent",CatalogPostModifyEvent.class);
-evt=new CatalogPostModifyEventImpl();
-break;
-case REMOVE:
-notifyMethod=CatalogListener.class.getMethod("handleRemoveEvent",CatalogRemoveEvent.class);
-evt=new CatalogRemoveEventImpl();
-subj=(CatalogInfo)Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{clazz},new RemovedObjectProxy(id,name));
-break;
-default :
-throw new IllegalStateException("Should not happen");
-}
-if (subj == null) {
-ConfigChangeEvent removeEvent=new ConfigChangeEvent(id,name,clazz,Type.REMOVE);
-if (queue.contains(removeEvent)) {
-LOGGER.fine(format("%s - Ignoring event %s, a remove is queued.",nodeId(),event));
-continue;
-}
-Catalog rawCatalog=cluster.getRawCatalog();
-subj=getCatalogInfo(rawCatalog,id,clazz);
-if (subj == null) {
-String message=format("%s - Error processing event %s: object not found in catalog",nodeId(),event);
-LOGGER.warning(message);
-continue;
-}
+        processCatalogEvent(ce);
+      }
  else {
-String message=format("%s - Object for event %s not found in secured catalog but found in RAW catalog!",nodeId(),event);
-LOGGER.info(message);
-}
-}
-evt.setSource(subj);
-try {
-for (CatalogListener l : ImmutableList.copyOf(cat.getListeners())) {
-if (l != this && isStarted()) {
-notifyMethod.invoke(l,evt);
-}
-}
-}
- catch (Exception ex) {
-LOGGER.log(Level.WARNING,format("%s - Event dispatch failed: %s",nodeId(),event),ex);
-}
-}
- else {
-Info subj;
-Method notifyMethod;
-if (GeoServerInfo.class.isAssignableFrom(clazz)) {
-subj=gs.getGlobal();
-notifyMethod=ConfigurationListener.class.getMethod("handlePostGlobalChange",GeoServerInfo.class);
-}
- else if (SettingsInfo.class.isAssignableFrom(clazz)) {
-WorkspaceInfo ws=ce.getWorkspaceId() != null ? cat.getWorkspace(ce.getWorkspaceId()) : null;
-subj=ws != null ? gs.getSettings(ws) : gs.getSettings();
-notifyMethod=ConfigurationListener.class.getMethod("handleSettingsPostModified",SettingsInfo.class);
-}
- else if (LoggingInfo.class.isAssignableFrom(clazz)) {
-subj=gs.getLogging();
-notifyMethod=ConfigurationListener.class.getMethod("handlePostLoggingChange",LoggingInfo.class);
-}
- else if (ServiceInfo.class.isAssignableFrom(clazz)) {
-subj=gs.getService(id,(Class<ServiceInfo>)clazz);
-notifyMethod=ConfigurationListener.class.getMethod("handlePostServiceChange",ServiceInfo.class);
-}
- else {
-throw new IllegalStateException("Unknown event type " + clazz);
-}
-for (ConfigurationListener l : gs.getListeners()) {
-try {
-if (l != this) notifyMethod.invoke(l,subj);
-}
- catch (Exception ex) {
-LOGGER.log(Level.WARNING,format("%s - Event dispatch failed: %s",nodeId(),event),ex);
-}
-}
-}
-}
-}
+        processGeoServerConfigEvent(ce);
+      }
+    }
+ catch (    Exception e) {
+      e.printStackTrace();
+    }
+ finally {
+      ack(event);
+    }
+  }
 }
