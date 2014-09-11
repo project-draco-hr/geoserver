@@ -1,0 +1,27 @@
+{
+  DataStoreInfo info;
+  WorkspaceInfo wsInfo;
+  final String storeName="testStore";
+  final String storeId="Store-TEST";
+  final String storeWorkspace="Workspace-TEST";
+{
+    info=createMock(DataStoreInfo.class);
+    wsInfo=createMock(WorkspaceInfo.class);
+    expect(info.getName()).andStubReturn(storeName);
+    expect(info.getId()).andStubReturn(storeId);
+    expect(info.getWorkspace()).andStubReturn(wsInfo);
+    expect(wsInfo.getId()).andStubReturn(storeWorkspace);
+    expectationTestStoreDelete(info,storeName,storeId,DataStoreInfo.class);
+  }
+  replay(info,wsInfo);
+  ConfigChangeEvent evt=new ConfigChangeEvent(storeId,storeName,DataStoreInfoImpl.class,Type.REMOVE);
+{
+    sync=getSynchronizer();
+    sync.initialize(configWatcher);
+    evt.setWorkspaceId(storeWorkspace);
+    mockMessage(evt);
+  }
+  waitForSync();
+  this.assertAcked(evt.getUUID());
+  verify(info,wsInfo);
+}

@@ -2,21 +2,47 @@
   hz=createMock(HazelcastInstance.class);
   cluster=createMock(HzCluster.class);
   topic=createMock(ITopic.class);
+  ackTopic=createMock(ITopic.class);
   configWatcher=createMock(ClusterConfigWatcher.class);
   clusterConfig=createMock(ClusterConfig.class);
   captureTopicListener=new Capture<MessageListener<Event>>();
+  captureAckTopicListener=new Capture<MessageListener<UUID>>();
+  captureAckTopicPublish=new Capture<UUID>();
   localAddress=new InetSocketAddress(localAddress(42),5000);
   remoteAddress=new InetSocketAddress(localAddress(54),5000);
   Cluster cluster=createMock(Cluster.class);
-  Member member=createMock(Member.class);
+  Member localMember=createMock(Member.class);
+  Member remoteMember=createMock(Member.class);
   expect(this.cluster.getHz()).andStubReturn(hz);
   expect(this.cluster.isEnabled()).andStubReturn(true);
   expect(hz.<Event>getTopic(TOPIC_NAME)).andReturn(topic);
   topic.addMessageListener(capture(captureTopicListener));
   expectLastCall();
-  expect(cluster.getLocalMember()).andStubReturn(member);
-  expect(member.getInetSocketAddress()).andStubReturn(localAddress);
-  EasyMock.replay(cluster,member);
+  expect(hz.<UUID>getTopic(ACK_TOPIC_NAME)).andReturn(ackTopic);
+  ackTopic.addMessageListener(capture(captureAckTopicListener));
+  expectLastCall();
+  ackTopic.publish(EasyMock.capture(captureAckTopicPublish));
+  EasyMock.expectLastCall().andStubAnswer(new IAnswer<Object>(){
+    @Override public Object answer() throws Throwable {
+      Message<UUID> message=createMock(Message.class);
+      expect(message.getMessageObject()).andStubReturn(captureAckTopicPublish.getValue());
+      replay(message);
+      for (      MessageListener<UUID> listener : captureAckTopicListener.getValues()) {
+        listener.onMessage(message);
+      }
+      return null;
+    }
+  }
+);
+  expect(cluster.getLocalMember()).andStubReturn(localMember);
+  expect(localMember.getInetSocketAddress()).andStubReturn(localAddress);
+  expect(remoteMember.getInetSocketAddress()).andStubReturn(remoteAddress);
+  expect(localMember.isLiteMember()).andStubReturn(false);
+  expect(remoteMember.isLiteMember()).andStubReturn(false);
+  expect(localMember.localMember()).andStubReturn(true);
+  expect(remoteMember.localMember()).andStubReturn(false);
+  expect(cluster.getMembers()).andStubReturn(Sets.newHashSet(localMember,remoteMember));
+  EasyMock.replay(cluster,localMember,remoteMember);
   expect(hz.getCluster()).andStubReturn(cluster);
   expect(configWatcher.get()).andStubReturn(clusterConfig);
   expect(clusterConfig.getSyncDelay()).andStubReturn(SYNC_DELAY);
