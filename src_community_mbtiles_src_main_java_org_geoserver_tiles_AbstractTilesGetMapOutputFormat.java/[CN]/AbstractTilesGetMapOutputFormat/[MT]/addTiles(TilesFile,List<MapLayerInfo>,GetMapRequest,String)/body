@@ -2,6 +2,7 @@
   if (mapLayers.isEmpty()) {
     return;
   }
+  RasterCleaner cleaner=GeoServerExtensions.bean(RasterCleaner.class);
   String tileEntryName=null;
   Map formatOpts=request.getFormatOptions();
   if (formatOpts.containsKey("tileset_name")) {
@@ -57,10 +58,7 @@
         req.setBbox(new Envelope(box.getMinX(),box.getMaxX(),box.getMinY(),box.getMaxY()));
         WebMap result=webMapService.getMap(req);
         tiles.addTile(z,(int)x,(int)(flipy ? gridSubset.getNumTilesHigh(z) - (y + 1) : y),toBytes(result));
-        if (ntiles++ == TILE_CLEANUP_INTERVAL) {
-          cleanUpImages();
-          ntiles=0;
-        }
+        cleaner.finished(null);
       }
     }
   }
