@@ -1,0 +1,18 @@
+{
+  for (  Method method : CatalogVisitor.class.getMethods()) {
+    if (!method.getName().equals("visit"))     continue;
+    if (method.getParameterTypes().length != 1)     continue;
+    Class<?> clazz=method.getParameterTypes()[0];
+    if (CatalogInfo.class.isAssignableFrom(method.getParameterTypes()[0])) {
+      @SuppressWarnings("unchecked") InvocationHandler handler=new RemovedObjectProxy("Test","Test",(Class<? extends CatalogInfo>)clazz);
+      CatalogInfo info=(CatalogInfo)Proxy.newProxyInstance(clazz.getClassLoader(),new Class[]{clazz},handler);
+      CatalogVisitor visitor=createMock(CatalogVisitor.class);
+      System.err.println(method);
+      method.invoke(visitor,same(info));
+      expectLastCall();
+      replay(visitor);
+      info.accept(visitor);
+      verify(visitor);
+    }
+  }
+}
