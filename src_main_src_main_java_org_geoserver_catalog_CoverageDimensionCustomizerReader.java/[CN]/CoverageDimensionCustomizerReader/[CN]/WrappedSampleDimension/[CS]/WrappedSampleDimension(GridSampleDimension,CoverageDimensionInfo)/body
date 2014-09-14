@@ -7,6 +7,20 @@
   final List<Category> categories=sampleDim.getCategories();
   this.configuredRange=info.getRange();
   this.customCategories=categories;
+  final String uom=info.getUnit();
+  Unit defaultUnit=sampleDim.getUnits();
+  Unit unit=defaultUnit;
+  try {
+    if (uom != null) {
+      unit=Unit.valueOf(uom);
+    }
+  }
+ catch (  IllegalArgumentException iae) {
+    if (LOGGER.isLoggable(Level.WARNING) && defaultUnit != null) {
+      LOGGER.warning("Unable to parse the specified unit (" + uom + "). Using the previous one: "+ defaultUnit.toString());
+    }
+  }
+  this.configuredUnit=unit;
   final List<Double> nullValues=info.getNullValues();
   if (nullValues != null && nullValues.size() > 0) {
     final int size=nullValues.size();
