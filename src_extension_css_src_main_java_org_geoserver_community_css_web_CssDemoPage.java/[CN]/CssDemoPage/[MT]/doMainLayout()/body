@@ -93,31 +93,34 @@
   mainContent.add(associateDefaultStyle);
   final IModel<String> sldModel=new AbstractReadOnlyModel<String>(){
     public String getObject(){
-      File file=findStyleFile(style);
-      if (file != null && file.isFile()) {
-        BufferedReader reader=null;
-        try {
-          reader=new BufferedReader(new FileReader(file));
-          StringBuilder builder=new StringBuilder();
-          char[] line=new char[4096];
-          int len=0;
-          while ((len=reader.read(line,0,4096)) >= 0)           builder.append(line,0,len);
-          return builder.toString();
+      try {
+        if (CssHandler.FORMAT.equals(style.getFormat())) {
+          StyledLayerDescriptor sld=Styles.sld(style.getStyle());
+          return Styles.string(sld,new SLDHandler(),SLDHandler.VERSION_10,true);
         }
- catch (        IOException e) {
-          throw new WicketRuntimeException(e);
-        }
- finally {
-          try {
-            if (reader != null)             reader.close();
+ else {
+          File file=findStyleFile(style);
+          if (file != null && file.isFile()) {
+            BufferedReader reader=null;
+            try {
+              reader=new BufferedReader(new FileReader(file));
+              StringBuilder builder=new StringBuilder();
+              char[] line=new char[4096];
+              int len=0;
+              while ((len=reader.read(line,0,4096)) >= 0)               builder.append(line,0,len);
+              return builder.toString();
+            }
+  finally {
+              if (reader != null)               reader.close();
+            }
           }
- catch (          IOException e) {
-            throw new WicketRuntimeException(e);
+ else {
+            return "No SLD file found for this style. One will be generated automatically if you save the CSS.";
           }
         }
       }
- else {
-        return "No SLD file found for this style. One will be generated automatically if you save the CSS.";
+ catch (      IOException e) {
+        throw new WicketRuntimeException(e);
       }
     }
   }
