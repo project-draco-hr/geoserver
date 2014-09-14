@@ -1,0 +1,18 @@
+{
+  Connection connection=new TestConnection();
+  Connection wrapper=new WrapperConnection(connection);
+  assertTrue(wrapper.isWrapperFor(Connection.class));
+  Connection unwrap=wrapper.unwrap(Connection.class);
+  assertSame(connection,unwrap);
+  UnWrapper unwrapper=new GenericUnWrapper();
+  assertFalse(unwrapper.canUnwrap(wrapper));
+  try {
+    assertNull(unwrapper.unwrap(wrapper));
+    fail("Cannot unwrap yet");
+  }
+ catch (  Exception expected) {
+  }
+  GenericUnWrapper.CONNECTION_METHODS.put(WrapperConnection.class,WrapperConnection.class.getMethod("getUnderlyingConnection",null));
+  assertTrue(unwrapper.canUnwrap(wrapper));
+  assertSame(connection,unwrapper.unwrap(wrapper));
+}

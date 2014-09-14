@@ -1,7 +1,6 @@
 {
   JSONObject collection=(JSONObject)getAsJSON("wfs?request=GetFeature&version=1.0.0&typename=" + getLayerId(LINE3D) + "&outputformat="+ JSONType.json);
   assertEquals(1,collection.getInt("totalFeatures"));
-  assertEquals("4327",collection.getJSONObject("crs").getJSONObject("properties").getString("code"));
   JSONArray features=collection.getJSONArray("features");
   assertEquals(1,features.size());
   JSONObject feature=features.getJSONObject(0);
@@ -16,4 +15,7 @@
   assertEquals(120,c2.getInt(0));
   assertEquals(0,c2.getInt(1));
   assertEquals(100,c2.getInt(2));
+  CoordinateReferenceSystem expectedCrs=CRS.decode("EPSG:4327");
+  JSONObject aCRS=collection.getJSONObject("crs");
+  assertThat(aCRS,encodesCRS(expectedCrs));
 }

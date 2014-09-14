@@ -1,6 +1,17 @@
 {
-  final File file=new File(createTempDir(storage.getStorage()),contents.getName() + ".gpkg");
+  final File file;
+  URL path=contents.getPath();
+  boolean remove=contents.getRemove() != null ? contents.getRemove() : true;
+  if (!remove && path != null) {
+    File urlToFile=DataUtilities.urlToFile(path);
+    urlToFile.mkdirs();
+    file=new File(urlToFile,contents.getName() + ".gpkg");
+  }
+ else {
+    file=new File(createTempDir(storage.getStorage()),contents.getName() + ".gpkg");
+  }
   GeoPackage gpkg=new GeoPackage(file);
+  gpkg.init();
   for (int i=0; i < contents.getLayerCount(); i++) {
     Layer layer=contents.getLayer(i);
     if (layer.getType() == LayerType.FEATURES) {
@@ -125,6 +136,15 @@
  else {
         request.setSRS(tiles.getSrs().toString());
       }
+      String srs=request.getSRS();
+      if (srs != null && !srs.isEmpty()) {
+        try {
+          request.setCrs(CRS.decode(srs));
+        }
+ catch (        FactoryException e) {
+          throw new RuntimeException(e);
+        }
+      }
       request.setBgColor(tiles.getBgColor());
       request.setTransparent(tiles.isTransparent());
       request.setStyleBody(tiles.getSldBody());
@@ -188,5 +208,10 @@
     }
   }
   gpkg.close();
-  return storage.getURL(file);
+  if (path != null && !remove) {
+    return path;
+  }
+ else {
+    return storage.getURL(file);
+  }
 }

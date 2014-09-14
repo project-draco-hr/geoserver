@@ -15,15 +15,20 @@
   final SimpleFeatureCollection collection=source.getGranules(query);
   final SimpleFeatureIterator iterator=collection.features();
   final List<GridCoverageRequest> requests=new ArrayList<GridCoverageRequest>();
-  while (iterator.hasNext()) {
-    final SimpleFeature feature=iterator.next();
-    final GridCoverageRequest subRequest=new GridCoverageRequest();
-    subRequest.setOutputCRS(gridCoverageRequest.getOutputCRS());
-    subRequest.setSpatialInterpolation(gridCoverageRequest.getSpatialInterpolation());
-    subRequest.setSpatialSubset(gridCoverageRequest.getSpatialSubset());
-    subRequest.setTemporalInterpolation(gridCoverageRequest.getTemporalInterpolation());
-    updateDimensions(subRequest,feature,structuredReader,coverageName);
-    requests.add(subRequest);
+  try {
+    while (iterator.hasNext()) {
+      final SimpleFeature feature=iterator.next();
+      final GridCoverageRequest subRequest=new GridCoverageRequest();
+      subRequest.setOutputCRS(gridCoverageRequest.getOutputCRS());
+      subRequest.setSpatialInterpolation(gridCoverageRequest.getSpatialInterpolation());
+      subRequest.setSpatialSubset(gridCoverageRequest.getSpatialSubset());
+      subRequest.setTemporalInterpolation(gridCoverageRequest.getTemporalInterpolation());
+      updateDimensions(subRequest,feature,structuredReader,coverageName);
+      requests.add(subRequest);
+    }
+  }
+  finally {
+    iterator.close();
   }
   return requests;
 }

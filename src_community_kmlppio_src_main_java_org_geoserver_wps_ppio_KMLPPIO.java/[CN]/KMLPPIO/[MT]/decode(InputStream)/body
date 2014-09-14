@@ -1,0 +1,29 @@
+{
+  StreamingParser parser=new StreamingParser(new KMLConfiguration(),input,KML.Placemark);
+  SimpleFeature f=null;
+  ListFeatureCollection features=null;
+  HashMap oldftype=null;
+  SimpleFeatureType type=null;
+  SimpleFeatureBuilder featureBuilder=null;
+  while ((f=(SimpleFeature)parser.parse()) != null) {
+    HashMap ftype=getSignature(f);
+    if (oldftype == null) {
+      oldftype=ftype;
+      type=getType(ftype);
+      featureBuilder=new SimpleFeatureBuilder(type);
+      features=new ListFeatureCollection(type);
+    }
+ else {
+      if (!oldftype.equals(ftype)) {
+        break;
+      }
+    }
+    for (    Object oentry : ftype.entrySet()) {
+      Map.Entry entry=(Map.Entry)oentry;
+      featureBuilder.add(f.getAttribute((Name)entry.getKey()));
+    }
+    SimpleFeature fnew=featureBuilder.buildFeature(f.getID());
+    features.add(fnew);
+  }
+  return features;
+}

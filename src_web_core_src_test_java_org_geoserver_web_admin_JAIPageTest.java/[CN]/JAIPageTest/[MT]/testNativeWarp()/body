@@ -1,0 +1,29 @@
+{
+  if (!ImageUtilities.isMediaLibAvailable()) {
+    Assert.assertTrue(true);
+    return;
+  }
+  JAIInfo info=(JAIInfo)getGeoServerApplication().getGeoServer().getGlobal().getJAI();
+  Assert.assertFalse(info.isAllowNativeWarp());
+  login();
+  tester.startPage(JAIPage.class);
+  tester.assertRenderedPage(JAIPage.class);
+  FormTester form=tester.newFormTester("form");
+  form.setValue("allowNativeWarp",true);
+  form.submit("submit");
+  tester.assertNoErrorMessage();
+  info=(JAIInfo)getGeoServerApplication().getGeoServer().getGlobal().getJAI();
+  Assert.assertTrue(info.isAllowNativeWarp());
+  Object factory=info.getJAI().getOperationRegistry().getFactory(RenderedRegistryMode.MODE_NAME,"Warp");
+  Assert.assertTrue(factory instanceof MlibWarpRIF);
+  tester.startPage(JAIPage.class);
+  tester.assertRenderedPage(JAIPage.class);
+  form=tester.newFormTester("form");
+  form.setValue("allowNativeWarp",false);
+  form.submit("submit");
+  tester.assertNoErrorMessage();
+  info=(JAIInfo)getGeoServerApplication().getGeoServer().getGlobal().getJAI();
+  Assert.assertFalse(info.isAllowNativeWarp());
+  factory=info.getJAI().getOperationRegistry().getFactory(RenderedRegistryMode.MODE_NAME,"Warp");
+  Assert.assertTrue(factory instanceof WarpRIF);
+}

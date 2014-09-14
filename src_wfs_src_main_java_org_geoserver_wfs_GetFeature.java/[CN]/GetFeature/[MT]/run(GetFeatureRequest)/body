@@ -29,7 +29,7 @@
   }
   List<Map<String,String>> viewParams=null;
   if (request.getViewParams() != null && request.getViewParams().size() > 0) {
-    viewParams=(List<Map<String,String>>)request.getViewParams();
+    viewParams=request.getViewParams();
   }
   int count=0;
   int totalCount=0;
@@ -95,6 +95,9 @@
           propNames.add(metaPropNames);
         }
         List<Join> joins=null;
+        String primaryAlias=null;
+        QName primaryTypeName=query.getTypeNames().get(0);
+        FeatureTypeInfo primaryMeta=metas.get(0);
         Filter filter=query.getFilter();
         if (filter == null && metas.size() > 1) {
           throw new WFSException(request,"Join query must specify a filter");
@@ -107,6 +110,9 @@
               }
               JoinExtractingVisitor extractor=new JoinExtractingVisitor(metas,query.getAliases());
               filter.accept(extractor,null);
+              primaryAlias=extractor.getPrimaryAlias();
+              primaryMeta=extractor.getPrimaryFeatureType();
+              primaryTypeName=new QName(primaryMeta.getNamespace().getURI(),primaryMeta.getNativeName());
               joins=extractor.getJoins();
               if (joins.size() != metas.size() - 1) {
                 throw new WFSException(request,String.format("Query specified %d types but %d " + "join filters were found",metas.size(),extractor.getJoins().size()));
@@ -135,14 +141,14 @@
         if (joins != null) {
           hints=new Hints(ResourcePool.JOINS,joins);
         }
-        FeatureSource<? extends FeatureType,? extends Feature> source=metas.get(0).getFeatureSource(null,hints);
+        FeatureSource<? extends FeatureType,? extends Feature> source=primaryMeta.getFeatureSource(null,hints);
         int queryMaxFeatures=maxFeatures - count;
         int metaMaxFeatures=maxFeatures(metas);
         if (metaMaxFeatures > 0 && metaMaxFeatures < queryMaxFeatures) {
           queryMaxFeatures=metaMaxFeatures;
         }
         Map<String,String> viewParam=viewParams != null ? viewParams.get(i) : null;
-        org.geotools.data.Query gtQuery=toDataQuery(query,filter,offset,queryMaxFeatures,source,request,allPropNames.get(0),viewParam,joins);
+        org.geotools.data.Query gtQuery=toDataQuery(query,filter,offset,queryMaxFeatures,source,request,allPropNames.get(0),viewParam,joins,primaryTypeName,primaryAlias);
         LOGGER.fine("Query is " + query + "\n To gt2: "+ gtQuery);
         FeatureCollection<? extends FeatureType,? extends Feature> features=getFeatures(request,source,gtQuery);
         if (!(meta.getFeatureType() instanceof SimpleFeatureType)) {
@@ -164,7 +170,7 @@
             offset=0;
           }
  else {
-            org.geotools.data.Query q2=toDataQuery(query,filter,0,queryMaxFeatures,source,request,allPropNames.get(0),viewParam,joins);
+            org.geotools.data.Query q2=toDataQuery(query,filter,0,queryMaxFeatures,source,request,allPropNames.get(0),viewParam,joins,primaryTypeName,primaryAlias);
             int size2=source.getCount(q2);
             if (size2 > 0) {
               offset=Math.max(0,offset - size2);
@@ -175,7 +181,7 @@
           totalCountExecutors.add(new CountExecutor(size));
         }
  else {
-          org.geotools.data.Query qTotal=toDataQuery(query,filter,0,Integer.MAX_VALUE,source,request,allPropNames.get(0),viewParam,joins);
+          org.geotools.data.Query qTotal=toDataQuery(query,filter,0,Integer.MAX_VALUE,source,request,allPropNames.get(0),viewParam,joins,primaryTypeName,primaryAlias);
           totalCountExecutors.add(new CountExecutor(source,qTotal));
         }
         List<PropertyName> metaPropNames=propNames.get(0);

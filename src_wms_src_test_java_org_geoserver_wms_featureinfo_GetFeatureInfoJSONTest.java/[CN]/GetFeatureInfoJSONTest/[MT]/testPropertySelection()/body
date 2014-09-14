@@ -1,0 +1,17 @@
+{
+  String layer=getLayerId(MockData.FORESTS);
+  String request="wms?service=wms&version=1.1.1&bbox=-0.002,-0.002,0.002,0.002&styles=&format=jpeg" + "&request=GetFeatureInfo&layers=" + layer + "&query_layers="+ layer+ "&width=20&height=20&x=10&y=10"+ "&info_format="+ JSONType.json+ "&propertyName=NAME";
+  MockHttpServletResponse response=getAsServletResponse(request);
+  assertEquals(JSONType.json,response.getContentType());
+  String result=response.getOutputStreamContent();
+  assertNotNull(result);
+  JSONObject rootObject=JSONObject.fromObject(result);
+  print(rootObject);
+  assertEquals(rootObject.get("type"),"FeatureCollection");
+  JSONArray featureCol=rootObject.getJSONArray("features");
+  JSONObject aFeature=featureCol.getJSONObject(0);
+  assertTrue(aFeature.getJSONObject("geometry").isNullObject());
+  JSONObject properties=aFeature.getJSONObject("properties");
+  assertTrue(properties.getJSONObject("FID").isNullObject());
+  assertEquals("Green Forest",properties.get("NAME"));
+}

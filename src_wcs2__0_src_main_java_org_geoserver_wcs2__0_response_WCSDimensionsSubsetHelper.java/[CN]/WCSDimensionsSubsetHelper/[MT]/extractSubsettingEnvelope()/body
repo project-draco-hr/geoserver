@@ -1,16 +1,26 @@
 {
   final CoordinateReferenceSystem sourceCRS=reader.getCoordinateReferenceSystem();
-  GeneralEnvelope sourceEnvelopeInSubsettingCRS=new GeneralEnvelope(reader.getOriginalEnvelope());
-  sourceEnvelopeInSubsettingCRS.setCoordinateReferenceSystem(sourceCRS);
+  WCSEnvelope sourceEnvelopeInSubsettingCRS=new WCSEnvelope(reader.getOriginalEnvelope());
   if (!(subsettingCRS == null || CRS.equalsIgnoreMetadata(subsettingCRS,sourceCRS))) {
     try {
-      sourceEnvelopeInSubsettingCRS=CRS.transform(reader.getOriginalEnvelope(),subsettingCRS);
-      sourceEnvelopeInSubsettingCRS.setCoordinateReferenceSystem(subsettingCRS);
+      sourceEnvelopeInSubsettingCRS=new WCSEnvelope(CRS.transform(reader.getOriginalEnvelope(),subsettingCRS));
     }
  catch (    Exception e) {
-      final WCS20Exception exception=new WCS20Exception("Unable to initialize subsetting envelope",WCS20Exception.WCS20ExceptionCode.SubsettingCrsNotSupported,subsettingCRS.toWKT());
-      exception.initCause(e);
-      throw exception;
+      try {
+        ProjectionHandler handler=ProjectionHandlerFinder.getHandler(new ReferencedEnvelope(0,1,0,1,subsettingCRS),sourceCRS,false);
+        if (handler != null) {
+          ReferencedEnvelope validArea=handler.getValidAreaBounds();
+          Envelope intersection=validArea.intersection(ReferencedEnvelope.reference(reader.getOriginalEnvelope()));
+          ReferencedEnvelope re=new ReferencedEnvelope(intersection,sourceCRS);
+          sourceEnvelopeInSubsettingCRS=new WCSEnvelope(re.transform(subsettingCRS,true));
+        }
+ else {
+          throw new WCS20Exception("Unable to initialize subsetting envelope",WCS20Exception.WCS20ExceptionCode.SubsettingCrsNotSupported,subsettingCRS.toWKT(),e);
+        }
+      }
+ catch (      Exception e2) {
+        throw new WCS20Exception("Unable to initialize subsetting envelope",WCS20Exception.WCS20ExceptionCode.SubsettingCrsNotSupported,subsettingCRS.toWKT(),e2);
+      }
     }
   }
   final EList<DimensionSubsetType> requestedDimensions=request.getDimensionSubset();
@@ -23,8 +33,7 @@
   }
   final List<String> axesNames=envelopeDimensionsMapper.getAxesNames(sourceEnvelopeInSubsettingCRS,true);
   final List<String> foundDimensions=new ArrayList<String>();
-  GeneralEnvelope subsettingEnvelope=new GeneralEnvelope(sourceEnvelopeInSubsettingCRS);
-  subsettingEnvelope.setCoordinateReferenceSystem(subsettingCRS);
+  WCSEnvelope subsettingEnvelope=new WCSEnvelope(sourceEnvelopeInSubsettingCRS);
   Set<String> dimensionKeys=enabledDimensions.keySet();
   for (  DimensionSubsetType dim : requestedDimensions) {
     String dimension=WCSDimensionsSubsetHelper.getDimensionName(dim);
@@ -65,12 +74,12 @@
       final DimensionTrimType trim=(DimensionTrimType)dim;
       final double low=Double.parseDouble(trim.getTrimLow());
       final double high=Double.parseDouble(trim.getTrimHigh());
-      if (low > high) {
-        throw new WCS20Exception("Low greater than High",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,trim.getTrimLow());
-      }
       final int axisIndex=envelopeDimensionsMapper.getAxisIndex(sourceEnvelopeInSubsettingCRS,dimension);
       if (axisIndex < 0) {
         throw new WCS20Exception("Invalid axis provided",WCS20Exception.WCS20ExceptionCode.InvalidAxisLabel,dimension);
+      }
+      if (low > high && !subsettingEnvelope.isLongitude(axisIndex)) {
+        throw new WCS20Exception("Low greater than High",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,trim.getTrimLow());
       }
       subsettingEnvelope.setRange(axisIndex,low,high);
     }
@@ -93,30 +102,9 @@
       throw new WCS20Exception("Invalid element found while attempting to parse dimension subsetting request",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,dim.getClass().toString());
     }
   }
-  GeneralEnvelope sourceEnvelope=reader.getOriginalEnvelope();
-  try {
-    if (!CRS.equalsIgnoreMetadata(subsettingEnvelope.getCoordinateReferenceSystem(),reader.getOriginalEnvelope())) {
-      if (!CRS.equalsIgnoreMetadata(subsettingCRS,sourceCRS)) {
-        final GeneralEnvelope subsettingEnvelopeInSourceCRS=CRS.transform(subsettingEnvelope,sourceCRS);
-        subsettingEnvelopeInSourceCRS.setCoordinateReferenceSystem(sourceCRS);
-        subsettingEnvelopeInSourceCRS.intersect(sourceEnvelope);
-        subsettingEnvelopeInSourceCRS.setCoordinateReferenceSystem(sourceCRS);
-        if (subsettingEnvelopeInSourceCRS.isEmpty()) {
-          throw new WCS20Exception("Empty intersection after subsetting",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"");
-        }
-        return subsettingEnvelopeInSourceCRS;
-      }
-    }
-    subsettingEnvelope.intersect(sourceEnvelope);
-    subsettingEnvelope.setCoordinateReferenceSystem(reader.getCoordinateReferenceSystem());
-    if (subsettingEnvelope.isEmpty()) {
-      throw new WCS20Exception("Empty intersection after subsetting",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"");
-    }
-    return subsettingEnvelope;
+  subsettingEnvelope.intersect(new GeneralEnvelope(sourceEnvelopeInSubsettingCRS));
+  if (subsettingEnvelope.isEmpty()) {
+    throw new WCS20Exception("Empty intersection after subsetting",WCS20Exception.WCS20ExceptionCode.InvalidSubsetting,"");
   }
- catch (  TransformException e) {
-    final WCS20Exception exception=new WCS20Exception("Unable to initialize subsetting envelope",WCS20Exception.WCS20ExceptionCode.SubsettingCrsNotSupported,subsettingCRS.toWKT());
-    exception.initCause(e);
-    throw exception;
-  }
+  return subsettingEnvelope;
 }

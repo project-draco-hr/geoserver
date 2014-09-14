@@ -1,0 +1,14 @@
+{
+  GeoServer geoServer=getGeoServerApplication().getGeoServer();
+  WPSInfo wps=geoServer.getService(WPSInfo.class);
+  WorkspaceInfo defaultWs=getCatalog().getDefaultWorkspace();
+  WPSInfo wps2=geoServer.getFactory().create(WPSInfo.class);
+  OwsUtils.copy(wps,wps2,WPSInfo.class);
+  ((ServiceInfoImpl)wps2).setId(null);
+  wps2.setWorkspace(defaultWs);
+  wps2.setMaintainer("TestMaintainer");
+  geoServer.add(wps2);
+  login();
+  tester.startPage(WPSAdminPage.class,new PageParameters(Collections.singletonMap("workspace",defaultWs.getName())));
+  tester.assertModelValue("form:maintainer","TestMaintainer");
+}

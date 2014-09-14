@@ -1,0 +1,25 @@
+{
+  GWC gwc=GWC.get();
+  GWCConfig config=gwc.getConfig();
+  config.setCacheLayersByDefault(true);
+  gwc.saveConfig(config);
+  GWCSettingsPage page=new GWCSettingsPage();
+  tester.startPage(page);
+  tester.assertRenderedPage(GWCSettingsPage.class);
+  tester.assertComponent("form:cachingOptionsPanel:container:configs:cachedGridsets",DefaultGridsetsEditor.class);
+  DropDownChoice<String> availableItems=(DropDownChoice<String>)tester.getComponentFromLastRenderedPage("form:cachingOptionsPanel:container:configs:cachedGridsets:availableGridsets");
+  assertNotNull(availableItems);
+  String item=availableItems.getChoices().get(0);
+  assertNotNull(item);
+  assertTrue(item.equalsIgnoreCase("GlobalCRS84Pixel"));
+  FormTester form=tester.newFormTester("form");
+  form.select("cachingOptionsPanel:container:configs:cachedGridsets:availableGridsets",0);
+  tester.executeAjaxEvent("form:cachingOptionsPanel:container:configs:cachedGridsets:addGridset","onclick");
+  tester.assertRenderedPage(GWCSettingsPage.class);
+  form.submit("submit");
+  tester.assertNoErrorMessage();
+  tester.startPage(page);
+  tester.assertRenderedPage(GWCSettingsPage.class);
+  availableItems=(DropDownChoice<String>)tester.getComponentFromLastRenderedPage("form:cachingOptionsPanel:container:configs:cachedGridsets:availableGridsets");
+  assertFalse(availableItems.getChoices().contains(item));
+}

@@ -1,0 +1,21 @@
+{
+  List<GridCoverage2D> result=new ArrayList<GridCoverage2D>();
+  if (subset != null) {
+    if (subset.isCrossingDateline()) {
+      Envelope2D coverageEnvelope=coverage.getEnvelope2D();
+      GeneralEnvelope[] normalizedEnvelopes=subset.getNormalizedEnvelopes();
+      for (int i=0; i < normalizedEnvelopes.length; i++) {
+        GeneralEnvelope ge=normalizedEnvelopes[i];
+        if (ge.intersects(coverageEnvelope,false)) {
+          GridCoverage2D cropped=cropOnEnvelope(coverage,ge);
+          result.add(cropped);
+        }
+      }
+    }
+ else {
+      GridCoverage2D cropped=cropOnEnvelope(coverage,subset);
+      result.add(cropped);
+    }
+  }
+  return result;
+}
