@@ -1,0 +1,63 @@
+{
+  final long rasterSizeLimits=downloadServiceConfiguration.getRasterSizeLimits();
+  if (rasterSizeLimits <= 0) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("No raster size limits, moving on....");
+    }
+    return true;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Raster size limits: " + rasterSizeLimits);
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Checking download limits for raster request");
+  }
+  CoordinateReferenceSystem nativeCRS=DownloadUtilities.getNativeCRS(coverageInfo);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Native CRS is " + nativeCRS.toWKT());
+  }
+  ROIManager roiManager=null;
+  if (roi != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Pushing ROI to native CRS");
+    }
+    CoordinateReferenceSystem roiCRS=(CoordinateReferenceSystem)roi.getUserData();
+    roiManager=new ROIManager(roi,roiCRS);
+    roiManager.useNativeCRS(nativeCRS);
+  }
+  final GridCoverage2DReader reader=(GridCoverage2DReader)coverageInfo.getGridCoverageReader(null,null);
+  final double areaRead;
+  if (roi != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Reprojecting ROI");
+    }
+    final Geometry safeRoiInNativeCRS=roiManager.getSafeRoiInNativeCRS();
+    Geometry roiInNativeCRS_=safeRoiInNativeCRS.intersection(FeatureUtilities.getPolygon(reader.getOriginalEnvelope(),new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING))));
+    if (roiInNativeCRS_.isEmpty()) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Empty intersection, so the result does not exceed the limits");
+      }
+      return true;
+    }
+    final AffineTransform2D w2G=(AffineTransform2D)reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER).inverse();
+    final Geometry rasterGeometry=JTS.transform(roiInNativeCRS_,w2G);
+    areaRead=rasterGeometry.getEnvelope().getArea();
+  }
+ else {
+    final Rectangle2D originalGridRange=(GridEnvelope2D)reader.getOriginalGridRange();
+    areaRead=originalGridRange.getWidth() * originalGridRange.getHeight();
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Area to read in pixels: " + areaRead);
+  }
+  if (areaRead > rasterSizeLimits) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Area exceeds the limits");
+    }
+    return false;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Area does not exceeds the limits");
+  }
+  return true;
+}

@@ -1,0 +1,61 @@
+{
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Writing raster");
+  }
+  long limit=DownloadServiceConfiguration.NO_LIMIT;
+  if (limits.getHardOutputLimit() > 0) {
+    limit=limits.getHardOutputLimit();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Hard output limits set to " + limit);
+    }
+  }
+ else {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Hard output limit unset");
+    }
+  }
+  ProcessParameterIO ppio_=DownloadUtilities.find(new Parameter<GridCoverage2D>("fakeParam",GridCoverage2D.class),null,mimeType,false);
+  if (ppio_ == null) {
+    throw new ProcessException("Don't know how to encode in mime type " + mimeType);
+  }
+ else   if (!(ppio_ instanceof ComplexPPIO)) {
+    throw new ProcessException("Invalid PPIO found " + ppio_.getIdentifer());
+  }
+  final ComplexPPIO complexPPIO=(ComplexPPIO)ppio_;
+  String extension=complexPPIO.getFileExtension();
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Writing file in a temporary folder");
+  }
+  final File output=resourceManager.getTemporaryFile("." + extension);
+  final FileImageOutputStreamExtImpl fileImageOutputStreamExtImpl=new FileImageOutputStreamExtImpl(output);
+  ImageOutputStream os=null;
+  try {
+    if (limit > DownloadServiceConfiguration.NO_LIMIT) {
+      os=new LimitedImageOutputStream(fileImageOutputStreamExtImpl,limit){
+        @Override protected void raiseError(        long pSizeMax,        long pCount) throws IOException {
+          IOException e=new IOException("Download Exceeded the maximum HARD allowed size!");
+          throw e;
+        }
+      }
+;
+    }
+ else {
+      os=fileImageOutputStreamExtImpl;
+    }
+    complexPPIO.encode(gridCoverage,new OutputStreamAdapter(os));
+    os.flush();
+  }
+  finally {
+    try {
+      if (os != null) {
+        os.close();
+      }
+    }
+ catch (    Exception e) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,e.getLocalizedMessage(),e);
+      }
+    }
+  }
+  return output;
+}

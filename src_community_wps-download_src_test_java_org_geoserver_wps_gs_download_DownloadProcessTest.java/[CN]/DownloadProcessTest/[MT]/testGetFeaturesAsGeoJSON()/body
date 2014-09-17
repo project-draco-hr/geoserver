@@ -1,0 +1,13 @@
+{
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(),getGeoServer());
+  final WPSResourceManager resourceManager=new WPSResourceManager();
+  DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  FeatureTypeInfo ti=getCatalog().getFeatureTypeByName(getLayerId(MockData.POLYGONS));
+  SimpleFeatureCollection rawSource=(SimpleFeatureCollection)ti.getFeatureSource(null,null).getFeatures();
+  File jsonZip=downloadProcess.execute(getLayerId(MockData.POLYGONS),null,"application/json",null,CRS.decode("EPSG:32615"),roi,false,new NullProgressListener());
+  Assert.assertNotNull(jsonZip);
+  File[] files=exctractJSONFile(jsonZip);
+  SimpleFeatureCollection rawTarget=(SimpleFeatureCollection)new FeatureJSON().readFeatureCollection(new FileInputStream(files[0]));
+  Assert.assertNotNull(rawTarget);
+  Assert.assertEquals(rawSource.size(),rawTarget.size());
+}

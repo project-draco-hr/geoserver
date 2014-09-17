@@ -1,0 +1,116 @@
+{
+  Utilities.ensureNonNull("downloadProcessProperties",downloadProcessProperties);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Parsing the properties file");
+  }
+  long maxFeatures=DownloadServiceConfiguration.DEFAULT_MAX_FEATURES;
+  long rasterSizeLimits=DownloadServiceConfiguration.DEFAULT_RASTER_SIZE_LIMITS;
+  long writeLimits=DownloadServiceConfiguration.DEFAULT_RASTER_SIZE_LIMITS;
+  long hardOutputLimit=DownloadServiceConfiguration.DEFAULT_WRITE_LIMITS;
+  int compressionLevel=DownloadServiceConfiguration.DEFAULT_COMPRESSION_LEVEL;
+  Set<Object> properties=downloadProcessProperties.keySet();
+  for (  Object property : properties) {
+    String prop=(String)property;
+    if (prop.equalsIgnoreCase(DownloadServiceConfiguration.MAX_FEATURES_NAME)) {
+      String value=(String)downloadProcessProperties.get(DownloadServiceConfiguration.MAX_FEATURES_NAME);
+      try {
+        final long parseLong=Long.parseLong(value);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("maxFeatures parsed to " + parseLong);
+        }
+        if (parseLong > 0) {
+          maxFeatures=parseLong;
+        }
+      }
+ catch (      NumberFormatException e) {
+        if (LOGGER.isLoggable(Level.INFO)) {
+          LOGGER.log(Level.INFO,e.getLocalizedMessage(),e);
+        }
+      }
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("maxFeatures assigned to " + maxFeatures);
+      }
+    }
+    if (prop.equalsIgnoreCase(DownloadServiceConfiguration.RASTER_SIZE_LIMITS_NAME)) {
+      String value=(String)downloadProcessProperties.get(DownloadServiceConfiguration.RASTER_SIZE_LIMITS_NAME);
+      try {
+        final long parseLong=Long.parseLong(value);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("raster size limits parsed to " + parseLong);
+        }
+        if (parseLong > 0) {
+          rasterSizeLimits=Long.parseLong(value);
+        }
+      }
+ catch (      NumberFormatException e) {
+        if (LOGGER.isLoggable(Level.INFO)) {
+          LOGGER.log(Level.INFO,e.getLocalizedMessage(),e);
+        }
+      }
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("raster size limits assigned to " + rasterSizeLimits);
+      }
+    }
+    if (prop.equalsIgnoreCase(DownloadServiceConfiguration.WRITE_LIMITS_NAME)) {
+      String value=(String)downloadProcessProperties.get(DownloadServiceConfiguration.WRITE_LIMITS_NAME);
+      try {
+        final long parseLong=Long.parseLong(value);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("writeLimits parsed to " + parseLong);
+        }
+        if (parseLong > 0) {
+          writeLimits=Long.parseLong(value);
+        }
+      }
+ catch (      NumberFormatException e) {
+        if (LOGGER.isLoggable(Level.INFO)) {
+          LOGGER.log(Level.INFO,e.getLocalizedMessage(),e);
+        }
+      }
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("writeLimits assigned to " + writeLimits);
+      }
+    }
+    if (prop.equalsIgnoreCase("hardOutputLimit")) {
+      String value=(String)downloadProcessProperties.get("hardOutputLimit");
+      try {
+        final long parseLong=Long.parseLong(value);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("hardOutputLimit parsed to " + parseLong);
+        }
+        if (parseLong > 0) {
+          hardOutputLimit=Long.parseLong(value);
+        }
+      }
+ catch (      NumberFormatException e) {
+        if (LOGGER.isLoggable(Level.INFO)) {
+          LOGGER.log(Level.INFO,e.getLocalizedMessage(),e);
+        }
+      }
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("hardOutputLimit assigned to " + hardOutputLimit);
+      }
+    }
+    if (prop.equalsIgnoreCase("compressionLevel")) {
+      String value=(String)downloadProcessProperties.get("compressionLevel");
+      try {
+        final long parseLong=Long.parseLong(value);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("compressionLevel parsed to " + parseLong);
+        }
+        if (parseLong >= 0 && parseLong <= 8) {
+          compressionLevel=Integer.parseInt(value);
+        }
+      }
+ catch (      NumberFormatException e) {
+        if (LOGGER.isLoggable(Level.INFO)) {
+          LOGGER.log(Level.INFO,e.getLocalizedMessage(),e);
+        }
+      }
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("compressionLevel assigned to " + compressionLevel);
+      }
+    }
+  }
+  return new DownloadServiceConfiguration(maxFeatures,rasterSizeLimits,writeLimits,hardOutputLimit,compressionLevel);
+}

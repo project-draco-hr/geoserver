@@ -1,0 +1,115 @@
+{
+  try {
+    if (layerName == null || layerName.length() <= 0) {
+      throw new IllegalArgumentException("Empty or null layerName provided!");
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Download process called on resource: " + layerName);
+    }
+    if (clip == null) {
+      clip=false;
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Clipping disabled");
+      }
+    }
+    if (roi != null) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"ROI check");
+      }
+      DownloadUtilities.checkPolygonROI(roi);
+      if (roiCRS == null) {
+        throw new IllegalArgumentException("ROI without a CRS is not usable!");
+      }
+      roi.setUserData(roiCRS);
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Running the estimator");
+    }
+    if (!estimator.execute(layerName,filter,targetCRS,roiCRS,roi,clip,progressListener)) {
+      throw new IllegalArgumentException("Download Limits Exceeded. Unable to proceed!");
+    }
+    LayerInfo layerInfo=catalog.getLayerByName(layerName);
+    if (layerInfo == null) {
+      throw new IllegalArgumentException("Unable to locate layer: " + layerName);
+    }
+    ResourceInfo resourceInfo=layerInfo.getResource();
+    if (resourceInfo == null) {
+      throw new IllegalArgumentException("Unable to locate ResourceInfo for layer:" + layerName);
+    }
+    DownloadServiceConfiguration limits=estimator.getDownloadServiceConfiguration();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Employing limits " + limits);
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"The resource to work on is " + resourceInfo.getName());
+    }
+    File internalOutput=null;
+    if (resourceInfo instanceof FeatureTypeInfo) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"The resource to work on is a vector layer");
+      }
+      internalOutput=new VectorDownload(limits,resourceManager).execute((FeatureTypeInfo)resourceInfo,mimeType,roi,clip,filter,targetCRS,progressListener);
+    }
+ else     if (resourceInfo instanceof CoverageInfo) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"The resource to work on is a raster layer");
+      }
+      CoverageInfo cInfo=(CoverageInfo)resourceInfo;
+      internalOutput=new RasterDownload(limits,resourceManager).execute(mimeType,progressListener,cInfo,roi,targetCRS,clip,filter);
+    }
+ else {
+      throw new IllegalArgumentException("Could not complete the Download Process, requested layer was of wrong type-->" + resourceInfo.getClass());
+    }
+    if (internalOutput == null) {
+      throw new IllegalStateException("Could not complete the Download Process, output file is null");
+    }
+    if (!internalOutput.exists() || !internalOutput.canRead()) {
+      throw new IllegalStateException("Could not complete the Download Process, output file invalid! --> " + internalOutput.getAbsolutePath());
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Preparing the result");
+    }
+    final File result=resourceManager.getOutputFile(resourceManager.getExecutionId(true),resourceInfo.getName() + ".zip");
+    FileOutputStream os1=null;
+    try {
+      os1=new FileOutputStream(result);
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Listing files");
+      }
+      List<File> filesToDownload=new ArrayList<File>();
+      filesToDownload.add(internalOutput);
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Collecting styles");
+      }
+      List<File> styles=DownloadUtilities.collectStyles(layerInfo);
+      filesToDownload.addAll(styles);
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Zipping files");
+      }
+      new ZipArchivePPIO(estimator.getDownloadServiceConfiguration().getCompressionLevel()).encode(filesToDownload,os1);
+    }
+  finally {
+      if (os1 != null) {
+        IOUtils.closeQuietly(os1);
+      }
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Prepare the result for deletion");
+      }
+      resourceManager.addResource(new WPSFileResource(internalOutput));
+    }
+    if (progressListener != null) {
+      progressListener.complete();
+    }
+    return result;
+  }
+ catch (  Throwable e) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Download failed");
+    }
+    final ProcessException processException=new ProcessException(e);
+    if (progressListener != null) {
+      progressListener.exceptionOccurred(processException);
+    }
+    throw processException;
+  }
+}
