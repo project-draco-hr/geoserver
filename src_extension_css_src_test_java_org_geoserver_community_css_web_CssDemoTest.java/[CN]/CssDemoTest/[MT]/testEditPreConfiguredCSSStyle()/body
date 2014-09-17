@@ -1,0 +1,25 @@
+{
+  Catalog cat=getCatalog();
+  StyleInfo foo=cat.getFactory().createStyle();
+  foo.setName("foo");
+  foo.setFilename("foo.css");
+  foo.setFormat(CssHandler.FORMAT);
+  String css="* { fill: #cccccc }";
+  cat.getResourcePool().writeStyle(foo,new ByteArrayInputStream(css.getBytes()));
+  cat.add(foo);
+  login();
+  PageParameters pp=new PageParameters();
+  String prefixedName=getLayerId(MockData.BASIC_POLYGONS);
+  pp.put("layer",prefixedName);
+  pp.put("style","foo");
+  tester.startPage(CssDemoPage.class,pp);
+  tester.assertRenderedPage(CssDemoPage.class);
+  tester.assertModelValue("main-content:style.name","foo");
+  tester.assertModelValue("main-content:layer.name",prefixedName);
+  tester.debugComponentTrees();
+  FormTester form=tester.newFormTester("main-content:style.editing:style-editor");
+  form.setValue("editor","* { stroke: red; }");
+  tester.executeAjaxEvent("main-content:style.editing:style-editor:submit","onclick");
+  String content=IOUtils.toString(cat.getResourcePool().readStyle(foo));
+  assertEquals("* { stroke: red; }",content);
+}
