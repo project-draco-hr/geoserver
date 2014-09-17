@@ -1,0 +1,23 @@
+{
+  if (targetCRS == null) {
+    throw new IllegalArgumentException("The provided targetCRS is null");
+  }
+  if (roiInNativeCRS == null) {
+    throw new IllegalStateException("It looks like useNativeCRS has not been called yet");
+  }
+  this.targetCRS=targetCRS;
+  if (isROIBBOX) {
+    roiInTargetCRS=DownloadUtilities.transformGeometry(safeRoiInNativeCRS,targetCRS);
+    DownloadUtilities.checkPolygonROI(roiInTargetCRS);
+    safeRoiInTargetCRS=roiInTargetCRS.getEnvelope();
+    safeRoiInTargetCRS.setUserData(targetCRS);
+    safeRoiInNativeCRS=DownloadUtilities.transformGeometry(safeRoiInTargetCRS,nativeCRS);
+    DownloadUtilities.checkPolygonROI(safeRoiInNativeCRS);
+    safeRoiInNativeCRS=safeRoiInNativeCRS.getEnvelope();
+    safeRoiInNativeCRS.setUserData(nativeCRS);
+  }
+ else {
+    roiInTargetCRS=DownloadUtilities.transformGeometry(roiInNativeCRS,targetCRS);
+    safeRoiInTargetCRS=roiInTargetCRS;
+  }
+}

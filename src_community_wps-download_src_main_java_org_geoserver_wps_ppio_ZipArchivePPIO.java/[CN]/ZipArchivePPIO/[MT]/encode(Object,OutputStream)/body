@@ -1,0 +1,54 @@
+{
+  if (output instanceof File && isZpFile((File)output)) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"File is already a zip, we have only to copy it");
+    }
+    FileUtils.copyFile((File)output,os);
+    return;
+  }
+  ZipOutputStream zipout=new ZipOutputStream(os);
+  zipout.setLevel(compressionLevel);
+  if (output instanceof File) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Zipping the file");
+    }
+    final File file=((File)output);
+    if (file.isDirectory()) {
+      IOUtils.zipDirectory(file,zipout,FileFilterUtils.trueFileFilter());
+    }
+ else {
+      zipFile(file,zipout);
+    }
+  }
+ else {
+    if (output instanceof Collection) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Zipping the collection");
+      }
+      final Collection collection=(Collection)output;
+      for (      Object obj : collection) {
+        if (obj instanceof File) {
+          final File file=((File)obj);
+          if (file.isDirectory()) {
+            IOUtils.zipDirectory(file,zipout,FileFilterUtils.trueFileFilter());
+          }
+ else {
+            zipFile(file,zipout);
+          }
+        }
+ else {
+          if (LOGGER.isLoggable(Level.INFO)) {
+            LOGGER.info("Skipping object -->" + obj.toString());
+          }
+        }
+      }
+    }
+ else {
+      throw new IllegalArgumentException("Unable to zip provided output. Output-->" + output != null ? output.getClass().getCanonicalName() : "null");
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Finished to zip");
+  }
+  zipout.finish();
+}

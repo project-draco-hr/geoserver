@@ -1,0 +1,22 @@
+{
+  if (file == null || !file.exists() || !file.canRead()) {
+    throw new IllegalArgumentException("Provided File is not valid and/or reqadable! --> File:" + file != null ? file.getAbsolutePath() : "null");
+  }
+  final ZipEntry entry=new ZipEntry(FilenameUtils.getName(file.getAbsolutePath()));
+  zipout.putNextEntry(entry);
+  InputStream in=null;
+  try {
+    int c;
+    in=new FileInputStream(file);
+    while (-1 != (c=in.read(buffer))) {
+      zipout.write(buffer,0,c);
+    }
+    zipout.closeEntry();
+  }
+  finally {
+    if (in != null) {
+      org.apache.commons.io.IOUtils.closeQuietly(in);
+    }
+  }
+  zipout.flush();
+}
