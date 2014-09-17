@@ -1,0 +1,152 @@
+{
+  String name;
+  if (filename != null && !filename.isEmpty()) {
+    name=filename;
+  }
+ else   if (!layerz.isEmpty()) {
+    String firstLayer=layerz.iterator().next();
+    name=firstLayer.substring(firstLayer.lastIndexOf(":") + 1);
+  }
+ else {
+    throw new ProcessException("Layers parameter is empty");
+  }
+  if (styleNames != null && styleNames.size() != layerz.size()) {
+    throw new ProcessException("Layers and styleNames must have the same size");
+  }
+  final File file;
+  if (path != null) {
+    File urlToFile=DataUtilities.urlToFile(path);
+    urlToFile.mkdirs();
+    file=new File(urlToFile,name + ".mbtiles");
+  }
+ else {
+    file=new File(createTempDir(storage.getStorage()),name + ".mbtiles");
+  }
+  MBTilesFile mbtile=new MBTilesFile(file,true);
+  try {
+    mbtile.init();
+    GetMapRequest request=new GetMapRequest();
+    ArrayList<MapLayerInfo> layers=new ArrayList<MapLayerInfo>();
+    for (    String layername : layerz) {
+      LayerInfo layerInfo=catalog.getLayerByName(layername);
+      if (layerInfo == null) {
+        throw new ServiceException("Layer not found: " + layername);
+      }
+      layers.add(new MapLayerInfo(layerInfo));
+    }
+    request.setLayers(layers);
+    if (boundingbox == null) {
+      try {
+        ReferencedEnvelope bbox=null;
+        for (        MapLayerInfo l : request.getLayers()) {
+          ResourceInfo r=l.getResource();
+          ReferencedEnvelope b=r.getNativeBoundingBox();
+          if (bbox != null) {
+            b=b.transform(bbox.getCoordinateReferenceSystem(),true);
+          }
+          if (bbox != null) {
+            bbox.include(b);
+          }
+ else {
+            bbox=b;
+          }
+        }
+        request.setBbox(bbox);
+      }
+ catch (      Exception e) {
+        String msg="Must specify bbox, unable to derive from requested layers";
+        throw new RuntimeException(msg,e);
+      }
+    }
+ else {
+      request.setBbox(boundingbox);
+    }
+    CoordinateReferenceSystem crs=boundingbox.getCoordinateReferenceSystem();
+    if (crs == null) {
+      ResourceInfo r=request.getLayers().iterator().next().getResource();
+      crs=r.getCRS();
+      request.setCrs(crs);
+    }
+ else {
+      request.setCrs(crs);
+    }
+    request.setSRS(CRS.toSRS(crs));
+    if (bgColor != null && !bgColor.isEmpty()) {
+      request.setBgColor(Color.decode(bgColor));
+    }
+    request.setTransparent(transparency == null ? false : transparency);
+    if (stylePath != null) {
+      request.setStyleUrl(stylePath);
+    }
+ else     if (styleBody != null && !styleBody.isEmpty()) {
+      request.setStyleBody(styleBody);
+    }
+ else {
+      request.setStyles(new ArrayList<Style>());
+      if (styleNames != null && !styleNames.isEmpty()) {
+        for (        String styleName : styleNames) {
+          StyleInfo info=catalog.getStyleByName(styleName);
+          if (info != null) {
+            request.getStyles().add(info.getStyle());
+          }
+ else {
+            request.getStyles().add(null);
+          }
+        }
+      }
+      if (request.getStyles().isEmpty()) {
+        for (        MapLayerInfo info : request.getLayers()) {
+          request.getStyles().add(info.getDefaultStyle());
+        }
+      }
+    }
+    request.setFormat("none");
+    Map formatOptions=new HashMap();
+    formatOptions.put("format",format);
+    if (minZoom != null) {
+      formatOptions.put("min_zoom",minZoom);
+    }
+    if (maxZoom != null) {
+      formatOptions.put("max_zoom",maxZoom);
+    }
+    if (minColumn != null) {
+      formatOptions.put("min_column",minColumn);
+    }
+    if (maxColumn != null) {
+      formatOptions.put("max_column",maxColumn);
+    }
+    if (minRow != null) {
+      formatOptions.put("min_row",minRow);
+    }
+    if (maxRow != null) {
+      formatOptions.put("max_row",maxRow);
+    }
+    formatOptions.put(GRIDSET_NAME,EPSG_900913);
+    request.setFormatOptions(formatOptions);
+    mapOutput.addTiles(mbtile,request,name);
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(Level.SEVERE)) {
+      LOGGER.log(Level.SEVERE,e.getMessage(),e);
+    }
+    throw new ProcessException(e);
+  }
+ finally {
+    if (mbtile != null) {
+      try {
+        mbtile.close();
+      }
+ catch (      Exception e) {
+        if (LOGGER.isLoggable(Level.SEVERE)) {
+          LOGGER.log(Level.SEVERE,e.getMessage(),e);
+        }
+      }
+    }
+  }
+  if (path != null) {
+    return DataUtilities.fileToURL(file);
+  }
+ else {
+    return storage.getURL(file);
+  }
+}
