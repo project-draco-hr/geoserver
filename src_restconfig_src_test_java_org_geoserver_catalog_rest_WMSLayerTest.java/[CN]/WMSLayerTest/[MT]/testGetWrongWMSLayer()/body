@@ -1,0 +1,23 @@
+{
+  String ws="sf";
+  String wms="demo";
+  String wl="statessssss";
+  String requestPath="/rest/workspaces/" + ws + "/wmslayers/"+ wl+ ".html";
+  String requestPath2="/rest/workspaces/" + ws + "/wmsstores/"+ wms+ "/wmslayers/"+ wl+ ".html";
+  String exception="No such cascaded wms: " + ws + ","+ wl;
+  String exception2="No such cascaded wms layer: " + ws + ","+ wms+ ","+ wl;
+  MockHttpServletResponse response=getAsServletResponse(requestPath);
+  assertEquals(404,response.getStatusCode());
+  assertTrue(response.getOutputStreamContent().contains(exception));
+  response=getAsServletResponse(requestPath + "?quietOnNotFound=true");
+  assertEquals(404,response.getStatusCode());
+  assertFalse(response.getOutputStreamContent().contains(exception));
+  assertTrue(response.getOutputStreamContent().isEmpty());
+  response=getAsServletResponse(requestPath2);
+  assertEquals(404,response.getStatusCode());
+  assertTrue(response.getOutputStreamContent().contains(exception2));
+  response=getAsServletResponse(requestPath2 + "?quietOnNotFound=true");
+  assertEquals(404,response.getStatusCode());
+  assertFalse(response.getOutputStreamContent().contains(exception2));
+  assertTrue(response.getOutputStreamContent().isEmpty());
+}
