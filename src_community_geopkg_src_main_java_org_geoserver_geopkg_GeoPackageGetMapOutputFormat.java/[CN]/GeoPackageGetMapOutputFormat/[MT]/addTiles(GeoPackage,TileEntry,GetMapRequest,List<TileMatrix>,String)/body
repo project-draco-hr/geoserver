@@ -7,6 +7,7 @@
   if (mapLayers.isEmpty()) {
     return;
   }
+  RasterCleaner cleaner=GeoServerExtensions.bean(RasterCleaner.class);
   ReferencedEnvelope bbox=bounds(request);
   e.setTableName(name);
   e.setBounds(bbox);
@@ -62,7 +63,6 @@
   if (formatOpts.containsKey("max_row")) {
     maxRow=Integer.parseInt(formatOpts.get("max_row").toString());
   }
-  int ntiles=0;
   for (  TileMatrix matrix : matrixSet.values()) {
     req.setWidth(matrix.getTileWidth());
     req.setHeight(matrix.getTileHeight());
@@ -86,10 +86,7 @@
         t.setRow((int)y);
         t.setData(toBytes(result));
         geopkg.add(e,t);
-        if (ntiles++ == TILE_CLEANUP_INTERVAL) {
-          cleanUpImages();
-          ntiles=0;
-        }
+        cleaner.finished(null);
       }
     }
   }
