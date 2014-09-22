@@ -1,0 +1,20 @@
+{
+  tester.startPage(new GlobalSettingsPage());
+  tester.assertRenderedPage(GlobalSettingsPage.class);
+  tester.assertNoErrorMessage();
+  GeoServer gs=getGeoServer();
+  FormTester form=tester.newFormTester("form");
+  form.setValue("extensions:0:content:quiet",false);
+  form.submit("submit");
+  tester.assertNoErrorMessage();
+  assertEquals(gs.getGlobal().getSettings().getMetadata().get(RESTUtils.QUIET_ON_NOT_FOUND_KEY,Boolean.class),false);
+  tester.startPage(new GlobalSettingsPage());
+  tester.assertRenderedPage(GlobalSettingsPage.class);
+  tester.assertNoErrorMessage();
+  gs=getGeoServer();
+  form=tester.newFormTester("form");
+  form.setValue("extensions:0:content:quiet",true);
+  form.submit("submit");
+  tester.assertNoErrorMessage();
+  assertEquals(gs.getGlobal().getSettings().getMetadata().get(RESTUtils.QUIET_ON_NOT_FOUND_KEY,Boolean.class),true);
+}

@@ -1,0 +1,22 @@
+{
+  String ws="sf";
+  String lg="foooooo";
+  String requestPath="/rest/layergroups/" + lg + ".html";
+  String requestPath2="/rest/workspaces/" + ws + "/layergroups/"+ lg+ ".html";
+  String exception="No such layer group " + lg;
+  String exception2="No such layer group " + lg + " in workspace "+ ws;
+  MockHttpServletResponse response=getAsServletResponse(requestPath);
+  assertEquals(404,response.getStatusCode());
+  assertTrue(response.getOutputStreamContent().contains(exception));
+  response=getAsServletResponse(requestPath + "?quietOnNotFound=true");
+  assertEquals(404,response.getStatusCode());
+  assertFalse(response.getOutputStreamContent().contains(exception));
+  assertTrue(response.getOutputStreamContent().isEmpty());
+  response=getAsServletResponse(requestPath2);
+  assertEquals(404,response.getStatusCode());
+  assertTrue(response.getOutputStreamContent().contains(exception2));
+  response=getAsServletResponse(requestPath2 + "?quietOnNotFound=true");
+  assertEquals(404,response.getStatusCode());
+  assertFalse(response.getOutputStreamContent().contains(exception2));
+  assertTrue(response.getOutputStreamContent().isEmpty());
+}

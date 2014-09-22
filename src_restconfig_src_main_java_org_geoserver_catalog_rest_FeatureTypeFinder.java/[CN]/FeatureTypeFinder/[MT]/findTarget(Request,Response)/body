@@ -9,12 +9,19 @@
     throw new RestletException("No such datastore: " + ws + ","+ ds,Status.CLIENT_ERROR_NOT_FOUND);
   }
   if (ft != null) {
+    boolean quietOnNotFound=quietOnNotFoundEnabled(request);
     if (ds != null && catalog.getFeatureTypeByDataStore(catalog.getDataStoreByName(ws,ds),ft) == null) {
+      if (quietOnNotFound) {
+        return null;
+      }
       throw new RestletException("No such feature type: " + ws + ","+ ds+ ","+ ft,Status.CLIENT_ERROR_NOT_FOUND);
     }
  else {
       NamespaceInfo ns=catalog.getNamespaceByPrefix(ws);
       if (ns == null || catalog.getFeatureTypeByName(ns,ft) == null) {
+        if (quietOnNotFound) {
+          return null;
+        }
         throw new RestletException("No such feature type: " + ws + ","+ ft,Status.CLIENT_ERROR_NOT_FOUND);
       }
     }
