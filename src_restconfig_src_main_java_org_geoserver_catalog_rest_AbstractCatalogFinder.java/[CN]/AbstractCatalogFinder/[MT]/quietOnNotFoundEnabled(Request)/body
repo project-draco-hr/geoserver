@@ -1,0 +1,22 @@
+{
+  Boolean quietOnNotFound=null;
+  Form form=request.getResourceRef().getQueryAsForm();
+  String quietOnNotFoundS=form.getFirstValue(RESTUtils.QUIET_ON_NOT_FOUND_KEY);
+  if (quietOnNotFoundS != null && !quietOnNotFoundS.isEmpty()) {
+    quietOnNotFound=Boolean.parseBoolean(quietOnNotFoundS);
+  }
+ else {
+    GeoServerInfo gsInfo=GeoServerExtensions.bean(GeoServer.class).getGlobal();
+    if (gsInfo != null) {
+      SettingsInfo info=gsInfo.getSettings();
+      MetadataMap map=info != null ? info.getMetadata() : null;
+      if (map != null && map.containsKey(RESTUtils.QUIET_ON_NOT_FOUND_KEY)) {
+        quietOnNotFound=map.get(RESTUtils.QUIET_ON_NOT_FOUND_KEY,Boolean.class);
+      }
+    }
+  }
+  if (quietOnNotFound == null) {
+    quietOnNotFound=DEFAULT_QUIET_ON_NOT_FOUND;
+  }
+  return quietOnNotFound;
+}

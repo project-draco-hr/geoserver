@@ -4,6 +4,10 @@
     return new LayerListResource(getContext(),request,response,catalog);
   }
   if (layer != null && catalog.getLayerByName(layer) == null) {
+    boolean quietOnNotFound=quietOnNotFoundEnabled(request);
+    if (quietOnNotFound) {
+      return null;
+    }
     throw new RestletException("No such layer: " + layer,Status.CLIENT_ERROR_NOT_FOUND);
   }
   return new LayerResource(null,request,response,catalog);

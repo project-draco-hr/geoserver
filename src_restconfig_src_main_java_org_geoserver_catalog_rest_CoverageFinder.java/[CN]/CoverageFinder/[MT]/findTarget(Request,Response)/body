@@ -19,12 +19,19 @@
     }
   }
   if (c != null) {
+    boolean quietOnNotFound=quietOnNotFoundEnabled(request);
     if (cs != null && catalog.getCoverageByCoverageStore(catalog.getCoverageStoreByName(ws,cs),c) == null) {
+      if (quietOnNotFound) {
+        return null;
+      }
       throw new RestletException("No such coverage: " + ws + ","+ cs+ ","+ c,Status.CLIENT_ERROR_NOT_FOUND);
     }
  else {
       NamespaceInfo ns=catalog.getNamespaceByPrefix(ws);
       if (ns == null || catalog.getCoverageByName(ns,c) == null) {
+        if (quietOnNotFound) {
+          return null;
+        }
         throw new RestletException("No such coverage: " + ws + ","+ c,Status.CLIENT_ERROR_NOT_FOUND);
       }
     }
