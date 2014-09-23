@@ -14,16 +14,16 @@
     if (name == null) {
       throw new RestletException("Style must have a name.",Status.CLIENT_ERROR_BAD_REQUEST);
     }
-    if (existsStyleInCatalog(workspaceName,name)) {
-      throw new RestletException("Style " + name + " already exists.",Status.CLIENT_ERROR_FORBIDDEN);
+    if (!existsStyleInCatalog(workspaceName,name)) {
+      throw new RestletException("Style " + name + " doesn't exists.",Status.CLIENT_ERROR_FORBIDDEN);
     }
-    GeoServerResourceLoader loader=catalog.getResourceLoader();
     String path="styles/" + name + ".sld";
     String pathStyleFolder="styles/";
     if (workspaceName != null) {
       path="workspaces/" + workspaceName + "/"+ path;
       pathStyleFolder="workspaces/" + workspaceName + "/"+ pathStyleFolder;
     }
+    GeoServerResourceLoader loader=catalog.getResourceLoader();
     File f;
     try {
       f=loader.find(path);
@@ -31,30 +31,21 @@
  catch (    IOException e) {
       throw new RestletException("Error looking up file",Status.SERVER_ERROR_INTERNAL,e);
     }
-    if (f != null) {
-      String msg="SLD file " + path + ".sld already exists.";
+    if (f == null) {
+      String msg="SLD file " + name + ".sld doesn't exists.";
       throw new RestletException(msg,Status.CLIENT_ERROR_FORBIDDEN);
     }
     File stylesDir=new File(loader.getBaseDirectory(),pathStyleFolder);
     saveImageResources(directory,stylesDir);
-    try {
-      f=loader.createFile(path);
-      serializeSldFileInCatalog(f,uploadedFile);
-    }
- catch (    IOException e) {
-      throw new RestletException("Error saving the style",Status.SERVER_ERROR_INTERNAL,e);
-    }
-    StyleInfo sinfo=catalog.getFactory().createStyle();
-    sinfo.setName(name);
+    serializeSldFileInCatalog(f,uploadedFile);
+    StyleInfo sinfo=catalog.getStyleByName(workspaceName,name);
     sinfo.setFilename(f.getName());
-    if (workspaceName != null) {
-      sinfo.setWorkspace(catalog.getWorkspaceByName(workspaceName));
-    }
-    catalog.add(sinfo);
-    LOGGER.info("Processed the style package " + name);
+    catalog.save(sinfo);
+    LOGGER.info("PUT Style Package: " + name + ", workspace: "+ workspaceName);
   }
  catch (  Exception e) {
-    LOGGER.severe("Error processing the style package (POST): " + e.getMessage());
+    e.printStackTrace();
+    LOGGER.severe("Error processing the style package (PUT): " + e.getMessage());
     throw new RestletException("Error processing the style",Status.SERVER_ERROR_INTERNAL,e);
   }
  finally {
