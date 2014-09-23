@@ -24,9 +24,19 @@
     String targetNamespace=catalog.getNamespaceByPrefix(targetPrefix).getURI();
     schema.setTargetNamespace(targetNamespace);
     schema.getQNamePrefixToNamespaceMap().put(targetPrefix,targetNamespace);
-    for (    NamespaceInfo nameSpaceinfo : catalog.getNamespaces()) {
-      if (!schema.getQNamePrefixToNamespaceMap().containsKey(nameSpaceinfo.getPrefix())) {
-        schema.getQNamePrefixToNamespaceMap().put(nameSpaceinfo.getPrefix(),nameSpaceinfo.getURI());
+    boolean simple=true;
+    for (int i=0; i < featureTypeInfos.length && simple; i++) {
+      try {
+        simple=featureTypeInfos[i].getFeatureType() instanceof SimpleFeatureType;
+      }
+ catch (      IOException e) {
+      }
+    }
+    if (!simple) {
+      for (      NamespaceInfo nameSpaceinfo : catalog.getNamespaces()) {
+        if (!schema.getQNamePrefixToNamespaceMap().containsKey(nameSpaceinfo.getPrefix())) {
+          schema.getQNamePrefixToNamespaceMap().put(nameSpaceinfo.getPrefix(),nameSpaceinfo.getURI());
+        }
       }
     }
     try {
