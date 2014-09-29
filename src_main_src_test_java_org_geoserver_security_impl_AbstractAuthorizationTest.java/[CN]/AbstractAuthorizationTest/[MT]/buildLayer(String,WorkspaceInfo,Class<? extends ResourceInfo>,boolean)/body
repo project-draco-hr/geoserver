@@ -13,9 +13,15 @@
   }
   expect(store.getWorkspace()).andReturn(ws).anyTimes();
   replay(store);
+  NamespaceInfo ns=createNiceMock(NamespaceInfo.class);
+  expect(ns.getName()).andReturn(ws.getName()).anyTimes();
+  expect(ns.getPrefix()).andReturn(ws.getName()).anyTimes();
+  expect(ns.getURI()).andReturn("http://www.geoserver.org/test/" + ws.getName()).anyTimes();
+  replay(ns);
   ResourceInfo resource=createNiceMock(resourceClass);
   expect(resource.getStore()).andReturn(store).anyTimes();
   expect(resource.getName()).andReturn(name).anyTimes();
+  expect(resource.getNamespace()).andReturn(ns).anyTimes();
   if (resource instanceof FeatureTypeInfo) {
     expect(((FeatureTypeInfo)resource).getFeatureSource((ProgressListener)anyObject(),(Hints)anyObject())).andReturn(fs).anyTimes();
   }
