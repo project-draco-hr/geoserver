@@ -1,0 +1,30 @@
+{
+  FeatureTypeInfo info;
+  final String ftName="testFT";
+  final String ftId="FeatureType-TEST";
+  DataStoreInfo dsInfo;
+  final String dsName="testStore";
+  final String dsId="DataStore-TEST";
+{
+    dsInfo=createMock(DataStoreInfo.class);
+    info=createMock(FeatureTypeInfo.class);
+    expect(dsInfo.getName()).andStubReturn(dsName);
+    expect(dsInfo.getId()).andStubReturn(dsId);
+    expect(info.getName()).andStubReturn(ftName);
+    expect(info.getId()).andStubReturn(ftId);
+    expect(info.getStore()).andStubReturn(dsInfo);
+    expect(catalog.getStore(EasyMock.eq(dsId),EasyMock.anyObject(Class.class))).andStubReturn(dsInfo);
+    ;
+    expectationTestFTDelete(info,ftName,ftId,dsId,FeatureTypeInfo.class);
+  }
+  replay(info,dsInfo);
+{
+    sync=getSynchronizer();
+    sync.initialize(configWatcher);
+    ConfigChangeEvent evt=new ConfigChangeEvent(ftId,ftName,FeatureTypeInfoImpl.class,Type.REMOVE);
+    evt.setStoreId(dsId);
+    mockMessage(evt);
+  }
+  waitForSync();
+  verify(info,dsInfo);
+}
