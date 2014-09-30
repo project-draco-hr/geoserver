@@ -1,0 +1,31 @@
+{
+  GWCConfig gwcConfig=new GWCConfig();
+  gwcConfig.setInnerCachingEnabled(true);
+  gwcConfig.setEnabledPersistence(false);
+  blobStore.setChanged(gwcConfig,false);
+  BlobStore delegate=blobStore.getDelegate();
+  assertTrue(delegate instanceof MemoryBlobStore);
+  assertTrue(((MemoryBlobStore)delegate).getStore() instanceof NullBlobStore);
+  Resource bytes=new ByteArrayResource("1 2 3 4 5 6 test".getBytes());
+  long[] xyz={1L,2L,3L};
+  Map<String,String> parameters=new HashMap<String,String>();
+  parameters.put("a","x");
+  parameters.put("b","??");
+  TileObject to=TileObject.createCompleteTileObject("test:123123 112",xyz,"EPSG:4326","image/jpeg",parameters,bytes);
+  to.setId(11231231);
+  blobStore.put(to);
+  TileObject to2=TileObject.createQueryTileObject("test:123123 112",xyz,"EPSG:4326","image/jpeg",parameters);
+  to2.setId(11231231);
+  blobStore.get(to2);
+  assertEquals(to.getBlobFormat(),to2.getBlobFormat());
+  InputStream is=to.getBlob().getInputStream();
+  InputStream is2=to2.getBlob().getInputStream();
+  checkInputStreams(is,is2);
+  TileObject to3=cache.getTileObj(to);
+  assertNotNull(to3);
+  assertEquals(to.getBlobFormat(),to3.getBlobFormat());
+  is=to.getBlob().getInputStream();
+  InputStream is3=to3.getBlob().getInputStream();
+  checkInputStreams(is,is3);
+  assertFalse(((MemoryBlobStore)delegate).getStore().get(to));
+}

@@ -1,0 +1,77 @@
+{
+  if (LOGGER.isLoggable(Level.FINEST)) {
+    LOGGER.finest("Configuring BlobStore");
+  }
+  configured.getAndSet(false);
+  actualOperations.incrementAndGet();
+  actualOperations.decrementAndGet();
+  while (actualOperations.get() > 0) {
+  }
+  String cacheProvider=gwcConfig.getCacheProviderClass();
+  if (!getCacheProviders().containsKey(cacheProvider)) {
+    if (LOGGER.isLoggable(Level.WARNING)) {
+      LOGGER.warning("Wrong CacheProvider defined, using default one");
+    }
+    cacheProvider=GuavaCacheProvider.class.toString();
+    if (!initialization) {
+      gwcConfig.setCacheProviderClass(cacheProvider);
+      try {
+        GWC.get().saveConfig(gwcConfig);
+      }
+ catch (      IOException e) {
+        if (LOGGER.isLoggable(Level.SEVERE)) {
+          LOGGER.log(Level.SEVERE,e.getMessage(),e);
+        }
+      }
+    }
+  }
+  CacheConfiguration cacheConfiguration=gwcConfig.getCacheConfigurations().get(cacheProvider);
+  if (LOGGER.isLoggable(Level.FINEST)) {
+    LOGGER.finest("Configuring cache");
+  }
+  cache=getCacheProviders().get(cacheProvider);
+  if (!cache.isImmutable()) {
+    CacheConfiguration internalCacheConfig=internalCacheConfigs.get(cacheProvider);
+    if (internalCacheConfig == null) {
+      internalCacheConfig=new CacheConfiguration();
+      internalCacheConfig.setConcurrencyLevel(cacheConfiguration.getConcurrencyLevel());
+      internalCacheConfig.setEvictionTime(cacheConfiguration.getEvictionTime());
+      internalCacheConfig.setHardMemoryLimit(cacheConfiguration.getHardMemoryLimit());
+      internalCacheConfig.setPolicy(cacheConfiguration.getPolicy());
+      cache.configure(cacheConfiguration);
+      internalCacheConfigs.put(cacheProvider,internalCacheConfig);
+    }
+ else     if (!internalCacheConfig.equals(cacheConfiguration)) {
+      internalCacheConfig.setConcurrencyLevel(cacheConfiguration.getConcurrencyLevel());
+      internalCacheConfig.setEvictionTime(cacheConfiguration.getEvictionTime());
+      internalCacheConfig.setHardMemoryLimit(cacheConfiguration.getHardMemoryLimit());
+      internalCacheConfig.setPolicy(cacheConfiguration.getPolicy());
+      cache.configure(internalCacheConfig);
+    }
+    if (!initialization) {
+      Iterable<GeoServerTileLayer> geoServerTileLayers=GWC.get().getGeoServerTileLayers();
+      for (      GeoServerTileLayer layer : geoServerTileLayers) {
+        if (layer.getInfo().isEnabled() && !layer.getInfo().isInMemoryCached()) {
+          cache.addUncachedLayer(layer.getName());
+        }
+      }
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINEST)) {
+    LOGGER.finest("Configuring BlobStore delegate");
+  }
+  if (gwcConfig.isInnerCachingEnabled()) {
+    memoryStore.setCacheProvider(cache);
+    if (!gwcConfig.isPersistenceEnabled()) {
+      memoryStore.setStore(nullStore);
+    }
+ else {
+      memoryStore.setStore(defaultStore);
+    }
+    delegate=memoryStore;
+  }
+ else {
+    delegate=defaultStore;
+  }
+  configured.getAndSet(true);
+}

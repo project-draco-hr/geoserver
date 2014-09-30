@@ -1,0 +1,20 @@
+{
+  configured=new AtomicBoolean(false);
+  actualOperations=new AtomicLong(0);
+  this.delegate=defaultStore;
+  this.defaultStore=defaultStore;
+  this.memoryStore=memoryStore;
+  this.nullStore=nullStore;
+  HashMap<String,CacheProvider> cacheProviders=new HashMap<String,CacheProvider>();
+  HashMap<String,String> cacheProvidersNames=new HashMap<String,String>();
+  List<CacheProvider> extensions=GeoServerExtensions.extensions(CacheProvider.class);
+  for (  CacheProvider provider : extensions) {
+    if (provider.isAvailable()) {
+      cacheProviders.put(provider.getClass().toString(),provider);
+      cacheProvidersNames.put(provider.getClass().toString(),provider.getName());
+    }
+  }
+  this.cacheProviders=Collections.unmodifiableMap(cacheProviders);
+  this.cacheProvidersNames=Collections.unmodifiableMap(cacheProvidersNames);
+  this.internalCacheConfigs=new HashMap<String,CacheConfiguration>();
+}

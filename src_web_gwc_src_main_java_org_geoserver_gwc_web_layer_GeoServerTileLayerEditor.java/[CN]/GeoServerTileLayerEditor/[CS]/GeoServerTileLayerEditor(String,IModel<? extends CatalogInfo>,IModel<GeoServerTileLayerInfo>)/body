@@ -60,6 +60,12 @@
   add(enabled=new CheckBox("enabled",new PropertyModel<Boolean>(getModel(),"enabled")));
   enabled.add(new AttributeModifier("title",true,new ResourceModel("enabled.title")));
   configs.add(enabled);
+  enableInMemoryCaching=new CheckBox("inMemoryCached",new PropertyModel<Boolean>(getModel(),"inMemoryCached"));
+  ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
+  if (store != null && store.getCache() != null) {
+    enableInMemoryCaching.setEnabled(mediator.getConfig().isInnerCachingEnabled() && !store.getCache().isImmutable());
+  }
+  configs.add(enableInMemoryCaching);
   List<Integer> metaTilingChoices=Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20);
   IModel<Integer> metaTilingXModel=new PropertyModel<Integer>(getModel(),"metaTilingX");
   metaTilingX=new DropDownChoice<Integer>("metaTilingX",metaTilingXModel,metaTilingChoices);
