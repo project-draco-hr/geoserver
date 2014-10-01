@@ -32,13 +32,23 @@
  else {
     this.configuredNoDataValues=sampleDim.getNoDataValues();
   }
+  boolean nodataConfigured=configuredNoDataValues != null && configuredNoDataValues.length > 0;
   if (categories != null) {
     this.customCategories=new ArrayList<Category>(categories.size());
     Category wrapped=null;
     for (    Category category : categories) {
       wrapped=category;
       if (Category.NODATA.getName().equals(category.getName())) {
-        wrapped=new Category(Category.NODATA.getName(),category.getColors()[0],configuredNoDataValues != null && configuredNoDataValues.length > 0 ? configuredNoDataValues[0] : category.getRange().getMinimum());
+        if (category.isQuantitative()) {
+          double minimum=nodataConfigured ? configuredNoDataValues[0] : category.getRange().getMinimum();
+          double maximum=nodataConfigured ? configuredNoDataValues[0] : category.getRange().getMaximum();
+          if (Double.isNaN(minimum) && Double.isNaN(maximum)) {
+            wrapped=new Category(Category.NODATA.getName(),category.getColors()[0],minimum);
+          }
+ else {
+            wrapped=new Category(Category.NODATA.getName(),category.getColors(),NumberRange.create(minimum,maximum),category.getSampleToGeophysics());
+          }
+        }
       }
       customCategories.add(wrapped);
     }
