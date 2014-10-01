@@ -1,7 +1,11 @@
 {
   Writer w=new OutputStreamWriter(os);
   try {
-    new WKTWriter().write((Geometry)value,w);
+    Geometry g=(Geometry)value;
+    if (g instanceof LinearRing) {
+      g=g.getFactory().createLineString(((LinearRing)g).getCoordinateSequence());
+    }
+    new WKTWriter().write(g,w);
   }
   finally {
     w.flush();
