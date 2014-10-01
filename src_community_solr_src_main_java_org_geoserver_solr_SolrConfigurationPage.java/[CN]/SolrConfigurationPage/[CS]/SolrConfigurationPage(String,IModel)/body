@@ -1,0 +1,31 @@
+{
+  super(panelId,model);
+  ResourceInfo ri=(ResourceInfo)model.getObject();
+  DataStoreInfo store=(DataStoreInfo)ri.getStore();
+  Map<String,Serializable> connectionparameters=store.getConnectionParameters();
+  solrurl=(String)connectionparameters.get("solr_url");
+  final Form solr_form=new Form("solr_form",new CompoundPropertyModel(this));
+  add(solr_form);
+  List<SolrAttribute> attributes=fillSolrAttributes((ResourceInfo)model.getObject()).getAttributes();
+  final SolrAttributeProvider attProvider=new SolrAttributeProvider(attributes);
+  final GeoServerTablePanel<SolrAttribute> solrAttributePanel=getSolrAttributePanel(attProvider);
+  solr_form.add(solrAttributePanel);
+  AjaxCheckBox checkBox=new AjaxCheckBox("hideEmpty",Model.of(Boolean.TRUE)){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      attProvider.reload((Boolean)this.getDefaultModelObject());
+      target.addComponent(solrAttributePanel);
+    }
+  }
+;
+  checkBox.setOutputMarkupId(true);
+  solr_form.add(checkBox);
+  solr_form.add(new AjaxButton("solr_save"){
+    protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      onSave(target);
+    }
+  }
+);
+  feedbackPanel=new FeedbackPanel("solr_feedback");
+  feedbackPanel.setOutputMarkupId(true);
+  solr_form.add(feedbackPanel);
+}

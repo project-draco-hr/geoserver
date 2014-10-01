@@ -1,0 +1,59 @@
+{
+  GeoServerTablePanel<SolrAttribute> atts=new GeoServerTablePanel<SolrAttribute>("solrAttributes",attProvider){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<SolrAttribute> property){
+      SolrAttribute att=(SolrAttribute)itemModel.getObject();
+      boolean isGeometry=att.getType() != null && Geometry.class.isAssignableFrom(att.getType());
+      boolean isPK=att.isPk();
+      if (property == SolrAttributeProvider.PK) {
+        if (isPK) {
+          Fragment f=new Fragment(id,"checkboxPk",SolrConfigurationPage.this);
+          f.add(new CheckBox("pk",new PropertyModel<Boolean>(itemModel,"pk")));
+          return f;
+        }
+ else {
+          Fragment f=new Fragment(id,"empty",SolrConfigurationPage.this);
+          return f;
+        }
+      }
+ else       if (property == SolrAttributeProvider.NAME && (isGeometry || isPK)) {
+        Fragment f=new Fragment(id,"label",SolrConfigurationPage.this);
+        f.add(new Label("label",((SolrAttribute)itemModel.getObject()).getName() + "*"));
+        return f;
+      }
+ else       if (property == SolrAttributeProvider.TYPE && isGeometry) {
+        Fragment f=new Fragment(id,"geometry",SolrConfigurationPage.this);
+        f.add(new DropDownChoice("geometry",new PropertyModel(itemModel,"type"),GEOMETRY_TYPES,new GeometryTypeRenderer()));
+        return f;
+      }
+ else       if (property == SolrAttributeProvider.USE) {
+        Fragment f=new Fragment(id,"checkboxUse",SolrConfigurationPage.this);
+        f.add(new CheckBox("use",new PropertyModel<Boolean>(itemModel,"use")));
+        return f;
+      }
+ else       if (property == SolrAttributeProvider.EMPTY) {
+        Fragment f=new Fragment(id,"checkboxEmpty",SolrConfigurationPage.this);
+        f.add(new CheckBox("isEmpty",new PropertyModel<Boolean>(itemModel,"empty")));
+        return f;
+      }
+ else       if (property == SolrAttributeProvider.SRID) {
+        if (isGeometry) {
+          Fragment f=new Fragment(id,"text",SolrConfigurationPage.this);
+          f.add(new TextField<Integer>("text",new PropertyModel<Integer>(itemModel,"srid")));
+          return f;
+        }
+ else {
+          Fragment f=new Fragment(id,"empty",SolrConfigurationPage.this);
+          return f;
+        }
+      }
+      return null;
+    }
+  }
+;
+  atts.setOutputMarkupId(true);
+  atts.setFilterVisible(false);
+  atts.setSortable(false);
+  atts.setPageable(false);
+  atts.setOutputMarkupId(true);
+  return atts;
+}
