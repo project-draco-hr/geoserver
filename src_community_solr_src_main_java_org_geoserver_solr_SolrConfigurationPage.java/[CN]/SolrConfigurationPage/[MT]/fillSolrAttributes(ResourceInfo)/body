@@ -1,0 +1,34 @@
+{
+  SolrLayerConfiguration solrLayerConfiguration=(SolrLayerConfiguration)ri.getMetadata().get(SolrLayerConfiguration.KEY);
+  try {
+    ArrayList<SolrAttribute> result=new ArrayList<SolrAttribute>();
+    Map<String,SolrAttribute> tempMap=new HashMap<String,SolrAttribute>();
+    if (solrLayerConfiguration != null) {
+      for (      SolrAttribute att : solrLayerConfiguration.getAttributes()) {
+        tempMap.put(att.getName(),att);
+      }
+    }
+ else {
+      tempMap.clear();
+      solrLayerConfiguration=new SolrLayerConfiguration(new ArrayList<SolrAttribute>());
+      solrLayerConfiguration.setLayerName(ri.getName());
+      ri.getMetadata().put(SolrLayerConfiguration.KEY,solrLayerConfiguration);
+    }
+    SolrDataStore dataStore=(SolrDataStore)((DataStoreInfo)ri.getStore()).getDataStore(new NullProgressListener());
+    ArrayList<SolrAttribute> attributes=dataStore.getSolrAttributes(solrLayerConfiguration.getLayerName());
+    for (    SolrAttribute at : attributes) {
+      if (tempMap.containsKey(at.getName())) {
+        SolrAttribute prev=tempMap.get(at.getName());
+        prev.setEmpty(at.getEmpty());
+        at=prev;
+      }
+      result.add(at);
+    }
+    solrLayerConfiguration.getAttributes().clear();
+    solrLayerConfiguration.getAttributes().addAll(result);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,e.getMessage(),e);
+  }
+  return solrLayerConfiguration;
+}

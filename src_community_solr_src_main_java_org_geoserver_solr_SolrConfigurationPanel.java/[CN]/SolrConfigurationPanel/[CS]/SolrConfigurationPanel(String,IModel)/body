@@ -1,0 +1,42 @@
+{
+  super(panelId,model);
+  final FeatureTypeInfo fti=(FeatureTypeInfo)model.getObject();
+  final ResourceConfigurationPanel current=this;
+  final ModalWindow modal=new ModalWindow("modal");
+  modal.setInitialWidth(800);
+  modal.setTitle(new ParamResourceModel("modalTitle",SolrConfigurationPanel.this));
+  modal.setWindowClosedCallback(new ModalWindow.WindowClosedCallback(){
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (_layerInfo != null) {
+        GeoServerApplication app=(GeoServerApplication)getApplication();
+        FeatureTypeInfo ft=(FeatureTypeInfo)getResourceInfo();
+        app.getCatalog().getResourcePool().clear(ft);
+        app.getCatalog().getResourcePool().clear(ft.getStore());
+        setResponsePage(new ResourceConfigurationPage(_layerInfo,_isNew));
+      }
+    }
+  }
+);
+  if (fti.getMetadata().get(SolrLayerConfiguration.KEY) == null) {
+    modal.add(new OpenWindowOnLoadBehavior());
+  }
+  modal.setContent(new SolrConfigurationPage(panelId,model){
+    @Override void done(    AjaxRequestTarget target,    LayerInfo layerInfo,    Boolean isNew){
+      _layerInfo=layerInfo;
+      _isNew=isNew;
+      modal.close(target);
+    }
+  }
+);
+  add(modal);
+  AjaxLink findLink=new AjaxLink("edit"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      modal.show(target);
+    }
+  }
+;
+  final Fragment attributePanel=new Fragment("solrPanel","solrPanelFragment",this);
+  attributePanel.setOutputMarkupId(true);
+  add(attributePanel);
+  attributePanel.add(findLink);
+}

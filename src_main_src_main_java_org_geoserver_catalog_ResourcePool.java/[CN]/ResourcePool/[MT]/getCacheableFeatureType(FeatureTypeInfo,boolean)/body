@@ -6,17 +6,11 @@ synchronized (featureTypeCache) {
       ft=featureTypeCache.get(key);
       if (ft == null) {
         DataAccess<? extends FeatureType,? extends Feature> dataAccess=getDataStore(info.getStore());
-        if (isSQLView(info,dataAccess)) {
-          VirtualTable vt=info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class);
-          JDBCDataStore jstore=(JDBCDataStore)dataAccess;
-          if (!jstore.getVirtualTables().containsValue(vt)) {
-            jstore.addVirtualTable(vt);
-          }
-          ft=jstore.getSchema(vt.getName());
+        FeatureTypeCallback initializer=getFeatureTypeInitializer(info,dataAccess);
+        if (initializer != null) {
+          initializer.initialize(info,dataAccess,null);
         }
- else {
-          ft=dataAccess.getSchema(info.getQualifiedNativeName());
-        }
+        ft=dataAccess.getSchema(info.getQualifiedNativeName());
         ft=buildFeatureType(info,handleProjectionPolicy,ft);
         featureTypeCache.put(key,ft);
       }
