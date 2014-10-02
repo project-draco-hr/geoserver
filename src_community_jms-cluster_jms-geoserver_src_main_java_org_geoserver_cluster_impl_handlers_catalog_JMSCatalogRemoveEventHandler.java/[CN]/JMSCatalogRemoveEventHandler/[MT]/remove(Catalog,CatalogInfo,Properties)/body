@@ -1,0 +1,53 @@
+{
+  if (info instanceof LayerGroupInfo) {
+    final LayerGroupInfo deserObject=CatalogUtils.localizeLayerGroup((LayerGroupInfo)info,catalog);
+    catalog.remove(deserObject);
+  }
+ else   if (info instanceof LayerInfo) {
+    final LayerInfo layer=CatalogUtils.localizeLayer((LayerInfo)info,catalog);
+    catalog.remove(layer);
+  }
+ else   if (info instanceof MapInfo) {
+    final MapInfo localObject=CatalogUtils.localizeMapInfo((MapInfo)info,catalog);
+    catalog.remove(localObject);
+  }
+ else   if (info instanceof NamespaceInfo) {
+    final NamespaceInfo namespace=CatalogUtils.localizeNamespace((NamespaceInfo)info,catalog);
+    catalog.remove(namespace);
+  }
+ else   if (info instanceof StoreInfo) {
+    StoreInfo store=CatalogUtils.localizeStore((StoreInfo)info,catalog);
+    catalog.remove(store);
+  }
+ else   if (info instanceof ResourceInfo) {
+    final ResourceInfo resource=CatalogUtils.localizeResource((ResourceInfo)info,catalog);
+    catalog.remove(resource);
+  }
+ else   if (info instanceof StyleInfo) {
+    final StyleInfo style=CatalogUtils.localizeStyle((StyleInfo)info,catalog);
+    catalog.remove(style);
+    final String purge=(String)options.get("purge");
+    if (purge != null && Boolean.parseBoolean(purge)) {
+      try {
+        catalog.getResourcePool().deleteStyle(style,true);
+      }
+ catch (      IOException e) {
+        if (LOGGER.isLoggable(java.util.logging.Level.SEVERE)) {
+          LOGGER.severe(e.getLocalizedMessage());
+        }
+      }
+    }
+  }
+ else   if (info instanceof WorkspaceInfo) {
+    final WorkspaceInfo workspace=CatalogUtils.localizeWorkspace((WorkspaceInfo)info,catalog);
+    catalog.remove(workspace);
+  }
+ else   if (info instanceof CatalogInfo) {
+    if (LOGGER.isLoggable(java.util.logging.Level.WARNING)) {
+      LOGGER.warning("info - ID: " + info.getId() + " toString: "+ info.toString());
+    }
+  }
+ else {
+    throw new IllegalArgumentException("Bad incoming object: " + info.toString());
+  }
+}

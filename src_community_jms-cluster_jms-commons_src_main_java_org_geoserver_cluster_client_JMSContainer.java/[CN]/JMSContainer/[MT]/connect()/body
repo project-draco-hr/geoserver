@@ -1,0 +1,40 @@
+{
+  if (!isRunning()) {
+    LOGGER.info("Connecting...");
+    start();
+    if (isRunning()) {
+      for (int repReg=1; repReg <= max; ++repReg) {
+        LOGGER.info("Registration...");
+        if (isRegisteredWithDestination()) {
+          LOGGER.info("Now GeoServer is registered with the destination");
+          return true;
+        }
+ else         if (repReg == max) {
+          LOGGER.log(Level.SEVERE,"Registration aborted due to a connection problem");
+          stop();
+          LOGGER.info("Disconnected");
+        }
+ else {
+          LOGGER.info("Impossible to register GeoServer with destination, waiting...");
+        }
+        LOGGER.info("Waiting for registration...(" + repReg + "/"+ max+ ")");
+        try {
+          Thread.sleep(maxWait);
+        }
+ catch (        InterruptedException e) {
+          LOGGER.log(Level.SEVERE,e.getLocalizedMessage(),e);
+        }
+      }
+    }
+ else {
+      LOGGER.severe("Impossible to start a connection to destination.");
+      stop();
+      LOGGER.info("Disconnected");
+      return false;
+    }
+  }
+ else {
+    LOGGER.severe("Connection is already running");
+  }
+  return false;
+}

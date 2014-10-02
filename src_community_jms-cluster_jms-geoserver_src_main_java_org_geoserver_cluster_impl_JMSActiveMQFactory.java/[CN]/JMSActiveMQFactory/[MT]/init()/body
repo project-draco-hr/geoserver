@@ -1,0 +1,36 @@
+{
+  max=Integer.parseInt(config.getConfiguration(ConnectionConfiguration.CONNECTION_RETRY_KEY).toString());
+  maxWait=Long.parseLong(config.getConfiguration(ConnectionConfiguration.CONNECTION_MAXWAIT_KEY).toString());
+  if (EmbeddedBrokerConfiguration.isEnabled(config)) {
+    if (!isEmbeddedBrokerStarted()) {
+      try {
+        if (!startEmbeddedBroker(config.getConfigurations())) {
+          if (LOGGER.isLoggable(Level.SEVERE)) {
+            LOGGER.severe("Unable to start the embedded brokerURI, force status to disabled");
+          }
+          config.putConfiguration(ConnectionConfiguration.CONNECTION_KEY,ConnectionConfigurationStatus.disabled.toString());
+        }
+ else {
+          if (LOGGER.isLoggable(Level.SEVERE)) {
+            LOGGER.severe("Started the embedded brokerURI: " + brokerService.toString());
+          }
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,e.getMessage(),e);
+        config.putConfiguration(ConnectionConfiguration.CONNECTION_KEY,ConnectionConfigurationStatus.disabled.toString());
+      }
+      try {
+        config.storeConfig();
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.SEVERE,e.getMessage(),e);
+      }
+    }
+ else {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.warning("The brokerURI seems to be already started");
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+    LOGGER.fine("Incoming message event of type " + event.getClass().getSimpleName() + " from Catalog");
+  }
+  if (!isEnabled()) {
+    if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+      LOGGER.fine("skipping incoming event: context is not initted");
+    }
+    return;
+  }
+  Properties options=getProperties();
+  try {
+    GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+    final CatalogInfo info=event.getSource();
+    if (info instanceof StyleInfo) {
+      final String canonicalStyleFileName=File.separator + "styles" + File.separator+ ((StyleInfo)info).getFilename();
+      File styleFile=new File(loader.getBaseDirectory().getCanonicalPath(),canonicalStyleFileName);
+      if (!styleFile.exists()) {
+        final String workspace=((StyleInfo)info).getWorkspace().getName();
+        final String styleFileName=File.separator + "workspaces" + File.separator+ workspace+ File.separator+ "styles"+ File.separator+ ((StyleInfo)info).getFilename();
+        styleFile=new File(loader.getBaseDirectory().getCanonicalPath(),styleFileName);
+      }
+      jmsPublisher.publish(getTopic(),getJmsTemplate(),options,new DocumentFile(styleFile));
+    }
+    jmsPublisher.publish(getTopic(),getJmsTemplate(),options,event);
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE)) {
+      LOGGER.severe(e.getLocalizedMessage());
+    }
+    final CatalogException ex=new CatalogException(e);
+    throw ex;
+  }
+}

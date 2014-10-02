@@ -1,0 +1,33 @@
+{
+  Properties props=(Properties)obj;
+  for (  Object key : props.keySet()) {
+    String k=key.toString();
+    final String value=props.get(key).toString();
+    config.putConfiguration(key.toString(),value);
+    final Object oldValue=config.getConfiguration(k);
+    if (props.get(k).equals(oldValue))     continue;
+    if (key.equals(ConnectionConfiguration.CONNECTION_KEY)) {
+      controller.connectClient(Boolean.getBoolean(value));
+    }
+ else     if (key.equals(ToggleConfiguration.TOGGLE_MASTER_KEY)) {
+      controller.toggle(Boolean.getBoolean(value),ToggleType.MASTER);
+    }
+ else     if (key.equals(ToggleConfiguration.TOGGLE_SLAVE_KEY)) {
+      controller.toggle(Boolean.getBoolean(value),ToggleType.SLAVE);
+    }
+ else     if (key.equals(JMSConfiguration.INSTANCE_NAME_KEY)) {
+      controller.setInstanceName(value);
+    }
+ else     if (key.equals(BrokerConfiguration.BROKER_URL_KEY)) {
+      controller.setBrokerURL(value);
+    }
+ else     if (key.equals(ReadOnlyConfiguration.READ_ONLY_KEY)) {
+      controller.setReadOnly(Boolean.getBoolean(value));
+    }
+ else     if (key.equals(JMSConfiguration.GROUP_KEY)) {
+      controller.setGroup(value);
+    }
+  }
+  controller.save();
+  return obj.toString();
+}

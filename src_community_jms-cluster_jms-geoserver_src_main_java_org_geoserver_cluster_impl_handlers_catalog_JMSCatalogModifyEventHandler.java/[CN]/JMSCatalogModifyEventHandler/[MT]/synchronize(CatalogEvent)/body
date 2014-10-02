@@ -1,0 +1,24 @@
+{
+  if (event == null) {
+    throw new IllegalArgumentException("Incoming object is null");
+  }
+  try {
+    if (event instanceof CatalogModifyEvent) {
+      final CatalogModifyEvent modifyEv=((CatalogModifyEvent)event);
+      producer.disable();
+      JMSCatalogModifyEventHandler.modify(catalog,modifyEv);
+    }
+ else {
+      if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))       LOGGER.severe("Unrecognized event type");
+      return false;
+    }
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))     LOGGER.severe(this.getClass() + " is unable to synchronize the incoming event: " + event);
+    throw e;
+  }
+ finally {
+    producer.enable();
+  }
+  return true;
+}
