@@ -1,0 +1,58 @@
+{
+  try {
+    ResourceInfo ri=(ResourceInfo)getDefaultModel().getObject();
+    SolrLayerConfiguration layerConfiguration=fillSolrAttributes(ri);
+    Boolean pkSet=false;
+    Boolean geomSet=false;
+    Boolean sridSet=false;
+    for (    SolrAttribute att : layerConfiguration.getAttributes()) {
+      if (att.isPk() && att.isUse()) {
+        pkSet=true;
+      }
+      if (Geometry.class.isAssignableFrom(att.getType()) && att.isUse()) {
+        geomSet=true;
+        if (att.getSrid() != null) {
+          sridSet=true;
+        }
+      }
+    }
+    if (!pkSet) {
+      error(new ParamResourceModel("pkEmptyFailure",SolrConfigurationPage.this).getString());
+    }
+    if (!geomSet) {
+      error(new ParamResourceModel("geomEmptyFailure",SolrConfigurationPage.this).getString());
+    }
+    if (!sridSet) {
+      error(new ParamResourceModel("sridEmptyFailure",SolrConfigurationPage.this).getString());
+    }
+    if (!pkSet || !geomSet || !sridSet) {
+      target.addComponent(feedbackPanel);
+      return;
+    }
+    Catalog catalog=((GeoServerApplication)this.getPage().getApplication()).getCatalog();
+    LayerInfo layerInfo=catalog.getLayerByName(ri.getQualifiedName());
+    FeatureTypeInfo typeInfo;
+    Boolean isNew=true;
+    if (layerInfo == null) {
+      DataStoreInfo dsInfo=catalog.getStore(ri.getStore().getId(),DataStoreInfo.class);
+      SolrDataStore ds=(SolrDataStore)dsInfo.getDataStore(null);
+      CatalogBuilder builder=new CatalogBuilder(catalog);
+      builder.setStore(dsInfo);
+      ds.setSolrConfigurations(layerConfiguration);
+      typeInfo=builder.buildFeatureType(ds.getFeatureSource(ri.getQualifiedName()));
+      typeInfo.getMetadata().put(SolrLayerConfiguration.KEY,layerConfiguration);
+      layerInfo=builder.buildLayer(typeInfo);
+    }
+ else {
+      isNew=false;
+      ResourceInfo resourceInfo=layerInfo.getResource();
+      FeatureTypeInfo featureTypeInfo=(FeatureTypeInfo)resourceInfo;
+      featureTypeInfo.getMetadata().put(SolrLayerConfiguration.KEY,layerConfiguration);
+    }
+    done(target,layerInfo,isNew);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,e.getMessage(),e);
+    error(new ParamResourceModel("creationFailure",this,e).getString());
+  }
+}
