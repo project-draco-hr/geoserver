@@ -1,0 +1,38 @@
+{
+  final Set<?> beanSet=beans.entrySet();
+  final Set<JMSEventHandlerSPI<S,O>> candidates=new TreeSet<JMSEventHandlerSPI<S,O>>(new Comparator<JMSEventHandlerSPI<S,O>>(){
+    @Override public int compare(    JMSEventHandlerSPI<S,O> o1,    JMSEventHandlerSPI<S,O> o2){
+      if (o1.getPriority() < o2.getPriority())       return -1;
+ else       if (o1.getPriority() == o2.getPriority()) {
+        return 0;
+      }
+ else {
+        return 1;
+      }
+    }
+  }
+);
+  for (final Iterator<?> it=beanSet.iterator(); it.hasNext(); ) {
+    final Map.Entry<String,?> entry=(Entry<String,?>)it.next();
+    final JMSEventHandlerSPI<S,O> spi=(JMSEventHandlerSPI)entry.getValue();
+    if (spi != null) {
+      if (spi.canHandle(eventType)) {
+        if (LOGGER.isLoggable(Level.INFO))         LOGGER.info("Creating an instance of: " + spi.getClass());
+        candidates.add(spi);
+      }
+    }
+  }
+  final Iterator<JMSEventHandlerSPI<S,O>> it=candidates.iterator();
+  while (it.hasNext()) {
+    try {
+      final JMSEventHandler<S,O> handler=it.next().createHandler();
+      if (handler != null)       return handler;
+    }
+ catch (    Exception e) {
+      if (LOGGER.isLoggable(Level.WARNING))       LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+  }
+  final String message="Unable to find the needed Handler SPI for event of type: " + eventType.getClass().getCanonicalName();
+  if (LOGGER.isLoggable(Level.WARNING))   LOGGER.warning(message);
+  throw new IllegalArgumentException(message);
+}

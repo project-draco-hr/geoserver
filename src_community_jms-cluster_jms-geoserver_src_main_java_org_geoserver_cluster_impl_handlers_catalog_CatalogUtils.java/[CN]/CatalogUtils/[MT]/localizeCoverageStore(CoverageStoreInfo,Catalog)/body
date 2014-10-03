@@ -1,0 +1,13 @@
+{
+  if (info == null || catalog == null)   throw new NullArgumentException("Arguments may never be null");
+  final CoverageStoreInfo localObject=catalog.getCoverageStoreByName(info.getWorkspace(),info.getName());
+  final CatalogBuilder builder=new CatalogBuilder(catalog);
+  if (localObject != null) {
+    return localObject;
+  }
+  final CoverageStoreInfo createdObject=catalog.getFactory().createCoverageStore();
+  BeanUtils.copyProperties(createdObject,info);
+  createdObject.setWorkspace(localizeWorkspace(info.getWorkspace(),catalog));
+  builder.attach(createdObject);
+  return createdObject;
+}

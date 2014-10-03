@@ -1,0 +1,152 @@
+{
+  final FeedbackPanel fp=getFeedbackPanel();
+  getJMSContainerExceptionHandler().setFeedbackPanel(fp);
+  getJMSContainerExceptionHandler().setSession(fp.getSession());
+  fp.setOutputMarkupId(true);
+  final Form<Properties> form=new Form<Properties>("form",new CompoundPropertyModel<Properties>(getConfig().getConfigurations()));
+  final TextField<String> brokerURL=new TextField<String>(BrokerConfiguration.BROKER_URL_KEY);
+  brokerURL.setType(String.class);
+  form.add(brokerURL);
+  final TextField<String> instanceName=new TextField<String>(JMSConfiguration.INSTANCE_NAME_KEY);
+  instanceName.setType(String.class);
+  form.add(instanceName);
+  final TextField<String> group=new TextField<String>(JMSConfiguration.GROUP_KEY);
+  group.setType(String.class);
+  form.add(group);
+  final TextField<String> topicName=new TextField<String>(TopicConfiguration.TOPIC_NAME_KEY);
+  topicName.setType(String.class);
+  form.add(topicName);
+  final TextField<String> connectionInfo=new TextField<String>(ConnectionConfiguration.CONNECTION_KEY);
+  connectionInfo.setType(String.class);
+  connectionInfo.setOutputMarkupId(true);
+  connectionInfo.setOutputMarkupPlaceholderTag(true);
+  connectionInfo.setEnabled(false);
+  form.add(connectionInfo);
+  final AjaxButton connection=new AjaxButton("connectionB",new StringResourceModel(ConnectionConfiguration.CONNECTION_KEY,this,null)){
+    /** 
+ * serialVersionUID 
+ */
+    private static final long serialVersionUID=1L;
+    @Override protected void onSubmit(    AjaxRequestTarget target,    org.apache.wicket.markup.html.form.Form<?> form){
+      final JMSContainer c=getJMSContainer();
+      if (c.isRunning()) {
+        fp.info("Disconnecting...");
+        if (c.disconnect()) {
+          fp.info("Succesfully un-registered from the destination topic");
+          fp.warn("You will (probably) loose next incoming events from other instances!!! (depending on how you have configured the broker)");
+          connectionInfo.getModel().setObject(ConnectionConfigurationStatus.disabled.toString());
+        }
+ else {
+          fp.error("Disconnection error!");
+          connectionInfo.getModel().setObject(ConnectionConfigurationStatus.enabled.toString());
+        }
+      }
+ else {
+        fp.info("Connecting...");
+        if (c.connect()) {
+          fp.info("Now GeoServer is registered with the destination");
+          connectionInfo.getModel().setObject(ConnectionConfigurationStatus.enabled.toString());
+        }
+ else {
+          fp.error("Connection error!");
+          fp.error("Registration aborted due to a connection problem");
+          connectionInfo.getModel().setObject(ConnectionConfigurationStatus.disabled.toString());
+        }
+      }
+      target.addComponent(connectionInfo);
+      target.addComponent(fp);
+    }
+  }
+;
+  connection.setOutputMarkupId(true);
+  connection.setOutputMarkupPlaceholderTag(true);
+  form.add(connection);
+  addToggle(ToggleConfiguration.TOGGLE_MASTER_KEY,ToggleType.MASTER,ToggleConfiguration.TOGGLE_MASTER_KEY,"toggleMasterB",form,fp);
+  addToggle(ToggleConfiguration.TOGGLE_SLAVE_KEY,ToggleType.SLAVE,ToggleConfiguration.TOGGLE_SLAVE_KEY,"toggleSlaveB",form,fp);
+  final TextField<String> readOnlyInfo=new TextField<String>(ReadOnlyConfiguration.READ_ONLY_KEY);
+  readOnlyInfo.setType(String.class);
+  readOnlyInfo.setOutputMarkupId(true);
+  readOnlyInfo.setOutputMarkupPlaceholderTag(true);
+  readOnlyInfo.setEnabled(false);
+  form.add(readOnlyInfo);
+  final AjaxButton readOnly=new AjaxButton("readOnlyB",new StringResourceModel(ReadOnlyConfiguration.READ_ONLY_KEY,this,null)){
+    /** 
+ * serialVersionUID 
+ */
+    private static final long serialVersionUID=1L;
+    @Override protected void onSubmit(    AjaxRequestTarget target,    org.apache.wicket.markup.html.form.Form<?> form){
+      ReadOnlyGeoServerLoader loader=getReadOnlyGeoServerLoader();
+      if (loader.isEnabled()) {
+        readOnlyInfo.getModel().setObject("disabled");
+        loader.enable(false);
+      }
+ else {
+        readOnlyInfo.getModel().setObject("enabled");
+        loader.enable(true);
+      }
+      target.addComponent(this.getParent());
+    }
+  }
+;
+  form.add(readOnly);
+  final Button save=new Button("saveB",new StringResourceModel("save",this,null)){
+    /** 
+ * serialVersionUID 
+ */
+    private static final long serialVersionUID=1L;
+    @Override public void onSubmit(){
+      try {
+        getConfig().storeConfig();
+        fp.info("Configuration saved");
+      }
+ catch (      IOException e) {
+        if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))         LOGGER.severe(e.getLocalizedMessage());
+        fp.error(e.getLocalizedMessage());
+      }
+    }
+  }
+;
+  form.add(save);
+  final TextField<String> embeddedBrokerInfo=new TextField<String>(EmbeddedBrokerConfiguration.EMBEDDED_BROKER_KEY);
+  embeddedBrokerInfo.setType(String.class);
+  embeddedBrokerInfo.setOutputMarkupId(true);
+  embeddedBrokerInfo.setOutputMarkupPlaceholderTag(true);
+  embeddedBrokerInfo.setEnabled(false);
+  form.add(embeddedBrokerInfo);
+  final AjaxButton embeddedBroker=new AjaxButton("embeddedBrokerB",new StringResourceModel(EmbeddedBrokerConfiguration.EMBEDDED_BROKER_KEY,this,null)){
+    /** 
+ * serialVersionUID 
+ */
+    private static final long serialVersionUID=1L;
+    @Override protected void onSubmit(    AjaxRequestTarget target,    org.apache.wicket.markup.html.form.Form<?> form){
+      JMSFactory factory=getJMSFactory();
+      if (!factory.isEmbeddedBrokerStarted()) {
+        try {
+          if (factory.startEmbeddedBroker(getConfig().getConfigurations())) {
+            embeddedBrokerInfo.getModel().setObject("enabled");
+          }
+        }
+ catch (        Exception e) {
+          if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))           LOGGER.severe(e.getLocalizedMessage());
+          fp.error(e.getLocalizedMessage());
+        }
+      }
+ else {
+        try {
+          if (factory.stopEmbeddedBroker()) {
+            embeddedBrokerInfo.getModel().setObject("disabled");
+          }
+        }
+ catch (        Exception e) {
+          if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))           LOGGER.severe(e.getLocalizedMessage());
+          fp.error(e.getLocalizedMessage());
+        }
+      }
+      target.addComponent(this.getParent());
+    }
+  }
+;
+  form.add(embeddedBroker);
+  add(form);
+  add(fp);
+}

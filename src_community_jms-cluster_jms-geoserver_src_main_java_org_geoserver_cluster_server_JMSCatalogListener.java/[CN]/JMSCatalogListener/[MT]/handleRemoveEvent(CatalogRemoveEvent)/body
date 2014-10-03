@@ -1,0 +1,21 @@
+{
+  if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+    LOGGER.fine("Incoming message event of type " + event.getClass().getSimpleName() + " from Catalog");
+  }
+  if (!isEnabled()) {
+    if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+      LOGGER.fine("skipping incoming event: context is not initted");
+    }
+    return;
+  }
+  Properties options=getProperties();
+  try {
+    jmsPublisher.publish(getTopic(),getJmsTemplate(),options,event);
+  }
+ catch (  JMSException e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE)) {
+      LOGGER.severe(e.getLocalizedMessage());
+    }
+    throw new CatalogException(e);
+  }
+}

@@ -1,0 +1,17 @@
+{
+  try {
+    final JMSEventHandler<S,O> handler=jmsManager.getHandler(event);
+    if (handler == null) {
+      throw new IllegalArgumentException("Unable to locate a valid handler for the incoming event: " + event);
+    }
+    handler.synchronize(event);
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(Level.SEVERE)) {
+      LOGGER.severe("Unable to synchronize event: " + event + " locally");
+    }
+    final JMSException ex=new JMSException(e.getLocalizedMessage());
+    ex.initCause(e);
+    throw ex;
+  }
+}

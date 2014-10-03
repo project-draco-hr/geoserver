@@ -1,0 +1,32 @@
+{
+  if (info == null || catalog == null)   throw new NullArgumentException("Arguments may never be null");
+  final LayerInfo localObject=catalog.getLayerByName(info.getName());
+  if (localObject != null) {
+    return localObject;
+  }
+  final LayerInfo createdObject=catalog.getFactory().createLayer();
+  ResourceInfo resource=info.getResource();
+  if (resource != null) {
+    resource=localizeResource(resource,catalog);
+  }
+ else {
+    throw new NullPointerException("No resource found !!!");
+  }
+  createdObject.setResource(resource);
+  BeanUtils.copyProperties(createdObject,info);
+  createdObject.setResource(resource);
+  final StyleInfo deserDefaultStyle=info.getDefaultStyle();
+  if (deserDefaultStyle != null) {
+    final StyleInfo localDefaultStyle=localizeStyle(deserDefaultStyle,catalog);
+    if (localDefaultStyle == null) {
+      throw new NullPointerException("No matching style called \'" + deserDefaultStyle.getName() + "\'found locally.");
+    }
+    createdObject.setDefaultStyle(localDefaultStyle);
+  }
+ else {
+  }
+  createdObject.getStyles().addAll(localizeStyles(createdObject.getStyles(),catalog));
+  final CatalogBuilder builder=new CatalogBuilder(catalog);
+  builder.attach(createdObject);
+  return createdObject;
+}

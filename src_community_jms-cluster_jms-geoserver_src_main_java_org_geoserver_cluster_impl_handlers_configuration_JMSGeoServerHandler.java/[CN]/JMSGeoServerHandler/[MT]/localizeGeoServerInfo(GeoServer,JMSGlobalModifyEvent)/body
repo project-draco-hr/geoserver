@@ -1,0 +1,11 @@
+{
+  if (geoServer == null || ev == null)   throw new IllegalArgumentException("Wrong passed arguments are null");
+  final GeoServerInfo localObject=geoServer.getGlobal();
+  final GeoServerInfo deserGeoServerInfo=ev.getSource();
+  BeanUtils.copyProperties(localObject,deserGeoServerInfo);
+  org.geoserver.cluster.impl.utils.BeanUtils.smartUpdate(localObject,ev.getPropertyNames(),ev.getNewValues());
+  localObject.setCoverageAccess(localizeCoverageAccessInfo(geoServer,deserGeoServerInfo.getCoverageAccess()));
+  localObject.setJAI(localizeJAIInfo(geoServer,deserGeoServerInfo.getJAI()));
+  localObject.setSettings(localizeSettingsInfo(geoServer,deserGeoServerInfo.getSettings()));
+  return localObject;
+}

@@ -1,0 +1,22 @@
+{
+  File properties=new File(config.getConfiguration(EmbeddedBrokerConfiguration.EMBEDDED_BROKER_PROPERTIES_KEY).toString());
+  if (!properties.isAbsolute() && !properties.isFile()) {
+    properties=new File(JMSConfiguration.getConfigPathDir(),properties.getPath());
+    InputStream inputStream=null;
+    try {
+      inputStream=defaults.getInputStream();
+      IOUtils.copy(inputStream,properties);
+    }
+  finally {
+      if (inputStream != null) {
+        org.apache.commons.io.IOUtils.closeQuietly(inputStream);
+      }
+    }
+  }
+  final Resource res=new FileSystemResource(properties);
+  super.setLocation(res);
+  final Properties props=new Properties();
+  props.setProperty("activemq.base",(String)config.getConfiguration("CLUSTER_CONFIG_DIR"));
+  props.setProperty("instanceName",(String)config.getConfiguration("instanceName"));
+  setProperties(props);
+}

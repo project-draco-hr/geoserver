@@ -1,0 +1,20 @@
+{
+  if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+    LOGGER.fine("Incoming event of type");
+  }
+  if (!isEnabled()) {
+    if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+      LOGGER.fine("skipping incoming event: context is not initted");
+    }
+    return;
+  }
+  try {
+    final Properties options=getProperties();
+    jmsPublisher.publish(getTopic(),getJmsTemplate(),options,new JMSServiceModifyEvent(ModificationProxy.unwrap(service),propertyNames,oldValues,newValues));
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE)) {
+      LOGGER.severe(e.getLocalizedMessage());
+    }
+  }
+}

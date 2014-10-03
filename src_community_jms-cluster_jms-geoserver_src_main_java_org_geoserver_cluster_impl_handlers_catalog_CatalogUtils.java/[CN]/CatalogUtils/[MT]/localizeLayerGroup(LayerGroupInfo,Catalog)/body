@@ -1,0 +1,22 @@
+{
+  if (info == null || catalog == null)   throw new NullArgumentException("Arguments may never be null");
+  final LayerGroupInfo localObject=catalog.getLayerGroupByName(info.getName());
+  if (localObject != null) {
+    return localObject;
+  }
+  try {
+    info.getLayers().addAll(localizeLayers(info.getLayers(),catalog));
+  }
+ catch (  IllegalAccessException e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))     LOGGER.severe(e.getLocalizedMessage());
+    throw e;
+  }
+catch (  InvocationTargetException e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))     LOGGER.severe(e.getLocalizedMessage());
+    throw e;
+  }
+  info.getStyles().addAll(localizeStyles(new HashSet<StyleInfo>(info.getStyles()),catalog));
+  final CatalogBuilder builder=new CatalogBuilder(catalog);
+  builder.attach(info);
+  return info;
+}
