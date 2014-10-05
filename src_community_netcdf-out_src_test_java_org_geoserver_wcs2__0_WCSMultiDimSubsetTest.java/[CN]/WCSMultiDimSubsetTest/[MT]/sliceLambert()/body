@@ -1,0 +1,31 @@
+{
+  GridCoverage2D targetCoverage=null, sourceCoverage=null;
+  try {
+    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName(LAMBERTMOSAIC.getLocalPart()).getGridCoverageReader(null,null).read(null);
+    final Envelope2D sourceEnvelope=sourceCoverage.getEnvelope2D();
+    MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__lambert&&Format=application/custom" + "&subset=E,http://www.opengis.net/def/crs/EPSG/0/31300(" + sourceEnvelope.x + ","+ (sourceEnvelope.x + 25)+ ")"+ "&subset=N,http://www.opengis.net/def/crs/EPSG/0/31300("+ sourceEnvelope.y+ ","+ (sourceEnvelope.y + 25)+ ")");
+    assertNotNull(response);
+    targetCoverage=applicationContext.getBean(WCSResponseInterceptor.class).getLastResult();
+    assertEquals((Object)sourceCoverage.getCoordinateReferenceSystem(),(Object)targetCoverage.getCoordinateReferenceSystem());
+    assertTrue(targetCoverage instanceof GranuleStack);
+    GridCoverage2D firstResult=((GranuleStack)targetCoverage).getGranules().get(0);
+    assertEquals(1,firstResult.getGridGeometry().getGridRange().getSpan(0));
+    assertEquals(1,firstResult.getGridGeometry().getGridRange().getSpan(1));
+    assertEquals(0,firstResult.getGridGeometry().getGridRange().getLow(0));
+    assertEquals(326,firstResult.getGridGeometry().getGridRange().getLow(1));
+  }
+  finally {
+    try {
+      scheduleForCleaning(targetCoverage);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+    try {
+      scheduleForCleaning(sourceCoverage);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    }
+  }
+}
