@@ -1,0 +1,25 @@
+{
+  if (requestFormat == Format.OCTET_STREAM) {
+    List<Vector3> vertexList=filterCoordinates(geometry.getCoordinates());
+    for (int i=0; i < vertexList.size(); i++) {
+      Vector3 vertex=vertexList.get(i);
+      if (!vertices.contains(vertex)) {
+        vertices.add(vertex);
+      }
+    }
+  }
+ else {
+    if (geometry instanceof Polygon) {
+      triangulateFromCoordinates(geometry.getCoordinates());
+    }
+ else     if (geometry instanceof LineString || geometry instanceof MultiLineString) {
+      lineFromCoordinates(geometry.getCoordinates());
+    }
+ else {
+      int geometries=geometry.getNumGeometries();
+      for (int i=0; i < geometries; i++) {
+        triangulateFromCoordinates(geometry.getGeometryN(i).getCoordinates());
+      }
+    }
+  }
+}

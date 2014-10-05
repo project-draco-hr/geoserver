@@ -1,0 +1,51 @@
+{
+  if (geometry instanceof Polygon || geometry instanceof MultiPolygon) {
+    if (outputObject == null) {
+      geometryType=GeometryType.POLYGON;
+      if (LOD != null) {
+        outputObject=new XML3DGeometry(boundingBox,geometryType,requestFormat,LOD);
+      }
+ else {
+        outputObject=new XML3DGeometry(boundingBox,geometryType,requestFormat);
+      }
+    }
+    outputObject.addGeometry(geometry);
+  }
+ else   if (geometry instanceof LineString || geometry instanceof MultiLineString) {
+    if (outputObject == null) {
+      geometryType=GeometryType.LINESTRING;
+      if (LOD != null) {
+        outputObject=new XML3DGeometry(boundingBox,geometryType,requestFormat,LOD);
+      }
+ else {
+        outputObject=new XML3DGeometry(boundingBox,geometryType,requestFormat);
+      }
+    }
+    outputObject.addGeometry(geometry);
+  }
+ else   if (geometry instanceof Point) {
+    geometryType=GeometryType.POINT;
+    if (points == null) {
+      points=new XML3DNode("objects");
+      xml3dRootNode.addXML3DNode(points);
+    }
+    if (mesh_ref != null) {
+      XML3DNode point=new XML3DNode("group");
+      points.addXML3DNode(point);
+      point.addXML3DAttribute(new XML3DAttribute("id",id));
+      Coordinate coordinate=geometry.getCoordinate();
+      double minX=boundingBox.getLowerCorner().getCoordinate()[0];
+      double minY=boundingBox.getLowerCorner().getCoordinate()[1];
+      point.addXML3DAttribute(new XML3DAttribute("translation",String.valueOf(coordinate.x - minX) + " " + String.valueOf(coordinate.z)+ " "+ String.valueOf(coordinate.y - minY)));
+      XML3DNode node=new XML3DNode("mesh");
+      XML3DAttribute mesh_src=new XML3DAttribute("src",mesh_ref);
+      node.addXML3DAttribute(mesh_src);
+      point.addXML3DNode(node);
+    }
+ else {
+    }
+  }
+ else {
+    throw new IllegalArgumentException("Unable to determine geometry type " + geometry.getClass());
+  }
+}
