@@ -1,0 +1,39 @@
+{
+  if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+    LOGGER.fine("Incoming event of type " + event.getClass().getSimpleName() + " from Catalog");
+  }
+  if (!isEnabled()) {
+    if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+      LOGGER.fine("skipping incoming event: context is not initted");
+    }
+    return;
+  }
+  final Properties options=getProperties();
+  try {
+    GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+    final CatalogInfo info=event.getSource();
+    if (info instanceof StyleInfo) {
+      final StyleInfo sInfo=((StyleInfo)info);
+      WorkspaceInfo wInfo=sInfo.getWorkspace();
+      File styleFile=null;
+      if (wInfo != null) {
+        styleFile=new File(loader.getBaseDirectory() + File.separator + "workspaces"+ File.separator+ wInfo.getName()+ File.separator+ "styles"+ File.separator+ sInfo.getFilename());
+      }
+ else {
+        styleFile=loader.find("styles/" + sInfo.getFilename());
+      }
+      if (!styleFile.exists() || !styleFile.canRead() || !styleFile.isFile()) {
+        throw new IllegalStateException("Unable to find style for event: " + sInfo.toString());
+      }
+      jmsPublisher.publish(getTopic(),getJmsTemplate(),options,new DocumentFile(styleFile));
+    }
+    jmsPublisher.publish(getTopic(),getJmsTemplate(),options,event);
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE)) {
+      LOGGER.severe(e.getLocalizedMessage());
+    }
+    final CatalogException ex=new CatalogException(e);
+    throw ex;
+  }
+}

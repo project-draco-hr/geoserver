@@ -1,0 +1,17 @@
+{
+  NullPointerException npe=new NullPointerException();
+  ServiceException serviceException=new ServiceException("hello service exception");
+  serviceException.setCode("helloCode");
+  serviceException.setLocator("helloLocator");
+  serviceException.getExceptionText().add("NullPointerException");
+  serviceException.initCause(npe);
+  handler.handleServiceException(serviceException,requestInfo);
+  InputStream input=new ByteArrayInputStream(response.getOutputStreamContent().getBytes());
+  DocumentBuilderFactory docBuilderFactory=DocumentBuilderFactory.newInstance();
+  docBuilderFactory.setNamespaceAware(true);
+  Document doc=docBuilderFactory.newDocumentBuilder().parse(input);
+  Node exceptionTextNode=XPathAPI.selectSingleNode(doc,"ows:ExceptionReport/ows:Exception/ows:ExceptionText/text()");
+  assertNotNull(exceptionTextNode);
+  String exceptionText=exceptionTextNode.getNodeValue().replaceAll("\\s+"," ");
+  assertEquals("hello service exception NullPointerException",exceptionText);
+}

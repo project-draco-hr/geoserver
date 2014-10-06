@@ -1,0 +1,19 @@
+{
+  GridSampleDimension sampleDim=new GridSampleDimension("original",SampleDimensionType.REAL_64BITS,ColorInterpretation.GRAY_INDEX,null,null,new double[]{-9999.0},-1000d,1000d,1d,0d,null);
+  final CoverageDimensionImpl coverageDim=new CoverageDimensionImpl();
+  final String wrappedName="wrapped";
+  coverageDim.setName(wrappedName);
+  coverageDim.setDimensionType(SampleDimensionType.REAL_64BITS);
+  SampleDimension wrappedDim=new WrappedSampleDimension(sampleDim,coverageDim);
+  NumberRange<? extends Number> wrappedRange=((WrappedSampleDimension)wrappedDim).getRange();
+  assertNull(wrappedRange);
+  assertEquals(-9999,wrappedDim.getMinimumValue(),DELTA);
+  assertEquals(1000,wrappedDim.getMaximumValue(),DELTA);
+  assertEquals(wrappedName,wrappedDim.getDescription().toString());
+  sampleDim=new GridSampleDimension("original",null,new BaseUnit<Quantity>("test"));
+  wrappedDim=new WrappedSampleDimension(sampleDim,coverageDim);
+  wrappedRange=((WrappedSampleDimension)wrappedDim).getRange();
+  assertNull(wrappedRange);
+  assertEquals(Double.NEGATIVE_INFINITY,wrappedDim.getMinimumValue(),DELTA);
+  assertEquals(Double.POSITIVE_INFINITY,wrappedDim.getMaximumValue(),DELTA);
+}

@@ -1,0 +1,13 @@
+{
+  Path p1=temp.newFolder("d1").toPath();
+  p1.resolve("foo/bar").toFile().mkdirs();
+  Files.touch(p1.resolve("foo/bar/bar.txt").toFile());
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  ZipOutputStream zout=new ZipOutputStream(bout);
+  IOUtils.zipDirectory(p1.toFile(),zout,null);
+  Path p2=temp.newFolder("d2").toPath();
+  p2.toFile().mkdirs();
+  ByteArrayInputStream bin=new ByteArrayInputStream(bout.toByteArray());
+  IOUtils.decompress(bin,p2.toFile());
+  assertTrue(p2.resolve("foo/bar/bar.txt").toFile().exists());
+}

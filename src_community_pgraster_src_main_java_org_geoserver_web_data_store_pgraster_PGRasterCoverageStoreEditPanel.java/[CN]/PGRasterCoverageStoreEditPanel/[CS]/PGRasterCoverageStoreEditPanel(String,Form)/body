@@ -1,0 +1,48 @@
+{
+  super(componentId,storeEditForm);
+  final IModel model=storeEditForm.getModel();
+  setDefaultModel(model);
+  final IModel paramsModel=new PropertyModel(model,"connectionParameters");
+  final WebMarkupContainer configsContainer=new WebMarkupContainer("configsContainer");
+  configsContainer.setOutputMarkupId(true);
+  add(configsContainer);
+  final PGRasterPanel advancedConfigPanel=new PGRasterPanel("pgpanel",paramsModel,storeEditForm);
+  advancedConfigPanel.setOutputMarkupId(true);
+  advancedConfigPanel.setVisible(false);
+  configsContainer.add(advancedConfigPanel);
+  final TextParamPanel url=new TextParamPanel("urlPanel",new PropertyModel(paramsModel,"URL"),new ResourceModel("url","URL"),true);
+  final FormComponent urlFormComponent=url.getFormComponent();
+  urlFormComponent.add(new FileExistsValidator());
+  add(url);
+  IModel<Boolean> enabledModel=new Model<Boolean>(false);
+  enabled=new CheckBox("enabled",enabledModel);
+  add(enabled);
+  enabled.add(new AjaxFormComponentUpdatingBehavior("onclick"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      Boolean visible=enabled.getModelObject();
+      advancedConfigPanel.setVisible(visible);
+      target.addComponent(configsContainer);
+    }
+  }
+);
+  storeEditForm.add(new IFormValidator(){
+    private static final long serialVersionUID=1L;
+    public FormComponent[] getDependentFormComponents(){
+      if (enabled.getModelObject()) {
+        return advancedConfigPanel.getDependentFormComponents();
+      }
+ else {
+        return new FormComponent[]{urlFormComponent};
+      }
+    }
+    public void validate(    final Form form){
+      CoverageStoreInfo storeInfo=(CoverageStoreInfo)form.getModelObject();
+      String coverageUrl=urlFormComponent.getValue();
+      if (enabled.getModelObject()) {
+        coverageUrl=advancedConfigPanel.buildURL() + coverageUrl;
+      }
+      storeInfo.setURL(coverageUrl);
+    }
+  }
+);
+}

@@ -9,12 +9,19 @@
     throw new RestletException("No such wms store: " + ws + ","+ wms,Status.CLIENT_ERROR_NOT_FOUND);
   }
   if (wl != null) {
+    boolean quietOnNotFound=quietOnNotFoundEnabled(request);
     if (wms != null && catalog.getResourceByStore(catalog.getStoreByName(ws,wms,WMSStoreInfo.class),wl,WMSLayerInfo.class) == null) {
+      if (quietOnNotFound) {
+        return null;
+      }
       throw new RestletException("No such cascaded wms layer: " + ws + ","+ wms+ ","+ wl,Status.CLIENT_ERROR_NOT_FOUND);
     }
  else {
       NamespaceInfo ns=catalog.getNamespaceByPrefix(ws);
       if (ns == null || catalog.getResourceByName(ns,wl,WMSLayerInfo.class) == null) {
+        if (quietOnNotFound) {
+          return null;
+        }
         throw new RestletException("No such cascaded wms: " + ws + ","+ wl,Status.CLIENT_ERROR_NOT_FOUND);
       }
     }

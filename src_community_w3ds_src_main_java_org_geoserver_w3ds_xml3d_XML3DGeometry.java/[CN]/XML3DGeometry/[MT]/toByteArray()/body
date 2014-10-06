@@ -1,0 +1,42 @@
+{
+  List<List<Vector3>> grid=getVertexGrid();
+  int sizeX=grid.get(0).size();
+  int sizeZ=grid.size();
+  float resolutionX=(float)(bbox[2] - bbox[0]) / sizeX;
+  float resolutionZ=(float)(bbox[3] - bbox[1]) / sizeZ;
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  DataOutputStream out=null;
+  byte outputByteArray[]=null;
+  try {
+    out=new DataOutputStream(bos);
+    out.writeInt(sizeX);
+    out.writeInt(sizeZ);
+    out.writeFloat(resolutionX);
+    out.writeFloat(resolutionZ);
+    for (int i=0; i < sizeZ; i++) {
+      int len=grid.get(i).size() - 1;
+      for (int j=len; j >= 0; j--) {
+        out.writeFloat((float)grid.get(i).get(j).y);
+      }
+    }
+    out.flush();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Points in first row: " + sizeX + " Rows: "+ sizeZ);
+      LOGGER.fine("ByteArray resolution in x: " + resolutionX + " in y: "+ resolutionZ+ "\n");
+    }
+    outputByteArray=bos.toByteArray();
+  }
+ catch (  IOException e) {
+  }
+ finally {
+    try {
+      if (out != null) {
+        out.close();
+      }
+      bos.close();
+    }
+ catch (    IOException ex) {
+    }
+  }
+  return outputByteArray;
+}

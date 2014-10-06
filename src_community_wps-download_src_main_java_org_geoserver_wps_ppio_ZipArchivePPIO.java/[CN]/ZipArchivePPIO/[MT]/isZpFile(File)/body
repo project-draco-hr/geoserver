@@ -1,0 +1,28 @@
+{
+  if (file == null || !file.exists() || !file.canRead()) {
+    throw new IllegalArgumentException("Provided File is not valid and/or reqadable! --> File:" + file != null ? file.getAbsolutePath() : "null");
+  }
+  if (file.isDirectory()) {
+    return false;
+  }
+  if (file.length() < 4) {
+    return false;
+  }
+  DataInputStream in=null;
+  try {
+    in=new DataInputStream(new FileInputStream(file));
+    int test=in.readInt();
+    return test == 0x504b0304;
+  }
+ catch (  IOException e) {
+    if (LOGGER.isLoggable(Level.SEVERE)) {
+      LOGGER.log(Level.SEVERE,e.getLocalizedMessage(),e);
+    }
+    return false;
+  }
+ finally {
+    if (in != null) {
+      org.apache.commons.io.IOUtils.closeQuietly(in);
+    }
+  }
+}

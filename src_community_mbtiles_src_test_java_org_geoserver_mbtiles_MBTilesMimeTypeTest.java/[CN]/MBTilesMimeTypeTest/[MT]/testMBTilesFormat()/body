@@ -1,0 +1,23 @@
+{
+  tester.startPage(new MapPreviewPage());
+  tester.assertRenderedPage(MapPreviewPage.class);
+  tester.assertNoErrorMessage();
+  Component component=tester.getComponentFromLastRenderedPage("table:listContainer:items:1:itemProperties:4:component:menu:wmsFormats");
+  assertNotNull(component);
+  assertTrue(component instanceof RepeatingView);
+  RepeatingView view=(RepeatingView)component;
+  Iterator<? extends Component> iterator=view.iterator();
+  boolean mbtilesFound=false;
+  ParamResourceModel rm=new ParamResourceModel("format.wms.application/x-sqlite3",null,"");
+  String mbtiles=rm.getString();
+  while (iterator.hasNext()) {
+    Component comp=iterator.next();
+    assertTrue(comp instanceof Label);
+    Label lb=(Label)comp;
+    String test=lb.getDefaultModelObjectAsString();
+    if (test.contains(mbtiles)) {
+      mbtilesFound=true;
+    }
+  }
+  assertTrue(mbtilesFound);
+}

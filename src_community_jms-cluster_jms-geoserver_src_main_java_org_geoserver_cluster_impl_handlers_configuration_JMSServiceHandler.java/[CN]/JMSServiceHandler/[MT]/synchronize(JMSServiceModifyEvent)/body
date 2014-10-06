@@ -1,0 +1,18 @@
+{
+  if (ev == null) {
+    throw new NullArgumentException("Incoming event is null");
+  }
+  try {
+    final ServiceInfo localObject=localizeService(geoServer,ev);
+    producer.disable();
+    geoServer.save(localObject);
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))     LOGGER.severe(this.getClass() + " is unable to synchronize the incoming event: " + ev);
+    throw e;
+  }
+ finally {
+    producer.enable();
+  }
+  return true;
+}

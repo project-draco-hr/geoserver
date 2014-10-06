@@ -1,0 +1,37 @@
+{
+  ZipInputStream zis=null;
+  try {
+    zis=new ZipInputStream(input);
+    ZipEntry entry=null;
+    while ((entry=zis.getNextEntry()) != null) {
+      File file=new File(tempDirectory,entry.getName());
+      if (entry.isDirectory()) {
+        file.mkdir();
+      }
+ else {
+        int count;
+        byte data[]=new byte[4096];
+        FileOutputStream fos=null;
+        try {
+          fos=new FileOutputStream(file);
+          while ((count=zis.read(data)) != -1) {
+            fos.write(data,0,count);
+          }
+          fos.flush();
+        }
+  finally {
+          if (fos != null) {
+            org.apache.commons.io.IOUtils.closeQuietly(fos);
+          }
+        }
+      }
+      zis.closeEntry();
+    }
+  }
+  finally {
+    if (zis != null) {
+      org.apache.commons.io.IOUtils.closeQuietly(zis);
+    }
+  }
+  return tempDirectory;
+}

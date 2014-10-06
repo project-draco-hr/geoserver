@@ -1,0 +1,14 @@
+{
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(new DownloadServiceConfiguration(DownloadServiceConfiguration.NO_LIMIT,10,DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.DEFAULT_COMPRESSION_LEVEL)),getGeoServer());
+  final WPSResourceManager resourceManager=new WPSResourceManager();
+  DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  Polygon roi=(Polygon)new WKTReader2().read("POLYGON (( -127.57473954542964 54.06575021619523, -130.8545966116691 52.00807146727025, -129.50812897394974 49.85372324691927, -130.5300633861675 49.20465679591609, -129.25955033314003 48.60392508062591, -128.00975216684665 50.986137055052474, -125.8623089087404 48.63154492960477, -123.984159178178 50.68231871628503, -126.91186316993704 52.15307567440926, -125.3444367403868 53.54787804784162, -127.57473954542964 54.06575021619523 ))");
+  roi.setSRID(4326);
+  try {
+    downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),roi,true,new NullProgressListener());
+    Assert.assertFalse(true);
+  }
+ catch (  ProcessException e) {
+    Assert.assertEquals("java.lang.IllegalArgumentException: Download Limits Exceeded. Unable to proceed!: Download Limits Exceeded. Unable to proceed!",e.getMessage() + (e.getCause() != null ? ": " + e.getCause().getMessage() : ""));
+  }
+}

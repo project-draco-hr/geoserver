@@ -1,0 +1,12 @@
+{
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(new DownloadServiceConfiguration(DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.NO_LIMIT,10,DownloadServiceConfiguration.DEFAULT_COMPRESSION_LEVEL)),getGeoServer());
+  final WPSResourceManager resourceManager=new WPSResourceManager();
+  DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  try {
+    downloadProcess.execute(getLayerId(MockData.POLYGONS),null,"application/zip",null,CRS.decode("EPSG:32615"),roi,false,new NullProgressListener());
+    Assert.assertFalse(true);
+  }
+ catch (  ProcessException e) {
+    Assert.assertEquals("java.io.IOException: Download Exceeded the maximum HARD allowed size!: Download Exceeded the maximum HARD allowed size!",e.getMessage() + (e.getCause() != null ? ": " + e.getCause().getMessage() : ""));
+  }
+}
