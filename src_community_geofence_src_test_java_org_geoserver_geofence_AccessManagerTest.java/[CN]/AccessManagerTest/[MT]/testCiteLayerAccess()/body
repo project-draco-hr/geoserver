@@ -1,0 +1,24 @@
+{
+  UsernamePasswordAuthenticationToken user=new UsernamePasswordAuthenticationToken("cite","cite");
+  LayerInfo bpolygons=getCatalog().getLayerByName(getLayerId(MockData.BASIC_POLYGONS));
+  VectorAccessLimits vl=(VectorAccessLimits)accessManager.getAccessLimits(user,bpolygons);
+  assertEquals(Filter.INCLUDE,vl.getReadFilter());
+  assertEquals(Filter.INCLUDE,vl.getWriteFilter());
+  assertNull(vl.getReadAttributes());
+  assertNull(vl.getWriteAttributes());
+  Request request=new Request();
+  request.setService("WFS");
+  request.setRequest("GetFeature");
+  Dispatcher.REQUEST.set(request);
+  LayerInfo generic=getCatalog().getLayerByName(getLayerId(MockData.GENERICENTITY));
+  vl=(VectorAccessLimits)accessManager.getAccessLimits(user,generic);
+  assertEquals(Filter.EXCLUDE,vl.getReadFilter());
+  assertEquals(Filter.EXCLUDE,vl.getWriteFilter());
+  request=new Request();
+  request.setService("WmS");
+  request.setRequest("gETmAP");
+  Dispatcher.REQUEST.set(request);
+  vl=(VectorAccessLimits)accessManager.getAccessLimits(user,generic);
+  assertEquals(Filter.INCLUDE,vl.getReadFilter());
+  assertEquals(Filter.INCLUDE,vl.getWriteFilter());
+}

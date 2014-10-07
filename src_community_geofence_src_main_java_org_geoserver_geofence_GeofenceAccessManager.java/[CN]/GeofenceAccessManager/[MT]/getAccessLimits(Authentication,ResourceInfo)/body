@@ -1,0 +1,65 @@
+{
+  LOGGER.log(Level.FINE,"Getting access limits for Resource {0}",resource.getName());
+  String username=null;
+  if ((user != null) && !(user instanceof AnonymousAuthenticationToken)) {
+    if (isAdmin(user)) {
+      LOGGER.log(Level.FINE,"Admin level access, returning " + "full rights for layer {0}",resource.getPrefixedName());
+      return buildAccessLimits(resource,AccessInfo.ALLOW_ALL);
+    }
+    username=user.getName();
+  }
+  String service=null;
+  String request=null;
+  Request owsRequest=Dispatcher.REQUEST.get();
+  if (owsRequest != null) {
+    service=owsRequest.getService();
+    request=owsRequest.getRequest();
+  }
+  String layer=resource.getName();
+  StoreInfo store=resource.getStore();
+  WorkspaceInfo ws=store.getWorkspace();
+  String workspace=ws.getName();
+  RuleFilter ruleFilter=new RuleFilter(RuleFilter.SpecialFilterType.ANY);
+  setRuleFilterUserOrRole(user,ruleFilter);
+  ruleFilter.setInstance(configurationManager.getConfiguration().getInstanceName());
+  if (service != null) {
+    if ("*".equals(service)) {
+      ruleFilter.setService(RuleFilter.SpecialFilterType.ANY);
+    }
+ else {
+      ruleFilter.setService(service);
+    }
+  }
+ else {
+    ruleFilter.setService(RuleFilter.SpecialFilterType.DEFAULT);
+  }
+  if (request != null) {
+    if ("*".equals(request)) {
+      ruleFilter.setRequest(RuleFilter.SpecialFilterType.ANY);
+    }
+ else {
+      ruleFilter.setRequest(request);
+    }
+  }
+ else {
+    ruleFilter.setRequest(RuleFilter.SpecialFilterType.DEFAULT);
+  }
+  ruleFilter.setWorkspace(workspace);
+  ruleFilter.setLayer(layer);
+  String sourceAddress=retrieveCallerIpAddress();
+  if (sourceAddress != null) {
+    ruleFilter.setSourceAddress(sourceAddress);
+  }
+ else {
+    LOGGER.log(Level.WARNING,"No source IP address found");
+    ruleFilter.setSourceAddress(RuleFilter.SpecialFilterType.DEFAULT);
+  }
+  LOGGER.log(Level.FINE,"ResourceInfo filter: {0}",ruleFilter);
+  AccessInfo rule=rules.getAccessInfo(ruleFilter);
+  if (rule == null) {
+    rule=AccessInfo.DENY_ALL;
+  }
+  DataAccessLimits limits=buildAccessLimits(resource,rule);
+  LOGGER.log(Level.FINE,"Returning {0} for layer {1} and user {2}",new Object[]{limits,resource.getPrefixedName(),username});
+  return limits;
+}

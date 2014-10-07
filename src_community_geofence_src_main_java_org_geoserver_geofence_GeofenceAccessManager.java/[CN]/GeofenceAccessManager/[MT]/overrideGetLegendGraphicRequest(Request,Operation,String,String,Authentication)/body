@@ -1,0 +1,62 @@
+{
+  String layerName=(String)gsRequest.getKvp().get("LAYER");
+  List<LayerInfo> layers=new ArrayList<LayerInfo>();
+  LayerInfo candidateLayer=catalog.getLayerByName(layerName);
+  if (candidateLayer == null) {
+    if (layerName.indexOf(":") == -1) {
+      if (LocalWorkspace.get() != null) {
+        layerName=LocalWorkspace.get().getName() + ":" + layerName;
+      }
+ else       if (catalog.getDefaultWorkspace() != null) {
+        layerName=catalog.getDefaultWorkspace().getName() + ":" + layerName;
+      }
+    }
+    LayerGroupInfo layerGroup=catalog.getLayerGroupByName(layerName);
+    if (layerGroup != null) {
+      for (      PublishedInfo publishedInfo : layerGroup.getLayers()) {
+        if (publishedInfo instanceof LayerInfo) {
+          layers.add((LayerInfo)publishedInfo);
+        }
+ else {
+          if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE,"Skipping publishable " + publishedInfo);
+          }
+        }
+      }
+    }
+  }
+ else {
+    layers.add(candidateLayer);
+  }
+  GetLegendGraphicRequest getLegend=(GetLegendGraphicRequest)operation.getParameters()[0];
+  for (  LayerInfo layer : layers) {
+    ResourceInfo resource=layer.getResource();
+    RuleFilter ruleFilter=new RuleFilter(RuleFilter.SpecialFilterType.ANY);
+    setRuleFilterUserOrRole(user,ruleFilter);
+    ruleFilter.setInstance(configurationManager.getConfiguration().getInstanceName());
+    ruleFilter.setService(service);
+    ruleFilter.setRequest(request);
+    ruleFilter.setWorkspace(resource.getStore().getWorkspace().getName());
+    ruleFilter.setLayer(resource.getName());
+    LOGGER.log(Level.FINE,"Getting access limits for getLegendGraphic",ruleFilter);
+    AccessInfo rule=rules.getAccessInfo(ruleFilter);
+    String styleName=(String)gsRequest.getKvp().get("STYLE");
+    if (styleName == null) {
+      if (rule.getDefaultStyle() != null) {
+        try {
+          StyleInfo si=catalog.getStyleByName(rule.getDefaultStyle());
+          if (si == null) {
+            throw new ServiceException("Could not find default style suggested " + "by GeoRepository: " + rule.getDefaultStyle());
+          }
+          getLegend.setStyle(si.getStyle());
+        }
+ catch (        IOException e) {
+          throw new ServiceException("Unable to load the style suggested by GeoRepository: " + rule.getDefaultStyle(),e);
+        }
+      }
+    }
+ else {
+      checkStyleAllowed(rule,styleName);
+    }
+  }
+}

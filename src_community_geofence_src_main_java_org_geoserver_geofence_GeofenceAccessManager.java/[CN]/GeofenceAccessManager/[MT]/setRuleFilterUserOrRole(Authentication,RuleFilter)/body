@@ -1,0 +1,28 @@
+{
+  if (user != null) {
+    GeoFenceConfiguration config=configurationManager.getConfiguration();
+    if (config.isUseRolesToFilter() && config.getRoles().size() > 0) {
+      String role="UNKNOWN";
+      for (      GrantedAuthority authority : user.getAuthorities()) {
+        if (config.getRoles().contains(authority.getAuthority())) {
+          role=authority.getAuthority();
+        }
+      }
+      LOGGER.log(Level.FINE,"Setting role for filter: {0}",new Object[]{role});
+      ruleFilter.setUserGroup(role);
+    }
+ else {
+      String username=user.getName();
+      if (username == null) {
+        ruleFilter.setUser(RuleFilter.SpecialFilterType.DEFAULT);
+      }
+ else {
+        LOGGER.log(Level.FINE,"Setting user for filter: {0}",new Object[]{username});
+        ruleFilter.setUser(username);
+      }
+    }
+  }
+ else {
+    ruleFilter.setUser(RuleFilter.SpecialFilterType.DEFAULT);
+  }
+}
