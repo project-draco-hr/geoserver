@@ -4,8 +4,22 @@
   this.model=model;
   add(new HelpLink("authKeyParametersHelp",this).setDialog(dialog));
   add(new TextField<String>("authKeyParamName"));
-  add(new AuthenticationKeyMapperChoice("authKeyMapperName"));
+  Map<String,String> parameters=model.getObject().getMapperParameters();
+  final ParamsPanel paramsPanel=createParamsPanel("authKeyMapperParamsPanel",model.getObject().getAuthKeyMapperName(),parameters);
+  AuthenticationKeyMapperChoice authenticationKeyMapperChoice=new AuthenticationKeyMapperChoice("authKeyMapperName");
+  authenticationKeyMapperChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    protected void onUpdate(    AjaxRequestTarget target){
+      String newSelection=(String)getFormComponent().getConvertedInput();
+      Map<String,String> parameters=getMapperParameters(newSelection);
+      AuthenticationKeyFilterPanel.this.model.getObject().setMapperParameters(parameters);
+      paramsPanel.updateParameters(newSelection,parameters);
+      target.addComponent(paramsPanel);
+    }
+  }
+);
+  add(authenticationKeyMapperChoice);
   add(new UserGroupServiceChoice("userGroupServiceName"));
+  add(new WebMarkupContainer("authKeyMapperParamsContainer").add(paramsPanel).setOutputMarkupId(true));
   add(new AjaxSubmitLink("synchronize"){
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       try {
