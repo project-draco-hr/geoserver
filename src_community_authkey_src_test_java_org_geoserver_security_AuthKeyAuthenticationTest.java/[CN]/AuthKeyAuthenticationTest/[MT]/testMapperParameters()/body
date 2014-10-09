@@ -1,0 +1,20 @@
+{
+  String authKeyUrlParam="myAuthKeyParams";
+  String filterName="testAuthKeyParams1";
+  AuthenticationKeyFilterConfig config=new AuthenticationKeyFilterConfig();
+  config.setClassName(GeoServerAuthenticationKeyFilter.class.getName());
+  config.setName(filterName);
+  config.setUserGroupServiceName("ug1");
+  config.setAuthKeyParamName(authKeyUrlParam);
+  config.setAuthKeyMapperName("fakeMapper");
+  Map<String,String> mapperParams=new HashMap<String,String>();
+  mapperParams.put("param1","value1");
+  mapperParams.put("param2","value2");
+  config.setMapperParameters(mapperParams);
+  getSecurityManager().saveFilter(config);
+  GeoServerAuthenticationKeyFilter filter=(GeoServerAuthenticationKeyFilter)getSecurityManager().loadFilter(filterName);
+  assertTrue(filter.getMapper() instanceof FakeMapper);
+  FakeMapper fakeMapper=(FakeMapper)filter.getMapper();
+  assertEquals("value1",fakeMapper.getMapperParameter("param1"));
+  assertEquals("value2",fakeMapper.getMapperParameter("param2"));
+}
