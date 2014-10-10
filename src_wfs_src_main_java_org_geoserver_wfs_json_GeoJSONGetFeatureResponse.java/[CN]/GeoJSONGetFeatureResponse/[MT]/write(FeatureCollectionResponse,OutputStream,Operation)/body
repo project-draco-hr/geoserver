@@ -10,13 +10,13 @@
   OutputStreamWriter osw=null;
   Writer outWriter=null;
   boolean hasGeom=false;
-  String featureCount=null;
+  BigInteger featureCount=null;
   if (describeFeatureType != null) {
     if (describeFeatureType.getParameters()[0] instanceof GetFeatureType) {
-      featureCount=String.valueOf(getFeatureCountFromWFS11Request(describeFeatureType,wfs));
+      featureCount=BigInteger.valueOf(getFeatureCountFromWFS11Request(describeFeatureType,wfs));
     }
  else     if (describeFeatureType.getParameters()[0] instanceof net.opengis.wfs20.GetFeatureType) {
-      featureCount=(featureCollection.getTotalNumberOfFeatures().longValue() < 0) ? "unknown" : String.valueOf(featureCollection.getTotalNumberOfFeatures());
+      featureCount=(featureCollection.getTotalNumberOfFeatures().longValue() < 0) ? null : featureCollection.getTotalNumberOfFeatures();
     }
   }
   try {
@@ -29,6 +29,9 @@
     jsonWriter.object().key("type").value("FeatureCollection");
     if (featureCount != null) {
       jsonWriter.key("totalFeatures").value(featureCount);
+    }
+ else {
+      jsonWriter.key("totalFeatures").value("unknown");
     }
     jsonWriter.key("features");
     jsonWriter.array();
