@@ -1,0 +1,40 @@
+{
+  UsernamePasswordAuthenticationToken outTok=null;
+  LOGGER.log(Level.FINE,"Auth request with {0}",authentication);
+  if (authentication instanceof UsernamePasswordAuthenticationToken) {
+    UsernamePasswordAuthenticationToken inTok=(UsernamePasswordAuthenticationToken)authentication;
+    AuthUser authUser=null;
+    try {
+      authUser=ruleReaderService.authorize(inTok.getPrincipal().toString(),inTok.getCredentials().toString());
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Error in authenticating with GeoFence",e);
+      throw new AuthenticationException("Error in GeoFence communication",e){
+      }
+;
+    }
+    if (authUser != null) {
+      LOGGER.log(Level.FINE,"User {0} authenticated: {1}",new Object[]{inTok.getPrincipal(),authUser});
+      List<GrantedAuthority> roles=new ArrayList<GrantedAuthority>();
+      roles.addAll(inTok.getAuthorities());
+      roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+      if (authUser.getRole() == AuthUser.Role.ADMIN) {
+        roles.add(GeoServerRole.ADMIN_ROLE);
+        roles.add(new SimpleGrantedAuthority("ADMIN"));
+      }
+      outTok=new UsernamePasswordAuthenticationToken(inTok.getPrincipal(),inTok.getCredentials(),roles);
+    }
+ else {
+      if ("admin".equals(inTok.getPrincipal()) && "geoserver".equals(inTok.getCredentials())) {
+        LOGGER.log(Level.FINE,"Default admin credentials NOT authenticated -- probably a frontend check");
+      }
+ else {
+        LOGGER.log(Level.INFO,"User {0} NOT authenticated",inTok.getPrincipal());
+      }
+    }
+    return outTok;
+  }
+ else {
+    return null;
+  }
+}

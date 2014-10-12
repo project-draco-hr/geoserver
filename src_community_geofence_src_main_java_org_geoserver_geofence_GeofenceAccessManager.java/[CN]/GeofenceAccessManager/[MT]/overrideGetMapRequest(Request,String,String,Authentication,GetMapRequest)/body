@@ -1,0 +1,58 @@
+{
+  if (gsRequest.getKvp().get("layers") == null && gsRequest.getKvp().get("sld") == null && gsRequest.getKvp().get("sld_body") == null) {
+    throw new ServiceException("GetMap POST requests are forbidden");
+  }
+  if ((getMap.getSld() != null) || (getMap.getSldBody() != null)) {
+    if (!configurationManager.getConfiguration().isAllowDynamicStyles()) {
+      throw new ServiceException("Dynamic style usage is forbidden");
+    }
+  }
+  String stylesParam=(String)gsRequest.getRawKvp().get("STYLES");
+  List<String> styleNameList=new ArrayList<String>();
+  if (stylesParam != null) {
+    styleNameList.addAll(KvpUtils.readFlat(stylesParam));
+  }
+  List<MapLayerInfo> layers=getMap.getLayers();
+  for (int i=0; i < layers.size(); i++) {
+    MapLayerInfo layer=layers.get(i);
+    ResourceInfo info=null;
+    if (layer.getType() == MapLayerInfo.TYPE_VECTOR || layer.getType() == MapLayerInfo.TYPE_RASTER) {
+      info=layer.getResource();
+    }
+ else     if (!configurationManager.getConfiguration().isAllowRemoteAndInlineLayers()) {
+      throw new ServiceException("Remote layers are not allowed");
+    }
+    RuleFilter ruleFilter=new RuleFilter(RuleFilter.SpecialFilterType.ANY);
+    setRuleFilterUserOrRole(user,ruleFilter);
+    ruleFilter.setInstance(configurationManager.getConfiguration().getInstanceName());
+    ruleFilter.setService(service);
+    ruleFilter.setRequest(request);
+    if (info != null) {
+      ruleFilter.setWorkspace(info.getStore().getWorkspace().getName());
+      ruleFilter.setLayer(info.getName());
+    }
+ else {
+      ruleFilter.setWorkspace(RuleFilter.SpecialFilterType.ANY);
+      ruleFilter.setLayer(RuleFilter.SpecialFilterType.ANY);
+    }
+    LOGGER.log(Level.FINE,"Getting access limits for getMap",ruleFilter);
+    AccessInfo rule=rules.getAccessInfo(ruleFilter);
+    String styleName=(styleNameList.size() > 0) ? styleNameList.get(i) : null;
+    if (styleName != null) {
+      checkStyleAllowed(rule,styleName);
+    }
+ else     if ((rule.getDefaultStyle() != null)) {
+      try {
+        StyleInfo si=catalog.getStyleByName(rule.getDefaultStyle());
+        if (si == null) {
+          throw new ServiceException("Could not find default style suggested " + "by Geofence: " + rule.getDefaultStyle());
+        }
+        Style style=si.getStyle();
+        getMap.getStyles().set(i,style);
+      }
+ catch (      IOException e) {
+        throw new ServiceException("Unable to load the style suggested by Geofence: " + rule.getDefaultStyle(),e);
+      }
+    }
+  }
+}

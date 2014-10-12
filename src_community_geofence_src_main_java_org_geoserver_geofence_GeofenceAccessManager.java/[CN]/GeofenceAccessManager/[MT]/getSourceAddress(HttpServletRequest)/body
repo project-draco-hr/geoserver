@@ -1,0 +1,20 @@
+{
+  try {
+    if (http == null) {
+      LOGGER.log(Level.WARNING,"No HTTP connection available.");
+      return null;
+    }
+    String forwardedFor=http.getHeader("X-Forwarded-For");
+    if (forwardedFor != null) {
+      String[] ips=forwardedFor.split(", ");
+      return InetAddress.getByName(ips[0]).getHostAddress();
+    }
+ else {
+      return http.getRemoteAddr();
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.INFO,"Failed to get remote address",e);
+    return null;
+  }
+}

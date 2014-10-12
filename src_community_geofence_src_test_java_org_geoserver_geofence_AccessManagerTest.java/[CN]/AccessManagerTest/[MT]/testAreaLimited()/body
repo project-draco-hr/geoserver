@@ -1,0 +1,10 @@
+{
+  UsernamePasswordAuthenticationToken user=new UsernamePasswordAuthenticationToken("area","area");
+  LayerInfo generic=getCatalog().getLayerByName(getLayerId(MockData.GENERICENTITY));
+  VectorAccessLimits vl=(VectorAccessLimits)accessManager.getAccessLimits(user,generic);
+  FilterFactory2 ff=CommonFactoryFinder.getFilterFactory2(null);
+  Geometry limit=new WKTReader().read("MULTIPOLYGON(((48 62, 48 63, 49 63, 49 62, 48 62)))");
+  Filter filter=ff.intersects(ff.property(""),ff.literal(limit));
+  assertEquals(filter,vl.getReadFilter());
+  assertEquals(filter,vl.getWriteFilter());
+}

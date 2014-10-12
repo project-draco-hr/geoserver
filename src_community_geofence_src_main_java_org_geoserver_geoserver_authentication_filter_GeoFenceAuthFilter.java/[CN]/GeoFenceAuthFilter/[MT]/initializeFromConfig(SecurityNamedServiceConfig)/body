@@ -1,0 +1,17 @@
+{
+  super.initializeFromConfig(config);
+  GeoFenceAuthFilterConfig cfg=(GeoFenceAuthFilterConfig)config;
+  aep=new BasicAuthenticationEntryPoint();
+  aep.setRealmName(GeoServerSecurityManager.REALM);
+  try {
+    aep.afterPropertiesSet();
+  }
+ catch (  Exception e) {
+    throw new IOException(e);
+  }
+  SecurityNamedServiceConfig authCfg=securityManager.loadAuthenticationProviderConfig("geofence");
+  GeoFenceAuthenticationProvider geofenceAuthProvider=geofenceAuth.createAuthenticationProvider(authCfg);
+  BasicAuthenticationFilter filter=new BasicAuthenticationFilter(geofenceAuthProvider,aep);
+  filter.afterPropertiesSet();
+  getNestedFilters().add(filter);
+}

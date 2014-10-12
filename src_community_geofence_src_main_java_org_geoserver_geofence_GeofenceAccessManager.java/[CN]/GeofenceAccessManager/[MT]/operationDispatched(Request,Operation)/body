@@ -1,0 +1,33 @@
+{
+  String service=gsRequest.getService();
+  String request=gsRequest.getRequest();
+  Authentication user=SecurityContextHolder.getContext().getAuthentication();
+  String username=null;
+  if ((user != null) && !(user instanceof AnonymousAuthenticationToken)) {
+    if (isAdmin(user)) {
+      LOGGER.log(Level.FINE,"Admin level access, not applying default style for this request");
+      return operation;
+    }
+ else {
+      username=user.getName();
+    }
+  }
+  if ((request != null) && "WMS".equalsIgnoreCase(service) && ("GetMap".equalsIgnoreCase(request) || "GetFeatureInfo".equalsIgnoreCase(request))) {
+    Object ro=operation.getParameters()[0];
+    GetMapRequest getMap;
+    if (ro instanceof GetMapRequest) {
+      getMap=(GetMapRequest)ro;
+    }
+ else     if (ro instanceof GetFeatureInfoRequest) {
+      getMap=((GetFeatureInfoRequest)ro).getGetMapRequest();
+    }
+ else {
+      throw new ServiceException("Unrecognized request object: " + ro);
+    }
+    overrideGetMapRequest(gsRequest,service,request,user,getMap);
+  }
+ else   if ((request != null) && "WMS".equalsIgnoreCase(service) && "GetLegendGraphic".equalsIgnoreCase(request)) {
+    overrideGetLegendGraphicRequest(gsRequest,operation,service,request,user);
+  }
+  return operation;
+}
