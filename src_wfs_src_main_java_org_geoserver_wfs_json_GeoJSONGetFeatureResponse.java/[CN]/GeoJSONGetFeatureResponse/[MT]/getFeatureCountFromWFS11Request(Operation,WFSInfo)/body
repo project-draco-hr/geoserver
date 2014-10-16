@@ -1,7 +1,9 @@
 {
   int totalCount=0;
   Catalog catalog=wfs.getGeoServer().getCatalog();
-  GetFeatureType request=(GetFeatureType)describeFeatureType.getParameters()[0];
+  GetFeatureType request=(GetFeatureType)operation.getParameters()[0];
+  List<Map<String,String>> viewParams=new GetFeatureRequest.WFS11(request).getViewParams();
+  int idx=0;
   for (  QueryType query : (EList<QueryType>)request.getQuery()) {
     QName typeName=(QName)query.getTypeName().get(0);
     FeatureTypeInfo meta=catalog.getFeatureTypeByName(typeName.getNamespaceURI(),typeName.getLocalPart());
@@ -11,6 +13,12 @@
       filter=Filter.INCLUDE;
     }
     Query countQuery=new Query(typeName.getLocalPart(),filter);
+    Map<String,String> viewParam=viewParams != null && viewParams.size() > idx ? viewParams.get(idx) : null;
+    if (viewParam != null) {
+      final Hints hints=new Hints();
+      hints.put(Hints.VIRTUAL_TABLE_PARAMETERS,viewParam);
+      countQuery.setHints(hints);
+    }
     int count=0;
     count=source.getCount(countQuery);
     if (count == -1) {
