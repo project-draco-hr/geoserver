@@ -26,6 +26,48 @@
     }
     return style.getName();
   }
+ else   if (getRequest().getEntity().getMediaType().equals(MediaType.APPLICATION_ZIP) && object instanceof InputStream) {
+    File directory=null;
+    try {
+      directory=unzipSldPackage((InputStream)object);
+      File uploadedFile=retrieveSldFile(directory);
+      Style styleSld=parseSld(uploadedFile);
+      String name=getRequest().getResourceRef().getQueryAsForm().getFirstValue("name");
+      if (name == null) {
+        name=findNameFromObject(styleSld);
+      }
+      if (catalog.getStyleByName(workspace,name) != null) {
+        throw new RestletException("Style " + name + " already exists.",Status.CLIENT_ERROR_FORBIDDEN);
+      }
+      saveImageResources(directory,workspace);
+      StyleInfo styleInfo=catalog.getFactory().createStyle();
+      styleInfo.setName(name);
+      styleInfo.setFilename(name + ".sld");
+      if (workspace != null) {
+        styleInfo.setWorkspace(catalog.getWorkspaceByName(workspace));
+      }
+      GeoServerDataDirectory dataDir=new GeoServerDataDirectory(catalog.getResourceLoader());
+      if (dataDir.style(styleInfo).getType() != Resource.Type.UNDEFINED) {
+        String msg="Style resource " + styleInfo.getFilename() + " already exists.";
+        throw new RestletException(msg,Status.CLIENT_ERROR_FORBIDDEN);
+      }
+      serializeSldFileInCatalog(new File(getStylePath(styleInfo)),uploadedFile);
+      catalog.add(styleInfo);
+      LOGGER.info("POST Style Package: " + name + ", workspace: "+ workspace);
+      return name;
+    }
+ catch (    RestletException e) {
+      throw e;
+    }
+catch (    Exception e) {
+      e.printStackTrace();
+      LOGGER.severe("Error processing the style package (POST): " + e.getMessage());
+      throw new RestletException("Error processing the style",Status.SERVER_ERROR_INTERNAL,e);
+    }
+ finally {
+      FileUtils.deleteQuietly(directory);
+    }
+  }
  else   if (object instanceof Style || object instanceof InputStream) {
     String name=getRequest().getResourceRef().getQueryAsForm().getFirstValue("name");
     ;
