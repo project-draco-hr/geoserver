@@ -4,19 +4,7 @@
   final String requestCRS=request.getSRS();
   final CoordinateReferenceSystem sourceCRS=CRS.decode(requestCRS);
   final CoordinateReferenceSystem cvCRS=((GeneralEnvelope)coverageReader.getOriginalEnvelope()).getCoordinateReferenceSystem();
-  final MathTransform GCCRSTodeviceCRSTransformdeviceCRSToGCCRSTransform=CRS.findMathTransform(cvCRS,sourceCRS,true);
-  final MathTransform GCCRSTodeviceCRSTransform=CRS.findMathTransform(cvCRS,targetCRS,true);
-  final MathTransform deviceCRSToGCCRSTransform=GCCRSTodeviceCRSTransformdeviceCRSToGCCRSTransform.inverse();
-  com.vividsolutions.jts.geom.Envelope envelope=request.getBbox();
-  GeneralEnvelope destinationEnvelope;
-  final boolean lonFirst=sourceCRS.getCoordinateSystem().getAxis(0).getDirection().absolute().equals(AxisDirection.EAST);
-  if (!lonFirst) {
-    destinationEnvelope=new GeneralEnvelope(new double[]{envelope.getMinY(),envelope.getMinX()},new double[]{envelope.getMaxY(),envelope.getMaxX()});
-  }
- else {
-    destinationEnvelope=new GeneralEnvelope(new double[]{envelope.getMinX(),envelope.getMinY()},new double[]{envelope.getMaxX(),envelope.getMaxY()});
-  }
-  destinationEnvelope.setCoordinateReferenceSystem(sourceCRS);
+  GeneralEnvelope destinationEnvelope=new GeneralEnvelope(mapContent.getRenderingArea());
   final GeneralEnvelope destinationEnvelopeInSourceCRS=CRS.transform(destinationEnvelope,cvCRS);
   Rectangle destinationSize=null;
   destinationSize=new Rectangle(0,0,request.getHeight(),request.getWidth());
