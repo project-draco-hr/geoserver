@@ -25,11 +25,44 @@
  else       if (data.getComplexData() != null) {
         ComplexDataType complex=data.getComplexData();
         if (ppio instanceof RawDataPPIO) {
-          String content=complex.getData().get(0).toString();
-          return new StringRawData(content,complex.getMimeType());
+          Object inputData=complex.getData().get(0);
+          String encoding=complex.getEncoding();
+          byte[] decoded=null;
+          if (encoding != null) {
+            if ("base64".equals(encoding)) {
+              String input=inputData.toString();
+              decoded=Base64.decode(input);
+            }
+ else {
+              throw new WPSException("Unsupported encoding " + encoding);
+            }
+          }
+          if (decoded != null) {
+            return new ByteArrayRawData(decoded,complex.getMimeType());
+          }
+ else {
+            return new StringRawData(inputData.toString(),complex.getMimeType());
+          }
         }
  else {
-          value=((ComplexPPIO)ppio).decode(complex.getData().get(0));
+          Object inputData=complex.getData().get(0);
+          String encoding=complex.getEncoding();
+          byte[] decoded=null;
+          if (encoding != null) {
+            if ("base64".equals(encoding)) {
+              String input=inputData.toString();
+              decoded=Base64.decode(input);
+            }
+ else {
+              throw new WPSException("Unsupported encoding " + encoding);
+            }
+          }
+          if (decoded != null) {
+            value=((ComplexPPIO)ppio).decode(new ByteArrayInputStream(decoded));
+          }
+ else {
+            value=((ComplexPPIO)ppio).decode(inputData);
+          }
         }
       }
  else       if (data.getBoundingBoxData() != null) {
