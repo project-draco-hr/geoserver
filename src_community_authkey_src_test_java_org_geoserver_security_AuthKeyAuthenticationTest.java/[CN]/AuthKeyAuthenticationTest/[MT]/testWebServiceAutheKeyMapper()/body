@@ -1,0 +1,25 @@
+{
+  GeoServerUserGroupService ugservice=createUserGroupService("testWebServiceAuthKey");
+  GeoServerUserGroupStore ugstore=ugservice.createStore();
+  GeoServerUser u1=ugstore.createUserObject("user1","passwd1",true);
+  ugstore.addUser(u1);
+  GeoServerUser u2=ugstore.createUserObject("user2","passwd2",true);
+  ugstore.addUser(u2);
+  ugstore.store();
+  WebServiceAuthenticationKeyMapper propMapper=GeoServerExtensions.extensions(WebServiceAuthenticationKeyMapper.class).iterator().next();
+  propMapper.setUserGroupServiceName("testWebServiceAuthKey");
+  propMapper.setSecurityManager(getSecurityManager());
+  propMapper.setWebServiceUrl("http://service/{key}");
+  propMapper.setHttpClient(new TestHttpClient("testkey","user1"));
+  GeoServerUser user=propMapper.getUser("testkey");
+  assertNotNull(user);
+  assertEquals(user.getUsername(),"user1");
+  boolean error=false;
+  try {
+    user=propMapper.getUser("wrongkey");
+  }
+ catch (  UsernameNotFoundException e) {
+    error=true;
+  }
+  assertTrue(error);
+}

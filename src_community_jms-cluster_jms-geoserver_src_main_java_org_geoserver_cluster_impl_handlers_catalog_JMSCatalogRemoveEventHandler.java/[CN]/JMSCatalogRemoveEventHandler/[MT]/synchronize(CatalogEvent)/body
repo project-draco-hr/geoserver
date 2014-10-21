@@ -1,0 +1,25 @@
+{
+  if (event == null) {
+    throw new NullArgumentException("Incoming object is null");
+  }
+  try {
+    if (event instanceof CatalogRemoveEvent) {
+      final CatalogRemoveEvent removeEv=((CatalogRemoveEvent)event);
+      final CatalogInfo info=removeEv.getSource();
+      producer.disable();
+      JMSCatalogRemoveEventHandler.remove(catalog,info,getProperties());
+    }
+ else {
+      if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))       LOGGER.severe("Unrecognized event type");
+      return false;
+    }
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE))     LOGGER.severe(this.getClass() + " is unable to synchronize the incoming event: " + event);
+    throw e;
+  }
+ finally {
+    producer.enable();
+  }
+  return true;
+}

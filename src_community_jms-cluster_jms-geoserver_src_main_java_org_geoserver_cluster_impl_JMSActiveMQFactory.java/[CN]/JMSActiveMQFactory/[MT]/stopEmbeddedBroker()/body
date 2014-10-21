@@ -1,0 +1,34 @@
+{
+  if (LOGGER.isLoggable(Level.INFO)) {
+    LOGGER.info("Embedded brokerURI is now stopped");
+  }
+  if (brokerService == null) {
+    return true;
+  }
+  brokerService.stop();
+  for (int i=-1; i < max; ++i) {
+    try {
+      if (!brokerService.isStarted()) {
+        if (LOGGER.isLoggable(Level.INFO)) {
+          LOGGER.info("Embedded brokerURI is now stopped");
+        }
+        brokerService=null;
+        return true;
+      }
+      if (LOGGER.isLoggable(Level.INFO)) {
+        LOGGER.info("Embedded brokerURI is going to stop: waiting...");
+      }
+      Thread.sleep(maxWait);
+    }
+ catch (    Exception e1) {
+      if (LOGGER.isLoggable(Level.SEVERE)) {
+        LOGGER.severe("Unable to start the embedded brokerURI" + e1.getLocalizedMessage());
+      }
+      return false;
+    }
+  }
+  if (LOGGER.isLoggable(Level.SEVERE)) {
+    LOGGER.severe("Unable to stop the embedded brokerURI");
+  }
+  return false;
+}

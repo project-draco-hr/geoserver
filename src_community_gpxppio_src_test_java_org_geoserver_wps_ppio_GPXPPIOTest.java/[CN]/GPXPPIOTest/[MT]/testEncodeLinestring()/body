@@ -1,0 +1,17 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName(getLayerId(MockData.LINES));
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)fti.getFeatureSource(null,null).getFeatures();
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  ppio.encode(fc,bos);
+  Document dom=dom(new ByteArrayInputStream(bos.toByteArray()));
+  checkValidationErorrs(dom,"./src/test/resources/org/geoserver/wps/ppio/gpx.xsd");
+  assertEquals("GeoServer",xpath.evaluate("/gpx:gpx/@creator",dom));
+  assertEquals("GeoServer",xpath.evaluate("/gpx:gpx/gpx:metadata/gpx:link/gpx:text",dom));
+  assertEquals("http://www.geoserver.org",xpath.evaluate("/gpx:gpx/gpx:metadata/gpx:link/@href",dom));
+  assertEquals(1,xpath.getMatchingNodes("/gpx:gpx/gpx:rte",dom).getLength());
+  assertEquals("t0001 ",xpath.evaluate("/gpx:gpx/gpx:rte[1]/gpx:extensions/att:id",dom));
+  assertEquals("4.523789",xpath.evaluate("//gpx:rte/gpx:rtept[1]/@lat",dom));
+  assertEquals("-92.998873",xpath.evaluate("//gpx:rte/gpx:rtept[1]/@lon",dom));
+  assertEquals("4.524241",xpath.evaluate("//gpx:rte/gpx:rtept[2]/@lat",dom));
+  assertEquals("-92.998422",xpath.evaluate("//gpx:rte/gpx:rtept[2]/@lon",dom));
+}

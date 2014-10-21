@@ -1,0 +1,77 @@
+{
+  CRSAuthorityFactory crsFactory=CRS.getAuthorityFactory(true);
+  CoordinateReferenceSystem targetCRS=crsFactory.createCoordinateReferenceSystem("EPSG:4326");
+  collection=new ReprojectingFeatureCollection(collection,targetCRS);
+  XMLOutputFactory xmlFactory=XMLOutputFactory.newInstance();
+  XMLStreamWriter writer=xmlFactory.createXMLStreamWriter(lFileOutputStream);
+  writer.writeStartDocument();
+  writer.writeStartElement("gpx");
+  writer.writeAttribute("xmlns","http://www.topografix.com/GPX/1/1");
+  if (link != null) {
+    writer.writeAttribute("xmlns:att",link);
+  }
+  writer.writeAttribute("version","1.1");
+  if (creator != null) {
+    writer.writeAttribute("creator",creator);
+  }
+  writer.writeStartElement("metadata");
+  if (link != null && creator != null) {
+    writer.writeStartElement("link");
+    writer.writeAttribute("href",link);
+    writer.writeStartElement("text");
+    writer.writeCharacters(creator);
+    writer.writeEndElement();
+    writer.writeEndElement();
+  }
+  writer.writeStartElement("time");
+  Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+  SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+  writer.writeCharacters(sdf.format(calendar.getTime()));
+  writer.writeEndElement();
+  writer.writeEndElement();
+  String schemaName="";
+  FeatureIterator<SimpleFeature> iter=collection.features();
+  try {
+    while (iter.hasNext()) {
+      SimpleFeature f=iter.next();
+      Geometry g=(Geometry)f.getDefaultGeometry();
+      if (g instanceof MultiLineString) {
+        MultiLineString mls=(MultiLineString)g;
+        int numGeometries=mls.getNumGeometries();
+        writer.writeStartElement("trk");
+        if (writeExtendedData) {
+          writeData(writer,f);
+        }
+        for (int i=0; i < numGeometries; i++) {
+          LineString ls=(LineString)mls.getGeometryN(i);
+          writeTrkSeg(writer,ls);
+        }
+        writer.writeEndElement();
+      }
+ else       if (g instanceof LineString) {
+        writeRte(writer,(LineString)g,f);
+      }
+ else       if (g instanceof MultiPoint) {
+        MultiPoint mpt=(MultiPoint)g;
+        int numGeometries=mpt.getNumGeometries();
+        for (int i=0; i < numGeometries; i++) {
+          Point pt=(Point)mpt.getGeometryN(i);
+          writeWpt(writer,pt,f);
+        }
+      }
+ else       if (g instanceof Point) {
+        writeWpt(writer,(Point)g,f);
+      }
+ else {
+        throw new IllegalArgumentException("Unsupported geometry type: " + g.getClass().getSimpleName());
+      }
+    }
+  }
+  finally {
+    iter.close();
+  }
+  writer.writeEndDocument();
+  writer.flush();
+  writer.close();
+  return;
+}

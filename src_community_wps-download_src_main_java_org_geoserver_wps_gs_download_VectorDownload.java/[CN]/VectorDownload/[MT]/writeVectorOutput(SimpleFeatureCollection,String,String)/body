@@ -1,0 +1,61 @@
+{
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Writing features");
+  }
+  ProcessParameterIO ppio_=DownloadUtilities.find(new Parameter<SimpleFeatureCollection>("fakeParam",SimpleFeatureCollection.class),null,mimeType,false);
+  if (ppio_ == null) {
+    throw new ProcessException("Don't know how to encode in mime type " + mimeType);
+  }
+ else   if (!(ppio_ instanceof ComplexPPIO)) {
+    throw new ProcessException("Invalid PPIO found " + ppio_.getIdentifer());
+  }
+  long limit=DownloadServiceConfiguration.NO_LIMIT;
+  if (limits.getHardOutputLimit() > 0) {
+    limit=limits.getHardOutputLimit();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Hard output limits set to " + limit);
+    }
+  }
+ else {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Hard output limit unset");
+    }
+  }
+  String extension="";
+  if (ppio_ instanceof ComplexPPIO) {
+    extension="." + ((ComplexPPIO)ppio_).getFileExtension();
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Writing file in a temporary folder");
+  }
+  final File output=resourceManager.getTemporaryFile(extension);
+  OutputStream os=null;
+  try {
+    final BufferedOutputStream bufferedOutputStream=new BufferedOutputStream(new FileOutputStream(output));
+    if (limit > DownloadServiceConfiguration.NO_LIMIT) {
+      os=new LimitedOutputStream(bufferedOutputStream,limit){
+        @Override protected void raiseError(        long pSizeMax,        long pCount) throws IOException {
+          IOException ioe=new IOException("Download Exceeded the maximum HARD allowed size!");
+          throw ioe;
+        }
+      }
+;
+    }
+ else {
+      os=bufferedOutputStream;
+    }
+    if (ppio_ instanceof ComplexPPIO) {
+      ((ComplexPPIO)ppio_).encode(features,os);
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Flushing stream");
+    }
+    os.flush();
+  }
+  finally {
+    if (os != null) {
+      IOUtils.closeQuietly(os);
+    }
+  }
+  return output;
+}

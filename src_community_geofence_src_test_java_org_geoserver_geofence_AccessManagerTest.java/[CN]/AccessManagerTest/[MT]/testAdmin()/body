@@ -1,0 +1,13 @@
+{
+  UsernamePasswordAuthenticationToken user=new UsernamePasswordAuthenticationToken("admin","geoserver",Arrays.asList(new GrantedAuthority[]{new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")}));
+  WorkspaceInfo citeWS=getCatalog().getWorkspaceByName(MockData.CITE_PREFIX);
+  WorkspaceAccessLimits wl=accessManager.getAccessLimits(user,citeWS);
+  assertTrue(wl.isReadable());
+  assertTrue(wl.isWritable());
+  LayerInfo layer=getCatalog().getLayerByName(getLayerId(MockData.BASIC_POLYGONS));
+  VectorAccessLimits vl=(VectorAccessLimits)accessManager.getAccessLimits(user,layer);
+  assertEquals(Filter.INCLUDE,vl.getReadFilter());
+  assertEquals(Filter.INCLUDE,vl.getWriteFilter());
+  assertNull(vl.getReadAttributes());
+  assertNull(vl.getWriteAttributes());
+}

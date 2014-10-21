@@ -1,0 +1,17 @@
+{
+  startPage();
+  WorkspaceInfo defaultWs=getCatalog().getDefaultWorkspace();
+  tester.assertModelValue("dataStoreForm:workspacePanel:border:paramValue",defaultWs);
+  FormTester ft=tester.newFormTester("dataStoreForm");
+  ft.setValue("dataStoreNamePanel:border:paramValue","testStore");
+  ft.setValue("parametersPanel:url:border:paramValue","file://" + new File("./target").getCanonicalPath());
+  ft.select("workspacePanel:border:paramValue",2);
+  ft.submit();
+  tester.executeAjaxEvent("dataStoreForm:workspacePanel:border:paramValue","onchange");
+  tester.executeAjaxEvent("dataStoreForm:save","onclick");
+  WorkspacesModel wm=new WorkspacesModel();
+  List<WorkspaceInfo> wl=(List<WorkspaceInfo>)wm.getObject();
+  WorkspaceInfo ws=wl.get(2);
+  StoreInfo store=getCatalog().getStoreByName("testStore",DataStoreInfo.class);
+  assertEquals(getCatalog().getNamespaceByPrefix(ws.getName()).getURI(),store.getConnectionParameters().get("namespace"));
+}

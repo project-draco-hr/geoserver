@@ -1,0 +1,18 @@
+{
+  wms11ClientNfi=new MockHttpClient();
+  wms11BaseNfiURL=new URL(TestHttpClientProvider.MOCKSERVER + "/wms11_nfi");
+  URL capsDocument=WMSTestSupport.class.getResource("caps111_no_feature_info.xml");
+  wms11ClientNfi.expectGet(new URL(wms11BaseNfiURL + "?service=WMS&request=GetCapabilities&version=1.1.1"),new MockHttpResponse(capsDocument,"text/xml"));
+  String caps=wms11BaseNfiURL + "?service=WMS&request=GetCapabilities&version=1.1.1";
+  TestHttpClientProvider.bind(wms11ClientNfi,caps);
+  CatalogBuilder cb=new CatalogBuilder(getCatalog());
+  WMSStoreInfo store=cb.buildWMSStore("mock-wms-store-110-nfi");
+  getCatalog().add(store);
+  cb.setStore(store);
+  store.setCapabilitiesURL(caps);
+  WMSLayerInfo wmsLayer=cb.buildWMSLayer("world4326");
+  getCatalog().add(wmsLayer);
+  LayerInfo gsLayer=cb.buildLayer(wmsLayer);
+  gsLayer.setName(WORLD4326_110_NFI);
+  getCatalog().add(gsLayer);
+}

@@ -1,0 +1,164 @@
+{
+  final CatalogInfo info=modifyEv.getSource();
+  String name=getOldName(catalog,modifyEv);
+  if (info instanceof LayerGroupInfo) {
+    if (name == null) {
+      name=((LayerGroupInfo)info).getName();
+    }
+    final LayerGroupInfo localObject=catalog.getLayerGroupByName(name);
+    if (localObject == null) {
+      throw new CatalogException("Unable to locate " + info + " named: "+ name+ " locally.");
+    }
+    BeanUtils.smartUpdate(localObject,modifyEv.getPropertyNames(),modifyEv.getNewValues());
+    catalog.save(localObject);
+  }
+ else   if (info instanceof LayerInfo) {
+    if (name == null) {
+      name=((LayerInfo)info).getName();
+    }
+    final LayerInfo localObject=catalog.getLayerByName(name);
+    if (localObject == null) {
+      throw new CatalogException("Unable to locate " + info + " named: "+ name+ " locally.");
+    }
+    BeanUtils.smartUpdate(localObject,modifyEv.getPropertyNames(),modifyEv.getNewValues());
+    catalog.save(localObject);
+  }
+ else   if (info instanceof MapInfo) {
+    if (name == null) {
+      name=((MapInfo)info).getName();
+    }
+    final MapInfo localObject=catalog.getMapByName(name);
+    if (localObject == null) {
+      throw new CatalogException("Unable to locate " + info + " named: "+ name+ " locally.");
+    }
+    BeanUtils.smartUpdate(localObject,modifyEv.getPropertyNames(),modifyEv.getNewValues());
+    catalog.save(localObject);
+  }
+ else   if (info instanceof NamespaceInfo) {
+    final String uri;
+    final Object uriObj=getOldValue(catalog,modifyEv,"uRI");
+    if (uriObj != null) {
+      uri=uriObj.toString();
+    }
+ else {
+      uri=((NamespaceInfo)info).getURI();
+    }
+    final NamespaceInfo localObject=catalog.getNamespaceByURI(uri);
+    if (localObject == null) {
+      throw new CatalogException("Unable to locate " + info + " uri: "+ uri+ " locally.");
+    }
+    BeanUtils.smartUpdate(localObject,modifyEv.getPropertyNames(),modifyEv.getNewValues());
+    catalog.save(localObject);
+  }
+ else   if (info instanceof StoreInfo) {
+    if (name == null) {
+      name=((StoreInfo)info).getName();
+    }
+    final WorkspaceInfo workspace;
+    final Object objWorkpsace=getOldValue(catalog,modifyEv,"workspace");
+    if (objWorkpsace != null) {
+      workspace=(WorkspaceInfo)objWorkpsace;
+    }
+ else {
+      workspace=((StoreInfo)info).getWorkspace();
+    }
+    final StoreInfo localObject;
+    if (info instanceof CoverageStoreInfo) {
+      localObject=catalog.getStoreByName(workspace,name,CoverageStoreInfo.class);
+    }
+ else     if (info instanceof DataStoreInfo) {
+      localObject=catalog.getStoreByName(workspace,name,DataStoreInfo.class);
+    }
+ else     if (info instanceof WMSStoreInfo) {
+      localObject=catalog.getStoreByName(workspace,name,WMSStoreInfo.class);
+    }
+ else {
+      throw new IllegalArgumentException("Unable to provide localization for the passed instance");
+    }
+    if (localObject == null) {
+      throw new CatalogException("Unable to locate " + info + " named: "+ name+ " locally.");
+    }
+    BeanUtils.smartUpdate(localObject,modifyEv.getPropertyNames(),modifyEv.getNewValues());
+    catalog.save(localObject);
+  }
+ else   if (info instanceof ResourceInfo) {
+    if (name == null) {
+      name=((ResourceInfo)info).getName();
+    }
+    final NamespaceInfo namespace;
+    final Object objWorkpsace=getOldValue(catalog,modifyEv,"namespace");
+    if (objWorkpsace != null) {
+      namespace=(NamespaceInfo)objWorkpsace;
+    }
+ else {
+      namespace=((ResourceInfo)info).getNamespace();
+    }
+    final ResourceInfo localObject;
+    if (info instanceof CoverageInfo) {
+      localObject=catalog.getCoverageByName(namespace,name);
+    }
+ else     if (info instanceof FeatureTypeInfo) {
+      localObject=catalog.getFeatureTypeByName(namespace,name);
+    }
+ else     if (info instanceof WMSLayerInfo) {
+      localObject=catalog.getResourceByName(namespace,name,WMSLayerInfo.class);
+    }
+ else {
+      throw new IllegalArgumentException("Unable to provide localization for the passed instance");
+    }
+    if (localObject == null) {
+      throw new CatalogException("Unable to locate " + info + " named: "+ name+ " locally.");
+    }
+    BeanUtils.smartUpdate(localObject,modifyEv.getPropertyNames(),modifyEv.getNewValues());
+    catalog.save(localObject);
+  }
+ else   if (info instanceof StyleInfo) {
+    if (name == null) {
+      name=((StyleInfo)info).getName();
+    }
+    final StyleInfo localObject=catalog.getStyleByName(name);
+    if (localObject == null) {
+      throw new CatalogException("Unable to locate " + info + " named: "+ name+ " locally.");
+    }
+    BeanUtils.smartUpdate(localObject,modifyEv.getPropertyNames(),modifyEv.getNewValues());
+    catalog.save(localObject);
+  }
+ else   if (info instanceof WorkspaceInfo) {
+    if (name == null) {
+      name=((WorkspaceInfo)info).getName();
+    }
+    final WorkspaceInfo localObject=catalog.getWorkspaceByName(name);
+    if (localObject == null) {
+      throw new CatalogException("Unable to locate " + info + " named: "+ name+ " locally.");
+    }
+    BeanUtils.smartUpdate(localObject,modifyEv.getPropertyNames(),modifyEv.getNewValues());
+    catalog.save(localObject);
+  }
+ else   if (info instanceof CatalogInfo) {
+    final List<String> properties=modifyEv.getPropertyNames();
+    if (properties.contains("defaultNamespace")) {
+      final NamespaceInfo newDefault=(NamespaceInfo)modifyEv.getNewValues().get(properties.indexOf("defaultNamespace"));
+      if (newDefault != null) {
+        final WorkspaceInfo ws=catalog.getWorkspaceByName(newDefault.getPrefix());
+        if (ws != null && !catalog.getDefaultWorkspace().equals(ws)) {
+          catalog.setDefaultWorkspace(ws);
+        }
+      }
+    }
+ else     if (properties.contains("defaultWorkspace")) {
+      final WorkspaceInfo newDefault=(WorkspaceInfo)modifyEv.getNewValues().get(properties.indexOf("defaultWorkspace"));
+      if (newDefault != null) {
+        final NamespaceInfo ns=catalog.getNamespaceByPrefix(newDefault.getName());
+        if (ns != null && !catalog.getDefaultNamespace().equals(ns)) {
+          catalog.setDefaultNamespace(ns);
+        }
+      }
+    }
+  }
+ else {
+    if (LOGGER.isLoggable(java.util.logging.Level.WARNING)) {
+      LOGGER.warning("info - ID: " + info.getId() + " toString: "+ info.toString());
+    }
+    throw new IllegalArgumentException("Bad incoming object: " + info.toString());
+  }
+}

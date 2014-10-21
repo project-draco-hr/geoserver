@@ -4,8 +4,14 @@
     return new WorkspaceListResource(null,request,response,catalog);
   }
   if (workspace != null) {
+    boolean quietOnNotFound=quietOnNotFoundEnabled(request);
     if (catalog.getWorkspaceByName(workspace) == null) {
-      throw new RestletException("No such workspace: " + workspace,Status.CLIENT_ERROR_NOT_FOUND);
+      if (quietOnNotFound) {
+        return null;
+      }
+ else {
+        throw new RestletException("No such workspace: " + workspace,Status.CLIENT_ERROR_NOT_FOUND);
+      }
     }
   }
   return new WorkspaceResource(null,request,response,catalog);

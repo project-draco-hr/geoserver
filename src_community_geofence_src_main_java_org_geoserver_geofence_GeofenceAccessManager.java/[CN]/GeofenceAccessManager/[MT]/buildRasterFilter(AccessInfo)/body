@@ -1,0 +1,18 @@
+{
+  MultiPolygon rasterFilter=null;
+  if (rule.getAreaWkt() != null) {
+    WKTReader reader=new WKTReader();
+    Geometry area=null;
+    try {
+      area=reader.read(rule.getAreaWkt());
+    }
+ catch (    ParseException e) {
+      throw new RuntimeException("Failed to unmarshal the restricted area wkt",e);
+    }
+    rasterFilter=Converters.convert(area,MultiPolygon.class);
+    if (rasterFilter == null) {
+      throw new RuntimeException("Error applying security rules, cannot convert " + "the Geofence area restriction " + rule.getAreaWkt() + " to a multi-polygon");
+    }
+  }
+  return rasterFilter;
+}

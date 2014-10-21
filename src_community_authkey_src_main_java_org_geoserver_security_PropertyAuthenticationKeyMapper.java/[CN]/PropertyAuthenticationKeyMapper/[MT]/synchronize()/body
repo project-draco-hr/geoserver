@@ -8,8 +8,14 @@
   authKeyProps=new Properties();
   Properties oldProps=new Properties();
   if (propFile.exists()) {
-    propFile.renameTo(backupFile);
-    oldProps.load(new FileInputStream(backupFile));
+    FileUtils.copyFile(propFile,backupFile);
+    FileInputStream inputFile=new FileInputStream(backupFile);
+    try {
+      oldProps.load(inputFile);
+    }
+  finally {
+      inputFile.close();
+    }
   }
   Map<Object,Object> reverseMap=new HashMap<Object,Object>();
   for (  Entry<Object,Object> entry : oldProps.entrySet()) {
@@ -26,7 +32,13 @@
       counter++;
     }
   }
-  authKeyProps.store(new FileOutputStream(propFile,false),"Format is authkey=username");
+  FileOutputStream outputFile=new FileOutputStream(propFile,false);
+  try {
+    authKeyProps.store(outputFile,"Format is authkey=username");
+  }
+  finally {
+    outputFile.close();
+  }
   if (backupFile.exists())   backupFile.delete();
   fileWatcher=new PropertyFileWatcher(propFile);
   return counter;

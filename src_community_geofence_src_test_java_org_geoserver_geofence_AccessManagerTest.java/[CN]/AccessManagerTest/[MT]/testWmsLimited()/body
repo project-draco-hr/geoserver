@@ -1,0 +1,17 @@
+{
+  UsernamePasswordAuthenticationToken user=new UsernamePasswordAuthenticationToken("wmsuser","wmsuser");
+  Request request=new Request();
+  request.setService("WFS");
+  request.setRequest("GetFeature");
+  Dispatcher.REQUEST.set(request);
+  LayerInfo generic=getCatalog().getLayerByName(getLayerId(MockData.GENERICENTITY));
+  VectorAccessLimits vl=(VectorAccessLimits)accessManager.getAccessLimits(user,generic);
+  assertEquals(Filter.EXCLUDE,vl.getReadFilter());
+  assertEquals(Filter.EXCLUDE,vl.getWriteFilter());
+  request=new Request();
+  request.setService("wms");
+  Dispatcher.REQUEST.set(request);
+  vl=(VectorAccessLimits)accessManager.getAccessLimits(user,generic);
+  assertEquals(Filter.INCLUDE,vl.getReadFilter());
+  assertEquals(Filter.INCLUDE,vl.getWriteFilter());
+}

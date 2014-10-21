@@ -1,0 +1,35 @@
+{
+  if (lenient) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Lenient approach used");
+    }
+    return ProcessParameterIO.find(p,context,mime);
+  }
+  if (p.type.isEnum()) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Trying to find the PPIO for the Enum = " + p.type);
+    }
+    return new LiteralPPIO(p.type);
+  }
+  List<ProcessParameterIO> all=ProcessParameterIO.findAll(p,context);
+  if (all.isEmpty()) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"No PPIO found for the parameter " + p.getName());
+    }
+    return null;
+  }
+  if (mime != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Trying to search for a PPIO for the parameter " + p.getName());
+    }
+    for (    ProcessParameterIO ppio : all) {
+      if (ppio instanceof ComplexPPIO && ((ComplexPPIO)ppio).getMimeType().equals(mime)) {
+        return ppio;
+      }
+    }
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Unable to find a PPIO for the parameter " + p.getName());
+  }
+  return null;
+}

@@ -1,0 +1,25 @@
+{
+  if (isRunning()) {
+    LOGGER.info("Disconnecting...");
+    stop();
+    for (int rep=1; rep <= max; ++rep) {
+      LOGGER.info("Unregistering...");
+      if (!isRunning()) {
+        LOGGER.info("Succesfully un-registered from the destination topic");
+        LOGGER.warning("You will (probably) loose next incoming events from other instances!!! (depending on how you have configured the broker)");
+        return true;
+      }
+      LOGGER.info("Waiting for connection shutdown...(" + rep + "/"+ max+ ")");
+      try {
+        Thread.sleep(maxWait);
+      }
+ catch (      InterruptedException e) {
+        LOGGER.log(Level.SEVERE,e.getLocalizedMessage(),e);
+      }
+    }
+  }
+ else {
+    LOGGER.severe("Connection is already stopped");
+  }
+  return false;
+}

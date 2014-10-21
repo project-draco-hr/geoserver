@@ -1,0 +1,33 @@
+{
+  AuthenticationKeyFilterConfigValidator validator=new AuthenticationKeyFilterConfigValidator(getSecurityManager());
+  AuthenticationKeyFilterConfig config=new AuthenticationKeyFilterConfig();
+  config.setClassName(GeoServerAuthenticationKeyFilter.class.getName());
+  config.setName("fakeFilter");
+  config.setUserGroupServiceName(XMLUserGroupService.DEFAULT_NAME);
+  config.setAuthKeyParamName("authkey");
+  config.setAuthKeyMapperName("fakeMapper");
+  Map<String,String> mapperParams=new HashMap<String,String>();
+  mapperParams.put("param1","value1");
+  mapperParams.put("param2","value2");
+  config.setMapperParameters(mapperParams);
+  boolean failed=false;
+  try {
+    validator.validateFilterConfig(config);
+  }
+ catch (  FilterConfigException ex) {
+    failed=true;
+  }
+  assertFalse(failed);
+  mapperParams.put("param3","value3");
+  try {
+    validator.validateFilterConfig(config);
+  }
+ catch (  FilterConfigException ex) {
+    assertEquals(AuthenticationKeyFilterConfigException.INVALID_AUTH_KEY_MAPPER_PARAMETER_$3,ex.getId());
+    assertEquals(1,ex.getArgs().length);
+    assertEquals("param3",ex.getArgs()[0]);
+    LOGGER.info(ex.getMessage());
+    failed=true;
+  }
+  assertTrue(failed);
+}

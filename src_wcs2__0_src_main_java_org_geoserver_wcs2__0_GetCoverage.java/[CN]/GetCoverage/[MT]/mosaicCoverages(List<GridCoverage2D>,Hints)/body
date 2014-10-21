@@ -1,0 +1,33 @@
+{
+  GridCoverage2D first=coverages.get(0);
+  if (coverages.size() == 1) {
+    return first;
+  }
+  CoordinateReferenceSystem crs=first.getCoordinateReferenceSystem2D();
+  MapProjection mapProjection=CRS.getMapProjection(crs);
+  if (crs instanceof GeographicCRS || mapProjection instanceof Mercator) {
+    double offset;
+    if (crs instanceof GeographicCRS) {
+      offset=360;
+    }
+ else {
+      offset=computeMercatorWorldSpan(crs,mapProjection);
+    }
+    for (int i=1; i < coverages.size(); i++) {
+      GridCoverage2D c=coverages.get(i);
+      if (Math.abs(c.getEnvelope().getMinimum(0) + offset - first.getEnvelope().getMaximum(0)) < EPS) {
+        GridCoverage2D displaced=displaceCoverage(coverages.get(1),offset);
+        coverages.set(i,displaced);
+      }
+    }
+  }
+  try {
+    final ParameterValueGroup param=MOSAIC_PARAMS.clone();
+    param.parameter("sources").setValue(coverages);
+    param.parameter("policy").setValue(GridGeometryPolicy.FIRST.name());
+    return (GridCoverage2D)MOSAIC_FACTORY.doOperation(param,hints);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Failed to mosaic the input coverages",e);
+  }
+}

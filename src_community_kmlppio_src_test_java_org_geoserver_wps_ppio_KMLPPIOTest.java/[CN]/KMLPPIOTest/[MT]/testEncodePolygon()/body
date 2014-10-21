@@ -1,0 +1,9 @@
+{
+  FeatureTypeInfo fti=getCatalog().getFeatureTypeByName(getLayerId(MockData.BASIC_POLYGONS));
+  SimpleFeatureCollection fc=(SimpleFeatureCollection)fti.getFeatureSource(null,null).getFeatures();
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  ppio.encode(fc,bos);
+  Document dom=dom(new ByteArrayInputStream(bos.toByteArray()));
+  checkValidationErorrs(dom,"./src/test/resources/org/geoserver/wps/ppio/ogckml22.xsd");
+  assertEquals("-1.0,5.0 2.0,5.0 2.0,2.0 -1.0,2.0 -1.0,5.0",xpath.evaluate("//kml:Placemark[@id='BasicPolygons.1107531493644']//kml:LinearRing/kml:coordinates",dom));
+}

@@ -1,0 +1,60 @@
+{
+  if (downloadServiceConfiguration.getMaxFeatures() <= 0) {
+    return true;
+  }
+  CoordinateReferenceSystem nativeCRS=DownloadUtilities.getNativeCRS(resourceInfo);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("Native CRS is " + nativeCRS.toWKT());
+  }
+  ROIManager roiManager=null;
+  if (roi != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Pushing ROI to native CRS");
+    }
+    CoordinateReferenceSystem roiCRS=(CoordinateReferenceSystem)roi.getUserData();
+    roiManager=new ROIManager(roi,roiCRS);
+    roiManager.useNativeCRS(nativeCRS);
+  }
+  final SimpleFeatureSource featureSource=(SimpleFeatureSource)resourceInfo.getFeatureSource(null,GeoTools.getDefaultHints());
+  Filter ra=Filter.INCLUDE;
+  if (filter != null) {
+    ra=filter;
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Using filter " + ra);
+    }
+  }
+  if (roi != null) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Adding Geometry filter with ROI");
+    }
+    final String dataGeomName=featureSource.getSchema().getGeometryDescriptor().getLocalName();
+    final Intersects intersectionFilter=FeatureUtilities.DEFAULT_FILTER_FACTORY.intersects(FeatureUtilities.DEFAULT_FILTER_FACTORY.property(dataGeomName),FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(roiManager.getSafeRoiInNativeCRS()));
+    ra=FeatureUtilities.DEFAULT_FILTER_FACTORY.and(ra,intersectionFilter);
+  }
+  ra=(Filter)ra.accept(new SimplifyingFilterVisitor(),null);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Counting features");
+  }
+  int count=featureSource.getCount(new Query("counter",ra));
+  if (count < 0) {
+    SimpleFeatureCollection features=featureSource.getFeatures(ra);
+    count=features.size();
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Feature size is " + count);
+  }
+  final long maxFeatures=downloadServiceConfiguration.getMaxFeatures();
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Max features limit is " + maxFeatures);
+  }
+  if (maxFeatures > 0 && count > maxFeatures) {
+    if (LOGGER.isLoggable(Level.SEVERE)) {
+      LOGGER.log(Level.SEVERE,"MaxFeatures limit exceeded. " + count + " > "+ maxFeatures);
+    }
+    return false;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"MaxFeatures limit not exceeded.");
+  }
+  return true;
+}

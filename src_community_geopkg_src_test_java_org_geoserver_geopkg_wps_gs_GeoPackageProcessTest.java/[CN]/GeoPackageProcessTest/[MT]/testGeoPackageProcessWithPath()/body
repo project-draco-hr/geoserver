@@ -1,0 +1,32 @@
+{
+  File path=getDataDirectory().findOrCreateDataRoot();
+  String urlPath=string(post("wps",getXml2(path,false))).trim();
+  File file=new File(path,"test.gpkg");
+  assertNotNull(file);
+  assertTrue(file.exists());
+  GeoPackage gpkg=new GeoPackage(file);
+  List<TileEntry> tiles=gpkg.tiles();
+  assertEquals(1,tiles.size());
+  TileEntry te=tiles.get(0);
+  assertEquals("world_lakes",te.getTableName());
+  assertEquals("world and lakes overlay",te.getDescription());
+  assertEquals("wl1",te.getIdentifier());
+  assertEquals(4326,te.getSrid().intValue());
+  assertEquals(-0.17578125,te.getBounds().getMinX(),0.0001);
+  assertEquals(-0.087890625,te.getBounds().getMinY(),0.0001);
+  assertEquals(0.17578125,te.getBounds().getMaxX(),0.0001);
+  assertEquals(0.087890625,te.getBounds().getMaxY(),0.0001);
+  List<TileMatrix> matrices=te.getTileMatricies();
+  assertEquals(1,matrices.size());
+  TileMatrix matrix=matrices.get(0);
+  assertEquals(10,matrix.getZoomLevel().intValue());
+  assertEquals(256,matrix.getTileWidth().intValue());
+  assertEquals(256,matrix.getTileHeight().intValue());
+  assertEquals(2048,matrix.getMatrixWidth().intValue());
+  assertEquals(1024,matrix.getMatrixHeight().intValue());
+  TileReader tr=gpkg.reader(te,null,null,null,null,null,null);
+  assertTrue(tr.hasNext());
+  assertEquals(10,tr.next().getZoom().intValue());
+  tr.close();
+  gpkg.close();
+}

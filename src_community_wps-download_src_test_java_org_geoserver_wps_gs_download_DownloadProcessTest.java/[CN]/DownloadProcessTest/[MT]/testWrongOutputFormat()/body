@@ -1,0 +1,15 @@
+{
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(),getGeoServer());
+  final WPSResourceManager resourceManager=new WPSResourceManager();
+  DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  FeatureTypeInfo ti=getCatalog().getFeatureTypeByName(getLayerId(MockData.POLYGONS));
+  SimpleFeatureCollection rawSource=(SimpleFeatureCollection)ti.getFeatureSource(null,null).getFeatures();
+  final DefaultProgressListener progressListener=new DefaultProgressListener();
+  try {
+    downloadProcess.execute(getLayerId(MockData.POLYGONS),null,"IAmWrong!!!",null,CRS.decode("EPSG:32615"),roi,false,progressListener);
+    Assert.assertTrue("We did not get an exception",false);
+  }
+ catch (  Exception e) {
+    Assert.assertTrue("Everything as expected",true);
+  }
+}

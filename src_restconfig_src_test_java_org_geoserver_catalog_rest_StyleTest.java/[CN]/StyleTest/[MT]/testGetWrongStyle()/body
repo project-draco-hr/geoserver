@@ -1,0 +1,22 @@
+{
+  String ws="gs";
+  String style="foooooo";
+  String requestPath="/rest/styles/" + style + ".html";
+  String requestPath2="/rest/workspaces/" + ws + "/styles/"+ style+ ".html";
+  String exception="No such style: " + style;
+  String exception2="No such style " + style + " in workspace "+ ws;
+  MockHttpServletResponse response=getAsServletResponse(requestPath);
+  assertEquals(404,response.getStatusCode());
+  assertTrue(response.getOutputStreamContent().contains(exception));
+  response=getAsServletResponse(requestPath + "?quietOnNotFound=true");
+  assertEquals(404,response.getStatusCode());
+  assertFalse(response.getOutputStreamContent().contains(exception));
+  assertTrue(response.getOutputStreamContent().isEmpty());
+  response=getAsServletResponse(requestPath2);
+  assertEquals(404,response.getStatusCode());
+  assertTrue(response.getOutputStreamContent().contains(exception2));
+  response=getAsServletResponse(requestPath2 + "?quietOnNotFound=true");
+  assertEquals(404,response.getStatusCode());
+  assertFalse(response.getOutputStreamContent().contains(exception2));
+  assertTrue(response.getOutputStreamContent().isEmpty());
+}

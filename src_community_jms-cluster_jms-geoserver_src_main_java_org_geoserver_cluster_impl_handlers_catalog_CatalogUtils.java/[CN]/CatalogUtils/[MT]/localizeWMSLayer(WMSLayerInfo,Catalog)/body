@@ -1,0 +1,15 @@
+{
+  if (info == null || catalog == null)   throw new NullArgumentException("Arguments may never be null");
+  final WMSLayerInfo localObject=catalog.getResourceByName(info.getNamespace(),info.getName(),WMSLayerInfo.class);
+  if (localObject != null) {
+    return localObject;
+  }
+  final WMSLayerInfo createdObject=catalog.getFactory().createWMSLayer();
+  BeanUtils.copyProperties(createdObject,info);
+  createdObject.setNamespace(localizeNamespace(info.getNamespace(),catalog));
+  final StoreInfo store=localizeStore(info.getStore(),catalog);
+  createdObject.setStore(store);
+  final CatalogBuilder builder=new CatalogBuilder(catalog);
+  builder.attach(createdObject);
+  return createdObject;
+}
