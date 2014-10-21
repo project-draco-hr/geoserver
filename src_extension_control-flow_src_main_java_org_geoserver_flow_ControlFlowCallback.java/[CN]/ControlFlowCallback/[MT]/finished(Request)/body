@@ -2,24 +2,19 @@
   if (SENTINEL.isOutermostRequest() && REQUEST_CONTROLLERS.get() != null) {
     runningRequests.decrementAndGet();
     if (REQUEST_CONTROLLERS.get() != null) {
-      List<FlowController> fcl=REQUEST_CONTROLLERS.get();
-      for (      FlowController flowController : fcl) {
+      CallbackContext context=REQUEST_CONTROLLERS.get();
+      for (      FlowController flowController : context.controllers) {
         try {
           flowController.requestComplete(request);
         }
  catch (        Exception e) {
-          LOGGER.log(Level.SEVERE,"Flow controller " + fcl + " failed to mark the request as complete",e);
+          LOGGER.log(Level.SEVERE,"Flow controller " + flowController + " failed to mark the request as complete",e);
         }
       }
     }
     REQUEST_CONTROLLERS.remove();
     if (LOGGER.isLoggable(Level.INFO)) {
-      if (controllers.size() > 0) {
-        LOGGER.info("Running requests: " + runningRequests.get() + ", processing through flow controllers: "+ blockedRequests.get());
-      }
- else {
-        LOGGER.info("Control flow installed, but no rules configured in controlflow.properties");
-      }
+      LOGGER.info("Running requests: " + getRunningRequests() + ", blocked requests: "+ getBlockedRequests());
     }
   }
   SENTINEL.stop();

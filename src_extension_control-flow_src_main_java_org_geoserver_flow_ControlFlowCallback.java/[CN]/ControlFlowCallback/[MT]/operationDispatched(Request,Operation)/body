@@ -1,12 +1,23 @@
 {
-  checkConfiguration();
   SENTINEL.start();
   if (SENTINEL.isOutermostRequest()) {
     blockedRequests.incrementAndGet();
     try {
-      List<FlowController> controllers=this.controllers;
-      if (controllers.size() > 0) {
-        REQUEST_CONTROLLERS.set(controllers);
+      List<FlowController> controllers=null;
+      try {
+        controllers=provider.getFlowControllers(request);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"An error occurred setting up the flow controllers to this request",e);
+        return operation;
+      }
+      if (controllers.size() == 0) {
+        LOGGER.info("Control-flow inactive for , there are no configured rules");
+      }
+ else {
+        long timeout=provider.getTimeout(request);
+        CallbackContext context=new CallbackContext(controllers,timeout);
+        REQUEST_CONTROLLERS.set(context);
         long maxTime=timeout > 0 ? System.currentTimeMillis() + timeout : -1;
         for (        FlowController flowController : controllers) {
           if (timeout > 0) {
