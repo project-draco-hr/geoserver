@@ -19,10 +19,10 @@
   expect(this.cluster.getRawCatalog()).andStubReturn(catalog);
   ;
   expect(hz.<Event>getTopic(TOPIC_NAME)).andStubReturn(topic);
-  topic.addMessageListener(capture(captureTopicListener));
+  expect(topic.addMessageListener(capture(captureTopicListener))).andReturn("fake-id");
   expectLastCall().anyTimes();
   expect(hz.<UUID>getTopic(ACK_TOPIC_NAME)).andStubReturn(ackTopic);
-  ackTopic.addMessageListener(capture(captureAckTopicListener));
+  expect(ackTopic.addMessageListener(capture(captureAckTopicListener))).andReturn("fake-id");
   expectLastCall().anyTimes();
   ackTopic.publish(EasyMock.capture(captureAckTopicPublish));
   EasyMock.expectLastCall().andStubAnswer(new IAnswer<Object>(){
@@ -40,8 +40,6 @@
   expect(cluster.getLocalMember()).andStubReturn(localMember);
   expect(localMember.getInetSocketAddress()).andStubReturn(localAddress);
   expect(remoteMember.getInetSocketAddress()).andStubReturn(remoteAddress);
-  expect(localMember.isLiteMember()).andStubReturn(false);
-  expect(remoteMember.isLiteMember()).andStubReturn(false);
   expect(localMember.localMember()).andStubReturn(true);
   expect(remoteMember.localMember()).andStubReturn(false);
   expect(cluster.getMembers()).andStubReturn(Sets.newHashSet(localMember,remoteMember));
