@@ -1,0 +1,20 @@
+{
+  Matcher matcher=RATE_PATTERN.matcher(value);
+  if (!matcher.matches()) {
+    LOGGER.severe("Rate limiting rule values should be expressed as <rate</<unit>[;<delay>s], " + "where unit can be s, m, h or d. This one is invalid: " + value);
+    return null;
+  }
+  int rate=Integer.parseInt(matcher.group(1));
+  long interval=Intervals.valueOf(matcher.group(2)).duration;
+  int delay=0;
+  String userDelay=matcher.group(4);
+  if (userDelay != null) {
+    delay=Integer.parseInt(userDelay) * 1000;
+  }
+  String service=keys.length >= 3 ? keys[2] : null;
+  String request=keys.length >= 4 ? keys[3] : null;
+  String format=keys.length >= 5 ? keys[4] : null;
+  OWSRequestMatcher requestMatcher=new OWSRequestMatcher(service,request,format);
+  KeyGenerator keyGenerator=buildKeyGenerator(keys,value);
+  return new RateFlowController(requestMatcher,rate,interval,delay,keyGenerator);
+}

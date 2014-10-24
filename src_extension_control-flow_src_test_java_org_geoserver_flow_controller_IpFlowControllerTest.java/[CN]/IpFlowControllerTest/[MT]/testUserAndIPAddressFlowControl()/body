@@ -1,15 +1,15 @@
 {
   IpFlowController ipController=new IpFlowController(1);
-  UserFlowController userController=new UserFlowController(1);
+  UserConcurrentFlowController userController=new UserConcurrentFlowController(1);
   String ipAddress="127.0.0.1";
-  Request firstRequest=buildRequest(ipAddress,"");
+  Request firstRequest=buildIpRequest(ipAddress,"");
   FlowControllerTestingThread tSample=new FlowControllerTestingThread(firstRequest,0,0,userController,ipController);
   tSample.start();
   waitTerminated(tSample,MAX_WAIT);
   assertEquals(ThreadState.COMPLETE,tSample.state);
   String ip=firstRequest.getHttpRequest().getRemoteAddr();
-  FlowControllerTestingThread t1=new FlowControllerTestingThread(buildRequest(ip,""),0,Long.MAX_VALUE,ipController);
-  FlowControllerTestingThread t2=new FlowControllerTestingThread(buildRequest(ip,""),0,Long.MAX_VALUE,ipController);
+  FlowControllerTestingThread t1=new FlowControllerTestingThread(buildIpRequest(ip,""),0,Long.MAX_VALUE,ipController);
+  FlowControllerTestingThread t2=new FlowControllerTestingThread(buildIpRequest(ip,""),0,Long.MAX_VALUE,ipController);
   try {
     t1.start();
     waitBlocked(t1,MAX_WAIT);
