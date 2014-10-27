@@ -1,0 +1,13 @@
+{
+  boolean result=true;
+  Type resourceType=resource.getType();
+  if (resourceType == Type.RESOURCE && resource.lastmodified() < expirationThreshold) {
+    result=resource.delete();
+  }
+ else   if (resourceType == Type.DIRECTORY) {
+    for (    Resource child : resource.list()) {
+      result&=cleanupResource(child,expirationThreshold);
+    }
+  }
+  return result;
+}

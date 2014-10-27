@@ -1,21 +1,20 @@
 {
   Name processName=request.getProcessName();
   ProcessManager processManager=getProcessManager(processName);
-  LazyInputMap inputs=request.getProcessInputs(this);
   String executionId=resourceManager.getExecutionId(synchronous);
-  final AsynchronousProcessContext context=new AsynchronousProcessContext(request,executionId,inputs,processManager,applicationContext);
-  contexts.put(executionId,context);
-  if (!synchronous) {
+  LazyInputMap inputs=request.getProcessInputs(WPSExecutionManager.this);
+  ExecutionStatus status=new ExecutionStatus(processName,executionId,request.isAsynchronous());
+  status.setRequest(request.getRequest());
+  Executor executor=new Executor(request,processManager,processName,inputs,synchronous,status,resourceManager);
+  ExecuteResponseType response;
+  if (synchronous) {
+    response=executor.call();
+  }
+ else {
     LOGGER.log(Level.INFO,"Submitting new asynch process " + processName.getURI() + " with execution id "+ executionId);
+    ExecuteResponseBuilder builder=new ExecuteResponseBuilder(request.getRequest(),applicationContext,status);
+    response=builder.build();
+    storedResponseWriters.submit(executor);
   }
-  processManager.submit(executionId,processName,inputs,request.isAsynchronous());
-  if (request.isAsynchronous()) {
-    storedResponseWriters.submit(new Runnable(){
-      @Override public void run(){
-        context.writeResponseFile();
-      }
-    }
-);
-  }
-  return executionId;
+  return response;
 }

@@ -1,0 +1,43 @@
+{
+  List<ExecutionStatus> result=new ArrayList<>();
+  Filter filter=query.getFilter();
+  for (  ExecutionStatus status : statuses.values()) {
+    if (filter.evaluate(status)) {
+      result.add(status);
+    }
+  }
+  SortBy[] sorts=query.getSortBy();
+  if (sorts != null) {
+    List<Comparator<ExecutionStatus>> comparators=new ArrayList<>();
+    for (    SortBy sort : sorts) {
+      if (sort == SortBy.NATURAL_ORDER) {
+        comparators.add(new BeanComparator("creationTime"));
+      }
+ else       if (sort == SortBy.REVERSE_ORDER) {
+        comparators.add(Collections.reverseOrder(new BeanComparator("creationTime")));
+      }
+ else {
+        String property=sort.getPropertyName().getPropertyName();
+        Comparator<ExecutionStatus> comparator=new BeanComparator(property);
+        if (sort.getSortOrder() == SortOrder.DESCENDING) {
+          comparator=Collections.reverseOrder(comparator);
+        }
+        comparators.add(comparator);
+      }
+    }
+    if (comparators.size() > 1) {
+      Comparator<ExecutionStatus> comparator=new CompositeComparator<>(comparators);
+      Collections.sort(result,comparator);
+    }
+ else     if (comparators.size() == 1) {
+      Collections.sort(result,comparators.get(0));
+    }
+  }
+  if (query.getStartIndex() != null && query.getStartIndex() > 0) {
+    result=result.subList(query.getStartIndex(),Math.min(result.size() - query.getStartIndex(),query.getMaxFeatures()));
+  }
+ else   if (result.size() > query.getMaxFeatures()) {
+    result=result.subList(0,query.getMaxFeatures());
+  }
+  return result;
+}

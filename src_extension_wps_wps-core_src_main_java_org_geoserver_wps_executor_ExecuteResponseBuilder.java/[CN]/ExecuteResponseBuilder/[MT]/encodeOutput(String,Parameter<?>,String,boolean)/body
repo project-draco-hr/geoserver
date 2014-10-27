@@ -16,30 +16,22 @@
       OutputReferenceType outputReference=f.createOutputReferenceType();
       output.setReference(outputReference);
       ComplexPPIO cppio=(ComplexPPIO)ppio;
-      File file=resourceManager.getOutputFile(executionId,key + "." + cppio.getFileExtension());
-      FileOutputStream fos=null;
-      try {
-        fos=new FileOutputStream(file);
-        cppio.encode(o,fos);
+      String name=key + "." + cppio.getFileExtension();
+      Resource outputResource=resourceManager.getOutputResource(status.getExecutionId(),name);
+      try (OutputStream os=outputResource.out()){
+        cppio.encode(o,os);
       }
-  finally {
-        IOUtils.closeQuietly(fos);
-      }
-      Map<String,String> kvp=new LinkedHashMap<String,String>();
-      kvp.put("service","WPS");
-      kvp.put("version","1.0.0");
-      kvp.put("request","GetExecutionResult");
-      kvp.put("executionId",executionId);
-      kvp.put("outputId",file.getName());
+       String mime;
       if (o instanceof RawData) {
         RawData rawData=(RawData)o;
-        kvp.put("mimetype",rawData.getMimeType());
+        mime=rawData.getMimeType();
       }
  else {
-        kvp.put("mimetype",cppio.getMimeType());
+        mime=cppio.getMimeType();
       }
-      outputReference.setHref(ResponseUtils.buildURL(request.getBaseUrl(),"ows",kvp,URLType.SERVICE));
-      outputReference.setMimeType(cppio.getMimeType());
+      String url=resourceManager.getOutputResourceUrl(status.getExecutionId(),name,request.getBaseUrl(),mime);
+      outputReference.setHref(url);
+      outputReference.setMimeType(mime);
     }
  else {
       DataType data=f.createDataType();
