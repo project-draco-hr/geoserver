@@ -1,0 +1,12 @@
+{
+  GridSetBroker broker=createMock(GridSetBroker.class);
+  GridSet set=createMock(GridSet.class);
+  expect(broker.get("test")).andStubReturn(set);
+  expect(set.getNumLevels()).andStubReturn(5);
+  replay(broker,set);
+  ZoomContextFinder finder=new GWCZoomContextFinder(broker);
+  ZoomContext zContext=finder.get("test");
+  double denom=zContext.getScaleDenominator(5);
+  assertThat(denom,is(0d));
+  verify(broker,set);
+}
