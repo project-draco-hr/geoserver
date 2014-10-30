@@ -58,10 +58,12 @@
   }
   builder.setStore(info);
   if (add) {
+    catalog.validate(info,true).throwIfInvalid();
     catalog.add(info);
   }
  else {
     if (save) {
+      catalog.validate(info,false).throwIfInvalid();
       catalog.save(info);
     }
   }
@@ -151,11 +153,12 @@
           }
  while (i < 10 && catalog.getFeatureTypeByName(namespace,ftinfo.getName()) != null);
         }
+        catalog.validate(ftinfo,true).throwIfInvalid();
         catalog.add(ftinfo);
         LayerInfo layer=builder.buildLayer(ftinfo);
         boolean valid=true;
         try {
-          if (!catalog.validate(layer,true).isEmpty()) {
+          if (!catalog.validate(layer,true).isValid()) {
             valid=false;
           }
         }
@@ -168,6 +171,7 @@
       }
  else {
         LOGGER.info("Updated feature type " + ftinfo.getName());
+        catalog.validate(ftinfo,false).throwIfInvalid();
         catalog.save(ftinfo);
       }
       getResponse().setStatus(Status.SUCCESS_CREATED);
