@@ -1,0 +1,52 @@
+{
+  int maxFeatures=query.getMaxFeatures();
+  int startIndex=query.getStartIndex() == null ? 0 : query.getStartIndex();
+  boolean needsSorting=query.getSortBy() != null && query.getSortBy().length > 0;
+  FilterPredicate filterPredicate=new FilterPredicate(query.getFilter());
+  Predicate predicate=filterPredicate.predicate;
+  Filter postFilter=filterPredicate.postFilter;
+  if (postFilter != null && postFilter != Filter.INCLUDE) {
+    FilteringEntryProcessor filterProcessor=new FilteringEntryProcessor(postFilter);
+    Map<String,Object> entries=statuses.executeOnEntries(filterProcessor);
+    List<ExecutionStatus> result=new ArrayList(entries.values());
+    return postProcessResults(query,maxFeatures,startIndex,needsSorting,result);
+  }
+ else {
+    if ((maxFeatures < Integer.MAX_VALUE || startIndex > 0) && postFilter != null) {
+      Comparator<Map.Entry> pagingComparator=null;
+      if (needsSorting) {
+        pagingComparator=getComparator("value.",query.getSortBy());
+      }
+      if (pagingComparator != null) {
+        predicate=new PagingPredicate(predicate,pagingComparator,maxFeatures);
+      }
+ else {
+        predicate=new PagingPredicate(predicate,maxFeatures);
+      }
+    }
+    ArrayList<ExecutionStatus> result=new ArrayList<>();
+    if (predicate instanceof PagingPredicate) {
+      int position=0;
+      PagingPredicate pp=(PagingPredicate)predicate;
+      while (position < startIndex - maxFeatures) {
+        pp.nextPage();
+        position+=maxFeatures;
+      }
+      List<ExecutionStatus> page=new ArrayList<>(statuses.values(pp));
+      if (startIndex > position) {
+        page=page.subList(startIndex - position,page.size());
+      }
+      result.addAll(page);
+      if (result.size() < maxFeatures) {
+        int missing=maxFeatures - result.size();
+        pp.nextPage();
+        List<ExecutionStatus> nextPage=new ArrayList<>(statuses.values(pp));
+        page=nextPage.subList(0,Math.min(missing,nextPage.size()));
+        result.addAll(page);
+      }
+      return result;
+    }
+    result=new ArrayList<>(statuses.values(predicate));
+    return postProcessResults(query,maxFeatures,startIndex,needsSorting,result);
+  }
+}
