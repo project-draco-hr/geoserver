@@ -1,0 +1,38 @@
+{
+  String usHeader=req.getHeader(userNameHeaderName);
+  String pwHeader=req.getHeader(passwordHeaderName);
+  if (usHeader == null || pwHeader == null) {
+    return null;
+  }
+  String username=parseHeader(usHeader,userNameRegex);
+  String password=parseHeader(pwHeader,passwordRegex);
+  if (username == null && password == null) {
+    return null;
+  }
+  if (decodeURI) {
+    try {
+      username=java.net.URLDecoder.decode(username,"UTF-8");
+    }
+ catch (    UnsupportedEncodingException e) {
+      LOGGER.log(Level.WARNING,"unsupported decode user name");
+    }
+  }
+  StringBuffer buff=new StringBuffer(password);
+  buff.append(":");
+  buff.append(getName());
+  String digestString=null;
+  try {
+    MessageDigest md=(MessageDigest)digest.clone();
+    digestString=new String(Hex.encode(md.digest(buff.toString().getBytes("utf-8"))));
+  }
+ catch (  UnsupportedEncodingException e) {
+    throw new RuntimeException(e);
+  }
+catch (  CloneNotSupportedException e) {
+    throw new RuntimeException(e);
+  }
+  buff=new StringBuffer(username);
+  buff.append(":");
+  buff.append(digestString);
+  return buff.toString();
+}
