@@ -1,0 +1,37 @@
+{
+  String usHeader=request.getHeader(userNameHeaderName);
+  String pwHeader=request.getHeader(passwordHeaderName);
+  if (usHeader == null || pwHeader == null) {
+    return;
+  }
+  String us=parseHeader(usHeader,userNameRegex);
+  String pw=parseHeader(pwHeader,passwordRegex);
+  if (us == null || pw == null) {
+    return;
+  }
+  if (decodeURI) {
+    us=java.net.URLDecoder.decode(us,"UTF-8");
+    pw=java.net.URLDecoder.decode(pw,"UTF-8");
+  }
+  UsernamePasswordAuthenticationToken result=new UsernamePasswordAuthenticationToken(us,pw,new ArrayList<GrantedAuthority>());
+  Authentication auth=null;
+  try {
+    auth=getSecurityManager().authenticate(result);
+  }
+ catch (  ProviderNotFoundException e) {
+    LOGGER.log(Level.WARNING,"couldn't to authenticate user:" + us);
+    return;
+  }
+  LOGGER.log(Level.FINER,"logged in as {0}",us);
+  Collection<GeoServerRole> roles=new ArrayList<GeoServerRole>();
+  for (  GrantedAuthority grauth : auth.getAuthorities()) {
+    roles.add((GeoServerRole)grauth);
+  }
+  if (!roles.contains(GeoServerRole.AUTHENTICATED_ROLE)) {
+    roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+  }
+  response.addHeader("X-GeoServer-Auth-User",us);
+  UsernamePasswordAuthenticationToken newResult=new UsernamePasswordAuthenticationToken(auth.getPrincipal(),auth.getCredentials(),roles);
+  newResult.setDetails(auth.getDetails());
+  SecurityContextHolder.getContext().setAuthentication(newResult);
+}

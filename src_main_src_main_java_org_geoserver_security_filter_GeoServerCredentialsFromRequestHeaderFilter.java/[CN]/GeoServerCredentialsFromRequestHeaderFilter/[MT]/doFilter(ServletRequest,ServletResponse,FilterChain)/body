@@ -1,0 +1,14 @@
+{
+  String cacheKey=authenticateFromCache(this,(HttpServletRequest)request);
+  if (SecurityContextHolder.getContext().getAuthentication() == null) {
+    doAuthenticate((HttpServletRequest)request,(HttpServletResponse)response);
+    Authentication postAuthentication=SecurityContextHolder.getContext().getAuthentication();
+    if (postAuthentication != null && cacheKey != null) {
+      if (cacheAuthentication(postAuthentication,(HttpServletRequest)request)) {
+        getSecurityManager().getAuthenticationCache().put(getName(),cacheKey,postAuthentication);
+      }
+    }
+  }
+  request.setAttribute(GeoServerSecurityFilter.AUTHENTICATION_ENTRY_POINT_HEADER,aep);
+  chain.doFilter(request,response);
+}
