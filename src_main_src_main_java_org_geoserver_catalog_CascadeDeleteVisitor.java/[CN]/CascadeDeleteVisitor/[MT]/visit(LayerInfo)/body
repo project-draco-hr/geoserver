@@ -1,6 +1,8 @@
 {
-  for (  LayerGroupInfo group : catalog.getLayerGroups()) {
-    if (group.getLayers().contains(layer)) {
+  Filter groupContainsLayer=Predicates.equal("layers",layer,MatchAction.ANY);
+  try (CloseableIterator<LayerGroupInfo> groups=catalog.list(LayerGroupInfo.class,groupContainsLayer)){
+    while (groups.hasNext()) {
+      LayerGroupInfo group=groups.next();
       int index=group.getLayers().indexOf(layer);
       group.getLayers().remove(index);
       group.getStyles().remove(index);
@@ -12,7 +14,7 @@
       }
     }
   }
-  ResourceInfo resource=layer.getResource();
+   ResourceInfo resource=layer.getResource();
   catalog.remove(layer);
   catalog.remove(resource);
 }

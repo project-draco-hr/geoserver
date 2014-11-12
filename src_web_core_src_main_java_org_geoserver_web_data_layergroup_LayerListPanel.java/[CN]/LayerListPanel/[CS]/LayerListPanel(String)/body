@@ -1,7 +1,37 @@
 {
   this(id,new LayerListProvider(){
-    @Override protected List<LayerInfo> getItems(){
-      return getCatalog().getLayers();
+    @Override public Iterator<LayerInfo> iterator(    final int first,    final int count){
+      Iterator<LayerInfo> iterator=filteredItems(first,count);
+      if (iterator instanceof CloseableIterator) {
+        try {
+          return Lists.newArrayList(iterator).iterator();
+        }
+  finally {
+          CloseableIteratorAdapter.close(iterator);
+        }
+      }
+ else {
+        return iterator;
+      }
+    }
+    /** 
+ * Returns the requested page of layer objects after applying any keyword
+ * filtering set on the page
+ */
+    private Iterator<LayerInfo> filteredItems(    Integer first,    Integer count){
+      final Catalog catalog=getCatalog();
+      final SortParam sort=getSort();
+      final Property<LayerInfo> property=getProperty(sort);
+      SortBy sortOrder=null;
+      if (sort != null) {
+        if (property instanceof BeanProperty) {
+          final String sortProperty=((BeanProperty<LayerInfo>)property).getPropertyPath();
+          sortOrder=sortBy(sortProperty,sort.isAscending());
+        }
+      }
+      final Filter filter=getFilter();
+      Iterator<LayerInfo> items=catalog.list(LayerInfo.class,filter,first,count,sortOrder);
+      return items;
     }
   }
 );

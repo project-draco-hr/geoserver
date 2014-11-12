@@ -1,0 +1,24 @@
+{
+  CatalogFilterAccessManager mgr=setupAccessManager();
+  SecureCatalogImpl sc=new SecureCatalogImpl(catalog,mgr){
+    @Override protected boolean isAdmin(    Authentication authentication){
+      return false;
+    }
+  }
+;
+  GeoServerExtensionsHelper.singleton("secureCatalog",sc,SecureCatalogImpl.class);
+  CloseableIterator<StyleInfo> styles=sc.list(StyleInfo.class,Filter.INCLUDE);
+  int size=Iterators.size(styles);
+  assertEquals(2,size);
+  WorkspaceInfo ws=sc.getWorkspaceByName("topp");
+  LocalWorkspace.set(ws);
+  styles=sc.list(StyleInfo.class,Filter.INCLUDE);
+  size=Iterators.size(styles);
+  assertEquals(2,size);
+  LocalWorkspace.remove();
+  ws=sc.getWorkspaceByName("nurc");
+  LocalWorkspace.set(ws);
+  styles=sc.list(StyleInfo.class,Filter.INCLUDE);
+  size=Iterators.size(styles);
+  assertEquals(1,size);
+}

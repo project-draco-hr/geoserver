@@ -1,0 +1,19 @@
+{
+  CatalogMode mode=getMode();
+  if ((readFilter == null || readFilter == Filter.INCLUDE) && (writeFilter == null || writeFilter == Filter.INCLUDE || WMSLayerInfo.class.isAssignableFrom(resourceClass) || CoverageInfo.class.isAssignableFrom(resourceClass))) {
+    return null;
+  }
+  if (FeatureTypeInfo.class.isAssignableFrom(resourceClass)) {
+    return new VectorAccessLimits(mode,null,readFilter,null,writeFilter);
+  }
+ else   if (CoverageInfo.class.isAssignableFrom(resourceClass)) {
+    return new CoverageAccessLimits(mode,readFilter,null,null);
+  }
+ else   if (WMSLayerInfo.class.isAssignableFrom(resourceClass)) {
+    return new WMSAccessLimits(mode,readFilter,null,true);
+  }
+ else {
+    LOGGER.log(Level.INFO,"Warning, adapting to generic access limits for unrecognized resource type " + resourceClass);
+    return new DataAccessLimits(mode,readFilter);
+  }
+}

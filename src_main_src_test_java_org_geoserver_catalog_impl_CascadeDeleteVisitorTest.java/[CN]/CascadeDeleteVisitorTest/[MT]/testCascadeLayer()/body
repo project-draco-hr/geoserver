@@ -1,19 +1,10 @@
 {
-  Catalog catalog=createMock(Catalog.class);
-  LayerGroupInfo lg=setUpMockLayerGroup(catalog);
-  catalog.save(lg);
-  expectLastCall();
-  catalog.remove((LayerInfo)lg.getLayers().get(0));
-  expectLastCall();
-  catalog.remove(((LayerInfo)lg.getLayers().get(0)).getResource());
-  expectLastCall();
-  replay(catalog);
+  Catalog catalog=getCatalog();
   String name=toString(LAKES);
   LayerInfo layer=catalog.getLayerByName(name);
   assertNotNull(layer);
   CascadeDeleteVisitor visitor=new CascadeDeleteVisitor(catalog);
   visitor.visit(layer);
-  verify(catalog);
   LayerGroupInfo group=catalog.getLayerGroupByName(LAKES_GROUP);
   assertEquals(2,group.getLayers().size());
   assertFalse(group.getLayers().contains(layer));
