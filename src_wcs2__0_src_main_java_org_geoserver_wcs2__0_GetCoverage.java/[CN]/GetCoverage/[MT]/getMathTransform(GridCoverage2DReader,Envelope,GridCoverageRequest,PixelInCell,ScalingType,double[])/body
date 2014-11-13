@@ -1,0 +1,20 @@
+{
+  final OverviewPolicy overviewPolicy=request.getOverviewPolicy();
+  ScalingPolicy scalingPolicy=scaling == null ? null : ScalingPolicy.getPolicy(scaling);
+  if (overviewPolicy == null || overviewPolicy == OverviewPolicy.IGNORE || scaling == null || scalingPolicy == null || scalingPolicy == ScalingPolicy.ScaleToExtent) {
+    return reader.getOriginalGridToWorld(pixelInCell);
+  }
+  MathTransform transform=reader.getOriginalGridToWorld(pixelInCell);
+  AffineTransform af=(AffineTransform)transform;
+  final double nativeResX=XAffineTransform.getScaleX0(af);
+  final double nativeResY=XAffineTransform.getScaleY0(af);
+  final double[] requestedResolution=computeRequestedResolution(scaling,subset,nativeResX,nativeResY);
+  final double[] readResolution=reader.getReadingResolutions(overviewPolicy,requestedResolution);
+  AffineTransform scale=new AffineTransform();
+  preAppliedScale[0]=readResolution[0] / nativeResX;
+  preAppliedScale[1]=readResolution[1] / nativeResY;
+  scale.scale(preAppliedScale[0],preAppliedScale[1]);
+  AffineTransform finalTransform=new AffineTransform(af);
+  finalTransform.concatenate(scale);
+  return ProjectiveTransform.create(finalTransform);
+}
