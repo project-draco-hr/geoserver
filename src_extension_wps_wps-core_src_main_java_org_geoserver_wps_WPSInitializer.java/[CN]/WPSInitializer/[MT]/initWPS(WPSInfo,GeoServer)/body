@@ -1,18 +1,17 @@
 {
-  double timeout=info.getConnectionTimeout();
-  if (timeout > 0) {
-    executionManager.setConnectionTimeout((int)timeout * 1000);
+  double connectionTimeout=info.getConnectionTimeout();
+  if (connectionTimeout > 0) {
+    executionManager.setConnectionTimeout((int)connectionTimeout * 1000);
   }
  else {
     executionManager.setConnectionTimeout(0);
   }
-  timeout=info.getResourceExpirationTimeout();
-  if (timeout > 0) {
-    cleaner.setExpirationDelay((int)timeout * 1000);
+  int expirationTimeout=info.getResourceExpirationTimeout() * 1000;
+  if (expirationTimeout <= 0) {
+    expirationTimeout=5 * 60 * 1000;
   }
- else {
-    cleaner.setExpirationDelay(5 * 60 * 1000);
-  }
+  cleaner.setExpirationDelay(expirationTimeout);
+  executionManager.setHeartbeatDelay(expirationTimeout / 2);
   int defaultMaxProcesses=Runtime.getRuntime().availableProcessors() * 2;
   int maxSynch=info.getMaxSynchronousProcesses();
   if (maxSynch > 0) {
