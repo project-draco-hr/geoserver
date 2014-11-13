@@ -1,0 +1,19 @@
+{
+  if (!this.allowed) {
+    Request request=Dispatcher.REQUEST.get();
+    CatalogMode mode=getMode();
+    if (mode == CatalogMode.MIXED) {
+      if (request != null && "GetCapabilities".equalsIgnoreCase(request.getRequest())) {
+      }
+ else {
+        throw unauthorizedAccess(resource);
+      }
+    }
+ else     if (mode == CatalogMode.CHALLENGE) {
+      this.allowed=true;
+      if (request != null && !"GetCapabilities".equalsIgnoreCase(request.getRequest()) && ("Execute".equalsIgnoreCase(request.getRequest()) || "DescribeProcess".equalsIgnoreCase(request.getRequest()))) {
+        throw unauthorizedAccess(resource);
+      }
+    }
+  }
+}
