@@ -5,7 +5,7 @@
   config.setPasswordHeaderName("X-Credentials");
   config.setUserNameRegex("private-user=([^&]*)");
   config.setPasswordRegex("private-pw=([^&]*)");
-  config.setParseAsUriComponents(false);
+  config.setParseAsUriComponents(true);
   config.setName(testFilterName10);
   getSecurityManager().saveFilter(config);
   prepareFilterChain(pattern,testFilterName10);
@@ -54,7 +54,8 @@
   request=createRequest("/foo/bar");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  request.addHeader("X-Credentials","private-user=" + GeoServerUser.ROOT_USERNAME + "&private-pw="+ getMasterPassword());
+  String masterPassword=URLEncoder.encode(getMasterPassword(),"UTF-8");
+  request.addHeader("X-Credentials","private-user=" + GeoServerUser.ROOT_USERNAME + "&private-pw="+ masterPassword);
   getProxy().doFilter(request,response,chain);
   assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
