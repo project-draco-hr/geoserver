@@ -1,0 +1,17 @@
+{
+  ScalingPolicy policy=ScalingPolicy.getPolicy(scaling);
+  double[] requestedResolution=new double[2];
+  if (policy == ScalingPolicy.ScaleToSize) {
+    int[] scalingSize=ScalingPolicy.getTargetSize(scaling);
+    final GridToEnvelopeMapper mapper=new GridToEnvelopeMapper(new GridEnvelope2D(0,0,scalingSize[0],scalingSize[1]),subset);
+    AffineTransform scalingTransform=mapper.createAffineTransform();
+    requestedResolution[0]=XAffineTransform.getScaleX0(scalingTransform);
+    requestedResolution[1]=XAffineTransform.getScaleY0(scalingTransform);
+  }
+ else {
+    double[] scalingFactors=ScalingPolicy.getScaleFactors(scaling);
+    requestedResolution[0]=nativeResX / scalingFactors[0];
+    requestedResolution[1]=nativeResY / scalingFactors[1];
+  }
+  return requestedResolution;
+}
