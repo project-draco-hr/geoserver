@@ -1,0 +1,23 @@
+{
+  Utilities.ensureNonNull("interpolation",spatialInterpolation);
+  if (scaling == null) {
+    if (spatialInterpolation instanceof InterpolationNearest) {
+      return coverage;
+    }
+ else {
+      final Operation operation=CoverageProcessor.getInstance().getOperation("Warp");
+      final ParameterValueGroup parameters=operation.getParameters();
+      parameters.parameter("Source").setValue(coverage);
+      parameters.parameter("warp").setValue(new WarpAffine(AffineTransform.getScaleInstance(1,1)));
+      parameters.parameter("interpolation").setValue(spatialInterpolation != null ? spatialInterpolation : InterpolationPolicy.getDefaultPolicy().getInterpolation());
+      parameters.parameter("backgroundValues").setValue(CoverageUtilities.getBackgroundValues(coverage));
+      return (GridCoverage2D)CoverageProcessor.getInstance().doOperation(parameters,hints);
+    }
+  }
+  final ScalingPolicy scalingPolicy=ScalingPolicy.getPolicy(scaling);
+  if (!Double.isNaN(preAppliedScale[0]) && !Double.isNaN(preAppliedScale[1])) {
+    final Double[] scale=new Double[]{preAppliedScale[0],preAppliedScale[1]};
+    hints.add(new Hints(GetCoverage.PRE_APPLIED_SCALE,scale));
+  }
+  return scalingPolicy.scale(coverage,scaling,spatialInterpolation,hints,wcs);
+}

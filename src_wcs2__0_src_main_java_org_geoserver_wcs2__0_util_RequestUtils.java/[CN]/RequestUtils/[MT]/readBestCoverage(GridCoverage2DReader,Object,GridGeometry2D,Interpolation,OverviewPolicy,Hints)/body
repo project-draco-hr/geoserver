@@ -12,15 +12,19 @@
   readGGParam.setValue(readGG);
   final Parameter<Interpolation> readInterpolation=(Parameter<Interpolation>)ImageMosaicFormat.INTERPOLATION.createValue();
   readInterpolation.setValue(interpolation);
+  final Parameter<OverviewPolicy> readOverview=(Parameter<OverviewPolicy>)AbstractGridFormat.OVERVIEW_POLICY.createValue();
+  readOverview.setValue(overviewPolicy);
   GridCoverage2D coverage=null;
   GeneralParameterValue[] readParams=(GeneralParameterValue[])params;
   final int length=readParams == null ? 0 : readParams.length;
   if (length > 0) {
     final String readGGName=AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString();
     final String readInterpolationName=ImageMosaicFormat.INTERPOLATION.getName().toString();
+    final String overviewPolicyName=AbstractGridFormat.OVERVIEW_POLICY.getName().toString();
     int i=0;
     boolean foundInterpolation=false;
     boolean foundGG=false;
+    boolean foundOverviewPolicy=false;
     for (; i < length; i++) {
       final String paramName=readParams[i].getDescriptor().getName().toString();
       if (paramName.equalsIgnoreCase(readGGName)) {
@@ -31,8 +35,12 @@
         ((Parameter)readParams[i]).setValue(interpolation);
         foundInterpolation=true;
       }
+ else       if (paramName.equalsIgnoreCase(overviewPolicyName)) {
+        ((Parameter)readParams[i]).setValue(overviewPolicy);
+        foundOverviewPolicy=true;
+      }
     }
-    if (!foundGG || !foundInterpolation) {
+    if (!foundGG || !foundInterpolation || !foundOverviewPolicy) {
       List<GeneralParameterValue> paramList=new ArrayList<GeneralParameterValue>();
       paramList.addAll(Arrays.asList(readParams));
       if (!foundGG) {
@@ -40,6 +48,9 @@
       }
       if (!foundInterpolation) {
         paramList.add(readInterpolation);
+      }
+      if (!foundOverviewPolicy && readOverview != null && readOverview.getValue() != null) {
+        paramList.add(readOverview);
       }
       readParams=(GeneralParameterValue[])paramList.toArray(new GeneralParameterValue[paramList.size()]);
     }

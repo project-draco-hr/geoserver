@@ -47,7 +47,8 @@
   }
   GridCoverage2D coverage=null;
   if (sameCRS) {
-    readGG=new GridGeometry2D(PixelInCell.CELL_CENTER,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),subset,hints);
+    MathTransform transform=getMathTransform(reader,requestedEnvelope != null ? requestedEnvelope : subset,request,PixelInCell.CELL_CENTER,scaling,preAppliedScale);
+    readGG=new GridGeometry2D(PixelInCell.CELL_CENTER,transform,subset,hints);
   }
  else {
     Rectangle rasterRange=CRS.transform(reader.getOriginalGridToWorld(PixelInCell.CELL_CORNER).inverse(),subset).toRectangle2D().getBounds();
@@ -56,7 +57,7 @@
     readGG=new GridGeometry2D(new GridEnvelope2D(rasterRange),PixelInCell.CELL_CENTER,reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER),coverageCRS,hints);
   }
   WCSUtils.checkInputLimits(wcs,cinfo,reader,readGG);
-  coverage=RequestUtils.readBestCoverage(reader,readParameters,readGG,spatialInterpolation,hints);
+  coverage=RequestUtils.readBestCoverage(reader,readParameters,readGG,spatialInterpolation,request.getOverviewPolicy(),hints);
   if (coverage != null) {
     if (incrementalInputSize == null) {
       WCSUtils.checkInputLimits(wcs,coverage);

@@ -1,4 +1,6 @@
 {
+  CoverageInfo cinfo=helper.getCoverageInfo();
+  WCSEnvelope requestedEnvelope=helper.getRequestedEnvelope();
   Interpolation spatialInterpolation=request.getSpatialInterpolation();
   Utilities.ensureNonNull("interpolation",spatialInterpolation);
   final CoordinateReferenceSystem coverageCRS=reader.getCoordinateReferenceSystem();
@@ -15,7 +17,6 @@
   }
   List<GridCoverage2D> readCoverages=new ArrayList<>();
   for (  GeneralEnvelope readEnvelope : readEnvelopes) {
-    boolean skip=false;
     GridCoverage2D cov=null;
     BoundingBox readBoundingBox=new Envelope2D(readEnvelope);
     for (    GridCoverage2D gc : readCoverages) {
@@ -26,7 +27,7 @@
       }
     }
     if (cov == null) {
-      cov=readCoverage(cinfo,request,reader,hints,incrementalInputSize,spatialInterpolation,coverageCRS,readEnvelope);
+      cov=readCoverage(cinfo,request,reader,hints,incrementalInputSize,spatialInterpolation,coverageCRS,readEnvelope,requestedEnvelope,scaling,preAppliedScale);
       readCoverages.add(cov);
     }
     Envelope2D covEnvelope=cov.getEnvelope2D();
