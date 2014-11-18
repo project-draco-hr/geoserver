@@ -1,0 +1,28 @@
+{
+  if (sorts == null || sorts.length == 0) {
+    return null;
+  }
+  List<Comparator> comparators=new ArrayList<>();
+  for (  SortBy sort : sorts) {
+    if (sort == SortBy.NATURAL_ORDER) {
+      comparators.add(new BeanComparator(prefix + "creationTime"));
+    }
+ else     if (sort == SortBy.REVERSE_ORDER) {
+      comparators.add(Collections.reverseOrder(new BeanComparator(prefix + "creationTime")));
+    }
+ else {
+      String property=sort.getPropertyName().getPropertyName();
+      Comparator comparator=new BeanComparator(prefix + property);
+      if (sort.getSortOrder() == SortOrder.DESCENDING) {
+        comparator=Collections.reverseOrder(comparator);
+      }
+      comparators.add(comparator);
+    }
+  }
+  if (comparators.size() > 1) {
+    return new CompositeComparator(comparators);
+  }
+ else {
+    return comparators.get(0);
+  }
+}

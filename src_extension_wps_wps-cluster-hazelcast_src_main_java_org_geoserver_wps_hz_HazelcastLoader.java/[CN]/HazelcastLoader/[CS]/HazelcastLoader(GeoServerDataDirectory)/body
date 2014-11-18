@@ -1,0 +1,13 @@
+{
+  Resource resource=dd.get(HAZELCAST_NAME);
+  if (resource.getType() == Type.UNDEFINED) {
+    try (OutputStream os=resource.out();InputStream is=HazelcastLoader.class.getResourceAsStream(HAZELCAST_NAME)){
+      IOUtils.copy(is,os);
+    }
+   }
+  try (InputStream is=resource.in()){
+    Config config=new XmlConfigBuilder(is).build();
+    validateConfiguration(config);
+    instance=Hazelcast.newHazelcastInstance(config);
+  }
+ }

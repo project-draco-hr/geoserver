@@ -9,18 +9,6 @@
     throw new WPSException("Invalid request, only one of the raw data output or the " + "response document should be specified in the request");
   }
   ExecuteRequest request=new ExecuteRequest(execute);
-  ExecuteResponseBuilder builder=new ExecuteResponseBuilder(execute,context,new Date());
-  String executionId=executionManager.submit(request,!request.isAsynchronous());
-  builder.setExecutionId(executionId);
-  if (!request.isAsynchronous()) {
-    try {
-      Map<String,Object> outputs=executionManager.getOutput(executionId,-1);
-      builder.setOutputs(outputs);
-    }
- catch (    Exception e) {
-      LOGGER.log(Level.SEVERE,"Process execution failed",e);
-      builder.setException(e);
-    }
-  }
-  return builder.build();
+  ExecuteResponseType response=executionManager.submit(request,!request.isAsynchronous());
+  return response;
 }
