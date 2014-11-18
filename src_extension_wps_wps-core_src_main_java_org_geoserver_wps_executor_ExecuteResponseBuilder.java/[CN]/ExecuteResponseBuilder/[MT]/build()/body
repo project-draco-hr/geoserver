@@ -15,11 +15,11 @@
   process.setTitle(Ows11Util.languageString(pf.getTitle(processName)));
   process.setAbstract(Ows11Util.languageString(pf.getDescription(processName)));
   response.setStatus(f.createStatusType());
-  XMLGregorianCalendar gc=Converters.convert(created,XMLGregorianCalendar.class);
+  XMLGregorianCalendar gc=Converters.convert(status.getCreationTime(),XMLGregorianCalendar.class);
   response.getStatus().setCreationTime(gc);
   if (status == null) {
-    if (exception != null) {
-      setResponseFailed(response,getException(ProcessState.COMPLETED));
+    if (status.getException() != null) {
+      setResponseFailed(response,getException(ProcessState.FAILED));
     }
  else     if (outputs == null) {
       response.getStatus().setProcessAccepted("Process accepted.");
@@ -47,7 +47,7 @@
       startedType.setValue(status.getTask());
       response.getStatus().setProcessStarted(startedType);
     }
- else     if (status.getPhase() == ProcessState.COMPLETED) {
+ else     if (status.getPhase() == ProcessState.SUCCEEDED) {
       response.getStatus().setProcessSucceeded("Process succeeded.");
     }
  else {
@@ -55,12 +55,12 @@
       setResponseFailed(response,reportException);
     }
   }
-  if (helper.isAsynchronous() && request.getBaseUrl() != null && executionId != null) {
+  if (status.isAsynchronous() && request.getBaseUrl() != null && status.getExecutionId() != null) {
     Map<String,String> kvp=new LinkedHashMap<String,String>();
     kvp.put("service","WPS");
     kvp.put("version","1.0.0");
     kvp.put("request","GetExecutionStatus");
-    kvp.put("executionId",executionId);
+    kvp.put("executionId",status.getExecutionId());
     response.setStatusLocation(ResponseUtils.buildURL(request.getBaseUrl(),"ows",kvp,URLType.SERVICE));
   }
   if (helper.isLineageRequested()) {
@@ -80,7 +80,7 @@
       }
     }
   }
-  if (exception == null && outputs != null) {
+  if (status.getException() == null && outputs != null) {
     ProcessOutputsType1 processOutputs=f.createProcessOutputsType1();
     response.setProcessOutputs(processOutputs);
     Map<String,Parameter<?>> resultInfo=pf.getResultInfo(processName,null);

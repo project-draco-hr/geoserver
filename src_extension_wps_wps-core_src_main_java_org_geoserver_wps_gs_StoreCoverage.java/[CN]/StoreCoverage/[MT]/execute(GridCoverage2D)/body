@@ -1,9 +1,11 @@
 {
-  final File file=File.createTempFile(coverage.getName().toString(),".tif",storage.getStorage());
+  String fileName=coverage.getName().toString() + ".tif";
+  final Resource resource=resources.getOutputResource(null,fileName);
+  final File file=resource.file();
   GeoTiffWriter writer=new GeoTiffWriter(file);
   final ParameterValueGroup params=new GeoTiffFormat().getWriteParameters();
   params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(DEFAULT_WRITE_PARAMS);
-  final GeneralParameterValue[] wps=(GeneralParameterValue[])params.values().toArray(new GeneralParameterValue[1]);
+  final GeneralParameterValue[] wps=params.values().toArray(new GeneralParameterValue[1]);
   try {
     writer.write(coverage,wps);
   }
@@ -14,5 +16,5 @@
  catch (    Exception e) {
     }
   }
-  return storage.getURL(file);
+  return new URL(resources.getOutputResourceUrl(null,fileName,null,"image/tiff"));
 }

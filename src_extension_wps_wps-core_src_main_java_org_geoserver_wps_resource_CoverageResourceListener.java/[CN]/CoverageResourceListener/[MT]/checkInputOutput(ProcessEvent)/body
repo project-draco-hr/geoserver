@@ -1,0 +1,24 @@
+{
+  String executionId=event.getStatus().getExecutionId();
+  ResourceStatus status=resourceStates.get(executionId);
+  if (status == null) {
+    status=new ResourceStatus();
+    resourceStates.put(executionId,status);
+  }
+  if (!status.inputChecked) {
+    for (    Object input : event.getInputs().values()) {
+      if (input instanceof GridCoverage) {
+        resourceManager.addResource(new GridCoverageResource(((GridCoverage)input)));
+      }
+    }
+    status.inputChecked=true;
+  }
+  if (!status.outputChecked && event.getOutputs() != null) {
+    for (    Object output : event.getOutputs().values()) {
+      if (output instanceof GridCoverage) {
+        resourceManager.addResource(new GridCoverageResource(((GridCoverage)output)));
+      }
+    }
+    status.outputChecked=true;
+  }
+}

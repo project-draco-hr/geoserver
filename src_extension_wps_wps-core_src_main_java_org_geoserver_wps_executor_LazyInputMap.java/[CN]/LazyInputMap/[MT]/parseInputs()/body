@@ -1,0 +1,41 @@
+{
+  if (parsed) {
+    return;
+  }
+  parsed=true;
+  int longParses=0;
+  for (  InputProvider provider : providers.values()) {
+    if (provider.longParse()) {
+      longParses++;
+    }
+  }
+  float fastParseStep, longParseStep;
+  if (longParses > 0) {
+    fastParseStep=1;
+    longParseStep=(100f - (providers.size() - longParses)) / longParses;
+  }
+ else {
+    fastParseStep=100f / providers.size();
+    longParseStep=0;
+  }
+  listener.started();
+  int progress=0;
+  for (  InputProvider provider : providers.values()) {
+    listener.setTask(new SimpleInternationalString("Retrieving/parsing process input: " + provider.getInputId()));
+    try {
+      Object value=provider.getValue();
+      values.put(provider.getInputId(),value);
+    }
+ catch (    Exception e) {
+      listener.exceptionOccurred(e);
+      throw new WPSException("Failed to retrieve value for input " + provider.getInputId(),e);
+    }
+    if (provider.longParse()) {
+      progress+=longParseStep;
+    }
+ else {
+      progress+=fastParseStep;
+    }
+    listener.progress(progress);
+  }
+}

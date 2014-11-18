@@ -1,0 +1,63 @@
+{
+  float inputPercentage=inputs.longParse() ? 33 : 1;
+  float outputPercentage=hasComplexOutputs() ? 33 : 3;
+  float executionPercentage=100 - inputPercentage - outputPercentage;
+  WPSProgressListener listener=notifier.getProgressListener();
+  inputs.setListener(new SubProgressListener(listener,0,inputPercentage));
+  SubProgressListener executionListener=new SubProgressListener(listener,inputPercentage,executionPercentage);
+  processManager.submit(status.getExecutionId(),status.getProcessName(),inputs,executionListener,status.isAsynchronous());
+  Map<String,Object> outputs=null;
+  try {
+    outputs=processManager.getOutput(status.getExecutionId(),-1);
+    if (status.getPhase() == ProcessState.RUNNING) {
+      notifier.fireProgress(inputPercentage + executionPercentage,"Execution completed, preparing to write response");
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Process execution failed",e);
+    notifier.fireFailed(e);
+  }
+  notifier.fireProgress(inputPercentage + executionPercentage,"Writing outputs");
+  ExecuteResponseType result=null;
+  try {
+    ExecutionStatus completedStatus=new ExecutionStatus(status);
+    if (status.getPhase() == ProcessState.RUNNING) {
+      completedStatus.setPhase(ProcessState.SUCCEEDED);
+    }
+    ExecuteResponseBuilder builder=new ExecuteResponseBuilder(status.getRequest(),applicationContext,completedStatus);
+    builder.setOutputs(outputs);
+    result=builder.build();
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed writing out the results",e);
+    notifier.fireFailed(e);
+  }
+  if (synchronous) {
+    notifier.fireSucceded();
+  }
+ else {
+    try {
+      Resource output=resourceManager.getStoredResponse(status.getExecutionId());
+      try {
+        notifier.fireProgress(inputPercentage + executionPercentage + outputPercentage / 2,"Writing out response");
+        writeOutResponse(result,output);
+        notifier.fireSucceded();
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"Request failed during output encoding",e);
+        status.setException(e);
+        ExecuteResponseBuilder builder=new ExecuteResponseBuilder(status.getRequest(),applicationContext,status);
+        builder.setOutputs(null);
+        result=builder.build();
+        writeOutResponse(result,output);
+        notifier.fireFailed(e);
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Failed to write out the stored WPS response for executionId " + status.getExecutionId(),e);
+      notifier.fireFailed(e);
+      throw new WPSException("Execution failed while writing the outputs",e);
+    }
+  }
+  return result;
+}

@@ -1,0 +1,19 @@
+{
+  try {
+    PostPreProcessFilterSplittingVisitor splitter=new PostPreProcessFilterSplittingVisitor(FILTER_CAPABILITIES,null,null);
+    filter.accept(splitter,null);
+    postFilter=splitter.getFilterPost();
+    Filter preFilter=splitter.getFilterPre();
+    if (preFilter == Filter.INCLUDE) {
+      predicate=TruePredicate.INSTANCE;
+    }
+ else {
+      FilterToCriteria transformer=new FilterToCriteria();
+      predicate=(Predicate<String,ExecutionStatus>)preFilter.accept(transformer,null);
+    }
+  }
+ catch (  Exception e) {
+    postFilter=filter;
+    predicate=TruePredicate.INSTANCE;
+  }
+}
