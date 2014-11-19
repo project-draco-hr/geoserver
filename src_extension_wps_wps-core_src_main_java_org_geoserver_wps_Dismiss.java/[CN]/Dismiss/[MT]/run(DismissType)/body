@@ -1,0 +1,15 @@
+{
+  String executionId=request.getExecutionId();
+  ExecutionStatus status=statusTracker.getStatus(executionId);
+  if (status == null) {
+    throw new UnknownExecutionIdException(executionId);
+  }
+  if (status.getPhase() == ProcessState.DISMISSING) {
+    throw new UnknownExecutionIdException(executionId);
+  }
+  executionManager.cancel(executionId);
+  ExecutionStatus cancelledStatus=new ExecutionStatus(status);
+  cancelledStatus.setPhase(ProcessState.FAILED);
+  cancelledStatus.setException(new WPSException("The process execution has been dismissed"));
+  return new StatusResponseBuilder(resources,ctx).buildStatusResponse(cancelledStatus);
+}

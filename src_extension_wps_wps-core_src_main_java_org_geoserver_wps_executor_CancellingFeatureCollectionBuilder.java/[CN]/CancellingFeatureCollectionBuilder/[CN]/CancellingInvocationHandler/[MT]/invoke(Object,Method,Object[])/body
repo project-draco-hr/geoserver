@@ -1,0 +1,17 @@
+{
+  if (listener.isCanceled()) {
+    throw new ProcessDismissedException();
+  }
+  Object result=method.invoke(delegate,args);
+  if (result instanceof FeatureIterator<?>) {
+    Class[] interfaces;
+    if (result instanceof SimpleFeatureIterator) {
+      interfaces=new Class[]{SimpleFeatureIterator.class};
+    }
+ else {
+      interfaces=new Class[]{FeatureIterator.class};
+    }
+    result=Proxy.newProxyInstance(CancellingFeatureCollectionBuilder.class.getClassLoader(),interfaces,new CancellingInvocationHandler(listener,result));
+  }
+  return result;
+}
