@@ -1,0 +1,55 @@
+{
+  DataType data=input.getData();
+  Object result=null;
+  if (data.getLiteralData() != null) {
+    LiteralDataType literal=data.getLiteralData();
+    result=((LiteralPPIO)ppio).decode(literal.getValue());
+  }
+ else   if (data.getComplexData() != null) {
+    ComplexDataType complex=data.getComplexData();
+    if (ppio instanceof RawDataPPIO) {
+      Object inputData=complex.getData().get(0);
+      String encoding=complex.getEncoding();
+      byte[] decoded=null;
+      if (encoding != null) {
+        if ("base64".equals(encoding)) {
+          String input=inputData.toString();
+          decoded=Base64.decode(input);
+        }
+ else {
+          throw new WPSException("Unsupported encoding " + encoding);
+        }
+      }
+      if (decoded != null) {
+        return new ByteArrayRawData(decoded,complex.getMimeType());
+      }
+ else {
+        return new StringRawData(inputData.toString(),complex.getMimeType());
+      }
+    }
+ else {
+      Object inputData=complex.getData().get(0);
+      String encoding=complex.getEncoding();
+      byte[] decoded=null;
+      if (encoding != null) {
+        if ("base64".equals(encoding)) {
+          String input=inputData.toString();
+          decoded=Base64.decode(input);
+        }
+ else {
+          throw new WPSException("Unsupported encoding " + encoding);
+        }
+      }
+      if (decoded != null) {
+        result=((ComplexPPIO)ppio).decode(new ByteArrayInputStream(decoded));
+      }
+ else {
+        result=((ComplexPPIO)ppio).decode(inputData);
+      }
+    }
+  }
+ else   if (data.getBoundingBoxData() != null) {
+    result=((BoundingBoxPPIO)ppio).decode(data.getBoundingBoxData());
+  }
+  return result;
+}

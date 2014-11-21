@@ -1,0 +1,14 @@
+{
+  WebFeatureService wfs=(WebFeatureService)context.getBean("wfsServiceTarget");
+  GetFeatureType gft=null;
+  InputReferenceType ref=input.getReference();
+  if (ref.getMethod() == MethodType.POST_LITERAL) {
+    gft=(GetFeatureType)ref.getBody();
+  }
+ else {
+    GetFeatureKvpRequestReader reader=(GetFeatureKvpRequestReader)context.getBean("getFeatureKvpReader");
+    gft=(GetFeatureType)kvpParse(ref.getHref(),reader);
+  }
+  FeatureCollectionResponse featureCollectionType=wfs.getFeature(gft);
+  return ((ComplexPPIO)ppio).decode(featureCollectionType.getAdaptee());
+}

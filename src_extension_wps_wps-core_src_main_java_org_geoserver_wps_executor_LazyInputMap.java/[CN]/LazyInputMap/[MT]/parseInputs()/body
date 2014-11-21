@@ -3,39 +3,30 @@
     return;
   }
   parsed=true;
-  int longParses=0;
+  int totalSteps=0;
   for (  InputProvider provider : providers.values()) {
-    if (provider.longParse()) {
-      longParses++;
-    }
-  }
-  float fastParseStep, longParseStep;
-  if (longParses > 0) {
-    fastParseStep=1;
-    longParseStep=(100f - (providers.size() - longParses)) / longParses;
-  }
- else {
-    fastParseStep=100f / providers.size();
-    longParseStep=0;
+    totalSteps=provider.longStepCount();
   }
   listener.started();
-  int progress=0;
+  float stepsSoFar=0;
   for (  InputProvider provider : providers.values()) {
     listener.setTask(new SimpleInternationalString("Retrieving/parsing process input: " + provider.getInputId()));
     try {
-      Object value=provider.getValue();
+      float providerLongSteps=provider.longStepCount();
+      ProgressListener subListener;
+      if (providerLongSteps > 0) {
+        subListener=new SubProgressListener(listener,(stepsSoFar / totalSteps) * 100,(providerLongSteps / totalSteps) * 100);
+      }
+ else {
+        subListener=new NullProgressListener();
+      }
+      totalSteps+=providerLongSteps;
+      Object value=provider.getValue(subListener);
       values.put(provider.getInputId(),value);
     }
  catch (    Exception e) {
       listener.exceptionOccurred(e);
       throw new WPSException("Failed to retrieve value for input " + provider.getInputId(),e);
     }
-    if (provider.longParse()) {
-      progress+=longParseStep;
-    }
- else {
-      progress+=fastParseStep;
-    }
-    listener.progress(progress);
   }
 }
