@@ -1,0 +1,23 @@
+{
+  final WCSInfo wcsInfo=getWCS();
+  final boolean oldLatLon=wcsInfo.isLatLon();
+  wcsInfo.setLatLon(true);
+  getGeoServer().save(wcsInfo);
+  try {
+    MockHttpServletResponse response=getAsServletResponse("ows?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__2DLatLonCoverage&format=application/custom&subset=time,http://www.opengis.net/def/trs/ISO-8601/0/Gregorian UTC(\"2013-11-01T00:00:00.000Z\")&subset=BANDS(\"MyBand\")");
+    assertNotNull(response);
+    GridCoverage2D lastResult=applicationContext.getBean(WCSResponseInterceptor.class).getLastResult();
+    assertTrue(lastResult instanceof GranuleStack);
+    GranuleStack stack=(GranuleStack)lastResult;
+    for (    GridCoverage2D c : stack.getGranules()) {
+      System.out.println(c.getEnvelope());
+      assertEquals(45.,c.getEnvelope2D().getHeight(),0.001);
+      assertEquals(30.,c.getEnvelope2D().getWidth(),0.001);
+    }
+    assertEquals(1,stack.getGranules().size());
+  }
+  finally {
+    wcsInfo.setLatLon(oldLatLon);
+    getGeoServer().save(wcsInfo);
+  }
+}
