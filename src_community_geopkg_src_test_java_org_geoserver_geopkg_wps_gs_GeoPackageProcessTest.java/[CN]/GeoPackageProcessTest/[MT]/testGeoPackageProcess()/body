@@ -1,6 +1,9 @@
 {
   String urlPath=string(post("wps",getXml())).trim();
-  File file=getDataDirectory().findFile(urlPath.substring("http://localhost:8080/geoserver/".length()));
+  String resourceUrl=urlPath.substring("http://localhost:8080/geoserver/".length());
+  MockHttpServletResponse response=getAsServletResponse(resourceUrl);
+  File file=new File(getDataDirectory().findOrCreateDir("tmp"),"test.gpkg");
+  FileUtils.writeByteArrayToFile(file,getBinary(response));
   assertNotNull(file);
   assertEquals("test.gpkg",file.getName());
   assertTrue(file.exists());
