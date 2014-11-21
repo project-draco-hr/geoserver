@@ -1,0 +1,59 @@
+{
+  Name processName=Ows11Util.name(request.getIdentifier());
+  ProcessFactory pf=GeoServerProcessors.createProcessFactory(processName);
+  if (pf == null) {
+    throw new WPSException("Unknown process " + processName);
+  }
+  final Map<String,Parameter<?>> parameters=pf.getParameterInfo(processName);
+  Map<String,InputProvider> providers=new HashMap<String,InputProvider>();
+  Map<String,String> outputMimeParameters=AbstractRawData.getOutputMimeParameters(processName,pf);
+  if (!outputMimeParameters.isEmpty()) {
+    Map<String,String> requestedRawDataMimeTypes=getRequestedRawDataMimeTypes(outputMimeParameters.keySet(),processName,pf);
+    for (    Map.Entry<String,String> param : outputMimeParameters.entrySet()) {
+      String outputName=param.getKey();
+      String inputParameter=param.getValue();
+      String mime=requestedRawDataMimeTypes.get(outputName);
+      StringInputProvider provider=new StringInputProvider(mime,inputParameter);
+      providers.put(inputParameter,provider);
+    }
+  }
+  for (Iterator i=request.getDataInputs().getInput().iterator(); i.hasNext(); ) {
+    InputType input=(InputType)i.next();
+    String inputId=input.getIdentifier().getValue();
+    Parameter p=parameters.get(inputId);
+    if (p == null) {
+      throw new WPSException("No such parameter: " + inputId);
+    }
+    String mime=null;
+    if (input.getData() != null && input.getData().getComplexData() != null) {
+      mime=input.getData().getComplexData().getMimeType();
+    }
+ else     if (input.getReference() != null) {
+      mime=input.getReference().getMimeType();
+    }
+    ProcessParameterIO ppio=ProcessParameterIO.find(p,manager.applicationContext,mime);
+    if (ppio == null) {
+      throw new WPSException("Unable to decode input: " + inputId);
+    }
+    try {
+      InputProvider provider=AbstractInputProvider.getInputProvider(input,ppio,manager,manager.applicationContext);
+      if (p.maxOccurs > 1) {
+        ListInputProvider lp=(ListInputProvider)providers.get(p.key);
+        if (lp == null) {
+          lp=new ListInputProvider(provider);
+          providers.put(p.key,lp);
+        }
+ else {
+          lp.add(provider);
+        }
+      }
+ else {
+        providers.put(p.key,provider);
+      }
+    }
+ catch (    Exception e) {
+      throw new WPSException("Failed to parse process inputs",e);
+    }
+  }
+  return new LazyInputMap(providers);
+}

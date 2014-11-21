@@ -1,0 +1,21 @@
+{
+  float totalSteps=longStepCount();
+  float stepsSoFar=0;
+  if (value == null) {
+    value=new ArrayList<Object>();
+    for (    InputProvider provider : providers) {
+      float providerLongSteps=provider.longStepCount();
+      ProgressListener subListener;
+      if (providerLongSteps > 0) {
+        subListener=new SubProgressListener(listener,(stepsSoFar / totalSteps) * 100,(providerLongSteps / totalSteps) * 100);
+      }
+ else {
+        subListener=new NullProgressListener();
+      }
+      totalSteps+=providerLongSteps;
+      Object pv=provider.getValue(subListener);
+      value.add(pv);
+    }
+  }
+  return value;
+}

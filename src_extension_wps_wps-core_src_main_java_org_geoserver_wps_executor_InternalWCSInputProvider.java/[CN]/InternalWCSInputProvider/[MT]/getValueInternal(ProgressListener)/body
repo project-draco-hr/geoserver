@@ -1,0 +1,29 @@
+{
+  Object getCoverage=null;
+  InputReferenceType ref=input.getReference();
+  if (ref.getMethod() == MethodType.POST_LITERAL) {
+    getCoverage=ref.getBody();
+  }
+ else {
+    String version=getVersion(ref.getHref());
+    KvpRequestReader reader;
+    if (version.equals("1.0.0") || version.equals("1.0")) {
+      reader=(KvpRequestReader)context.getBean("wcs100GetCoverageRequestReader");
+    }
+ else {
+      reader=(KvpRequestReader)context.getBean("wcs111GetCoverageRequestReader");
+    }
+    getCoverage=kvpParse(ref.getHref(),reader);
+  }
+  if (getCoverage instanceof GetCoverageType) {
+    WebCoverageService111 wcs=(WebCoverageService111)context.getBean("wcs111ServiceTarget");
+    return wcs.getCoverage((net.opengis.wcs11.GetCoverageType)getCoverage)[0];
+  }
+ else   if (getCoverage instanceof net.opengis.wcs10.GetCoverageType) {
+    WebCoverageService100 wcs=(WebCoverageService100)context.getBean("wcs100ServiceTarget");
+    return wcs.getCoverage((net.opengis.wcs10.GetCoverageType)getCoverage)[0];
+  }
+ else {
+    throw new WPSException("Unrecognized request type " + getCoverage);
+  }
+}
