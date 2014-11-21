@@ -2,13 +2,14 @@
   final File file;
   URL path=contents.getPath();
   boolean remove=contents.getRemove() != null ? contents.getRemove() : true;
+  String outputName=contents.getName() + ".gpkg";
   if (!remove && path != null) {
     File urlToFile=DataUtilities.urlToFile(path);
     urlToFile.mkdirs();
     file=new File(urlToFile,contents.getName() + ".gpkg");
   }
  else {
-    file=new File(createTempDir(storage.getStorage()),contents.getName() + ".gpkg");
+    file=resources.getOutputResource(null,outputName).file();
   }
   GeoPackage gpkg=new GeoPackage(file);
   gpkg.init();
@@ -212,6 +213,6 @@
     return path;
   }
  else {
-    return storage.getURL(file);
+    return new URL(resources.getOutputResourceUrl(outputName,"application/x-gpkg"));
   }
 }

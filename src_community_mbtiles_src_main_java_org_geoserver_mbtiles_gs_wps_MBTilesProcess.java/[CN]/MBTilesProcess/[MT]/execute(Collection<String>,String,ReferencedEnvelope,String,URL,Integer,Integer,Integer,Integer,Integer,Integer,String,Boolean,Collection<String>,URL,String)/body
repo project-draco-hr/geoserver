@@ -14,13 +14,15 @@
     throw new ProcessException("Layers and styleNames must have the same size");
   }
   final File file;
+  String outputResourceName=name + ".mbtiles";
   if (path != null) {
     File urlToFile=DataUtilities.urlToFile(path);
     urlToFile.mkdirs();
-    file=new File(urlToFile,name + ".mbtiles");
+    file=new File(urlToFile,outputResourceName);
   }
  else {
-    file=new File(createTempDir(storage.getStorage()),name + ".mbtiles");
+    final Resource resource=resources.getOutputResource(null,outputResourceName);
+    file=resource.file();
   }
   MBTilesFile mbtile=new MBTilesFile(file,true);
   try {
@@ -147,6 +149,6 @@
     return DataUtilities.fileToURL(file);
   }
  else {
-    return storage.getURL(file);
+    return new URL(resources.getOutputResourceUrl(outputResourceName,"application/x-mbtiles"));
   }
 }
