@@ -26,18 +26,17 @@
     LOGGER.fine(Joiner.on("").join("query returned ",ids.size()," records in ",sw.toString()));
   }
   List<T> lazyTransformed=Lists.transform(ids,new Function<String,T>(){
-    @Override public T apply(    String id){
+    @Nullable @Override public T apply(    String id){
       return getById(id,of);
     }
   }
 );
   CloseableIterator<T> result;
+  Iterator<T> iterator=Iterators.filter(lazyTransformed.iterator(),com.google.common.base.Predicates.notNull());
   if (fullySupported) {
-    Iterator<T> iterator=lazyTransformed.iterator();
     result=new CloseableIteratorAdapter<T>(iterator);
   }
  else {
-    Iterator<T> iterator=lazyTransformed.iterator();
     result=CloseableIteratorAdapter.filter(iterator,filter);
     assert(!sqlBuilder.isOffsetLimitApplied());
     result=applyOffsetLimit(result,offset,limit);
