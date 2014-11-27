@@ -1,36 +1,21 @@
 {
-  Event e=message.getMessageObject();
+  Event event=message.getMessageObject();
   if (!isStarted()) {
     if (LOGGER.isLoggable(Level.FINER)) {
-      LOGGER.finer(format("Ignoring message: %s. Service is not started.",e));
+      LOGGER.finer(format("Ignoring message: %s. Service is not started.",event));
     }
     return;
   }
   Metrics.newCounter(getClass(),"recieved").inc();
-  if (localAddress(cluster.getHz()).equals(e.getSource())) {
+  if (localAddress(cluster.getHz()).equals(event.getSource())) {
     if (LOGGER.isLoggable(Level.FINER)) {
-      LOGGER.finer(format("%s - Skipping message generated locally: %s",nodeId(),e));
+      LOGGER.finer(format("%s - Skipping message generated locally: %s",nodeId(),event));
     }
     return;
   }
   if (LOGGER.isLoggable(Level.FINE)) {
-    LOGGER.fine(format("%s - Received event %s",nodeId(),e));
+    LOGGER.fine(format("%s - Received event %s",nodeId(),event));
   }
-  queue.add(message.getMessageObject());
   final int syncDelay=configWatcher.get().getSyncDelay();
-  executor.schedule(new Runnable(){
-    @Override public void run(){
-      if (queue.isEmpty()) {
-        return;
-      }
-      try {
-        processEventQueue(queue);
-      }
- catch (      Exception e) {
-        LOGGER.log(Level.WARNING,format("%s - Event processing failed",nodeId()),e);
-      }
-      Metrics.newCounter(getClass(),"reloads").inc();
-    }
-  }
-,syncDelay,TimeUnit.SECONDS);
+  executor.schedule(new EventWorker(event),syncDelay,TimeUnit.SECONDS);
 }

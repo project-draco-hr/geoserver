@@ -18,6 +18,7 @@
   expect(this.cluster.isEnabled()).andStubReturn(true);
   expect(this.cluster.getRawCatalog()).andStubReturn(catalog);
   ;
+  expect(this.cluster.getAckTimeoutMillis()).andStubReturn(100);
   expect(hz.<Event>getTopic(TOPIC_NAME)).andStubReturn(topic);
   expect(topic.addMessageListener(capture(captureTopicListener))).andReturn("fake-id");
   expectLastCall().anyTimes();
@@ -56,6 +57,6 @@
   catalog.addListener(capture(catListenerCapture));
   expectLastCall().atLeastOnce();
   executor=createMock(ScheduledExecutorService.class);
-  captureExecutor=new Capture<Runnable>();
+  captureExecutor=new Capture<Runnable>(CaptureType.ALL);
   expect(executor.schedule(capture(captureExecutor),anyLong(),(TimeUnit)anyObject())).andStubReturn(null);
 }

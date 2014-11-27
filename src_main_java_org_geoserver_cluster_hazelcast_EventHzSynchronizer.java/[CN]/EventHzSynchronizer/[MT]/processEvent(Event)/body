@@ -1,0 +1,23 @@
+{
+  Preconditions.checkState(isStarted());
+  if (!(event instanceof ConfigChangeEvent)) {
+    return;
+  }
+  try {
+    LOGGER.fine(format("%s - Processing event %s",nodeId(),event));
+    ConfigChangeEvent ce=(ConfigChangeEvent)event;
+    Class<? extends Info> clazz=ce.getObjectInterface();
+    if (CatalogInfo.class.isAssignableFrom(clazz)) {
+      processCatalogEvent(ce);
+    }
+ else {
+      processGeoServerConfigEvent(ce);
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,format("%s - Error processing event %s",nodeId(),event),e);
+  }
+ finally {
+    ack(event);
+  }
+}

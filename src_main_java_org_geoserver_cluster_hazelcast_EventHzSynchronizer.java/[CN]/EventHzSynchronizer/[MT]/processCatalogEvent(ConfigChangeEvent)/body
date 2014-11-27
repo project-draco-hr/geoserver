@@ -1,9 +1,9 @@
 {
   Class<? extends Info> clazz=event.getObjectInterface();
-  Type t=event.getChangeType();
-  String id=event.getObjectId();
-  String name=event.getObjectName();
-  String nativeName=event.getNativeName();
+  final Type t=event.getChangeType();
+  final String id=event.getObjectId();
+  final String name=event.getObjectName();
+  final @Nullable String nativeName=event.getNativeName();
   CatalogInfo subj;
   Method notifyMethod;
   CatalogEventImpl evt;
@@ -22,7 +22,7 @@ break;
 case REMOVE:
 notifyMethod=CatalogListener.class.getMethod("handleRemoveEvent",CatalogRemoveEvent.class);
 evt=new CatalogRemoveEventImpl();
-RemovedObjectProxy proxy=new RemovedObjectProxy(id,name,clazz);
+RemovedObjectProxy proxy=new RemovedObjectProxy(id,name,clazz,nativeName);
 if (ResourceInfo.class.isAssignableFrom(clazz) && event.getStoreId() != null) {
 proxy.addCatalogCollaborator("store",cat.getStore(event.getStoreId(),StoreInfo.class));
 }
@@ -32,11 +32,6 @@ default :
 throw new IllegalStateException("Should not happen");
 }
 if (subj == null) {
-ConfigChangeEvent removeEvent=new ConfigChangeEvent(id,name,clazz,Type.REMOVE);
-if (queue.contains(removeEvent)) {
-LOGGER.fine(format("%s - Ignoring event %s, a remove is queued.",nodeId(),event));
-return;
-}
 if (subj == null) {
 String message=format("%s - Error processing event %s: object not found in catalog",nodeId(),event);
 LOGGER.warning(message);
