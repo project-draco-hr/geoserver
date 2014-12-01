@@ -1,7 +1,12 @@
 {
   GWC mediator=GWC.get();
+  GeoServerTileLayer tileLayer=(GeoServerTileLayer)mediator.getTileLayerByName(tileLayerModel.getObject().getName());
   mediator.removeTileLayers(Arrays.asList(tileLayerModel.getObject().getName()));
   assertNull(mediator.getTileLayer(layerModel.getObject()));
+  GWCConfig config=mediator.getConfig();
+  boolean defaultCaching=config.isCacheLayersByDefault();
+  config.setCacheLayersByDefault(true);
+  mediator.saveConfig(config);
   GeoServerTileLayerInfo newInfo=TileLayerInfoUtil.loadOrCreate(layerModel.getObject(),mediator.getConfig());
   tileLayerModel=new GeoServerTileLayerInfoModel(newInfo,true);
   tester.startPage(new FormTestPage(new ComponentBuilder(){
@@ -12,9 +17,15 @@
   }
 ));
   tester.assertComponent("form:panel",LayerCacheOptionsTabPanel.class);
+  FormTester formTester=tester.newFormTester("form");
+  formTester.setValue("panel:tileLayerEditor:createTileLayer",false);
+  formTester.submit();
   LayerCacheOptionsTabPanel panel=(LayerCacheOptionsTabPanel)tester.getComponentFromLastRenderedPage("form:panel");
   panel.save();
   assertNotNull(tileLayerModel.getEnabled());
-  assertTrue(tileLayerModel.getEnabled().booleanValue());
-  assertNotNull(mediator.getTileLayer(layerModel.getObject()));
+  assertFalse(tileLayerModel.getEnabled().booleanValue());
+  assertNull(mediator.getTileLayer(layerModel.getObject()));
+  config.setCacheLayersByDefault(defaultCaching);
+  mediator.saveConfig(config);
+  mediator.add(tileLayer);
 }
