@@ -1,0 +1,54 @@
+{
+  String statusLocation=submitMonkey("x3");
+  Map<String,Object> kvp=KvpUtils.parseQueryString(statusLocation);
+  String executionId=(String)kvp.get("executionId");
+  MonkeyProcess.progress("x3",100f,true);
+  Document dom=getAsDOM(statusLocation);
+  assertXpathExists("//wps:ProcessStarted",dom);
+  assertXpathEvaluatesTo("50","//wps:ProcessStarted/@percentCompleted",dom);
+  final AtomicBoolean returnFlag=new AtomicBoolean(false);
+  SimpleFeatureType featureType=buildSampleFeatureType();
+  ListFeatureCollection fc=new ListFeatureCollection(featureType){
+    @Override public SimpleFeatureIterator features(){
+      while (returnFlag.get() == false) {
+        try {
+          Thread.sleep(20);
+        }
+ catch (        InterruptedException e) {
+        }
+      }
+      return super.features();
+    }
+    @Override protected Iterator openIterator(){
+      while (returnFlag.get() == false) {
+        try {
+          Thread.sleep(20);
+        }
+ catch (        InterruptedException e) {
+        }
+      }
+      return super.openIterator();
+    }
+  }
+;
+  MonkeyProcess.exit("x3",fc,true);
+  ProcessStatusTracker statusTracker=GeoServerExtensions.bean(ProcessStatusTracker.class,applicationContext);
+  dom=getAsDOM("wps?service=WPS&version=1.0.0&request=Dismiss&executionId=" + executionId);
+  assertXpathExists("//wps:ProcessFailed",dom);
+  ExecutionStatus status=statusTracker.getStatus(executionId);
+  Assert.assertEquals(ProcessState.DISMISSING,status.getPhase());
+  returnFlag.set(true);
+  while (status != null && status.getPhase() == ProcessState.DISMISSING) {
+    Thread.sleep(50);
+    status=statusTracker.getStatus(executionId);
+    if (status != null) {
+      Assert.assertEquals(ProcessState.DISMISSING,status.getPhase());
+    }
+  }
+  WPSResourceManager resources=GeoServerExtensions.bean(WPSResourceManager.class,applicationContext);
+  ProcessArtifactsStore artifactsStore=resources.getArtifactsStore();
+  List<Resource> executionResources=artifactsStore.listExecutionResourcess();
+  for (  Resource r : executionResources) {
+    assertNotEquals(executionId,r.name());
+  }
+}

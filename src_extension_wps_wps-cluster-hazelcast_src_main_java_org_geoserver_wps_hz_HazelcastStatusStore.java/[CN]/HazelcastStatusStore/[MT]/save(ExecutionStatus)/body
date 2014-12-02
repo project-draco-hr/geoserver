@@ -1,3 +1,21 @@
 {
-  statuses.put(status.getExecutionId(),new ExecutionStatus(status));
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Saving status " + status);
+  }
+  boolean succeded=false;
+  while (!succeded) {
+    ExecutionStatus oldStatus=statuses.get(status.getExecutionId());
+    if (oldStatus != null) {
+      ProcessState previousPhase=oldStatus.getPhase();
+      ProcessState currPhase=status.getPhase();
+      if (!currPhase.isValidSuccessor(previousPhase)) {
+        throw new WPSException("Cannot switch process status from " + previousPhase + " to "+ currPhase);
+      }
+      succeded=statuses.replace(status.getExecutionId(),oldStatus,new ExecutionStatus(status));
+    }
+ else {
+      ExecutionStatus previous=statuses.put(status.getExecutionId(),status);
+      succeded=previous == null;
+    }
+  }
 }

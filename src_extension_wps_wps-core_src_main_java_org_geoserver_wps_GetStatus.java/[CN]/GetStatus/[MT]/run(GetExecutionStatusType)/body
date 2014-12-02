@@ -2,7 +2,7 @@
   String executionId=request.getExecutionId();
   ExecutionStatus status=tracker.getStatus(executionId);
   if (status == null) {
-    throw new WPSException("Unknown execution id " + executionId + ", either the execution was never submitted or too much time "+ "elapsed since the process completed");
+    throw new UnknownExecutionIdException(executionId);
   }
   if (status.getPhase().isExecutionCompleted()) {
     Resource storedResponse=resources.getStoredResponse(executionId);
@@ -13,22 +13,10 @@
       return storedResponse;
     }
   }
+ else   if (status.getPhase() == ProcessState.DISMISSING) {
+    throw new UnknownExecutionIdException(executionId);
+  }
  else {
-    try {
-      ExecuteType execute=status.getRequest();
-      if (execute == null) {
-        execute=resources.getStoredRequestObject(executionId);
-      }
-      if (execute == null) {
-        throw new WPSException("Could not locate the original request for execution id: " + executionId);
-      }
- else {
-        ExecuteResponseBuilder builder=new ExecuteResponseBuilder(execute,ctx,status);
-        return builder.build();
-      }
-    }
- catch (    IOException e) {
-      throw new WPSException("Failed to write status response",e);
-    }
+    return new StatusResponseBuilder(resources,ctx).buildStatusResponse(status);
   }
 }
