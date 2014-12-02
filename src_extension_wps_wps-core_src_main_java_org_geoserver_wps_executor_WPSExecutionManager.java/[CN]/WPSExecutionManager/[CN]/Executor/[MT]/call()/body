@@ -2,12 +2,17 @@
   if (transfer != null) {
     try {
       transfer.apply();
-      localProcessExecutionIds.add(status.getExecutionId());
+      localProcesses.put(status.getExecutionId(),notifier);
       return execute();
     }
   finally {
-      localProcessExecutionIds.remove(status.getExecutionId());
-      transfer.cleanup();
+      localProcesses.remove(status.getExecutionId());
+      try {
+        transfer.cleanup();
+      }
+  finally {
+        resourceManager.finished(status.getExecutionId());
+      }
     }
   }
  else {

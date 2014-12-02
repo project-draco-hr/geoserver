@@ -12,6 +12,12 @@
   }
  else {
     LOGGER.log(Level.INFO,"Submitting new asynch process " + processName.getURI() + " with execution id "+ executionId);
+    try {
+      resourceManager.storeRequestObject(request.getRequest(),executionId);
+    }
+ catch (    IOException e) {
+      throw new WPSException("Failed to store original WPS request, which " + "will be needed to encode the output",e);
+    }
     ExecuteResponseBuilder builder=new ExecuteResponseBuilder(request.getRequest(),applicationContext,status);
     response=builder.build();
     executors.submit(executor);

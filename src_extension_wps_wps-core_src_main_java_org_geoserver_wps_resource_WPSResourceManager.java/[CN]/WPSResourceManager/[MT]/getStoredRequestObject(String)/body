@@ -5,8 +5,12 @@
   }
  else {
     try (InputStream in=resource.in()){
-      XStream xs=new XStream(new BinaryStreamDriver());
-      return (ExecuteType)xs.fromXML(in);
+      WPSConfiguration config=new WPSConfiguration();
+      Parser parser=new Parser(config);
+      return (ExecuteType)parser.parse(in);
     }
-   }
+ catch (    SAXException|ParserConfigurationException e) {
+      throw new WPSException("Could not parse the stored WPS request",e);
+    }
+  }
 }

@@ -1,0 +1,19 @@
+{
+  ExecutionResources executionResources=resourceCache.get(id);
+  for (  WPSResource resource : executionResources.temporary) {
+    try {
+      resource.delete();
+    }
+ catch (    Throwable t) {
+      LOGGER.log(Level.WARNING,"Failed to clean up the WPS resource " + resource.getName(),t);
+    }
+  }
+  if (cancelled) {
+    try {
+      artifactsStore.clearArtifacts(id);
+    }
+ catch (    IOException e) {
+      throw new WPSException("Failed to clear the process artifacts");
+    }
+  }
+}

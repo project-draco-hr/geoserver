@@ -1,0 +1,31 @@
+{
+  final List<ExecutionStatus> selection=table.getSelection();
+  if (selection.size() == 0)   return;
+  dialog.setTitle(new ParamResourceModel("confirmDismissal",this));
+  dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+    protected Component getContents(    String id){
+      return new Label(id,new ParamResourceModel("confirmDismissProcesses",ProcessStatusPage.this));
+    }
+    protected boolean onSubmit(    AjaxRequestTarget target,    Component contents){
+      WPSExecutionManager executor=GeoServerApplication.get().getBeanOfType(WPSExecutionManager.class);
+      for (      ExecutionStatus status : selection) {
+        try {
+          executor.cancel(status.getExecutionId());
+        }
+ catch (        Exception e) {
+          LOGGER.severe("Failed to cancel process: " + status.getExecutionId());
+          error("Failed to cancel process: " + status.getExecutionId() + " with error: "+ e.getMessage());
+        }
+      }
+      return true;
+    }
+    @Override public void onClose(    AjaxRequestTarget target){
+      if (table.getSelection().size() == 0) {
+        setEnabled(false);
+        target.addComponent(ProcessDismissLink.this);
+        target.addComponent(table);
+      }
+    }
+  }
+);
+}
