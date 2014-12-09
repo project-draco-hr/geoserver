@@ -42,11 +42,10 @@
  else {
       String[] period=date.split("/");
       if (period.length == 3) {
-        final Date begin=beginning(getFuzzyDate(period[0]));
-        final Date end=end(getFuzzyDate(period[1]));
+        Date[] range=parseTimeDuration(period);
         final long millisIncrement=parsePeriod(period[2]);
-        final long startTime=begin.getTime();
-        final long endTime=end.getTime();
+        final long startTime=range[0].getTime();
+        final long endTime=range[1].getTime();
         long time;
         int j=0;
         while ((time=j * millisIncrement + startTime) <= endTime) {
@@ -61,9 +60,8 @@
         }
       }
  else       if (period.length == 2) {
-        final Date begin=beginning(getFuzzyDate(period[0]));
-        final Date end=end(getFuzzyDate(period[1]));
-        addPeriod(result,new DateRange(begin,end));
+        Date[] range=parseTimeDuration(period);
+        addPeriod(result,new DateRange(range[0],range[1]));
       }
  else {
         throw new ParseException("Invalid time period: " + Arrays.toString(period),0);
