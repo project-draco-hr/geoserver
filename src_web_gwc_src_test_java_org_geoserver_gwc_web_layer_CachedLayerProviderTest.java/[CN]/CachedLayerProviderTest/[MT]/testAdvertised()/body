@@ -1,0 +1,16 @@
+{
+  GWC oldGWC=GWC.get();
+  GWC gwc=mock(GWC.class);
+  GWC.set(gwc);
+  TileLayer l=mock(TileLayer.class);
+  when(l.isAdvertised()).thenReturn(false);
+  Set<String> tileLayerNames=gwc.getTileLayerNames();
+  tileLayerNames.add("testUnAdvertised");
+  int gwcSize=tileLayerNames.size() - 1;
+  when(gwc.getTileLayerNames()).thenReturn(tileLayerNames);
+  when(gwc.getTileLayerByName("testUnAdvertised")).thenReturn(l);
+  CachedLayerProvider provider=new CachedLayerProvider();
+  int providerSize=provider.getItems().size();
+  assertEquals(gwcSize,providerSize);
+  GWC.set(oldGWC);
+}
