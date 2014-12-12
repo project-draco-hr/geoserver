@@ -1,6 +1,6 @@
 {
   Name processName=Ows11Util.name(request.getIdentifier());
-  ProcessFactory pf=GeoServerProcessors.createProcessFactory(processName);
+  ProcessFactory pf=GeoServerProcessors.createProcessFactory(processName,true);
   if (pf == null) {
     throw new WPSException("Unknown process " + processName);
   }
@@ -35,12 +35,14 @@
     if (ppio == null) {
       throw new WPSException("Unable to decode input: " + inputId);
     }
+    Collection<Validator> validators=(Collection<Validator>)p.metadata.get(ProcessLimitsFilter.VALIDATORS_KEY);
+    List<Validator> filteredValidators=Validators.filterOutClasses(validators,MultiplicityValidator.class);
     try {
-      InputProvider provider=AbstractInputProvider.getInputProvider(input,ppio,manager,manager.applicationContext);
+      InputProvider provider=AbstractInputProvider.getInputProvider(input,ppio,manager,manager.applicationContext,validators);
       if (p.maxOccurs > 1) {
         ListInputProvider lp=(ListInputProvider)providers.get(p.key);
         if (lp == null) {
-          lp=new ListInputProvider(provider);
+          lp=new ListInputProvider(provider,p.getMaxOccurs());
           providers.put(p.key,lp);
         }
  else {

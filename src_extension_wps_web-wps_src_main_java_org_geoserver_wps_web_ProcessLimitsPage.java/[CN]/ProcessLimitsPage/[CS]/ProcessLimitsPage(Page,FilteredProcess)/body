@@ -1,0 +1,84 @@
+{
+  setReturnPage(returnPage);
+  this.process=process;
+  Form form=new Form("form");
+  add(form);
+  final List<InputLimit> inputLimits=buildInputLimits(process);
+  GeoServerDataProvider<InputLimit> inputLimitsProvider=new GeoServerDataProvider<ProcessLimitsPage.InputLimit>(){
+    @Override protected List<org.geoserver.web.wicket.GeoServerDataProvider.Property<InputLimit>> getProperties(){
+      List<Property<InputLimit>> result=new ArrayList<>();
+      result.add(new BeanProperty<InputLimit>("name","name"));
+      result.add(new PropertyPlaceholder("type"));
+      result.add(new BeanProperty<InputLimit>("editor","validator"));
+      return result;
+    }
+    @Override protected List<InputLimit> getItems(){
+      return inputLimits;
+    }
+  }
+;
+  table=new GeoServerTablePanel<InputLimit>("table",inputLimitsProvider){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<InputLimit> property){
+      InputLimit limit=(InputLimit)itemModel.getObject();
+      String propertyName=property.getName();
+      if (propertyName.equals("type")) {
+        String type;
+        try {
+          String key="type." + limit.getValidator().getClass().getName();
+          type=new ParamResourceModel(key,ProcessLimitsPage.this).getString();
+        }
+ catch (        Exception e) {
+          type=limit.validator.getClass().getSimpleName();
+        }
+        return new Label(id,type);
+      }
+ else       if (propertyName.equals("editor")) {
+        WPSInputValidator validator=limit.getValidator();
+        if (validator instanceof MaxSizeValidator) {
+          Fragment f=new Fragment(id,"textEditor",ProcessLimitsPage.this);
+          PropertyModel maxSizeModel=new PropertyModel(itemModel,"validator.maxSizeMB");
+          TextField<Integer> text=new TextField<Integer>("text",maxSizeModel,Integer.class);
+          f.add(text);
+          return f;
+        }
+ else         if (validator instanceof MultiplicityValidator) {
+          Fragment f=new Fragment(id,"textEditor",ProcessLimitsPage.this);
+          PropertyModel maxMultiplicityModel=new PropertyModel(itemModel,"validator.maxInstances");
+          TextField<Integer> text=new TextField<Integer>("text",maxMultiplicityModel,Integer.class);
+          f.add(text);
+          return f;
+        }
+ else         if (validator instanceof NumberRangeValidator) {
+          Fragment f=new Fragment(id,"rangeEditor",ProcessLimitsPage.this);
+          PropertyModel rangeModel=new PropertyModel(itemModel,"validator.range");
+          RangePanel rangeEditor=new RangePanel("range",rangeModel);
+          f.add(rangeEditor);
+          return f;
+        }
+      }
+      return null;
+    }
+  }
+;
+  table.setOutputMarkupId(true);
+  table.setFilterable(false);
+  table.setPageable(false);
+  table.setItemReuseStrategy(new DefaultItemReuseStrategy());
+  table.setSortable(false);
+  form.add(table);
+  SubmitLink apply=new SubmitLink("apply"){
+    @Override public void onSubmit(){
+      process.setValidators(buildValidators(inputLimits));
+      doReturn();
+    }
+  }
+;
+  form.add(apply);
+  Link cancel=new Link("cancel"){
+    @Override public void onClick(){
+      doReturn();
+    }
+  }
+;
+  form.add(cancel);
+}

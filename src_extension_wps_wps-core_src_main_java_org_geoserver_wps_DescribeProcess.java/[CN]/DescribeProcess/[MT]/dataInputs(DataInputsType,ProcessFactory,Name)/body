@@ -39,7 +39,9 @@
         addAllowedValues(literal,enumValues);
       }
  else {
-        literal.setAnyValue(owsf.createAnyValueType());
+        Object min=p.metadata.get(Param.MIN);
+        Object max=p.metadata.get(Param.MAX);
+        addAllowedValues(literal,min,max);
       }
       try {
         if (p.sample != null) {
@@ -56,6 +58,12 @@
  else {
       SupportedComplexDataInputType complex=wpsf.createSupportedComplexDataInputType();
       input.setComplexData(complex);
+      if (p.metadata.get(MaxSizeValidator.PARAMETER_KEY) instanceof Number) {
+        int maxSize=((Number)p.metadata.get(MaxSizeValidator.PARAMETER_KEY)).intValue();
+        if (maxSize > 0) {
+          complex.setMaximumMegabytes(BigInteger.valueOf(maxSize));
+        }
+      }
       complex.setSupported(wpsf.createComplexDataCombinationsType());
       for (      ProcessParameterIO ppio : ppios) {
         ComplexPPIO cppio=(ComplexPPIO)ppio;

@@ -1,0 +1,23 @@
+{
+  login();
+  WPSInfo wps=getGeoServerApplication().getGeoServer().getService(WPSInfo.class);
+  ProcessGroupInfo rasterGroup=getRasterGroup(wps.getProcessGroups());
+  ProcessInfo pi=getProcess(rasterGroup.getFilteredProcesses(),"Contour");
+  WPSAccessRulePage accessRulePage=(WPSAccessRulePage)tester.startPage(new WPSAccessRulePage());
+  ProcessSelectionPage selectionPage=(ProcessSelectionPage)tester.startPage(new ProcessSelectionPage(accessRulePage,rasterGroup));
+  FilteredProcess filteredProcess=new FilteredProcess(pi.getName(),"");
+  filteredProcess.setValidators(pi.getValidators());
+  ProcessLimitsPage limitsPage=(ProcessLimitsPage)tester.startPage(new ProcessLimitsPage(selectionPage,filteredProcess));
+  OddEvenItem item=(OddEvenItem)tester.getComponentFromLastRenderedPage("form:table:listContainer:items:1");
+  InputLimit il=(InputLimit)item.getDefaultModelObject();
+  assertEquals("data",il.getName());
+  assertEquals(new Integer(1),item.get("itemProperties:2:component:text").getDefaultModelObject());
+  item=(OddEvenItem)tester.getComponentFromLastRenderedPage("form:table:listContainer:items:3");
+  il=(InputLimit)item.getDefaultModelObject();
+  assertEquals("levels",il.getName());
+  assertEquals(new NumberRange(Double.class,-8000d,8000d),item.get("itemProperties:2:component:range").getDefaultModelObject());
+  item=(OddEvenItem)tester.getComponentFromLastRenderedPage("form:table:listContainer:items:4");
+  il=(InputLimit)item.getDefaultModelObject();
+  assertEquals("levels",il.getName());
+  assertEquals(new Integer(3),item.get("itemProperties:2:component:text").getDefaultModelObject());
+}

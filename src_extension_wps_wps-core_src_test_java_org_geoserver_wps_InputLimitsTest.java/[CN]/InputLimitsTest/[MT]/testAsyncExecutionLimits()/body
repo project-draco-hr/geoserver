@@ -1,0 +1,14 @@
+{
+  String request="wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&storeExecuteResponse=true&DataInputs=" + urlEncode("id=x2");
+  Document dom=getAsDOM(request);
+  assertXpathExists("//wps:ProcessAccepted",dom);
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  String fullStatusLocation=xpath.evaluate("//wps:ExecuteResponse/@statusLocation",dom);
+  String statusLocation=fullStatusLocation.substring(fullStatusLocation.indexOf('?') - 3);
+  Thread.sleep(3000);
+  MonkeyProcess.progress("x2",50f,true);
+  dom=waitForProcessEnd(statusLocation,10);
+  XMLAssert.assertXpathExists("//wps:Status/wps:ProcessFailed",dom);
+  String message=xpath.evaluate("//wps:Status/wps:ProcessFailed/ows:ExceptionReport/ows:Exception/ows:ExceptionText",dom);
+  assertTrue(message.contains("went beyond the configured limits of 2 seconds"));
+}
