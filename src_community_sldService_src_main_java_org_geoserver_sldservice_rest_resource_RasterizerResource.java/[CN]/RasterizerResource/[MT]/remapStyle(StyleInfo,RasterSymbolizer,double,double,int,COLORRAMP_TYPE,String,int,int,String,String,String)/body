@@ -1,0 +1,66 @@
+{
+  StyleBuilder sb=new StyleBuilder();
+  ColorMap originalColorMap=rasterSymbolizer.getColorMap();
+  ColorMap resampledColorMap=null;
+  int numClasses=originalColorMap.getColorMapEntries().length;
+  if (classes > 0) {
+    final String[] labels=new String[classes + 1];
+    final double[] quantities=new double[classes + 1];
+    ColorRamp colorRamp=null;
+    quantities[0]=min - DEFAULT_MIN_DECREMENT;
+    if (colorMapType == ColorMap.TYPE_INTERVALS) {
+      max=max + DEFAULT_MIN_DECREMENT;
+      min=min + DEFAULT_MIN_DECREMENT;
+    }
+    double res=(max - min) / (classes - 1);
+    labels[0]="transparent";
+    final String format="%." + digits + "f";
+    for (int c=1; c <= classes; c++) {
+      quantities[c]=min + res * (c - 1);
+      labels[c]=String.format(Locale.US,format,quantities[c]);
+    }
+switch (ramp) {
+case RED:
+      colorRamp=new RedColorRamp();
+    break;
+case BLUE:
+  colorRamp=new BlueColorRamp();
+break;
+case GRAY:
+colorRamp=new GrayColorRamp();
+break;
+case JET:
+colorRamp=new JetColorRamp();
+break;
+case RANDOM:
+colorRamp=new RandomColorRamp();
+break;
+case CUSTOM:
+colorRamp=new CustomColorRamp();
+CustomColorRamp customRamp=(CustomColorRamp)colorRamp;
+if (startColor != null) {
+customRamp.setStartColor(Color.decode(startColor));
+}
+if (endColor != null) {
+customRamp.setEndColor(Color.decode(endColor));
+}
+if (midColor != null) {
+customRamp.setMid(Color.decode(midColor));
+}
+break;
+}
+colorRamp.setNumClasses(classes);
+List<Color> realColorRamp=new ArrayList<Color>();
+realColorRamp.add(Color.BLACK);
+realColorRamp.addAll(colorRamp.getRamp());
+resampledColorMap=sb.createColorMap(labels,quantities,realColorRamp.toArray(new Color[1]),colorMapType);
+FilterFactory2 filterFactory=CommonFactoryFinder.getFilterFactory2(null);
+resampledColorMap.getColorMapEntry(0).setOpacity(filterFactory.literal(0));
+}
+ else {
+return defaultStyle.getStyle();
+}
+rasterSymbolizer.setColorMap(resampledColorMap);
+Style style=sb.createStyle(layerName,rasterSymbolizer);
+return style;
+}

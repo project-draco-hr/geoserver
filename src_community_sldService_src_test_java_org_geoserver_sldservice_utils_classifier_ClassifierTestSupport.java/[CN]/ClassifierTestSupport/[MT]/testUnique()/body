@@ -1,0 +1,24 @@
+{
+  attributes.put("layer",FEATURETYPE_LAYER);
+  attributes.put("attribute","name");
+  attributes.put("intervals",3);
+  attributes.put("method","uniqueInterval");
+  initRequestUrl(request,"xml");
+  resource.handleGet();
+  assertNotNull(responseEntity);
+  assertTrue(responseEntity instanceof Representation);
+  Representation representation=(Representation)responseEntity;
+  String resultXml=representation.getText().replace("\r","").replace("\n","");
+  Rule[] rules=checkRules(resultXml.replace("<Rules>",sldPrefix).replace("</Rules>",sldPostfix),3);
+  checkRule(rules[0],"#550000",org.opengis.filter.PropertyIsEqualTo.class);
+  checkRule(rules[1],"#8C0000",org.opengis.filter.PropertyIsEqualTo.class);
+  checkRule(rules[2],"#C30000",org.opengis.filter.PropertyIsEqualTo.class);
+  TreeSet<String> orderedRules=new TreeSet<String>();
+  orderedRules.add(rules[0].getTitle());
+  orderedRules.add(rules[1].getTitle());
+  orderedRules.add(rules[2].getTitle());
+  Iterator iter=orderedRules.iterator();
+  assertEquals("bar",iter.next());
+  assertEquals("foo",iter.next());
+  assertEquals("foobar",iter.next());
+}

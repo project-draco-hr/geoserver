@@ -1,0 +1,16 @@
+{
+  attributes.put("layer",FEATURETYPE_LAYER);
+  attributes.put("attribute","id");
+  attributes.put("intervals",3);
+  attributes.put("open",true);
+  initRequestUrl(request,"xml");
+  resource.handleGet();
+  assertNotNull(responseEntity);
+  assertTrue(responseEntity instanceof Representation);
+  Representation representation=(Representation)responseEntity;
+  String resultXml=representation.getText().replace("\r","").replace("\n","");
+  Rule[] rules=checkRules(resultXml.replace("<Rules>",sldPrefix).replace("</Rules>",sldPostfix),3);
+  checkRule(rules[0],"#550000",org.opengis.filter.PropertyIsLessThanOrEqualTo.class);
+  checkRule(rules[1],"#8C0000",org.opengis.filter.And.class);
+  checkRule(rules[2],"#C30000",org.opengis.filter.PropertyIsGreaterThan.class);
+}

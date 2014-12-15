@@ -1,0 +1,18 @@
+{
+  attributes.put("layer",FEATURETYPE_LAYER);
+  attributes.put("attribute","foo");
+  attributes.put("intervals",3);
+  attributes.put("open",true);
+  attributes.put("method","quantile");
+  initRequestUrl(request,"xml");
+  resource.handleGet();
+  assertNotNull(responseEntity);
+  assertTrue(responseEntity instanceof Representation);
+  Representation representation=(Representation)responseEntity;
+  String resultXml=representation.getText().replace("\r","").replace("\n","");
+  Rule[] rules=checkRules(resultXml.replace("<Rules>",sldPrefix).replace("</Rules>",sldPostfix),3);
+  assertTrue(rules[0].getTitle().contains("20.0"));
+  assertTrue(rules[1].getTitle().contains("20.0"));
+  assertTrue(rules[1].getTitle().contains("61.0"));
+  assertTrue(rules[2].getTitle().contains("61.0"));
+}
