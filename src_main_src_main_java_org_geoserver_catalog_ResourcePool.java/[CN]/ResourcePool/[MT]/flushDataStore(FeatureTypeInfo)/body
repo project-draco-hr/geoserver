@@ -1,0 +1,42 @@
+{
+  DataStoreInfo ds=ft.getStore();
+  if (ds == null) {
+    return;
+  }
+  if (!dataStoreCache.containsKey(ds.getId())) {
+    return;
+  }
+  DataAccess<?,?> dataStore;
+  try {
+    dataStore=getDataStore(ds);
+  }
+ catch (  IOException e) {
+    LOGGER.warning("Unable to obtain data store for '" + ft.getQualifiedNativeName());
+    LOGGER.log(Level.WARNING,"",e);
+    return;
+  }
+  final int dsFtCount=countFeatureTypesOf(ds);
+  if (dsFtCount == 0) {
+    LOGGER.log(Level.INFO,"Feature Type {0} cleared: Disposing DataStore {1} - {2}",new String[]{ft.getName(),ds.getName(),"Last Feature Type Disposed"});
+    clear(ds);
+  }
+ else {
+    if (dataStore instanceof ContentDataStore) {
+      ContentDataStore contentDataStore=(ContentDataStore)dataStore;
+      try {
+        String nativeName=ft.getNativeName();
+        if (nativeName != null) {
+          flushState(contentDataStore,nativeName);
+          LOGGER.log(Level.INFO,"Feature Type {0} cleared from ContentDataStore {1}",new String[]{ft.getName(),ds.getName()});
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.warning("Unable to flush '" + ft.getQualifiedNativeName());
+        LOGGER.log(Level.WARNING,"",e);
+      }
+    }
+ else {
+      LOGGER.log(Level.INFO,"Unable to clean up cached feature type {0} in data store {1}. Not a ContentDataStore",new String[]{ft.getName(),ds.getName()});
+    }
+  }
+}
