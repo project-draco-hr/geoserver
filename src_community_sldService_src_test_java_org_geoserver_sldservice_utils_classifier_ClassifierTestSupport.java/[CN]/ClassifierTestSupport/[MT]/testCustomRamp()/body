@@ -1,0 +1,19 @@
+{
+  attributes.put("layer",FEATURETYPE_LAYER);
+  attributes.put("attribute","name");
+  attributes.put("intervals",3);
+  attributes.put("method","uniqueInterval");
+  attributes.put("ramp","custom");
+  attributes.put("startColor","0xFF0000");
+  attributes.put("endColor","0x0000FF");
+  initRequestUrl(request,"xml");
+  resource.handleGet();
+  assertNotNull(responseEntity);
+  assertTrue(responseEntity instanceof Representation);
+  Representation representation=(Representation)responseEntity;
+  String resultXml=representation.getText().replace("\r","").replace("\n","");
+  Rule[] rules=checkRules(resultXml.replace("<Rules>",sldPrefix).replace("</Rules>",sldPostfix),3);
+  checkRule(rules[0],"#FF0000",org.opengis.filter.PropertyIsEqualTo.class);
+  checkRule(rules[1],"#AA0055",org.opengis.filter.PropertyIsEqualTo.class);
+  checkRule(rules[2],"#5500AA",org.opengis.filter.PropertyIsEqualTo.class);
+}
