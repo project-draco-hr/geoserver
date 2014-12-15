@@ -1,0 +1,35 @@
+{
+  SecureTreeNode root=new SecureTreeNode();
+  for (  WpsAccessRule rule : rules) {
+    String group=rule.getGroupName();
+    String name=rule.getWpsName();
+    SecureTreeNode node;
+    if (ANY.equals(group)) {
+      node=root;
+    }
+ else {
+      SecureTreeNode ws=root.getChild(group);
+      if (ws == null) {
+        ws=root.addChild(group);
+      }
+      if ("*".equals(name)) {
+        node=ws;
+      }
+ else {
+        SecureTreeNode layerNode=ws.getChild(name);
+        if (layerNode == null)         layerNode=ws.addChild(name);
+        node=layerNode;
+      }
+    }
+    if (node != root) {
+      LOGGER.warning("Rule " + rule + " is overriding another rule targetting the same resource");
+    }
+    node.setAuthorizedRoles(AccessMode.READ,rule.getRoles());
+    node.setAuthorizedRoles(AccessMode.WRITE,Collections.singleton("NO_ONE"));
+    node.setAuthorizedRoles(AccessMode.ADMIN,Collections.singleton("NO_ONE"));
+  }
+  root.setAuthorizedRoles(AccessMode.READ,Collections.singleton("*"));
+  root.setAuthorizedRoles(AccessMode.WRITE,Collections.singleton("NO_ONE"));
+  root.setAuthorizedRoles(AccessMode.ADMIN,Collections.singleton("NO_ONE"));
+  return root;
+}

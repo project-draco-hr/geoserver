@@ -1,0 +1,29 @@
+{
+  GeoServer gs=createMock(GeoServer.class);
+  URL url=Thread.currentThread().getContextClassLoader().getResource("org/geoserver/wps/");
+  File file=new File(url.getPath());
+  WPSXStreamLoader loader=new WPSXStreamLoader(new GeoServerResourceLoader(file));
+  WPSInfo wps=loader.load(gs);
+  boolean found1=false;
+  boolean found2=false;
+  for (  ProcessGroupInfo pg : wps.getProcessGroups()) {
+    if (pg.getFactoryClass().getName().equals("org.geoserver.wps.DeprecatedProcessFactory")) {
+      assertFalse(pg.isEnabled());
+      found1=true;
+    }
+    if (pg.getFilteredProcesses() != null) {
+      for (      Object opi : pg.getFilteredProcesses()) {
+        assertTrue(opi instanceof ProcessInfo);
+      }
+      if (pg.getFactoryClass().getName().equals("org.geoserver.wps.jts.SpringBeanProcessFactory")) {
+        assertTrue(pg.isEnabled());
+        assertEquals(pg.getFilteredProcesses().get(0).getName().toString(),"gs:GeorectifyCoverage");
+        assertEquals(pg.getFilteredProcesses().get(1).getName().toString(),"gs:GetFullCoverage");
+        assertEquals(pg.getFilteredProcesses().get(2).getName().toString(),"gs:Import");
+        found2=true;
+      }
+    }
+  }
+  assertTrue(found1);
+  assertTrue(found2);
+}

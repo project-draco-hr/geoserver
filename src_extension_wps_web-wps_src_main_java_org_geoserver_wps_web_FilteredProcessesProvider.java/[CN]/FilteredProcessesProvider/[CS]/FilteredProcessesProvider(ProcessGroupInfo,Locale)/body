@@ -4,9 +4,21 @@
   ProcessFactory pf=GeoServerProcessors.getProcessFactory(pfi.getFactoryClass(),false);
   Set<Name> names=pf.getNames();
   selectableProcesses=new ArrayList<FilteredProcess>();
+  List<ProcessInfo> filteredProcesses=pfi.getFilteredProcesses();
   for (  Name name : names) {
-    String description=GeoServerProcessors.getProcessFactory(pfi.getFactoryClass(),false).getDescription(name).toString(locale);
-    FilteredProcess sp=new FilteredProcess(name,description);
+    InternationalString description=GeoServerProcessors.getProcessFactory(pfi.getFactoryClass(),false).getDescription(name);
+    String des="";
+    if (description != null) {
+      des=description.toString(locale);
+    }
+    FilteredProcess sp=new FilteredProcess(name,des);
+    sp.setEnabled(true);
+    for (    ProcessInfo fp : filteredProcesses) {
+      if (sp.getName().equals(fp.getName())) {
+        sp.setEnabled(fp.isEnabled());
+        sp.setRoles(fp.getRoles());
+      }
+    }
     selectableProcesses.add(sp);
   }
   Collections.sort(selectableProcesses);
