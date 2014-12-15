@@ -1,0 +1,19 @@
+{
+  attributes.put("layer",COVERAGE_LAYER);
+  attributes.put("classes",5);
+  attributes.put("min",10.0);
+  attributes.put("max",50.0);
+  attributes.put("digits",1);
+  attributes.put("ramp","custom");
+  attributes.put("startColor","0xFF0000");
+  attributes.put("endColor","0x0000FF");
+  initRequestUrl(request,"sld");
+  resource.handleGet();
+  assertNotNull(responseEntity);
+  assertTrue(responseEntity instanceof Representation);
+  Representation representation=(Representation)responseEntity;
+  String resultXml=representation.getText().replace("\r","").replace("\n","");
+  ColorMap map=checkColorMap(resultXml,5);
+  checkColorEntry(map.getColorMapEntries()[1],"#FF0000","10.0","1.0");
+  checkColorEntry(map.getColorMapEntries()[5],"#3300CC","50.0","1.0");
+}

@@ -1,0 +1,17 @@
+{
+  attributes.put("layer",FEATURETYPE_LAYER);
+  attributes.put("attribute","name");
+  attributes.put("intervals",3);
+  attributes.put("method","uniqueInterval");
+  attributes.put("ramp","blue");
+  initRequestUrl(request,"xml");
+  resource.handleGet();
+  assertNotNull(responseEntity);
+  assertTrue(responseEntity instanceof Representation);
+  Representation representation=(Representation)responseEntity;
+  String resultXml=representation.getText().replace("\r","").replace("\n","");
+  Rule[] rules=checkRules(resultXml.replace("<Rules>",sldPrefix).replace("</Rules>",sldPostfix),3);
+  checkRule(rules[0],"#000055",org.opengis.filter.PropertyIsEqualTo.class);
+  checkRule(rules[1],"#00008C",org.opengis.filter.PropertyIsEqualTo.class);
+  checkRule(rules[2],"#0000C3",org.opengis.filter.PropertyIsEqualTo.class);
+}

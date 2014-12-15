@@ -6,17 +6,22 @@
   if (layer == null) {
     return new ArrayList();
   }
-  final LayerInfo layerInfo=catalog.getLayerByName(layer);
-  if (layerInfo != null) {
-    final List<Rule> rules=this.generateClassifiedSLD(attributes,parameters);
-    RulesList jsonRules=null;
-    if (rules != null)     jsonRules=generateRulesList(layer,getRequest(),rules);
-    if (jsonRules != null) {
-      return jsonRules;
-    }
+  try {
+    final LayerInfo layerInfo=catalog.getLayerByName(layer);
+    if (layerInfo != null && layerInfo.getResource() instanceof FeatureTypeInfo) {
+      final List<Rule> rules=this.generateClassifiedSLD(attributes,parameters);
+      RulesList jsonRules=null;
+      if (rules != null)       jsonRules=generateRulesList(layer,getRequest(),rules);
+      if (jsonRules != null) {
+        return jsonRules;
+      }
  else {
-      throw new RestletException("Error generating Classification!",Status.CLIENT_ERROR_BAD_REQUEST);
+        throw new RestletException("Error generating Classification!",Status.CLIENT_ERROR_BAD_REQUEST);
+      }
     }
+    return new ArrayList();
   }
-  return new ArrayList();
+ catch (  IllegalArgumentException e) {
+    return e.getMessage();
+  }
 }

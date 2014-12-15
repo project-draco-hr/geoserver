@@ -1,0 +1,40 @@
+{
+  responseEntity=null;
+  context=Mockito.mock(Context.class);
+  request=Mockito.mock(Request.class);
+  ClientInfo clientInfo=new ClientInfo();
+  Mockito.when(request.getClientInfo()).thenReturn(clientInfo);
+  Mockito.when(request.getAttributes()).thenReturn(attributes);
+  response=Mockito.mock(Response.class);
+  catalog=Mockito.mock(Catalog.class);
+  resourcePool=Mockito.mock(ResourcePool.class);
+  Mockito.when(catalog.getResourcePool()).thenReturn(resourcePool);
+  Mockito.doAnswer(new Answer<Object>(){
+    public Object answer(    InvocationOnMock invocation){
+      Object[] args=invocation.getArguments();
+      if (args.length > 0) {
+        responseEntity=args[0];
+      }
+      return "";
+    }
+  }
+).when(response).setEntity((Representation)Mockito.any());
+  LayerInfoImpl testFeatureLayerInfo=new LayerInfoImpl();
+  testFeatureTypeInfo=new FeatureTypeInfoImpl(catalog);
+  featureTypeBuilder.setName(FEATURETYPE_LAYER);
+  featureTypeBuilder.add("id",Integer.class);
+  featureTypeBuilder.add("name",String.class);
+  featureTypeBuilder.add("foo",Integer.class);
+  featureTypeBuilder.add("geometry",Polygon.class);
+  Mockito.when(resourcePool.getFeatureType(testFeatureTypeInfo)).thenReturn(featureTypeBuilder.buildFeatureType());
+  testFeatureLayerInfo.setResource(testFeatureTypeInfo);
+  Mockito.when(catalog.getLayerByName(FEATURETYPE_LAYER)).thenReturn(testFeatureLayerInfo);
+  LayerInfoImpl testCoverageLayerInfo=new LayerInfoImpl();
+  CoverageInfoImpl testCoverageInfo=new CoverageInfoImpl(catalog);
+  StyleInfoImpl coverageStyleInfo=new StyleInfoImpl(catalog);
+  testCoverageLayerInfo.setDefaultStyle(coverageStyleInfo);
+  testCoverageLayerInfo.setResource(testCoverageInfo);
+  Style coverageStyle=styleBuilder.createStyle(styleBuilder.createRasterSymbolizer());
+  Mockito.when(resourcePool.getStyle(coverageStyleInfo)).thenReturn(coverageStyle);
+  Mockito.when(catalog.getLayerByName(COVERAGE_LAYER)).thenReturn(testCoverageLayerInfo);
+}
