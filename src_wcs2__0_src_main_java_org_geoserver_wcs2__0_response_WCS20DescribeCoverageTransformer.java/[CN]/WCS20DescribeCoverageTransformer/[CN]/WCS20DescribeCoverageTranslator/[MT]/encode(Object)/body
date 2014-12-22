@@ -4,10 +4,18 @@
   }
   this.request=(DescribeCoverageType)o;
   List<CoverageInfo> coverages=new ArrayList<CoverageInfo>();
+  List<String> covIds=new ArrayList<String>();
   for (  String encodedCoverageId : (List<String>)request.getCoverageId()) {
-    LayerInfo layer=NCNameResourceCodec.getCoverage(catalog,encodedCoverageId);
+    String newCoverageID=encodedCoverageId;
+    if (availableDescribeCoverageExtensions) {
+      for (      WCS20DescribeCoverageExtension ext : wcsDescribeCoverageExtensions) {
+        newCoverageID=ext.handleCoverageId(newCoverageID);
+      }
+    }
+    LayerInfo layer=NCNameResourceCodec.getCoverage(catalog,newCoverageID);
     if (layer != null) {
       coverages.add((CoverageInfo)layer.getResource());
+      covIds.add(encodedCoverageId);
     }
  else {
       throw new IllegalArgumentException("Failed to locate coverage " + encodedCoverageId + ", unexpected, the coverage existance has been "+ "checked earlier in the request lifecycle");
@@ -24,10 +32,23 @@
   String location=buildSchemaLocation(request.getBaseUrl(),WCS.NAMESPACE,"http://schemas.opengis.net/wcs/2.0/wcsDescribeCoverage.xsd");
   attributes.addAttribute("","xsi:schemaLocation","xsi:schemaLocation","",location);
   start("wcs:CoverageDescriptions",attributes);
+  int coverageIndex=0;
   for (  CoverageInfo ci : coverages) {
     try {
       String encodedId=NCNameResourceCodec.encode(ci);
-      handleCoverageDescription(encodedId,ci);
+      CoverageInfo ciNew=ci;
+      String newCoverageID=covIds.get(coverageIndex);
+      if (availableDescribeCoverageExtensions) {
+        for (        WCS20DescribeCoverageExtension ext : wcsDescribeCoverageExtensions) {
+          newCoverageID=ext.handleEncodedId(location,newCoverageID);
+          ciNew=ext.handleCoverageInfo(covIds.get(coverageIndex),ci);
+        }
+      }
+ else {
+        newCoverageID=encodedId;
+      }
+      handleCoverageDescription(newCoverageID,ciNew);
+      coverageIndex++;
     }
  catch (    Exception e) {
       throw new RuntimeException("Unexpected error occurred during describe coverage xml encoding",e);

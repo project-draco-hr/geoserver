@@ -1,0 +1,23 @@
+{
+  Map<String,DimensionDescriptor> sourceDescriptors=new HashMap<String,DimensionDescriptor>();
+  for (  DimensionDescriptor dimensionDescriptor : reader.getDimensionDescriptors(name)) {
+    sourceDescriptors.put(dimensionDescriptor.getName().toUpperCase(),dimensionDescriptor);
+  }
+  List<DimensionDescriptor> enabledDescriptors=new ArrayList<DimensionDescriptor>();
+  for (  Entry<String,Serializable> entry : ci.getMetadata().entrySet()) {
+    if (entry.getValue() instanceof DimensionInfo) {
+      DimensionInfo di=(DimensionInfo)entry.getValue();
+      if (di.isEnabled()) {
+        String dimensionName=entry.getKey();
+        if (dimensionName.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+          dimensionName=dimensionName.substring(ResourceInfo.CUSTOM_DIMENSION_PREFIX.length());
+        }
+        DimensionDescriptor selected=sourceDescriptors.get(dimensionName.toUpperCase());
+        if (selected != null) {
+          enabledDescriptors.add(selected);
+        }
+      }
+    }
+  }
+  return enabledDescriptors;
+}

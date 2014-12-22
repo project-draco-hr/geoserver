@@ -6,7 +6,13 @@
   }
   List<String> badCoverageIds=new ArrayList<String>();
   for (  String encodedCoverageId : (List<String>)request.getCoverageId()) {
-    LayerInfo layer=NCNameResourceCodec.getCoverage(catalog,encodedCoverageId);
+    String newCoverageID=encodedCoverageId;
+    if (availableDescribeCovExtensions) {
+      for (      WCS20DescribeCoverageExtension ext : wcsDescribeCoverageExtensions) {
+        newCoverageID=ext.handleCoverageId(newCoverageID);
+      }
+    }
+    LayerInfo layer=NCNameResourceCodec.getCoverage(catalog,newCoverageID);
     if (layer == null) {
       badCoverageIds.add(encodedCoverageId);
     }
