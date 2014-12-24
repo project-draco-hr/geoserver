@@ -1,0 +1,32 @@
+{
+  MockHttpServletResponse resp=getAsServletResponse(requestURL);
+  assertEquals("image/gif",resp.getContentType());
+  try (ImageInputStream is=ImageIO.createImageInputStream(getBinaryInputStream(resp))){
+    ImageReader reader=ImageIO.getImageReadersByFormatName("gif").next();
+    reader.setInput(is);
+    assertEquals(4,reader.getNumImages(true));
+    IIOMetadata imageMetadata=reader.getImageMetadata(0);
+    System.out.println(Arrays.toString(imageMetadata.getMetadataFormatNames()));
+    IIOMetadataNode node=(IIOMetadataNode)imageMetadata.getAsTree("javax_imageio_gif_image_1.0");
+    NodeList nodes=node.getElementsByTagName("ApplicationExtensions");
+    node=(IIOMetadataNode)nodes.item(0);
+    nodes=node.getElementsByTagName("ApplicationExtension");
+    boolean found=false;
+    for (int i=0; i < nodes.getLength(); i++) {
+      node=(IIOMetadataNode)nodes.item(i);
+      if ("NETSCAPE".equals(node.getAttribute("applicationID")) && "2.0".equals(node.getAttribute("authenticationCode"))) {
+        found=true;
+        byte[] flags=(byte[])node.getUserObject();
+        if (loopContinously) {
+          assertArrayEquals(new byte[]{0x1,0x0,0x0},flags);
+        }
+ else {
+          assertArrayEquals(new byte[]{0x1,0x1,0x0},flags);
+        }
+      }
+    }
+    if (!found) {
+      fail("Could not find custom metadata node containing the loop control extension");
+    }
+  }
+ }
