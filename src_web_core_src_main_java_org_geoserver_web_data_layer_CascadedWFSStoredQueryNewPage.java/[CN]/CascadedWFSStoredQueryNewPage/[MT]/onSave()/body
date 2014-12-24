@@ -1,0 +1,21 @@
+{
+  StoredQuery selection=(StoredQuery)storedQueriesDropDown.getDefaultModelObject();
+  StoredQueryConfiguration config=createStoredQueryConfiguration(parameterProvider.getItems(),selection.storedQueryId);
+  String storedQueryId=selection.storedQueryId;
+  try {
+    DataStoreInfo dsInfo=getCatalog().getStore(storeId,DataStoreInfo.class);
+    WFSDataStore directDs=getContentDataStore();
+    DataAccess da=dsInfo.getDataStore(null);
+    Name typeName=directDs.addStoredQuery(getNativeName(),config.getStoredQueryId());
+    CatalogBuilder builder=new CatalogBuilder(getCatalog());
+    builder.setStore(dsInfo);
+    FeatureTypeInfo fti=builder.buildFeatureType(da.getFeatureSource(typeName));
+    fti.getMetadata().put(FeatureTypeInfo.STORED_QUERY_CONFIGURATION,config);
+    LayerInfo layerInfo=builder.buildLayer(fti);
+    setResponsePage(new ResourceConfigurationPage(layerInfo,true));
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to create feature type",e);
+    error(new ParamResourceModel("creationFailure",this,e.getMessage()).getString());
+  }
+}

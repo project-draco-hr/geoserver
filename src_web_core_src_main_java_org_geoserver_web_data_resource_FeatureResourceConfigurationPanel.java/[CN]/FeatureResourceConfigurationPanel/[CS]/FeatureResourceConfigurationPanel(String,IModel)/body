@@ -86,4 +86,20 @@
   FeatureTypeInfo typeInfo=(FeatureTypeInfo)model.getObject();
   reloadContainer.setVisible(typeInfo.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class) == null);
   sqlViewContainer.setVisible(!reloadContainer.isVisible());
+  WebMarkupContainer cascadedStoredQueryContainer=new WebMarkupContainer("editCascadedStoredQueryContainer");
+  attributePanel.add(cascadedStoredQueryContainer);
+  cascadedStoredQueryContainer.add(new Link("editCascadedStoredQuery"){
+    @Override public void onClick(){
+      FeatureTypeInfo typeInfo=(FeatureTypeInfo)model.getObject();
+      try {
+        setResponsePage(new CascadedWFSStoredQueryEditPage(typeInfo,((ResourceConfigurationPage)this.getPage())));
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"Failure opening the sql view edit page",e);
+        error(e.toString());
+      }
+    }
+  }
+);
+  cascadedStoredQueryContainer.setVisible(typeInfo.getMetadata().get(FeatureTypeInfo.STORED_QUERY_CONFIGURATION,StoredQueryConfiguration.class) != null);
 }
