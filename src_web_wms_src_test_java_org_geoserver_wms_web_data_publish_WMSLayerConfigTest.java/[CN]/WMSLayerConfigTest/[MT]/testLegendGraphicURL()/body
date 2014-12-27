@@ -1,4 +1,9 @@
 {
+  Catalog catalog=getCatalog();
+  StyleInfo style=catalog.getStyleByName(MockData.PONDS.getLocalPart());
+  WorkspaceInfo ws=catalog.getWorkspaceByName(MockData.PONDS.getPrefix());
+  style.setWorkspace(ws);
+  catalog.save(style);
   final LayerInfo layer=getCatalog().getLayerByName(MockData.PONDS.getLocalPart());
   FormTestPage page=new FormTestPage(new ComponentBuilder(){
     public Component buildComponent(    String id){
@@ -14,5 +19,6 @@
   assertEquals(1,img.getBehaviors().size());
   assertTrue(img.getBehaviors().get(0) instanceof AttributeModifier);
   AttributeModifier mod=(AttributeModifier)img.getBehaviors().get(0);
-  assertTrue(mod.toString().contains("../cite/wms?REQUEST=GetLegendGraphic"));
+  assertTrue(mod.toString().contains("wms?REQUEST=GetLegendGraphic"));
+  assertTrue(mod.toString().contains("style=cite:Ponds"));
 }
