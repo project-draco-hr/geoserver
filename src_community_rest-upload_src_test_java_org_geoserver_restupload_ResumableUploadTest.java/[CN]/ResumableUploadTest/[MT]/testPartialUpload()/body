@@ -1,0 +1,20 @@
+{
+  String uploadId=sendPostRequest();
+  MockHttpServletRequest request=createRequest("/rest/resumableupload/" + uploadId);
+  request.setMethod("PUT");
+  request.setContentType("application/octet-stream");
+  byte[] bigFile=generateFileAsBytes();
+  byte[] partialFile=ArrayUtils.subarray(bigFile,0,(int)partialSize);
+  request.setBodyContent(partialFile);
+  request.setHeader("Content-type","application/octet-stream");
+  request.setHeader("Content-Length",String.valueOf(bigFile.length));
+  MockHttpServletResponse response=dispatch(request);
+  assertEquals(ResumableUploadCatalogResource.RESUME_INCOMPLETE.getCode(),response.getStatusCode());
+  assertEquals(null,response.getHeader("Content-Length"));
+  assertEquals("0-" + (partialSize - 1),response.getHeader("Range"));
+  File uploadedFile=getTempPath(uploadId);
+  assertTrue(uploadedFile.exists());
+  assertEquals(partialSize,uploadedFile.length());
+  boolean checkBytes=Arrays.equals(partialFile,toBytes(new FileInputStream(uploadedFile)));
+  assertTrue(checkBytes);
+}

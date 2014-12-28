@@ -1,0 +1,29 @@
+{
+  String uploadId=RESTUtils.getAttribute(getRequest(),"uploadId");
+  if (uploadId == null || uploadId.isEmpty()) {
+    getResponse().setStatus(new Status(Status.CLIENT_ERROR_BAD_REQUEST,"Missing upload ID"));
+    return;
+  }
+  try {
+    if (!resumableUploadResourceManager.isUploadDone(uploadId)) {
+      Long writedBytes=resumableUploadResourceManager.getWrittenBytes(uploadId);
+      getResponse().setStatus(new Status(RESUME_INCOMPLETE.getCode()));
+      Series<Parameter> headers=new Form();
+      headers.add("Content-Length","0");
+      headers.add("Range","0-" + (writedBytes - 1));
+      getResponse().getAttributes().put("org.restlet.http.headers",headers);
+    }
+ else {
+      Response response=getResponse();
+      response.setStatus(Status.SUCCESS_OK);
+    }
+  }
+ catch (  IllegalStateException e) {
+    getResponse().setStatus(new Status(Status.CLIENT_ERROR_NOT_FOUND,e.getMessage()));
+    return;
+  }
+catch (  IOException e) {
+    getResponse().setStatus(new Status(Status.SERVER_ERROR_INTERNAL,e.getMessage()));
+    return;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  MockHttpServletRequest request=createRequest("/rest/resumableupload/");
+  request.setMethod("POST");
+  request.setContentType("text/plain");
+  request.setBodyContent(fileName);
+  request.setHeader("Content-type","text/plain");
+  MockHttpServletResponse response=dispatch(request);
+  assertEquals(Status.SUCCESS_CREATED.getCode(),response.getStatusCode());
+  String responseBody=response.getOutputStreamContent();
+  String url=responseBody.split("\\r?\\n")[1];
+  String uploadId=FilenameUtils.getBaseName(url);
+  return uploadId;
+}

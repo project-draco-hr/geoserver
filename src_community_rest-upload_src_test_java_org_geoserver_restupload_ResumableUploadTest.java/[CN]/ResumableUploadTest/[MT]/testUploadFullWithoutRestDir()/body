@@ -1,0 +1,13 @@
+{
+  GeoServerInfo global=getGeoServer().getGlobal();
+  SettingsInfoImpl info=(SettingsInfoImpl)ModificationProxy.unwrap(global.getSettings());
+  MetadataMap map=info.getMetadata();
+  map.remove(RESTUtils.ROOT_KEY);
+  global.setSettings(info);
+  getGeoServer().save(global);
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  Resource data=loader.get("data");
+  root=data.dir().getAbsolutePath();
+  testUploadFull();
+  before();
+}
