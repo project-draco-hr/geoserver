@@ -1,0 +1,17 @@
+{
+  GeoServer geoServer=getGeoServer();
+  WFSInfo service=geoServer.getService(WFSInfo.class);
+  try {
+    service.setCiteCompliant(true);
+    geoServer.save(service);
+    final QName typeName=MockData.FORESTS;
+    String path="ows?service=WFS&version=1.1.0&request=GetFeature&typeName=" + getLayerId(typeName) + "&bbox=1818131,6142575,1818198,6142642,EPSG:3857&srsName=EPSG:4326";
+    Document doc=getAsDOM(path);
+    print(doc);
+    XMLAssert.assertXpathEvaluatesTo("1","count(//wfs:FeatureCollection)",doc);
+  }
+  finally {
+    service.setCiteCompliant(false);
+    geoServer.save(service);
+  }
+}
