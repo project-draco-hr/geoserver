@@ -1,0 +1,28 @@
+{
+  Catalog catalog=getCatalog();
+  WorkspaceInfo ws=catalog.getWorkspaceByName(MockData.ROAD_SEGMENTS.getPrefix());
+  CatalogBuilder cb=new CatalogBuilder(catalog);
+  LayerGroupInfo lg=catalog.getFactory().createLayerGroup();
+  lg.getLayers().add(catalog.getLayerByName(getLayerId(MockData.ROAD_SEGMENTS)));
+  lg.getLayers().add(catalog.getLayerByName(getLayerId(MockData.STREAMS)));
+  cb.calculateLayerGroupBounds(lg);
+  lg.setName("test-lg");
+  lg.setWorkspace(ws);
+  catalog.add(lg);
+  StyleInfo style=catalog.getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart());
+  style.setWorkspace(ws);
+  catalog.save(style);
+  CascadeRemovalReporter reporter=new CascadeRemovalReporter(catalog);
+  ws.accept(reporter);
+  List<StyleInfo> styles=reporter.getObjects(StyleInfo.class,ModificationType.DELETE);
+  assertEquals(1,styles.size());
+  assertEquals(style,styles.get(0));
+  List<LayerGroupInfo> groups=reporter.getObjects(LayerGroupInfo.class,ModificationType.DELETE);
+  assertEquals(1,groups.size());
+  assertEquals(lg,groups.get(0));
+  CascadeDeleteVisitor remover=new CascadeDeleteVisitor(catalog);
+  ws.accept(remover);
+  assertNull(catalog.getWorkspaceByName(ws.getName()));
+  assertNull(catalog.getStyleByName(style.getName()));
+  assertNull(catalog.getLayerGroupByName(lg.getName()));
+}
