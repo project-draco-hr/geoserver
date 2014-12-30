@@ -1,5 +1,6 @@
 {
   IModel<StyleInfo> styleModel=new CompoundPropertyModel(style != null ? new StyleDetachableModel(style) : getCatalog().getFactory().createStyle());
+  format=style != null ? style.getFormat() : getCatalog().getFactory().createStyle().getFormat();
   styleForm=new Form("form",styleModel){
     @Override protected void onSubmit(){
       super.onSubmit();
@@ -18,7 +19,7 @@
     wsChoice.setRequired(true);
   }
   styleForm.add(wsChoice);
-  formatChoice=new DropDownChoice<String>("format",new StyleFormatsModel(),new ChoiceRenderer<String>(){
+  formatChoice=new DropDownChoice<String>("format",new PropertyModel(this,"format"),new StyleFormatsModel(),new ChoiceRenderer<String>(){
     @Override public String getIdValue(    String object,    int index){
       return object;
     }
@@ -37,7 +38,7 @@
   formatReadOnlyMessage=new WebMarkupContainer("formatReadOnly",new Model());
   formatReadOnlyMessage.setVisible(false);
   styleForm.add(formatReadOnlyMessage);
-  styleForm.add(editor=new CodeMirrorEditor("styleEditor",new PropertyModel(this,"rawStyle")));
+  styleForm.add(editor=new CodeMirrorEditor("styleEditor",styleHandler().getCodeMirrorEditMode(),new PropertyModel(this,"rawStyle")));
   editor.setTextAreaMarkupId("editor");
   editor.setOutputMarkupId(true);
   editor.setRequired(true);
