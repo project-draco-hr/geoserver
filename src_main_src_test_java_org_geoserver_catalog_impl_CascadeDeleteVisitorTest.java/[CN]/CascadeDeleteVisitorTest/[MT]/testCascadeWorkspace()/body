@@ -8,6 +8,14 @@
   StoreInfo s1=createMock(StoreInfo.class);
   StoreInfo s2=createMock(StoreInfo.class);
   expect(catalog.getStoresByWorkspace(ws,StoreInfo.class)).andReturn(Arrays.asList(s1,s2)).anyTimes();
+  StyleInfo style=createMockStyle(catalog,"ws-specific-style");
+  expect(catalog.getStylesByWorkspace(ws)).andReturn(Arrays.asList(style));
+  style.accept((CatalogVisitor)anyObject());
+  expectLastCall();
+  LayerGroupInfo group=setUpMockLayerGroup(catalog);
+  group.accept((CatalogVisitor)anyObject());
+  expectLastCall();
+  expect(catalog.getLayerGroupsByWorkspace(ws)).andReturn(Arrays.asList(group)).anyTimes();
   ns.accept((CatalogVisitor)anyObject());
   expectLastCall();
   s1.accept((CatalogVisitor)anyObject());
@@ -16,7 +24,7 @@
   expectLastCall();
   catalog.remove(ws);
   expectLastCall();
-  replay(ws,ns,s1,s2,catalog);
+  replay(ws,ns,s1,s2,catalog,style);
   new CascadeDeleteVisitor(catalog).visit(ws);
   verify(catalog.getNamespaceByPrefix(CITE_PREFIX));
   for (  StoreInfo s : catalog.getStoresByWorkspace(ws,StoreInfo.class)) {
