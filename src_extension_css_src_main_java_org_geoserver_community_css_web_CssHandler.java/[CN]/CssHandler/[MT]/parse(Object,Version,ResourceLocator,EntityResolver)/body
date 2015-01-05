@@ -1,11 +1,24 @@
 {
-  Reader reader=null;
-  try {
-    reader=toReader(input);
-    Style style=CSS2SLD.convert(reader);
-    return Styles.sld(style);
+  if (input instanceof File) {
+    File cssFile=(File)input;
+    input=new FileSystemResourceStore(cssFile.getParentFile()).get(cssFile.getName());
   }
-  finally {
-    IOUtils.closeQuietly(reader);
+  if (input instanceof Resource) {
+    Resource cssResource=(Resource)input;
+    Resource sldResource=cssResource.parent().get(FilenameUtils.getBaseName(cssResource.name()) + ".sld");
+    if (sldResource.getType() != Resource.Type.UNDEFINED && sldResource.lastmodified() > cssResource.lastmodified()) {
+      return sldHandler.parse(sldResource,SLDHandler.VERSION_10,resourceLocator,entityResolver);
+    }
+ else {
+      StyledLayerDescriptor sld=convertToSLD(toReader(input));
+      try (OutputStream fos=sldResource.out()){
+        sldHandler.encode(sld,SLDHandler.VERSION_10,true,fos);
+      }
+       return sldHandler.parse(sldResource,SLDHandler.VERSION_10,resourceLocator,entityResolver);
+    }
   }
-}
+  try (Reader reader=toReader(input)){
+    StyledLayerDescriptor sld=convertToSLD(toReader(input));
+    return sld;
+  }
+ }
