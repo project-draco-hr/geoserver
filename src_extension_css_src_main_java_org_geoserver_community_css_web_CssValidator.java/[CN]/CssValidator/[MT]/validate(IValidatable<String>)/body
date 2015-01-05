@@ -1,13 +1,19 @@
 {
   if (text.getValue() != null) {
+    List<Exception> exceptions;
     try {
-      Reader in=new StringReader(text.getValue());
-      CSS2SLD.convert(in);
-      in.close();
+      CssHandler handler=GeoServerApplication.get().getBeanOfType(CssHandler.class);
+      exceptions=handler.validate(text.getValue(),null,null);
+      for (      Exception exception : exceptions) {
+        ValidationError error=new ValidationError();
+        error.setMessage(exception.getMessage());
+        text.error(error);
+      }
     }
- catch (    Exception e) {
+ catch (    IOException e) {
+      LOGGER.log(Level.SEVERE,"Unexpected error validating CSS",e);
       ValidationError error=new ValidationError();
-      error.setMessage(e.getMessage());
+      error.setMessage("Validation failed: " + e.getMessage());
       text.error(error);
     }
   }
