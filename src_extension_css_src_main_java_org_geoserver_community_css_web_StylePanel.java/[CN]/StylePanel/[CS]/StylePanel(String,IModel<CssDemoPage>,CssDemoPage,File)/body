@@ -1,0 +1,65 @@
+{
+  super(id,model);
+  if (cssFile != null && cssFile.exists()) {
+    try {
+      styleBody=FileUtils.readFileToString(cssFile);
+    }
+ catch (    IOException ioe) {
+      throw new WicketRuntimeException("Error loading CSS: ",ioe);
+    }
+  }
+ else {
+    styleBody="No CSS file was found for this style. Please make sure " + "this is the style you intended to edit, since saving " + "the CSS will destroy the existing SLD.";
+  }
+  Form styleEditorForm=new Form("style-editor");
+  final PropertyModel<String> styleBodyModel=new PropertyModel(this,"styleBody");
+  final CodeMirrorEditor editor=new CodeMirrorEditor("editor",styleBodyModel);
+  editor.setMode("css");
+  editor.setTextAreaMarkupId("editor");
+  editor.setOutputMarkupId(true);
+  editor.setRequired(true);
+  editor.add(new CssValidator());
+  styleEditorForm.add(editor);
+  final FeedbackPanel feedback2=new FeedbackPanel("feedback-low");
+  feedback2.setOutputMarkupId(true);
+  styleEditorForm.add(feedback2);
+  styleEditorForm.add(new AjaxSubmitLink("submit"){
+    @Override public void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      try {
+        StyleInfo info=page.getStyleInfo();
+        editor.processInput();
+        String body=styleBodyModel.getObject();
+        if (CssHandler.FORMAT.equals(info.getFormat())) {
+          page.catalog().getResourcePool().writeStyle(info,new ByteArrayInputStream(body.getBytes()));
+        }
+ else {
+          String sld=page.cssText2sldText(body,info);
+          Writer writer=new FileWriter(cssFile);
+          writer.write(body);
+          writer.close();
+          page.catalog().getResourcePool().writeStyle(page.getStyleInfo(),new ByteArrayInputStream(sld.getBytes()));
+        }
+        page.catalog().save(info);
+        target.addComponent(feedback2);
+        if (page.sldPreview != null)         target.addComponent(page.sldPreview);
+        if (page.map != null)         target.appendJavascript(page.map.getUpdateCommand());
+      }
+ catch (      Exception e) {
+        throw new WicketRuntimeException(e);
+      }
+    }
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      target.addComponent(feedback2);
+    }
+    @Override protected IAjaxCallDecorator getAjaxCallDecorator(){
+      return new AjaxPreprocessingCallDecorator(super.getAjaxCallDecorator()){
+        @Override public CharSequence preDecorateScript(        CharSequence script){
+          return "if(event.view.document.gsEditors) { " + "event.view.document.gsEditors." + editor.getTextAreaMarkupId() + ".save(); } \n"+ script;
+        }
+      }
+;
+    }
+  }
+);
+  add(styleEditorForm);
+}
