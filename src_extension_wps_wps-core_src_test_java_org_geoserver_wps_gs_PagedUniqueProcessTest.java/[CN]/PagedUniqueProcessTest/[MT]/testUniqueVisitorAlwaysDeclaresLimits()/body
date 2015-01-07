@@ -1,0 +1,20 @@
+{
+  PagedUniqueProcess process=new PagedUniqueProcess();
+  SimpleFeatureCollection features=Mockito.mock(SimpleFeatureCollection.class);
+  SimpleFeatureType featureType=(SimpleFeatureType)catalog.getFeatureTypeByName("states").getFeatureType();
+  Mockito.when(features.getSchema()).thenReturn(featureType);
+  final AtomicInteger counter=new AtomicInteger();
+  Mockito.doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      UniqueVisitor visitor=(UniqueVisitor)invocation.getArguments()[0];
+      if (visitor.hasLimits()) {
+        counter.incrementAndGet();
+      }
+      visitor.setValue(Arrays.asList("a","b","c","d"));
+      return null;
+    }
+  }
+).when(features).accepts(Mockito.any(UniqueVisitor.class),Mockito.any(ProgressListener.class));
+  process.execute(features,FIELD_NAME,0,2);
+  assertEquals(2,counter.intValue());
+}
