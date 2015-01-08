@@ -51,16 +51,23 @@
     g2d.setColor(fgcolor);
   }
   g2d.setStroke(new BasicStroke(2));
-  g2d.drawLine(leftX,centerY,leftX + topPx,centerY);
-  g2d.drawLine(leftX,centerY,leftX + bottomPx,centerY);
-  g2d.drawLine(leftX,centerY + prongHeight,leftX,centerY - prongHeight);
-  g2d.drawLine(leftX + topPx,centerY,leftX + topPx,centerY - prongHeight);
-  g2d.drawLine(leftX + bottomPx,centerY,leftX + bottomPx,centerY + prongHeight);
-  String topText=topRounded + " " + topUnits;
-  String bottomText=bottomRounded + " " + bottomUnits;
-  g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,oldAntialias);
-  g2d.drawString(topText,leftX + (topPx - metrics.stringWidth(topText)) / 2,centerY - prongHeight + metrics.getAscent());
-  g2d.drawString(bottomText,leftX + (bottomPx - metrics.stringWidth(bottomText)) / 2,centerY + metrics.getHeight());
+  if (measurementSystem == METRIC || measurementSystem == BOTH) {
+    g2d.drawLine(leftX,centerY,leftX,centerY - prongHeight);
+    g2d.drawLine(leftX + topPx,centerY,leftX + topPx,centerY - prongHeight);
+    g2d.drawLine(leftX,centerY,leftX + topPx,centerY);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,oldAntialias);
+    String topText=topRounded + " " + topUnits;
+    g2d.drawString(topText,leftX + (int)((topPx - metrics.stringWidth(topText)) / 2),centerY - prongHeight + metrics.getAscent());
+  }
+  if (measurementSystem == IMPERIAL || measurementSystem == BOTH) {
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
+    g2d.drawLine(leftX,centerY + prongHeight,leftX,centerY);
+    g2d.drawLine(leftX + bottomPx,centerY,leftX + bottomPx,centerY + prongHeight);
+    g2d.drawLine(leftX,centerY,leftX + bottomPx,centerY);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,oldAntialias);
+    String bottomText=bottomRounded + " " + bottomUnits;
+    g2d.drawString(bottomText,leftX + (int)((bottomPx - metrics.stringWidth(bottomText)) / 2),centerY + metrics.getHeight());
+  }
   g2d.setColor(oldColor);
   g2d.setStroke(oldStroke);
   g2d.setFont(oldFont);
