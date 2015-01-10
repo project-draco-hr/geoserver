@@ -1,6 +1,9 @@
 {
-  final DataStore ds=getProjectedTestDataStore();
-  final FeatureSource<SimpleFeatureType,SimpleFeature> fs=ds.getFeatureSource("ProjectedPolygon");
+  final DataStore ds=getTestDataStore();
+  final SimpleFeatureSource origional=ds.getFeatureSource("ProjectedPolygon");
+  Query query=new Query("ProjectedPolygon");
+  query.setCoordinateSystem(CRS.decode("EPSG:3004"));
+  final SimpleFeatureSource fs=new DefaultView(origional,query);
   final ReferencedEnvelope env=new ReferencedEnvelope(fs.getBounds(),CRS.decode("EPSG:3004"));
   LOGGER.info("about to create map ctx for ProjectedPolygon with bounds " + env);
   final WMSMapContent map=new WMSMapContent();
