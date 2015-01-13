@@ -1,0 +1,28 @@
+{
+  outputFormat=new TextFeatureInfoOutputFormat(getWMS());
+  Request request=new Request();
+  parameters=new HashMap<String,Object>();
+  parameters.put("LAYER","testLayer");
+  Map<String,String> env=new HashMap<String,String>();
+  env.put("TEST1","VALUE1");
+  env.put("TEST2","VALUE2");
+  parameters.put("ENV",env);
+  request.setKvp(parameters);
+  Dispatcher.REQUEST.set(request);
+  final FeatureTypeInfo featureType=getFeatureTypeInfo(MockData.NULLS);
+  fcType=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  fcType.getFeature().add(featureType.getFeatureSource(null,null).getFeatures());
+  List<MapLayerInfo> queryLayers=new ArrayList<MapLayerInfo>();
+  LayerInfo layerInfo=new LayerInfoImpl();
+  layerInfo.setType(LayerInfo.Type.VECTOR);
+  ResourceInfo resourceInfo=new FeatureTypeInfoImpl(null);
+  NamespaceInfo nameSpace=new NamespaceInfoImpl();
+  nameSpace.setPrefix("topp");
+  nameSpace.setURI("http://www.topp.org");
+  resourceInfo.setNamespace(nameSpace);
+  layerInfo.setResource(resourceInfo);
+  MapLayerInfo mapLayerInfo=new MapLayerInfo(layerInfo);
+  queryLayers.add(mapLayerInfo);
+  getFeatureInfoRequest=new GetFeatureInfoRequest();
+  getFeatureInfoRequest.setQueryLayers(queryLayers);
+}
