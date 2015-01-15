@@ -1,0 +1,32 @@
+{
+  login();
+  tester.startPage(StylePage.class);
+  tester.assertRenderedPage(StylePage.class);
+  DataView dv=(DataView)tester.getComponentFromLastRenderedPage("table:listContainer:items");
+  Catalog catalog=getCatalog();
+  assertEquals(dv.size(),catalog.getStyles().size());
+  IDataProvider dataProvider=dv.getDataProvider();
+  assertTrue(dataProvider instanceof StyleProvider);
+  StyleProvider provider=(StyleProvider)dataProvider;
+  boolean catchedException=false;
+  try {
+    provider.getItems();
+  }
+ catch (  UnsupportedOperationException e) {
+    catchedException=true;
+  }
+  assertTrue(catchedException);
+  StyleInfo actual=provider.iterator(0,1).next();
+  CloseableIterator<StyleInfo> list=catalog.list(StyleInfo.class,Filter.INCLUDE,0,1,Predicates.sortBy("name",true));
+  assertTrue(list.hasNext());
+  StyleInfo expected=list.next();
+  try {
+    if (list != null) {
+      list.close();
+    }
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  assertEquals(expected,actual);
+}

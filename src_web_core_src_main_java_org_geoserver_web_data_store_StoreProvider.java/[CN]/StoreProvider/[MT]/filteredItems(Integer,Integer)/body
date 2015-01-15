@@ -1,0 +1,24 @@
+{
+  final Catalog catalog=getCatalog();
+  final SortParam sort=getSort();
+  final Property<StoreInfo> property=getProperty(sort);
+  SortBy sortOrder=null;
+  if (sort != null) {
+    if (property instanceof BeanProperty) {
+      final String sortProperty=((BeanProperty<StoreInfo>)property).getPropertyPath();
+      sortOrder=sortBy(sortProperty,sort.isAscending());
+    }
+ else     if (property == ENABLED) {
+      sortOrder=sortBy("enabled",sort.isAscending());
+    }
+ else     if (property == TYPE) {
+      sortOrder=sortBy("type",sort.isAscending());
+    }
+  }
+ else {
+    sortOrder=sortBy("name",true);
+  }
+  final Filter filter=getWorkspaceFilter(getFilter());
+  Iterator<StoreInfo> items=catalog.list(StoreInfo.class,filter,first,count,sortOrder);
+  return items;
+}

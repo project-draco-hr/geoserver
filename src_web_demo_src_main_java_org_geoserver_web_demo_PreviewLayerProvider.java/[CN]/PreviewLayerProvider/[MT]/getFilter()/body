@@ -1,0 +1,13 @@
+{
+  Filter filter=super.getFilter();
+  Filter isLayerInfo=Predicates.isInstanceOf(LayerInfo.class);
+  Filter isLayerGroupInfo=Predicates.isInstanceOf(LayerGroupInfo.class);
+  Filter enabledFilter=Predicates.equal("resource.enabled",true);
+  Filter storeEnabledFilter=Predicates.equal("resource.store.enabled",true);
+  Filter advertisedFilter=Predicates.equal("resource.advertised",true);
+  Filter nonContainerGroup=Predicates.or(Predicates.equal("mode",LayerGroupInfo.Mode.EO),Predicates.equal("mode",LayerGroupInfo.Mode.NAMED),Predicates.equal("mode",LayerGroupInfo.Mode.SINGLE));
+  Filter layerFilter=Predicates.and(isLayerInfo,enabledFilter,storeEnabledFilter,advertisedFilter);
+  Filter layerGroupFilter=Predicates.and(isLayerGroupInfo,nonContainerGroup);
+  Filter orFilter=Predicates.or(layerFilter,layerGroupFilter);
+  return Predicates.and(filter,orFilter);
+}

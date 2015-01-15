@@ -1,0 +1,112 @@
+{
+  if (WorkspaceInfo.class.isAssignableFrom(clazz)) {
+    boolean rootAccess=canAccess(user,root);
+    List<Filter> exceptions=new ArrayList<>();
+    for (    Map.Entry<String,SecureTreeNode> entry : root.getChildren().entrySet()) {
+      String wsName=entry.getKey();
+      SecureTreeNode node=entry.getValue();
+      boolean nodeAccess=canAccess(user,node);
+      if (nodeAccess != rootAccess) {
+        if (rootAccess) {
+          exceptions.add(Predicates.notEqual("name",wsName));
+        }
+ else {
+          exceptions.add(Predicates.equal("name",wsName));
+        }
+      }
+    }
+    if (exceptions.size() == 0) {
+      return rootAccess ? Filter.INCLUDE : Filter.EXCLUDE;
+    }
+ else {
+      return rootAccess ? Predicates.and(exceptions) : Predicates.or(exceptions);
+    }
+  }
+ else   if (PublishedInfo.class.isAssignableFrom(clazz) || ResourceInfo.class.isAssignableFrom(clazz) || CoverageInfo.class.isAssignableFrom(clazz)) {
+    boolean rootAccess=canAccess(user,root);
+    List<Filter> exceptions=new ArrayList<>();
+    String wsNameProperty;
+    if (PublishedInfo.class.isAssignableFrom(clazz)) {
+      wsNameProperty="resource.store.workspace.name";
+    }
+ else {
+      wsNameProperty="store.workspace.name";
+    }
+    for (    Map.Entry<String,SecureTreeNode> wsEntry : root.getChildren().entrySet()) {
+      String wsName=wsEntry.getKey();
+      SecureTreeNode wsNode=wsEntry.getValue();
+      boolean wsAccess=canAccess(user,wsNode);
+      List<Filter> layerExceptions=new ArrayList<>();
+      for (      Map.Entry<String,SecureTreeNode> layerEntry : wsNode.getChildren().entrySet()) {
+        String layerName=layerEntry.getKey();
+        SecureTreeNode layerNode=layerEntry.getValue();
+        boolean layerAccess=canAccess(user,layerNode);
+        if (layerAccess != wsAccess) {
+          if (wsAccess) {
+            layerExceptions.add(Predicates.notEqual("prefixedName",wsName + ":" + layerName));
+          }
+ else {
+            layerExceptions.add(Predicates.equal("prefixedName",wsName + ":" + layerName));
+          }
+        }
+      }
+      Filter wsFilter=null;
+      if (rootAccess) {
+        wsFilter=Predicates.notEqual(wsNameProperty,wsName);
+      }
+ else {
+        wsFilter=Predicates.equal(wsNameProperty,wsName);
+      }
+      if (layerExceptions.isEmpty()) {
+        if (wsAccess != rootAccess) {
+          exceptions.add(wsFilter);
+        }
+      }
+ else {
+        layerExceptions.add(wsFilter);
+        Filter combined=wsAccess ? Predicates.and(layerExceptions) : Predicates.or(layerExceptions);
+        exceptions.add(combined);
+      }
+    }
+    if (exceptions.size() == 0) {
+      return rootAccess ? Filter.INCLUDE : Filter.EXCLUDE;
+    }
+ else {
+      Filter filter=rootAccess ? Predicates.and(exceptions) : Predicates.or(exceptions);
+      if (PublishedInfo.class.equals(clazz)) {
+        Filter layerFilter=Predicates.and(Predicates.isInstanceOf(LayerInfo.class),filter);
+        Filter layerGroupFilter=Predicates.isInstanceOf(LayerGroupInfo.class);
+        return Predicates.or(layerFilter,layerGroupFilter);
+      }
+ else {
+        return filter;
+      }
+    }
+  }
+ else   if (StyleInfo.class.isAssignableFrom(clazz) || LayerGroupInfo.class.isAssignableFrom(clazz)) {
+    boolean rootAccess=canAccess(user,root);
+    List<Filter> exceptions=new ArrayList<>();
+    for (    Map.Entry<String,SecureTreeNode> entry : root.getChildren().entrySet()) {
+      String wsName=entry.getKey();
+      SecureTreeNode node=entry.getValue();
+      boolean nodeAccess=canAccess(user,node);
+      if (nodeAccess != rootAccess) {
+        if (rootAccess) {
+          exceptions.add(Predicates.notEqual("workspace.name",wsName));
+        }
+ else {
+          exceptions.add(Predicates.equal("workspace.name",wsName));
+        }
+      }
+    }
+    if (exceptions.size() == 0) {
+      return rootAccess ? Filter.INCLUDE : Filter.EXCLUDE;
+    }
+ else {
+      return rootAccess ? Predicates.and(exceptions) : Predicates.or(exceptions);
+    }
+  }
+ else {
+    return InMemorySecurityFilter.buildUserAccessFilter(this,user);
+  }
+}
