@@ -1,0 +1,37 @@
+{
+  ApplicationContext applicationContext=GeoServerApplication.get().getApplicationContext();
+  Multimap<String,WPSInputValidator> validators=process.getValidators();
+  ProcessFactory pf=GeoServerProcessors.createProcessFactory(process.getName(),false);
+  Map<String,Parameter<?>> parameters=pf.getParameterInfo(process.getName());
+  List<InputLimit> result=new ArrayList<>();
+  for (  Parameter param : parameters.values()) {
+    String name=param.getName();
+    Collection<WPSInputValidator> paramValidators=validators != null ? validators.get(name) : null;
+    Set<Class> validatorTypes=new HashSet<>();
+    if (paramValidators != null) {
+      for (      WPSInputValidator validator : paramValidators) {
+        validatorTypes.add(validator.getClass());
+        result.add(new InputLimit(name,validator.copy()));
+      }
+    }
+    if (param.getMaxOccurs() > 1 && !validatorTypes.contains(MultiplicityValidator.class)) {
+      int max=0;
+      if (param.getMaxOccurs() < Integer.MAX_VALUE) {
+        max=param.getMaxOccurs();
+      }
+      result.add(new InputLimit(name,new MultiplicityValidator(max)));
+    }
+    boolean isComplex=ProcessParameterIO.isComplex(param,applicationContext);
+    if (isComplex) {
+      if (!validatorTypes.contains(MaxSizeValidator.class)) {
+        result.add(new InputLimit(name,new MaxSizeValidator(0)));
+      }
+    }
+ else {
+      if (isNumeric(param) && !validatorTypes.contains(NumberRangeValidator.class)) {
+        result.add(new InputLimit(name,new NumberRangeValidator(null)));
+      }
+    }
+  }
+  return result;
+}

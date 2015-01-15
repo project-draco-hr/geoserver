@@ -54,6 +54,34 @@
         fragment.add(roles);
         return fragment;
       }
+ else       if (property.getName().equals("validated")) {
+        final IModel<Boolean> hasValidatorsModel=property.getModel(itemModel);
+        IModel<String> availableModel=new AbstractReadOnlyModel<String>(){
+          @Override public String getObject(){
+            Boolean value=hasValidatorsModel.getObject();
+            if (Boolean.TRUE.equals(value)) {
+              return "*";
+            }
+ else {
+              return "";
+            }
+          }
+        }
+;
+        return new Label(id,availableModel);
+      }
+ else       if (property.getName().equals("edit")) {
+        Fragment fragment=new Fragment(id,"linkFragment",ProcessSelectionPage.this);
+        Link link=new Link("link"){
+          @Override public void onClick(){
+            FilteredProcess fp=(FilteredProcess)itemModel.getObject();
+            setResponsePage(new ProcessLimitsPage(ProcessSelectionPage.this,fp));
+          }
+        }
+;
+        fragment.add(link);
+        return fragment;
+      }
       return null;
     }
   }
@@ -66,11 +94,8 @@
     @Override public void onSubmit(){
       pfi.getFilteredProcesses().clear();
       for (      FilteredProcess process : provider.getItems()) {
-        if (!process.getRoles().isEmpty() || !process.getEnabled()) {
-          ProcessInfo pai=new ProcessInfoImpl();
-          pai.setName(process.getName());
-          pai.setEnabled(process.getEnabled());
-          pai.getRoles().addAll(process.getRoles());
+        if (!process.getRoles().isEmpty() || !process.getEnabled() || !process.getValidators().isEmpty()) {
+          ProcessInfo pai=process.toProcessInfo();
           pfi.getFilteredProcesses().add(pai);
         }
       }

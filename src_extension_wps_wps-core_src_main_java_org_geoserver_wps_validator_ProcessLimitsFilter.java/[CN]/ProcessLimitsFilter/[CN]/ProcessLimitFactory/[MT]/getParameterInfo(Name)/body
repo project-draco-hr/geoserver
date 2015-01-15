@@ -1,0 +1,83 @@
+{
+  WPSInfo wps=geoServer.getService(WPSInfo.class);
+  ProcessFactory factory=GeoServerProcessors.createProcessFactory(name,false);
+  ProcessInfo processInfo=null;
+  for (  ProcessGroupInfo group : wps.getProcessGroups()) {
+    if (group.getFactoryClass().equals(factory.getClass())) {
+      List<ProcessInfo> filteredProcesses=group.getFilteredProcesses();
+      for (      ProcessInfo pi : filteredProcesses) {
+        if (name.equals(pi.getName())) {
+          processInfo=pi;
+          break;
+        }
+      }
+      if (processInfo != null) {
+        break;
+      }
+    }
+  }
+  Map<String,Parameter<?>> result=super.getParameterInfo(name);
+  int maxComplexInputSize=wps.getMaxComplexInputSize();
+  if (maxComplexInputSize <= 0 && (processInfo == null || processInfo.getValidators() == null || processInfo.getValidators().isEmpty())) {
+    return result;
+  }
+ else {
+    Multimap<String,WPSInputValidator> validatorsMap=processInfo != null ? processInfo.getValidators() : EMPTY_MULTIMAP;
+    HashMap<String,Parameter<?>> params=new LinkedHashMap<>(result);
+    for (    String paramName : params.keySet()) {
+      Parameter<?> param=params.get(paramName);
+      Collection<WPSInputValidator> validators=validatorsMap.get(paramName);
+      if (validators == null && (maxComplexInputSize <= 0 || !ProcessParameterIO.isComplex(param,applicationContext))) {
+        continue;
+      }
+      Map<String,Object> metadataClone=new HashMap(param.metadata);
+      if (wps.getMaxComplexInputSize() > 0) {
+        metadataClone.put(MaxSizeValidator.PARAMETER_KEY,wps.getMaxComplexInputSize());
+      }
+      int maxOccurs=param.getMaxOccurs();
+      if (validators != null) {
+        metadataClone.put(VALIDATORS_KEY,validators);
+        for (        Validator validator : validators) {
+          if (validator instanceof MaxSizeValidator) {
+            MaxSizeValidator msv=(MaxSizeValidator)validator;
+            int maxSizeMB=msv.getMaxSizeMB();
+            metadataClone.put(MaxSizeValidator.PARAMETER_KEY,maxSizeMB);
+          }
+ else           if (validator instanceof NumberRangeValidator) {
+            NumberRangeValidator rv=(NumberRangeValidator)validator;
+            Range<?> range=rv.getRange();
+            Comparable min=(Comparable)param.metadata.get(Parameter.MIN);
+            Comparable max=(Comparable)param.metadata.get(Parameter.MAX);
+            boolean restricting=false;
+            if (range.getMinValue() != null && (min == null || min.compareTo(range.getMinValue()) < 0)) {
+              min=range.getMinValue();
+              restricting=true;
+            }
+            if (range.getMaxValue() != null && (max == null || max.compareTo(range.getMaxValue()) > 0)) {
+              max=range.getMaxValue();
+              restricting=true;
+            }
+            if (restricting) {
+              if (min != null) {
+                metadataClone.put(Parameter.MIN,min);
+              }
+              if (max != null) {
+                metadataClone.put(Parameter.MAX,max);
+              }
+            }
+          }
+ else           if (validator instanceof MultiplicityValidator) {
+            MultiplicityValidator mv=(MultiplicityValidator)validator;
+            int max=mv.getMaxInstances();
+            if (max < maxOccurs) {
+              maxOccurs=max;
+            }
+          }
+        }
+      }
+      Parameter<?> substitute=new Parameter(param.key,param.type,param.title,param.description,param.required,param.minOccurs,maxOccurs,param.sample,metadataClone);
+      params.put(param.key,substitute);
+    }
+    return params;
+  }
+}

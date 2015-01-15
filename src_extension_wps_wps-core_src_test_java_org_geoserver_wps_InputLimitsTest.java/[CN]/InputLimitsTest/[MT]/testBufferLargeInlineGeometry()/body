@@ -1,0 +1,10 @@
+{
+  String wkt=buildLineString((Short.MAX_VALUE + 1) * 2 + 1);
+  String xml="<wps:Execute service='WPS' version='1.0.0' xmlns:wps='http://www.opengis.net/wps/1.0.0' " + "xmlns:ows='http://www.opengis.net/ows/1.1'>" + "<ows:Identifier>geo:buffer</ows:Identifier>"+ "<wps:DataInputs>"+ "<wps:Input>"+ "<ows:Identifier>distance</ows:Identifier>"+ "<wps:Data>"+ "<wps:LiteralData>1</wps:LiteralData>"+ "</wps:Data>"+ "</wps:Input>"+ "<wps:Input>"+ "<ows:Identifier>geom</ows:Identifier>"+ "<wps:Data>"+ "<wps:ComplexData mimeType=\"application/wkt\">"+ "<![CDATA[" + wkt + "]]>"+ "</wps:ComplexData>"+ "</wps:Data>"+ "</wps:Input>"+ "</wps:DataInputs>"+ "<wps:ResponseForm>"+ "<wps:ResponseDocument storeExecuteResponse='false'>"+ "<wps:Output>"+ "<ows:Identifier>result</ows:Identifier>"+ "</wps:Output>"+ "</wps:ResponseDocument>"+ "</wps:ResponseForm>"+ "</wps:Execute>";
+  Document dom=postAsDOM("wps",xml);
+  assertXpathExists("//wps:Status/wps:ProcessFailed",dom);
+  assertXpathEvaluatesTo("geom","//wps:Status/wps:ProcessFailed/ows:ExceptionReport/ows:Exception/@locator",dom);
+  String message=xp.evaluate("//wps:Status/wps:ProcessFailed/ows:ExceptionReport/ows:Exception/ows:ExceptionText",dom);
+  assertTrue(message.contains("exceeds the maximum allowed"));
+  assertTrue(message.contains("geom"));
+}

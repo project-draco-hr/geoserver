@@ -1,0 +1,13 @@
+{
+  super.onSetUp(testData);
+  WPSInfo wps=getGeoServer().getService(WPSInfo.class);
+  ProcessGroupInfo geoGroup=getGeoGroup(wps.getProcessGroups());
+  ProcessInfo buffer=new ProcessInfoImpl();
+  buffer.setEnabled(true);
+  buffer.setName(new NameImpl("geo","buffer"));
+  buffer.getValidators().put("geom",new MaxSizeValidator(1));
+  buffer.getValidators().put("distance",new NumberRangeValidator(new NumberRange<Double>(Double.class,0d,100d)));
+  buffer.getValidators().put("quadrantSegments",new NumberRangeValidator(new NumberRange<Integer>(Integer.class,2,20)));
+  geoGroup.getFilteredProcesses().add(buffer);
+  getGeoServer().save(wps);
+}
