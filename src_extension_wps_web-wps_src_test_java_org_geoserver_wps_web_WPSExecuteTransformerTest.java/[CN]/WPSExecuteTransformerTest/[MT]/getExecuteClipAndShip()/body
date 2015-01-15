@@ -1,0 +1,27 @@
+{
+  CoordinateReferenceSystem epsg4326=CRS.decode("EPSG:4326");
+  Name collectGeometriesName=new NameImpl("gs","CollectGeometries");
+  InputParameterValues collectGeometriesFeaturesValues=new InputParameterValues(collectGeometriesName,"features");
+  VectorLayerConfiguration geosolutionsStates=new VectorLayerConfiguration();
+  geosolutionsStates.setLayerName("geosolutions:states");
+  ParameterValue cgFeatures=collectGeometriesFeaturesValues.values.get(0);
+  cgFeatures.setType(ParameterType.VECTOR_LAYER);
+  cgFeatures.setValue(geosolutionsStates);
+  OutputParameter collectGeometriesOutput=new OutputParameter(collectGeometriesName,"result");
+  ExecuteRequest collectGeometriesRequest=new ExecuteRequest(collectGeometriesName.getURI(),Arrays.asList(collectGeometriesFeaturesValues),Arrays.asList(collectGeometriesOutput));
+  Name clipName=new NameImpl("gs","CropCoverage");
+  InputParameterValues clipFeaturesValues=new InputParameterValues(clipName,"coverage");
+  ParameterValue features=clipFeaturesValues.values.get(0);
+  features.setType(ParameterType.RASTER_LAYER);
+  RasterLayerConfiguration geosolutionsUsa=new RasterLayerConfiguration();
+  geosolutionsUsa.setLayerName("geosolutions:usa");
+  geosolutionsUsa.setSpatialDomain(new ReferencedEnvelope(-180.0,180,-90.000000000036,90,epsg4326));
+  features.setValue(geosolutionsUsa);
+  InputParameterValues clipClipValues=new InputParameterValues(clipName,"cropShape");
+  ParameterValue clip=clipClipValues.values.get(0);
+  clip.setType(ParameterType.SUBPROCESS);
+  clip.setValue(collectGeometriesRequest);
+  OutputParameter clipOutput=new OutputParameter(clipName,"result");
+  ExecuteRequest executeBuffer=new ExecuteRequest(clipName.getURI(),Arrays.asList(clipFeaturesValues,clipClipValues),Arrays.asList(clipOutput));
+  return executeBuffer;
+}
