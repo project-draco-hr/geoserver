@@ -1,5 +1,5 @@
 {
-  GetMapRequest request=mapContent.getRequest();
+  final GetMapRequest request=mapContent.getRequest();
   String bilEncoding=(String)request.getFormat();
   int height=request.getHeight();
   int width=request.getWidth();
@@ -27,19 +27,23 @@
       LOGGER.warning("Can't parse output no data attribute: " + e.getMessage());
     }
   }
-  GridCoverageReader coverageReader=mapLayerInfo.getCoverageReader();
+  GridCoverage2DReader coverageReader=(GridCoverage2DReader)mapLayerInfo.getCoverageReader();
+  GeneralEnvelope destinationEnvelope=new GeneralEnvelope(mapContent.getRenderingArea());
   GridCoverage2D subCov=null;
   try {
-    subCov=getFinalCoverage(request,mapLayerInfo,mapContent,(GridCoverage2DReader)coverageReader);
+    subCov=getFinalCoverage(request,mapLayerInfo,mapContent,coverageReader,destinationEnvelope);
   }
- catch (  IndexOutOfBoundsException e) {
-    e.printStackTrace();
+ catch (  Exception e) {
+    LOGGER.severe("Could not get a subcoverage");
   }
-catch (  FactoryException e) {
-    e.printStackTrace();
-  }
-catch (  TransformException e) {
-    e.printStackTrace();
+  if (subCov == null) {
+    LOGGER.fine("Creating coverage from a blank image");
+    BufferedImage emptyImage=new BufferedImage(width,height,BufferedImage.TYPE_USHORT_GRAY);
+    DataBuffer data=emptyImage.getRaster().getDataBuffer();
+    for (int i=0; i < data.getSize(); ++i) {
+      data.setElem(i,32768);
+    }
+    subCov=factory.create("uselessname",emptyImage,destinationEnvelope);
   }
   if (subCov != null) {
     image=subCov.getRenderedImage();
@@ -62,10 +66,10 @@ catch (  TransformException e) {
       if ((bilEncoding.equals("application/bil32")) && (dtype != DataBuffer.TYPE_FLOAT)) {
         transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_FLOAT,null);
       }
-      if ((bilEncoding.equals("application/bil16")) && (dtype != DataBuffer.TYPE_SHORT)) {
+ else       if ((bilEncoding.equals("application/bil16")) && (dtype != DataBuffer.TYPE_SHORT)) {
         transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_SHORT,null);
       }
-      if ((bilEncoding.equals("application/bil8")) && (dtype != DataBuffer.TYPE_BYTE)) {
+ else       if ((bilEncoding.equals("application/bil8")) && (dtype != DataBuffer.TYPE_BYTE)) {
         transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_BYTE,null);
       }
       TiledImage tiled=new TiledImage(transformedImage,width,height);
