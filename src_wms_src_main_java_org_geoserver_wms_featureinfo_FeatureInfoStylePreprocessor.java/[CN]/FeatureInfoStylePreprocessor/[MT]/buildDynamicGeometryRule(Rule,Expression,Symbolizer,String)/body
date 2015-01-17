@@ -1,0 +1,14 @@
+{
+  List<Filter> typeChecks=new ArrayList<>();
+  for (  String geometryType : geometryTypes) {
+    typeChecks.add(ff.equal(ff.function("geometryType",geom),ff.literal(geometryType),false));
+  }
+  Filter geomCheck=ff.or(typeChecks);
+  Filter ruleFilter=base.getFilter();
+  Filter filter=ruleFilter == null || ruleFilter == Filter.INCLUDE ? geomCheck : ff.and(geomCheck,ruleFilter);
+  RuleImpl extra=new RuleImpl(base);
+  extra.setFilter(filter);
+  extra.symbolizers().clear();
+  extra.symbolizers().add(symbolizer);
+  return extra;
+}

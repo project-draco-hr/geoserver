@@ -1,6 +1,8 @@
 {
   geometriesOnLineSymbolizer.clear();
   geometriesOnPolygonSymbolizer.clear();
+  geometriesOnPointSymbolizer.clear();
+  geometriesOnTextSymbolizer.clear();
   addSolidLineSymbolier=false;
   super.visit(rule);
   Rule copy=(Rule)pages.peek();
@@ -16,15 +18,31 @@
       copy.symbolizers().add(sb.createPolygonSymbolizer());
     }
  else     if (geometryType.equals(Geometry.class)) {
-      Filter polygon=ff.equal(ff.function("geometryType",geom),ff.literal("Polygon"),false);
-      Filter multiPolygon=ff.equal(ff.function("geometryType",geom),ff.literal("MultiPolygon"),false);
-      Filter geomCheck=ff.or(Arrays.asList(polygon,multiPolygon));
-      Filter ruleFilter=copy.getFilter();
-      Filter filter=ruleFilter == null || ruleFilter == Filter.INCLUDE ? geomCheck : ff.and(geomCheck,ruleFilter);
-      RuleImpl extra=new RuleImpl(copy);
-      extra.setFilter(filter);
-      extra.symbolizers().clear();
-      extra.symbolizers().add(sb.createPolygonSymbolizer());
+      RuleImpl extra=buildDynamicGeometryRule(copy,geom,sb.createPolygonSymbolizer(),"Polygon","MultiPolygon");
+      extraRules.add(extra);
+    }
+  }
+  geometriesOnTextSymbolizer.removeAll(geometriesOnPolygonSymbolizer);
+  geometriesOnTextSymbolizer.removeAll(geometriesOnLineSymbolizer);
+  geometriesOnTextSymbolizer.removeAll(geometriesOnPointSymbolizer);
+  for (  Expression geom : geometriesOnTextSymbolizer) {
+    Object result=geom.evaluate(schema);
+    Class geometryType=getTargetGeometryType(result);
+    if (Polygon.class.isAssignableFrom(geometryType) || MultiPolygon.class.isAssignableFrom(geometryType)) {
+      copy.symbolizers().add(sb.createPolygonSymbolizer());
+    }
+ else     if (LineString.class.isAssignableFrom(geometryType) || MultiLineString.class.isAssignableFrom(geometryType)) {
+      copy.symbolizers().add(sb.createLineSymbolizer());
+    }
+ else     if (Point.class.isAssignableFrom(geometryType) || MultiPoint.class.isAssignableFrom(geometryType)) {
+      copy.symbolizers().add(sb.createPointSymbolizer());
+    }
+ else {
+      RuleImpl extra=buildDynamicGeometryRule(copy,geom,sb.createPolygonSymbolizer(),"Polygon","MultiPolygon");
+      extraRules.add(extra);
+      extra=buildDynamicGeometryRule(copy,geom,sb.createLineSymbolizer(),"LineString","LinearRing","MultiLineString");
+      extraRules.add(extra);
+      extra=buildDynamicGeometryRule(copy,geom,sb.createPointSymbolizer(),"Point","MultiPoint");
       extraRules.add(extra);
     }
   }
