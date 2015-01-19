@@ -1,0 +1,11 @@
+{
+  Map<String,Object> results=executor.submitChained(executeRequest,listener);
+  Object obj=results.values().iterator().next();
+  if (obj != null && !ppio.getType().isInstance(obj)) {
+    throw new WPSException("The process output is incompatible with the input target type, was expecting " + ppio.getType().getName() + " and got "+ obj.getClass().getName());
+  }
+  if (obj instanceof FeatureCollection) {
+    obj=CancellingFeatureCollectionBuilder.wrap((FeatureCollection)obj,listener);
+  }
+  return obj;
+}

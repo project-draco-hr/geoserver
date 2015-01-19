@@ -1,0 +1,25 @@
+{
+  InputProvider provider;
+  if (input.getReference() != null) {
+    InputReferenceType ref=input.getReference();
+    String href=ref.getHref();
+    if (href.startsWith("http://geoserver/wfs")) {
+      provider=new InternalWFSInputProvider(input,ppio,context);
+    }
+ else     if (href.startsWith("http://geoserver/wcs")) {
+      provider=new InternalWCSInputProvider(input,ppio,context);
+    }
+ else     if (href.startsWith("http://geoserver/wps")) {
+      provider=new InternalWPSInputProvider(input,ppio,executor,context);
+    }
+ else {
+      int maxSizeMB=Validators.getMaxSizeMB(validators);
+      validators=Validators.filterOutClasses(validators,MaxSizeValidator.class);
+      provider=new RemoteRequestInputProvider(input,(ComplexPPIO)ppio,executor.getConnectionTimeout(),maxSizeMB * 1024 * 1024);
+    }
+  }
+ else {
+    provider=new SimpleInputProvider(input,ppio);
+  }
+  return ValidatingInputProvider.wrap(provider,validators);
+}

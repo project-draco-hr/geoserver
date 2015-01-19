@@ -1,0 +1,22 @@
+{
+  final float inNoData=-9.99999993381581251e+36f;
+  final float outNoData=-9999;
+  String layer=getLayerId(SF_DEM);
+  String request="wms?service=wms&request=GetMap&version=1.1.0" + "&layers=" + layer + "&bbox=-103.871,44.370,-103.629,44.501"+ "&width="+ width+ "&height="+ width+ "&format=application/bil32&crs=EPSG:4326";
+  MockHttpServletResponse servletResponse=getAsServletResponse(request);
+  byte[] bytes=getBinary(servletResponse);
+  FloatBuffer orig=ByteBuffer.wrap(bytes).asFloatBuffer();
+  setConfiguration(SF_DEM,BilConfig.NO_DATA_OUTPUT,String.valueOf(outNoData));
+  servletResponse=getAsServletResponse(request);
+  bytes=getBinary(servletResponse);
+  FloatBuffer translated=ByteBuffer.wrap(bytes).asFloatBuffer();
+  assertEquals("Unexpected content length after translating no-data values",orig.limit(),translated.limit());
+  int noDataCount=0;
+  for (int i=0; i < orig.limit(); i++) {
+    if (orig.get(i) == inNoData) {
+      assertEquals(outNoData,translated.get(i),1e-6);
+      noDataCount+=1;
+    }
+  }
+  assertTrue("Did not find any no-data values",noDataCount > 0);
+}

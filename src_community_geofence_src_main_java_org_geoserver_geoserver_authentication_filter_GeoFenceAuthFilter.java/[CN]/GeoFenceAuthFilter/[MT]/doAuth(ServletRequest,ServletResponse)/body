@@ -1,0 +1,31 @@
+{
+  BasicUser basicUser=getBasicAuth(request);
+  AuthUser authUser=null;
+  if (basicUser != null) {
+    LOGGER.fine("Checking auth for user " + basicUser.name);
+    authUser=ruleReaderService.authorize(basicUser.name,basicUser.pw);
+    if (authUser == null) {
+      LOGGER.info("Could not authenticate user " + basicUser.name);
+    }
+  }
+ else {
+    LOGGER.fine("No basicauth");
+  }
+  if (authUser != null) {
+    LOGGER.fine("Found user " + authUser);
+    List<GrantedAuthority> authorities=new ArrayList<GrantedAuthority>();
+    authorities.add(GeoServerRole.AUTHENTICATED_ROLE);
+    if (authUser.getRole() == AuthUser.Role.ADMIN) {
+      authorities.add(GeoServerRole.ADMIN_ROLE);
+      authorities.add(new SimpleGrantedAuthority("ADMIN"));
+    }
+ else {
+      authorities.add(new SimpleGrantedAuthority(USER_ROLE));
+    }
+    UsernamePasswordAuthenticationToken upa=new UsernamePasswordAuthenticationToken(basicUser.name,basicUser.pw,authorities);
+    SecurityContextHolder.getContext().setAuthentication(upa);
+  }
+ else {
+    LOGGER.fine("Anonymous access");
+  }
+}

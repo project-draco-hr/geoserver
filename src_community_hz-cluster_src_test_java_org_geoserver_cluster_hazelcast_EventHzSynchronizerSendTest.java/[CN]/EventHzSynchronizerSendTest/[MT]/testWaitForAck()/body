@@ -1,0 +1,37 @@
+{
+  DataStoreInfo info;
+  WorkspaceInfo wsInfo;
+  final String storeName="testStore";
+  final String storeId="Store-TEST";
+  final String storeWorkspace="Workspace-TEST";
+  final Capture<ConfigChangeEvent> capture=new Capture<ConfigChangeEvent>();
+{
+    info=createMock(DataStoreInfo.class);
+    wsInfo=createMock(WorkspaceInfo.class);
+    expect(info.getName()).andStubReturn(storeName);
+    expect(info.getId()).andStubReturn(storeId);
+    expect(info.getWorkspace()).andStubReturn(wsInfo);
+    expect(wsInfo.getId()).andStubReturn(storeWorkspace);
+    topic.publish(capture(capture));
+    expectLastCall();
+  }
+  replay(info,wsInfo);
+{
+    HzSynchronizer sync=getSynchronizer();
+    CatalogRemoveEventImpl event=new CatalogRemoveEventImpl();
+    event.setSource(info);
+    for (    CatalogListener listener : catListenerCapture.getValues()) {
+      listener.handleRemoveEvent(event);
+    }
+    for (    MessageListener<UUID> listener : this.captureAckTopicListener.getValues()) {
+      String topicName="geoserver.config.ack";
+      UUID messageObject=capture.getValue().getUUID();
+      int publishTime=0;
+      Member publishingMember=null;
+      Message<UUID> message=new Message<UUID>(topicName,messageObject,publishTime,publishingMember);
+      listener.onMessage(message);
+    }
+  }
+  waitForSync();
+  verify(info,wsInfo);
+}

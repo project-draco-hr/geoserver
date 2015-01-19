@@ -1,0 +1,22 @@
+{
+  final Map<String,String> params=new HashMap<String,String>();
+  params.put("map-name","geoserver-sessions");
+  params.put("sticky-session",Boolean.toString(getCluster().isStickySession()));
+  params.put("instance-name",getCluster().getHz().getConfig().getInstanceName());
+  FilterConfig config=new FilterConfig(){
+    @Override public String getFilterName(){
+      return "hazelcast";
+    }
+    @Override public ServletContext getServletContext(){
+      return srvCtx;
+    }
+    @Override public String getInitParameter(    String name){
+      return params.get(name);
+    }
+    @Override public Enumeration<String> getInitParameterNames(){
+      return Iterators.asEnumeration(params.keySet().iterator());
+    }
+  }
+;
+  delegate.init(config);
+}

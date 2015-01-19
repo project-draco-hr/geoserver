@@ -1,133 +1,140 @@
 {
   ImportData data=task.getData();
-  FeatureReader reader=format.read(data,task);
-  SimpleFeatureType featureType=(SimpleFeatureType)reader.getFeatureType();
-  final String featureTypeName=featureType.getName().getLocalPart();
-  DataStore dataStore=(DataStore)store.getDataStore(null);
-  FeatureDataConverter featureDataConverter=FeatureDataConverter.DEFAULT;
-  if (isShapefileDataStore(dataStore)) {
-    featureDataConverter=FeatureDataConverter.TO_SHAPEFILE;
-  }
- else   if (isOracleDataStore(dataStore)) {
-    featureDataConverter=FeatureDataConverter.TO_ORACLE;
-  }
- else   if (isPostGISDataStore(dataStore)) {
-    featureDataConverter=FeatureDataConverter.TO_POSTGIS;
-  }
-  featureType=featureDataConverter.convertType(featureType,format,data,task);
-  UpdateMode updateMode=task.getUpdateMode();
-  final String uniquifiedFeatureTypeName;
-  if (updateMode == UpdateMode.CREATE) {
-    uniquifiedFeatureTypeName=findUniqueNativeFeatureTypeName(featureType,store);
-    task.setOriginalLayerName(featureTypeName);
-    if (!uniquifiedFeatureTypeName.equals(featureTypeName)) {
-      task.getLayer().getResource().setName(uniquifiedFeatureTypeName);
-      task.getLayer().getResource().setNativeName(uniquifiedFeatureTypeName);
-      SimpleFeatureTypeBuilder typeBuilder=new SimpleFeatureTypeBuilder();
-      typeBuilder.setName(uniquifiedFeatureTypeName);
-      typeBuilder.addAll(featureType.getAttributeDescriptors());
-      featureType=typeBuilder.buildFeatureType();
-    }
-    if (dataStore instanceof JDBCDataStore) {
-      JDBCDataStore ds=(JDBCDataStore)dataStore;
-      if (ds.getSqlTypeNameToClassMappings().containsKey("timestamptz")) {
-        ds.getSqlTypeToSqlTypeNameOverrides().put(java.sql.Types.TIMESTAMP,"timestamptz");
-      }
-    }
-    featureType=tx.inline(task,dataStore,featureType);
-    dataStore.createSchema(featureType);
-  }
- else {
-    if (updateMode == UpdateMode.UPDATE) {
-      throw new UnsupportedOperationException("updateMode UPDATE is not supported yet");
-    }
-    uniquifiedFeatureTypeName=featureTypeName;
-  }
-  Transaction transaction=new DefaultTransaction();
-  if (updateMode == UpdateMode.REPLACE) {
-    FeatureStore fs=(FeatureStore)dataStore.getFeatureSource(featureTypeName);
-    fs.setTransaction(transaction);
-    fs.removeFeatures(Filter.INCLUDE);
-  }
-  Exception error=null;
+  FeatureReader reader=null;
   FeatureWriter writer=null;
-  ProgressMonitor monitor=task.progress();
-  int skipped=0;
-  int cnt=0;
-  long startTime=System.currentTimeMillis();
-  task.clearMessages();
-  task.setTotalToProcess(format.getFeatureCount(task.getData(),task));
-  LOGGER.info("begining import");
+  Exception error=null;
   try {
-    writer=dataStore.getFeatureWriterAppend(uniquifiedFeatureTypeName,transaction);
-    while (reader.hasNext()) {
-      if (monitor.isCanceled()) {
-        break;
+    reader=format.read(data,task);
+    SimpleFeatureType featureType=(SimpleFeatureType)reader.getFeatureType();
+    final String featureTypeName=featureType.getName().getLocalPart();
+    DataStore dataStore=(DataStore)store.getDataStore(null);
+    FeatureDataConverter featureDataConverter=FeatureDataConverter.DEFAULT;
+    if (isShapefileDataStore(dataStore)) {
+      featureDataConverter=FeatureDataConverter.TO_SHAPEFILE;
+    }
+ else     if (isOracleDataStore(dataStore)) {
+      featureDataConverter=FeatureDataConverter.TO_ORACLE;
+    }
+ else     if (isPostGISDataStore(dataStore)) {
+      featureDataConverter=FeatureDataConverter.TO_POSTGIS;
+    }
+    featureType=featureDataConverter.convertType(featureType,format,data,task);
+    UpdateMode updateMode=task.getUpdateMode();
+    final String uniquifiedFeatureTypeName;
+    if (updateMode == UpdateMode.CREATE) {
+      uniquifiedFeatureTypeName=findUniqueNativeFeatureTypeName(featureType,store);
+      task.setOriginalLayerName(featureTypeName);
+      if (!uniquifiedFeatureTypeName.equals(featureTypeName)) {
+        task.getLayer().getResource().setName(uniquifiedFeatureTypeName);
+        task.getLayer().getResource().setNativeName(uniquifiedFeatureTypeName);
+        SimpleFeatureTypeBuilder typeBuilder=new SimpleFeatureTypeBuilder();
+        typeBuilder.setName(uniquifiedFeatureTypeName);
+        typeBuilder.addAll(featureType.getAttributeDescriptors());
+        featureType=typeBuilder.buildFeatureType();
       }
-      SimpleFeature feature=(SimpleFeature)reader.next();
-      SimpleFeature next=(SimpleFeature)writer.next();
-      featureDataConverter.convert(feature,next);
-      Geometry geom=(Geometry)next.getDefaultGeometry();
-      if (geom != null && geom.isEmpty()) {
-        next.setDefaultGeometry(null);
+      if (dataStore instanceof JDBCDataStore) {
+        JDBCDataStore ds=(JDBCDataStore)dataStore;
+        if (ds.getSqlTypeNameToClassMappings().containsKey("timestamptz")) {
+          ds.getSqlTypeToSqlTypeNameOverrides().put(java.sql.Types.TIMESTAMP,"timestamptz");
+        }
       }
-      next=tx.inline(task,dataStore,feature,next);
-      if (next == null) {
-        skipped++;
-      }
+      featureType=tx.inline(task,dataStore,featureType);
+      dataStore.createSchema(featureType);
+    }
  else {
-        writer.write();
+      if (updateMode == UpdateMode.UPDATE) {
+        throw new UnsupportedOperationException("updateMode UPDATE is not supported yet");
       }
-      task.setNumberProcessed(++cnt);
+      uniquifiedFeatureTypeName=featureTypeName;
     }
-    transaction.commit();
-    if (skipped > 0) {
-      task.addMessage(Level.WARNING,skipped + " features were skipped.");
+    Transaction transaction=new DefaultTransaction();
+    if (updateMode == UpdateMode.REPLACE) {
+      FeatureStore fs=(FeatureStore)dataStore.getFeatureSource(featureTypeName);
+      fs.setTransaction(transaction);
+      fs.removeFeatures(Filter.INCLUDE);
     }
-    LOGGER.info("load to target took " + (System.currentTimeMillis() - startTime));
-  }
- catch (  Exception e) {
-    error=e;
-  }
-  if (error != null || monitor.isCanceled()) {
+    ProgressMonitor monitor=task.progress();
+    int skipped=0;
+    int cnt=0;
+    long startTime=System.currentTimeMillis();
+    task.clearMessages();
+    task.setTotalToProcess(format.getFeatureCount(task.getData(),task));
+    LOGGER.info("begining import");
     try {
-      transaction.rollback();
+      writer=dataStore.getFeatureWriterAppend(uniquifiedFeatureTypeName,transaction);
+      while (reader.hasNext()) {
+        if (monitor.isCanceled()) {
+          break;
+        }
+        SimpleFeature feature=(SimpleFeature)reader.next();
+        SimpleFeature next=(SimpleFeature)writer.next();
+        featureDataConverter.convert(feature,next);
+        Geometry geom=(Geometry)next.getDefaultGeometry();
+        if (geom != null && geom.isEmpty()) {
+          next.setDefaultGeometry(null);
+        }
+        next=tx.inline(task,dataStore,feature,next);
+        if (next == null) {
+          skipped++;
+        }
+ else {
+          writer.write();
+        }
+        task.setNumberProcessed(++cnt);
+      }
+      transaction.commit();
+      if (skipped > 0) {
+        task.addMessage(Level.WARNING,skipped + " features were skipped.");
+      }
+      LOGGER.info("load to target took " + (System.currentTimeMillis() - startTime));
     }
- catch (    Exception e1) {
-      LOGGER.log(Level.WARNING,"Error rolling back transaction",e1);
-    }
-    try {
-      dropSchema(dataStore,featureTypeName);
-    }
- catch (    Exception e1) {
-      LOGGER.log(Level.WARNING,"Error dropping schema in rollback",e1);
-    }
-  }
-  try {
-    transaction.close();
-  }
- catch (  Exception e) {
-    if (error != null) {
+ catch (    Exception e) {
       error=e;
     }
-    LOGGER.log(Level.WARNING,"Error closing transaction",e);
-  }
-  if (writer != null) {
+    if (error != null || monitor.isCanceled()) {
+      try {
+        transaction.rollback();
+      }
+ catch (      Exception e1) {
+        LOGGER.log(Level.WARNING,"Error rolling back transaction",e1);
+      }
+      try {
+        dropSchema(dataStore,featureTypeName);
+      }
+ catch (      Exception e1) {
+        LOGGER.log(Level.WARNING,"Error dropping schema in rollback",e1);
+      }
+    }
     try {
-      writer.close();
+      transaction.close();
     }
  catch (    Exception e) {
       if (error != null) {
         error=e;
       }
-      LOGGER.log(Level.WARNING,"Error closing writer",e);
+      LOGGER.log(Level.WARNING,"Error closing transaction",e);
     }
   }
-  try {
-    format.dispose(reader,task);
-  }
- catch (  Exception e) {
-    LOGGER.log(Level.WARNING,"Error closing reader",e);
+  finally {
+    if (writer != null) {
+      try {
+        writer.close();
+      }
+ catch (      Exception e) {
+        if (error != null) {
+          error=e;
+        }
+        LOGGER.log(Level.WARNING,"Error closing writer",e);
+      }
+    }
+    try {
+      if (reader != null) {
+        format.dispose(reader,task);
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"Error closing reader",e);
+    }
   }
   if (error != null) {
     throw error;

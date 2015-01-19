@@ -1,0 +1,16 @@
+{
+  Resource resource=getStoredRequest(executionId);
+  if (resource == null || resource.getType() == Type.UNDEFINED) {
+    return null;
+  }
+ else {
+    try (InputStream in=resource.in()){
+      WPSConfiguration config=new WPSConfiguration();
+      Parser parser=new Parser(config);
+      return (ExecuteType)parser.parse(in);
+    }
+ catch (    SAXException|ParserConfigurationException e) {
+      throw new WPSException("Could not parse the stored WPS request",e);
+    }
+  }
+}

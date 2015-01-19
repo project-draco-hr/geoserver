@@ -1,0 +1,15 @@
+{
+  final PlanarImage source=sources[0];
+  final Rectangle bounds=destRect.intersection(source.getBounds());
+  if (!destRect.equals(bounds)) {
+    Logging.getLogger(TransformException.class).warning("Bounds mismatch: " + destRect + " and "+ bounds);
+  }
+  WritableRectIter iterator=RectIterFactory.createWritable(dest,bounds);
+  iterator=TransfertRectIter.create(RectIterFactory.create(source,bounds),iterator);
+  if (!iterator.finishedBands()) {
+    do {
+      recode(iterator);
+    }
+ while (!iterator.nextBandDone());
+  }
+}

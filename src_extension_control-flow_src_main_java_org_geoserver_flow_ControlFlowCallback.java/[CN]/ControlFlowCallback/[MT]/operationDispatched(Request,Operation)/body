@@ -1,20 +1,39 @@
 {
-  checkConfiguration();
   SENTINEL.start();
   if (SENTINEL.isOutermostRequest()) {
     blockedRequests.incrementAndGet();
+    long start=System.currentTimeMillis();
     try {
-      List<FlowController> controllers=this.controllers;
-      if (controllers.size() > 0) {
-        REQUEST_CONTROLLERS.set(controllers);
+      Request requestWithOperation=null;
+      if (request != null) {
+        requestWithOperation=new Request(request);
+        requestWithOperation.setOperation(operation);
+      }
+      List<FlowController> controllers=null;
+      try {
+        controllers=provider.getFlowControllers(requestWithOperation);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.SEVERE,"An error occurred setting up the flow controllers to this request",e);
+        return operation;
+      }
+      if (controllers.size() == 0) {
+        LOGGER.info("Control-flow inactive for , there are no configured rules");
+      }
+ else {
+        long timeout=provider.getTimeout(requestWithOperation);
+        CallbackContext context=new CallbackContext(controllers,timeout);
+        REQUEST_CONTROLLERS.set(context);
         long maxTime=timeout > 0 ? System.currentTimeMillis() + timeout : -1;
         for (        FlowController flowController : controllers) {
           if (timeout > 0) {
             long maxWait=maxTime - System.currentTimeMillis();
-            if (!flowController.requestIncoming(request,maxWait))             throw new HttpErrorCodeException(503,"Requested timeout out while waiting to be executed");
+            if (!flowController.requestIncoming(requestWithOperation,maxWait)) {
+              throw new HttpErrorCodeException(503,"Requested timeout out while waiting to be executed, please lower your request rate");
+            }
           }
  else {
-            flowController.requestIncoming(request,-1);
+            flowController.requestIncoming(requestWithOperation,-1);
           }
         }
       }
@@ -22,6 +41,10 @@
   finally {
       blockedRequests.decrementAndGet();
       runningRequests.incrementAndGet();
+      if (request != null && request.getHttpResponse() != null) {
+        long end=System.currentTimeMillis();
+        request.getHttpResponse().addHeader(X_RATELIMIT_DELAY,String.valueOf(end - start));
+      }
     }
   }
   return operation;

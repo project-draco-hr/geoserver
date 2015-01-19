@@ -1,0 +1,29 @@
+{
+  final Catalog catalog=getCatalog();
+  final SortParam sort=getSort();
+  final Property<PreviewLayer> property=getProperty(sort);
+  SortBy sortOrder=null;
+  if (sort != null) {
+    if (property instanceof BeanProperty) {
+      final String sortProperty=((BeanProperty<PreviewLayer>)property).getPropertyPath();
+      sortOrder=sortBy(sortProperty,sort.isAscending());
+    }
+ else     if (property == NAME) {
+      sortOrder=sortBy("prefixedName",sort.isAscending());
+    }
+  }
+  Filter filter=getFilter();
+  CloseableIterator<PublishedInfo> pi=catalog.list(PublishedInfo.class,filter,first,count,sortOrder);
+  return CloseableIteratorAdapter.transform(pi,new Function<PublishedInfo,PreviewLayer>(){
+    @Override public PreviewLayer apply(    PublishedInfo input){
+      if (input instanceof LayerInfo) {
+        return new PreviewLayer((LayerInfo)input);
+      }
+ else       if (input instanceof LayerGroupInfo) {
+        return new PreviewLayer((LayerGroupInfo)input);
+      }
+      return null;
+    }
+  }
+);
+}

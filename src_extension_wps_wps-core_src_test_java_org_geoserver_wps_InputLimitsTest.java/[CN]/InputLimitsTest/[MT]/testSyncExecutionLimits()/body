@@ -1,0 +1,10 @@
+{
+  MonkeyProcess.wait("x2",2000);
+  MonkeyProcess.progress("x2",50f,false);
+  String request="wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&DataInputs=" + urlEncode("id=x2");
+  Document dom=getAsDOM(request);
+  XMLAssert.assertXpathExists("//wps:Status/wps:ProcessFailed",dom);
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  String message=xpath.evaluate("//wps:Status/wps:ProcessFailed/ows:ExceptionReport/ows:Exception/ows:ExceptionText",dom);
+  assertTrue(message.contains("went beyond the configured limits of 1 seconds"));
+}

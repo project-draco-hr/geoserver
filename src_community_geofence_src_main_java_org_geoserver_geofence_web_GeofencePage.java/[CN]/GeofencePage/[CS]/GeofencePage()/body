@@ -1,0 +1,91 @@
+{
+  GeoFenceConfigurationManager configManager=GeoServerExtensions.bean(GeoFenceConfigurationManager.class);
+  config=configManager.getConfiguration().clone();
+  cacheParams=configManager.getCacheConfiguration().clone();
+  final IModel<GeoFenceConfiguration> configModel=getGeoFenceConfigModel();
+  final IModel<CacheConfiguration> cacheModel=getCacheConfigModel();
+  Form<IModel<GeoFenceConfiguration>> form=new Form<IModel<GeoFenceConfiguration>>("form",new CompoundPropertyModel<IModel<GeoFenceConfiguration>>(configModel));
+  form.setOutputMarkupId(true);
+  add(form);
+  form.add(new TextField<String>("instanceName",new PropertyModel<String>(configModel,"instanceName")).setRequired(true));
+  form.add(new TextField<String>("servicesUrl",new PropertyModel<String>(configModel,"servicesUrl")).setRequired(true));
+  form.add(new AjaxSubmitLink("test"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      ((FormComponent)form.get("servicesUrl")).processInput();
+      String servicesUrl=(String)((FormComponent)form.get("servicesUrl")).getConvertedInput();
+      RuleReaderService ruleReader=getRuleReaderService(servicesUrl);
+      try {
+        List<ShortRule> rules=ruleReader.getMatchingRules(new RuleFilter());
+        info(new StringResourceModel(GeofencePage.class.getSimpleName() + ".connectionSuccessful",null).getObject());
+      }
+ catch (      Exception e) {
+        error(e);
+        LOGGER.log(Level.WARNING,e.getMessage(),e);
+      }
+      target.addComponent(getPage().get("feedback"));
+    }
+    private RuleReaderService getRuleReaderService(    String servicesUrl){
+      HttpInvokerProxyFactoryBean invoker=new org.springframework.remoting.httpinvoker.HttpInvokerProxyFactoryBean();
+      invoker.setServiceUrl(servicesUrl);
+      invoker.setServiceInterface(RuleReaderService.class);
+      invoker.afterPropertiesSet();
+      return (RuleReaderService)invoker.getObject();
+    }
+  }
+.setDefaultFormProcessing(false));
+  form.add(new CheckBox("allowRemoteAndInlineLayers",new PropertyModel<Boolean>(configModel,"allowRemoteAndInlineLayers")));
+  form.add(new CheckBox("allowDynamicStyles",new PropertyModel<Boolean>(configModel,"allowDynamicStyles")));
+  form.add(new CheckBox("grantWriteToWorkspacesToAuthenticatedUsers",new PropertyModel<Boolean>(configModel,"grantWriteToWorkspacesToAuthenticatedUsers")));
+  form.add(new CheckBox("useRolesToFilter",new PropertyModel<Boolean>(configModel,"useRolesToFilter")));
+  form.add(new TextField<String>("acceptedRoles",new PropertyModel<String>(configModel,"acceptedRoles")));
+  Button submit=new Button("submit",new StringResourceModel("submit",this,null)){
+    private static final long serialVersionUID=1L;
+    @Override public void onSubmit(){
+      try {
+        GeoServerExtensions.bean(GeoFenceConfigurationController.class).storeConfiguration(config,cacheParams);
+        doReturn();
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Save error",e);
+        error(e);
+      }
+    }
+  }
+;
+  form.add(submit);
+  Button cancel=new Button("cancel"){
+    private static final long serialVersionUID=1L;
+    @Override public void onSubmit(){
+      doReturn();
+    }
+  }
+.setDefaultFormProcessing(false);
+  form.add(cancel);
+  form.add(new TextField<Long>("cacheSize",new PropertyModel<Long>(cacheModel,"size")).setRequired(true));
+  form.add(new TextField<Long>("cacheRefresh",new PropertyModel<Long>(cacheModel,"refreshMilliSec")).setRequired(true));
+  form.add(new TextField<Long>("cacheExpire",new PropertyModel<Long>(cacheModel,"expireMilliSec")).setRequired(true));
+  CachedRuleReader cacheRuleReader=GeoServerExtensions.bean(CachedRuleReader.class);
+  final Model<String> ruleStatsModel=new Model(getStats(cacheRuleReader));
+  final Label ruleStats=new Label("rulestats",ruleStatsModel);
+  ruleStats.setOutputMarkupId(true);
+  ruleStats.setEscapeModelStrings(false);
+  form.add(ruleStats);
+  final Model<String> userStatsModel=new Model(getUserStats(cacheRuleReader));
+  final Label userStats=new Label("userstats",userStatsModel);
+  userStats.setEscapeModelStrings(false);
+  userStats.setOutputMarkupId(true);
+  form.add(userStats);
+  form.add(new AjaxSubmitLink("invalidate"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      CachedRuleReader cacheRuleReader=GeoServerExtensions.bean(CachedRuleReader.class);
+      cacheRuleReader.invalidateAll();
+      info(new StringResourceModel(GeofencePage.class.getSimpleName() + ".cacheInvalidated",null).getObject());
+      ruleStatsModel.setObject(getStats(cacheRuleReader));
+      userStatsModel.setObject(getUserStats(cacheRuleReader));
+      target.addComponent(ruleStats);
+      target.addComponent(userStats);
+      target.addComponent(getPage().get("feedback"));
+    }
+  }
+.setDefaultFormProcessing(false));
+}

@@ -1,13 +1,21 @@
 {
   final Fragment mainContent=new Fragment("main-content","normal",this);
-  mainContent.setOutputMarkupId(true);
   final ModalWindow popup=new ModalWindow("popup");
   mainContent.add(popup);
   final StyleNameModel styleNameModel=new StyleNameModel(style);
-  mainContent.add(new Label("style.name",styleNameModel));
   final PropertyModel layerNameModel=new PropertyModel(layer,"prefixedName");
-  mainContent.add(new Label("layer.name",layerNameModel));
-  mainContent.add(new AjaxLink("change.style",new ParamResourceModel("CssDemoPage.changeStyle",this)){
+  mainContent.add(new AjaxLink("create.style",new ParamResourceModel("CssDemoPage.createStyle",this)){
+    public void onClick(    AjaxRequestTarget target){
+      target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
+      popup.setInitialHeight(200);
+      popup.setInitialWidth(300);
+      popup.setTitle(new Model("Choose name for new style"));
+      popup.setContent(new StyleNameInput(popup.getContentId(),CssDemoPage.this));
+      popup.show(target);
+    }
+  }
+);
+  mainContent.add(new SimpleAjaxLink("change.style",styleNameModel){
     public void onClick(    AjaxRequestTarget target){
       target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
       popup.setInitialHeight(400);
@@ -18,24 +26,13 @@
     }
   }
 );
-  mainContent.add(new AjaxLink("change.layer",new ParamResourceModel("CssDemoPage.changeLayer",this)){
+  mainContent.add(new SimpleAjaxLink("change.layer",layerNameModel){
     public void onClick(    AjaxRequestTarget target){
       target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
       popup.setInitialHeight(400);
       popup.setInitialWidth(600);
       popup.setTitle(new Model("Choose layer to edit"));
       popup.setContent(new LayerChooser(popup.getContentId(),CssDemoPage.this));
-      popup.show(target);
-    }
-  }
-);
-  mainContent.add(new AjaxLink("create.style",new ParamResourceModel("CssDemoPage.createStyle",this)){
-    public void onClick(    AjaxRequestTarget target){
-      target.appendJavascript("Wicket.Window.unloadConfirmation = false;");
-      popup.setInitialHeight(200);
-      popup.setInitialWidth(300);
-      popup.setTitle(new Model("Choose name for new style"));
-      popup.setContent(new StyleNameInput(popup.getContentId(),CssDemoPage.this));
       popup.show(target);
     }
   }
@@ -168,12 +165,9 @@
     }
   }
 );
-  FeedbackPanel feedback2=new FeedbackPanel("feedback-low");
-  feedback2.setOutputMarkupId(true);
-  mainContent.add(feedback2);
   File sldFile=findStyleFile(style);
   File cssFile=new File(sldFile.getParentFile(),style.getName() + ".css");
-  mainContent.add(new StylePanel("style.editing",model,CssDemoPage.this,getFeedbackPanel(),cssFile));
+  mainContent.add(new StylePanel("style.editing",model,CssDemoPage.this,cssFile));
   mainContent.add(new AjaxTabbedPanel("context",tabs));
   add(mainContent);
   add(dialog=new GeoServerDialog("dialog"));

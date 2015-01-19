@@ -1,11 +1,18 @@
 {
-  List<LayerInfo> layers=catalog.getLayers();
-  for (  LayerInfo layer : layers) {
-    removeStyleInLayer(layer,style);
+  Filter anyStyle=Predicates.equal("styles",style,MatchAction.ANY);
+  Filter layersAssociated=Predicates.or(Predicates.equal("defaultStyle",style),anyStyle);
+  try (CloseableIterator<LayerInfo> it=catalog.list(LayerInfo.class,layersAssociated)){
+    while (it.hasNext()) {
+      LayerInfo layer=it.next();
+      removeStyleInLayer(layer,style);
+    }
   }
-  List<LayerGroupInfo> groups=catalog.getLayerGroups();
-  for (  LayerGroupInfo group : groups) {
-    removeStyleInLayerGroup(group,style);
+   Filter groupAssociated=Predicates.or(Predicates.equal("rootLayerStyle",style),anyStyle);
+  try (CloseableIterator<LayerGroupInfo> it=catalog.list(LayerGroupInfo.class,groupAssociated)){
+    while (it.hasNext()) {
+      LayerGroupInfo group=it.next();
+      removeStyleInLayerGroup(group,style);
+    }
   }
-  catalog.remove(style);
+   catalog.remove(style);
 }

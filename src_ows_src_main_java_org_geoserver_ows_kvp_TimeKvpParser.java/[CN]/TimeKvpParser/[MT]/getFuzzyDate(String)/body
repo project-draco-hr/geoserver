@@ -1,11 +1,17 @@
 {
-  if (value.equalsIgnoreCase("current") || value.equalsIgnoreCase("now")) {
+  String computedValue=value;
+  if (computedValue.equalsIgnoreCase("current") || computedValue.equalsIgnoreCase("now")) {
     return null;
+  }
+  if (computedValue.equalsIgnoreCase("present")) {
+    Calendar now=Calendar.getInstance();
+    now.set(Calendar.MILLISECOND,0);
+    computedValue=FormatAndPrecision.MILLISECOND.getFormat().format(now.getTime());
   }
   for (  FormatAndPrecision f : FormatAndPrecision.values()) {
     ParsePosition pos=new ParsePosition(0);
-    Date time=f.getFormat().parse(value,pos);
-    if (pos.getIndex() == value.length()) {
+    Date time=f.getFormat().parse(computedValue,pos);
+    if (pos.getIndex() == computedValue.length()) {
       DateRange range=f.expand(time);
       if (range.getMinValue().equals(range.getMaxValue())) {
         return range.getMinValue();

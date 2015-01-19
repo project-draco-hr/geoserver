@@ -1,17 +1,24 @@
 {
-  List<LayerInfo> layer=catalog.getLayers();
-  for (  LayerInfo li : layer) {
-    if (style.equals(li.getDefaultStyle()))     add(li,ModificationType.STYLE_RESET);
- else     if (li.getStyles().contains(style))     add(li,ModificationType.EXTRA_STYLE_REMOVED);
-  }
-  List<LayerGroupInfo> groups=catalog.getLayerGroups();
-  for (  LayerGroupInfo group : groups) {
-    if (style.equals(group.getRootLayerStyle())) {
-      add(group,ModificationType.GROUP_CHANGED);
-    }
-    if (group.getStyles().contains(style)) {
-      add(group,ModificationType.GROUP_CHANGED);
+  Filter anyStyle=Predicates.equal("styles",style,MatchAction.ANY);
+  Filter layersAssociated=Predicates.or(Predicates.equal("defaultStyle",style),anyStyle);
+  try (CloseableIterator<LayerInfo> it=catalog.list(LayerInfo.class,layersAssociated)){
+    while (it.hasNext()) {
+      LayerInfo li=it.next();
+      if (style.equals(li.getDefaultStyle()))       add(li,ModificationType.STYLE_RESET);
+ else       if (li.getStyles().contains(style))       add(li,ModificationType.EXTRA_STYLE_REMOVED);
     }
   }
-  add(style,ModificationType.DELETE);
+   Filter groupAssociated=Predicates.or(Predicates.equal("rootLayerStyle",style),anyStyle);
+  try (CloseableIterator<LayerGroupInfo> it=catalog.list(LayerGroupInfo.class,groupAssociated)){
+    while (it.hasNext()) {
+      LayerGroupInfo group=it.next();
+      if (style.equals(group.getRootLayerStyle())) {
+        add(group,ModificationType.GROUP_CHANGED);
+      }
+      if (group.getStyles().contains(style)) {
+        add(group,ModificationType.GROUP_CHANGED);
+      }
+    }
+  }
+   add(style,ModificationType.DELETE);
 }

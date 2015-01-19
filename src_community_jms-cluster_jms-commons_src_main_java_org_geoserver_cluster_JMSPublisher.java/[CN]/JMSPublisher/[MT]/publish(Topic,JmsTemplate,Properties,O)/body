@@ -1,0 +1,16 @@
+{
+  try {
+    final JMSEventHandler<S,O> handler=jmsManager.getHandler(object);
+    props.put(JMSEventHandlerSPI.getKeyName(),handler.getGeneratorClass().getSimpleName());
+    final MessageCreator creator=new JMSObjectMessageCreator(handler.serialize(object),props);
+    jmsTemplate.send(destination,creator);
+  }
+ catch (  Exception e) {
+    if (LOGGER.isLoggable(java.util.logging.Level.SEVERE)) {
+      LOGGER.severe(e.getLocalizedMessage());
+    }
+    final JMSException ex=new JMSException(e.getLocalizedMessage());
+    ex.initCause(e);
+    throw ex;
+  }
+}

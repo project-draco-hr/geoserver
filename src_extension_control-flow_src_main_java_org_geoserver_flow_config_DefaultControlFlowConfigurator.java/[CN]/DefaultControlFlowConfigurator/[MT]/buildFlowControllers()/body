@@ -10,20 +10,22 @@
     int queueSize=0;
     StringTokenizer tokenizer=new StringTokenizer(value,",");
     try {
-      if (!"ip.blacklist".equals(key) && !"ip.whitelist".equals(key)) {
-        if (tokenizer.countTokens() == 1) {
-          queueSize=Integer.parseInt(value);
-        }
- else {
-          queueSize=Integer.parseInt(tokenizer.nextToken());
-        }
+      if ("ip.blacklist".equals(key) && "ip.whitelist".equals(key)) {
+        continue;
       }
  else {
-        continue;
+        if (!key.startsWith("user.ows") && !key.startsWith("ip.ows")) {
+          if (tokenizer.countTokens() == 1) {
+            queueSize=Integer.parseInt(value);
+          }
+ else {
+            queueSize=Integer.parseInt(tokenizer.nextToken());
+          }
+        }
       }
     }
  catch (    NumberFormatException e) {
-      LOGGER.severe("Rules should be assigned just a queue size, instead " + okey + " is associated to "+ value);
+      LOGGER.severe("Rules should be assigned just a queue size, instead " + key + " is associated to "+ value);
       continue;
     }
     FlowController controller=null;
@@ -46,11 +48,29 @@
       }
     }
  else     if ("user".equals(keys[0])) {
-      controller=new UserFlowController(queueSize);
+      if (keys.length == 1) {
+        controller=new UserConcurrentFlowController(queueSize);
+      }
+ else       if ("ows".equals(keys[1])) {
+        controller=new RateControllerBuilder(){
+          @Override protected KeyGenerator buildKeyGenerator(          String[] keys,          String value){
+            return new CookieKeyGenerator();
+          }
+        }
+.build(keys,value);
+      }
     }
  else     if ("ip".equals(keys[0])) {
       if (keys.length == 1) {
         controller=new IpFlowController(queueSize);
+      }
+ else       if (keys.length > 1 && "ows".equals(keys[1])) {
+        controller=new RateControllerBuilder(){
+          @Override protected KeyGenerator buildKeyGenerator(          String[] keys,          String value){
+            return new IpKeyGenerator();
+          }
+        }
+.build(keys,value);
       }
  else       if (keys.length > 1) {
         if (!"blacklist".equals(keys[1]) && !"whitelist".equals(keys[1])) {

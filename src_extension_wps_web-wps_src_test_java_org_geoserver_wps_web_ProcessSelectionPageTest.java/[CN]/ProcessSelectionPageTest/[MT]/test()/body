@@ -1,0 +1,19 @@
+{
+  login();
+  WPSInfo wps=getGeoServerApplication().getGeoServer().getService(WPSInfo.class);
+  ProcessGroupInfo pgi=getGeoGroup(wps.getProcessGroups());
+  WPSAccessRulePage accessRulePage=(WPSAccessRulePage)tester.startPage(new WPSAccessRulePage());
+  ProcessSelectionPage selectionPage=(ProcessSelectionPage)tester.startPage(new ProcessSelectionPage(accessRulePage,pgi));
+  DataView datas=(DataView)tester.getComponentFromLastRenderedPage("form:selectionTable:listContainer:items");
+  for (Iterator it=datas.getItems(); it.hasNext(); ) {
+    OddEvenItem item=(OddEvenItem)it.next();
+    FilteredProcess fp=(FilteredProcess)item.getDefaultModelObject();
+    Component validatedLabel=item.get("itemProperties:5:component");
+    if (fp.getName().getLocalPart().equals("buffer")) {
+      assertEquals("*",validatedLabel.getDefaultModelObject());
+    }
+ else {
+      assertEquals("",validatedLabel.getDefaultModelObject());
+    }
+  }
+}

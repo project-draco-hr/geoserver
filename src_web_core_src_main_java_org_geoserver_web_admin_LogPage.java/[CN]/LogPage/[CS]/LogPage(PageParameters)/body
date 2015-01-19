@@ -5,6 +5,15 @@
   if (location == null) {
     location=getGeoServerApplication().getGeoServer().getLogging().getLocation();
   }
+  if (location == null) {
+    try {
+      GeoServerResourceLoader loader=getGeoServerApplication().getResourceLoader();
+      location=new File(loader.findOrCreateDirectory("logs"),"geoserver.log").getAbsolutePath();
+    }
+ catch (    IOException e) {
+      throw new RuntimeException("Unexpeced error, could not find the log file location",e);
+    }
+  }
   logFile=new File(location);
   if (!logFile.isAbsolute()) {
     GeoServerDataDirectory dd=getGeoServerApplication().getBeanOfType(GeoServerDataDirectory.class);

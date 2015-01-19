@@ -1,0 +1,31 @@
+{
+  LayerInfo info;
+  final String layerName="testLayer";
+  final String layerId="Layer-TEST";
+  final String layerWorkspace=null;
+{
+    info=createMock(LayerInfo.class);
+    expect(info.getName()).andStubReturn(layerName);
+    expect(info.getId()).andStubReturn(layerId);
+    expectEvent(localAddress,layerName,layerWorkspace,layerId,LayerInfo.class,Type.MODIFY);
+  }
+  replay(info);
+{
+    HzSynchronizer sync=getSynchronizer();
+    CatalogModifyEventImpl preEvent=new CatalogModifyEventImpl();
+    preEvent.setSource(info);
+    preEvent.setPropertyNames(Arrays.asList("enabled"));
+    preEvent.setOldValues(Arrays.asList("true"));
+    preEvent.setNewValues(Arrays.asList("false"));
+    for (    CatalogListener listener : catListenerCapture.getValues()) {
+      listener.handleModifyEvent(preEvent);
+    }
+    CatalogPostModifyEventImpl postEvent=new CatalogPostModifyEventImpl();
+    postEvent.setSource(info);
+    for (    CatalogListener listener : catListenerCapture.getValues()) {
+      listener.handlePostModifyEvent(postEvent);
+    }
+  }
+  waitForSync();
+  verify(info);
+}

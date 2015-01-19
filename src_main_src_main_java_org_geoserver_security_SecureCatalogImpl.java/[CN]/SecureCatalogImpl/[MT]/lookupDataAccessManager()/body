@@ -1,12 +1,7 @@
 {
   DataAccessManager manager=GeoServerExtensions.bean(DataAccessManager.class);
-  if (manager == null) {
-    manager=new DefaultDataAccessManager(GeoServerExtensions.bean(DataAccessRuleDAO.class));
-  }
- else {
-    if (manager instanceof DataAccessManagerWrapper) {
-      ((DataAccessManagerWrapper)manager).setDelegate(new DefaultDataAccessManager(GeoServerExtensions.bean(DataAccessRuleDAO.class)));
-    }
+  if (manager != null && manager instanceof DataAccessManagerWrapper) {
+    ((DataAccessManagerWrapper)manager).setDelegate(buildDefaultResourceAccessManager());
   }
   return manager;
 }

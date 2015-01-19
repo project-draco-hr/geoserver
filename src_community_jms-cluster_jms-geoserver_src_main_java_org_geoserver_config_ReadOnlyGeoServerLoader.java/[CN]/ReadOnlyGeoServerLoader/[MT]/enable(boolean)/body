@@ -1,0 +1,24 @@
+{
+  this.enabled=enabled;
+  if (enabled) {
+    if (persister != null) {
+      geoserver.removeListener(persister);
+      persister=null;
+    }
+    if (listener != null) {
+      geoserver.removeListener(listener);
+      listener=null;
+    }
+  }
+ else {
+    if (listener == null) {
+      final List<XStreamServiceLoader> loaders=GeoServerExtensions.extensions(XStreamServiceLoader.class);
+      listener=new ServicePersister(loaders,geoserver);
+      geoserver.addListener(listener);
+    }
+    if (persister == null) {
+      persister=new GeoServerPersister(resourceLoader,xpf.createXMLPersister());
+      geoserver.addListener(persister);
+    }
+  }
+}

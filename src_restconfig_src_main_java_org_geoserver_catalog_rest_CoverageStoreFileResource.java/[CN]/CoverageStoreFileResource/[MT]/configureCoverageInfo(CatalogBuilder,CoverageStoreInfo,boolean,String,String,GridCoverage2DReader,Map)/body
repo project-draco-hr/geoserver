@@ -30,6 +30,7 @@
     }
     if (existing != null) {
       builder.updateCoverage(existing,cinfo);
+      catalog.validate(existing,false).throwIfInvalid();
       catalog.save(existing);
       cinfo=existing;
     }
@@ -38,11 +39,12 @@
     cinfo.setSRS("EPSG:4326");
   }
   if (add) {
+    catalog.validate(cinfo,true).throwIfInvalid();
     catalog.add(cinfo);
     LayerInfo layerInfo=builder.buildLayer(cinfo);
     boolean valid=true;
     try {
-      if (!catalog.validate(layerInfo,true).isEmpty()) {
+      if (!catalog.validate(layerInfo,true).isValid()) {
         valid=false;
       }
     }

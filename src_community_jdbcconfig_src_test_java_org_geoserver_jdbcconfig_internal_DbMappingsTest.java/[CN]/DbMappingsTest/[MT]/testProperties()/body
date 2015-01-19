@@ -1,0 +1,30 @@
+{
+  DataSource dataSource=testSupport.getDataSource();
+  NamedParameterJdbcTemplate template=new NamedParameterJdbcTemplate(dataSource);
+  DbMappings db=new DbMappings(new Dialect());
+  db.initDb(template);
+  LayerInfoImpl info=new LayerInfoImpl();
+  CoverageInfoImpl resource=new CoverageInfoImpl(null);
+  resource.setName("test");
+  resource.setTitle("test");
+  CoverageStoreInfoImpl store=new CoverageStoreInfoImpl(null);
+  store.setName("test");
+  WorkspaceInfoImpl workspace=new WorkspaceInfoImpl();
+  workspace.setName("test");
+  store.setWorkspace(workspace);
+  resource.setStore(store);
+  info.setResource(resource);
+  Iterable<Property> properties=db.properties(info);
+  boolean titleExists=false;
+  boolean prefixedNameExists=false;
+  for (  Property prop : properties) {
+    if (prop.getPropertyName().equals("title")) {
+      titleExists=true;
+    }
+ else     if (prop.getPropertyName().equals("prefixedName")) {
+      prefixedNameExists=true;
+    }
+  }
+  assertTrue("title property not found",titleExists);
+  assertTrue("prefixedName property not found",prefixedNameExists);
+}

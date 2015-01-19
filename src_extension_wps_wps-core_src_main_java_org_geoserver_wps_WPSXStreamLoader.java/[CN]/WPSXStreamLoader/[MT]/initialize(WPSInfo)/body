@@ -18,10 +18,37 @@
     service.getVersions().add(new Version("1.0.0"));
   }
   if (service.getConnectionTimeout() == 0) {
-    ((WPSInfoImpl)service).setConnectionTimeout(WPSInfoImpl.DEFAULT_CONNECTION_TIMEOUT);
+    ((WPSInfo)service).setConnectionTimeout(WPSInfoImpl.DEFAULT_CONNECTION_TIMEOUT);
   }
   if (service.getProcessGroups() == null) {
     ((WPSInfoImpl)service).setProcessGroups(new ArrayList());
+  }
+ else {
+    for (    ProcessGroupInfo pg : service.getProcessGroups()) {
+      if (pg.getRoles() == null) {
+        pg.setRoles(new ArrayList<String>());
+      }
+      if (pg.getMetadata() == null) {
+        ((ProcessGroupInfoImpl)pg).setMetadata(new MetadataMap());
+      }
+      if (pg.getFilteredProcesses() == null) {
+        ((ProcessGroupInfoImpl)pg).setFilteredProcesses(new ArrayList<ProcessInfo>());
+      }
+ else {
+        for (        ProcessInfo pi : pg.getFilteredProcesses()) {
+          if (pi.getRoles() == null) {
+            ((ProcessInfoImpl)pi).setRoles(new ArrayList<String>());
+          }
+          if (pi.getValidators() == null) {
+            Multimap<String,WPSInputValidator> validators=ArrayListMultimap.create();
+            ((ProcessInfoImpl)pi).setValidators(validators);
+          }
+          if (pi.getMetadata() == null) {
+            ((ProcessInfoImpl)pi).setMetadata(new MetadataMap());
+          }
+        }
+      }
+    }
   }
   if (service.getName() == null) {
     service.setName("WPS");

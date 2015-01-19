@@ -1,0 +1,13 @@
+{
+  attributes.put("layer",FEATURETYPE_LAYER);
+  attributes.put("attribute","foo");
+  initRequestUrl(request,"xml");
+  resource.handleGet();
+  assertNotNull(responseEntity);
+  assertTrue(responseEntity instanceof Representation);
+  Representation representation=(Representation)responseEntity;
+  String resultXml=representation.getText().replace("\r","").replace("\n","");
+  Rule[] rules=checkRules(resultXml.replace("<Rules>",sldPrefix).replace("</Rules>",sldPostfix),DEFAULT_INTERVALS);
+  checkRule(rules[0],"#680000",org.opengis.filter.And.class);
+  checkRule(rules[1],"#B20000",org.opengis.filter.And.class);
+}

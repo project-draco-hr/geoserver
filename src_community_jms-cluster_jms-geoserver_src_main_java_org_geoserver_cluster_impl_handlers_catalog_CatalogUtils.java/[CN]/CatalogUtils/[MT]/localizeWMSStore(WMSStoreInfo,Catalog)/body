@@ -1,0 +1,13 @@
+{
+  if (info == null || catalog == null)   throw new NullArgumentException("Arguments may never be null");
+  final WMSStoreInfo localObject=catalog.getStoreByName(info.getWorkspace(),info.getName(),WMSStoreInfo.class);
+  final CatalogBuilder builder=new CatalogBuilder(catalog);
+  if (localObject != null) {
+    return localObject;
+  }
+  final WMSStoreInfo createdObject=catalog.getFactory().createWebMapServer();
+  BeanUtils.copyProperties(createdObject,info);
+  createdObject.setWorkspace(localizeWorkspace(info.getWorkspace(),catalog));
+  builder.attach(createdObject);
+  return createdObject;
+}

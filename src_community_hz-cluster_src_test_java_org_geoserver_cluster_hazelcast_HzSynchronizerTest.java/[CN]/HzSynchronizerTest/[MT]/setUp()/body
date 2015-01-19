@@ -1,0 +1,62 @@
+{
+  hz=createMock(HazelcastInstance.class);
+  cluster=createMock(HzCluster.class);
+  topic=createMock(ITopic.class);
+  ackTopic=createMock(ITopic.class);
+  configWatcher=createMock(ClusterConfigWatcher.class);
+  clusterConfig=createMock(ClusterConfig.class);
+  captureTopicListener=new Capture<MessageListener<Event>>();
+  captureAckTopicListener=new Capture<MessageListener<UUID>>();
+  captureAckTopicPublish=new Capture<UUID>();
+  localAddress=new InetSocketAddress(localAddress(42),5000);
+  remoteAddress=new InetSocketAddress(localAddress(54),5000);
+  catalog=createMock(Catalog.class);
+  Cluster cluster=createMock(Cluster.class);
+  Member localMember=createMock(Member.class);
+  Member remoteMember=createMock(Member.class);
+  expect(this.cluster.getHz()).andStubReturn(hz);
+  expect(this.cluster.isEnabled()).andStubReturn(true);
+  expect(this.cluster.getRawCatalog()).andStubReturn(catalog);
+  ;
+  expect(this.cluster.getAckTimeoutMillis()).andStubReturn(100);
+  expect(hz.<Event>getTopic(TOPIC_NAME)).andStubReturn(topic);
+  expect(topic.addMessageListener(capture(captureTopicListener))).andReturn("fake-id");
+  expectLastCall().anyTimes();
+  expect(hz.<UUID>getTopic(ACK_TOPIC_NAME)).andStubReturn(ackTopic);
+  expect(ackTopic.addMessageListener(capture(captureAckTopicListener))).andReturn("fake-id");
+  expectLastCall().anyTimes();
+  ackTopic.publish(EasyMock.capture(captureAckTopicPublish));
+  EasyMock.expectLastCall().andStubAnswer(new IAnswer<Object>(){
+    @Override public Object answer() throws Throwable {
+      Message<UUID> message=createMock(Message.class);
+      expect(message.getMessageObject()).andStubReturn(captureAckTopicPublish.getValue());
+      EasyMock.replay(message);
+      for (      MessageListener<UUID> listener : captureAckTopicListener.getValues()) {
+        listener.onMessage(message);
+      }
+      return null;
+    }
+  }
+);
+  expect(cluster.getLocalMember()).andStubReturn(localMember);
+  expect(localMember.getSocketAddress()).andStubReturn(localAddress);
+  expect(remoteMember.getSocketAddress()).andStubReturn(remoteAddress);
+  expect(localMember.localMember()).andStubReturn(true);
+  expect(remoteMember.localMember()).andStubReturn(false);
+  expect(cluster.getMembers()).andStubReturn(Sets.newHashSet(localMember,remoteMember));
+  EasyMock.replay(cluster,localMember,remoteMember);
+  expect(hz.getCluster()).andStubReturn(cluster);
+  expect(configWatcher.get()).andStubReturn(clusterConfig);
+  expect(clusterConfig.getSyncDelay()).andStubReturn(SYNC_DELAY);
+  geoServer=createMock(GeoServer.class);
+  expect(geoServer.getCatalog()).andStubReturn(catalog);
+  gsListenerCapture=new Capture<ConfigurationListener>();
+  geoServer.addListener(capture(gsListenerCapture));
+  expectLastCall().atLeastOnce();
+  catListenerCapture=new Capture<CatalogListener>();
+  catalog.addListener(capture(catListenerCapture));
+  expectLastCall().atLeastOnce();
+  executor=createMock(ScheduledExecutorService.class);
+  captureExecutor=new Capture<Runnable>(CaptureType.ALL);
+  expect(executor.schedule(capture(captureExecutor),anyLong(),(TimeUnit)anyObject())).andStubReturn(null);
+}

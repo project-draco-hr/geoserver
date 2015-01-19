@@ -1,0 +1,19 @@
+{
+  GeoServer gs=getGeoServer();
+  WPSInfo wps=gs.getService(WPSInfo.class);
+  ProcessInfo pai=new ProcessInfoImpl();
+  NameImpl bufferName=new NameImpl("JTS","buffer");
+  pai.setName(bufferName);
+  pai.setEnabled(true);
+  pai.getRoles().add("ROLE_TEST");
+  ProcessFactory jts=Processors.createProcessFactory(bufferName);
+  ProcessGroupInfo jtsGroup=new ProcessGroupInfoImpl();
+  jtsGroup.setFactoryClass(jts.getClass());
+  jtsGroup.setEnabled(true);
+  jtsGroup.getFilteredProcesses().add(pai);
+  List<ProcessGroupInfo> pgs=wps.getProcessGroups();
+  pgs.clear();
+  pgs.add(jtsGroup);
+  wps.setCatalogMode(getMode());
+  gs.save(wps);
+}

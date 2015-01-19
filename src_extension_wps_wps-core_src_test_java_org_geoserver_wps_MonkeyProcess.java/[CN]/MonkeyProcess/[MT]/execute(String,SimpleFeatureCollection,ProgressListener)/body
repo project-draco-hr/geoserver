@@ -1,0 +1,26 @@
+{
+  BlockingQueue<Command> queue=getCommandQueue(id);
+  while (true) {
+    Command command=queue.take();
+    if (command.type == CommandType.Exit) {
+      listener.progress(100f);
+      listener.complete();
+      commands.remove(id);
+      return (SimpleFeatureCollection)command.value;
+    }
+ else     if (command.type == CommandType.SetProgress) {
+      float progress=((Number)command.value).floatValue();
+      listener.progress(progress);
+      listener.setTask(new SimpleInternationalString("Currently at " + progress));
+    }
+ else     if (command.type == CommandType.Wait) {
+      long wait=((Number)command.value).longValue();
+      Thread.sleep(wait);
+    }
+ else {
+      ProcessException exception=(ProcessException)command.value;
+      listener.exceptionOccurred(exception);
+      throw exception;
+    }
+  }
+}

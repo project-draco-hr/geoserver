@@ -31,7 +31,7 @@
       }
       if (p.metadata.get(Parameter.OPTIONS) != null) {
         List<Object> options=(List<Object>)p.metadata.get(Parameter.OPTIONS);
-        Object[] optionsArray=(Object[])options.toArray(new Object[options.size()]);
+        Object[] optionsArray=options.toArray(new Object[options.size()]);
         addAllowedValues(literal,optionsArray);
       }
  else       if (lppio.getType().isEnum()) {
@@ -39,7 +39,9 @@
         addAllowedValues(literal,enumValues);
       }
  else {
-        literal.setAnyValue(owsf.createAnyValueType());
+        Object min=p.metadata.get(Param.MIN);
+        Object max=p.metadata.get(Param.MAX);
+        addAllowedValues(literal,min,max);
       }
       try {
         if (p.sample != null) {
@@ -56,6 +58,12 @@
  else {
       SupportedComplexDataInputType complex=wpsf.createSupportedComplexDataInputType();
       input.setComplexData(complex);
+      if (p.metadata.get(MaxSizeValidator.PARAMETER_KEY) instanceof Number) {
+        int maxSize=((Number)p.metadata.get(MaxSizeValidator.PARAMETER_KEY)).intValue();
+        if (maxSize > 0) {
+          complex.setMaximumMegabytes(BigInteger.valueOf(maxSize));
+        }
+      }
       complex.setSupported(wpsf.createComplexDataCombinationsType());
       for (      ProcessParameterIO ppio : ppios) {
         ComplexPPIO cppio=(ComplexPPIO)ppio;
@@ -65,6 +73,9 @@
           for (          String mimeType : mimeTypes) {
             ComplexDataDescriptionType ddt=wpsf.createComplexDataDescriptionType();
             ddt.setMimeType(mimeType);
+            if (!mimeType.contains("json") && !mimeType.contains("text") && !mimeType.contains("xml")&& !mimeType.contains("gml")) {
+              ddt.setEncoding("base64");
+            }
             complex.getSupported().getFormat().add(ddt);
             if (format == null) {
               format=ddt;
@@ -74,6 +85,9 @@
  else {
           format=wpsf.createComplexDataDescriptionType();
           format.setMimeType(cppio.getMimeType());
+          if (cppio instanceof BinaryPPIO) {
+            format.setEncoding("base64");
+          }
           complex.getSupported().getFormat().add(format);
         }
         if (complex.getDefault() == null) {

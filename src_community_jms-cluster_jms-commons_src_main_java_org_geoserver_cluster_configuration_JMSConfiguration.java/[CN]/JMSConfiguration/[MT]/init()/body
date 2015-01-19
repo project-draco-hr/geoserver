@@ -1,0 +1,27 @@
+{
+  try {
+    loadConfig();
+    if (configuration.isEmpty()) {
+      initDefaults();
+    }
+    boolean override=override();
+    if (exts != null) {
+      for (      JMSConfigurationExt ext : exts) {
+        override|=ext.override(this);
+      }
+    }
+    if (override) {
+      storeConfig();
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.severe("Unable to load properties: using defaults");
+    initDefaults();
+  }
+  try {
+    storeConfig();
+  }
+ catch (  IOException e) {
+    LOGGER.severe("Unable to store properties");
+  }
+}

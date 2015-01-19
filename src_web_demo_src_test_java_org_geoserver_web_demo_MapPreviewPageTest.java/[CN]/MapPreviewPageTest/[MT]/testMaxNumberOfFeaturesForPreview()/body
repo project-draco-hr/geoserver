@@ -1,0 +1,16 @@
+{
+  GeoServer geoserver=getGeoServer();
+  WFSInfo wfsInfo=geoserver.getService(WFSInfo.class);
+  int maxFeatures=100;
+  wfsInfo.setMaxNumberOfFeaturesForPreview(maxFeatures);
+  geoserver.save(wfsInfo);
+  tester.startPage(MapPreviewPage.class);
+  tester.assertRenderedPage(MapPreviewPage.class);
+  assertMaxFeaturesInData((DataView)tester.getComponentFromLastRenderedPage("table:listContainer:items"),maxFeatures);
+  maxFeatures=0;
+  wfsInfo.setMaxNumberOfFeaturesForPreview(maxFeatures);
+  geoserver.save(wfsInfo);
+  tester.startPage(MapPreviewPage.class);
+  tester.assertRenderedPage(MapPreviewPage.class);
+  assertMaxFeaturesInData((DataView)tester.getComponentFromLastRenderedPage("table:listContainer:items"),maxFeatures);
+}

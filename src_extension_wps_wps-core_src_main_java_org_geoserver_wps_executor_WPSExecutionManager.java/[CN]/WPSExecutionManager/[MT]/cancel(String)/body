@@ -1,6 +1,23 @@
 {
-  AsynchronousProcessContext context=contexts.get(executionId);
-  if (context != null) {
-    context.processManager.cancel(executionId);
+  ExecutionStatus status=statusTracker.getStatus(executionId);
+  if (status == null) {
+    throw new UnknownExecutionIdException(executionId);
   }
+  if (status.getPhase() == ProcessState.RUNNING) {
+    ProcessListenerNotifier notifier=localProcesses.get(executionId);
+    if (notifier != null) {
+      notifier.dismiss();
+    }
+ else {
+      status.setPhase(ProcessState.DISMISSING);
+      statusTracker.dismissing(new ProcessEvent(status,null,null));
+    }
+    status=statusTracker.getStatus(executionId);
+    if (!status.getPhase().isExecutionCompleted()) {
+      return;
+    }
+  }
+  ProcessEvent event=new ProcessEvent(status,null);
+  statusTracker.dismissed(event);
+  resourceManager.dismissed(event);
 }

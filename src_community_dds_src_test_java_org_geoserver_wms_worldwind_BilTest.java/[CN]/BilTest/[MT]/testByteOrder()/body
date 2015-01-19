@@ -1,0 +1,11 @@
+{
+  byte[] bytesDefault=getStandardRequest("application/bil16");
+  setConfiguration(AUS_DEM,BilConfig.BYTE_ORDER,ByteOrder.BIG_ENDIAN.toString());
+  byte[] bytesBigEndian=getStandardRequest("application/bil16");
+  assertArrayEquals("Big endian byte order should return same result as default",bytesDefault,bytesBigEndian);
+  ShortBuffer expected=ByteBuffer.wrap(bytesBigEndian).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+  setConfiguration(AUS_DEM,BilConfig.BYTE_ORDER,ByteOrder.LITTLE_ENDIAN.toString());
+  byte[] bytesLittleEndian=getStandardRequest("application/bil16");
+  ShortBuffer actual=ByteBuffer.wrap(bytesLittleEndian).asShortBuffer();
+  assertEquals("Little endian byte order should return reverse of big endian byte order",expected,actual);
+}

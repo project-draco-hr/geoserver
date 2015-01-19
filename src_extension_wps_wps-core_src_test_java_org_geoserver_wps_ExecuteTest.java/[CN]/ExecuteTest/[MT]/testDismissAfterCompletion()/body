@@ -1,0 +1,23 @@
+{
+  String statusLocation=submitMonkey("x3");
+  Map<String,Object> kvp=KvpUtils.parseQueryString(statusLocation);
+  String executionId=(String)kvp.get("executionId");
+  MonkeyProcess.exit("x3",collectionOfThings(),true);
+  Document dom=waitForProcessEnd(statusLocation,60);
+  assertXpathExists("//wps:ProcessSucceeded",dom);
+  ProcessStatusTracker statusTracker=GeoServerExtensions.bean(ProcessStatusTracker.class,applicationContext);
+  ExecutionStatus status=statusTracker.getStatus(executionId);
+  Assert.assertEquals(ProcessState.SUCCEEDED,status.getPhase());
+  WPSResourceManager resources=GeoServerExtensions.bean(WPSResourceManager.class,applicationContext);
+  Resource resource=resources.getStoredResponse(executionId);
+  Assert.assertEquals(Resource.Type.RESOURCE,resource.getType());
+  dom=getAsDOM("wps?service=WPS&version=1.0.0&request=Dismiss&executionId=" + executionId);
+  assertXpathExists("//wps:ProcessFailed",dom);
+  status=statusTracker.getStatus(executionId);
+  Assert.assertNull(status);
+  ProcessArtifactsStore artifactsStore=resources.getArtifactsStore();
+  List<Resource> executionResources=artifactsStore.listExecutionResourcess();
+  for (  Resource r : executionResources) {
+    assertNotEquals(executionId,r.name());
+  }
+}

@@ -1,0 +1,52 @@
+{
+  Class<? extends Info> clazz=event.getObjectInterface();
+  final Type t=event.getChangeType();
+  final String id=event.getObjectId();
+  final String name=event.getObjectName();
+  final @Nullable String nativeName=event.getNativeName();
+  CatalogInfo subj;
+  Method notifyMethod;
+  CatalogEventImpl evt;
+  final Catalog cat=cluster.getRawCatalog();
+switch (t) {
+case ADD:
+    subj=getCatalogInfo(cat,id,clazz);
+  notifyMethod=CatalogListener.class.getMethod("handleAddEvent",CatalogAddEvent.class);
+evt=new CatalogAddEventImpl();
+break;
+case MODIFY:
+subj=getCatalogInfo(cat,id,clazz);
+notifyMethod=CatalogListener.class.getMethod("handlePostModifyEvent",CatalogPostModifyEvent.class);
+evt=new CatalogPostModifyEventImpl();
+break;
+case REMOVE:
+notifyMethod=CatalogListener.class.getMethod("handleRemoveEvent",CatalogRemoveEvent.class);
+evt=new CatalogRemoveEventImpl();
+RemovedObjectProxy proxy=new RemovedObjectProxy(id,name,clazz,nativeName);
+if (ResourceInfo.class.isAssignableFrom(clazz) && event.getStoreId() != null) {
+proxy.addCatalogCollaborator("store",cat.getStore(event.getStoreId(),StoreInfo.class));
+}
+subj=(CatalogInfo)Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{clazz},proxy);
+break;
+default :
+throw new IllegalStateException("Should not happen");
+}
+if (subj == null) {
+if (subj == null) {
+String message=format("%s - Error processing event %s: object not found in catalog",nodeId(),event);
+LOGGER.warning(message);
+return;
+}
+}
+evt.setSource(subj);
+try {
+for (CatalogListener l : ImmutableList.copyOf(cat.getListeners())) {
+if (l != this && isStarted()) {
+notifyMethod.invoke(l,evt);
+}
+}
+}
+ catch (Exception ex) {
+LOGGER.log(Level.WARNING,format("%s - Event dispatch failed: %s",nodeId(),event),ex);
+}
+}

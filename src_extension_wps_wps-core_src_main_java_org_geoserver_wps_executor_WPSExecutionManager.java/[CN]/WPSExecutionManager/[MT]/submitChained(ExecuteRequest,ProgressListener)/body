@@ -1,0 +1,14 @@
+{
+  Name processName=request.getProcessName();
+  ProcessManager processManager=getProcessManager(processName);
+  String executionId=resourceManager.getExecutionId(true);
+  LazyInputMap inputs=request.getProcessInputs(this);
+  int inputsLongSteps=inputs.longStepCount();
+  int longSteps=inputsLongSteps + 1;
+  float longStepPercentage=100f / longSteps;
+  float inputPercentage=inputsLongSteps * longStepPercentage;
+  float executionPercentage=100 - inputPercentage;
+  inputs.setListener(new SubProgressListener(listener,inputPercentage));
+  ProgressListener executionListener=new SubProgressListener(listener,inputPercentage,executionPercentage);
+  return processManager.submitChained(executionId,processName,inputs,executionListener);
+}

@@ -1,0 +1,21 @@
+{
+  JDBCDataStore jstore=(JDBCDataStore)dataAccess;
+  VirtualTable vt=info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class);
+  FeatureType ft=null;
+  if (jstore.getVirtualTables().containsValue(vt)) {
+    ft=jstore.getSchema(vt.getName());
+    if (!jstore.getVirtualTables().containsValue(vt)) {
+      ft=null;
+    }
+  }
+  if (ft == null) {
+    if (temporaryName != null) {
+      jstore.createVirtualTable(new VirtualTable(temporaryName.getLocalPart(),vt));
+      return true;
+    }
+ else {
+      jstore.createVirtualTable(vt);
+    }
+  }
+  return false;
+}

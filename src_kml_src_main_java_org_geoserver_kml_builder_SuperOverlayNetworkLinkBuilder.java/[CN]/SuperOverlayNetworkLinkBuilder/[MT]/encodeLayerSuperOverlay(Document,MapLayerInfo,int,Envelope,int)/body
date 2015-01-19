@@ -1,0 +1,33 @@
+{
+  Map formatOptions=request.getFormatOptions();
+  Layer layer=mapContent.layers().get(layerIndex);
+  Folder folder=container.createAndAddFolder();
+  folder.setName(layerInfo.getLabel());
+  if (layerInfo.getDescription() != null && layerInfo.getDescription().length() > 0) {
+    folder.setDescription(layerInfo.getDescription());
+  }
+  if (formatOptions.get(VISIBLE_KEY) != null) {
+    boolean visible=Boolean.parseBoolean(formatOptions.get(VISIBLE_KEY).toString());
+    folder.setVisibility(visible);
+  }
+ else {
+    folder.setVisibility(true);
+  }
+  LookAtOptions lookAtOptions=new LookAtOptions(formatOptions);
+  if (bounds != null) {
+    LookAtDecoratorFactory lookAtFactory=new LookAtDecoratorFactory();
+    ReferencedEnvelope layerBounds=layer.getBounds();
+    CoordinateReferenceSystem layerCRS=layerBounds.getCoordinateReferenceSystem();
+    if (layerCRS != null && !CRS.equalsIgnoreMetadata(layerCRS,DefaultGeographicCRS.WGS84)) {
+      try {
+        layerBounds=layerBounds.transform(DefaultGeographicCRS.WGS84,true);
+      }
+ catch (      Exception e) {
+        throw new ServiceException("Failed to transform the layer bounds for " + layer.getTitle() + " to WGS84",e);
+      }
+    }
+    LookAt la=lookAtFactory.buildLookAt(layerBounds,lookAtOptions,false);
+    folder.setAbstractView(la);
+  }
+  encodeNetworkLinks(folder,layer,bounds,zoomLevel);
+}

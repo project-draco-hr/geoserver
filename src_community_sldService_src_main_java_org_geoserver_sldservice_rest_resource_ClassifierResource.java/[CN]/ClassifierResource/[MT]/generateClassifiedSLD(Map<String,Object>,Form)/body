@@ -4,9 +4,11 @@
     final String property=form.getFirstValue("attribute");
     final String method=form.getFirstValue("method","equalInterval");
     final String intervals=form.getFirstValue("intervals","2");
+    final String intervalsForUnique=form.getFirstValue("intervals","-1");
     final String open=form.getFirstValue("open","false");
-    final String colorRamp=form.getFirstValue("ramp");
+    final String colorRamp=form.getFirstValue("ramp","red");
     final boolean reverse=Boolean.parseBoolean(form.getFirstValue("reverse"));
+    final boolean normalize=Boolean.parseBoolean(form.getFirstValue("normalize"));
     if (property != null && property.length() > 0) {
       try {
         LayerInfo layerInfo=catalog.getLayerByName(layerName);
@@ -16,17 +18,18 @@
             final FeatureType ftType=((FeatureTypeInfo)obj).getFeatureType();
             final FeatureCollection ftCollection=((FeatureTypeInfo)obj).getFeatureSource(new NullProgressListener(),null).getFeatures();
             List<Rule> rules=null;
+            Class<?> propertyType=ftType.getDescriptor(property).getType().getBinding();
             if ("equalInterval".equals(method)) {
-              rules=builder.equalIntervalClassification(ftCollection,property,Integer.parseInt(intervals),Boolean.parseBoolean(open));
+              rules=builder.equalIntervalClassification(ftCollection,property,propertyType,Integer.parseInt(intervals),Boolean.parseBoolean(open),normalize);
             }
  else             if ("uniqueInterval".equals(method)) {
-              rules=builder.uniqueIntervalClassification(ftCollection,property);
+              rules=builder.uniqueIntervalClassification(ftCollection,property,propertyType,Integer.parseInt(intervalsForUnique),normalize);
             }
  else             if ("quantile".equals(method)) {
-              rules=builder.quantileClassification(ftCollection,property,Integer.parseInt(intervals),Boolean.parseBoolean(open));
+              rules=builder.quantileClassification(ftCollection,property,propertyType,Integer.parseInt(intervals),Boolean.parseBoolean(open),normalize);
             }
  else             if ("jenks".equals(method)) {
-              rules=builder.jenksClassification(ftCollection,property,Integer.parseInt(intervals),Boolean.parseBoolean(open));
+              rules=builder.jenksClassification(ftCollection,property,propertyType,Integer.parseInt(intervals),Boolean.parseBoolean(open),normalize);
             }
             if (colorRamp != null && colorRamp.length() > 0) {
               ColorRamp ramp=null;
@@ -51,7 +54,10 @@
               if (geomT == LineString.class || geomT == MultiLineString.class) {
                 builder.lineStyle(rules,ramp,reverse);
               }
- else               if (geomT == MultiPolygon.class || geomT == Polygon.class || geomT == Point.class || geomT == MultiPoint.class) {
+ else               if (geomT == Point.class || geomT == MultiPoint.class) {
+                builder.pointStyle(rules,ramp,reverse);
+              }
+ else               if (geomT == MultiPolygon.class || geomT == Polygon.class) {
                 builder.polygonStyle(rules,ramp,reverse);
               }
             }

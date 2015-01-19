@@ -1,7 +1,19 @@
 {
   XStream xs=xp.getXStream();
+  xs.registerConverter(new ProcessGroupConverter(xs.getMapper(),xs.getReflectionProvider()));
   xs.alias("wps",WPSInfo.class,WPSInfoImpl.class);
   xs.alias("processGroup",ProcessGroupInfoImpl.class);
   xs.alias("name",NameImpl.class);
+  xs.alias("name",Name.class,NameImpl.class);
+  xs.alias("accessInfo",ProcessInfoImpl.class);
   xs.registerConverter(new NameConverter());
+  ClassAliasingMapper mapper=new ClassAliasingMapper(xs.getMapper());
+  mapper.addClassAlias("role",String.class);
+  xs.registerLocalConverter(ProcessGroupInfoImpl.class,"roles",new CollectionConverter(mapper));
+  xs.registerLocalConverter(ProcessInfoImpl.class,"roles",new CollectionConverter(mapper));
+  xs.registerLocalConverter(ProcessInfoImpl.class,"validators",new XStreamPersister.MultimapConverter(mapper));
+  xs.alias("maxSizeValidator",MaxSizeValidator.class);
+  xs.alias("maxMultiplicityValidator",MultiplicityValidator.class);
+  xs.alias("rangeValidator",NumberRangeValidator.class);
+  xs.registerLocalConverter(NumberRangeValidator.class,"range",new NumberRangeConverter(xs.getMapper(),xs.getReflectionProvider()));
 }

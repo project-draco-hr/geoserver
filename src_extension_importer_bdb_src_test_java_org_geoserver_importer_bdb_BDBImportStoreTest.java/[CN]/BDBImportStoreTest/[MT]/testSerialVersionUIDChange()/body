@@ -10,14 +10,18 @@
   ImportContext ctx=new ImportContext2();
   ctx.setState(ImportContext.State.PENDING);
   ctx.setUser("fooboo");
-  store=new BDBImportStore(imp);
-  store.init();
-  store.add(ctx);
-  Iterator<ImportContext> iterator=store.iterator();
-  while (iterator.hasNext()) {
-    ctx=iterator.next();
-    assertEquals("fooboo",ctx.getUser());
+  BDBImportStore store=new BDBImportStore(imp);
+  try {
+    store.init();
+    store.add(ctx);
+    Iterator<ImportContext> iterator=store.iterator();
+    while (iterator.hasNext()) {
+      ctx=iterator.next();
+      assertEquals("fooboo",ctx.getUser());
+    }
+    store.add(ctx);
   }
-  store.add(ctx);
-  store.destroy();
+  finally {
+    store.destroy();
+  }
 }

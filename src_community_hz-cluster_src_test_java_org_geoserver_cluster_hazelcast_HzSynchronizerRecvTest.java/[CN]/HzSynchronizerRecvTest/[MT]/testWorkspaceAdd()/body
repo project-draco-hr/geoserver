@@ -1,0 +1,20 @@
+{
+  WorkspaceInfo info;
+  final String workspaceName="testStore";
+  final String workspaceId="Store-TEST";
+{
+    info=createMock(WorkspaceInfo.class);
+    expect(info.getName()).andStubReturn(workspaceName);
+    expect(info.getId()).andStubReturn(workspaceId);
+    expectationTestWorkspaceAdd(info,workspaceName,workspaceId);
+  }
+  replay(info);
+{
+    sync=getSynchronizer();
+    sync.initialize(configWatcher);
+    ConfigChangeEvent evt=new ConfigChangeEvent(workspaceId,workspaceName,WorkspaceInfoImpl.class,Type.ADD);
+    mockMessage(evt);
+  }
+  waitForSync();
+  verify(info);
+}

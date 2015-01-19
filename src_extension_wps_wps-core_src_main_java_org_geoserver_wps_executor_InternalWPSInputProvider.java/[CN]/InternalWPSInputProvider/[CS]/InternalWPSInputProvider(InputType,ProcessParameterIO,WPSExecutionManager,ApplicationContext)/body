@@ -1,0 +1,16 @@
+{
+  super(input,ppio);
+  this.executor=executor;
+  ExecuteType request=null;
+  InputReferenceType ref=input.getReference();
+  if (ref.getMethod() == MethodType.POST_LITERAL) {
+    request=(ExecuteType)ref.getBody();
+  }
+ else {
+    ExecuteKvpRequestReader reader=(ExecuteKvpRequestReader)context.getBean("executeKvpRequestReader");
+    request=(ExecuteType)kvpParse(ref.getHref(),reader);
+  }
+  executeRequest=new ExecuteRequest(request);
+  LazyInputMap inputs=executeRequest.getProcessInputs(executor);
+  this.longSteps=inputs.longStepCount() + 1;
+}

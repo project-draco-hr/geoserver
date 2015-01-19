@@ -1,17 +1,9 @@
 {
-  Catalog catalog=createMock(Catalog.class);
-  DataStoreInfo ds=createMock(DataStoreInfo.class);
-  ResourceInfo r1=createMock(ResourceInfo.class);
-  LayerInfo l1=createMock(LayerInfo.class);
-  l1.accept((CatalogVisitor)anyObject());
-  expectLastCall();
-  expect(catalog.getResourcesByStore(ds,ResourceInfo.class)).andReturn(Arrays.asList(r1));
-  expect(catalog.getLayers(r1)).andReturn(Arrays.asList(l1));
-  expect(catalog.getLayer(null)).andReturn(l1);
-  catalog.remove(ds);
-  expectLastCall();
-  replay(ds,r1,l1,catalog);
-  new CascadeDeleteVisitor(catalog).visit(ds);
-  LayerInfo l=catalog.getLayer(null);
-  verify(catalog,l);
+  Catalog catalog=getCatalog();
+  DataStoreInfo store=(DataStoreInfo)catalog.getLayerByName(getLayerId(LAKES)).getResource().getStore();
+  new CascadeDeleteVisitor(catalog).visit(store);
+  assertEquals(0,catalog.count(LayerInfo.class,Filter.INCLUDE));
+  assertEquals(0,catalog.count(ResourceInfo.class,Filter.INCLUDE));
+  assertEquals(0,catalog.count(StoreInfo.class,Filter.INCLUDE));
+  assertEquals(0,catalog.count(LayerGroupInfo.class,Filter.INCLUDE));
 }

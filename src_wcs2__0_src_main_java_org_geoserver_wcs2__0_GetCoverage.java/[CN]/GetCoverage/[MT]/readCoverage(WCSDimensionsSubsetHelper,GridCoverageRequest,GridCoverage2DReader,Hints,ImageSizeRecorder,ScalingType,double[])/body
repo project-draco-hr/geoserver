@@ -1,0 +1,43 @@
+{
+  CoverageInfo cinfo=helper.getCoverageInfo();
+  WCSEnvelope requestedEnvelope=helper.getRequestedEnvelope();
+  Interpolation spatialInterpolation=request.getSpatialInterpolation();
+  Utilities.ensureNonNull("interpolation",spatialInterpolation);
+  final CoordinateReferenceSystem coverageCRS=reader.getCoordinateReferenceSystem();
+  WCSEnvelope subset=request.getSpatialSubset();
+  List<GridCoverage2D> result=new ArrayList<GridCoverage2D>();
+  List<GeneralEnvelope> readEnvelopes=new ArrayList<GeneralEnvelope>();
+  if (subset.isCrossingDateline()) {
+    GeneralEnvelope[] envelopes=subset.getNormalizedEnvelopes();
+    addEnvelopes(envelopes[0],readEnvelopes,coverageCRS);
+    addEnvelopes(envelopes[1],readEnvelopes,coverageCRS);
+  }
+ else {
+    addEnvelopes(subset,readEnvelopes,coverageCRS);
+  }
+  List<GridCoverage2D> readCoverages=new ArrayList<>();
+  for (  GeneralEnvelope readEnvelope : readEnvelopes) {
+    GridCoverage2D cov=null;
+    BoundingBox readBoundingBox=new Envelope2D(readEnvelope);
+    for (    GridCoverage2D gc : readCoverages) {
+      Envelope2D gce=gc.getEnvelope2D();
+      if (gce.contains(readBoundingBox)) {
+        cov=gc;
+        break;
+      }
+    }
+    if (cov == null) {
+      cov=readCoverage(cinfo,request,reader,hints,incrementalInputSize,spatialInterpolation,coverageCRS,readEnvelope,requestedEnvelope,scaling,preAppliedScale);
+      readCoverages.add(cov);
+    }
+    Envelope2D covEnvelope=cov.getEnvelope2D();
+    if (covEnvelope.contains(readBoundingBox) && (covEnvelope.getWidth() > readBoundingBox.getWidth() || covEnvelope.getHeight() > readBoundingBox.getHeight())) {
+      GridCoverage2D cropped=cropOnEnvelope(cov,readEnvelope);
+      result.add(cropped);
+    }
+ else {
+      result.add(cov);
+    }
+  }
+  return result;
+}

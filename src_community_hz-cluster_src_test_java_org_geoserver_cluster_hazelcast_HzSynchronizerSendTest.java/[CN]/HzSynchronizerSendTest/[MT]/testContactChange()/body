@@ -1,0 +1,24 @@
+{
+  GeoServerInfo info;
+  final String globalName=null;
+  final String globalId="GeoServer-TEST";
+  final String globalWorkspace=null;
+{
+    info=createMock(GeoServerInfo.class);
+    expect(info.getId()).andStubReturn(globalId);
+    expectEvent(localAddress,globalName,globalWorkspace,globalId,GeoServerInfo.class,Type.MODIFY);
+  }
+  replay(info);
+{
+    HzSynchronizer sync=getSynchronizer();
+    sync.initialize(configWatcher);
+    for (    ConfigurationListener listener : gsListenerCapture.getValues()) {
+      listener.handleGlobalChange(info,Arrays.asList("contact.address"),Arrays.<Object>asList("69 Old Avenue"),Arrays.<Object>asList("42 Test Street"));
+    }
+    for (    ConfigurationListener listener : gsListenerCapture.getValues()) {
+      listener.handlePostGlobalChange(info);
+    }
+  }
+  waitForSync();
+  verify(info);
+}

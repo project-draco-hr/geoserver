@@ -1,0 +1,44 @@
+{
+  boolean retval=true;
+  long now=System.currentTimeMillis();
+  String queueId=keyGenerator.getUserKey(request);
+  QUEUE_ID.set(queueId);
+  TimedBlockingQueue queue=null;
+  queue=queues.get(queueId);
+  if (queue == null) {
+    queue=new TimedBlockingQueue(queueSize,true);
+    queues.put(queueId,queue);
+  }
+  try {
+    if (timeout > 0) {
+      retval=queue.offer(request,timeout,TimeUnit.MILLISECONDS);
+    }
+ else {
+      queue.put(request);
+    }
+  }
+ catch (  InterruptedException e) {
+    LOGGER.log(Level.WARNING,"Unexpected interruption while " + "blocking on the request queue");
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine("UserFlowController(" + queueSize + ","+ queueId+ ") queue size "+ queue.size());
+    LOGGER.fine("UserFlowController(" + queueSize + ","+ queueId+ ") total queues "+ queues.size());
+  }
+  if ((queues.size() > maxQueues && (now - lastCleanup) > (maxAge / 10)) || (now - lastCleanup) > maxAge) {
+    int cleanupCount=0;
+synchronized (queues) {
+      for (      String key : queues.keySet()) {
+        TimedBlockingQueue tbq=queues.get(key);
+        if (now - tbq.lastModified > maxAge && tbq.size() == 0) {
+          queues.remove(key);
+          cleanupCount++;
+        }
+      }
+      lastCleanup=now;
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("UserFlowController(" + queueSize + ") purged "+ cleanupCount+ " stale queues");
+      }
+    }
+  }
+  return retval;
+}

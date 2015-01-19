@@ -5,12 +5,9 @@
   }
   DataStore dataStore=(DataStore)dataAccess;
   SimpleFeatureSource fs;
-  if (dataStore instanceof JDBCDataStore && info.getMetadata() != null && info.getMetadata().containsKey(FeatureTypeInfo.JDBC_VIRTUAL_TABLE)) {
-    VirtualTable vt=(VirtualTable)info.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE);
-    JDBCDataStore jstore=(JDBCDataStore)dataStore;
-    if (!jstore.getVirtualTables().containsValue(vt)) {
-      jstore.addVirtualTable(vt);
-    }
+  FeatureTypeCallback initializer=getFeatureTypeInitializer(info,dataAccess);
+  if (initializer != null) {
+    initializer.initialize(info,dataAccess,null);
   }
   final String typeName=info.getNativeName();
   final String alias=info.getName();
@@ -76,6 +73,6 @@
       }
       schema=typeBuilder.buildFeatureType();
     }
-    return GeoServerFeatureLocking.create(fs,schema,info.getFilter(),resultCRS,info.getProjectionPolicy().getCode(),getTolerance(info));
+    return GeoServerFeatureLocking.create(fs,schema,info.getFilter(),resultCRS,info.getProjectionPolicy().getCode(),getTolerance(info),info.getMetadata());
   }
 }

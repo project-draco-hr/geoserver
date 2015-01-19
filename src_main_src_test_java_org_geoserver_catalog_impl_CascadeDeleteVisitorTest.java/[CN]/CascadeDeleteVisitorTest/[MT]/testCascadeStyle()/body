@@ -1,29 +1,9 @@
 {
-  Catalog catalog=createMock(Catalog.class);
-  createMockStyle(catalog,StyleInfo.DEFAULT_POINT);
-  StyleInfo style=createMockStyle(catalog,LAKES.getLocalPart());
-  LayerInfo lakes=createMock(LayerInfo.class);
-  expect(lakes.getDefaultStyle()).andReturn(style).anyTimes();
-  expect(lakes.getStyles()).andReturn(new HashSet()).anyTimes();
-  FeatureTypeInfo lakesFt=createNiceMock(FeatureTypeInfo.class);
-  expect(lakes.getResource()).andReturn(lakesFt).anyTimes();
-  lakes.setDefaultStyle((StyleInfo)anyObject());
-  expectLastCall();
-  catalog.save(lakes);
-  expectLastCall();
-  LayerInfo buildings=createMock(LayerInfo.class);
-  expect(buildings.getDefaultStyle()).andReturn(null).anyTimes();
-  expect(buildings.getStyles()).andReturn(new HashSet<StyleInfo>(Arrays.asList(style))).anyTimes();
-  catalog.save(buildings);
-  expectLastCall();
-  expect(catalog.getLayers()).andReturn(Arrays.asList(lakes,buildings)).anyTimes();
-  expect(catalog.getLayerGroups()).andReturn(new ArrayList());
-  catalog.remove(style);
-  expectLastCall();
-  replay(style,lakesFt,lakes,buildings,catalog);
+  Catalog catalog=getCatalog();
+  StyleInfo style=catalog.getStyleByName(LAKES.getLocalPart());
+  assertNotNull(style);
   new CascadeDeleteVisitor(catalog).visit(style);
-  for (  LayerInfo l : catalog.getLayers()) {
-    verify(l);
-  }
-  verify(catalog);
+  assertNull(catalog.getStyleByName(LAKES.getLocalPart()));
+  LayerInfo layer=catalog.getLayerByName(getLayerId(LAKES));
+  assertEquals("polygon",layer.getDefaultStyle().getName());
 }

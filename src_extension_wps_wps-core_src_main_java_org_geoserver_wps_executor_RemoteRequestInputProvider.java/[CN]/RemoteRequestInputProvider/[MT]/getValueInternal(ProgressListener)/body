@@ -1,0 +1,125 @@
+{
+  InputReferenceType ref=input.getReference();
+  URL destination=new URL(ref.getHref());
+  HttpMethod method=null;
+  GetMethod refMethod=null;
+  InputStream input=null;
+  InputStream refInput=null;
+  listener.started();
+  try {
+    if ("file".equalsIgnoreCase(destination.getProtocol())) {
+      File file=DataUtilities.urlToFile(destination);
+      if (maxSize > 0 && maxSize < file.length()) {
+        throw new WPSException("Input " + getInputId() + " size "+ file.length()+ " exceeds maximum allowed size of "+ maxSize,"NoApplicableCode",getInputId());
+      }
+      input=new FileInputStream(file);
+    }
+ else     if ("http".equalsIgnoreCase(destination.getProtocol())) {
+      HttpClient client=new HttpClient();
+      HttpConnectionManagerParams params=new HttpConnectionManagerParams();
+      params.setSoTimeout(timeout);
+      params.setConnectionTimeout(timeout);
+      HttpConnectionManager manager=new SimpleHttpConnectionManager();
+      manager.setParams(params);
+      client.setHttpConnectionManager(manager);
+      if (ref.getMethod() == null || ref.getMethod() == MethodType.GET_LITERAL) {
+        GetMethod get=new GetMethod(ref.getHref());
+        get.setFollowRedirects(true);
+        method=get;
+      }
+ else {
+        String encoding=ref.getEncoding();
+        if (encoding == null) {
+          encoding="UTF-8";
+        }
+        PostMethod post=new PostMethod(ref.getHref());
+        Object body=ref.getBody();
+        if (body == null) {
+          if (ref.getBodyReference() != null) {
+            URL refDestination=new URL(ref.getBodyReference().getHref());
+            if ("http".equalsIgnoreCase(refDestination.getProtocol())) {
+              refMethod=new GetMethod(ref.getBodyReference().getHref());
+              refMethod.setFollowRedirects(true);
+              client.executeMethod(refMethod);
+              refInput=refMethod.getResponseBodyAsStream();
+            }
+ else {
+              URLConnection conn=refDestination.openConnection();
+              conn.setConnectTimeout(timeout);
+              conn.setReadTimeout(timeout);
+              refInput=conn.getInputStream();
+            }
+            post.setRequestEntity(new InputStreamRequestEntity(refInput,complexPPIO.getMimeType()));
+          }
+ else {
+            throw new WPSException("A POST request should contain a non empty body");
+          }
+        }
+ else         if (body instanceof String) {
+          post.setRequestEntity(new StringRequestEntity((String)body,complexPPIO.getMimeType(),encoding));
+        }
+ else {
+          throw new WPSException("The request body should be contained in a CDATA section, " + "otherwise it will get parsed as XML instead of being preserved as is");
+        }
+        method=post;
+      }
+      if (ref.getHeader() != null) {
+        for (Iterator it=ref.getHeader().iterator(); it.hasNext(); ) {
+          HeaderType header=(HeaderType)it.next();
+          method.setRequestHeader(header.getKey(),header.getValue());
+        }
+      }
+      int code=client.executeMethod(method);
+      if (code == 200) {
+        try {
+          Header length=method.getResponseHeader("Content-Lenght");
+          if (maxSize > 0 && length != null && Long.parseLong(length.getValue()) > maxSize) {
+            throw new WPSException("Input " + getInputId() + " size "+ length.getValue()+ " exceeds maximum allowed size of "+ maxSize+ " according to HTTP Content-Lenght response header","NoApplicableCode",getInputId());
+          }
+        }
+ catch (        NumberFormatException e) {
+          LOGGER.log(Level.FINE,"Failed to parse content lenght to check input limits respect, " + "moving on and checking data as it comes in",e);
+        }
+        input=method.getResponseBodyAsStream();
+        if (maxSize > 0) {
+          input=new MaxSizeInputStream(input,getInputId(),maxSize);
+        }
+      }
+ else {
+        throw new WPSException("Error getting remote resources from " + ref.getHref() + ", http error "+ code+ ": "+ method.getStatusText());
+      }
+    }
+ else {
+      URLConnection conn=destination.openConnection();
+      conn.setConnectTimeout(timeout);
+      conn.setReadTimeout(timeout);
+      input=conn.getInputStream();
+      if (maxSize > 0) {
+        input=new MaxSizeInputStream(input,getInputId(),maxSize);
+      }
+    }
+    if (input != null) {
+      CancellingInputStream is=new CancellingInputStream(input,listener);
+      return complexPPIO.decode(is);
+    }
+ else {
+      throw new WPSException("Could not find a mean to read input " + inputId);
+    }
+  }
+  finally {
+    listener.progress(100);
+    listener.complete();
+    if (refInput != null) {
+      refInput.close();
+    }
+    if (input != null) {
+      input.close();
+    }
+    if (method != null) {
+      method.releaseConnection();
+    }
+    if (refMethod != null) {
+      refMethod.releaseConnection();
+    }
+  }
+}

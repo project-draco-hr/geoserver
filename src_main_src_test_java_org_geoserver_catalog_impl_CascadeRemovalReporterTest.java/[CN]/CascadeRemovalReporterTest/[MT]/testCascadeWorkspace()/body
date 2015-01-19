@@ -4,6 +4,30 @@
   WorkspaceInfo ws=catalog.getWorkspaceByName(MockData.CITE_PREFIX);
   assertNotNull(ws);
   List<StoreInfo> stores=getCatalog().getStoresByWorkspace(ws,StoreInfo.class);
+  List<StyleInfo> styles=getCatalog().getStylesByWorkspace(ws);
+  List<LayerGroupInfo> layerGroups=getCatalog().getLayerGroupsByWorkspace(ws);
+  List<LayerGroupInfo> changedLayerGroups=new ArrayList<LayerGroupInfo>();
+  List<LayerGroupInfo> totalLayerGroups=getCatalog().getLayerGroups();
+  for (  LayerGroupInfo info : totalLayerGroups) {
+    List<LayerInfo> layers=info.layers();
+    int size=layers.size();
+    for (    LayerInfo l : layers) {
+      if (stores.contains(l.getResource().getStore())) {
+        size--;
+      }
+    }
+    if (size == 0) {
+      if (!layerGroups.contains(info)) {
+        layerGroups.add(info);
+      }
+    }
+ else {
+      changedLayerGroups.add(info);
+    }
+  }
   ws.accept(visitor);
   assertTrue(stores.containsAll(visitor.getObjects(StoreInfo.class,ModificationType.DELETE)));
+  assertTrue(styles.containsAll(visitor.getObjects(StyleInfo.class,ModificationType.DELETE)));
+  assertTrue(layerGroups.containsAll(visitor.getObjects(LayerGroupInfo.class,ModificationType.DELETE)));
+  assertTrue(changedLayerGroups.containsAll(visitor.getObjects(LayerGroupInfo.class,ModificationType.GROUP_CHANGED)));
 }

@@ -1,0 +1,74 @@
+{
+  Filter readFilter=(rule.getGrant() == GrantType.ALLOW) ? Filter.INCLUDE : Filter.EXCLUDE;
+  Filter writeFilter=(rule.getGrant() == GrantType.ALLOW) ? Filter.INCLUDE : Filter.EXCLUDE;
+  try {
+    if (rule.getCqlFilterRead() != null) {
+      readFilter=ECQL.toFilter(rule.getCqlFilterRead());
+    }
+    if (rule.getCqlFilterWrite() != null) {
+      writeFilter=ECQL.toFilter(rule.getCqlFilterWrite());
+    }
+  }
+ catch (  CQLException e) {
+    throw new IllegalArgumentException("Invalid cql filter found: " + e.getMessage(),e);
+  }
+  List<PropertyName> readAttributes=toPropertyNames(rule.getAttributes(),PropertyAccessMode.READ);
+  List<PropertyName> writeAttributes=toPropertyNames(rule.getAttributes(),PropertyAccessMode.WRITE);
+  Geometry area=null;
+  String areaWkt=rule.getAreaWkt();
+  if (areaWkt != null) {
+    try {
+      WKTReader wktReader=new WKTReader();
+      area=wktReader.read(areaWkt);
+      if ((area != null) && (area.getSRID() > 0)) {
+        CoordinateReferenceSystem geomCrs=CRS.decode("EPSG:" + area.getSRID());
+        CoordinateReferenceSystem resourceCrs=resource.getCRS();
+        if ((resourceCrs != null) && !CRS.equalsIgnoreMetadata(geomCrs,resourceCrs)) {
+          MathTransform mt=CRS.findMathTransform(geomCrs,resourceCrs,true);
+          area=JTS.transform(area,mt);
+          rule.setAreaWkt(area.toString());
+        }
+      }
+    }
+ catch (    ParseException e) {
+      throw new RuntimeException("Failed to unmarshal the restricted area wkt",e);
+    }
+catch (    Exception e) {
+      throw new RuntimeException("Failed to reproject the restricted area to the layer's native SRS",e);
+    }
+  }
+  CatalogMode catalogMode=DEFAULT_CATALOG_MODE;
+  if (rule.getCatalogMode() != null) {
+switch (rule.getCatalogMode()) {
+case CHALLENGE:
+      catalogMode=CatalogMode.CHALLENGE;
+    break;
+case HIDE:
+  catalogMode=CatalogMode.HIDE;
+break;
+case MIXED:
+catalogMode=CatalogMode.MIXED;
+break;
+}
+}
+LOGGER.log(Level.FINE,"Returning mode {0} for resource {1}",new Object[]{catalogMode,resource});
+if (resource instanceof FeatureTypeInfo) {
+if (area != null) {
+Filter areaFilter=FF.intersects(FF.property(""),FF.literal(area));
+readFilter=mergeFilter(readFilter,areaFilter);
+writeFilter=mergeFilter(writeFilter,areaFilter);
+}
+return new VectorAccessLimits(catalogMode,readAttributes,readFilter,writeAttributes,writeFilter);
+}
+ else if (resource instanceof CoverageInfo) {
+MultiPolygon rasterFilter=buildRasterFilter(rule);
+return new CoverageAccessLimits(catalogMode,readFilter,rasterFilter,null);
+}
+ else if (resource instanceof WMSLayerInfo) {
+MultiPolygon rasterFilter=buildRasterFilter(rule);
+return new WMSAccessLimits(catalogMode,readFilter,rasterFilter,true);
+}
+ else {
+throw new IllegalArgumentException("Don't know how to handle resource " + resource);
+}
+}

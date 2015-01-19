@@ -14,12 +14,13 @@
   pp.put("style","foo");
   tester.startPage(CssDemoPage.class,pp);
   tester.assertRenderedPage(CssDemoPage.class);
-  tester.assertModelValue("main-content:style.name","foo");
-  tester.assertModelValue("main-content:layer.name",prefixedName);
-  tester.debugComponentTrees();
+  tester.assertModelValue("main-content:change.style:link:label","foo");
+  tester.assertModelValue("main-content:change.layer:link:label",prefixedName);
   FormTester form=tester.newFormTester("main-content:style.editing:style-editor");
-  form.setValue("editor","* { stroke: red; }");
+  form.setValue("editor:editorContainer:editorParent:editor","* { stroke: red; }");
   tester.executeAjaxEvent("main-content:style.editing:style-editor:submit","onclick");
-  String content=IOUtils.toString(cat.getResourcePool().readStyle(foo));
+  BufferedReader reader=cat.getResourcePool().readStyle(foo);
+  String content=IOUtils.toString(reader);
+  reader.close();
   assertEquals("* { stroke: red; }",content);
 }

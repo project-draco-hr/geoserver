@@ -1,21 +1,27 @@
 {
   Name processName=request.getProcessName();
   ProcessManager processManager=getProcessManager(processName);
-  LazyInputMap inputs=request.getProcessInputs(this);
   String executionId=resourceManager.getExecutionId(synchronous);
-  final AsynchronousProcessContext context=new AsynchronousProcessContext(request,executionId,inputs,processManager,applicationContext);
-  contexts.put(executionId,context);
-  if (!synchronous) {
+  LazyInputMap inputs=request.getProcessInputs(WPSExecutionManager.this);
+  ExecutionStatus status=new ExecutionStatus(processName,executionId,request.isAsynchronous());
+  status.setRequest(request.getRequest());
+  long maxExecutionTime=getMaxExecutionTime(synchronous);
+  Executor executor=new Executor(request,processManager,processName,inputs,synchronous,status,resourceManager,maxExecutionTime);
+  ExecuteResponseType response;
+  if (synchronous) {
+    response=executor.call();
+  }
+ else {
     LOGGER.log(Level.INFO,"Submitting new asynch process " + processName.getURI() + " with execution id "+ executionId);
-  }
-  processManager.submit(executionId,processName,inputs,request.isAsynchronous());
-  if (request.isAsynchronous()) {
-    storedResponseWriters.submit(new Runnable(){
-      @Override public void run(){
-        context.writeResponseFile();
-      }
+    try {
+      resourceManager.storeRequestObject(request.getRequest(),executionId);
     }
-);
+ catch (    IOException e) {
+      throw new WPSException("Failed to store original WPS request, which " + "will be needed to encode the output",e);
+    }
+    ExecuteResponseBuilder builder=new ExecuteResponseBuilder(request.getRequest(),applicationContext,status);
+    response=builder.build();
+    executors.submit(executor);
   }
-  return executionId;
+  return response;
 }

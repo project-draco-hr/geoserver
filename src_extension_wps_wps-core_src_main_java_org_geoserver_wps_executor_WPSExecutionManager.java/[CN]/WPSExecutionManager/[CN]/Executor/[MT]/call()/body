@@ -1,0 +1,21 @@
+{
+  if (transfer != null) {
+    try {
+      transfer.apply();
+      localProcesses.put(status.getExecutionId(),notifier);
+      return execute();
+    }
+  finally {
+      localProcesses.remove(status.getExecutionId());
+      try {
+        transfer.cleanup();
+      }
+  finally {
+        resourceManager.finished(status.getExecutionId());
+      }
+    }
+  }
+ else {
+    return execute();
+  }
+}

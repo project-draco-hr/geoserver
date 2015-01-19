@@ -1,0 +1,22 @@
+{
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  request.setContextPath("/geoserver");
+  request.setRequestURI("/geoserver/hello");
+  request.setMethod("post");
+  String xml="<Hello service='hello' message='Hello world!' version='1.0.0' />";
+  MimeMultipart body=new MimeMultipart();
+  request.setContentType(body.getContentType());
+  InternetHeaders headers=new InternetHeaders();
+  headers.setHeader("Content-Disposition","form-data; name=\"body\";");
+  headers.setHeader("Content-Type","application/xml");
+  body.addBodyPart(new MimeBodyPart(headers,xml.getBytes()));
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  body.writeTo(bout);
+  request.setBodyContent(bout.toByteArray());
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  URL url=getClass().getResource("applicationContext.xml");
+  FileSystemXmlApplicationContext context=new FileSystemXmlApplicationContext(url.toString());
+  Dispatcher dispatcher=(Dispatcher)context.getBean("dispatcher");
+  dispatcher.handleRequestInternal(request,response);
+  assertEquals("Hello world!",response.getOutputStreamContent());
+}

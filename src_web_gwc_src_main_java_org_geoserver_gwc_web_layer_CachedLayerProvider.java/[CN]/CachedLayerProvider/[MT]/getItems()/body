@@ -1,6 +1,17 @@
 {
   final GWC gwc=GWC.get();
   List<String> tileLayerNames=new ArrayList<String>(gwc.getTileLayerNames());
+  Predicate<? super String> predicate=new Predicate<String>(){
+    @Override public boolean apply(    @Nullable String input){
+      if (input != null && !input.isEmpty()) {
+        TileLayer layer=GWC.get().getTileLayerByName(input);
+        return layer.isAdvertised();
+      }
+      return false;
+    }
+  }
+;
+  tileLayerNames=new ArrayList(Collections2.filter(tileLayerNames,predicate));
   return Lists.transform(tileLayerNames,new Function<String,TileLayer>(){
     @Override public TileLayer apply(    String input){
       return GWC.get().getTileLayerByName(input);

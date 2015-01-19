@@ -1,0 +1,31 @@
+{
+  FunctionFactory factory=new GeoServerFunctionFactory();
+  List<FunctionName> functionNames=factory.getFunctionNames();
+  assertNotNull(functionNames);
+  assertTrue(functionNames.size() == 1);
+  assertEquals(IsInstanceOf.NAME,functionNames.get(0));
+  FilterFactory2 ff=CommonFactoryFinder.getFilterFactory2();
+  List<Expression> args=new ArrayList<Expression>();
+  args.add(ff.literal(Object.class));
+  Function f=factory.function(IsInstanceOf.NAME.getFunctionName(),args,null);
+  assertNotNull(f);
+  f=factory.function(IsInstanceOf.NAME.getName(),args,null);
+  assertNotNull(f);
+  boolean catchedException=false;
+  try {
+    args.add(ff.literal(Object.class));
+    f=factory.function(IsInstanceOf.NAME.getName(),args,null);
+  }
+ catch (  IllegalArgumentException e) {
+    catchedException=true;
+  }
+  assertTrue(catchedException);
+  catchedException=false;
+  try {
+    f=factory.function(IsInstanceOf.NAME.getName(),null,null);
+  }
+ catch (  NullPointerException e) {
+    catchedException=true;
+  }
+  assertTrue(catchedException);
+}

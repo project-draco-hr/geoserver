@@ -1,0 +1,34 @@
+{
+  WPSInfo wps=this.gs.getService(WPSInfo.class);
+  TreeSet<WpsAccessRule> result=new TreeSet<WpsAccessRule>();
+  if (wps != null) {
+    catalogMode=CatalogMode.HIDE;
+    if (wps.getCatalogMode() != null) {
+      catalogMode=wps.getCatalogMode();
+    }
+    for (    ProcessGroupInfo group : wps.getProcessGroups()) {
+      Set<String> prefixes=new HashSet<String>();
+      ProcessFactory pf=GeoServerProcessors.getProcessFactory(group.getFactoryClass(),false);
+      if (pf != null) {
+        Set<Name> names=pf.getNames();
+        for (        Name name : names) {
+          prefixes.add(name.getNamespaceURI());
+        }
+      }
+      for (      String prefix : prefixes) {
+        if (group.getRoles() != null && !group.getRoles().isEmpty()) {
+          result.add(new WpsAccessRule(prefix,ANY,new HashSet<String>(group.getRoles())));
+        }
+      }
+      for (      ProcessInfo process : group.getFilteredProcesses()) {
+        if (process.getRoles() != null && !process.getRoles().isEmpty()) {
+          result.add(new WpsAccessRule(process.getName().getNamespaceURI(),process.getName().getLocalPart(),new HashSet<String>(process.getRoles())));
+        }
+      }
+    }
+  }
+  if (result.size() == 0) {
+    result.add(new WpsAccessRule(WpsAccessRule.EXECUTE_ALL));
+  }
+  root=buildAuthorizationTree(result);
+}

@@ -1,0 +1,35 @@
+{
+  final Iterator<String> itPropertyName=properties.iterator();
+  final Iterator<Object> itValue=values.iterator();
+  while (itPropertyName.hasNext() && itValue.hasNext()) {
+    String propertyName=itPropertyName.next();
+    final Object value=itValue.next();
+    PropertyDescriptor pd=PropertyUtils.getPropertyDescriptor(info,propertyName);
+    if (pd == null) {
+      propertyName=propertyName.toUpperCase();
+      pd=PropertyUtils.getPropertyDescriptor(info,propertyName);
+      if (pd == null) {
+        return;
+      }
+    }
+    if (pd.getWriteMethod() != null) {
+      PropertyUtils.setProperty(info,propertyName,value);
+    }
+ else {
+      final Object property=PropertyUtils.getProperty(info,propertyName);
+      if (Collection.class.isAssignableFrom(pd.getPropertyType())) {
+        final Collection<?> liveCollection=(Collection<?>)property;
+        liveCollection.clear();
+        liveCollection.addAll((Collection)value);
+      }
+ else       if (Map.class.isAssignableFrom(pd.getPropertyType())) {
+        final Map<?,?> liveMap=(Map<?,?>)property;
+        liveMap.clear();
+        liveMap.putAll((Map)value);
+      }
+ else {
+        if (CatalogUtils.LOGGER.isLoggable(java.util.logging.Level.SEVERE))         CatalogUtils.LOGGER.severe("Skipping unwritable property " + propertyName + " with property type "+ pd.getPropertyType());
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  final String layerName=MockData.BASIC_POLYGONS.getPrefix() + ":" + MockData.BASIC_POLYGONS.getLocalPart();
+  String requestUrl="wms/kml?layers=" + layerName + "&format_options=kmlrefresh:expires";
+  Document dom=getAsDOM(requestUrl);
+  assertEquals("kml",dom.getDocumentElement().getLocalName());
+  assertXpathEvaluatesTo("onExpire","/kml:kml/kml:Document/kml:NetworkLink/kml:Url/kml:refreshMode",dom);
+  requestUrl="wms/kml?layers=" + layerName + "&format_options=kmlrefresh:60";
+  dom=getAsDOM(requestUrl);
+  assertXpathEvaluatesTo("onInterval","/kml:kml/kml:Document/kml:NetworkLink/kml:Url/kml:refreshMode",dom);
+  assertXpathEvaluatesTo("60.0","/kml:kml/kml:Document/kml:NetworkLink/kml:Url/kml:refreshInterval",dom);
+}

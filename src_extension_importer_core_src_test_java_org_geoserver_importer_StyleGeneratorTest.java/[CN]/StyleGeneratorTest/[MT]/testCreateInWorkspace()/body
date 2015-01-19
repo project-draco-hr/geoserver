@@ -1,0 +1,16 @@
+{
+  ResourcePool rp=createNiceMock(ResourcePool.class);
+  Catalog cat=createNiceMock(Catalog.class);
+  expect(cat.getFactory()).andReturn(new CatalogFactoryImpl(null)).anyTimes();
+  expect(cat.getResourcePool()).andReturn(rp).anyTimes();
+  WorkspaceInfo ws=createNiceMock(WorkspaceInfo.class);
+  FeatureTypeInfo ft=createNiceMock(FeatureTypeInfo.class);
+  expect(ft.getName()).andReturn("foo").anyTimes();
+  replay(rp,ft,ws,cat);
+  StyleGenerator gen=new StyleGenerator(cat);
+  gen.setWorkspace(ws);
+  SimpleFeatureType schema=DataUtilities.createType("foo","geom:Point");
+  StyleInfo style=gen.createStyle(ft,schema);
+  assertNotNull(style);
+  assertNotNull(style.getWorkspace());
+}

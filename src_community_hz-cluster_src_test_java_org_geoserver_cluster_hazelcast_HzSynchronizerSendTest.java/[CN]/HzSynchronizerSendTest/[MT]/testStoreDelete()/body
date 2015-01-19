@@ -1,0 +1,27 @@
+{
+  DataStoreInfo info;
+  WorkspaceInfo wsInfo;
+  final String storeName="testStore";
+  final String storeId="Store-TEST";
+  final String storeWorkspace="Workspace-TEST";
+{
+    info=createMock(DataStoreInfo.class);
+    wsInfo=createMock(WorkspaceInfo.class);
+    expect(info.getName()).andStubReturn(storeName);
+    expect(info.getId()).andStubReturn(storeId);
+    expect(info.getWorkspace()).andStubReturn(wsInfo);
+    expect(wsInfo.getId()).andStubReturn(storeWorkspace);
+    expectEvent(localAddress,storeName,storeWorkspace,storeId,DataStoreInfo.class,Type.REMOVE);
+  }
+  replay(info,wsInfo);
+{
+    HzSynchronizer sync=getSynchronizer();
+    CatalogRemoveEventImpl event=new CatalogRemoveEventImpl();
+    event.setSource(info);
+    for (    CatalogListener listener : catListenerCapture.getValues()) {
+      listener.handleRemoveEvent(event);
+    }
+  }
+  waitForSync();
+  verify(info,wsInfo);
+}

@@ -1,0 +1,24 @@
+{
+  float totalSteps=longStepCount();
+  float stepsSoFar=0;
+  if (value == null) {
+    if (maxItems > 0 && providers.size() > maxItems) {
+      throw new WPSException("Too many values for input " + getInputId() + ", the max is "+ maxItems,"NoApplicableCode",getInputId());
+    }
+    value=new ArrayList<Object>();
+    for (    InputProvider provider : providers) {
+      float providerLongSteps=provider.longStepCount();
+      ProgressListener subListener;
+      if (providerLongSteps > 0) {
+        subListener=new SubProgressListener(listener,(stepsSoFar / totalSteps) * 100,(providerLongSteps / totalSteps) * 100);
+      }
+ else {
+        subListener=new NullProgressListener();
+      }
+      totalSteps+=providerLongSteps;
+      Object pv=provider.getValue(subListener);
+      value.add(pv);
+    }
+  }
+  return value;
+}

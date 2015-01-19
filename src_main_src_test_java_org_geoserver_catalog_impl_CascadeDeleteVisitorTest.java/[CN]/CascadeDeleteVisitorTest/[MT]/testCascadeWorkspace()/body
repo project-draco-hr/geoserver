@@ -1,26 +1,12 @@
 {
-  Catalog catalog=createMock(Catalog.class);
-  WorkspaceInfo ws=createMock(WorkspaceInfo.class);
-  expect(ws.getName()).andReturn(CITE_PREFIX).anyTimes();
-  expect(catalog.getWorkspaceByName(CITE_PREFIX)).andReturn(ws).anyTimes();
-  NamespaceInfo ns=createMock(NamespaceInfo.class);
-  expect(catalog.getNamespaceByPrefix(CITE_PREFIX)).andReturn(ns).anyTimes();
-  StoreInfo s1=createMock(StoreInfo.class);
-  StoreInfo s2=createMock(StoreInfo.class);
-  expect(catalog.getStoresByWorkspace(ws,StoreInfo.class)).andReturn(Arrays.asList(s1,s2)).anyTimes();
-  ns.accept((CatalogVisitor)anyObject());
-  expectLastCall();
-  s1.accept((CatalogVisitor)anyObject());
-  expectLastCall();
-  s2.accept((CatalogVisitor)anyObject());
-  expectLastCall();
-  catalog.remove(ws);
-  expectLastCall();
-  replay(ws,ns,s1,s2,catalog);
+  Catalog catalog=getCatalog();
+  WorkspaceInfo ws=catalog.getWorkspaceByName(CITE_PREFIX);
   new CascadeDeleteVisitor(catalog).visit(ws);
-  verify(catalog.getNamespaceByPrefix(CITE_PREFIX));
-  for (  StoreInfo s : catalog.getStoresByWorkspace(ws,StoreInfo.class)) {
-    verify(s);
-  }
-  verify(catalog);
+  assertNull(catalog.getNamespaceByPrefix(CITE_PREFIX));
+  assertEquals(0,catalog.count(LayerInfo.class,Filter.INCLUDE));
+  assertEquals(0,catalog.count(ResourceInfo.class,Filter.INCLUDE));
+  assertEquals(0,catalog.count(StoreInfo.class,Filter.INCLUDE));
+  assertEquals(0,catalog.count(LayerGroupInfo.class,Filter.INCLUDE));
+  assertEquals(0,catalog.getStylesByWorkspace(CITE_PREFIX).size());
+  assertNull(catalog.getStyleByName(WS_STYLE));
 }

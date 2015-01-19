@@ -1,6 +1,8 @@
 {
   List<GridCoverage2D> coverages=null;
-  coverages=readCoverage(helper.getCoverageInfo(),gridCoverageRequest,reader,hints,incrementalInputSize);
+  double[] preAppliedScale=new double[]{Double.NaN,Double.NaN};
+  ScalingType scaling=extractScaling(extensions);
+  coverages=readCoverage(helper,gridCoverageRequest,reader,hints,incrementalInputSize,scaling,preAppliedScale);
   GridSampleDimension[] sampleDimensions=collectDimensions(coverages);
   if (coverages == null || coverages.isEmpty()) {
     throw new IllegalStateException("Unable to read a coverage for the current request" + coverageType.toString());
@@ -16,7 +18,7 @@
   }
   coverages=temp;
   for (int i=0; i < coverages.size(); i++) {
-    GridCoverage2D scaled=handleScaling(coverages.get(i),extensions,gridCoverageRequest.getSpatialInterpolation(),hints);
+    GridCoverage2D scaled=handleScaling(coverages.get(i),scaling,gridCoverageRequest.getSpatialInterpolation(),preAppliedScale,hints);
     coverages.set(i,scaled);
   }
   for (int i=0; i < coverages.size(); i++) {
@@ -25,7 +27,7 @@
   }
   GridCoverage2D coverage=mosaicCoverages(coverages,hints);
   final boolean enforceLatLonAxesOrder=requestingLatLonAxesOrder(gridCoverageRequest.getOutputCRS());
-  if (enforceLatLonAxesOrder) {
+  if (wcs.isLatLon() && enforceLatLonAxesOrder) {
     coverage=enforceLatLongOrder(coverage,hints,gridCoverageRequest.getOutputCRS());
   }
   if (incrementalOutputSize == null) {

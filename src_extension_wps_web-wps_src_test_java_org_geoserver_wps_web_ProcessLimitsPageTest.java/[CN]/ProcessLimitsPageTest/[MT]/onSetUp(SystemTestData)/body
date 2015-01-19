@@ -1,0 +1,13 @@
+{
+  super.onSetUp(testData);
+  WPSInfo wps=getGeoServer().getService(WPSInfo.class);
+  ProcessGroupInfo rasterGroup=getRasterGroup(wps.getProcessGroups());
+  ProcessInfo contour=new ProcessInfoImpl();
+  contour.setEnabled(true);
+  contour.setName(new NameImpl("ras","Contour"));
+  contour.getValidators().put("data",new MaxSizeValidator(1));
+  contour.getValidators().put("levels",new NumberRangeValidator(new NumberRange<Double>(Double.class,-8000d,8000d)));
+  contour.getValidators().put("levels",new MultiplicityValidator(3));
+  rasterGroup.getFilteredProcesses().add(contour);
+  getGeoServer().save(wps);
+}

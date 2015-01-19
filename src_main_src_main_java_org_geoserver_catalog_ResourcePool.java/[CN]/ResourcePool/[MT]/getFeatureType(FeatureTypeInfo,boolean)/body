@@ -1,4 +1,12 @@
 {
-  boolean cacheable=isCacheable(info) && handleProjectionPolicy;
-  return cacheable ? getCacheableFeatureType(info,handleProjectionPolicy) : getNonCacheableFeatureType(info,handleProjectionPolicy);
+  try {
+    return tryGetFeatureType(info,handleProjectionPolicy);
+  }
+ catch (  Exception ex) {
+    LOGGER.log(Level.WARNING,"Error while getting feature type, flushing cache and retrying: {0}",ex.getMessage());
+    LOGGER.log(Level.FINE,"",ex);
+    this.clear(info);
+    this.flushDataStore(info);
+    return tryGetFeatureType(info,handleProjectionPolicy);
+  }
 }

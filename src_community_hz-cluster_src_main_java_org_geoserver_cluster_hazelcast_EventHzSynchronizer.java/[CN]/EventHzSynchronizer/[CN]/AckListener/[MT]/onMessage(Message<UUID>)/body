@@ -1,0 +1,16 @@
+{
+  UUID eventId=message.getMessageObject();
+  AtomicInteger countDown=expectedAckCounters.get(eventId);
+  if (countDown != null) {
+    countDown.decrementAndGet();
+    String originAddr=null;
+    Member publishingMember=message.getPublishingMember();
+    if (publishingMember != null) {
+      InetSocketAddress socketAddress=publishingMember.getSocketAddress();
+      if (socketAddress != null) {
+        originAddr=addressString(socketAddress);
+      }
+    }
+    LOGGER.finer(format("%s - Got ack on event %s from %s",nodeId(),eventId,originAddr));
+  }
+}

@@ -1,0 +1,21 @@
+{
+  LayerInfo layerInfo;
+  final String layerName="testlayer";
+  final String layerId="Layer-TEST";
+{
+    layerInfo=createMock(LayerInfo.class);
+    expect(layerInfo.getId()).andStubReturn(layerId);
+    expect(layerInfo.getName()).andStubReturn(layerName);
+    expectationTestTwoLayerChangeNoPause(layerInfo,layerId);
+  }
+  replay(layerInfo);
+{
+    sync=getSynchronizer();
+    sync.initialize(configWatcher);
+    ConfigChangeEvent evtLayer=new ConfigChangeEvent(layerId,layerName,LayerInfoImpl.class,Type.MODIFY);
+    mockMessage(evtLayer);
+    mockMessage(evtLayer);
+    waitForSync();
+  }
+  verify(layerInfo);
+}

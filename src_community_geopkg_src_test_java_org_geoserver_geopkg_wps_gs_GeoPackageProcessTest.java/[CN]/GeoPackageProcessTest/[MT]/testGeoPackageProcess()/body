@@ -1,6 +1,9 @@
 {
   String urlPath=string(post("wps",getXml())).trim();
-  File file=getDataDirectory().findFile(urlPath.substring("http://localhost:8080/geoserver/".length()));
+  String resourceUrl=urlPath.substring("http://localhost:8080/geoserver/".length());
+  MockHttpServletResponse response=getAsServletResponse(resourceUrl);
+  File file=new File(getDataDirectory().findOrCreateDir("tmp"),"test.gpkg");
+  FileUtils.writeByteArrayToFile(file,getBinary(response));
   assertNotNull(file);
   assertEquals("test.gpkg",file.getName());
   assertTrue(file.exists());
@@ -16,6 +19,8 @@
   assertEquals(500000,fe.getBounds().getMinY(),0.0001);
   assertEquals(500100,fe.getBounds().getMaxX(),0.0001);
   assertEquals(500100,fe.getBounds().getMaxY(),0.0001);
+  assertFalse(gpkg.hasSpatialIndex(fe));
+  assertTrue(gpkg.hasSpatialIndex(features.get(1)));
   SimpleFeatureReader fr=gpkg.reader(fe,null,null);
   assertEquals(1,fr.getFeatureType().getAttributeCount());
   assertEquals("pointProperty",fr.getFeatureType().getAttributeDescriptors().get(0).getLocalName());

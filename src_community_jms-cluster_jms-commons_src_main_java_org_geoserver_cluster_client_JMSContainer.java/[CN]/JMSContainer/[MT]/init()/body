@@ -1,0 +1,27 @@
+{
+  setAutoStartup(false);
+  setConcurrentConsumers(1);
+  setPubSubDomain(true);
+  setSubscriptionDurable(Boolean.parseBoolean(config.getConfiguration(TopicConfiguration.DURABLE_KEY).toString()));
+  setDurableSubscriptionName(config.getConfiguration(JMSConfiguration.INSTANCE_NAME_KEY).toString());
+  max=Integer.parseInt(config.getConfiguration(ConnectionConfiguration.CONNECTION_RETRY_KEY).toString());
+  maxWait=Long.parseLong(config.getConfiguration(ConnectionConfiguration.CONNECTION_MAXWAIT_KEY).toString());
+  final String startString=config.getConfiguration(ConnectionConfiguration.CONNECTION_KEY);
+  if (startString != null && startString.equals(ConnectionConfigurationStatus.enabled.toString())) {
+    if (!connect()) {
+      if (LOGGER.isLoggable(Level.SEVERE)) {
+        LOGGER.severe("Unable to connect to the broker, force connection status to disabled");
+      }
+      config.putConfiguration(ConnectionConfiguration.CONNECTION_KEY,ConnectionConfigurationStatus.disabled.toString());
+      try {
+        config.storeConfig();
+      }
+ catch (      IOException e) {
+        LOGGER.log(Level.SEVERE,e.getMessage(),e);
+      }
+    }
+  }
+ else {
+    configure();
+  }
+}

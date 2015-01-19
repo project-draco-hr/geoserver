@@ -2,7 +2,12 @@
   ResourceAccessManager manager=GeoServerExtensions.bean(ResourceAccessManager.class);
   if (manager == null) {
     DataAccessManager daManager=lookupDataAccessManager();
-    manager=new DataAccessManagerAdapter(daManager);
+    if (daManager == null) {
+      manager=buildDefaultResourceAccessManager();
+    }
+ else {
+      manager=new DataAccessManagerAdapter(daManager);
+    }
   }
   CatalogFilterAccessManager lwManager=new CatalogFilterAccessManager();
   lwManager.setDelegate(manager);

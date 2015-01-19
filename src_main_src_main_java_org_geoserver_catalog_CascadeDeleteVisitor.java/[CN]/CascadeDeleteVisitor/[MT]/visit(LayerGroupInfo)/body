@@ -1,14 +1,17 @@
 {
-  List<LayerGroupInfo> groups=catalog.getLayerGroups();
-  for (  LayerGroupInfo group : groups) {
-    if (group.getLayers().remove(layerGroupToRemove)) {
-      if (group.getLayers().size() == 0) {
-        visit(group);
-      }
+  Filter associatedTo=Predicates.equal("layers",layerGroupToRemove,MatchAction.ANY);
+  try (CloseableIterator<LayerGroupInfo> it=catalog.list(LayerGroupInfo.class,associatedTo)){
+    while (it.hasNext()) {
+      LayerGroupInfo group=it.next();
+      if (group.getLayers().remove(layerGroupToRemove)) {
+        if (group.getLayers().size() == 0) {
+          visit(group);
+        }
  else {
-        catalog.save(group);
+          catalog.save(group);
+        }
       }
     }
   }
-  catalog.remove(layerGroupToRemove);
+   catalog.remove(layerGroupToRemove);
 }

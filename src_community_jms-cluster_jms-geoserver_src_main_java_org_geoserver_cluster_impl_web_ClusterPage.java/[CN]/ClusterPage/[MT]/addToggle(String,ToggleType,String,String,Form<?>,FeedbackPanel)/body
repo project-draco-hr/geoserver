@@ -1,0 +1,33 @@
+{
+  final TextField<String> toggleInfo=new TextField<String>(textFieldId);
+  toggleInfo.setType(String.class);
+  toggleInfo.setOutputMarkupId(true);
+  toggleInfo.setOutputMarkupPlaceholderTag(true);
+  toggleInfo.setEnabled(false);
+  form.add(toggleInfo);
+  final AjaxButton toggle=new AjaxButton(buttonId){
+    private static final long serialVersionUID=1L;
+    @Override protected void onError(    AjaxRequestTarget target,    org.apache.wicket.markup.html.form.Form<?> form){
+      fp.error("ERROR");
+      target.addComponent(fp);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      final boolean switchTo=!Boolean.parseBoolean(toggleInfo.getModel().getObject());
+      final ApplicationContext ctx=getGeoServerApplication().getApplicationContext();
+      ctx.publishEvent(new ToggleEvent(switchTo,type));
+      if (switchTo) {
+        fp.info("The " + type + " toggle is now ENABLED");
+      }
+ else {
+        fp.warn("The " + type + " toggle is now DISABLED no event will be posted/received to/from the broker");
+        fp.info("Note that the " + type + " is still registered to the topic destination");
+      }
+      toggleInfo.getModel().setObject(Boolean.toString(switchTo));
+      target.addComponent(toggleInfo);
+      target.addComponent(fp);
+    }
+  }
+;
+  toggle.setRenderBodyOnly(false);
+  form.add(toggle);
+}

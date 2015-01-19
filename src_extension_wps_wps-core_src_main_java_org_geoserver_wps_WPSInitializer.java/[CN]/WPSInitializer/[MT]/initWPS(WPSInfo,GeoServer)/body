@@ -1,18 +1,17 @@
 {
-  double timeout=info.getConnectionTimeout();
-  if (timeout > 0) {
-    executionManager.setConnectionTimeout((int)timeout * 1000);
+  double connectionTimeout=info.getConnectionTimeout();
+  if (connectionTimeout > 0) {
+    executionManager.setConnectionTimeout((int)connectionTimeout * 1000);
   }
  else {
     executionManager.setConnectionTimeout(0);
   }
-  timeout=info.getResourceExpirationTimeout();
-  if (timeout > 0) {
-    cleaner.setExpirationDelay((int)timeout * 1000);
+  int expirationTimeout=info.getResourceExpirationTimeout() * 1000;
+  if (expirationTimeout <= 0) {
+    expirationTimeout=5 * 60 * 1000;
   }
- else {
-    cleaner.setExpirationDelay(5 * 60 * 1000);
-  }
+  cleaner.setExpirationDelay(expirationTimeout);
+  executionManager.setHeartbeatDelay(expirationTimeout / 2);
   int defaultMaxProcesses=Runtime.getRuntime().availableProcessors() * 2;
   int maxSynch=info.getMaxSynchronousProcesses();
   if (maxSynch > 0) {
@@ -27,6 +26,39 @@
   }
  else {
     processManager.setMaxAsynchronousProcesses(defaultMaxProcesses);
+  }
+  if (resources.getArtifactsStore() instanceof DefaultProcessArtifactsStore) {
+    WPSInfo wps=geoServer.getService(WPSInfo.class);
+    String outputStorageDirectory=wps.getStorageDirectory();
+    FileSystemResourceStore resourceStore;
+    if (outputStorageDirectory == null || outputStorageDirectory.trim().isEmpty()) {
+      Resource temp=resourceLoader.get("temp/wps");
+      resourceStore=new FileSystemResourceStore(temp.dir());
+    }
+ else {
+      File storage=new File(outputStorageDirectory);
+      if (!storage.isAbsolute()) {
+        storage=resourceLoader.url(outputStorageDirectory);
+      }
+      if (storage.exists() && !storage.isDirectory()) {
+        throw new IllegalArgumentException("Invalid wps storage path, " + "it represents a file: " + storage.getPath());
+      }
+      if (!storage.exists()) {
+        if (!storage.mkdirs()) {
+          throw new IllegalArgumentException("Invalid wps storage path, it does not exists and cannot be created: " + storage.getPath());
+        }
+      }
+      resourceStore=new FileSystemResourceStore(storage);
+    }
+    try {
+      File lockDirectory=resourceLoader.findOrCreateDirectory("tmp");
+      resourceStore.setLockProvider(new FileLockProvider(lockDirectory));
+    }
+ catch (    IOException e) {
+      throw new RuntimeException("Unexpected failure searching for tmp directory inside geoserver data dir",e);
+    }
+    DefaultProcessArtifactsStore artifactsStore=(DefaultProcessArtifactsStore)resources.getArtifactsStore();
+    artifactsStore.setResourceStore(resourceStore);
   }
   lookupNewProcessGroups(info,geoServer);
 }

@@ -1,0 +1,18 @@
+{
+  StoredQueryConfiguration mockConfiguration=new StoredQueryConfiguration();
+  ParameterMappingExpressionValue param1=new ParameterMappingExpressionValue();
+  param1.setParameterName("bbox");
+  param1.setExpressionLanguage("CQL");
+  param1.setExpression("strConCat(" + "numberFormat('0.00000000000', bboxMinY), strConCat(" + "',', strConCat("+ "numberFormat('0.00000000000', bboxMinX), strConCat("+ "',', strConCat("+ "numberFormat('0.00000000000', bboxMaxY), strConCat("+ "',', strConCat("+ "numberFormat('0.00000000000', bboxMaxX), ',EPSG:4258')))))))");
+  mockConfiguration.getStoredQueryParameterMappings().add(param1);
+  ParameterMappingDefaultValue param2=new ParameterMappingDefaultValue();
+  param2.setParameterName("timestep");
+  param2.setDefaultValue("720");
+  mockConfiguration.getStoredQueryParameterMappings().add(param2);
+  ByteArrayOutputStream baos=new ByteArrayOutputStream();
+  persister.save(mockConfiguration,baos);
+  baos.flush();
+  String xml=new String(baos.toByteArray(),"UTF-8");
+  System.err.println(xml);
+  assertTrue(xml.contains("numberFormat"));
+}

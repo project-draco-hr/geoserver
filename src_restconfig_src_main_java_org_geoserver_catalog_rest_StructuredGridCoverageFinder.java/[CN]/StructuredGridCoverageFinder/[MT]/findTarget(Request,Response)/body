@@ -36,7 +36,23 @@
       }
     }
  else {
-      return new GranuleResource(getContext(),request,response,catalog,coverage,granule);
+      boolean quietOnNotFound=quietOnNotFoundEnabled(request);
+      GranuleResource granuleResource=new GranuleResource(getContext(),request,response,catalog,coverage,granule);
+      try {
+        granuleResource.handleObjectGet();
+      }
+ catch (      Exception e) {
+        if (e instanceof RestletException && ((RestletException)e).getStatus().equals(Status.CLIENT_ERROR_NOT_FOUND)) {
+          if (quietOnNotFound) {
+            return null;
+          }
+          throw (RestletException)e;
+        }
+ else {
+          throw new IOException(e);
+        }
+      }
+      return granuleResource;
     }
   }
  catch (  IOException e) {

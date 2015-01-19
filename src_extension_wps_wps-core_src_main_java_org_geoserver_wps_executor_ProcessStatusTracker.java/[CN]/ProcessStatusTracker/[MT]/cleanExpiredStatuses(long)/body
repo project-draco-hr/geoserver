@@ -1,0 +1,11 @@
+{
+  Date date=new Date(expirationThreshold);
+  Not completionTimenotNull=FF.not(FF.isNull(FF.property("completionTime")));
+  Filter completionTimeExpired=FF.before(FF.property("completionTime"),FF.literal(date));
+  Filter completionTimeFilter=FF.and(completionTimenotNull,completionTimeExpired);
+  Not lastUpdatedNotNull=FF.not(FF.isNull(FF.property("lastUpdated")));
+  Filter lastUpdatedExpired=FF.before(FF.property("lastUpdated"),FF.literal(date));
+  Filter lastUpdatedFilter=FF.and(lastUpdatedNotNull,lastUpdatedExpired);
+  And filter=FF.and(completionTimeFilter,lastUpdatedFilter);
+  store.remove(filter);
+}

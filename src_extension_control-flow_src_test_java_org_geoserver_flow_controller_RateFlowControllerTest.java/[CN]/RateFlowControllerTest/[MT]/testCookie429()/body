@@ -1,0 +1,15 @@
+{
+  RateFlowController controller=new RateFlowController(new OWSRequestMatcher(),2,Long.MAX_VALUE,0,new CookieKeyGenerator());
+  Request firstRequest=buildCookieRequest(null);
+  assertTrue(controller.requestIncoming(firstRequest,Integer.MAX_VALUE));
+  Cookie cookie=(Cookie)((MockHttpServletResponse)firstRequest.getHttpResponse()).getCookies().get(0);
+  String cookieValue=cookie.getValue();
+  Request request=buildCookieRequest(cookieValue);
+  assertTrue(controller.requestIncoming(request,Integer.MAX_VALUE));
+  try {
+    assertTrue(controller.requestIncoming(request,Integer.MAX_VALUE));
+  }
+ catch (  HttpErrorCodeException e) {
+    assertEquals(429,e.getErrorCode());
+  }
+}

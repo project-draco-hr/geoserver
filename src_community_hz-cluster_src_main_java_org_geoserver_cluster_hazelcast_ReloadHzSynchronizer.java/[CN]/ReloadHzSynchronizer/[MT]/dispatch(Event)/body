@@ -1,0 +1,11 @@
+{
+  if (eventLock.get()) {
+    return;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine(format("%s - Publishing event %s",nodeId(),e));
+  }
+  e.setSource(localAddress(cluster.getHz()));
+  topic.publish(e);
+  Metrics.newCounter(getClass(),"dispatched").inc();
+}

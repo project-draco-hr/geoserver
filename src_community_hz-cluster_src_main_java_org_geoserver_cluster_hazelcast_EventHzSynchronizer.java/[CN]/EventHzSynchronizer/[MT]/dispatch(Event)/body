@@ -1,0 +1,18 @@
+{
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine(format("%s - Publishing event %s",nodeId(),e));
+  }
+  final UUID evendId=e.getUUID();
+  Set<Member> members=cluster.getHz().getCluster().getMembers();
+  int expectedAcks=0;
+  for (  Member member : members) {
+    if (!(member.localMember())) {
+      expectedAcks++;
+    }
+  }
+  ackListener.expectedAckCounters.put(evendId,new AtomicInteger(expectedAcks));
+  e.setSource(localAddress(cluster.getHz()));
+  topic.publish(e);
+  Metrics.newCounter(getClass(),"dispatched").inc();
+  waitForAck(e);
+}

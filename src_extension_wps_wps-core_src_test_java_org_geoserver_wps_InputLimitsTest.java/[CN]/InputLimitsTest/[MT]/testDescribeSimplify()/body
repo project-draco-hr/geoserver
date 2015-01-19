@@ -1,0 +1,16 @@
+{
+  Document d=getAsDOM(root() + "service=wps&request=describeprocess&identifier=geo:simplify");
+  checkValidationErrors(d);
+  assertXpathExists("/wps:ProcessDescriptions",d);
+  String base="/wps:ProcessDescriptions/ProcessDescription/DataInputs";
+  assertXpathExists(base + "/Input[1]",d);
+  assertXpathEvaluatesTo("geom",base + "/Input[1]/ows:Identifier",d);
+  assertXpathExists(base + "/Input[1]/ComplexData",d);
+  assertXpathEvaluatesTo("10",base + "/Input[1]/ComplexData/@maximumMegabytes",d);
+  assertXpathExists(base + "/Input[2]",d);
+  assertXpathEvaluatesTo("distance",base + "/Input[2]/ows:Identifier",d);
+  assertXpathExists(base + "/Input[2]/LiteralData",d);
+  assertXpathEvaluatesTo("open-closed",base + "/Input[2]/LiteralData/ows:AllowedValues/ows:Range/@ows:rangeClosure",d);
+  assertXpathNotExists(base + "/Input[2]/LiteralData/ows:AllowedValues/ows:Range/ows:MinimumValue",d);
+  assertXpathEvaluatesTo("100.0",base + "/Input[2]/LiteralData/ows:AllowedValues/ows:Range/ows:MaximumValue",d);
+}

@@ -1,0 +1,69 @@
+{
+  if (!matcher.apply(request)) {
+    return true;
+  }
+  boolean retval=true;
+  long now=System.currentTimeMillis();
+  long currPeriodId=now / timeInterval;
+  String userKey=keyGenerator.getUserKey(request);
+  Counter counter=counters.get(userKey);
+  if (counter == null) {
+    userKey=canonicalizer.unique(userKey);
+synchronized (userKey) {
+      counter=counters.get(userKey);
+      if (counter == null) {
+        counter=new Counter();
+        counters.put(userKey,counter);
+      }
+    }
+  }
+  int requests=counter.addRequest(currPeriodId);
+  int residual=maxRequests - requests;
+  HttpServletResponse response=request.getHttpResponse();
+  response.addHeader(X_RATE_LIMIT_CONTEXT,matcher.toString());
+  response.addIntHeader(X_RATE_LIMIT_LIMIT,maxRequests);
+  response.addIntHeader(X_RATE_LIMIT_REMAINING,Math.max(residual,0));
+  response.addDateHeader(X_RATE_LIMIT_RESET,((currPeriodId + 1) * timeInterval));
+  response.addHeader("X-Rate-Limit-Action",action);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.fine(this + ", residual in current time period " + residual);
+  }
+  if (residual < 0) {
+    if (delay <= 0) {
+      throw new HttpErrorCodeException(429,"Too many requests requests in the current time period, check X-Rate-Limit HTTP response headers");
+    }
+ else     if (delay > timeout) {
+      return false;
+    }
+ else {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine(this + ", delaying current request");
+      }
+      try {
+        Thread.sleep(delay);
+      }
+ catch (      InterruptedException e) {
+        LOGGER.log(Level.WARNING,this + ", the delay was abruptly interrupted",e);
+      }
+    }
+  }
+  long elapsed=now - lastCleanup;
+  if (counters.size() > COUNTERS_CLEANUP_THRESHOLD && (elapsed > (timeInterval) || (elapsed > 10000))) {
+    int cleanupCount=0;
+synchronized (counters) {
+      for (      Map.Entry<String,Counter> entry : counters.entrySet()) {
+        Counter c=entry.getValue();
+        long timePeriodId=c.getTimePeriodId();
+        long age=(currPeriodId - timePeriodId) * timeInterval;
+        if (age > COUNTERS_CLEANUP_THRESHOLD) {
+          counters.remove(entry.getKey());
+        }
+      }
+      lastCleanup=now;
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine(this + ", purged " + cleanupCount+ " stale counters");
+      }
+    }
+  }
+  return retval;
+}

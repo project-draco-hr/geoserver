@@ -1,0 +1,37 @@
+{
+  if (parsed) {
+    return;
+  }
+  parsed=true;
+  int totalSteps=0;
+  for (  InputProvider provider : providers.values()) {
+    totalSteps=provider.longStepCount();
+  }
+  listener.started();
+  float stepsSoFar=0;
+  for (  InputProvider provider : providers.values()) {
+    listener.setTask(new SimpleInternationalString("Retrieving/parsing process input: " + provider.getInputId()));
+    try {
+      float providerLongSteps=provider.longStepCount();
+      ProgressListener subListener;
+      if (providerLongSteps > 0) {
+        subListener=new SubProgressListener(listener,(stepsSoFar / totalSteps) * 100,(providerLongSteps / totalSteps) * 100);
+      }
+ else {
+        subListener=new NullProgressListener();
+      }
+      totalSteps+=providerLongSteps;
+      subListener.started();
+      subListener.progress(0);
+      Object value=provider.getValue(subListener);
+      values.put(provider.getInputId(),value);
+    }
+ catch (    Exception e) {
+      listener.exceptionOccurred(e);
+      if (e instanceof WPSException) {
+        throw (WPSException)e;
+      }
+      throw new WPSException("Failed to retrieve value for input " + provider.getInputId(),e);
+    }
+  }
+}
