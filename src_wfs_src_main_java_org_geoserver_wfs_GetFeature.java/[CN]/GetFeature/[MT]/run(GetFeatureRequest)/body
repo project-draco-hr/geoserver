@@ -161,7 +161,8 @@
           features.getSchema().getUserData().put("targetVersion",request.getVersion());
         }
         boolean calculateSize=true;
-        calculateSize=!(("1.0".equals(request.getVersion()) || "1.0.0".equals(request.getVersion())) && (queries.size() == 1 || maxFeatures == Integer.MAX_VALUE));
+        isNumberMatchedSkipped=meta.getSkipNumberMatched();
+        calculateSize=!(("1.0".equals(request.getVersion()) || "1.0.0".equals(request.getVersion())) && (queries.size() == 1 || maxFeatures == Integer.MAX_VALUE)) && !(queries.size() == 1 && isNumberMatchedSkipped);
         if (!calculateSize) {
           calculateSize=offset > 0 && i < queries.size() - 1;
         }
@@ -182,7 +183,6 @@
             }
           }
         }
-        isNumberMatchedSkipped=meta.getSkipNumberMatched();
         if (!isNumberMatchedSkipped) {
           if (calculateSize && queryMaxFeatures == Integer.MAX_VALUE && offset == 0) {
             totalCountExecutors.add(new CountExecutor(size));
