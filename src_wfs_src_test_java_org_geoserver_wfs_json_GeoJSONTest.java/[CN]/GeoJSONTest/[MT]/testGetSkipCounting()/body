@@ -1,0 +1,21 @@
+{
+  Catalog catalog=getCatalog();
+  try {
+    FeatureTypeInfo primitive=catalog.getFeatureTypeByName(getLayerId(MockData.PRIMITIVEGEOFEATURE));
+    primitive.setSkipNumberMatched(true);
+    catalog.save(primitive);
+    MockHttpServletResponse response=getAsServletResponse("wfs?request=GetFeature&version=2.0.0&typename=sf:PrimitiveGeoFeature&outputformat=" + JSONType.json);
+    assertEquals("application/json",response.getContentType());
+    String out=response.getOutputStreamContent();
+    JSONObject rootObject=JSONObject.fromObject(out);
+    assertEquals(rootObject.get("type"),"FeatureCollection");
+    JSONArray featureCol=rootObject.getJSONArray("features");
+    JSONObject aFeature=featureCol.getJSONObject(0);
+    assertEquals(aFeature.getString("geometry_name"),"surfaceProperty");
+  }
+  finally {
+    FeatureTypeInfo primitive=catalog.getFeatureTypeByName(getLayerId(MockData.PRIMITIVEGEOFEATURE));
+    primitive.setSkipNumberMatched(false);
+    catalog.save(primitive);
+  }
+}
