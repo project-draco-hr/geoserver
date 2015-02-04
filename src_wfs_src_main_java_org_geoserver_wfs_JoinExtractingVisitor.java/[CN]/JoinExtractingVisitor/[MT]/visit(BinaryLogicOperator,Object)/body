@@ -1,6 +1,25 @@
 {
-  for (  Filter f : op.getChildren()) {
-    f.accept(this,extraData);
+  if (op instanceof And) {
+    for (    Filter f : op.getChildren()) {
+      f.accept(this,extraData);
+    }
+  }
+ else {
+    boolean joinFilter=false;
+    for (    Filter child : op.getChildren()) {
+      if (isJoinFilter(child,extraData)) {
+        joinFilter=true;
+        break;
+      }
+    }
+    if (joinFilter) {
+      checkValidJoinFilter(op);
+      joinFilters.add(op);
+    }
+ else {
+      handleOther(op,extraData);
+    }
+    return extraData;
   }
   return extraData;
 }

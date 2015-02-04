@@ -1,0 +1,24 @@
+{
+  Set<String> prefixes=new HashSet<>();
+  for (  Expression ex : expressions) {
+    FilterAttributeExtractor fae=new FilterAttributeExtractor();
+    ex.accept(fae,null);
+    Set<String> localAttributes=fae.getAttributeNameSet();
+    Set<String> localPrefixes=getPrefixes(localAttributes);
+    if (!localPrefixes.isEmpty()) {
+      if (prefixes.size() == 0) {
+        prefixes.addAll(localPrefixes);
+      }
+ else       if (prefixes.size() > 1) {
+        return true;
+      }
+ else {
+        localPrefixes.removeAll(prefixes);
+        if (!localPrefixes.isEmpty()) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}

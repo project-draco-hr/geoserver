@@ -4,8 +4,21 @@
   if (aliases == null || aliases.isEmpty()) {
     hadAliases=false;
     aliases=new ArrayList<String>();
-    for (int i=0; i < featureTypes.size(); i++) {
-      aliases.add(String.valueOf((char)('a' + i)));
+    for (int j=0, i=0; i < featureTypes.size(); i++) {
+      String alias;
+      boolean conflictFound;
+      do {
+        conflictFound=false;
+        alias=String.valueOf((char)('a' + (j++)));
+        for (        FeatureTypeInfo ft : featureTypes) {
+          if (alias.equals(ft.getName()) || alias.equals(ft.prefixedName())) {
+            conflictFound=true;
+            break;
+          }
+        }
+      }
+ while (conflictFound);
+      aliases.add(alias);
     }
   }
  else {

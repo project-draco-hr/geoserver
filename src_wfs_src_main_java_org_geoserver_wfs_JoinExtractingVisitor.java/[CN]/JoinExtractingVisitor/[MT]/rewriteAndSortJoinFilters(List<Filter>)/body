@@ -1,0 +1,26 @@
+{
+  Map<String,FeatureTypeInfo> typeMap=buildTypeMap();
+  Map<String,String> nameToAlias=buildNameToAlias();
+  String primaryName=primaryFeatureType.prefixedName();
+  String primaryUnqualifiedName=primaryFeatureType.getName();
+  PropertyNameRewriter rewriter=new PropertyNameRewriter(nameToAlias,true);
+  Filter[] sorted=new Filter[featureTypes.size() + 1];
+  for (  Filter filter : filters) {
+    Set<String> prefixes=getFilterPrefixes(filter);
+    prefixes.remove(primaryAlias);
+    prefixes.remove(primaryName);
+    prefixes.remove(primaryUnqualifiedName);
+    if (prefixes.size() != 1) {
+      throw new WFSException("Extracted invalid join filter " + filter + ", it joins more than "+ "one secondary feature type + "+ prefixes+ " with the central join feature type "+ primaryAlias+ "/"+ primaryName);
+    }
+    Filter rewritten=(Filter)filter.accept(rewriter,null);
+    String alias=prefixes.iterator().next();
+    FeatureTypeInfo ft=typeMap.get(alias);
+    int idx=featureTypes.indexOf(ft);
+    if (idx == -1) {
+      throw new WFSException("Extracted invalid join filter " + filter + ", it uses the unkonwn alias/typename "+ alias);
+    }
+    updateFilter(sorted,idx + 1,rewritten);
+  }
+  return Arrays.asList(sorted);
+}
