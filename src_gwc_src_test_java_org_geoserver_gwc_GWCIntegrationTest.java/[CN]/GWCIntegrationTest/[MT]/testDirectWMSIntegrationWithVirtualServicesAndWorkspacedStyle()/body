@@ -18,10 +18,20 @@
   assertEquals(qualifiedName,response2.getHeader("geowebcache-layer"));
   assertThat(response2.getHeader("geowebcache-cache-result"),equalToIgnoringCase("HIT"));
   request=TEST_WORKSPACE_NAME + "/" + buildGetMap(directWMSIntegrationEndpoint,localName,"EPSG:4326",WORKSPACED_STYLE_NAME,tileLayer)+ "&tiled=true";
-  response=getAsServletResponse(request);
   MockHttpServletResponse response3=getAsServletResponse(request);
-  assertEquals(200,response2.getStatusCode());
+  assertEquals(200,response3.getStatusCode());
   assertEquals("image/png",response3.getContentType());
   assertEquals(qualifiedName,response3.getHeader("geowebcache-layer"));
   assertThat(response3.getHeader("geowebcache-cache-result"),equalToIgnoringCase("HIT"));
+  String oldWorkspaceName=TEST_WORKSPACE_NAME;
+  WorkspaceInfo ws=getCatalog().getWorkspaceByName(oldWorkspaceName);
+  String newWorkspaceName=oldWorkspaceName + "_renamed";
+  ws.setName(newWorkspaceName);
+  getCatalog().save(ws);
+  request=newWorkspaceName + "/" + buildGetMap(directWMSIntegrationEndpoint,localName,"EPSG:4326",WORKSPACED_STYLE_NAME,tileLayer)+ "&tiled=true";
+  MockHttpServletResponse response4=getAsServletResponse(request);
+  assertEquals(200,response4.getStatusCode());
+  assertEquals("image/png",response4.getContentType());
+  assertEquals(newWorkspaceName + ":" + WORKSPACED_LAYER,response4.getHeader("geowebcache-layer"));
+  assertThat(response4.getHeader("geowebcache-cache-result"),equalToIgnoringCase("HIT"));
 }
