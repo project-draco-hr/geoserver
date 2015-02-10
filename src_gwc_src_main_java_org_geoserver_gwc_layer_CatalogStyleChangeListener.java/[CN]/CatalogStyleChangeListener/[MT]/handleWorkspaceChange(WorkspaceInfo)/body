@@ -1,0 +1,23 @@
+{
+  final CatalogModifyEvent preModifyEvent=PRE_MODIFY_EVENT.get();
+  PRE_MODIFY_EVENT.remove();
+  final List<String> changedProperties=preModifyEvent.getPropertyNames();
+  int nameIdx=changedProperties.indexOf("name");
+  if (nameIdx == -1) {
+    return;
+  }
+  String oldWorkspaceName=(String)preModifyEvent.getOldValues().get(nameIdx);
+  String newWorkspaceName=(String)preModifyEvent.getNewValues().get(nameIdx);
+  CloseableIterator<StyleInfo> styles=catalog.list(StyleInfo.class,Predicates.equal("workspace.name",newWorkspaceName));
+  try {
+    while (styles.hasNext()) {
+      StyleInfo style=styles.next();
+      String oldStyleName=oldWorkspaceName + ":" + style.getName();
+      String newStyleName=newWorkspaceName + ":" + style.getName();
+      handleStyleRenamed(oldStyleName,newStyleName);
+    }
+  }
+  finally {
+    styles.close();
+  }
+}
