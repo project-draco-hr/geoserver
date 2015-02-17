@@ -1,0 +1,17 @@
+{
+  Assume.assumeTrue(LDAPTestUtils.initLdapServer(true,ldapServerUrl,basePath));
+  ((LDAPSecurityServiceConfig)config).setUserDnPattern("uid={0},ou=People");
+  createAuthenticationProvider();
+  authProvider.setSecurityManager(securityManager);
+  securityManager.setProviders(Collections.singletonList(authProvider));
+  MemoryRoleStore roleService=new MemoryRoleStore();
+  roleService.initializeFromService(new MemoryRoleService());
+  roleService.setSecurityManager(securityManager);
+  GeoServerRole role=roleService.createRoleObject("MyRole");
+  roleService.addRole(role);
+  roleService.associateRoleToUser(role,"other");
+  securityManager.setActiveRoleService(roleService);
+  Authentication result=authProvider.authenticate(authenticationOther);
+  assertTrue(result.getAuthorities().contains(role));
+  assertEquals(3,result.getAuthorities().size());
+}
