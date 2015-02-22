@@ -12,6 +12,39 @@
     new CatalogBuilder(catalog).updateStyle(original,s);
     catalog.save(original);
   }
+ else   if (getRequest().getEntity().getMediaType().equals(MediaType.APPLICATION_ZIP) && object instanceof InputStream) {
+    File directory=null;
+    try {
+      directory=unzipSldPackage((InputStream)object);
+      File uploadedFile=retrieveSldFile(directory);
+      Style styleSld=parseSld(uploadedFile);
+      String name=getRequest().getResourceRef().getQueryAsForm().getFirstValue("name");
+      if (name == null) {
+        name=findNameFromObject(styleSld);
+      }
+      if (name == null) {
+        throw new RestletException("Style must have a name.",Status.CLIENT_ERROR_BAD_REQUEST);
+      }
+      if (!existsStyleInCatalog(workspace,name)) {
+        throw new RestletException("Style " + name + " doesn't exists.",Status.CLIENT_ERROR_FORBIDDEN);
+      }
+      saveImageResources(directory,workspace);
+      StyleInfo styleInfo=catalog.getStyleByName(workspace,style);
+      serializeSldFileInCatalog(new File(getStylePath(styleInfo)),uploadedFile);
+      LOGGER.info("PUT Style Package: " + name + ", workspace: "+ workspace);
+    }
+ catch (    RestletException e) {
+      throw e;
+    }
+catch (    Exception e) {
+      e.printStackTrace();
+      LOGGER.severe("Error processing the style package (PUT): " + e.getMessage());
+      throw new RestletException("Error processing the style",Status.SERVER_ERROR_INTERNAL,e);
+    }
+ finally {
+      FileUtils.deleteQuietly(directory);
+    }
+  }
  else   if (object instanceof Style || object instanceof InputStream) {
     StyleInfo s=catalog.getStyleByName(workspace,style);
     ResourcePool resourcePool=catalog.getResourcePool();
@@ -22,6 +55,9 @@
       resourcePool.writeStyle(s,(InputStream)object);
     }
     catalog.save(s);
+  }
+ else   if (object instanceof InputStream) {
+    LOGGER.info("PUT style InputStream");
   }
   LOGGER.info("PUT style " + style);
 }
