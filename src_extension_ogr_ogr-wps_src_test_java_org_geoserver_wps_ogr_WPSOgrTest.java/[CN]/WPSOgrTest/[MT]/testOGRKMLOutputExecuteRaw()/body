@@ -1,0 +1,19 @@
+{
+  File configuration=null;
+  try {
+    configuration=loadConfiguration();
+    Ogr2OgrConfigurator configurator=applicationContext.getBean(Ogr2OgrConfigurator.class);
+    configurator.loadConfiguration();
+    MockHttpServletResponse r=postAsServletResponse("wps",getWpsRawXML("application/vnd.google-earth.kml; subtype=OGR-KML"));
+    assertEquals("application/vnd.google-earth.kml; subtype=OGR-KML",r.getContentType());
+    assertTrue(r.getOutputStreamContent().length() > 0);
+  }
+ catch (  IOException e) {
+    System.err.println(e.getStackTrace());
+  }
+ finally {
+    if (configuration != null) {
+      configuration.delete();
+    }
+  }
+}

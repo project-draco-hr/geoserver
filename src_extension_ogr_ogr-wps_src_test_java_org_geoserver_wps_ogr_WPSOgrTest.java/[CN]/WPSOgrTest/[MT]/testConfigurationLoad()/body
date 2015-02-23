@@ -1,0 +1,24 @@
+{
+  File configuration=null;
+  try {
+    configuration=loadConfiguration();
+    Ogr2OgrConfigurator configurator=applicationContext.getBean(Ogr2OgrConfigurator.class);
+    configurator.loadConfiguration();
+    List<String> formatNames=new ArrayList<>();
+    for (    OgrFormat f : configurator.of.getFormats()) {
+      formatNames.add(f.formatName);
+    }
+    assertTrue(formatNames.contains("OGR-TAB"));
+    assertTrue(formatNames.contains("OGR-MIF"));
+    assertTrue(formatNames.contains("OGR-CSV"));
+    assertTrue(formatNames.contains("OGR-KML"));
+  }
+ catch (  IOException e) {
+    System.err.println(e.getStackTrace());
+  }
+ finally {
+    if (configuration != null) {
+      configuration.delete();
+    }
+  }
+}

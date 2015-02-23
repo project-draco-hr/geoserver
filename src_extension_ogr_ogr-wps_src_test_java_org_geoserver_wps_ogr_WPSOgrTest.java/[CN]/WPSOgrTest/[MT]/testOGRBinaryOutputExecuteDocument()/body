@@ -1,0 +1,32 @@
+{
+  File configuration=null;
+  try {
+    configuration=loadConfiguration();
+    Ogr2OgrConfigurator configurator=applicationContext.getBean(Ogr2OgrConfigurator.class);
+    configurator.loadConfiguration();
+    MockHttpServletResponse r=postAsServletResponse("wps",getWpsRawXML("application/zip; subtype=OGR-TAB"));
+    assertEquals("application/zip; subtype=OGR-TAB",r.getContentType());
+    ByteArrayInputStream bis=getBinaryInputStream(r);
+    ZipInputStream zis=new ZipInputStream(bis);
+    ZipEntry entry=null;
+    boolean found=false;
+    while ((entry=zis.getNextEntry()) != null) {
+      final String name=entry.getName();
+      zis.closeEntry();
+      if (name.equals("feature.tab")) {
+        found=true;
+        break;
+      }
+    }
+    zis.close();
+    assertTrue(found);
+  }
+ catch (  IOException e) {
+    System.err.println(e.getStackTrace());
+  }
+ finally {
+    if (configuration != null) {
+      configuration.delete();
+    }
+  }
+}

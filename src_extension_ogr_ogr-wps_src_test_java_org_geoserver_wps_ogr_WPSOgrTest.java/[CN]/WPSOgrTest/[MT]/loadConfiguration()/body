@@ -1,0 +1,15 @@
+{
+  String ogrConfigruationName="ogr2ogr.xml";
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  XStream xstream=buildXStream();
+  ClassLoader classLoader=getClass().getClassLoader();
+  File file=new File(classLoader.getResource(ogrConfigruationName).getFile());
+  OgrConfiguration ogrConfiguration=(OgrConfiguration)xstream.fromXML(file);
+  ogrConfiguration.ogr2ogrLocation=Ogr2OgrTestUtil.getOgr2Ogr();
+  ogrConfiguration.gdalData=Ogr2OgrTestUtil.getGdalData();
+  File configuration=loader.createFile(ogrConfigruationName);
+  xstream.toXML(ogrConfiguration,new FileOutputStream(configuration));
+  Ogr2OgrConfigurator configurator=applicationContext.getBean(Ogr2OgrConfigurator.class);
+  configurator.loadConfiguration();
+  return configuration;
+}
