@@ -1,0 +1,22 @@
+{
+  UsernamePasswordAuthenticationToken user=new UsernamePasswordAuthenticationToken("area","area");
+  LayerInfo generic=getCatalog().getLayerByName(getLayerId(MockData.GENERICENTITY));
+  WorkspaceInfoImpl ws=new WorkspaceInfoImpl();
+  ws.setName(generic.getResource().getStore().getWorkspace().getName());
+  StoreInfo store=new DataStoreInfoImpl(getCatalog());
+  store.setWorkspace(ws);
+  FeatureTypeInfoImpl resource=new FeatureTypeInfoImpl(getCatalog());
+  resource.setNamespace(generic.getResource().getNamespace());
+  resource.setSRS("EPSG:900913");
+  resource.setName(generic.getResource().getName());
+  resource.setStore(store);
+  LayerInfoImpl layerInfo=new LayerInfoImpl();
+  layerInfo.setResource(resource);
+  layerInfo.setName(generic.getName());
+  VectorAccessLimits vl=(VectorAccessLimits)accessManager.getAccessLimits(user,resource);
+  FilterFactory2 ff=CommonFactoryFinder.getFilterFactory2(null);
+  Geometry limit=new WKTReader().read(" MULTIPOLYGON (((5343335.558077131 8859142.800565697, 5343335.558077131 9100250.907059547, 5454655.048870404 9100250.907059547, 5454655.048870404 8859142.800565697, 5343335.558077131 8859142.800565697)))");
+  Filter filter=ff.intersects(ff.property(""),ff.literal(limit));
+  assertEquals(filter,vl.getReadFilter());
+  assertEquals(filter,vl.getWriteFilter());
+}
