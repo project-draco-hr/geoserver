@@ -1,0 +1,67 @@
+{
+  String uploadId=RESTUtils.getAttribute(getRequest(),"uploadId");
+  if (uploadId == null || uploadId.isEmpty()) {
+    getResponse().setStatus(new Status(Status.CLIENT_ERROR_BAD_REQUEST,"Missing upload ID"));
+    return;
+  }
+  if (!resumableUploadResourceManager.resourceExists(uploadId)) {
+    getResponse().setStatus(new Status(Status.CLIENT_ERROR_BAD_REQUEST,"Unknow upload ID"));
+    return;
+  }
+  Long totalByteToUpload=getContentLength();
+  Long startPosition=0L;
+  Long endPosition=(totalByteToUpload - 1);
+  Long totalFileSize=totalByteToUpload;
+  if (totalByteToUpload == 0) {
+    getResponse().setStatus(new Status(Status.CLIENT_ERROR_LENGTH_REQUIRED,"Not zero Content-Length header must be specified"));
+    return;
+  }
+  HeaderRange headerRange=getHeaderRange();
+  if (headerRange != null) {
+    try {
+      if (headerRange.getMinimum() > headerRange.getMaximum() || (headerRange.getRange().longValue() != totalByteToUpload)) {
+        getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST,"Range parameter values are not valid");
+        return;
+      }
+      startPosition=headerRange.getMinimum().longValue();
+      endPosition=headerRange.getMaximum().longValue();
+      totalFileSize=headerRange.getTotalFileSize();
+      Boolean validated=resumableUploadResourceManager.validateUpload(uploadId,totalByteToUpload,startPosition,endPosition,totalFileSize);
+      if (!validated) {
+        getResponse().setStatus(Status.CLIENT_ERROR_REQUESTED_RANGE_NOT_SATISFIABLE,"Range parameter values not meets partial uploaded files size");
+        return;
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,e.getMessage(),e);
+      getResponse().setStatus(Status.SERVER_ERROR_INTERNAL,e.getMessage());
+      return;
+    }
+  }
+ else {
+    resumableUploadResourceManager.clearUpload(uploadId);
+  }
+  Long writedBytes=resumableUploadResourceManager.handleUpload(uploadId,getRequest().getEntity(),startPosition);
+  if (writedBytes < totalFileSize) {
+    getResponse().setStatus(new Status(RESUME_INCOMPLETE.getCode()));
+    Series<Parameter> headers=new Form();
+    headers.add("Content-Length","0");
+    headers.add("Range","0-" + (writedBytes - 1));
+    getResponse().getAttributes().put("org.restlet.http.headers",headers);
+  }
+ else {
+    String mappedPath;
+    try {
+      mappedPath=resumableUploadResourceManager.uploadDone(uploadId);
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.SEVERE,e.getMessage(),e);
+      getResponse().setStatus(Status.SERVER_ERROR_INTERNAL,e.getMessage());
+      return;
+    }
+    Representation output=new StringRepresentation(mappedPath,MediaType.TEXT_PLAIN);
+    Response response=getResponse();
+    response.setEntity(output);
+    response.setStatus(Status.SUCCESS_OK);
+  }
+}

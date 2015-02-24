@@ -1,0 +1,27 @@
+{
+  Long writedByte=0L;
+  inputNotNull(source,destination);
+  if (!source.isOpen() || !destination.isOpen())   throw new IllegalStateException("Source and destination channels must be open.");
+  final java.nio.ByteBuffer buffer=java.nio.ByteBuffer.allocateDirect(bufferSize);
+  FileLock lock=null;
+  try {
+    lock=destination.lock();
+    destination.position(initialWritePosition);
+    while (source.read(buffer) != -1) {
+      buffer.flip();
+      while (buffer.hasRemaining())       writedByte=writedByte + destination.write(buffer);
+      buffer.clear();
+    }
+  }
+  finally {
+    if (lock != null) {
+      try {
+        lock.release();
+      }
+ catch (      Throwable t) {
+        if (LOGGER.isLoggable(Level.INFO))         LOGGER.log(Level.INFO,t.getLocalizedMessage(),t);
+      }
+    }
+  }
+  return writedByte;
+}

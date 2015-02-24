@@ -1,0 +1,25 @@
+{
+  ResumableUploadResourceCleaner cleaner=(ResumableUploadResourceCleaner)applicationContext.getBean("resumableUploadStorageCleaner");
+  cleaner.setExpirationDelay(1000);
+  String uploadId=sendPostRequest();
+  byte[] bigFile=generateFileAsBytes();
+  MockHttpServletRequest request=createRequest("/rest/resumableupload/" + uploadId);
+  request.setMethod("PUT");
+  request.setContentType("application/octet-stream");
+  request.setBodyContent(bigFile);
+  request.setHeader("Content-type","application/octet-stream");
+  request.setHeader("Content-Length",String.valueOf(bigFile.length));
+  dispatch(request);
+  File uploadedFile=getTempPath(uploadId);
+  assertFalse(uploadedFile.exists());
+  File sidecarFile=new File(FilenameUtils.concat(tmpUploadFolder.dir().getCanonicalPath(),uploadId + ".sidecar"));
+  assertTrue(sidecarFile.exists());
+  long startTime=new Date().getTime();
+  while (sidecarFile.exists() && (new Date().getTime() - startTime) < 120000) {
+    Thread.sleep(1000);
+  }
+  assertFalse(sidecarFile.exists());
+  MockHttpServletResponse response=getAsServletResponse("/rest/resumableupload/" + uploadId,"text/plain");
+  assertEquals(Status.CLIENT_ERROR_NOT_FOUND.getCode(),response.getStatusCode());
+  cleaner.setExpirationDelay(300000);
+}

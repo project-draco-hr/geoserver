@@ -1,0 +1,18 @@
+{
+  HeaderRange headerRange=null;
+  Object oHeaders=getRequest().getAttributes().get("org.restlet.http.headers");
+  if (oHeaders != null) {
+    Series<Parameter> headers=(Series<Parameter>)oHeaders;
+    Parameter contentRangeParam=headers.getFirst("Content-Range",true);
+    if (contentRangeParam != null) {
+      String contentRangeStr=contentRangeParam.getValue();
+      String range=contentRangeStr.substring(6);
+      String[] rangeParts=range.split("/");
+      Long startPosition=Long.parseLong(rangeParts[0].split("-")[0]);
+      Long endPosition=Long.parseLong(rangeParts[0].split("-")[1]);
+      Long totalFileSize=Long.parseLong(rangeParts[1]);
+      headerRange=new HeaderRange(startPosition,endPosition,totalFileSize);
+    }
+  }
+  return headerRange;
+}

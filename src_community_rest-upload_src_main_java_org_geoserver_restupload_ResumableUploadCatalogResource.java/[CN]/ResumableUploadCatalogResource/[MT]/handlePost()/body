@@ -1,0 +1,24 @@
+{
+  try {
+    String filePath=getRequest().getEntity().getText();
+    if (filePath == null || filePath.isEmpty()) {
+      getResponse().setStatus(new Status(Status.CLIENT_ERROR_BAD_REQUEST,"POST data must contains upload file path"));
+      return;
+    }
+    Reference ref=getRequest().getResourceRef();
+    String baseURL=ref.getIdentifier();
+    String uploadId=resumableUploadResourceManager.createUploadResource(filePath);
+    Representation output=new StringRepresentation("-----TO USE IN PUT-----\n" + baseURL + "/"+ uploadId+ "\n-----------------------\n",MediaType.TEXT_PLAIN);
+    Response response=getResponse();
+    Series<Parameter> headers=new Form();
+    headers.add("Location",baseURL + uploadId);
+    getResponse().getAttributes().put("org.restlet.http.headers",headers);
+    response.setEntity(output);
+    response.setStatus(Status.SUCCESS_CREATED);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,e.getMessage(),e);
+    getResponse().setStatus(new Status(Status.SERVER_ERROR_INTERNAL,e.getMessage()));
+    return;
+  }
+}
