@@ -1,0 +1,64 @@
+{
+  if (value == null) {
+    return;
+  }
+  AttributeDescriptor ad=guessedTypes.get(name);
+  Class target=null;
+  if (ad != null) {
+    target=ad.getType().getBinding();
+  }
+  Class originalTarget=target;
+  if (String.class.equals(target) || Geometry.class.equals(target)) {
+    return;
+  }
+  if (value instanceof Geometry) {
+    if (target == null) {
+      Geometry g=(Geometry)value;
+      AttributeTypeBuilder typeBuilder=new AttributeTypeBuilder();
+      typeBuilder.setName(name);
+      typeBuilder.setBinding(value.getClass());
+      if (g.getUserData() instanceof CoordinateReferenceSystem) {
+        typeBuilder.setCRS((CoordinateReferenceSystem)g.getUserData());
+      }
+      AttributeDescriptor geometryDescriptor=typeBuilder.buildDescriptor(name);
+      guessedTypes.put(name,geometryDescriptor);
+    }
+ else     if (Geometry.class.isAssignableFrom(target) && !target.isInstance(value)) {
+      AttributeTypeBuilder typeBuilder=new AttributeTypeBuilder();
+      typeBuilder.init(ad);
+      typeBuilder.setBinding(Geometry.class);
+      AttributeDescriptor geometryDescriptor=typeBuilder.buildDescriptor(name);
+      guessedTypes.put(name,geometryDescriptor);
+    }
+  }
+ else {
+    Hints hints=new Hints(ConverterFactory.SAFE_CONVERSION,true);
+    if (target == null) {
+      for (      Class c : TYPE_GUESS_TARGETS) {
+        Object converted=Converters.convert(value,c,hints);
+        if (converted != null) {
+          target=c;
+          break;
+        }
+      }
+      if (target == null) {
+        target=String.class;
+      }
+    }
+    Object converted=Converters.convert(value,target,hints);
+    while (converted == null && TYPE_PROMOTIONS.get(target) != null) {
+      target=TYPE_PROMOTIONS.get(target);
+      converted=Converters.convert(value,target,hints);
+    }
+    if (converted == null) {
+      target=String.class;
+    }
+    if (originalTarget != target) {
+      AttributeTypeBuilder typeBuilder=new AttributeTypeBuilder();
+      typeBuilder.setName(name);
+      typeBuilder.setBinding(target);
+      AttributeDescriptor newDescriptor=typeBuilder.buildDescriptor(name);
+      guessedTypes.put(name,newDescriptor);
+    }
+  }
+}

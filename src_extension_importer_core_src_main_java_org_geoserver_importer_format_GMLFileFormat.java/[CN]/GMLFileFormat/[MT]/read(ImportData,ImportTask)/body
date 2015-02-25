@@ -1,14 +1,13 @@
 {
   File file=getFileFromData(data);
   SimpleFeatureType ft=(SimpleFeatureType)task.getMetadata().get(FeatureType.class);
+  GMLVersion version=(GMLVersion)task.getMetadata().get(GML_VERSION_KEY);
+  if (version == null) {
+    version=GMLVersion.GML3;
+  }
   if (ft == null) {
     FeatureTypeInfo fti=(FeatureTypeInfo)task.getLayer().getResource();
     ft=buildFeatureTypeFromInfo(fti);
-    MetadataMap metadata=fti.getMetadata();
-    if (metadata.containsKey("importschemanames")) {
-      Map<Object,Object> userData=ft.getUserData();
-      userData.put("schemanames",metadata.get("importschemanames"));
-    }
   }
-  return read(ft,file);
+  return new GMLReader(new FileInputStream(file),version.getConfiguration(),ft);
 }
