@@ -1,0 +1,23 @@
+{
+  File configuration=null;
+  try {
+    configuration=loadConfiguration();
+    Ogr2OgrConfigurator configurator=applicationContext.getBean(Ogr2OgrConfigurator.class);
+    configurator.loadConfiguration();
+    Document d=postAsDOM("wps",getWpsDocumentXML("application/vnd.google-earth.kml; subtype=OGR-KML"));
+    Map<String,String> m=new HashMap<String,String>();
+    m.put("kml","http://www.opengis.net/kml/2.2");
+    org.custommonkey.xmlunit.NamespaceContext ctx=new SimpleNamespaceContext(m);
+    XpathEngine engine=XMLUnit.newXpathEngine();
+    engine.setNamespaceContext(ctx);
+    assertEquals(1,engine.getMatchingNodes("//kml:kml/kml:Document/kml:Schema",d).getLength());
+  }
+ catch (  IOException e) {
+    System.err.println(e.getStackTrace());
+  }
+ finally {
+    if (configuration != null) {
+      configuration.delete();
+    }
+  }
+}
