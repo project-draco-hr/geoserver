@@ -1,0 +1,25 @@
+{
+  SpatialFile importData=new SpatialFile(gmlFile);
+  ImportContext context=importer.createContext(importData,h2DataStore);
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertEquals(ImportTask.State.READY,task.getState());
+  assertEquals(ImportContext.State.PENDING,context.getState());
+  importer.run(context);
+  assertEquals(ImportContext.State.COMPLETE,context.getState());
+  FeatureTypeInfo fti=getCatalog().getResourceByName("states",FeatureTypeInfo.class);
+  assertNotNull(fti);
+  SimpleFeatureType featureType=(SimpleFeatureType)fti.getFeatureType();
+  GeometryDescriptor geometryDescriptor=featureType.getGeometryDescriptor();
+  assertEquals("Expecting a multipolygon",MultiPolygon.class,geometryDescriptor.getType().getBinding());
+  assertEquals(23,featureType.getAttributeCount());
+  SimpleFeatureSource fs=(SimpleFeatureSource)fti.getFeatureSource(null,null);
+  SimpleFeatureCollection fc=fs.getFeatures(CQL.toFilter("STATE_NAME = 'Illinois'"));
+  assertEquals(1,fc.size());
+  SimpleFeature sf=DataUtilities.first(fc);
+  Envelope envelope=((Geometry)sf.getDefaultGeometry()).getEnvelopeInternal();
+  assertEquals(-91.516129,envelope.getMinX(),1e-6);
+  assertEquals(-87.507889,envelope.getMaxX(),1e-6);
+  assertEquals(36.986771,envelope.getMinY(),1e-6);
+  assertEquals(42.509361,envelope.getMaxY(),1e-6);
+}

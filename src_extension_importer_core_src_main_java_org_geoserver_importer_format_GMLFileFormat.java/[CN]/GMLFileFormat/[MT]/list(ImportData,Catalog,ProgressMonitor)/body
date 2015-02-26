@@ -1,0 +1,69 @@
+{
+  File file=getFileFromData(data);
+  SimpleFeatureType featureType=getSchema(file);
+  CatalogFactory factory=catalog.getFactory();
+  CatalogBuilder cb=new CatalogBuilder(catalog);
+  String name=featureType.getName().getLocalPart();
+  FeatureTypeInfo ftinfo=factory.createFeatureType();
+  ftinfo.setEnabled(true);
+  ftinfo.setNativeName(name);
+  ftinfo.setName(name);
+  ftinfo.setTitle(name);
+  ftinfo.setNamespace(catalog.getDefaultNamespace());
+  List<AttributeTypeInfo> attributes=ftinfo.getAttributes();
+  for (  AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
+    AttributeTypeInfo att=factory.createAttribute();
+    att.setName(ad.getLocalName());
+    att.setBinding(ad.getType().getBinding());
+    attributes.add(att);
+  }
+  LayerInfo layer=cb.buildLayer((ResourceInfo)ftinfo);
+  ResourceInfo resource=layer.getResource();
+  CoordinateReferenceSystem crs=featureType.getCoordinateReferenceSystem();
+  CoordinateReferenceSystem targetCRS=crs;
+  if (crs == null) {
+    resource.setSRS(GENERIC_2D_CODE);
+    resource.setNativeCRS(null);
+  }
+ else {
+    Integer code=null;
+    try {
+      code=CRS.lookupEpsgCode(crs,true);
+    }
+ catch (    FactoryException e) {
+      throw (IOException)new IOException().initCause(e);
+    }
+    try {
+      if (code == null) {
+        targetCRS=CRS.decode("EPSG:4326",true);
+        resource.setSRS("EPSG:4326");
+        resource.setNativeCRS(crs);
+      }
+ else       if (CRS.getAxisOrder(crs) == AxisOrder.NORTH_EAST) {
+        targetCRS=CRS.decode("EPSG:" + code,true);
+        resource.setSRS("EPSG:" + code);
+        resource.setNativeCRS(targetCRS);
+      }
+ else {
+        resource.setSRS("EPSG:" + code);
+        resource.setNativeCRS(crs);
+      }
+    }
+ catch (    Exception e) {
+      throw new IOException("Failed to setup the layer CRS",e);
+    }
+  }
+  resource.setNativeBoundingBox(EMPTY_BOUNDS);
+  resource.setLatLonBoundingBox(EMPTY_BOUNDS);
+  resource.getMetadata().put("recalculate-bounds",Boolean.TRUE);
+  ImportTask task=new ImportTask(data);
+  task.setLayer(layer);
+  task.getMetadata().put(FeatureType.class,featureType);
+  task.getMetadata().put(GML_VERSION_KEY,featureType.getUserData().get(GML_VERSION_KEY));
+  if (targetCRS != crs) {
+    ReprojectTransform transform=new ReprojectTransform(crs,targetCRS);
+    TransformChain<VectorTransform> chain=new VectorTransformChain(transform);
+    task.setTransform(chain);
+  }
+  return Collections.singletonList(task);
+}
