@@ -16,12 +16,10 @@
     GridCoverage2D coverage=(GridCoverage2D)reader.read(parameters);
     if (coverage != null) {
       String selectedBand=inputBand.getBand();
-      if (BANDSELECT != null) {
-        final ParameterValueGroup param=BANDSELECT.getParameters();
-        param.parameter("Source").setValue(coverage);
-        param.parameter("SampleDimensions").setValue(new int[]{Integer.valueOf(selectedBand)});
-        coverage=(GridCoverage2D)PROCESSOR.doOperation(param,hints);
-      }
+      final ParameterValueGroup param=PROCESSOR.getOperation("SelectSampleDimension").getParameters();
+      param.parameter("Source").setValue(coverage);
+      param.parameter("SampleDimensions").setValue(new int[]{Integer.valueOf(selectedBand)});
+      coverage=(GridCoverage2D)PROCESSOR.doOperation(param,hints);
       coverages.add(coverage);
       dims.addAll(Arrays.asList(coverage.getSampleDimensions()));
     }
@@ -31,25 +29,19 @@
   }
   GridCoverage2D sampleCoverage=coverages.get(0);
   RenderedImage image=null;
+  Map properties=null;
   if (coverages.size() > 1) {
-    if (BANDMERGE != null) {
-      final ParameterValueGroup param=BANDMERGE.getParameters();
-      param.parameter("sources").setValue(coverages);
-      GridCoverage2D merge=(GridCoverage2D)PROCESSOR.doOperation(param,hints);
-      image=merge.getRenderedImage();
-    }
- else {
-      final int coveragesSize=coverages.size();
-      image=sampleCoverage.getRenderedImage();
-      for (int i=1; i < coveragesSize; i++) {
-        image=BandMergeDescriptor.create(image,coverages.get(i).getRenderedImage(),hints);
-      }
-    }
+    final ParameterValueGroup param=PROCESSOR.getOperation("BandMerge").getParameters();
+    param.parameter("sources").setValue(coverages);
+    GridCoverage2D merge=(GridCoverage2D)PROCESSOR.doOperation(param,hints);
+    image=merge.getRenderedImage();
+    properties=merge.getProperties();
   }
  else {
+    properties=sampleCoverage.getProperties();
     image=sampleCoverage.getRenderedImage();
   }
   GridSampleDimension[] sampleDimensions=dims.toArray(new GridSampleDimension[dims.size()]);
-  GridCoverage2D mergedCoverage=coverageFactory.create(coverageInfo.getName(),image,sampleCoverage.getGridGeometry(),sampleDimensions,null,null);
+  GridCoverage2D mergedCoverage=coverageFactory.create(coverageInfo.getName(),image,sampleCoverage.getGridGeometry(),sampleDimensions,null,properties);
   return new GridCoverageWrapper(coverageInfo.getName(),mergedCoverage,sampleDimensions,mergedCoverage.getProperties());
 }

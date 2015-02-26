@@ -19,8 +19,17 @@
   form.add(new CheckBox("recycling"));
   form.add(new CheckBox("jpegAcceleration"));
   addPngEncoderEditor(form);
-  form.add(new CheckBox("allowNativeMosaic"));
-  form.add(new CheckBox("allowNativeWarp"));
+  CheckBox checkBoxMosaic=new CheckBox("allowNativeMosaic");
+  CheckBox checkBoxWarp=new CheckBox("allowNativeWarp");
+  JAIInfo info=(JAIInfo)jaiModel.getObject();
+  JAIEXTInfo je=info.getJAIEXTInfo();
+  boolean mosaicEnabled=je != null && !je.getJAIEXTOperations().contains("Mosaic");
+  boolean warpEnabled=je != null && !je.getJAIEXTOperations().contains("Warp");
+  checkBoxMosaic.setEnabled(mosaicEnabled);
+  checkBoxWarp.setEnabled(warpEnabled);
+  form.add(checkBoxMosaic);
+  form.add(checkBoxWarp);
+  form.add(new JAIEXTPanel("jaiext",jaiModel));
   Button submit=new Button("submit",new StringResourceModel("submit",this,null)){
     @Override public void onSubmit(){
       GeoServer gs=(GeoServer)geoServerModel.getObject();
