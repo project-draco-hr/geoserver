@@ -1,8 +1,14 @@
 {
   Sextante.initialize();
+  int algorithmsCount=Sextante.getAlgorithmsCount();
+  LOGGER.info("Sextante loaded; it provides " + algorithmsCount + " algorithms!");
+  HashMap<String,HashMap<String,GeoAlgorithm>> algorithmsHash=Sextante.getAlgorithms();
   Set<Name> result=new HashSet<Name>();
-  for (  String name : (Set<String>)Sextante.getAlgorithms().keySet()) {
-    result.add(new NameImpl(SEXTANTE_NAMESPACE,name));
+  for (  HashMap<String,GeoAlgorithm> itemOb : algorithmsHash.values()) {
+    for (    Entry<String,GeoAlgorithm> entry : itemOb.entrySet()) {
+      result.add(new NameImpl(SEXTANTE_NAMESPACE,entry.getValue().getCommandLineName()));
+    }
   }
   names=Collections.unmodifiableSet(result);
+  org.geotools.process.Processors.addProcessFactory(this);
 }

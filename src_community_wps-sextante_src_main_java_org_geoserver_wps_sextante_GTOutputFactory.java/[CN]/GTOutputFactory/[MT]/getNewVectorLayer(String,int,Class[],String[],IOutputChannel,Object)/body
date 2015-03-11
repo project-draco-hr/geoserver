@@ -1,10 +1,13 @@
 {
   if (channel instanceof FileOutputChannel) {
-    String sFilename=((FileOutputChannel)channel).getFilename();
+    final String sFilename=((FileOutputChannel)channel).getFilename();
     createBaseDir(sFilename);
-    sName=sName.replaceAll(" ","_");
-    IVectorLayer vectorLayer=new ShpLayerFactory().create(sName,iShapeType,types,sFields,sFilename,crs);
+    final GTVectorLayer vectorLayer=new GTVectorLayer();
+    vectorLayer.create(sName,iShapeType,types,sFields,sFilename,crs);
     return vectorLayer;
+  }
+ else   if (channel instanceof StreamOutputChannel) {
+    return new StreamOutputLayer(((StreamOutputChannel)channel).getStream());
   }
  else {
     throw new UnsupportedOutputChannelException();

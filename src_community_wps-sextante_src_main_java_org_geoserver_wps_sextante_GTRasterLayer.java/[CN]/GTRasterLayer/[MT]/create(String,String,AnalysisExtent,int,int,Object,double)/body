@@ -1,0 +1,19 @@
+{
+  if (!(crs instanceof CoordinateReferenceSystem) || (crs == null)) {
+    crs=DefaultGeographicCRS.WGS84;
+  }
+  m_CRS=(CoordinateReferenceSystem)crs;
+  final Raster m_Raster=RasterFactory.createBandedRaster(dataType,ge.getNX(),ge.getNY(),numBands,null);
+  double width=ge.getXMax() - ge.getXMin();
+  double height=ge.getYMax() - ge.getYMin();
+  final Envelope envelope=new Envelope2D((CoordinateReferenceSystem)crs,ge.getXMin(),ge.getYMin(),width,height);
+  final GridCoverageFactory factory=CoverageFactoryFinder.getGridCoverageFactory(null);
+  final GridCoverage2D gc=factory.create(name,(WritableRaster)m_Raster,envelope,null,null,null,null,null);
+  m_BaseDataObject=gc;
+  m_sName=name;
+  m_sFilename=filename;
+  m_LayerExtent=ge;
+  m_image=(PlanarImage)gc.geophysics(true).getRenderedImage();
+  m_dNoDataValue=defaultNoDataValue;
+  initNoData((GridCoverage2D)m_BaseDataObject);
+}
