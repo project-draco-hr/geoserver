@@ -1,0 +1,24 @@
+{
+  DefaultDirectoryService directoryService=new DefaultDirectoryService();
+  directoryService.setShutdownHookEnabled(true);
+  directoryService.setAllowAnonymousAccess(allowAnonymousAccess);
+  directoryService.setWorkingDirectory(new File(System.getProperty("java.io.tmpdir") + "/apacheds-test"));
+  directoryService.getChangeLog().setEnabled(false);
+  JdbmPartition partition=new JdbmPartition();
+  partition.setId(defaultPartitionName);
+  partition.setSuffix(defaultPartitionSuffix);
+  directoryService.addPartition(partition);
+  directoryService.startup();
+  if (!directoryService.getAdminSession().exists(partition.getSuffixDn())) {
+    ServerEntry entry=directoryService.newEntry(new LdapDN(defaultPartitionSuffix));
+    entry.add("objectClass","top","domain","extensibleObject");
+    entry.add("dc",defaultPartitionName);
+    directoryService.getAdminSession().add(entry);
+  }
+  LdapServer ldapServer=new LdapServer();
+  ldapServer.setDirectoryService(directoryService);
+  TcpTransport ldapTransport=new TcpTransport(port);
+  ldapServer.setTransports(ldapTransport);
+  ldapServer.start();
+  return new EmbeddedLdapServer(directoryService,ldapServer);
+}

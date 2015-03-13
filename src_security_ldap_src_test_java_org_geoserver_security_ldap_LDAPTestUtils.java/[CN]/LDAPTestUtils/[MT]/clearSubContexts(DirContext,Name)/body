@@ -1,0 +1,28 @@
+{
+  NamingEnumeration enumeration=null;
+  try {
+    enumeration=ctx.listBindings(name);
+    while (enumeration.hasMore()) {
+      Binding element=(Binding)enumeration.next();
+      DistinguishedName childName=new DistinguishedName(element.getName());
+      childName.prepend((DistinguishedName)name);
+      try {
+        ctx.destroySubcontext(childName);
+      }
+ catch (      ContextNotEmptyException e) {
+        clearSubContexts(ctx,childName);
+        ctx.destroySubcontext(childName);
+      }
+    }
+  }
+ catch (  NamingException e) {
+    e.printStackTrace();
+  }
+ finally {
+    try {
+      enumeration.close();
+    }
+ catch (    Exception e) {
+    }
+  }
+}
