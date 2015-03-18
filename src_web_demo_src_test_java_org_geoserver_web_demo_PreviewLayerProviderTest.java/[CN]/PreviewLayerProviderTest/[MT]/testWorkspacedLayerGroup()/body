@@ -1,0 +1,20 @@
+{
+  String layerId=getLayerId(MockData.BUILDINGS);
+  LayerInfo layer=getCatalog().getLayerByName(layerId);
+  WorkspaceInfo ws=getCatalog().getWorkspaceByName("cite");
+  LayerGroupInfo group=getCatalog().getFactory().createLayerGroup();
+  group.setName("testWorkspacedLayerGroup");
+  group.setMode(LayerGroupInfo.Mode.SINGLE);
+  group.setWorkspace(ws);
+  group.getLayers().add(layer);
+  getCatalog().add(group);
+  try {
+    PreviewLayerProvider provider=new PreviewLayerProvider();
+    PreviewLayer pl=getPreviewLayer(provider,group.prefixedName());
+    assertNotNull(pl);
+    assertEquals("cite:testWorkspacedLayerGroup",pl.getName());
+  }
+  finally {
+    getCatalog().remove(group);
+  }
+}
