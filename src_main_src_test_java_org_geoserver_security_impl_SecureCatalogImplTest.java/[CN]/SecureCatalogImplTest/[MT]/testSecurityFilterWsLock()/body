@@ -1,0 +1,115 @@
+{
+  ResourceAccessManager resourceManager=getResourceAccessManager(buildLegacyAccessManager("wsLock.properties"));
+  Class<? extends CatalogInfo> clazz=WorkspaceInfo.class;
+  Filter security=resourceManager.getSecurityFilter(anonymous,clazz);
+  Filter security2=resourceManager.getSecurityFilter(milUser,clazz);
+  Filter security3=resourceManager.getSecurityFilter(rwUser,clazz);
+  assertNotSame(security,Filter.INCLUDE);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertSame(security2,Filter.INCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  List<WorkspaceInfo> ws=catalog.getWorkspaces();
+  Iterator<WorkspaceInfo> it=Iterators.filter(ws.iterator(),new PredicateFilter(security));
+  while (it.hasNext()) {
+    assertSame(it.next(),nurcWs);
+  }
+  it=Iterators.filter(ws.iterator(),new PredicateFilter(security3));
+  while (it.hasNext()) {
+    assertSame(it.next(),nurcWs);
+  }
+  clazz=PublishedInfo.class;
+  security=resourceManager.getSecurityFilter(anonymous,clazz);
+  security2=resourceManager.getSecurityFilter(milUser,clazz);
+  security3=resourceManager.getSecurityFilter(rwUser,clazz);
+  assertNotSame(security,Filter.INCLUDE);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertSame(security2,Filter.INCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  List<LayerInfo> ly=catalog.getLayers();
+  Iterator<LayerInfo> it1=Iterators.filter(ly.iterator(),new PredicateFilter(security));
+  while (it1.hasNext()) {
+    LayerInfo next=it1.next();
+    String wsName=next.getResource().getNamespace().getName();
+    assertTrue(wsName.equalsIgnoreCase("nurc"));
+  }
+  it1=Iterators.filter(ly.iterator(),new PredicateFilter(security3));
+  while (it1.hasNext()) {
+    LayerInfo next=it1.next();
+    String wsName=next.getResource().getNamespace().getName();
+    assertTrue(wsName.equalsIgnoreCase("nurc"));
+  }
+  clazz=StyleInfo.class;
+  security=resourceManager.getSecurityFilter(anonymous,clazz);
+  security2=resourceManager.getSecurityFilter(milUser,clazz);
+  security3=resourceManager.getSecurityFilter(rwUser,clazz);
+  assertNotSame(security,Filter.INCLUDE);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertSame(security2,Filter.INCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  List<StyleInfo> sy=catalog.getStyles();
+  Iterator<StyleInfo> it3=Iterators.filter(sy.iterator(),new PredicateFilter(security));
+  while (it3.hasNext()) {
+    StyleInfo next=it3.next();
+    WorkspaceInfo wsi=next.getWorkspace();
+    if (wsi != null) {
+      String wsName=wsi.getName();
+      assertTrue(wsName.equalsIgnoreCase("nurc"));
+    }
+  }
+  it3=Iterators.filter(sy.iterator(),new PredicateFilter(security3));
+  while (it3.hasNext()) {
+    StyleInfo next=it3.next();
+    WorkspaceInfo wsi=next.getWorkspace();
+    if (wsi != null) {
+      String wsName=wsi.getName();
+      assertTrue(wsName.equalsIgnoreCase("nurc"));
+    }
+  }
+  clazz=ResourceInfo.class;
+  security=resourceManager.getSecurityFilter(anonymous,clazz);
+  security2=resourceManager.getSecurityFilter(milUser,clazz);
+  security3=resourceManager.getSecurityFilter(rwUser,clazz);
+  assertNotSame(security,Filter.INCLUDE);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertSame(security2,Filter.INCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  List<FeatureTypeInfo> fy=catalog.getFeatureTypes();
+  Iterator<FeatureTypeInfo> it4=Iterators.filter(fy.iterator(),new PredicateFilter(security));
+  while (it4.hasNext()) {
+    FeatureTypeInfo next=it4.next();
+    String name=next.getNamespace().getName();
+    assertTrue(name.equalsIgnoreCase("nurc"));
+  }
+  it4=Iterators.filter(fy.iterator(),new PredicateFilter(security3));
+  while (it4.hasNext()) {
+    FeatureTypeInfo next=it4.next();
+    String name=next.getNamespace().getName();
+    assertTrue(name.equalsIgnoreCase("nurc"));
+  }
+  clazz=CoverageInfo.class;
+  security=resourceManager.getSecurityFilter(anonymous,clazz);
+  security2=resourceManager.getSecurityFilter(milUser,clazz);
+  security3=resourceManager.getSecurityFilter(rwUser,clazz);
+  assertNotSame(security,Filter.INCLUDE);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertSame(security2,Filter.INCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  List<CoverageInfo> cy=catalog.getCoverages();
+  Iterator<CoverageInfo> it5=Iterators.filter(cy.iterator(),new PredicateFilter(security));
+  while (it5.hasNext()) {
+    CoverageInfo next=it5.next();
+    String name=next.getNamespace().getName();
+    assertTrue(name.equalsIgnoreCase("nurc"));
+  }
+  it5=Iterators.filter(cy.iterator(),new PredicateFilter(security3));
+  while (it5.hasNext()) {
+    CoverageInfo next=it5.next();
+    String name=next.getNamespace().getName();
+    assertTrue(name.equalsIgnoreCase("nurc"));
+  }
+}
