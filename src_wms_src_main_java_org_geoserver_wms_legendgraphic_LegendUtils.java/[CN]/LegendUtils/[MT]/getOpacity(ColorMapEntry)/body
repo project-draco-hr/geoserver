@@ -1,9 +1,14 @@
 {
   ensureNotNull(entry,"ColorMapEntry");
-  final Expression opacity=entry.getOpacity();
+  Expression opacity=entry.getOpacity();
   Double opacityValue=null;
   if (opacity != null)   opacityValue=opacity.evaluate(null,Double.class);
  else   return 1.0;
+  if (opacityValue == null && opacity instanceof Literal) {
+    String opacityExp=opacity.evaluate(null,String.class);
+    opacity=ExpressionExtractor.extractCqlExpressions(opacityExp);
+    opacityValue=opacity.evaluate(null,Double.class);
+  }
   if ((opacityValue.doubleValue() - 1) > 0 || opacityValue.doubleValue() < 0) {
     throw new IllegalArgumentException(Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2,"Opacity",opacityValue));
   }

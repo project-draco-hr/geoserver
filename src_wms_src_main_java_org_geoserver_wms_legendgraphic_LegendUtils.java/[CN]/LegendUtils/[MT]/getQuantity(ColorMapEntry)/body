@@ -3,6 +3,11 @@
   Expression quantity=entry.getQuantity();
   ensureNotNull(quantity,"quantity");
   Double quantityString=quantity.evaluate(null,Double.class);
+  if (quantityString == null && quantity instanceof Literal) {
+    String quantityExp=quantity.evaluate(null,String.class);
+    quantity=ExpressionExtractor.extractCqlExpressions(quantityExp);
+    quantityString=quantity.evaluate(null,Double.class);
+  }
   ensureNotNull(quantityString,"quantityString");
   return quantityString.doubleValue();
 }
