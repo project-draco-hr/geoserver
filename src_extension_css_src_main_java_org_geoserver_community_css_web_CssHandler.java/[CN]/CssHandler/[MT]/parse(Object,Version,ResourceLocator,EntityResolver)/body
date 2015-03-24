@@ -10,12 +10,14 @@
       return sldHandler.parse(sldResource,SLDHandler.VERSION_10,resourceLocator,entityResolver);
     }
  else {
-      StyledLayerDescriptor sld=convertToSLD(toReader(input));
-      try (OutputStream fos=sldResource.out()){
-        sldHandler.encode(sld,SLDHandler.VERSION_10,true,fos);
+      try (Reader reader=toReader(input)){
+        StyledLayerDescriptor sld=convertToSLD(reader);
+        try (OutputStream fos=sldResource.out()){
+          sldHandler.encode(sld,SLDHandler.VERSION_10,true,fos);
+        }
+         return sldHandler.parse(sldResource,SLDHandler.VERSION_10,resourceLocator,entityResolver);
       }
-       return sldHandler.parse(sldResource,SLDHandler.VERSION_10,resourceLocator,entityResolver);
-    }
+     }
   }
   try (Reader reader=toReader(input)){
     StyledLayerDescriptor sld=convertToSLD(toReader(input));
