@@ -1,8 +1,12 @@
 {
   ensureNotNull(entry,"entry");
-  final Expression color=entry.getColor();
+  Expression color=entry.getColor();
   ensureNotNull(color,"color");
-  final String colorString=color.evaluate(null,String.class);
+  String colorString=color.evaluate(null,String.class);
+  if (colorString != null && colorString.startsWith("${")) {
+    color=ExpressionExtractor.extractCqlExpressions(colorString);
+    colorString=color.evaluate(null,String.class);
+  }
   ensureNotNull(colorString,"colorString");
   return color(colorString);
 }
