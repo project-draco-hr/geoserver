@@ -1,0 +1,21 @@
+{
+  HashMap kvp=new HashMap();
+  kvp.put("layers",getLayerId(MockData.BASIC_POLYGONS));
+  kvp.put("interpolations","bicubic");
+  GetMapRequest request=(GetMapRequest)reader.createRequest();
+  request=(GetMapRequest)reader.read(request,parseKvp(kvp),caseInsensitiveKvp(kvp));
+  assertNotNull(request.getInterpolations());
+  assertEquals(1,request.getInterpolations().size());
+  assertNotNull(request.getInterpolations().get(0));
+  assertTrue(request.getInterpolations().get(0) instanceof InterpolationBicubic);
+  kvp.put("layers",getLayerId(MockData.BASIC_POLYGONS) + "," + getLayerId(MockData.BASIC_POLYGONS)+ ","+ getLayerId(MockData.BASIC_POLYGONS));
+  kvp.put("interpolations","bicubic,,bilinear");
+  request=(GetMapRequest)reader.createRequest();
+  request=(GetMapRequest)reader.read(request,parseKvp(kvp),caseInsensitiveKvp(kvp));
+  assertNotNull(request.getInterpolations());
+  assertEquals(3,request.getInterpolations().size());
+  assertNotNull(request.getInterpolations().get(0));
+  assertNull(request.getInterpolations().get(1));
+  assertNotNull(request.getInterpolations().get(2));
+  assertTrue(request.getInterpolations().get(2) instanceof InterpolationBilinear);
+}
