@@ -5,10 +5,14 @@
   XpathEngine xpath=XMLUnit.newXpathEngine();
   String fullStatusLocation=xpath.evaluate("//wps:ExecuteResponse/@statusLocation",dom);
   String statusLocation=fullStatusLocation.substring(fullStatusLocation.indexOf('?') - 3);
-  waitForProcessStart(statusLocation,10);
-  Thread.sleep(4000);
-  MonkeyProcess.progress("x2",50f,true);
-  dom=waitForProcessEnd(statusLocation,10);
+  dom=waitForProcessEnd(statusLocation,20,new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      MonkeyProcess.progress("x2",50f,true);
+      Thread.sleep(100);
+      return null;
+    }
+  }
+);
   XMLAssert.assertXpathExists("//wps:Status/wps:ProcessFailed",dom);
   String message=xpath.evaluate("//wps:Status/wps:ProcessFailed/ows:ExceptionReport/ows:Exception/ows:ExceptionText",dom);
   assertTrue(message.contains("went beyond the configured limits of 2 seconds"));
