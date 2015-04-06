@@ -1,0 +1,29 @@
+{
+  try {
+    m_sName=name;
+    m_sFilename=filename;
+    m_iShapeType=shapeType;
+    m_Types=types;
+    m_sFields=fields;
+    m_CRS=crs;
+    m_FeatureCollection=new DefaultFeatureCollection();
+    final SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+    builder.setName("Location");
+    builder.setCRS((CoordinateReferenceSystem)m_CRS);
+    if (m_iShapeType == IVectorLayer.SHAPE_TYPE_POINT) {
+      builder.add("geom",MultiPoint.class);
+    }
+ else     if (m_iShapeType == IVectorLayer.SHAPE_TYPE_LINE) {
+      builder.add("geom",MultiLineString.class);
+    }
+ else {
+      builder.add("geom",MultiPolygon.class);
+    }
+    for (int i=0; i < m_sFields.length; i++) {
+      builder.add(m_sFields[i],m_Types[i]);
+    }
+    m_SFT=builder.buildFeatureType();
+  }
+ catch (  final Exception e) {
+  }
+}

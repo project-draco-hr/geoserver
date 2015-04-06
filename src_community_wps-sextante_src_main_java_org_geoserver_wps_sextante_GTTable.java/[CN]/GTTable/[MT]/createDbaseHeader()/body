@@ -1,0 +1,33 @@
+{
+  final SimpleFeatureType featureType=getFeatureSource().getSchema();
+  final DbaseFileHeader header=new DbaseFileHeader();
+  for (int i=0, ii=featureType.getAttributeCount(); i < ii; i++) {
+    final AttributeType type=featureType.getType(i);
+    final Class colType=type.getBinding();
+    final String colName=type.getName().getLocalPart();
+    final int fieldLen=255;
+    if ((colType == Integer.class) || (colType == Short.class) || (colType == Byte.class)) {
+      header.addColumn(colName,'N',Math.min(fieldLen,16),0);
+    }
+ else     if ((colType == Double.class) || (colType == Float.class) || (colType == Number.class)) {
+      final int l=Math.min(fieldLen,33);
+      header.addColumn(colName,'N',l,l / 2);
+    }
+ else     if (java.util.Date.class.isAssignableFrom(colType)) {
+      header.addColumn(colName,'D',fieldLen,0);
+    }
+ else     if (colType == Boolean.class) {
+      header.addColumn(colName,'L',1,0);
+    }
+ else     if (CharSequence.class.isAssignableFrom(colType)) {
+      header.addColumn(colName,'C',Math.min(254,fieldLen),0);
+    }
+ else     if (Geometry.class.isAssignableFrom(colType)) {
+      continue;
+    }
+ else {
+      throw new IOException("Unable to write : " + colType.getName());
+    }
+  }
+  return header;
+}
