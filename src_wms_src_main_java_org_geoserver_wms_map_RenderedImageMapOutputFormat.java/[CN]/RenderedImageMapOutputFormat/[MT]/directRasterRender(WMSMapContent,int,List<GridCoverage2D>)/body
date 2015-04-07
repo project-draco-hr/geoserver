@@ -170,8 +170,9 @@
           ImageLayout ilColorModel=new ImageLayout(image);
           ilColorModel.setColorModel(icm);
           RenderingHints hints=new RenderingHints(JAI.KEY_IMAGE_LAYOUT,ilColorModel);
-          image=FormatDescriptor.create(image,image.getSampleModel().getDataType(),hints);
-          worker.setImage(image);
+          worker.setRenderingHints(hints);
+          worker.format(image.getSampleModel().getDataType());
+          image=worker.getRenderedImage();
         }
         bgColorIndex=ColorUtilities.findColorIndex(bgColor,icm);
       }
@@ -259,7 +260,11 @@
   if (!(imageBounds.contains(mapRasterArea) || imageBounds.equals(mapRasterArea)) || transparencyType != Transparency.OPAQUE) {
     ROI[] rois=new ROI[]{new ROIShape(imageBounds)};
     double[][] thresholds=new double[][]{{ColorUtilities.getThreshold(image.getSampleModel().getDataType())}};
-    image=MosaicDescriptor.create(new RenderedImage[]{image},alphaChannels != null && transparencyType == Transparency.TRANSLUCENT ? MosaicDescriptor.MOSAIC_TYPE_BLEND : MosaicDescriptor.MOSAIC_TYPE_OVERLAY,alphaChannels,rois,thresholds,bgValues,new RenderingHints(JAI.KEY_IMAGE_LAYOUT,layout));
+    ImageWorker w=new ImageWorker(image);
+    w.setRenderingHint(JAI.KEY_IMAGE_LAYOUT,layout);
+    w.setBackground(bgValues);
+    w.mosaic(new RenderedImage[]{image},alphaChannels != null && transparencyType == Transparency.TRANSLUCENT ? MosaicDescriptor.MOSAIC_TYPE_BLEND : MosaicDescriptor.MOSAIC_TYPE_OVERLAY,alphaChannels,rois,thresholds,null);
+    image=w.getRenderedImage();
   }
  else {
     if (imageBounds.contains(mapRasterArea) && !imageBounds.equals(mapRasterArea)) {

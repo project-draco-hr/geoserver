@@ -3,7 +3,18 @@
     LOGGER.fine("Writing tiff image ...");
   }
   image=applyPalette(image,mapContent,IMAGE_GEOTIFF8,false);
-  final GridCoverage2D gc=factory.create("geotiff",image,new GeneralEnvelope(mapContent.getRenderingArea()));
+  GridCoverage2D gc=factory.create("geotiff",image,new GeneralEnvelope(mapContent.getRenderingArea()));
+  if (image instanceof PlanarImage) {
+    Map properties=gc.getProperties();
+    if (properties == null) {
+      properties=new HashMap();
+    }
+    Object property=((PlanarImage)image).getProperty(NoDataContainer.GC_NODATA);
+    if (property != null) {
+      CoverageUtilities.setNoDataProperty(properties,property);
+      gc=factory.create(gc.getName(),gc.getRenderedImage(),gc.getEnvelope(),gc.getSampleDimensions(),null,properties);
+    }
+  }
   final ImageOutputStream imageOutStream=ImageIOExt.createImageOutputStream(image,outStream);
   if (imageOutStream == null) {
     throw new ServiceException("Unable to create ImageOutputStream.");
