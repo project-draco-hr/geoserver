@@ -36,7 +36,11 @@
   if (DefaultWebMapService.isDirectRasterPathEnabled() && mapContent.layers().size() == 1 && mapContent.getAngle() == 0.0 && (layout == null || layout.isEmpty())) {
     List<GridCoverage2D> renderedCoverages=new ArrayList<GridCoverage2D>(2);
     try {
-      image=directRasterRender(mapContent,0,renderedCoverages);
+      Interpolation interpolation=null;
+      if (request.getInterpolations() != null && request.getInterpolations().size() > 0) {
+        interpolation=request.getInterpolations().get(0);
+      }
+      image=directRasterRender(mapContent,0,renderedCoverages,interpolation);
     }
  catch (    Exception e) {
       throw new ServiceException("Error rendering coverage on the fast path",e);
@@ -123,6 +127,19 @@
         Style copy=(Style)dupVisitor.getCopy();
         layer.setStyle(copy);
       }
+    }
+  }
+  if (request.getInterpolations() != null && !request.getInterpolations().isEmpty()) {
+    int count=0;
+    List<Interpolation> interpolations=request.getInterpolations();
+    for (    Layer layer : mapContent.layers()) {
+      if (count < interpolations.size()) {
+        Interpolation interpolation=interpolations.get(count);
+        if (interpolation != null) {
+          layer.getUserData().put(StreamingRenderer.BYLAYER_INTERPOLATION,interpolation);
+        }
+      }
+      count++;
     }
   }
   renderer.setRendererHints(rendererParams);
