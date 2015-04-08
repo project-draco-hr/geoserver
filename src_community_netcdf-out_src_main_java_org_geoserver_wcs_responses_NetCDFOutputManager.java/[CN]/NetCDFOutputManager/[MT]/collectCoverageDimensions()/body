@@ -1,0 +1,42 @@
+{
+  final List<DimensionBean> dimensions=granuleStack.getDimensions();
+  for (  DimensionBean dimension : dimensions) {
+    final String name=dimension.getName();
+    final NetCDFDimensionMapping mapper=new NetCDFDimensionMapping(name);
+    mapper.setCoverageDimension(dimension);
+    final DimensionType dimensionType=dimension.getDimensionType();
+    final boolean isRange=dimension.isRange();
+    TreeSet<Object> tree=null;
+switch (dimensionType) {
+case TIME:
+      tree=new TreeSet(new DateRangeComparator());
+    break;
+case ELEVATION:
+  tree=new TreeSet(new NumberRangeComparator());
+break;
+case CUSTOM:
+String dataType=dimension.getDatatype();
+if (NetCDFUtilities.isATime(dataType)) {
+tree=isRange ? new TreeSet(new DateRangeComparator()) : new TreeSet<Date>();
+}
+ else {
+tree=isRange ? new TreeSet(new NumberRangeComparator()) : new TreeSet<Object>();
+}
+}
+mapper.setDimensionValues(new DimensionValuesSet(tree));
+dimensionsManager.add(name,mapper);
+}
+sampleGranule=granuleStack.getGranules().get(0);
+double[] statisticsPeriods=null;
+if (!(dataPacking == DataPacking.NONE)) {
+AffineTransform transform=(AffineTransform)sampleGranule.getGridGeometry().getGridToCRS();
+statisticsPeriods=new double[]{1 * XAffineTransform.getScaleX0(transform),1 * XAffineTransform.getScaleY0(transform)};
+stats=new DataStats();
+}
+for (GridCoverage2D coverage : granuleStack.getGranules()) {
+updateDimensionValues(coverage);
+if (!(dataPacking == DataPacking.NONE)) {
+collectStats(coverage,statisticsPeriods);
+}
+}
+}

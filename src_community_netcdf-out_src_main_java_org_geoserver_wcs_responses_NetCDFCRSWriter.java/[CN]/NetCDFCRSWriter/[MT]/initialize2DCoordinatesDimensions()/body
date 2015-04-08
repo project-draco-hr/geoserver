@@ -1,0 +1,18 @@
+{
+  final RenderedImage image=sampleGranule.getRenderedImage();
+  final Envelope envelope=sampleGranule.getEnvelope2D();
+  AxisOrder axisOrder=CRS.getAxisOrder(crs);
+  final int height=image.getHeight();
+  final int width=image.getWidth();
+  final AffineTransform at=(AffineTransform)transform;
+  NetCDFCoordinate[] axisCoordinates=netcdfCrsType.getCoordinates();
+  double xmin=(axisOrder == AxisOrder.NORTH_EAST) ? envelope.getMinimum(1) : envelope.getMinimum(0);
+  double ymin=(axisOrder == AxisOrder.NORTH_EAST) ? envelope.getMinimum(0) : envelope.getMinimum(1);
+  final double periodY=((axisOrder == AxisOrder.NORTH_EAST) ? XAffineTransform.getScaleX0(at) : XAffineTransform.getScaleY0(at));
+  final double periodX=(axisOrder == AxisOrder.NORTH_EAST) ? XAffineTransform.getScaleY0(at) : XAffineTransform.getScaleX0(at);
+  xmin+=(periodX / 2d);
+  ymin+=(periodY / 2d);
+  addCoordinateVariable(axisCoordinates[0],height,ymin,periodY);
+  addCoordinateVariable(axisCoordinates[1],width,xmin,periodX);
+  return coordinatesDimensions;
+}

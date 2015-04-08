@@ -1,0 +1,20 @@
+{
+  String dimensionName=netCDFCoordinate.getDimensionName();
+  String standardName=netCDFCoordinate.getStandardName();
+  final Dimension dimension=writer.addDimension(null,dimensionName,size);
+  final ArrayFloat dimensionData=new ArrayFloat(new int[]{size});
+  final Index index=dimensionData.getIndex();
+  final Variable coordinateVariable=writer.addVariable(null,netCDFCoordinate.getShortName(),DataType.FLOAT,dimensionName);
+  writer.addVariableAttribute(coordinateVariable,new Attribute(NetCDFUtilities.LONG_NAME,netCDFCoordinate.getLongName()));
+  writer.addVariableAttribute(coordinateVariable,new Attribute(NetCDFUtilities.UNITS,netCDFCoordinate.getUnits()));
+  if (standardName != null && !standardName.isEmpty()) {
+    writer.addVariableAttribute(coordinateVariable,new Attribute(NetCDFUtilities.STANDARD_NAME,standardName));
+  }
+  for (int pos=0; pos < size; pos++) {
+    dimensionData.setFloat(index.set(pos),new Float(min + (new Float(pos).floatValue() * period)).floatValue());
+  }
+  final NetCDFDimensionMapping dimensionMapper=new NetCDFDimensionMapping(dimensionName);
+  dimensionMapper.setNetCDFDimension(dimension);
+  dimensionMapper.setDimensionValues(new DimensionValuesArray(dimensionData));
+  coordinatesDimensions.put(dimensionName,dimensionMapper);
+}

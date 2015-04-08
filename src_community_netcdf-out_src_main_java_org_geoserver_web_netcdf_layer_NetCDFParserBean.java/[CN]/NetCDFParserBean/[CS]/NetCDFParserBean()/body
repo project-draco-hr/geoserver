@@ -1,0 +1,38 @@
+{
+  File cfStandardTable=null;
+  if (netcdfFile != null) {
+    cfStandardTable=netcdfFile;
+  }
+  if (cfStandardTable == null && NetCDFUtilities.EXTERNAL_DATA_DIR != null) {
+    File netCDFDir=new File(NetCDFUtilities.EXTERNAL_DATA_DIR);
+    FileFilter filter=FileFilterUtils.nameFileFilter(NETCDF_STANDARD_NAME,IOCase.INSENSITIVE);
+    File[] files=netCDFDir.listFiles(filter);
+    if (files != null && files.length > 0) {
+      cfStandardTable=files[0];
+    }
+  }
+  if (cfStandardTable == null) {
+    GeoServerDataDirectory datadir=GeoServerExtensions.bean(GeoServerDataDirectory.class);
+    try {
+      cfStandardTable=datadir.findFile(NETCDF_STANDARD_NAME);
+    }
+ catch (    IOException e) {
+      LOGGER.log(Level.SEVERE,e.getMessage(),e);
+    }
+  }
+  if (cfStandardTable != null) {
+    NetCDFCFParser parser=null;
+    try {
+      parser=NetCDFCFParser.unmarshallXml(cfStandardTable);
+    }
+ catch (    JAXBException e) {
+      LOGGER.log(Level.SEVERE,e.getMessage(),e);
+    }
+    if (parser != null) {
+      this.parser=parser;
+    }
+  }
+ else {
+    LOGGER.log(Level.WARNING,"No CF-Standard File found");
+  }
+}

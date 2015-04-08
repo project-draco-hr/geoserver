@@ -1,0 +1,29 @@
+{
+  CoverageInfo info=getCatalog().getCoverageByName(new NameImpl("wcs","visibilityCF"));
+  assertTrue(info.getDimensions().get(0).getUnit().equalsIgnoreCase(ORIGINAL_UNIT));
+  MockHttpServletResponse response=getAsServletResponse("ows?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__visibilityCF&format=application/x-netcdf");
+  assertNotNull(response);
+  byte[] netcdfOut=getBinary(response);
+  File file=File.createTempFile("netcdf","outCF.nc",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,netcdfOut);
+  NetcdfDataset dataset=NetcdfDataset.openDataset(file.getAbsolutePath());
+  Variable var=dataset.findVariable(STANDARD_NAME);
+  assertNotNull(var);
+  String unit=var.getUnitsString();
+  assertEquals(CANONICAL_UNIT,unit);
+  Array readData=var.read(NETCDF_SECTION);
+  assertEquals(DataType.FLOAT,readData.getDataType());
+  float data=readData.getFloat(0);
+  System.out.println("CF:" + data);
+  assertEquals(data,(ORIGINAL_PIXEL_VALUE) * 1000,DELTA);
+  Attribute fillValue=var.findAttribute(NetCDFUtilities.FILL_VALUE);
+  Attribute standardName=var.findAttribute(NetCDFUtilities.STANDARD_NAME);
+  assertNotNull(standardName);
+  assertEquals(STANDARD_NAME,standardName.getStringValue());
+  assertNotNull(fillValue);
+  assertEquals(ORIGINAL_FILL_VALUE,fillValue.getNumericValue().doubleValue(),DELTA);
+  Attribute attribute=dataset.findGlobalAttribute("custom_attribute");
+  assertNotNull(attribute);
+  assertEquals("testing WCS",attribute.getStringValue());
+  dataset.close();
+}
