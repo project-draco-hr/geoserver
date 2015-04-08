@@ -1,0 +1,21 @@
+{
+  TileLayerInfoUtil.updateAcceptAllRegExParameterFilter(tileLayerInfo,"CQL_FILTER",true);
+  tileLayer=new GeoServerTileLayer(layer,gridSetBroker,tileLayerInfo);
+  GetMapRequest request=new GetMapRequest();
+  @SuppressWarnings("unchecked") Map<String,String> rawKvp=new CaseInsensitiveMap(new HashMap<String,String>());
+  rawKvp.put("CQL_FILTER","include");
+  request.setRawKvp(rawKvp);
+  StringBuilder target=new StringBuilder();
+  List<Filter> cqlFilters=Arrays.asList(CQL.toFilter("include"));
+  request.setCQLFilter(cqlFilters);
+  assertTrue(mediator.isCachingPossible(tileLayer,request,target));
+  assertEquals(0,target.length());
+  request.setFilter(cqlFilters);
+  assertTrue(mediator.isCachingPossible(tileLayer,request,target));
+  assertEquals(0,target.length());
+  List filters=new ArrayList(cqlFilters);
+  filters.add(Filter.INCLUDE);
+  request.setFilter(filters);
+  assertFalse(mediator.isCachingPossible(tileLayer,request,target));
+  assertFalse(0 == target.length());
+}
