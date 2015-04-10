@@ -1,0 +1,19 @@
+{
+  super(null);
+  this.delegate=query;
+  this.aliases=aliases;
+  if (originalAliases != null && !originalAliases.isEmpty()) {
+    Map<String,String> renameMap=buildRenameMap(originalAliases,aliases);
+    this.filter=(Filter)query.getFilter().accept(new AliasRenameVisitor(renameMap),null);
+    if (query.getPropertyNames() != null) {
+      this.propertyNames=new ArrayList<>();
+      for (      String name : query.getPropertyNames()) {
+        this.propertyNames.add(rename(renameMap,name));
+      }
+    }
+  }
+ else {
+    this.filter=query.getFilter();
+    this.propertyNames=query.getPropertyNames();
+  }
+}

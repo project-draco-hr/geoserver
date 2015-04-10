@@ -1,0 +1,41 @@
+{
+  Set<String> reservedWords=new HashSet<>();
+  for (  FeatureTypeInfo meta : metas) {
+    reservedWords.add(meta.getName());
+    reservedWords.add(meta.prefixedName());
+    FeatureType featureType=meta.getFeatureType();
+    for (    PropertyDescriptor pd : featureType.getDescriptors()) {
+      reservedWords.add(pd.getName().getLocalPart());
+      reservedWords.add(pd.getName().getURI());
+    }
+  }
+  List<String> aliases;
+  List<String> originalAliases=query.getAliases();
+  boolean replaced=false;
+  if (query.getAliases() != null && !query.getAliases().isEmpty()) {
+    aliases=new ArrayList<>(query.getAliases());
+  }
+ else {
+    replaced=true;
+    aliases=new ArrayList<>();
+    for (int i=0; i < metas.size(); i++) {
+      aliases.add(String.valueOf((char)('a' + i)));
+    }
+  }
+  for (int i=0; i < aliases.size(); i++) {
+    String alias=aliases.get(i);
+    String base=alias;
+    int j=0;
+    while (reservedWords.contains(alias)) {
+      replaced=true;
+      alias=base + (j++);
+    }
+    aliases.set(i,alias);
+  }
+  if (replaced) {
+    return new AliasedQuery(query,originalAliases,aliases);
+  }
+ else {
+    return query;
+  }
+}
