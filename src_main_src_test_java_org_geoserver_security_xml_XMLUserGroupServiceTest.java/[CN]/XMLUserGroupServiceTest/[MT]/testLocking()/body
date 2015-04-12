@@ -1,97 +1,102 @@
 {
   File xmlFile=File.createTempFile("users",".xml");
-  FileUtils.copyURLToFile(getClass().getResource("usersTemplate.xml"),xmlFile);
-  GeoServerUserGroupService service1=createUserGroupService("locking1",xmlFile.getCanonicalPath());
-  GeoServerUserGroupService service2=createUserGroupService("locking2",xmlFile.getCanonicalPath());
-  GeoServerUserGroupStore store1=createStore(service1);
-  GeoServerUserGroupStore store2=createStore(service2);
-  GeoServerUser user=store1.createUserObject("user","ps",true);
-  GeoServerUserGroup group=store2.createGroupObject("group",true);
-  store1.addUser(user);
-  boolean fail;
-  String failMessage="Concurrent lock not allowed";
-  fail=true;
   try {
-    store2.clear();
-  }
- catch (  IOException ex) {
-    fail=false;
-  }
-  if (fail)   Assert.fail(failMessage);
-  store1.load();
-  store2.addUser(user);
-  fail=true;
-  try {
+    FileUtils.copyURLToFile(getClass().getResource("usersTemplate.xml"),xmlFile);
+    GeoServerUserGroupService service1=createUserGroupService("locking1",xmlFile.getCanonicalPath());
+    GeoServerUserGroupService service2=createUserGroupService("locking2",xmlFile.getCanonicalPath());
+    GeoServerUserGroupStore store1=createStore(service1);
+    GeoServerUserGroupStore store2=createStore(service2);
+    GeoServerUser user=store1.createUserObject("user","ps",true);
+    GeoServerUserGroup group=store2.createGroupObject("group",true);
+    store1.addUser(user);
+    boolean fail;
+    String failMessage="Concurrent lock not allowed";
+    fail=true;
+    try {
+      store2.clear();
+    }
+ catch (    IOException ex) {
+      fail=false;
+    }
+    if (fail)     Assert.fail(failMessage);
+    store1.load();
+    store2.addUser(user);
+    fail=true;
+    try {
+      store1.clear();
+    }
+ catch (    IOException ex) {
+      fail=false;
+    }
+    if (fail)     Assert.fail(failMessage);
+    store2.store();
     store1.clear();
-  }
- catch (  IOException ex) {
-    fail=false;
-  }
-  if (fail)   Assert.fail(failMessage);
-  store2.store();
-  store1.clear();
-  store1.store();
-  store1.addUser(user);
-  fail=true;
-  try {
-    store2.associateUserToGroup(user,group);
-  }
- catch (  IOException ex) {
+    store1.store();
+    store1.addUser(user);
+    fail=true;
     try {
-      store2.disAssociateUserFromGroup(user,group);
+      store2.associateUserToGroup(user,group);
     }
- catch (    IOException e) {
-      fail=false;
-    }
-  }
-  if (fail)   Assert.fail(failMessage);
-  fail=true;
-  try {
-    store2.updateUser(user);
-  }
- catch (  IOException ex) {
-    try {
-      store2.removeUser(user);
-    }
- catch (    IOException ex1) {
+ catch (    IOException ex) {
       try {
-        store2.addUser(user);
+        store2.disAssociateUserFromGroup(user,group);
       }
- catch (      IOException ex2) {
+ catch (      IOException e) {
         fail=false;
       }
     }
-  }
-  if (fail)   Assert.fail(failMessage);
-  fail=true;
-  try {
-    store2.updateGroup(group);
-  }
- catch (  IOException ex) {
+    if (fail)     Assert.fail(failMessage);
+    fail=true;
     try {
-      store2.removeGroup(group);
+      store2.updateUser(user);
     }
- catch (    IOException ex1) {
+ catch (    IOException ex) {
       try {
-        store2.addGroup(group);
+        store2.removeUser(user);
       }
- catch (      IOException ex2) {
+ catch (      IOException ex1) {
+        try {
+          store2.addUser(user);
+        }
+ catch (        IOException ex2) {
+          fail=false;
+        }
+      }
+    }
+    if (fail)     Assert.fail(failMessage);
+    fail=true;
+    try {
+      store2.updateGroup(group);
+    }
+ catch (    IOException ex) {
+      try {
+        store2.removeGroup(group);
+      }
+ catch (      IOException ex1) {
+        try {
+          store2.addGroup(group);
+        }
+ catch (        IOException ex2) {
+          fail=false;
+        }
+      }
+    }
+    if (fail)     Assert.fail(failMessage);
+    fail=true;
+    try {
+      store2.clear();
+    }
+ catch (    IOException ex) {
+      try {
+        store2.store();
+      }
+ catch (      IOException e) {
         fail=false;
       }
     }
+    if (fail)     Assert.fail(failMessage);
   }
-  if (fail)   Assert.fail(failMessage);
-  fail=true;
-  try {
-    store2.clear();
+  finally {
+    xmlFile.delete();
   }
- catch (  IOException ex) {
-    try {
-      store2.store();
-    }
- catch (    IOException e) {
-      fail=false;
-    }
-  }
-  if (fail)   Assert.fail(failMessage);
 }
