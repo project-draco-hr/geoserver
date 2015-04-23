@@ -1,0 +1,15 @@
+{
+  CacheProvider testCacheProvider1=addMockProvider("testCacheProvider1");
+  CacheProvider testCacheProvider2=addMockProvider("testCacheProvider2");
+  extensions.property(DefaultCacheProvider.BEAN_NAME_PROPERTY,"testCacheProvider1");
+  replay(testCacheProvider1,testCacheProvider2);
+  CacheProvider provider=DefaultCacheProvider.findProvider();
+  assertThat(provider,sameInstance(testCacheProvider1));
+  verify(testCacheProvider1,testCacheProvider2);
+  reset(testCacheProvider1,testCacheProvider2);
+  extensions.property(DefaultCacheProvider.BEAN_NAME_PROPERTY,"testCacheProvider2");
+  replay(testCacheProvider1,testCacheProvider2);
+  provider=DefaultCacheProvider.findProvider();
+  assertThat(provider,sameInstance(testCacheProvider2));
+  verify(testCacheProvider1,testCacheProvider2);
+}
