@@ -1,0 +1,20 @@
+{
+  WFSInfo wfs=getWFS();
+  GeoServer gs=getGeoServer();
+  try {
+    wfs.setEncodeFeatureMember(false);
+    gs.save(wfs);
+    Document dom=getAsDOM("wfs?request=GetFeature&typename=" + getLayerId(SystemTestData.BUILDINGS) + "&version=1.1.0&service=wfs&sortBy=ADDRESS");
+    XMLAssert.assertXpathEvaluatesTo("1","count(//gml:featureMembers)",dom);
+    XMLAssert.assertXpathEvaluatesTo("0","count(//gml:featureMember)",dom);
+    wfs.setEncodeFeatureMember(true);
+    gs.save(wfs);
+    dom=getAsDOM("wfs?request=GetFeature&typename=" + getLayerId(SystemTestData.BUILDINGS) + "&version=1.1.0&service=wfs&sortBy=ADDRESS");
+    XMLAssert.assertXpathEvaluatesTo("0","count(//gml:featureMembers)",dom);
+    XMLAssert.assertXpathEvaluatesTo("2","count(//gml:featureMember)",dom);
+  }
+  finally {
+    wfs.setEncodeFeatureMember(false);
+    gs.save(wfs);
+  }
+}

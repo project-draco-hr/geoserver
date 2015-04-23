@@ -1,0 +1,19 @@
+{
+  int numDecimals=-1;
+  for (int i=0; i < featureCollections.size(); i++) {
+    FeatureCollection features=(FeatureCollection)featureCollections.get(i);
+    FeatureType featureType=features.getSchema();
+    ResourceInfo meta=catalog.getResourceByName(featureType.getName(),ResourceInfo.class);
+    if (meta instanceof FeatureTypeInfo) {
+      int ftiDecimals=((FeatureTypeInfo)meta).getNumDecimals();
+      if (ftiDecimals > 0) {
+        numDecimals=numDecimals == -1 ? ftiDecimals : Math.max(numDecimals,ftiDecimals);
+      }
+    }
+  }
+  SettingsInfo settings=geoServer.getSettings();
+  if (numDecimals == -1) {
+    numDecimals=settings.getNumDecimals();
+  }
+  return numDecimals;
+}
