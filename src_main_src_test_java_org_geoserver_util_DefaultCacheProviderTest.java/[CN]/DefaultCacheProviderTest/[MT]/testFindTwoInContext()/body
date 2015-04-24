@@ -1,0 +1,13 @@
+{
+  CacheProvider testCacheProvider1=addMockProvider("testCacheProvider1");
+  CacheProvider testCacheProvider2=addMockProvider("testCacheProvider2");
+  replay(testCacheProvider1,testCacheProvider2);
+  CacheProvider provider=DefaultCacheProvider.findProvider();
+  assertThat(provider,anyOf(sameInstance(testCacheProvider1),sameInstance(testCacheProvider2)));
+  String providerName="testCacheProvider2";
+  if (provider == testCacheProvider1) {
+    providerName="testCacheProvider1";
+  }
+  logging.assertLogged(allOf(hasProperty("level",is(Level.WARNING)),hasProperty("parameters",arrayContainingInAnyOrder(equalTo(providerName),anyOf(equalTo("testCacheProvider1, testCacheProvider2"),equalTo("testCacheProvider2, testCacheProvider1")),equalTo("GEOSERVER_DEFAULT_CACHE_PROVIDER")))));
+  verify(testCacheProvider1,testCacheProvider2);
+}
