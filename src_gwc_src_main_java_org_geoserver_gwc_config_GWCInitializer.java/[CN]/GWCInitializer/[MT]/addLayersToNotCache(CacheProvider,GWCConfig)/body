@@ -1,0 +1,30 @@
+{
+  if (LOGGER.isLoggable(Level.FINEST)) {
+    LOGGER.finest("Adding Layers to avoid In Memory Caching");
+  }
+  for (  LayerInfo layer : rawCatalog.getLayers()) {
+    if (!CatalogConfiguration.isLayerExposable(layer)) {
+      continue;
+    }
+    try {
+      GeoServerTileLayerInfo tileLayerInfo=tileLayerCatalog.getLayerById(layer.getId());
+      if (tileLayerInfo != null && tileLayerInfo.isEnabled() && !tileLayerInfo.isInMemoryCached()) {
+        cache.addUncachedLayer(tileLayerInfo.getName());
+      }
+    }
+ catch (    RuntimeException e) {
+      LOGGER.log(Level.WARNING,"Error occurred retrieving Layer '" + layer.getName() + "'",e);
+    }
+  }
+  for (  LayerGroupInfo layer : rawCatalog.getLayerGroups()) {
+    try {
+      GeoServerTileLayerInfo tileLayerInfo=tileLayerCatalog.getLayerById(layer.getId());
+      if (tileLayerInfo != null && tileLayerInfo.isEnabled() && !tileLayerInfo.isInMemoryCached()) {
+        cache.addUncachedLayer(tileLayerInfo.getName());
+      }
+    }
+ catch (    RuntimeException e) {
+      LOGGER.log(Level.WARNING,"Error occurred retrieving LayerGroup '" + tileLayerName(layer) + "'",e);
+    }
+  }
+}

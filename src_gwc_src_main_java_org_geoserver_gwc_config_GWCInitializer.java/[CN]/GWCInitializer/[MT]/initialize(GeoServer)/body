@@ -19,4 +19,35 @@
   }
   final GWCConfig gwcConfig=configPersister.getConfig();
   checkNotNull(gwcConfig);
+  if (gwcConfig.getCacheProviderClass() == null || gwcConfig.getCacheProviderClass().isEmpty()) {
+    gwcConfig.setCacheProviderClass(GuavaCacheProvider.class.toString());
+    configPersister.save(gwcConfig);
+  }
+  if (gwcConfig.getCacheConfigurations() == null) {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("Setting default CacheConfiguration");
+    }
+    Map<String,CacheConfiguration> map=new HashMap<String,CacheConfiguration>();
+    map.put(GuavaCacheProvider.class.toString(),new CacheConfiguration());
+    gwcConfig.setCacheConfigurations(map);
+    configPersister.save(gwcConfig);
+  }
+ else {
+    if (LOGGER.isLoggable(Level.FINEST)) {
+      LOGGER.finest("CacheConfiguration loaded");
+    }
+  }
+  if (blobStore != null) {
+    String cacheProviderClass=gwcConfig.getCacheProviderClass();
+    if (!blobStore.getCacheProviders().containsKey(cacheProviderClass)) {
+      gwcConfig.setCacheProviderClass(GuavaCacheProvider.class.toString());
+      configPersister.save(gwcConfig);
+      if (LOGGER.isLoggable(Level.FINEST)) {
+        LOGGER.finest("Unable to find: " + cacheProviderClass + ", used default configuration");
+      }
+    }
+    blobStore.setChanged(gwcConfig,true);
+    CacheProvider cache=blobStore.getCache();
+    addLayersToNotCache(cache,gwcConfig);
+  }
 }
