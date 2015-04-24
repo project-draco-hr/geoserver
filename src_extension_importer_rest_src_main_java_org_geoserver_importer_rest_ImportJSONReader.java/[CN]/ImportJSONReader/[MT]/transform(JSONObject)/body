@@ -35,6 +35,24 @@
       throw new ValidationException("Error parsing reproject transform",e);
     }
   }
+ else   if ("GdalTranslateTransform".equalsIgnoreCase(type)) {
+    List<String> options=getOptions(json);
+    transform=new GdalTranslateTransform(options);
+  }
+ else   if ("GdalWarpTransform".equalsIgnoreCase(type)) {
+    List<String> options=getOptions(json);
+    transform=new GdalWarpTransform(options);
+  }
+ else   if ("GdalAddoTransform".equalsIgnoreCase(type)) {
+    List<String> options=getOptions(json);
+    JSONArray array=json.getJSONArray("levels");
+    List<Integer> levels=new ArrayList<>();
+    for (int i=0; i < array.size(); i++) {
+      int level=array.getInt(i);
+      levels.add(level);
+    }
+    transform=new GdalAddoTransform(options,levels);
+  }
  else {
     throw new ValidationException("Invalid transform type '" + type + "'");
   }

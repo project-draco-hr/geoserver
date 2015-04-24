@@ -1,0 +1,24 @@
+{
+  super(options);
+  this.levels=levels;
+  if (levels == null || levels.size() == 0) {
+    throw new ValidationException("Levels is missing, must contain at least one value");
+  }
+ else {
+    for (    Integer level : levels) {
+      if (level == null) {
+        throw new ValidationException("Invalid null level found in the gdaladdo overviews levels: " + levels);
+      }
+      if (level <= 1) {
+        throw new ValidationException("Invalid level found in the gdaladdo overviews levels, they must be positive and greater than one: " + level);
+      }
+    }
+    int previous=levels.get(0);
+    for (int i=1; i < levels.size(); i++) {
+      int curr=levels.get(i);
+      if (curr <= previous) {
+        throw new ValidationException("Invalid levels order, they must be provided in increasing order, but we have " + curr + " after "+ previous+ " in "+ levels);
+      }
+    }
+  }
+}

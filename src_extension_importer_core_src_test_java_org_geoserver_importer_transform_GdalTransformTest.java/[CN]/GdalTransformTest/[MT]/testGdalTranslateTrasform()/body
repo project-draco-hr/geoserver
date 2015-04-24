@@ -1,0 +1,33 @@
+{
+  Assume.assumeTrue(GdalTranslateTransform.isAvailable());
+  File dir=unpack("geotiff/EmissiveCampania.tif.bz2");
+  File tif=new File(dir,"EmissiveCampania.tif");
+  ImportContext context=importer.createContext(new SpatialFile(tif));
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertEquals(ImportTask.State.READY,task.getState());
+  GdalTranslateTransform gtx=buildGdalTranslate();
+  task.getTransform().add(gtx);
+  assertEquals("EmissiveCampania",task.getLayer().getResource().getName());
+  importer.run(context);
+  Catalog cat=getCatalog();
+  assertNotNull(cat.getLayerByName("EmissiveCampania"));
+  assertEquals(ImportTask.State.COMPLETE,task.getState());
+  runChecks("EmissiveCampania");
+  GeoTiffReader reader=null;
+  try {
+    reader=new GeoTiffReader(tif);
+    ImageLayout layout=reader.getImageLayout();
+    ColorModel cm=layout.getColorModel(null);
+    assertEquals(3,cm.getNumComponents());
+    SampleModel sm=layout.getSampleModel(null);
+    assertEquals(3,sm.getNumBands());
+    assertEquals(DataBuffer.TYPE_BYTE,sm.getDataType());
+    assertEquals(0,reader.getNumOverviews());
+  }
+  finally {
+    if (reader != null) {
+      reader.dispose();
+    }
+  }
+}
