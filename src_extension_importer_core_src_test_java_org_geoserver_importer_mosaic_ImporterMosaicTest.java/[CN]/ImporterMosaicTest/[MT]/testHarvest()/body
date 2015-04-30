@@ -1,0 +1,25 @@
+{
+  Catalog catalog=getCatalog();
+  getTestData().addRasterLayer(WATTEMP,"watertemp.zip",null,null,TestData.class,catalog);
+  CoverageStoreInfo store=catalog.getCoverageStoreByName(WATTEMP.getLocalPart());
+  StructuredGridCoverage2DReader reader=(StructuredGridCoverage2DReader)store.getGridCoverageReader(null,null);
+  GranuleSource gs=reader.getGranules(reader.getGridCoverageNames()[0],true);
+  int originalCount=gs.getCount(Query.ALL);
+  String mosaicLocation=store.getURL();
+  File mosaicFolder=DataUtilities.urlToFile(new URL(mosaicLocation));
+  try (InputStream is=MockData.class.getResourceAsStream("harvesting.zip")){
+    IOUtils.decompress(is,mosaicFolder);
+  }
+   String fileName1="NCOM_wattemp_000_20081102T0000000_12.tiff";
+  File file1=new File(mosaicFolder,fileName1);
+  assertTrue(file1.exists());
+  ImportContext context=importer.createContext(new SpatialFile(file1),store);
+  String fileName2="NCOM_wattemp_100_20081102T0000000_12.tiff";
+  File file2=new File(mosaicFolder,fileName2);
+  importer.update(context,new SpatialFile(file2));
+  assertEquals(2,context.getTasks().size());
+  importer.run(context);
+  assertEquals(originalCount + 2,gs.getCount(Query.ALL));
+  assertEquals(1,gs.getCount(new Query(null,ECQL.toFilter("location = '" + fileName1 + "'"))));
+  assertEquals(1,gs.getCount(new Query(null,ECQL.toFilter("location = '" + fileName2 + "'"))));
+}
