@@ -1,0 +1,15 @@
+{
+  Catalog catalog=getCatalog();
+  String name=toString(LAKES);
+  LayerInfo layer=catalog.getLayerByName(name);
+  assertNotNull(layer);
+  LayerGroupInfo group=catalog.getLayerGroupByName(LAKES_GROUP);
+  group.getLayers().add(layer);
+  group.getStyles().add(null);
+  catalog.save(group);
+  CascadeDeleteVisitor visitor=new CascadeDeleteVisitor(catalog);
+  visitor.visit(layer);
+  group=catalog.getLayerGroupByName(LAKES_GROUP);
+  assertEquals(2,group.getLayers().size());
+  assertFalse(group.getLayers().contains(layer));
+}
