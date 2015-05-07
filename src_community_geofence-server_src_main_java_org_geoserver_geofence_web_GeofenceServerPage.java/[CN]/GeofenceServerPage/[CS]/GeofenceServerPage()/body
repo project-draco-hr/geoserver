@@ -1,0 +1,31 @@
+{
+  add(new AjaxLink<Object>("addNew"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      setResponsePage(new GeofenceRulePage(rulesModel.newRule(),rulesModel));
+    }
+  }
+);
+  add(remove=new AjaxLink<Object>("removeSelected"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      rulesModel.remove(rulesPanel.getSelection());
+      target.addComponent(rulesPanel);
+    }
+  }
+);
+  remove.setOutputMarkupId(true);
+  remove.setEnabled(false);
+  add(rulesPanel=new GeoServerTablePanel<ShortRule>("rulesPanel",rulesModel=new GeofenceRulesModel(),true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<ShortRule> property){
+      if (property == GeofenceRulesModel.BUTTONS) {
+        return new ButtonPanel(id,(ShortRule)itemModel.getObject());
+      }
+      return null;
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      remove.setEnabled(rulesPanel.getSelection().size() > 0);
+      target.addComponent(remove);
+    }
+  }
+);
+  rulesPanel.setOutputMarkupId(true);
+}
