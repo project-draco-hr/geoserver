@@ -1,0 +1,70 @@
+{
+  final Form<ShortRule> form=new Form<ShortRule>("form",new CompoundPropertyModel<ShortRule>(rule));
+  add(form);
+  form.add(new TextField<Integer>("priority").setRequired(true));
+  form.add(roleChoice=new DropDownChoice<String>("roleName",getRoleNames()));
+  roleChoice.add(new OnChangeAjaxBehavior(){
+    private static final long serialVersionUID=-2880886409750911044L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      userChoice.setChoices(getUserNames(roleChoice.getConvertedInput()));
+      ((ShortRule)form.getModelObject()).setUserName(null);
+      userChoice.modelChanged();
+      target.addComponent(userChoice);
+    }
+  }
+);
+  roleChoice.setNullValid(true);
+  form.add(userChoice=new DropDownChoice<String>("userName",getUserNames(rule.getRoleName())));
+  userChoice.setOutputMarkupId(true);
+  userChoice.setNullValid(true);
+  form.add(serviceChoice=new DropDownChoice<String>("service",getServiceNames()));
+  serviceChoice.add(new OnChangeAjaxBehavior(){
+    private static final long serialVersionUID=-5925784823433092831L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      requestChoice.setChoices(getOperationNames(serviceChoice.getConvertedInput()));
+      ((ShortRule)form.getModelObject()).setRequest(null);
+      requestChoice.modelChanged();
+      target.addComponent(requestChoice);
+    }
+  }
+);
+  serviceChoice.setNullValid(true);
+  form.add(requestChoice=new DropDownChoice<String>("request",getOperationNames(rule.getService()),new CaseConversionRenderer()));
+  requestChoice.setOutputMarkupId(true);
+  requestChoice.setNullValid(true);
+  form.add(workspaceChoice=new DropDownChoice<String>("workspace",getWorkspaceNames()));
+  workspaceChoice.add(new OnChangeAjaxBehavior(){
+    private static final long serialVersionUID=732177308220189475L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      layerChoice.setChoices(getLayerNames(workspaceChoice.getConvertedInput()));
+      ((ShortRule)form.getModelObject()).setLayer(null);
+      layerChoice.modelChanged();
+      target.addComponent(layerChoice);
+    }
+  }
+);
+  workspaceChoice.setNullValid(true);
+  form.add(layerChoice=new DropDownChoice<String>("layer",getLayerNames(rule.getWorkspace())));
+  layerChoice.setOutputMarkupId(true);
+  layerChoice.setNullValid(true);
+  form.add(grantTypeChoice=new DropDownChoice<GrantType>("access",Arrays.asList(GrantType.values()),new GrantTypeRenderer()));
+  grantTypeChoice.setRequired(true);
+  form.add(new SubmitLink("save"){
+    private static final long serialVersionUID=3735176778941168701L;
+    @Override public void onSubmit(){
+      ShortRule rule=(ShortRule)getForm().getModelObject();
+      try {
+        rules.save(rule);
+        doReturn(GeofenceServerPage.class);
+      }
+ catch (      DuplicateKeyException e) {
+        error(new ResourceModel("GeofenceRulePage.duplicate").getObject());
+      }
+catch (      Exception e) {
+        error(e);
+      }
+    }
+  }
+);
+  form.add(new BookmarkablePageLink<ShortRule>("cancel",GeofenceServerPage.class));
+}

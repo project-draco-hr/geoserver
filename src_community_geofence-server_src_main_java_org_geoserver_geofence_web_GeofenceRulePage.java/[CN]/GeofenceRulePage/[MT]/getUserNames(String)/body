@@ -1,0 +1,26 @@
+{
+  SortedSet<String> resultSet=new TreeSet<String>();
+  GeoServerSecurityManager securityManager=securityManager();
+  try {
+    if (roleName == null) {
+      for (      String serviceName : securityManager.listUserGroupServices()) {
+        for (        GeoServerUser user : securityManager.loadUserGroupService(serviceName).getUsers()) {
+          resultSet.add(user.getUsername());
+        }
+      }
+    }
+ else {
+      for (      String serviceName : securityManager.listRoleServices()) {
+        GeoServerRoleService roleService=securityManager.loadRoleService(serviceName);
+        GeoServerRole role=roleService.getRoleByName(roleName);
+        if (role != null) {
+          resultSet.addAll(roleService.getUserNamesForRole(role));
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+  }
+  return new ArrayList<String>(resultSet);
+}
