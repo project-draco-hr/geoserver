@@ -1,0 +1,20 @@
+{
+  if (SystemUtils.IS_OS_WINDOWS) {
+    name=name + ".exe";
+  }
+  String systemPath=System.getenv("PATH");
+  if (systemPath == null) {
+    systemPath=System.getenv("path");
+  }
+  if (systemPath == null) {
+    throw new IOException("Path is not set, cannot locate " + name);
+  }
+  String[] paths=systemPath.split(File.pathSeparator);
+  for (  String pathDir : paths) {
+    File file=new File(pathDir,name);
+    if (file.exists() && file.isFile() && file.canExecute()) {
+      return file;
+    }
+  }
+  throw new IOException("Could not locate executable (or could locate, but does not have execution rights): " + name);
+}

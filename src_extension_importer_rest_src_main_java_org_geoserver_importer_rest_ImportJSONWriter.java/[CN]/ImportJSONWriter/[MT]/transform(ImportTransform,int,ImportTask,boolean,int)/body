@@ -33,6 +33,26 @@
       json.key("source").value(srs(rt.getSource()));
       json.key("target").value(srs(rt.getTarget()));
     }
+ else     if (transform.getClass().equals(GdalTranslateTransform.class)) {
+      GdalTranslateTransform gtx=(GdalTranslateTransform)transform;
+      List<String> options=gtx.getOptions();
+      buildJsonOptions(json,"options",options);
+    }
+ else     if (transform.getClass().equals(GdalWarpTransform.class)) {
+      GdalWarpTransform gw=(GdalWarpTransform)transform;
+      List<String> options=gw.getOptions();
+      buildJsonOptions(json,"options",options);
+    }
+ else     if (transform.getClass().equals(GdalAddoTransform.class)) {
+      GdalAddoTransform gad=(GdalAddoTransform)transform;
+      List<String> options=gad.getOptions();
+      buildJsonOptions(json,"options",options);
+      JSONBuilder arrayBuilder=json.key("levels").array();
+      for (      Integer level : gad.getLevels()) {
+        arrayBuilder.value(level);
+      }
+      arrayBuilder.endArray();
+    }
  else {
       throw new IOException("Serializaiton of " + transform.getClass() + " not implemented");
     }

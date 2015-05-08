@@ -1,0 +1,36 @@
+{
+  Assume.assumeTrue(GdalWarpTransform.isAvailable());
+  File dir=unpack("geotiff/box_gcp_fixed.tif.bz2");
+  File tif=new File(dir,"box_gcp_fixed.tif");
+  ImportContext context=importer.createContext(new SpatialFile(tif));
+  assertEquals(1,context.getTasks().size());
+  ImportTask task=context.getTasks().get(0);
+  assertEquals(ImportTask.State.READY,task.getState());
+  GdalWarpTransform warp=buildGdalWarp();
+  task.getTransform().add(warp);
+  assertEquals("box_gcp_fixed",task.getLayer().getResource().getName());
+  CoverageStoreInfo store=(CoverageStoreInfo)task.getStore();
+  assertEquals("GeoTIFF",store.getFormat().getName());
+  importer.run(context);
+  Catalog cat=getCatalog();
+  assertNotNull(cat.getLayerByName("box_gcp_fixed"));
+  assertEquals(ImportTask.State.COMPLETE,task.getState());
+  runChecks("box_gcp_fixed");
+  GeoTiffReader reader=null;
+  try {
+    reader=new GeoTiffReader(tif);
+    ImageLayout layout=reader.getImageLayout();
+    ColorModel cm=layout.getColorModel(null);
+    assertEquals(3,cm.getNumComponents());
+    SampleModel sm=layout.getSampleModel(null);
+    assertEquals(1,sm.getNumBands());
+    assertEquals(DataBuffer.TYPE_BYTE,sm.getDataType());
+    assertEquals(0,reader.getNumOverviews());
+    assertEquals(Integer.valueOf(4326),CRS.lookupEpsgCode(reader.getCoordinateReferenceSystem(),false));
+  }
+  finally {
+    if (reader != null) {
+      reader.dispose();
+    }
+  }
+}
