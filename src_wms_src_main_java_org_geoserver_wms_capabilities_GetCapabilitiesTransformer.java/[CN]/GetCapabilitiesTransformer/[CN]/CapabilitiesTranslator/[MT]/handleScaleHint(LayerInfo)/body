@@ -1,18 +1,22 @@
 {
   try {
-    Map<String,Double> denominators=CapabilityUtil.searchMinMaxScaleDenominator(MIN_DENOMINATOR_ATTR,MAX_DENOMINATOR_ATTR,layer);
-    if ((denominators.get(MIN_DENOMINATOR_ATTR) == 0.0) && (denominators.get(MAX_DENOMINATOR_ATTR) == Double.POSITIVE_INFINITY)) {
+    NumberRange<Double> scaleDenominators=CapabilityUtil.searchMinMaxScaleDenominator(layer);
+    for (    ExtendedCapabilitiesProvider provider : extCapsProviders) {
+      scaleDenominators=provider.overrideScaleDenominators(layer,scaleDenominators);
+    }
+    if ((scaleDenominators.getMinimum() == 0.0) && (scaleDenominators.getMaximum() == Double.POSITIVE_INFINITY)) {
       return;
     }
     Double minScaleHint;
     Double maxScaleHint;
-    if (wmsConfig.getScalehintUnitPixel() != null && wmsConfig.getScalehintUnitPixel()) {
-      minScaleHint=CapabilityUtil.computeScaleHint(denominators.get(MIN_DENOMINATOR_ATTR));
-      maxScaleHint=CapabilityUtil.computeScaleHint(denominators.get(MAX_DENOMINATOR_ATTR));
+    boolean scaleUnitPixel=wmsConfig.getScalehintUnitPixel() != null && wmsConfig.getScalehintUnitPixel();
+    if (scaleUnitPixel) {
+      minScaleHint=CapabilityUtil.computeScaleHint(scaleDenominators.getMinValue());
+      maxScaleHint=CapabilityUtil.computeScaleHint(scaleDenominators.getMaxValue());
     }
  else {
-      minScaleHint=denominators.get(MIN_DENOMINATOR_ATTR);
-      maxScaleHint=denominators.get(MAX_DENOMINATOR_ATTR);
+      minScaleHint=scaleDenominators.getMinValue();
+      maxScaleHint=scaleDenominators.getMaxValue();
     }
     AttributesImpl attrs=new AttributesImpl();
     attrs.addAttribute("",MIN_DENOMINATOR_ATTR,MIN_DENOMINATOR_ATTR,"",String.valueOf(minScaleHint));
