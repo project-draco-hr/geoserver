@@ -150,25 +150,37 @@
   renderer.addRenderListener(nonIgnorableExceptionListener);
   onBeforeRender(renderer);
   int maxRenderingTime=wms.getMaxRenderingTime() * 1000;
-  RenderingTimeoutEnforcer timeout=new RenderingTimeoutEnforcer(maxRenderingTime,renderer,graphic);
-  timeout.start();
-  try {
-    renderer.paint(graphic,paintArea,mapContent.getRenderingArea(),mapContent.getRenderingTransform());
-    if (layout != null) {
-      try {
-        layout.paint(graphic,paintArea,mapContent);
-      }
- catch (      Exception e) {
-        throw new ServiceException("Problem occurred while trying to watermark data",e);
-      }
+  int localMaxRenderingTime=0;
+  Object timeoutOption=request.getFormatOptions().get("timeout");
+  if (timeoutOption != null) {
+    try {
+      localMaxRenderingTime=Integer.parseInt(timeoutOption.toString());
+    }
+ catch (    NumberFormatException e) {
+      LOGGER.log(Level.WARNING,"Could not parse format_option \"timeout\": " + timeoutOption,e);
     }
   }
-  finally {
-    timeout.stop();
-    graphic.dispose();
+  if (maxRenderingTime == 0) {
+    maxRenderingTime=localMaxRenderingTime;
   }
-  if (timeout.isTimedOut()) {
-    throw new ServiceException("This requested used more time than allowed and has been forcefully stopped. " + "Max rendering time is " + (maxRenderingTime / 1000.0) + "s");
+ else   if (localMaxRenderingTime != 0) {
+    maxRenderingTime=Math.min(maxRenderingTime,localMaxRenderingTime);
+  }
+  MapPainter painter=new MapPainter(renderer,paintArea,mapContent,graphic,layout);
+  Thread painterThread=new Thread(painter);
+  try {
+    painterThread.start();
+    painterThread.join(maxRenderingTime);
+  }
+ catch (  InterruptedException e) {
+    LOGGER.log(Level.FINE,"WMS Rendering was interrupted",e);
+  }
+  if (painterThread.isAlive()) {
+    new Thread(new MapPaintTerminator(painterThread,renderer,graphic)).start();
+    throw new ServiceException("This request used more time than allowed and has been forcefully stopped. " + "Max rendering time is " + (maxRenderingTime / 1000.0) + "s");
+  }
+  if (painter.getException() != null) {
+    throw new ServiceException("Rendering process failed",painter.getException());
   }
   if (nonIgnorableExceptionListener.exceptionOccurred()) {
     Exception renderError=nonIgnorableExceptionListener.getException();
