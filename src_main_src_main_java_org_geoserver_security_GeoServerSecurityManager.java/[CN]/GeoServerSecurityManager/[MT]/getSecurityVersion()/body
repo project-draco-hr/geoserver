@@ -1,0 +1,21 @@
+{
+  Resource security=security();
+  if (security.getType() == Type.UNDEFINED) {
+    return BASE_VERSION;
+  }
+  Resource properties=security.get(VERSION_PROPERTIES);
+  if (properties.getType() == Type.UNDEFINED) {
+    return BASE_VERSION;
+  }
+  Properties p=new Properties();
+  try (InputStream is=properties.in()){
+    p.load(is);
+  }
+   String version=p.getProperty(VERSION);
+  if (version != null) {
+    return new Version(version);
+  }
+ else {
+    return BASE_VERSION;
+  }
+}

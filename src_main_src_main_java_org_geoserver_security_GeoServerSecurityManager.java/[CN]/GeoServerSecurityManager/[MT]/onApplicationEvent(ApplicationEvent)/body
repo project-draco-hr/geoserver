@@ -10,11 +10,24 @@
       throw new RuntimeException(e1);
     }
     try {
-      boolean migratedFrom21=migrateFrom21();
-      removeErroneousAccessDeniedPage();
-      migrateFrom22(migratedFrom21);
-      migrateFrom23();
-      migrateFrom24();
+      Version securityVersion=getSecurityVersion();
+      boolean migratedFrom21=false;
+      if (securityVersion.compareTo(VERSION_2_2) < 0) {
+        migratedFrom21=migrateFrom21();
+      }
+      if (securityVersion.compareTo(VERSION_2_3) < 0) {
+        removeErroneousAccessDeniedPage();
+        migrateFrom22(migratedFrom21);
+      }
+      if (securityVersion.compareTo(VERSION_2_4) < 0) {
+        migrateFrom23();
+      }
+      if (securityVersion.compareTo(VERSION_2_5) < 0) {
+        migrateFrom24();
+      }
+      if (securityVersion.compareTo(CURR_VERSION) < 0) {
+        writeCurrentVersion();
+      }
     }
  catch (    Exception e1) {
       throw new RuntimeException(e1);
