@@ -175,26 +175,37 @@
  catch (  InterruptedException e) {
     LOGGER.log(Level.FINE,"WMS Rendering was interrupted",e);
   }
-  if (painterThread.isAlive()) {
-    new Thread(new MapPaintTerminator(painterThread,renderer,graphic)).start();
-    throw new ServiceException("This request used more time than allowed and has been forcefully stopped. " + "Max rendering time is " + (maxRenderingTime / 1000.0) + "s");
-  }
+  ServiceException serviceException=null;
   if (painter.getException() != null) {
-    throw new ServiceException("Rendering process failed",painter.getException());
+    serviceException=new ServiceException("Rendering process failed",painter.getException());
+  }
+  if (errorChecker.exceedsMaxErrors()) {
+    serviceException=new ServiceException("More than " + maxErrors + " rendering errors occurred, bailing out.",errorChecker.getLastException(),"internalError");
+  }
+  if (painterThread.isAlive()) {
+    serviceException=new ServiceException("This request used more time than allowed and has been forcefully stopped. " + "Max rendering time is " + (maxRenderingTime / 1000.0) + "s");
   }
   if (nonIgnorableExceptionListener.exceptionOccurred()) {
     Exception renderError=nonIgnorableExceptionListener.getException();
-    throw new ServiceException("Rendering process failed",renderError,"internalError");
+    serviceException=new ServiceException("Rendering process failed",renderError,"internalError");
   }
-  if (errorChecker.exceedsMaxErrors()) {
-    throw new ServiceException("More than " + maxErrors + " rendering errors occurred, bailing out.",errorChecker.getLastException(),"internalError");
-  }
-  if (palette != null && palette.getMapSize() < 256) {
-    image=optimizeSampleModel(preparedImage);
-  }
+  if (serviceException == null || (request.getRawKvp() != null && WMSServiceExceptionHandler.isPartialMapExceptionType(request.getRawKvp().get("EXCEPTIONS")))) {
+    if (palette != null && palette.getMapSize() < 256) {
+      image=optimizeSampleModel(preparedImage);
+    }
  else {
-    image=preparedImage;
+      image=preparedImage;
+    }
+    RenderedImageMap map=buildMap(mapContent,image);
+    if (serviceException != null) {
+      serviceException=new WMSServiceException(serviceException,map);
+    }
+ else {
+      return map;
+    }
   }
-  RenderedImageMap map=buildMap(mapContent,image);
-  return map;
+  if (painterThread.isAlive()) {
+    new Thread(new MapPaintTerminator(painterThread,renderer,graphic)).start();
+  }
+  throw serviceException;
 }

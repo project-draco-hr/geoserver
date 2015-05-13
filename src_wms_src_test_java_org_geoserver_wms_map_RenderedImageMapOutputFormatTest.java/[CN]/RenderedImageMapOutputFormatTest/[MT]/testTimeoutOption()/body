@@ -23,4 +23,18 @@
  catch (  ServiceException e) {
     assertTrue(e.getMessage().startsWith("This request used more time than allowed"));
   }
+  Map rawKvp=new HashMap();
+  rawKvp.put("EXCEPTIONS","PARTIALMAP");
+  request.setRawKvp(rawKvp);
+  try {
+    RenderedImageMap imageMap=this.rasterMapProducer.produceMap(map);
+    fail("Timeout was not reached");
+  }
+ catch (  ServiceException e) {
+    assertTrue(e instanceof WMSServiceException);
+    assertTrue(e.getCause().getMessage().startsWith("This request used more time than allowed"));
+    RenderedImageMap partialMap=(RenderedImageMap)((WMSServiceException)e).getMap();
+    assertNotNull(partialMap);
+    assertNotNull(partialMap.getImage());
+  }
 }
