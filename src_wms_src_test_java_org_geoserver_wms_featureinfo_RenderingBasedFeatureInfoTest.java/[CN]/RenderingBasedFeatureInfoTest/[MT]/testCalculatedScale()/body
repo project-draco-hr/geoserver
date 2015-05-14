@@ -1,0 +1,51 @@
+{
+  int mapWidth=1000;
+  int mapHeight=500;
+  Envelope mapbbox=new Envelope(-2,2,-1,1);
+  ReferencedEnvelope mapEnvelope=new ReferencedEnvelope(mapbbox,DefaultGeographicCRS.WGS84);
+  final HashMap<String,String> hints=new HashMap<String,String>();
+  double originalScale=RendererUtilities.calculateScale(mapEnvelope,mapWidth,mapHeight,hints);
+  double originalOGCScale=RendererUtilities.calculateOGCScale(mapEnvelope,mapWidth,hints);
+  final MutableDouble calculatedScale=new MutableDouble(0.0);
+  final MutableDouble calculatedOGCScale=new MutableDouble(0.0);
+  VectorRenderingLayerIdentifier vrli=new VectorRenderingLayerIdentifier(getWMS(),null){
+    @Override protected GetMapOutputFormat createMapOutputFormat(    BufferedImage image,    FeatureInfoRenderListener featureInfoListener){
+      return new AbstractMapOutputFormat("image/png",new String[]{"png"}){
+        @Override public WebMap produceMap(        WMSMapContent mapContent) throws ServiceException, IOException {
+          try {
+            ReferencedEnvelope referencedEnvelope=new ReferencedEnvelope(mapContent.getViewport().getBounds(),DefaultGeographicCRS.WGS84);
+            calculatedScale.setValue(RendererUtilities.calculateScale(referencedEnvelope,mapContent.getMapWidth(),mapContent.getMapHeight(),hints));
+            calculatedOGCScale.setValue(RendererUtilities.calculateOGCScale(referencedEnvelope,mapContent.getMapWidth(),hints));
+          }
+ catch (          TransformException e) {
+            throw new ServiceException(e);
+          }
+catch (          FactoryException e) {
+            throw new ServiceException(e);
+          }
+          return null;
+        }
+        @Override public MapProducerCapabilities getCapabilities(        String format){
+          return null;
+        }
+      }
+;
+    }
+  }
+;
+  GetFeatureInfoRequest request=new GetFeatureInfoRequest();
+  GetMapRequest getMapRequest=new GetMapRequest();
+  List<MapLayerInfo> layers=new ArrayList<MapLayerInfo>();
+  layers.add(new MapLayerInfo(getCatalog().getLayerByName(MockData.BASIC_POLYGONS.getLocalPart())));
+  getMapRequest.setLayers(layers);
+  getMapRequest.setSRS("EPSG:4326");
+  getMapRequest.setBbox(mapbbox);
+  getMapRequest.setWidth(mapWidth);
+  getMapRequest.setHeight(mapHeight);
+  request.setGetMapRequest(getMapRequest);
+  request.setQueryLayers(layers);
+  FeatureInfoRequestParameters params=new FeatureInfoRequestParameters(request);
+  vrli.identify(params,10);
+  assertEquals(originalScale,calculatedScale.doubleValue(),originalScale * 0.01);
+  assertEquals(originalOGCScale,calculatedOGCScale.doubleValue(),originalScale * 0.01);
+}
