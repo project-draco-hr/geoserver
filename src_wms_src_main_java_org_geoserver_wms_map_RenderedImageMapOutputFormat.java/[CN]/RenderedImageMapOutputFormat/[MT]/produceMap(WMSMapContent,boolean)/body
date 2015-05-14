@@ -6,11 +6,11 @@
   final GetMapRequest request=mapContent.getRequest();
   String antialias=(String)request.getFormatOptions().get("antialias");
   if (antialias != null)   antialias=antialias.toUpperCase();
-  IndexColorModel palette=null;
+  IndexColorModel potentialPalette=null;
   final boolean transparent=mapContent.isTransparent() && isTransparencySupported();
   final Color bgColor=mapContent.getBgColor();
   if (AA_NONE.equals(antialias)) {
-    palette=mapContent.getPalette();
+    potentialPalette=mapContent.getPalette();
   }
  else   if (AA_NONE.equals(antialias)) {
     PaletteExtractor pe=new PaletteExtractor(transparent ? null : bgColor);
@@ -19,8 +19,9 @@
       pe.visit(layers.get(i).getStyle());
       if (!pe.canComputePalette())       break;
     }
-    if (pe.canComputePalette())     palette=pe.getPalette();
+    if (pe.canComputePalette())     potentialPalette=pe.getPalette();
   }
+  final IndexColorModel palette=potentialPalette;
   long maxMemory=wms.getMaxRequestMemory() * KB;
   long memory=getDrawingSurfaceMemoryUse(paintArea.width,paintArea.height,palette,transparent);
   StreamingRenderer testRenderer=new StreamingRenderer();
@@ -149,7 +150,6 @@
   nonIgnorableExceptionListener=new RenderExceptionStrategy(renderer);
   renderer.addRenderListener(nonIgnorableExceptionListener);
   onBeforeRender(renderer);
-  int maxRenderingTime=wms.getMaxRenderingTime() * 1000;
   int localMaxRenderingTime=0;
   Object timeoutOption=request.getFormatOptions().get("timeout");
   if (timeoutOption != null) {
@@ -160,52 +160,54 @@
       LOGGER.log(Level.WARNING,"Could not parse format_option \"timeout\": " + timeoutOption,e);
     }
   }
-  if (maxRenderingTime == 0) {
-    maxRenderingTime=localMaxRenderingTime;
-  }
- else   if (localMaxRenderingTime != 0) {
-    maxRenderingTime=Math.min(maxRenderingTime,localMaxRenderingTime);
-  }
-  MapPainter painter=new MapPainter(renderer,paintArea,mapContent,graphic,layout);
-  Thread painterThread=new Thread(painter);
-  try {
-    painterThread.start();
-    painterThread.join(maxRenderingTime);
-  }
- catch (  InterruptedException e) {
-    LOGGER.log(Level.FINE,"WMS Rendering was interrupted",e);
-  }
+  int maxRenderingTime=getMaxRenderingTime(localMaxRenderingTime);
   ServiceException serviceException=null;
-  if (painter.getException() != null) {
-    serviceException=new ServiceException("Rendering process failed",painter.getException());
-  }
-  if (errorChecker.exceedsMaxErrors()) {
-    serviceException=new ServiceException("More than " + maxErrors + " rendering errors occurred, bailing out.",errorChecker.getLastException(),"internalError");
-  }
-  if (painterThread.isAlive()) {
-    serviceException=new ServiceException("This request used more time than allowed and has been forcefully stopped. " + "Max rendering time is " + (maxRenderingTime / 1000.0) + "s");
-  }
-  if (nonIgnorableExceptionListener.exceptionOccurred()) {
-    Exception renderError=nonIgnorableExceptionListener.getException();
-    serviceException=new ServiceException("Rendering process failed",renderError,"internalError");
-  }
-  if (serviceException == null || (request.getRawKvp() != null && WMSServiceExceptionHandler.isPartialMapExceptionType(request.getRawKvp().get("EXCEPTIONS")))) {
-    if (palette != null && palette.getMapSize() < 256) {
-      image=optimizeSampleModel(preparedImage);
-    }
- else {
-      image=preparedImage;
-    }
-    RenderedImageMap map=buildMap(mapContent,image);
-    if (serviceException != null) {
-      serviceException=new WMSServiceException(serviceException,map);
-    }
- else {
-      return map;
+  boolean saveMap=(request.getRawKvp() != null && WMSServiceExceptionHandler.isPartialMapExceptionType(request.getRawKvp().get("EXCEPTIONS")));
+  RenderingTimeoutEnforcer timeout=new RenderingTimeoutEnforcer(maxRenderingTime,renderer,graphic,saveMap){
+    /** 
+ * Save the map before disposing of the graphics
+ */
+    @Override public void saveMap(){
+      this.map=optimizeAndBuildMap(palette,preparedImage,mapContent);
     }
   }
-  if (painterThread.isAlive()) {
-    new Thread(new MapPaintTerminator(painterThread,renderer,graphic)).start();
+;
+  timeout.start();
+  try {
+    renderer.paint(graphic,paintArea,mapContent.getRenderingArea(),mapContent.getRenderingTransform());
+    if (layout != null) {
+      try {
+        layout.paint(graphic,paintArea,mapContent);
+      }
+ catch (      Exception e) {
+        throw new ServiceException("Problem occurred while trying to watermark data",e);
+      }
+    }
+    timeout.stop();
+    if (errorChecker.exceedsMaxErrors()) {
+      serviceException=new ServiceException("More than " + maxErrors + " rendering errors occurred, bailing out.",errorChecker.getLastException(),"internalError");
+    }
+    if (timeout.isTimedOut()) {
+      serviceException=new ServiceException("This request used more time than allowed and has been forcefully stopped. " + "Max rendering time is " + (maxRenderingTime / 1000.0) + "s");
+    }
+    if (nonIgnorableExceptionListener.exceptionOccurred()) {
+      Exception renderError=nonIgnorableExceptionListener.getException();
+      serviceException=new ServiceException("Rendering process failed",renderError,"internalError");
+    }
+    if (serviceException == null) {
+      return optimizeAndBuildMap(palette,preparedImage,mapContent);
+    }
+ else     if (saveMap) {
+      RenderedImageMap map=(RenderedImageMap)timeout.getMap();
+      if (map == null) {
+        map=optimizeAndBuildMap(palette,preparedImage,mapContent);
+      }
+      serviceException=new WMSPartialMapException(serviceException,map);
+    }
+  }
+  finally {
+    timeout.stop();
+    graphic.dispose();
   }
   throw serviceException;
 }
