@@ -5,7 +5,7 @@
   }
   final Style style=preprocessStyle(params.getStyle(),params.getLayer().getFeature().getFeatureType());
   final int userBuffer=params.getBuffer() > 0 ? params.getBuffer() : MIN_BUFFER_SIZE;
-  final int buffer=Math.min(userBuffer,wms.getMaxBuffer());
+  final int buffer=getBuffer(userBuffer);
   final List<Rule> rules=getActiveRules(style,params.getScaleDenominator());
   if (rules.size() == 0) {
     return null;
@@ -36,6 +36,9 @@
     image.setAccelerationPriority(0);
     int mid=radius;
     int hitAreaSize=buffer * 2 + 1;
+    if (hitAreaSize > paintAreaSize) {
+      hitAreaSize=paintAreaSize;
+    }
     Rectangle hitArea=new Rectangle(mid - buffer,mid - buffer,hitAreaSize,hitAreaSize);
     final FeatureInfoRenderListener featureInfoListener=new FeatureInfoRenderListener(image,hitArea,maxFeatures,params.getPropertyNames());
     mc.getViewport().setBounds(new ReferencedEnvelope(targetModelSpace,getMap.getCrs()));
