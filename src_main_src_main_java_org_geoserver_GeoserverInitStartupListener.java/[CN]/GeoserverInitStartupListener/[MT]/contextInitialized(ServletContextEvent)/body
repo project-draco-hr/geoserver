@@ -39,7 +39,19 @@
     Hints.putSystemDefault(Hints.FORCE_AXIS_ORDER_HONORING,"http");
   }
   Hints.putSystemDefault(Hints.LENIENT_DATUM_SHIFT,true);
-  Hints.putSystemDefault(Hints.COMPARISON_TOLERANCE,1e-9);
+  String comparisonToleranceProperty=GeoServerExtensions.getProperty(COMPARISON_TOLERANCE_PROPERTY);
+  double comparisonTolerance=DEFAULT_COMPARISON_TOLERANCE;
+  if (comparisonToleranceProperty != null) {
+    try {
+      comparisonTolerance=Double.parseDouble(comparisonToleranceProperty);
+    }
+ catch (    NumberFormatException nfe) {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.warning("Unable to parse the specified COMPARISON_TOLERANCE " + "system property: " + comparisonToleranceProperty + " which should be a number. Using Default: "+ DEFAULT_COMPARISON_TOLERANCE);
+      }
+    }
+  }
+  Hints.putSystemDefault(Hints.COMPARISON_TOLERANCE,comparisonTolerance);
   final Hints defHints=GeoTools.getDefaultHints();
   Hints.putSystemDefault(Hints.GRID_COVERAGE_FACTORY,CoverageFactoryFinder.getGridCoverageFactory(defHints));
   System.setProperty("org.geotools.epsg.factory.timeout","-1");
