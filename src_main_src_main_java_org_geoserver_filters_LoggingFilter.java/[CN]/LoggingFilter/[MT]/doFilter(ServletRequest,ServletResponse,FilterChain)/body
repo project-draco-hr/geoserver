@@ -16,15 +16,18 @@
       if (logBodies && (hreq.getMethod().equals("PUT") || hreq.getMethod().equals("POST"))) {
         message+=" request-size: " + hreq.getContentLength();
         message+=" body: ";
-        StringBuffer buff=new StringBuffer();
-        BufferedReader reader=hreq.getReader();
-        char[] readIn=new char[256];
-        int amountRead=0;
-        while ((amountRead=reader.read(readIn,0,256)) != -1) {
-          buff.append(readIn,0,amountRead);
+        String encoding=hreq.getCharacterEncoding();
+        if (encoding == null) {
+          encoding="ISO-8859-1";
         }
-        body=buff.toString();
-        req=new BufferedRequestWrapper(hreq,buff.toString());
+        ByteArrayOutputStream bos=new ByteArrayOutputStream();
+        byte[] bytes;
+        try (InputStream is=hreq.getInputStream()){
+          IOUtils.copy(is,bos);
+          bytes=bos.toByteArray();
+          body=new String(bytes,encoding);
+        }
+         req=new BufferedRequestWrapper(hreq,encoding,bytes);
       }
     }
  else {
