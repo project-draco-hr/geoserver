@@ -70,25 +70,22 @@
   form.add(new TextField<Long>("cacheRefresh",new PropertyModel<Long>(cacheModel,"refreshMilliSec")).setRequired(true));
   form.add(new TextField<Long>("cacheExpire",new PropertyModel<Long>(cacheModel,"expireMilliSec")).setRequired(true));
   CachedRuleReader cacheRuleReader=GeoServerExtensions.bean(CachedRuleReader.class);
-  final Model<String> ruleStatsModel=new Model(getStats(cacheRuleReader));
-  final Label ruleStats=new Label("rulestats",ruleStatsModel);
-  ruleStats.setOutputMarkupId(true);
-  ruleStats.setEscapeModelStrings(false);
-  form.add(ruleStats);
-  final Model<String> userStatsModel=new Model(getUserStats(cacheRuleReader));
-  final Label userStats=new Label("userstats",userStatsModel);
-  userStats.setEscapeModelStrings(false);
-  userStats.setOutputMarkupId(true);
-  form.add(userStats);
+  updateStatsValues(cacheRuleReader);
+  for (  String key : statsValues.keySet()) {
+    Label label=new Label(key,new MapModel(statsValues,key));
+    label.setOutputMarkupId(true);
+    form.add(label);
+    statsLabels.add(label);
+  }
   form.add(new AjaxSubmitLink("invalidate"){
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       CachedRuleReader cacheRuleReader=GeoServerExtensions.bean(CachedRuleReader.class);
       cacheRuleReader.invalidateAll();
       info(new StringResourceModel(GeofencePage.class.getSimpleName() + ".cacheInvalidated",null).getObject());
-      ruleStatsModel.setObject(getStats(cacheRuleReader));
-      userStatsModel.setObject(getUserStats(cacheRuleReader));
-      target.addComponent(ruleStats);
-      target.addComponent(userStats);
+      updateStatsValues(cacheRuleReader);
+      for (      Label label : statsLabels) {
+        target.addComponent(label);
+      }
       target.addComponent(getPage().get("feedback"));
     }
   }
