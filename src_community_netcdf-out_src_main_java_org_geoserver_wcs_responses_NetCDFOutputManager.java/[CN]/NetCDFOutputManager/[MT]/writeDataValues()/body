@@ -1,16 +1,17 @@
 {
-  final int numDimensions=getNumDimensions();
+  final int numDimensions=dimensionsManager.getNumDimensions();
   final int[] dimSize=new int[numDimensions];
   int iDim=0;
-  for (  NetCDFDimensionManager manager : dimensionMapping.values()) {
-    dimSize[iDim++]=getDimensionSize(manager.getName());
+  for (  NetCDFDimensionMapping dimension : dimensionsManager.getDimensions()) {
+    dimSize[iDim++]=dimension.getDimensionValues().getSize();
   }
-  final Variable var=writer.findVariable(sampleGranule.getName().toString());
+  String name=variableName != null ? variableName : sampleGranule.getName().toString();
+  final Variable var=writer.findVariable(name);
   if (var == null) {
-    throw new IllegalArgumentException("The requested variable doesn't exists: " + sampleGranule.getName());
+    throw new IllegalArgumentException("The requested variable doesn't exists: " + name);
   }
   final int imageDataType=sampleGranule.getRenderedImage().getSampleModel().getDataType();
-  final DataType netCDFDataType=NetCDFUtilities.transcodeImageDataType(imageDataType);
+  final DataType netCDFDataType=var.getDataType();
   final Array matrix=NetCDFUtilities.getArray(dimSize,netCDFDataType);
   for (  GridCoverage2D gridCoverage : granuleStack.getGranules()) {
     final RenderedImage ri=gridCoverage.getRenderedImage();
@@ -43,36 +44,15 @@
                 indexing[numDimensions - 1]=k - minX;
                 indexing[numDimensions - 2]=yPos;
                 matrixIndex.set(indexing);
-switch (netCDFDataType) {
-case BYTE:
-                  byte sampleByte=(byte)data.getSampleFloat(k,j,0);
-                matrix.setByte(matrixIndex,sampleByte);
-              break;
-case SHORT:
-            short sampleShort=(short)data.getSampleFloat(k,j,0);
-          matrix.setShort(matrixIndex,sampleShort);
-        break;
-case INT:
-      int sampleInt=(int)data.getSampleFloat(k,j,0);
-    matrix.setInt(matrixIndex,sampleInt);
-  break;
-case FLOAT:
-float sampleFloat=data.getSampleFloat(k,j,0);
-matrix.setFloat(matrixIndex,sampleFloat);
-break;
-case DOUBLE:
-double sampleDouble=data.getSampleDouble(k,j,0);
-matrix.setDouble(matrixIndex,sampleDouble);
-break;
-}
-}
-}
-}
-}
-}
-}
-data.done();
-}
-writer.write(var,matrix);
-writer.flush();
+                setPixel(k,j,NetCDFUtilities.transcodeImageDataType(imageDataType),netCDFDataType,data,matrix,matrixIndex);
+              }
+            }
+          }
+        }
+      }
+    }
+    data.done();
+  }
+  writer.write(var,matrix);
+  writer.flush();
 }

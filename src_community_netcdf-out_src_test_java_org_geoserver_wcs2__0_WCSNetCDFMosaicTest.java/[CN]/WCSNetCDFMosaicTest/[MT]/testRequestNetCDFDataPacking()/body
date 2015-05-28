@@ -1,0 +1,27 @@
+{
+  MockHttpServletResponse response=getAsServletResponse("ows?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__visibilityPacked&format=application/x-netcdf");
+  assertNotNull(response);
+  byte[] netcdfOut=getBinary(response);
+  File file=File.createTempFile("netcdf","outPK.nc",new File("./target"));
+  FileUtils.writeByteArrayToFile(file,netcdfOut);
+  NetcdfDataset dataset=NetcdfDataset.openDataset(file.getAbsolutePath());
+  Variable var=dataset.findVariable(STANDARD_NAME);
+  assertNotNull(var);
+  String unit=var.getUnitsString();
+  assertEquals(ORIGINAL_UNIT,unit);
+  Attribute fillValue=var.findAttribute(NetCDFUtilities.FILL_VALUE);
+  assertNotNull(fillValue);
+  assertEquals(PACKED_FILL_VALUE,fillValue.getNumericValue().doubleValue(),1E-6);
+  Attribute addOffsetAttr=var.findAttribute(DataPacking.ADD_OFFSET);
+  assertNotNull(addOffsetAttr);
+  Attribute scaleFactorAttr=var.findAttribute(DataPacking.SCALE_FACTOR);
+  assertNotNull(scaleFactorAttr);
+  double scaleFactor=scaleFactorAttr.getNumericValue().doubleValue();
+  double addOffset=addOffsetAttr.getNumericValue().doubleValue();
+  Array readData=var.read(NETCDF_SECTION);
+  assertEquals(DataType.SHORT,readData.getDataType());
+  short data=readData.getShort(0);
+  double packedData=(ORIGINAL_PIXEL_VALUE - addOffset) / scaleFactor;
+  assertEquals((short)(packedData + 0.5),data,DELTA);
+  dataset.close();
+}

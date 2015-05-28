@@ -1,0 +1,35 @@
+{
+  if (!(crs instanceof ProjectedCRS)) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("The provided CRS is not a projected CRS\n" + "No projection information needs to be added");
+    }
+    return;
+  }
+  Map<String,String> referencingToNetCDFParameters=projection.getParameters();
+  ProjectedCRS projectedCRS=(ProjectedCRS)crs;
+  Projection conversionFromBase=projectedCRS.getConversionFromBase();
+  if (conversionFromBase != null) {
+    Set<String> keySet=referencingToNetCDFParameters.keySet();
+    ParameterValueGroup values=conversionFromBase.getParameterValues();
+    List<GeneralParameterValue> valuesList=values.values();
+    Map<String,List<Double>> parameterValues=new HashMap<String,List<Double>>();
+    for (    GeneralParameterValue param : valuesList) {
+      String code=param.getDescriptor().getName().getCode();
+      if (keySet.contains(code)) {
+        Double value=((ParameterValue)param).doubleValue();
+        updateParameterValues(referencingToNetCDFParameters,code,value,parameterValues);
+      }
+    }
+    Set<String> paramKeys=parameterValues.keySet();
+    for (    String key : paramKeys) {
+      List<Double> val=parameterValues.get(key);
+      if (val.size() == 1) {
+        writer.addVariableAttribute(var,new Attribute(key,val.get(0)));
+      }
+ else {
+        writer.addVariableAttribute(var,new Attribute(key,val));
+      }
+    }
+  }
+  writer.addVariableAttribute(var,new Attribute(NetCDFUtilities.GRID_MAPPING_NAME,projection.getName()));
+}

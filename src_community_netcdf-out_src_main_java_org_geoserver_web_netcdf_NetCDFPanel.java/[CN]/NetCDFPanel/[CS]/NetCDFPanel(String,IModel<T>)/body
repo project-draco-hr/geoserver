@@ -1,0 +1,99 @@
+{
+  super(id,netcdfModel);
+  container=new WebMarkupContainer("container");
+  container.setOutputMarkupId(true);
+  add(container);
+  shuffle=new CheckBox("shuffle",new PropertyModel(netcdfModel,"shuffle"));
+  container.add(shuffle);
+  compressionLevel=new TextField<Integer>("compressionLevel",new PropertyModel(netcdfModel,"compressionLevel"));
+  List<DataPacking> dataPackings=Arrays.asList(DataPacking.values());
+  dataPacking=new DropDownChoice<DataPacking>("dataPacking",new PropertyModel(netcdfModel,"dataPacking"),dataPackings);
+  dataPacking.setOutputMarkupId(true);
+  container.add(dataPacking);
+  compressionLevel.add(new AbstractValidator<Integer>(){
+    @Override public boolean validateOnNullValue(){
+      return true;
+    }
+    @Override protected void onValidate(    IValidatable<Integer> validatable){
+      if (validatable != null && validatable.getValue() != null) {
+        Integer value=validatable.getValue();
+        if (value < 0) {
+          ValidationError error=new ValidationError();
+          error.setMessage(new ParamResourceModel("NetCDFOutSettingsPanel.lowCompression",null,"").getObject());
+          validatable.error(error);
+        }
+ else         if (value > 9) {
+          ValidationError error=new ValidationError();
+          error.setMessage(new ParamResourceModel("NetCDFOutSettingsPanel.highCompression",null,"").getObject());
+          validatable.error(error);
+        }
+      }
+    }
+  }
+);
+  container.add(compressionLevel);
+  IModel<List<GlobalAttribute>> attributeModel=new PropertyModel(netcdfModel,"globalAttributes");
+  globalAttributes=new ListView<GlobalAttribute>("globalAttributes",attributeModel){
+    private static final long serialVersionUID=1L;
+    @Override protected void populateItem(    final ListItem<GlobalAttribute> item){
+      final Label keyField;
+      keyField=new Label("key",new PropertyModel<String>(item.getModel(),"key"));
+      item.add(keyField);
+      final Label valueField;
+      valueField=new Label("value",new PropertyModel<String>(item.getModel(),"value"));
+      item.add(valueField);
+      final Component removeLink;
+      removeLink=new ImageAjaxLink("remove",DELETE_ICON){
+        private static final long serialVersionUID=1L;
+        @Override protected void onClick(        AjaxRequestTarget target){
+          List<GlobalAttribute> list;
+          list=new ArrayList<GlobalAttribute>(globalAttributes.getModelObject());
+          final GlobalAttribute attribute=(GlobalAttribute)getDefaultModelObject();
+          list.remove(attribute);
+          globalAttributes.setModelObject(list);
+          item.remove();
+          target.addComponent(container);
+        }
+      }
+;
+      removeLink.setDefaultModel(item.getModel());
+      item.add(removeLink);
+    }
+  }
+;
+  globalAttributes.setOutputMarkupId(true);
+  container.add(globalAttributes);
+  final TextField<String> newValue=new TextField<String>("newValue",Model.of(""));
+  newValue.setOutputMarkupId(true);
+  container.add(newValue);
+  final TextField<String> newKey=new TextField<String>("newKey",Model.of(""));
+  newKey.setOutputMarkupId(true);
+  container.add(newKey);
+  GeoServerAjaxFormLink addLink=new GeoServerAjaxFormLink("add"){
+    private static final long serialVersionUID=1L;
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      newValue.processInput();
+      newKey.processInput();
+      String key=newKey.getModelObject();
+      if (key == null || key.isEmpty()) {
+        ParamResourceModel rm=new ParamResourceModel("NetCDFOutSettingsPanel.nonEmptyKey",null,"");
+        error(rm.getString());
+      }
+ else {
+        String value=newValue.getModelObject();
+        GlobalAttribute attribute=new GlobalAttribute(key,value);
+        if (!globalAttributes.getModelObject().contains(attribute)) {
+          globalAttributes.getModelObject().add(attribute);
+        }
+        newKey.setModel(Model.of(""));
+        newValue.setModel(Model.of(""));
+        target.addComponent(container);
+      }
+    }
+  }
+;
+  addLink.add(new Icon("addIcon",ADD_ICON));
+  container.add(addLink);
+  NetCDFSettingsContainer object=netcdfModel.getObject();
+  object.toString();
+}
