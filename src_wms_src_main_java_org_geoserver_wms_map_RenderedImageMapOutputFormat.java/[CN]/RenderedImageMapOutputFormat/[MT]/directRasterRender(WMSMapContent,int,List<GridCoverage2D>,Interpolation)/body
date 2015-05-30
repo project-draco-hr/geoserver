@@ -62,14 +62,14 @@
   RenderingHints interpolationHints=new RenderingHints(JAI.KEY_INTERPOLATION,interpolation);
   try {
     final Color readerBgColor=transparent ? null : bgColor;
-    if (transformation == null && DefaultWebMapService.isAdvancedProjectionHandlingEnabled()) {
+    if (transformation == null && wms.isAdvancedProjectionHandlingEnabled()) {
       final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
       final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
       final Object params=feature.getProperty("params").getValue();
       GeneralParameterValue[] readParameters=getReadParameters(params,null,null,interpolation,readerBgColor);
       final GridCoverageRenderer gcr=new GridCoverageRenderer(mapEnvelope.getCoordinateReferenceSystem(),mapEnvelope,mapRasterArea,worldToScreen,interpolationHints);
       gcr.setAdvancedProjectionHandlingEnabled(true);
-      gcr.setWrapEnabled(DefaultWebMapService.isContinuousMapWrappingEnabled());
+      gcr.setWrapEnabled(wms.isContinuousMapWrappingEnabled());
       image=gcr.renderImage(reader,readParameters,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
       if (image == null) {
         image=createBkgImage(mapWidth,mapHeight,bgColor,null);
