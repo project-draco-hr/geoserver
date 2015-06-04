@@ -1,0 +1,17 @@
+{
+  BlobStorePage page=new BlobStorePage();
+  tester.startPage(page);
+  executeAjaxEventBehavior("selector:typeOfBlobStore","onchange","0");
+  FormTester formTester=tester.newFormTester("blobConfigContainer:blobStoreForm");
+  formTester.setValue("id","myblobstore");
+  formTester.setValue("enabled",false);
+  formTester.setValue("blobSpecificPanel:baseDirectory:border:paramValue","/mydir");
+  tester.executeAjaxEvent("blobConfigContainer:blobStoreForm:save","onclick");
+  List<BlobStoreConfig> blobStores=GWC.get().getBlobStores();
+  BlobStoreConfig config=blobStores.get(0);
+  assertTrue(config instanceof FileBlobStoreConfig);
+  assertEquals("myblobstore",config.getId());
+  assertEquals("/mydir",((FileBlobStoreConfig)config).getBaseDirectory());
+  assertEquals(4096,((FileBlobStoreConfig)config).getFileSystemBlockSize());
+  GWC.get().removeBlobStores(Collections.singleton("myblobstore"));
+}
