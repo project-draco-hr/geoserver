@@ -1,0 +1,27 @@
+{
+  JsonArray arc=new JsonArray();
+  final int size=coords.size();
+  if (size > 0) {
+    Coordinate buff=new Coordinate();
+    coords.getCoordinate(0,buff);
+    precisionModel.makePrecise(buff);
+    addCoordinate(arc,buff);
+    double lastX;
+    double lastY;
+    lastX=buff.x;
+    lastY=buff.y;
+    for (int i=1; i < size; i++) {
+      coords.getCoordinate(i,buff);
+      precisionModel.makePrecise(buff);
+      double deltaX=buff.x - lastX;
+      double deltaY=buff.y - lastY;
+      lastX=buff.x;
+      lastY=buff.y;
+      buff.x=deltaX;
+      buff.y=deltaY;
+      precisionModel.makePrecise(buff);
+      addCoordinate(arc,buff);
+    }
+  }
+  return arc;
+}
