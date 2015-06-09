@@ -1,0 +1,25 @@
+{
+  try {
+    final int maxFilters=5;
+    final List<Filter> filtersToDS=new ArrayList<Filter>();
+    for (    LiteFeatureTypeStyle style : styles) {
+      if (style.elseRules.length > 0)       return;
+      for (      Rule r : style.ruleList) {
+        if (r.getFilter() == null)         return;
+        filtersToDS.add(r.getFilter());
+      }
+    }
+    if (filtersToDS.size() > maxFilters)     return;
+    org.opengis.filter.Filter ruleFiltersCombined;
+    if (filtersToDS.size() == 1) {
+      ruleFiltersCombined=filtersToDS.get(0);
+    }
+ else {
+      ruleFiltersCombined=ff.or(filtersToDS);
+    }
+    ruleFiltersCombined=ff.and(query.getFilter(),ruleFiltersCombined);
+    query.setFilter(ruleFiltersCombined);
+  }
+ catch (  Exception e) {
+  }
+}
