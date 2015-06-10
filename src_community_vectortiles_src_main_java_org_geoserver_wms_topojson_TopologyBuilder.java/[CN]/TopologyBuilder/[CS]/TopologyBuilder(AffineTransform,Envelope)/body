@@ -12,4 +12,13 @@
   transformer.setMathTransform(mathTransform);
   PrecisionModel precisionModel=new PrecisionModel(10.0);
   fixedGeometryFactory=new GeometryFactory(precisionModel);
+  Polygon bounds=JTS.toGeometry(mapArea,fixedGeometryFactory);
+  try {
+    bounds=(Polygon)transformer.transform(bounds);
+  }
+ catch (  TransformException e) {
+    throw Throwables.propagate(e);
+  }
+  bounds=(Polygon)fixedGeometryFactory.createGeometry(bounds);
+  this.clipBounds=bounds;
 }
