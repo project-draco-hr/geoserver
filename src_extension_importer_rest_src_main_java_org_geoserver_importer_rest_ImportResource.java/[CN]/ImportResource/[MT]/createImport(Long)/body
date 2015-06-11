@@ -1,7 +1,15 @@
 {
   ImportContext context;
   try {
-    context=importer.createContext(id);
+    Form query=getRequest().getResourceRef().getQueryAsForm();
+    boolean async=query.getNames().contains("async");
+    if (async) {
+      context=importer.registerContext(id);
+    }
+ else {
+      context=importer.createContext(id);
+    }
+    ImportData data=null;
     if (MediaType.APPLICATION_JSON.equals(getRequest().getEntity().getMediaType())) {
       ImportContext newContext=(ImportContext)getFormatPostOrPut().toObject(getRequest().getEntity());
       WorkspaceInfo targetWorkspace=newContext.getTargetWorkspace();
@@ -24,15 +32,18 @@
         context.setTargetWorkspace(targetStore.getWorkspace());
       }
       context.setData(newContext.getData());
-      if (newContext.getData() != null) {
-        importer.init(context,true);
-      }
+    }
+    if (!async && context.getData() != null) {
+      importer.init(context,true);
     }
     context.reattach(importer.getCatalog(),true);
+    importer.changed(context);
+    if (async && context.getData() != null) {
+      importer.initAsynch(context,true);
+    }
     getResponse().redirectSeeOther(getPageInfo().rootURI("/imports/" + context.getId()));
     getResponse().setEntity(getFormatGet().toRepresentation(context));
     getResponse().setStatus(Status.SUCCESS_CREATED);
-    importer.changed(context);
   }
  catch (  IOException e) {
     throw new RestletException("Unable to create import",Status.SERVER_ERROR_INTERNAL,e);

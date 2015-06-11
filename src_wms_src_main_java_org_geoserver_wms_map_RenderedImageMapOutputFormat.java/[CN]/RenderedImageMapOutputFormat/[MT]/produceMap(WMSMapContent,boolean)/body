@@ -6,11 +6,11 @@
   final GetMapRequest request=mapContent.getRequest();
   String antialias=(String)request.getFormatOptions().get("antialias");
   if (antialias != null)   antialias=antialias.toUpperCase();
-  IndexColorModel palette=null;
+  IndexColorModel potentialPalette=null;
   final boolean transparent=mapContent.isTransparent() && isTransparencySupported();
   final Color bgColor=mapContent.getBgColor();
   if (AA_NONE.equals(antialias)) {
-    palette=mapContent.getPalette();
+    potentialPalette=mapContent.getPalette();
   }
  else   if (AA_NONE.equals(antialias)) {
     PaletteExtractor pe=new PaletteExtractor(transparent ? null : bgColor);
@@ -19,8 +19,9 @@
       pe.visit(layers.get(i).getStyle());
       if (!pe.canComputePalette())       break;
     }
-    if (pe.canComputePalette())     palette=pe.getPalette();
+    if (pe.canComputePalette())     potentialPalette=pe.getPalette();
   }
+  final IndexColorModel palette=potentialPalette;
   long maxMemory=wms.getMaxRequestMemory() * KB;
   long memory=getDrawingSurfaceMemoryUse(paintArea.width,paintArea.height,palette,transparent);
   StreamingRenderer testRenderer=new StreamingRenderer();
@@ -36,7 +37,11 @@
   if (DefaultWebMapService.isDirectRasterPathEnabled() && mapContent.layers().size() == 1 && mapContent.getAngle() == 0.0 && (layout == null || layout.isEmpty())) {
     List<GridCoverage2D> renderedCoverages=new ArrayList<GridCoverage2D>(2);
     try {
-      image=directRasterRender(mapContent,0,renderedCoverages);
+      Interpolation interpolation=null;
+      if (request.getInterpolations() != null && request.getInterpolations().size() > 0) {
+        interpolation=request.getInterpolations().get(0);
+      }
+      image=directRasterRender(mapContent,0,renderedCoverages,interpolation);
     }
  catch (    Exception e) {
       throw new ServiceException("Error rendering coverage on the fast path",e);
@@ -101,9 +106,9 @@
   if (DefaultWebMapService.isLineWidthOptimizationEnabled()) {
     rendererParams.put(StreamingRenderer.LINE_WIDTH_OPTIMIZATION_KEY,true);
   }
-  if (DefaultWebMapService.isAdvancedProjectionHandlingEnabled()) {
+  if (wms.isAdvancedProjectionHandlingEnabled()) {
     rendererParams.put(StreamingRenderer.ADVANCED_PROJECTION_HANDLING_KEY,true);
-    if (DefaultWebMapService.isContinuousMapWrappingEnabled()) {
+    if (wms.isContinuousMapWrappingEnabled()) {
       rendererParams.put(StreamingRenderer.CONTINUOUS_MAP_WRAPPING,true);
     }
   }
@@ -125,6 +130,19 @@
       }
     }
   }
+  if (request.getInterpolations() != null && !request.getInterpolations().isEmpty()) {
+    int count=0;
+    List<Interpolation> interpolations=request.getInterpolations();
+    for (    Layer layer : mapContent.layers()) {
+      if (count < interpolations.size()) {
+        Interpolation interpolation=interpolations.get(count);
+        if (interpolation != null) {
+          layer.getUserData().put(StreamingRenderer.BYLAYER_INTERPOLATION,interpolation);
+        }
+      }
+      count++;
+    }
+  }
   renderer.setRendererHints(rendererParams);
   int maxErrors=wms.getMaxRenderingErrors();
   MaxErrorEnforcer errorChecker=new MaxErrorEnforcer(renderer,maxErrors);
@@ -132,8 +150,28 @@
   nonIgnorableExceptionListener=new RenderExceptionStrategy(renderer);
   renderer.addRenderListener(nonIgnorableExceptionListener);
   onBeforeRender(renderer);
-  int maxRenderingTime=wms.getMaxRenderingTime() * 1000;
-  RenderingTimeoutEnforcer timeout=new RenderingTimeoutEnforcer(maxRenderingTime,renderer,graphic);
+  int localMaxRenderingTime=0;
+  Object timeoutOption=request.getFormatOptions().get("timeout");
+  if (timeoutOption != null) {
+    try {
+      localMaxRenderingTime=Integer.parseInt(timeoutOption.toString());
+    }
+ catch (    NumberFormatException e) {
+      LOGGER.log(Level.WARNING,"Could not parse format_option \"timeout\": " + timeoutOption,e);
+    }
+  }
+  int maxRenderingTime=getMaxRenderingTime(localMaxRenderingTime);
+  ServiceException serviceException=null;
+  boolean saveMap=(request.getRawKvp() != null && WMSServiceExceptionHandler.isPartialMapExceptionType(request.getRawKvp().get("EXCEPTIONS")));
+  RenderingTimeoutEnforcer timeout=new RenderingTimeoutEnforcer(maxRenderingTime,renderer,graphic,saveMap){
+    /** 
+ * Save the map before disposing of the graphics
+ */
+    @Override public void saveMap(){
+      this.map=optimizeAndBuildMap(palette,preparedImage,mapContent);
+    }
+  }
+;
   timeout.start();
   try {
     renderer.paint(graphic,paintArea,mapContent.getRenderingArea(),mapContent.getRenderingTransform());
@@ -145,27 +183,31 @@
         throw new ServiceException("Problem occurred while trying to watermark data",e);
       }
     }
+    timeout.stop();
+    if (errorChecker.exceedsMaxErrors()) {
+      serviceException=new ServiceException("More than " + maxErrors + " rendering errors occurred, bailing out.",errorChecker.getLastException(),"internalError");
+    }
+    if (timeout.isTimedOut()) {
+      serviceException=new ServiceException("This request used more time than allowed and has been forcefully stopped. " + "Max rendering time is " + (maxRenderingTime / 1000.0) + "s");
+    }
+    if (nonIgnorableExceptionListener.exceptionOccurred()) {
+      Exception renderError=nonIgnorableExceptionListener.getException();
+      serviceException=new ServiceException("Rendering process failed",renderError,"internalError");
+    }
+    if (serviceException == null) {
+      return optimizeAndBuildMap(palette,preparedImage,mapContent);
+    }
+ else     if (saveMap) {
+      RenderedImageMap map=(RenderedImageMap)timeout.getMap();
+      if (map == null) {
+        map=optimizeAndBuildMap(palette,preparedImage,mapContent);
+      }
+      serviceException=new WMSPartialMapException(serviceException,map);
+    }
   }
   finally {
     timeout.stop();
     graphic.dispose();
   }
-  if (timeout.isTimedOut()) {
-    throw new ServiceException("This requested used more time than allowed and has been forcefully stopped. " + "Max rendering time is " + (maxRenderingTime / 1000.0) + "s");
-  }
-  if (nonIgnorableExceptionListener.exceptionOccurred()) {
-    Exception renderError=nonIgnorableExceptionListener.getException();
-    throw new ServiceException("Rendering process failed",renderError,"internalError");
-  }
-  if (errorChecker.exceedsMaxErrors()) {
-    throw new ServiceException("More than " + maxErrors + " rendering errors occurred, bailing out.",errorChecker.getLastException(),"internalError");
-  }
-  if (palette != null && palette.getMapSize() < 256) {
-    image=optimizeSampleModel(preparedImage);
-  }
- else {
-    image=preparedImage;
-  }
-  RenderedImageMap map=buildMap(mapContent,image);
-  return map;
+  throw serviceException;
 }

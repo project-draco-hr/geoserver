@@ -1,0 +1,283 @@
+{
+  double scaleDenominator=mapContent.getScaleDenominator(true);
+  Layer layer=mapContent.layers().get(layerIndex);
+  FeatureType featureType=layer.getFeatureSource().getSchema();
+  Style style=layer.getStyle();
+  RasterSymbolizerVisitor visitor=new RasterSymbolizerVisitor(scaleDenominator,featureType);
+  style.accept(visitor);
+  List<RasterSymbolizer> symbolizers=visitor.getRasterSymbolizers();
+  if (symbolizers.size() != 1) {
+    return null;
+  }
+  RasterSymbolizer symbolizer=symbolizers.get(0);
+  Expression transformation=visitor.getRasterRenderingTransformation();
+  final int mapWidth=mapContent.getMapWidth();
+  final int mapHeight=mapContent.getMapHeight();
+  final ReferencedEnvelope mapEnvelope=getEastNorthEnvelope(mapContent.getRenderingArea());
+  final CoordinateReferenceSystem mapCRS=mapEnvelope.getCoordinateReferenceSystem();
+  final Rectangle mapRasterArea=new Rectangle(0,0,mapWidth,mapHeight);
+  final AffineTransform worldToScreen=RendererUtilities.worldToScreenTransform(mapEnvelope,mapRasterArea);
+  final boolean transparent=mapContent.isTransparent() && isTransparencySupported();
+  Color bgColor=mapContent.getBgColor();
+  if (transparent) {
+    bgColor=new Color(bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),0);
+  }
+ else {
+    bgColor=new Color(bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),255);
+  }
+  final Interpolation interpolation;
+  if (layerInterpolation != null) {
+    interpolation=layerInterpolation;
+  }
+ else {
+    if (wms != null) {
+      if (WMSInterpolation.Nearest.equals(wms.getInterpolation())) {
+        interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+      }
+ else       if (WMSInterpolation.Bilinear.equals(wms.getInterpolation())) {
+        interpolation=Interpolation.getInstance(Interpolation.INTERP_BILINEAR);
+      }
+ else       if (WMSInterpolation.Bicubic.equals(wms.getInterpolation())) {
+        interpolation=Interpolation.getInstance(Interpolation.INTERP_BICUBIC);
+      }
+ else {
+        interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+      }
+    }
+ else {
+      interpolation=Interpolation.getInstance(Interpolation.INTERP_NEAREST);
+    }
+  }
+  final int tileSizeX;
+  final int tileSizeY;
+  if (mapContent.getTileSize() != -1) {
+    tileSizeX=tileSizeY=mapContent.getTileSize();
+  }
+ else {
+    tileSizeX=mapContent.getMapWidth();
+    tileSizeY=mapContent.getMapHeight();
+  }
+  RenderedImage image=null;
+  GridCoverage2D coverage=null;
+  RenderingHints interpolationHints=new RenderingHints(JAI.KEY_INTERPOLATION,interpolation);
+  try {
+    final Color readerBgColor=transparent ? null : bgColor;
+    if (transformation == null && wms.isAdvancedProjectionHandlingEnabled()) {
+      final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
+      final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
+      final Object params=feature.getProperty("params").getValue();
+      GeneralParameterValue[] readParameters=getReadParameters(params,null,null,interpolation,readerBgColor);
+      final GridCoverageRenderer gcr=new GridCoverageRenderer(mapEnvelope.getCoordinateReferenceSystem(),mapEnvelope,mapRasterArea,worldToScreen,interpolationHints);
+      gcr.setAdvancedProjectionHandlingEnabled(true);
+      gcr.setWrapEnabled(wms.isContinuousMapWrappingEnabled());
+      image=gcr.renderImage(reader,readParameters,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
+      if (image == null) {
+        image=createBkgImage(mapWidth,mapHeight,bgColor,null);
+      }
+    }
+ else {
+      final CoordinateReferenceSystem coverageCRS=layer.getFeatureSource().getSchema().getCoordinateReferenceSystem();
+      final GridGeometry2D readGG;
+      final boolean equalsMetadata=CRS.equalsIgnoreMetadata(mapCRS,coverageCRS);
+      boolean sameCRS;
+      try {
+        sameCRS=equalsMetadata ? true : CRS.findMathTransform(mapCRS,coverageCRS,true).isIdentity();
+      }
+ catch (      FactoryException e1) {
+        final IOException ioe=new IOException();
+        ioe.initCause(e1);
+        throw ioe;
+      }
+      final boolean needsGutter=!sameCRS || !(interpolation instanceof InterpolationNearest);
+      if (!needsGutter) {
+        readGG=new GridGeometry2D(new GridEnvelope2D(mapRasterArea),mapEnvelope);
+      }
+ else {
+        Rectangle bufferedTargetArea=(Rectangle)mapRasterArea.clone();
+        bufferedTargetArea.add(mapRasterArea.x + mapRasterArea.width + 10,mapRasterArea.y + mapRasterArea.height + 10);
+        bufferedTargetArea.add(mapRasterArea.x - 10,mapRasterArea.y - 10);
+        try {
+          readGG=new GridGeometry2D(new GridEnvelope2D(bufferedTargetArea),PixelInCell.CELL_CORNER,new AffineTransform2D(worldToScreen.createInverse()),mapCRS,null);
+        }
+ catch (        Exception e) {
+          throw new IOException(e);
+        }
+      }
+      if (transformation != null) {
+        RenderingTransformationHelper helper=new RenderingTransformationHelper(){
+          protected GridCoverage2D readCoverage(          GridCoverage2DReader reader,          Object params,          GridGeometry2D readGG) throws IOException {
+            return readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
+          }
+        }
+;
+        Object result=helper.applyRenderingTransformation(transformation,layer.getFeatureSource(),layer.getQuery(),Query.ALL,readGG,coverageCRS,interpolationHints);
+        if (result == null) {
+          coverage=null;
+        }
+ else         if (result instanceof GridCoverage2D) {
+          coverage=(GridCoverage2D)result;
+        }
+ else {
+          return null;
+        }
+      }
+ else {
+        final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
+        final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
+        final Object params=feature.getProperty("params").getValue();
+        coverage=readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
+        if (coverage == null) {
+          image=createBkgImage(mapWidth,mapHeight,bgColor,null);
+        }
+      }
+      if (image == null) {
+        final GridCoverageRenderer gcr=new GridCoverageRenderer(mapCRS,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),worldToScreen,interpolationHints);
+        gcr.setAdvancedProjectionHandlingEnabled(false);
+        image=gcr.renderImage(coverage,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
+      }
+    }
+  }
+ catch (  Throwable e) {
+    throw new ServiceException(e);
+  }
+  if (image == null) {
+    return null;
+  }
+  final Rectangle imageBounds=PlanarImage.wrapRenderedImage(image).getBounds();
+  final ImageLayout layout=new ImageLayout();
+  layout.setMinX(0);
+  layout.setMinY(0);
+  layout.setWidth(mapWidth);
+  layout.setHeight(mapHeight);
+  layout.setTileGridXOffset(0);
+  layout.setTileGridYOffset(0);
+  layout.setTileWidth(tileSizeX);
+  layout.setTileHeight(tileSizeY);
+  ColorModel cm=image.getColorModel();
+  double[] bgValues=null;
+  PlanarImage[] alphaChannels=null;
+  final ImageWorker worker=new ImageWorker(image);
+  final int transparencyType=cm.getTransparency();
+  if (cm instanceof IndexColorModel) {
+    IndexColorModel icm=(IndexColorModel)cm;
+    final int bgColorIndex;
+    if (transparent) {
+      bgColorIndex=icm.getTransparentPixel();
+    }
+ else {
+      if (icm.hasAlpha() && icm.isAlphaPremultiplied()) {
+        bgColorIndex=-1;
+      }
+ else {
+        if (icm.getTransparency() != Transparency.OPAQUE) {
+          icm=ColorUtilities.applyBackgroundColor(icm,bgColor);
+          cm=icm;
+          ImageLayout ilColorModel=new ImageLayout(image);
+          ilColorModel.setColorModel(icm);
+          RenderingHints hints=new RenderingHints(JAI.KEY_IMAGE_LAYOUT,ilColorModel);
+          worker.setRenderingHints(hints);
+          worker.format(image.getSampleModel().getDataType());
+          image=worker.getRenderedImage();
+        }
+        bgColorIndex=ColorUtilities.findColorIndex(bgColor,icm);
+      }
+    }
+    if (bgColorIndex == -1) {
+      image=worker.forceComponentColorModel().getRenderedImage();
+      if (transparent) {
+        image=addAlphaChannel(image);
+        worker.setImage(image);
+      }
+      bgValues=new double[]{bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),transparent ? 0 : 255};
+      cm=image.getColorModel();
+    }
+ else {
+      bgValues=new double[]{bgColorIndex};
+    }
+    if (cm.hasAlpha() && bgColorIndex == -1) {
+      worker.forceComponentColorModel();
+      final RenderedImage alpha=worker.retainLastBand().getRenderedImage();
+      alphaChannels=new PlanarImage[]{PlanarImage.wrapRenderedImage(alpha)};
+    }
+  }
+  if (cm instanceof ComponentColorModel) {
+    ComponentColorModel ccm=(ComponentColorModel)cm;
+    boolean hasAlpha=cm.hasAlpha();
+    if (ccm.getNumColorComponents() == 1) {
+      if ((!isLevelOfGray(bgColor) && !transparent) || (ccm.getTransferType() == DataBuffer.TYPE_DOUBLE || ccm.getTransferType() == DataBuffer.TYPE_FLOAT || ccm.getTransferType() == DataBuffer.TYPE_UNDEFINED)) {
+        final ImageWorker iw=new ImageWorker(image);
+        if (hasAlpha) {
+          final RenderedImage alpha=iw.retainLastBand().getRenderedImage();
+          final RenderedImage gray=new ImageWorker(image).retainFirstBand().getRenderedImage();
+          image=new ImageWorker(gray).bandMerge(3).addBand(alpha,false).forceComponentColorModel().forceColorSpaceRGB().getRenderedImage();
+        }
+ else {
+          image=iw.bandMerge(3).forceComponentColorModel().forceColorSpaceRGB().getRenderedImage();
+        }
+      }
+ else       if (!hasAlpha) {
+        if (transparent) {
+          image=addAlphaChannel(image);
+          bgValues=new double[]{mapToGrayColor(bgColor,ccm),0};
+        }
+ else {
+          bgValues=new double[]{mapToGrayColor(bgColor,ccm)};
+        }
+      }
+ else {
+        final ImageWorker iw=new ImageWorker(image);
+        final RenderedImage alpha=iw.retainLastBand().getRenderedImage();
+        alphaChannels=new PlanarImage[]{PlanarImage.wrapRenderedImage(alpha)};
+        if (transparent) {
+          bgValues=new double[]{mapToGrayColor(bgColor,ccm),0};
+        }
+ else {
+          bgValues=new double[]{mapToGrayColor(bgColor,ccm),255};
+        }
+      }
+      cm=image.getColorModel();
+      ccm=(ComponentColorModel)cm;
+      hasAlpha=cm.hasAlpha();
+    }
+    if (bgValues == null) {
+      if (hasAlpha) {
+        final ImageWorker iw=new ImageWorker(image);
+        final RenderedImage alpha=iw.retainLastBand().getRenderedImage();
+        alphaChannels=new PlanarImage[]{PlanarImage.wrapRenderedImage(alpha)};
+        if (transparent) {
+          bgValues=new double[]{bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),0};
+        }
+ else {
+          bgValues=new double[]{bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue(),255};
+        }
+      }
+ else {
+        if (transparent) {
+          image=addAlphaChannel(image);
+          bgValues=new double[]{0,0,0,0};
+        }
+ else {
+          bgValues=new double[]{bgColor.getRed(),bgColor.getGreen(),bgColor.getBlue()};
+        }
+      }
+    }
+  }
+  if (!(imageBounds.contains(mapRasterArea) || imageBounds.equals(mapRasterArea)) || transparencyType != Transparency.OPAQUE) {
+    ROI[] rois=new ROI[]{new ROIShape(imageBounds)};
+    double[][] thresholds=new double[][]{{ColorUtilities.getThreshold(image.getSampleModel().getDataType())}};
+    ImageWorker w=new ImageWorker(image);
+    w.setRenderingHint(JAI.KEY_IMAGE_LAYOUT,layout);
+    w.setBackground(bgValues);
+    w.mosaic(new RenderedImage[]{image},alphaChannels != null && transparencyType == Transparency.TRANSLUCENT ? MosaicDescriptor.MOSAIC_TYPE_BLEND : MosaicDescriptor.MOSAIC_TYPE_OVERLAY,alphaChannels,rois,thresholds,null);
+    image=w.getRenderedImage();
+  }
+ else {
+    if (imageBounds.contains(mapRasterArea) && !imageBounds.equals(mapRasterArea)) {
+      ImageWorker iw=new ImageWorker(image);
+      iw.setBackground(bgValues);
+      iw.crop(0,0,mapWidth,mapHeight);
+      image=iw.getRenderedImage();
+    }
+  }
+  return image;
+}

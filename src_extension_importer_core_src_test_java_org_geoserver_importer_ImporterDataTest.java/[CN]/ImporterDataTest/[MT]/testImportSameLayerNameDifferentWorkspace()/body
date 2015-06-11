@@ -1,0 +1,16 @@
+{
+  File dir=tmpDir();
+  unpack("shape/archsites_epsg_prj.zip",dir);
+  new File(dir,"archsites.sbn").createNewFile();
+  new File(dir,"archsites.sbx").createNewFile();
+  new File(dir,"archsites.shp.xml").createNewFile();
+  Catalog cat=getCatalog();
+  WorkspaceInfo ws1=createWorkspace(cat,"ws1");
+  ImportContext context=importer.createContext(new Directory(dir),ws1);
+  importer.run(context);
+  assertNotNull(cat.getLayerByName("ws1:archsites"));
+  WorkspaceInfo ws2=createWorkspace(cat,"ws2");
+  context=importer.createContext(new Directory(dir),ws2);
+  importer.run(context);
+  assertNotNull(cat.getLayerByName("ws2:archsites"));
+}

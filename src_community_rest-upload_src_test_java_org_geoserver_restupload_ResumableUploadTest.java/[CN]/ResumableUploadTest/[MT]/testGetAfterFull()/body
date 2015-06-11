@@ -1,0 +1,16 @@
+{
+  String uploadId=sendPostRequest();
+  File uploadedFile=getTempPath(uploadId);
+  assertTrue(uploadedFile.exists());
+  MockHttpServletRequest request=createRequest("/rest/resumableupload/" + uploadId);
+  request.setMethod("PUT");
+  request.setContentType("application/octet-stream");
+  byte[] bigFile=generateFileAsBytes();
+  request.setBodyContent(bigFile);
+  request.setHeader("Content-type","application/octet-stream");
+  request.setHeader("Content-Length",String.valueOf(bigFile.length));
+  MockHttpServletResponse response=dispatch(request);
+  assertEquals(Status.SUCCESS_OK.getCode(),response.getStatusCode());
+  File sidecarFile=new File(FilenameUtils.concat(tmpUploadFolder.dir().getCanonicalPath(),uploadId + ".sidecar"));
+  assertTrue(sidecarFile.exists());
+}

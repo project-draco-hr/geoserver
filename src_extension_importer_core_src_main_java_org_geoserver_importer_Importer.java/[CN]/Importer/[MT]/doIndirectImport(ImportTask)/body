@@ -44,7 +44,19 @@
     }
   }
  else {
-    throw new UnsupportedOperationException("Indirect raster import not yet supported");
+    StoreInfo store=task.getStore();
+    final String errorMessage="Indirect raster import can only work against a structured grid coverage store (e.g., mosaic), this one is not: ";
+    if (!(store instanceof CoverageStoreInfo)) {
+      throw new IllegalArgumentException(errorMessage + store);
+    }
+    CoverageStoreInfo cs=(CoverageStoreInfo)store;
+    GridCoverageReader reader=cs.getGridCoverageReader(null,null);
+    if (!(reader instanceof StructuredGridCoverage2DReader)) {
+      throw new IllegalArgumentException(errorMessage + store);
+    }
+    StructuredGridCoverage2DReader sr=(StructuredGridCoverage2DReader)reader;
+    ImportData data=task.getData();
+    harvestImportData(sr,data);
   }
   if (!canceled && !doPostTransform(task,task.getData(),tx)) {
     return;

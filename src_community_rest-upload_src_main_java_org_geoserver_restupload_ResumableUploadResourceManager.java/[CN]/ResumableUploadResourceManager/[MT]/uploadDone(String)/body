@@ -1,0 +1,14 @@
+{
+  ResumableUploadResource resource=getResource(uploadId);
+  Map<String,String> storeParams=new HashMap<String,String>();
+  String destinationPath=getDestinationPath(uploadId);
+  StringBuilder remappingPath=new StringBuilder(destinationPath);
+  String tempFile=resource.getFile().getCanonicalPath();
+  RESTUtils.remapping(null,FilenameUtils.getBaseName(destinationPath),remappingPath,tempFile,storeParams);
+  File destinationFile=new File(remappingPath.toString());
+  destinationFile.getParentFile().mkdirs();
+  IOUtils.copyFile(resource.getFile(),destinationFile);
+  resource.delete();
+  getSideCarFile(uploadId).createNewFile();
+  return destinationPath.toString();
+}

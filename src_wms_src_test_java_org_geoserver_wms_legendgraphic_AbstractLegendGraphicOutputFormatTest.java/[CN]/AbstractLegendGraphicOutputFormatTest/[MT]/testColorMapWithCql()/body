@@ -1,0 +1,53 @@
+{
+  Style style=readSLD("ColorMapWithCql.sld");
+  assertNotNull(style.featureTypeStyles());
+  assertEquals(1,style.featureTypeStyles().size());
+  FeatureTypeStyle fts=style.featureTypeStyles().get(0);
+  assertNotNull(fts.rules());
+  assertEquals(1,fts.rules().size());
+  Rule rule=fts.rules().get(0);
+  assertNotNull(rule.symbolizers());
+  assertEquals(1,rule.symbolizers().size());
+  assertTrue(rule.symbolizers().get(0) instanceof RasterSymbolizer);
+  RasterSymbolizer symbolizer=(RasterSymbolizer)rule.symbolizers().get(0);
+  assertNotNull(symbolizer.getColorMap());
+  assertEquals(3,symbolizer.getColorMap().getColorMapEntries().length);
+  ColorMapEntry[] entries=symbolizer.getColorMap().getColorMapEntries();
+  Color color=LegendUtils.color(entries[0]);
+  int red=color.getRed();
+  assertEquals(255,red);
+  int green=color.getGreen();
+  assertEquals(0,green);
+  int blue=color.getBlue();
+  assertEquals(0,blue);
+  double quantity=LegendUtils.getQuantity(entries[1]);
+  assertEquals(20.0,quantity,0.0);
+  double opacity=LegendUtils.getOpacity(entries[2]);
+  assertEquals(0.5,opacity,0.0);
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  CoverageInfo cInfo=getCatalog().getCoverageByName("world");
+  assertNotNull(cInfo);
+  GridCoverage coverage=cInfo.getGridCoverage(null,null);
+  try {
+    SimpleFeatureCollection feature;
+    feature=FeatureUtilities.wrapGridCoverage((GridCoverage2D)coverage);
+    req.setLayer(feature.getSchema());
+    req.setStyle(style);
+    req.setLegendOptions(new HashMap());
+    final int HEIGHT_HINT=30;
+    req.setHeight(HEIGHT_HINT);
+    this.legendProducer.buildLegendGraphic(req);
+    BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+    assertNotBlank("testColorMapWithCql",image,LegendUtils.DEFAULT_BG_COLOR);
+    assertNotBlank("testColorMapWithCql",image,LegendUtils.DEFAULT_BG_COLOR);
+  }
+  finally {
+    RenderedImage ri=coverage.getRenderedImage();
+    if (coverage instanceof GridCoverage2D) {
+      ((GridCoverage2D)coverage).dispose(true);
+    }
+    if (ri instanceof PlanarImage) {
+      ImageUtilities.disposePlanarImageChain((PlanarImage)ri);
+    }
+  }
+}

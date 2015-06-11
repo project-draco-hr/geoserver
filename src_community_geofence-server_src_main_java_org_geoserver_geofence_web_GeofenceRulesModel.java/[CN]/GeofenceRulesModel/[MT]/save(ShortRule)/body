@@ -1,0 +1,21 @@
+{
+  if (rule.getId() == null) {
+    shiftIfNecessary(rule.getPriority(),rule);
+    int i=0;
+    while (i < rules.size() && rules.get(i).getPriority() < rule.getPriority()) {
+      i++;
+    }
+    rules.add(i,rule);
+    Rule bigRule=new Rule();
+    syncRule(rule,bigRule);
+    rule.setId(adminService().insert(bigRule));
+  }
+ else {
+    Rule bigRule=adminService().get(rule.getId());
+    if (bigRule.getPriority() != rule.getPriority()) {
+      shiftIfNecessary(rule.getPriority(),rule);
+    }
+    syncRule(rule,bigRule);
+    adminService().update(bigRule);
+  }
+}

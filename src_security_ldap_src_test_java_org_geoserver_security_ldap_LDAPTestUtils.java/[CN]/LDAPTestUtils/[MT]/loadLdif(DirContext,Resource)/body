@@ -1,0 +1,18 @@
+{
+  try {
+    DistinguishedName baseDn=(DistinguishedName)context.getEnvironment().get(DefaultDirObjectFactory.JNDI_ENV_BASE_PATH_KEY);
+    LdifParser parser=new LdifParser(ldifFile);
+    parser.open();
+    while (parser.hasMoreRecords()) {
+      LdapAttributes record=parser.getRecord();
+      DistinguishedName dn=record.getDN();
+      if (baseDn != null) {
+        dn.removeFirst(baseDn);
+      }
+      context.bind(dn,null,record);
+    }
+  }
+ catch (  NamingException e) {
+    throw new RuntimeException("Failed to populate LDIF",e);
+  }
+}

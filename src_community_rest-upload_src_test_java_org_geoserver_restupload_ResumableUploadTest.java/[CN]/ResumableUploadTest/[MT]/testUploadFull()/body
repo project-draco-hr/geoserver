@@ -1,0 +1,22 @@
+{
+  String uploadId=sendPostRequest();
+  File uploadedFile=getTempPath(uploadId);
+  assertTrue(uploadedFile.exists());
+  MockHttpServletRequest request=createRequest("/rest/resumableupload/" + uploadId);
+  request.setMethod("PUT");
+  request.setContentType("application/octet-stream");
+  byte[] bigFile=generateFileAsBytes();
+  request.setBodyContent(bigFile);
+  request.setHeader("Content-type","application/octet-stream");
+  request.setHeader("Content-Length",String.valueOf(bigFile.length));
+  MockHttpServletResponse response=dispatch(request);
+  assertEquals(Status.SUCCESS_OK.getCode(),response.getStatusCode());
+  assertFalse(uploadedFile.exists());
+  File destinationFile=new File(FilenameUtils.concat(root,fileName.replaceAll("^/","")));
+  assertTrue(destinationFile.exists());
+  assertEquals(bigFile.length,destinationFile.length());
+  boolean checkBytes=Arrays.equals(bigFile,toBytes(new FileInputStream(destinationFile)));
+  assertTrue(checkBytes);
+  String restUrl=response.getOutputStreamContent();
+  assertEquals(fileName.replaceAll("^/",""),restUrl);
+}

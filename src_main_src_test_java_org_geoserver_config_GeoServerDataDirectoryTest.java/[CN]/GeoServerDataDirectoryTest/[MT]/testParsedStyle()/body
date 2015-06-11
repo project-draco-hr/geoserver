@@ -1,0 +1,21 @@
+{
+  File styleDir=new File(dataDir.root(),"styles");
+  styleDir.mkdir();
+  File styleFile=new File(styleDir,"external.sld");
+  Files.copy(this.getClass().getResourceAsStream("external.sld"),styleFile.toPath());
+  File iconFile=new File(styleDir,"icon.png");
+  assertFalse(iconFile.exists());
+  StyleInfoImpl si=new StyleInfoImpl(null);
+  si.setName("");
+  si.setId("");
+  si.setFormat("sld");
+  si.setFormatVersion(new Version("1.0.0"));
+  si.setFilename(styleFile.getName());
+  Style s=dataDir.parsedStyle(si);
+  Symbolizer symbolizer=s.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0);
+  assertTrue(symbolizer instanceof PointSymbolizer);
+  GraphicalSymbol graphic=((PointSymbolizer)symbolizer).getGraphic().graphicalSymbols().get(0);
+  assertTrue(graphic instanceof ExternalGraphic);
+  assertEquals(((ExternalGraphic)graphic).getLocation(),iconFile.toURI().toURL());
+  assertFalse(iconFile.exists());
+}

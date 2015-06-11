@@ -1,11 +1,16 @@
 {
   GeoServerSecurityManager secMgr=getSecurityManager();
   File f=File.createTempFile("masterpw","info");
-  assertFalse(secMgr.dumpMasterPassword(f));
-  TestingAuthenticationToken auth=new TestingAuthenticationToken("admin","geoserver",(List)Arrays.asList(GeoServerRole.ADMIN_ROLE));
-  auth.setAuthenticated(true);
-  SecurityContextHolder.getContext().setAuthentication(auth);
-  assertTrue(secMgr.dumpMasterPassword(f));
-  dumpPWInfoFile(f);
-  assertTrue(masterPWInfoFileContains(f,new String(secMgr.getMasterPassword())));
+  try {
+    assertFalse(secMgr.dumpMasterPassword(f));
+    TestingAuthenticationToken auth=new TestingAuthenticationToken("admin","geoserver",(List)Arrays.asList(GeoServerRole.ADMIN_ROLE));
+    auth.setAuthenticated(true);
+    SecurityContextHolder.getContext().setAuthentication(auth);
+    assertTrue(secMgr.dumpMasterPassword(f));
+    dumpPWInfoFile(f);
+    assertTrue(masterPWInfoFileContains(f,new String(secMgr.getMasterPassword())));
+  }
+  finally {
+    f.delete();
+  }
 }

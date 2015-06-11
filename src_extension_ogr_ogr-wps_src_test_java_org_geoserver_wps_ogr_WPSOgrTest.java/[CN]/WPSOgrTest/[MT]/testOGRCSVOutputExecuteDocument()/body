@@ -1,0 +1,20 @@
+{
+  File configuration=null;
+  try {
+    configuration=loadConfiguration();
+    Ogr2OgrConfigurator configurator=applicationContext.getBean(Ogr2OgrConfigurator.class);
+    configurator.loadConfiguration();
+    MockHttpServletResponse r=postAsServletResponse("wps",getWpsRawXML("text/csv; subtype=OGR-CSV"));
+    assertEquals("text/csv; subtype=OGR-CSV",r.getContentType());
+    assertTrue(r.getOutputStreamContent().length() > 0);
+    assertTrue(r.getOutputStreamContent().contains("WKT,gml_id,STATE_NAME"));
+  }
+ catch (  IOException e) {
+    System.err.println(e.getStackTrace());
+  }
+ finally {
+    if (configuration != null) {
+      configuration.delete();
+    }
+  }
+}

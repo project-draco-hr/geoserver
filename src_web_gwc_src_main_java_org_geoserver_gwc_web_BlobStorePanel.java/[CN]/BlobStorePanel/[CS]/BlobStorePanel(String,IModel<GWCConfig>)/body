@@ -1,0 +1,124 @@
+{
+  super(id,gwcConfigModel);
+  values=new HashMap<String,String>();
+  IModel<Map<String,CacheConfiguration>> cacheConfigurations=new PropertyModel<Map<String,CacheConfiguration>>(gwcConfigModel,"cacheConfigurations");
+  IModel<Boolean> innerCachingEnabled=new PropertyModel<Boolean>(gwcConfigModel,"innerCachingEnabled");
+  final CheckBox innerCachingEnabledChoice=new CheckBox("innerCachingEnabled",innerCachingEnabled);
+  final WebMarkupContainer container=new WebMarkupContainer("container");
+  container.setOutputMarkupId(true).setEnabled(true);
+  final CacheConfigContainerWrapper cacheConfigContainer=new CacheConfigContainerWrapper("cacheConfContainer",gwcConfigModel.getObject().getCacheProviderClass(),gwcConfigModel);
+  cacheConfigContainer.setOutputMarkupId(true);
+  IModel<Boolean> persistenceEnabled=new PropertyModel<Boolean>(gwcConfigModel,"persistenceEnabled");
+  final CheckBox persistenceEnabledChoice=new CheckBox("persistenceEnabled",persistenceEnabled);
+  boolean visible=innerCachingEnabledChoice.getModelObject() == null ? false : innerCachingEnabledChoice.getModelObject();
+  container.setVisible(visible);
+  final DropDownChoice<String> choice;
+  final ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
+  if (store != null) {
+    final Map<String,String> cacheProviders=store.getCacheProvidersNames();
+    final IModel<String> providerClass=new PropertyModel<String>(gwcConfigModel,"cacheProviderClass");
+    IChoiceRenderer<String> renderer=new CacheProviderRenderer(cacheProviders);
+    choice=new DropDownChoice<String>("caches",providerClass,new ArrayList<String>(cacheProviders.keySet()),renderer);
+    choice.add(new AjaxFormComponentUpdatingBehavior("onChange"){
+      @Override protected void onUpdate(      AjaxRequestTarget target){
+        ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
+        String cacheClass=providerClass.getObject();
+        boolean immutable=false;
+        if (store != null) {
+          immutable=store.getCacheProviders().get(cacheClass).isImmutable();
+        }
+        cacheConfigContainer.setEnabled(!immutable);
+        if (!immutable) {
+          if (!gwcConfigModel.getObject().getCacheConfigurations().containsKey(cacheClass)) {
+            gwcConfigModel.getObject().getCacheConfigurations().put(cacheClass,new CacheConfiguration());
+          }
+          cacheConfigContainer.setMapKey(cacheClass,gwcConfigModel);
+        }
+        target.addComponent(cacheConfigContainer);
+      }
+    }
+);
+    cacheConfigContainer.setEnabled(!store.getCacheProviders().get(providerClass.getObject()).isImmutable());
+  }
+ else {
+    choice=new DropDownChoice<String>("caches",new ArrayList<String>());
+  }
+  container.add(choice);
+  persistenceEnabledChoice.setOutputMarkupId(true).setEnabled(true);
+  container.add(cacheConfigContainer);
+  innerCachingEnabledChoice.add(new AjaxFormComponentUpdatingBehavior("onChange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      boolean isVisible=innerCachingEnabledChoice.getModelObject() == null ? false : innerCachingEnabledChoice.getModelObject();
+      container.setVisible(isVisible);
+      target.addComponent(container.getParent());
+    }
+  }
+);
+  add(innerCachingEnabledChoice);
+  container.add(persistenceEnabledChoice);
+  add(container);
+  Button clearCache=new Button("cacheClear"){
+    @Override public void onSubmit(){
+      final ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
+      if (store != null) {
+        store.clearCache();
+      }
+    }
+  }
+;
+  container.add(clearCache);
+  final WebMarkupContainer statsContainer=new WebMarkupContainer("statsContainer");
+  statsContainer.setOutputMarkupId(true);
+  final Label totalCountLabel=new Label("totalCount",new MapModel(values,KEY_TOTAL_COUNT));
+  final Label hitCountLabel=new Label("hitCount",new MapModel(values,KEY_HIT_COUNT));
+  final Label missCountLabel=new Label("missCount",new MapModel(values,KEY_MISS_COUNT));
+  final Label missRateLabel=new Label("missRate",new MapModel(values,KEY_MISS_RATE));
+  final Label hitRateLabel=new Label("hitRate",new MapModel(values,KEY_HIT_RATE));
+  final Label evictedLabel=new Label("evicted",new MapModel(values,KEY_EVICTED));
+  final Label currentMemoryLabel=new Label("currentMemory",new MapModel(values,KEY_CURRENT_MEM));
+  final Label cacheSizeLabel=new Label("cacheSize",new MapModel(values,KEY_SIZE));
+  statsContainer.add(new Label("title"));
+  statsContainer.add(totalCountLabel);
+  statsContainer.add(hitCountLabel);
+  statsContainer.add(missCountLabel);
+  statsContainer.add(missRateLabel);
+  statsContainer.add(hitRateLabel);
+  statsContainer.add(evictedLabel);
+  statsContainer.add(currentMemoryLabel);
+  statsContainer.add(cacheSizeLabel);
+  AjaxButton statistics=new AjaxButton("statistics"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      try {
+        final ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
+        if (store != null) {
+          CacheStatistics stats=store.getCacheStatistics();
+          long hitCount=stats.getHitCount();
+          long missCount=stats.getMissCount();
+          long total=stats.getRequestCount();
+          double hitRate=stats.getHitRate();
+          double missRate=stats.getMissRate();
+          long evicted=stats.getEvictionCount();
+          double currentMem=stats.getCurrentMemoryOccupation();
+          long byteToMb=1024 * 1024;
+          double actualSize=((long)(100 * (stats.getActualSize() * 1.0d) / byteToMb)) / 100d;
+          double totalSize=((long)(100 * (stats.getTotalSize() * 1.0d) / byteToMb)) / 100d;
+          values.put(KEY_MISS_RATE,missRate >= 0 ? missRate + " %" : "Unavailable");
+          values.put(KEY_HIT_RATE,hitRate >= 0 ? hitRate + " %" : "Unavailable");
+          values.put(KEY_EVICTED,evicted >= 0 ? evicted + "" : "Unavailable");
+          values.put(KEY_TOTAL_COUNT,total >= 0 ? total + "" : "Unavailable");
+          values.put(KEY_MISS_COUNT,missCount >= 0 ? missCount + "" : "Unavailable");
+          values.put(KEY_HIT_COUNT,hitCount >= 0 ? hitCount + "" : "Unavailable");
+          values.put(KEY_CURRENT_MEM,currentMem >= 0 ? currentMem + " %" : "Unavailable");
+          values.put(KEY_SIZE,currentMem >= 0 && actualSize >= 0 ? actualSize + " / " + totalSize+ " Mb" : "Unavailable");
+        }
+      }
+ catch (      Throwable t) {
+        error(t);
+      }
+      target.addComponent(statsContainer);
+    }
+  }
+;
+  container.add(statsContainer);
+  container.add(statistics);
+}

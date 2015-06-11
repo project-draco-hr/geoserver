@@ -1,5 +1,31 @@
 {
-  CacheProvider cacheProvider=GeoServerExtensions.bean(CacheProvider.class);
+  CacheProvider cacheProvider=null;
+  String providerNames=GeoServerExtensions.getProperty(BEAN_NAME_PROPERTY);
+  if (providerNames != null) {
+    for (    String providerName : providerNames.split("\\s*,\\s*")) {
+      cacheProvider=(CacheProvider)(CacheProvider)GeoServerExtensions.bean(providerName);
+      if (cacheProvider != null) {
+        LOGGER.log(Level.INFO,"Using specified Cache Provider ",providerName);
+        break;
+      }
+    }
+    if (cacheProvider == null) {
+      LOGGER.log(Level.INFO,"{0} was specified but no beans matched it.",BEAN_NAME_PROPERTY);
+    }
+  }
+  if (cacheProvider == null) {
+    try {
+      cacheProvider=GeoServerExtensions.bean(CacheProvider.class);
+    }
+ catch (    MultipleBeansException ex) {
+      String providerName=ex.getAvailableBeans().iterator().next();
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        String available=StringUtils.join(ex.getAvailableBeans(),", ");
+        LOGGER.log(Level.WARNING,"Multiple Cache Providers in context: {0}\n\tUsing {1}.  Override by setting system property {2}",new Object[]{available,providerName,BEAN_NAME_PROPERTY});
+      }
+      cacheProvider=(CacheProvider)(CacheProvider)GeoServerExtensions.bean(providerName);
+    }
+  }
   if (cacheProvider == null) {
     cacheProvider=new DefaultCacheProvider();
   }

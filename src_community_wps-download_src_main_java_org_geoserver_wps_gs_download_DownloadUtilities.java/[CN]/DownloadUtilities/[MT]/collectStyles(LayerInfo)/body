@@ -1,24 +1,18 @@
 {
-  final List<File> styles=new ArrayList<File>();
+  final List<File> styleFiles=new ArrayList<File>();
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.log(Level.FINE,"Searching for default style");
   }
-  final StyleInfo style=layerInfo.getDefaultStyle();
-  File styleFile=findStyle(style);
-  if (styleFile != null) {
-    styles.add(styleFile);
+  LinkedHashSet<StyleInfo> styles=new LinkedHashSet<>();
+  styles.add(layerInfo.getDefaultStyle());
+  if (layerInfo.getStyles() != null) {
+    styles.addAll(layerInfo.getStyles());
   }
-  if (LOGGER.isLoggable(Level.FINE)) {
-    LOGGER.log(Level.FINE,"Searching for other styles");
-  }
-  final Set<StyleInfo> otherStyles=layerInfo.getStyles();
-  if (otherStyles != null && !otherStyles.isEmpty()) {
-    for (    StyleInfo si : otherStyles) {
-      styleFile=findStyle(si);
-      if (styleFile != null) {
-        styles.add(styleFile);
-      }
+  for (  StyleInfo si : styles) {
+    File styleFile=findStyle(si);
+    if (styleFile != null) {
+      styleFiles.add(styleFile);
     }
   }
-  return styles;
+  return styleFiles;
 }

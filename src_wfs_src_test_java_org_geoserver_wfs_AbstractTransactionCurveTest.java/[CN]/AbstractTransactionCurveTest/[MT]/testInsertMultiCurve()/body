@@ -1,0 +1,15 @@
+{
+  String xml=IOUtils.toString(getClass().getResourceAsStream("insertMultiCurve.xml"));
+  Document dom=postAsDOM("wfs",xml);
+  checkSuccesfulTransaction(dom,1,0,0);
+  SimpleFeature first=getSingleFeature(CURVEMULTILINES,"MNew");
+  Geometry g=(Geometry)first.getDefaultGeometry();
+  assertTrue(g instanceof MultiLineString);
+  MultiLineString mc=(MultiLineString)g;
+  LineString ls=(LineString)mc.getGeometryN(0);
+  assertEquals(2,ls.getNumPoints());
+  assertEquals(new Coordinate(0,0),ls.getCoordinateN(0));
+  assertEquals(new Coordinate(5,5),ls.getCoordinateN(1));
+  CircularString cs=(CircularString)mc.getGeometryN(1);
+  assertArrayEquals(new double[]{4,0,4,4,8,4},cs.getControlPoints(),0d);
+}

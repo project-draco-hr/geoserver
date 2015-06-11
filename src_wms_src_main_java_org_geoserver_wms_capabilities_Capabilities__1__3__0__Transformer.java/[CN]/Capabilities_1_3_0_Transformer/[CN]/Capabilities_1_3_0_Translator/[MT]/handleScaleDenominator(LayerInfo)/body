@@ -1,13 +1,14 @@
 {
   try {
-    final String MIN_SCALE_DENOMINATOR="MinScaleDenominator";
-    final String MAX_SCALE_DENOMINATOR="MaxScaleDenominator";
-    Map<String,Double> denominators=CapabilityUtil.searchMinMaxScaleDenominator(MIN_SCALE_DENOMINATOR,MAX_SCALE_DENOMINATOR,layer);
-    if (denominators.get(MIN_SCALE_DENOMINATOR) != 0.0) {
-      element(MIN_SCALE_DENOMINATOR,String.valueOf(denominators.get(MIN_SCALE_DENOMINATOR)));
+    NumberRange<Double> scaleDenominators=CapabilityUtil.searchMinMaxScaleDenominator(layer);
+    for (    ExtendedCapabilitiesProvider provider : extCapsProviders) {
+      scaleDenominators=provider.overrideScaleDenominators(layer,scaleDenominators);
     }
-    if (denominators.get(MAX_SCALE_DENOMINATOR) != Double.POSITIVE_INFINITY) {
-      element(MAX_SCALE_DENOMINATOR,String.valueOf(denominators.get(MAX_SCALE_DENOMINATOR)));
+    if (scaleDenominators.getMinimum() != 0.0) {
+      element("MinScaleDenominator",String.valueOf(scaleDenominators.getMinimum()));
+    }
+    if (scaleDenominators.getMaximum() != Double.POSITIVE_INFINITY) {
+      element("MaxScaleDenominator",String.valueOf(scaleDenominators.getMaximum()));
     }
   }
  catch (  IOException e) {

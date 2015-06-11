@@ -1,0 +1,26 @@
+{
+  List<Interpolation> interpolations=new ArrayList<Interpolation>();
+  for (int i=0; i < requestedLayers.size(); i++) {
+    Interpolation interpolation=null;
+    if (i < interpolationList.size()) {
+      String interpolationName=interpolationList.get(i);
+      if (!interpolationName.trim().equals("")) {
+        interpolation=getInterpolationObject(interpolationName);
+      }
+    }
+    Object o=requestedLayers.get(i);
+    if (o instanceof LayerInfo) {
+      interpolations.add(interpolation);
+    }
+ else     if (o instanceof LayerGroupInfo) {
+      List<LayerInfo> subLayers=((LayerGroupInfo)o).layers();
+      for (      LayerInfo layer : subLayers) {
+        interpolations.add(interpolation);
+      }
+    }
+ else {
+      throw new IllegalArgumentException("Unknown layer info type: " + o);
+    }
+  }
+  return interpolations;
+}

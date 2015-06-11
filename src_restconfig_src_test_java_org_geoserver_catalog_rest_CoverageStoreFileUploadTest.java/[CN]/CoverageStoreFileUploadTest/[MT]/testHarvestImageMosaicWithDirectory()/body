@@ -20,11 +20,10 @@
   CoverageInfo ci=getCatalog().getCoverageByName("watertemp3");
   assertNotNull(ci);
   assertEquals(storeInfo,ci.getStore());
-  URL zipHarvest=getClass().getResource("test-data/harvesting.zip");
-  File zipFile=DataUtilities.urlToFile(zipHarvest);
-  File newZip=new File(zipFile.getParentFile(),"harvesting2.zip");
-  FileUtils.copyFile(zipFile,newZip);
-  File outputDirectory=new File(zipFile.getParentFile(),"harvesting");
+  URL zipHarvest=MockData.class.getResource("harvesting.zip");
+  File newZip=new File("./target/harvesting2.zip");
+  FileUtils.copyInputStreamToFile(zipHarvest.openStream(),newZip);
+  File outputDirectory=new File("./target/harvesting");
   outputDirectory.mkdir();
   RESTUtils.unzipFile(newZip,outputDirectory);
   MockHttpServletRequest request=createRequest("/rest/workspaces/gs/coveragestores/watertemp3/external.imagemosaic");

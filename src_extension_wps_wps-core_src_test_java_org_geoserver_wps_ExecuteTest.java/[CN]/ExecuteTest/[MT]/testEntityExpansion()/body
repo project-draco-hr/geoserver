@@ -1,0 +1,7 @@
+{
+  String xml="<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" + "<!DOCTYPE foo [<!ELEMENT foo ANY >\n" + "  <!ENTITY xxe SYSTEM \"file:///file/not/there\" >]>\n"+ "<wps:Execute service='WPS' version='1.0.0' xmlns:wps='http://www.opengis.net/wps/1.0.0' "+ "xmlns:ows='http://www.opengis.net/ows/1.1'>"+ "<ows:Identifier>JTS:buffer</ows:Identifier>"+ "<wps:DataInputs>"+ "<wps:Input>"+ "<ows:Identifier>distance</ows:Identifier>"+ "<wps:Data>"+ "<wps:LiteralData>1</wps:LiteralData>"+ "</wps:Data>"+ "</wps:Input>"+ "<wps:Input>"+ "<ows:Identifier>&xxe;</ows:Identifier>"+ "<wps:Data>"+ "<wps:ComplexData>"+ "<gml:Polygon xmlns:gml='http://www.opengis.net/gml'>"+ "<gml:exterior>"+ "<gml:LinearRing>"+ "<gml:coordinates>1 1 2 1 2 2 1 2 1 1</gml:coordinates>"+ "</gml:LinearRing>"+ "</gml:exterior>"+ "</gml:Polygon>"+ "</wps:ComplexData>"+ "</wps:Data>"+ "</wps:Input>"+ "</wps:DataInputs>"+ "<wps:ResponseForm>"+ "<wps:ResponseDocument storeExecuteResponse='false'>"+ "<wps:Output>"+ "<ows:Identifier>result</ows:Identifier>"+ "</wps:Output>"+ "</wps:ResponseDocument>"+ "</wps:ResponseForm>"+ "</wps:Execute>";
+  Document d=postAsDOM("wps",xml);
+  checkValidationErrors(d);
+  String text=xp.evaluate("//ows:ExceptionText",d);
+  assertTrue(text.contains(NoExternalEntityResolver.ERROR_MESSAGE_BASE));
+}

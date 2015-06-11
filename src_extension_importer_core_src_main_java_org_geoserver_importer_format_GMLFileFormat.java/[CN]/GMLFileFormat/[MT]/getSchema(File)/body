@@ -1,0 +1,102 @@
+{
+  boolean hasSchema=false;
+  GMLVersion version=GMLVersion.GML3;
+  try (FileReader input=new FileReader(file)){
+    XmlPullParserFactory factory=XmlPullParserFactory.newInstance();
+    factory.setNamespaceAware(true);
+    factory.setValidating(false);
+    XmlPullParser parser=factory.newPullParser();
+    parser.setInput(input);
+    parser.nextTag();
+    String location=parser.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","schemaLocation");
+    hasSchema=location != null;
+    String gmlNamespace=parser.getNamespace("gml");
+    if (GML.NAMESPACE.equals(gmlNamespace)) {
+      version=GMLVersion.GML32;
+    }
+ else {
+      while (parser.next() != XmlPullParser.END_DOCUMENT) {
+        if (parser.getEventType() != XmlPullParser.START_TAG) {
+          continue;
+        }
+        String tag=parser.getName();
+        String ns=parser.getNamespace();
+        if ("outerBoundaryIs".equals(tag) || "innerBoundaryIs".equals(tag)) {
+          version=GMLVersion.GML2;
+          break;
+        }
+      }
+    }
+  }
+ catch (  XmlPullParserException e) {
+    throw new IOException("Failed to parse the input file",e);
+  }
+  String typeName=null;
+  Map<String,AttributeDescriptor> guessedTypes=new HashMap<>();
+  SimpleFeatureType result=null;
+  try (FileInputStream fis=new FileInputStream(file)){
+    SimpleFeature sf=null;
+    PullParser parser=new PullParser(version.getConfiguration(),fis,SimpleFeature.class);
+    sf=(SimpleFeature)parser.parse();
+    while (sf != null) {
+      if (hasSchema) {
+        result=sf.getFeatureType();
+        if (result.getCoordinateReferenceSystem() == null) {
+          Geometry g=(Geometry)sf.getDefaultGeometry();
+          if (g != null && g.getUserData() instanceof CoordinateReferenceSystem) {
+            CoordinateReferenceSystem crs=(CoordinateReferenceSystem)g.getUserData();
+            result=FeatureTypes.transform(result,crs);
+          }
+        }
+      }
+      if (typeName == null) {
+        typeName=sf.getFeatureType().getTypeName();
+      }
+      for (      AttributeDescriptor ad : sf.getFeatureType().getAttributeDescriptors()) {
+        String name=ad.getLocalName();
+        updateSimpleTypeGuess(name,sf.getAttribute(name),guessedTypes);
+      }
+      sf=(SimpleFeature)parser.parse();
+    }
+  }
+ catch (  Exception e) {
+    throw new IOException("Failed to parse GML data",e);
+  }
+  if (result != null) {
+    SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+    tb.init(result);
+    for (    String gmlAttribute : GML_ATTRIBUTES) {
+      if (!guessedTypes.containsKey(gmlAttribute) && tb.get(gmlAttribute) != null) {
+        tb.remove(gmlAttribute);
+      }
+    }
+    for (    AttributeDescriptor ad : result.getAttributeDescriptors()) {
+      String name=ad.getLocalName();
+      Class<?> binding=ad.getType().getBinding();
+      boolean valid=false;
+      for (      Class validAttributeType : VALID_ATTRIBUTE_TYPES) {
+        if (validAttributeType.isAssignableFrom(binding)) {
+          valid=true;
+          break;
+        }
+      }
+      if (!valid && tb.get(name) != null) {
+        tb.remove(name);
+      }
+    }
+    result=tb.buildFeatureType();
+  }
+  if (typeName != null) {
+    SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+    tb.setName(typeName);
+    for (    AttributeDescriptor ad : guessedTypes.values()) {
+      tb.add(ad);
+    }
+    result=tb.buildFeatureType();
+  }
+ else {
+    throw new IllegalArgumentException("Could not find any GML feature in the file");
+  }
+  result.getUserData().put(GML_VERSION_KEY,version);
+  return result;
+}

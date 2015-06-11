@@ -1,0 +1,13 @@
+{
+  File gmlSourceFile=new File("src/test/resources/org/geoserver/importer/test-data/gml/states.gml3.gml");
+  File gmlFile=new File("./target/states.gml3.gml");
+  File schemaSourceFile=new File("src/test/resources/org/geoserver/importer/test-data/gml/states.gml3.xsd");
+  File schemaFile=new File("./target/states.gml3.xsd");
+  FileUtils.copyFile(schemaSourceFile,schemaFile);
+  String gml=FileUtils.readFileToString(gmlSourceFile);
+  gml=gml.replace("${schemaLocation}",schemaFile.getCanonicalPath());
+  FileUtils.writeStringToFile(gmlFile,gml);
+  String wsName=getCatalog().getDefaultWorkspace().getName();
+  DataStoreInfo h2DataStore=createH2DataStore(wsName,"gml2States");
+  checkGMLStatesImport(gmlFile,h2DataStore);
+}

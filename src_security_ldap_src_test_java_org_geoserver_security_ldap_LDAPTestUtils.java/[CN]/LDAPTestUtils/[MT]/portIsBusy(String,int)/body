@@ -1,23 +1,26 @@
 {
-  Socket socket=new Socket();
-  InetSocketAddress endPoint=new InetSocketAddress(host,port);
-  if (endPoint.isUnresolved()) {
+  ServerSocket ss=null;
+  DatagramSocket ds=null;
+  try {
+    ss=new ServerSocket(port);
+    ss.setReuseAddress(true);
+    ds=new DatagramSocket(port);
+    ds.setReuseAddress(true);
     return false;
   }
- else {
-    try {
-      socket.connect(endPoint,2000);
-      return true;
-    }
- catch (    IOException ioe) {
-      return false;
-    }
+ catch (  IOException e) {
+  }
  finally {
+    if (ds != null) {
+      ds.close();
+    }
+    if (ss != null) {
       try {
-        socket.close();
+        ss.close();
       }
- catch (      IOException ioe) {
+ catch (      IOException e) {
       }
     }
   }
+  return true;
 }

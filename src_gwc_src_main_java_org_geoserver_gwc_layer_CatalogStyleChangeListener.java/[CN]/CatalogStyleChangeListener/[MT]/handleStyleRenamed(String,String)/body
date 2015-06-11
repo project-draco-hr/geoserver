@@ -1,0 +1,25 @@
+{
+  if (oldStyleName.equals(newStyleName)) {
+    return;
+  }
+  List<GeoServerTileLayer> affectedLayers;
+  affectedLayers=mediator.getTileLayersForStyle(oldStyleName);
+  for (  GeoServerTileLayer tl : affectedLayers) {
+    LayerInfo layerInfo=tl.getLayerInfo();
+    if (layerInfo == null) {
+      continue;
+    }
+    GeoServerTileLayerInfo info=tl.getInfo();
+    ImmutableSet<String> styleNames=info.cachedStyles();
+    if (styleNames.contains(oldStyleName)) {
+      tl.resetParameterFilters();
+      mediator.truncateByLayerAndStyle(tl.getName(),oldStyleName);
+      Set<String> newStyles=new HashSet<String>(styleNames);
+      newStyles.remove(oldStyleName);
+      newStyles.add(newStyleName);
+      String defaultStyle=layerInfo.getDefaultStyle() == null ? null : layerInfo.getDefaultStyle().prefixedName();
+      TileLayerInfoUtil.setCachedStyles(info,defaultStyle,newStyles);
+      mediator.save(tl);
+    }
+  }
+}

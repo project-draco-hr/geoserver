@@ -1,0 +1,34 @@
+{
+  m_FeatureSource=fs;
+  try {
+    final FeatureType ft=fs.getSchema();
+    final Class<?> type=ft.getGeometryDescriptor().getType().getBinding();
+    if (type.isAssignableFrom(Polygon.class) || type.isAssignableFrom(MultiPolygon.class)) {
+      m_iShapeType=IVectorLayer.SHAPE_TYPE_POLYGON;
+    }
+ else     if (type.isAssignableFrom(LineString.class) || type.isAssignableFrom(MultiLineString.class)) {
+      m_iShapeType=IVectorLayer.SHAPE_TYPE_LINE;
+    }
+ else {
+      m_iShapeType=IVectorLayer.SHAPE_TYPE_POINT;
+    }
+  }
+ catch (  final Exception e) {
+    Sextante.addErrorToLog(e);
+    m_iShapeType=IVectorLayer.SHAPE_TYPE_POLYGON;
+  }
+  try {
+    final SimpleFeatureType ft=(SimpleFeatureType)fs.getSchema();
+    m_CRS=ft.getCoordinateReferenceSystem();
+    m_sFields=new String[ft.getAttributeCount() - 1];
+    m_Types=new Class[ft.getAttributeCount() - 1];
+    for (int j=0; j < m_sFields.length; j++) {
+      final AttributeType at=ft.getType(j + 1);
+      m_sFields[j]=at.getName().getLocalPart();
+      m_Types[j]=at.getBinding();
+    }
+  }
+ catch (  final Exception e) {
+    Sextante.addErrorToLog(e);
+  }
+}

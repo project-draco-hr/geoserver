@@ -1,5 +1,7 @@
 {
   File file=maybeFile(data).get();
+  CatalogFactory factory=catalog.getFactory();
+  CatalogBuilder catalogBuilder=new CatalogBuilder(catalog);
   SimpleFeatureType featureType=new FeatureJSON().readFeatureCollectionSchema(file,false);
   System.out.println(featureType);
   SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
@@ -9,6 +11,13 @@
   FeatureTypeInfo ft=catalog.getFactory().createFeatureType();
   ft.setName(FilenameUtils.getBaseName(file.getName()));
   ft.setNativeName(ft.getName());
+  List<AttributeTypeInfo> attributes=ft.getAttributes();
+  for (  AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
+    AttributeTypeInfo att=factory.createAttribute();
+    att.setName(ad.getLocalName());
+    att.setBinding(ad.getType().getBinding());
+    attributes.add(att);
+  }
   CoordinateReferenceSystem crs=null;
   if (featureType != null && featureType.getCoordinateReferenceSystem() != null) {
     crs=featureType.getCoordinateReferenceSystem();
@@ -24,17 +33,10 @@
   if (srs != null) {
     ft.setSRS(srs);
   }
-  ReferencedEnvelope bounds=new ReferencedEnvelope(crs);
-  FeatureJSON reader=new FeatureJSON();
-  reader.setFeatureType(featureType);
-  FeatureIterator<SimpleFeature> it=reader.streamFeatureCollection(file);
-  while (it.hasNext()) {
-    SimpleFeature f=it.next();
-    bounds.include(f.getBounds());
-  }
-  ft.setNativeBoundingBox(bounds);
-  LayerInfo layer=catalog.getFactory().createLayer();
-  layer.setResource(ft);
+  ft.setNativeBoundingBox(EMPTY_BOUNDS);
+  ft.setLatLonBoundingBox(EMPTY_BOUNDS);
+  ft.getMetadata().put("recalculate-bounds",Boolean.TRUE);
+  LayerInfo layer=catalogBuilder.buildLayer((ResourceInfo)ft);
   ImportTask task=new ImportTask(data);
   task.setLayer(layer);
   task.getMetadata().put(FeatureType.class,featureType);

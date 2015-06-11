@@ -1,15 +1,7 @@
 {
   ((LexicalHandler)output).startCDATA();
-  PipedInputStream pins=new PipedInputStream();
-  PipedOutputStream pos=new PipedOutputStream(pins);
-  ppio.encode(object,pos);
-  Reader r=new InputStreamReader(pins);
-  char[] buffer=new char[1024];
-  int read;
-  while ((read=r.read(buffer)) > 0) {
-    output.characters(buffer,0,read);
+  try (OutputStream os=new WriterOutputStream(new ContentHandlerWriter(output))){
+    ppio.encode(object,os);
   }
-  pos.close();
-  r.close();
-  ((LexicalHandler)output).endCDATA();
+   ((LexicalHandler)output).endCDATA();
 }

@@ -1,0 +1,8 @@
+{
+  String xml="<wfs:GetFeature xmlns:wfs='" + WFS.NAMESPACE + "' xmlns:fes='"+ FES.NAMESPACE+ "'"+ " xmlns:gs='"+ SystemTestData.DEFAULT_URI+ "' version='2.0.0'>"+ "<wfs:Query typeNames='gs:t1 gs:t2 gs:t3' aliases='a b c'>"+ "<fes:Filter> "+ "<And>"+ "<PropertyIsEqualTo>"+ "<ValueReference>a/name1</ValueReference>"+ "<Literal>First</Literal>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>a/code1</ValueReference>"+ "<ValueReference>b/code2</ValueReference>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>b/name2</ValueReference>"+ "<Literal>Second</Literal>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>c/name3</ValueReference>"+ "<Literal>Third</Literal>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>b/code2</ValueReference>"+ "<ValueReference>c/code3</ValueReference>"+ "</PropertyIsEqualTo>"+ "</And>"+ "</fes:Filter> "+ "</wfs:Query>"+ "</wfs:GetFeature>";
+  Document dom=postAsDOM("wfs",xml);
+  XMLAssert.assertXpathEvaluatesTo("1","count(//wfs:Tuple)",dom);
+  XMLAssert.assertXpathExists("//wfs:Tuple/wfs:member[1]/gs:t2[gs:name2 = 'Second']",dom);
+  XMLAssert.assertXpathExists("//wfs:Tuple/wfs:member[2]/gs:t1[gs:name1 = 'First']",dom);
+  XMLAssert.assertXpathExists("//wfs:Tuple/wfs:member[3]/gs:t3[gs:name3 = 'Third']",dom);
+}

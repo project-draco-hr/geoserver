@@ -1,32 +1,6 @@
 {
-  String[] names;
-  if (GeoServerExtensions.context == context) {
-    names=extensionsCache.get(extensionPoint);
-  }
- else {
-    names=null;
-  }
-  if (names == null) {
-    checkContext(context,extensionPoint.getSimpleName());
-    if (context != null) {
-      try {
-        names=context.getBeanNamesForType(extensionPoint);
-        if (names == null) {
-          names=new String[0];
-        }
-        if (GeoServerExtensions.context == context) {
-          extensionsCache.put(extensionPoint,names);
-        }
-      }
- catch (      Exception e) {
-        LOGGER.log(Level.WARNING,"bean lookup error",e);
-        return Collections.EMPTY_LIST;
-      }
-    }
- else {
-      return Collections.EMPTY_LIST;
-    }
-  }
+  Collection<String> names;
+  names=extensionNames(extensionPoint,context);
   List<ExtensionFilter> filters;
   if (ExtensionFilter.class.isAssignableFrom(extensionPoint)) {
     filters=Collections.emptyList();
@@ -34,7 +8,7 @@
  else {
     filters=extensions(ExtensionFilter.class,context);
   }
-  List<T> result=new ArrayList<T>(names.length);
+  List<T> result=new ArrayList<T>(names.size());
   for (  String name : names) {
     Object bean=getBean(context,name);
     if (!excludeBean(name,bean,filters))     result.add((T)bean);

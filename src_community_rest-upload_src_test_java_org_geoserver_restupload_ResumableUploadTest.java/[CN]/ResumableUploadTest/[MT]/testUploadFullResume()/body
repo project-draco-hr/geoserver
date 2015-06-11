@@ -1,0 +1,31 @@
+{
+  String uploadId=sendPostRequest();
+  byte[] bigFile=generateFileAsBytes();
+  byte[] partialFile1=ArrayUtils.subarray(bigFile,0,(int)partialSize);
+  MockHttpServletRequest request=createRequest("/rest/resumableupload/" + uploadId);
+  request.setMethod("PUT");
+  request.setContentType("application/octet-stream");
+  request.setBodyContent(partialFile1);
+  request.setHeader("Content-type","application/octet-stream");
+  request.setHeader("Content-Length",String.valueOf(bigFile.length));
+  dispatch(request);
+  request=createRequest("/rest/resumableupload/" + uploadId);
+  request.setMethod("PUT");
+  request.setContentType("application/octet-stream");
+  byte[] partialFile2=ArrayUtils.subarray(bigFile,(int)partialSize,bigFile.length);
+  request.setBodyContent(partialFile2);
+  request.setHeader("Content-type","application/octet-stream");
+  request.setHeader("Content-Length",String.valueOf(partialFile2.length));
+  request.setHeader("Content-Range","bytes " + partialSize + "-"+ bigFile.length+ "/"+ bigFile.length);
+  MockHttpServletResponse response=dispatch(request);
+  assertEquals(Status.SUCCESS_OK.getCode(),response.getStatusCode());
+  File uploadedFile=getTempPath(uploadId);
+  assertFalse(uploadedFile.exists());
+  File destinationFile=new File(FilenameUtils.concat(root,fileName.replaceAll("^/","")));
+  assertTrue(destinationFile.exists());
+  assertEquals(bigFile.length,destinationFile.length());
+  boolean checkBytes=Arrays.equals(bigFile,toBytes(new FileInputStream(destinationFile)));
+  assertTrue(checkBytes);
+  String restUrl=response.getOutputStreamContent();
+  assertEquals(fileName.replaceAll("^/",""),restUrl);
+}

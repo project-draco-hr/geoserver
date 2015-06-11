@@ -40,4 +40,34 @@
   finally {
     layers.close();
   }
+  CloseableIterator<LayerGroupInfo> groups=catalog.list(LayerGroupInfo.class,Predicates.equal("workspace.name",newWorkspaceName));
+  try {
+    while (groups.hasNext()) {
+      LayerGroupInfo group=groups.next();
+      String oldName=oldWorkspaceName + ":" + group.getName();
+      String newName=newWorkspaceName + ":" + group.getName();
+      TileLayer tl;
+      try {
+        tl=mediator.getTileLayerByName(oldName);
+        if (!(tl instanceof GeoServerTileLayer)) {
+          continue;
+        }
+      }
+ catch (      IllegalArgumentException e) {
+        continue;
+      }
+      try {
+        if (tl instanceof GeoServerTileLayer) {
+          GeoServerTileLayer gstl=(GeoServerTileLayer)tl;
+          renameTileLayer(gstl.getInfo(),oldName,newName);
+        }
+      }
+ catch (      Exception e) {
+        log.log(Level.WARNING,"Failed to rename tile layer for geoserver group " + group + " while renaming tile layers for workspace name change "+ oldName+ " -> "+ newName,e);
+      }
+    }
+  }
+  finally {
+    groups.close();
+  }
 }

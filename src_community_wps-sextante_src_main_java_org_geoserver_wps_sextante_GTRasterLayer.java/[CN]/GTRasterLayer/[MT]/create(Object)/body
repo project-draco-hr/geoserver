@@ -1,15 +1,16 @@
 {
   if (obj instanceof GridCoverage2D) {
     m_BaseDataObject=obj;
-    GridCoverage2D gc=((GridCoverage2D)obj);
+    final GridCoverage2D gc=((GridCoverage2D)obj);
     m_CRS=gc.getCoordinateReferenceSystem();
-    Envelope2D env=gc.getEnvelope2D();
-    m_LayerExtent=new GridExtent();
-    m_LayerExtent.setCellSize((env.getMaxX() - env.getMinX()) / (double)gc.getRenderedImage().getWidth());
-    m_LayerExtent.setXRange(env.getMinX(),env.getMaxX());
-    m_LayerExtent.setYRange(env.getMinY(),env.getMaxY());
-    m_image=(PlanarImage)gc.geophysics(true).getRenderedImage();
+    final Envelope2D env=gc.getEnvelope2D();
+    m_LayerExtent=new AnalysisExtent();
+    m_LayerExtent.setCellSize((env.getMaxX() - env.getMinX()) / gc.getRenderedImage().getWidth());
+    m_LayerExtent.setXRange(env.getMinX(),env.getMaxX(),true);
+    m_LayerExtent.setYRange(env.getMinY(),env.getMaxY(),true);
+    m_image=(PlanarImage)gc.getRenderedImage();
     m_sName=gc.getName().toString();
+    m_dNoDataValue=-99999;
     initNoData(gc);
   }
 }

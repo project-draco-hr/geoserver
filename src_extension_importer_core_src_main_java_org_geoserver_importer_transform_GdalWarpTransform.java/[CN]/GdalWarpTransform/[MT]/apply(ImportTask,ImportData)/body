@@ -1,0 +1,23 @@
+{
+  super.apply(task,data);
+  LayerInfo layer=task.getLayer();
+  ResourceInfo resource=layer.getResource();
+  String originalSRS=resource.getSRS();
+  if (layer.getId() != null || resource == null || resource.getCatalog() == null) {
+    return;
+  }
+  DataFormat format=DataFormat.lookup(((FileData)data).getFile());
+  List<ImportTask> tasks=format.list(data,resource.getCatalog(),new ProgressMonitor());
+  if (tasks == null || tasks.isEmpty()) {
+    return;
+  }
+  LayerInfo updatedLayer=tasks.get(0).getLayer();
+  ResourceInfo updatedResource=updatedLayer.getResource();
+  String updatedSRS=updatedResource.getSRS();
+  if (originalSRS == null || (!originalSRS.equals(updatedSRS) && updatedSRS != null)) {
+    resource.setSRS(updatedSRS);
+    resource.setNativeCRS(updatedResource.getNativeCRS());
+    resource.setNativeBoundingBox(updatedResource.getNativeBoundingBox());
+    resource.setLatLonBoundingBox(updatedResource.getLatLonBoundingBox());
+  }
+}

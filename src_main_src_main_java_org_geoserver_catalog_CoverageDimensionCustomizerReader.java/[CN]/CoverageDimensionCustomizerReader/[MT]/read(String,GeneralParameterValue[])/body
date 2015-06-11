@@ -3,16 +3,17 @@
   if (coverage == null) {
     return coverage;
   }
-  final Map properties=coverage.getProperties();
+  final Map<String,Object> properties=coverage.getProperties();
   final SampleDimension[] dims=coverage.getSampleDimensions();
   GridSampleDimension[] wrappedDims=wrapDimensions(dims);
+  NoDataContainer noDataProperty=CoverageUtilities.getNoDataProperty(coverage);
   if (wrappedDims == null) {
     wrappedDims=(GridSampleDimension[])dims;
   }
- else   if (properties != null && properties.containsKey("GC_NODATA")) {
+ else   if (properties != null && noDataProperty != null) {
     double[] wrappedNoDataValues=wrappedDims[0].getNoDataValues();
     if (wrappedNoDataValues != null && wrappedNoDataValues.length > 0) {
-      properties.put("GC_NODATA",wrappedNoDataValues[0]);
+      CoverageUtilities.setNoDataProperty(properties,wrappedNoDataValues[0]);
     }
   }
   return new GridCoverageWrapper(coverageName,coverage,wrappedDims,properties);

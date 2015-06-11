@@ -1,0 +1,23 @@
+{
+  GetMapRequest mockGMR=createGetMapRequest(MockData.BASIC_POLYGONS);
+  GetMapRequest request=new GetMapRequest();
+  DefaultWebMapService reflector=new DefaultWebMapService(getWMS());
+  request.setSRS("EPSG:41001");
+  request.setCrs(CRS.decode("EPSG:41001"));
+  request.setLayers(mockGMR.getLayers());
+  request.setFormat("image/gif");
+  reflector.autoSetBoundsAndSize(request);
+  CoordinateReferenceSystem crs=request.getCrs();
+  String srs=request.getSRS();
+  Envelope bbox=request.getBbox();
+  String format=request.getFormat();
+  int width=request.getWidth();
+  int height=request.getHeight();
+  String crsString=crs.getName().toString();
+  assertTrue("WGS84 / Simple Mercator".equalsIgnoreCase(crsString));
+  assertTrue("EPSG:41001".equalsIgnoreCase(srs));
+  assertTrue(Math.abs(bbox.getMinX() + 1.9236008009077676E7) < 1E-4 && Math.abs(bbox.getMinY() + 2.2026354993694823E7) < 1E-4 && Math.abs(bbox.getMaxX() - 1.9236008009077676E7) < 1E-4 && Math.abs(bbox.getMaxY() - 2.2026354993694823E7) < 1E-4);
+  assertEquals("image/gif",format);
+  assertEquals(670,width);
+  assertEquals(768,height);
+}

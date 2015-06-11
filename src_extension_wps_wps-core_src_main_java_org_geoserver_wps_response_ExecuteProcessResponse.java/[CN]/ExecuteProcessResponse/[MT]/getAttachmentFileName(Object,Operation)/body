@@ -12,21 +12,26 @@
     String fname=result.getIdentifier().getValue();
     LiteralDataType literal=result.getData().getLiteralData();
     ComplexDataType complex=result.getData().getComplexData();
-    String fext;
+    String fext=null;
     if (literal != null) {
       fext="txt";
     }
  else     if (complex != null) {
-      String mimeType=result.getData().getComplexData().getMimeType();
-      if (mimeType == null) {
-        fext="txt";
-      }
- else {
-        fext=mimeType.split("/")[1].toLowerCase();
+      Name name=Ows11Util.name(response.getProcess().getIdentifier());
+      ProcessFactory factory=GeoServerProcessors.createProcessFactory(name,true);
+      if (factory != null) {
+        Map<String,Parameter<?>> resultInfo=factory.getResultInfo(name,null);
+        Parameter p=resultInfo.get(result.getIdentifier().getValue());
+        if (p != null) {
+          ProcessParameterIO ppio=ProcessParameterIO.find(p,ctx,complex.getMimeType());
+          if (ppio instanceof ComplexPPIO) {
+            fext=((ComplexPPIO)ppio).getFileExtension(result.getData().getComplexData().getData().get(0));
+          }
+        }
       }
     }
- else {
-      fext="xml";
+    if (fext == null) {
+      fext="bin";
     }
     return fname + "." + fext;
   }

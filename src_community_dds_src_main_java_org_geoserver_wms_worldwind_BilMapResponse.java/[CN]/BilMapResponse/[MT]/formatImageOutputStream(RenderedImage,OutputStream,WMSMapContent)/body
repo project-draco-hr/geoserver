@@ -63,14 +63,17 @@
       if (defaultDataType != null && ((bilEncoding.equals("application/bil") || bilEncoding.equals("image/bil")))) {
         bilEncoding=defaultDataType;
       }
+      ImageWorker worker=new ImageWorker(transformedImage);
+      Double nod=inNoDataValues != null ? (outNoData != null ? outNoData : inNoDataValues[0]) : null;
+      worker.setNoData(nod != null ? RangeFactory.create(nod,nod) : null);
       if ((bilEncoding.equals("application/bil32")) && (dtype != DataBuffer.TYPE_FLOAT)) {
-        transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_FLOAT,null);
+        transformedImage=worker.format(DataBuffer.TYPE_FLOAT).getRenderedImage();
       }
  else       if ((bilEncoding.equals("application/bil16")) && (dtype != DataBuffer.TYPE_SHORT)) {
-        transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_SHORT,null);
+        transformedImage=worker.format(DataBuffer.TYPE_SHORT).getRenderedImage();
       }
  else       if ((bilEncoding.equals("application/bil8")) && (dtype != DataBuffer.TYPE_BYTE)) {
-        transformedImage=FormatDescriptor.create(transformedImage,DataBuffer.TYPE_BYTE,null);
+        transformedImage=worker.format(DataBuffer.TYPE_BYTE).getRenderedImage();
       }
       TiledImage tiled=new TiledImage(transformedImage,width,height);
       final ImageOutputStream imageOutStream=ImageIO.createImageOutputStream(outStream);

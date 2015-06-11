@@ -1,5 +1,6 @@
 {
   List featureCollections=results.getFeature();
+  int numDecimals=getNumDecimals(featureCollections,geoServer,catalog);
   GetFeatureRequest request=GetFeatureRequest.adapt(getFeature.getParameters()[0]);
   HashMap<String,Set<ResourceInfo>> ns2metas=new HashMap<String,Set<ResourceInfo>>();
   for (int fcIndex=0; fcIndex < featureCollections.size(); fcIndex++) {
@@ -25,7 +26,7 @@
       String namespaceURI=featureType.getName().getNamespaceURI();
       FeatureTypeInfo meta=catalog.getFeatureTypeByName(featureType.getName());
       if (meta == null)       throw new WFSException(request,"Could not find feature type " + featureType.getName() + " in the GeoServer catalog");
-      Set metas=(Set)ns2metas.get(namespaceURI);
+      Set metas=ns2metas.get(namespaceURI);
       if (metas == null) {
         metas=new HashSet();
         ns2metas.put(namespaceURI,metas);
@@ -46,6 +47,12 @@
  else {
     configuration.getProperties().remove(GMLConfiguration.NO_SRS_DIMENSION);
   }
+  if (OPTIMIZED_ENCODING) {
+    configuration.getProperties().add(GMLConfiguration.OPTIMIZED_ENCODING);
+  }
+ else {
+    configuration.getProperties().remove(GMLConfiguration.OPTIMIZED_ENCODING);
+  }
   configuration.setSrsSyntax(wfs.getGML().get(WFSInfo.Version.V_11).getSrsNameStyle().toSrsSyntax());
   if (wfs.isEncodeFeatureMember()) {
     configuration.getProperties().add(GMLConfiguration.ENCODE_FEATURE_MEMBER);
@@ -53,6 +60,7 @@
  else {
     configuration.getProperties().remove(GMLConfiguration.ENCODE_FEATURE_MEMBER);
   }
+  setNumDecimals(numDecimals);
   Object gft=getFeature.getParameters()[0];
   Encoder encoder=createEncoder(configuration,ns2metas,gft);
   encoder.setEncoding(Charset.forName(geoServer.getSettings().getCharset()));
@@ -86,6 +94,9 @@
             typeNames.append(",");
           }
         }
+      }
+ else {
+        encoder.getNamespaces().declarePrefix(ri.getStore().getWorkspace().getName(),namespaceURI);
       }
     }
     if (typeNames.length() > 0) {

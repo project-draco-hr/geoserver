@@ -1,0 +1,19 @@
+{
+  final String userDn=user.getNameInNamespace();
+  if (logger.isDebugEnabled()) {
+    logger.debug("Getting authorities for user " + userDn);
+  }
+  final List<GrantedAuthority> result=new ArrayList<GrantedAuthority>();
+  if (password != null) {
+    ldapTemplate.authenticate(DistinguishedName.EMPTY_PATH,userDn,password,new AuthenticatedLdapEntryContextCallback(){
+      @Override public void executeWithContext(      DirContext ctx,      LdapEntryIdentification ldapEntryIdentification){
+        getAllRoles(user,userDn,result,username,ctx);
+      }
+    }
+);
+  }
+ else {
+    getAllRoles(user,userDn,result,username,null);
+  }
+  return result;
+}

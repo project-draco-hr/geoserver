@@ -1,0 +1,19 @@
+{
+  testPostAsSLD();
+  Catalog cat=getCatalog();
+  assertNotNull(cat.getStyleByName("foo"));
+  URL zip=getClass().getResource("test-data/foo.zip");
+  byte[] bytes=FileUtils.readFileToByteArray(DataUtilities.urlToFile(zip));
+  MockHttpServletResponse response=putAsServletResponse("/rest/styles/foo.zip",bytes,"application/zip");
+  assertEquals(200,response.getStatusCode());
+  assertNotNull(cat.getStyleByName("foo"));
+  Document d=getAsDOM("/rest/styles/foo.sld");
+  assertEquals("StyledLayerDescriptor",d.getDocumentElement().getNodeName());
+  XpathEngine engine=XMLUnit.newXpathEngine();
+  NodeList list=engine.getMatchingNodes("//sld:StyledLayerDescriptor/sld:NamedLayer/sld:UserStyle/sld:FeatureTypeStyle/sld:Rule/sld:PointSymbolizer/sld:Graphic/sld:ExternalGraphic/sld:OnlineResource",d);
+  assertEquals(1,list.getLength());
+  Element onlineResource=(Element)list.item(0);
+  assertEquals("gear.png",onlineResource.getAttribute("xlink:href"));
+  assertNotNull(getCatalog().getResourceLoader().find("styles/gear.png"));
+  assertNotNull(getCatalog().getResourceLoader().find("styles/foo.sld"));
+}

@@ -1,0 +1,12 @@
+{
+  CacheProvider rivalProvider=EasyMock.createMock("rivalProvider",CacheProvider.class);
+  CacheProvider hzProvider=EasyMock.createMock("hzProvider",HzCacheProvider.class);
+  EasyMock.replay(rivalProvider,hzProvider);
+  ExtensionFilter filter=new HzExtensionFilter();
+  extensions.singleton("filter",filter,ExtensionFilter.class);
+  extensions.singleton("rivalProvider",rivalProvider,CacheProvider.class);
+  extensions.singleton("hzProvider",hzProvider,CacheProvider.class,HzCacheProvider.class);
+  CacheProvider result=DefaultCacheProvider.findProvider();
+  assertThat(result,sameInstance(hzProvider));
+  EasyMock.verify(rivalProvider,hzProvider);
+}

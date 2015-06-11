@@ -1,0 +1,26 @@
+{
+  if (GeoServerExtensions.context != null) {
+    if (GeoServerExtensions.context.containsBean(name)) {
+      Object conflict=GeoServerExtensions.context.getBean(name);
+      if (bean != conflict) {
+        GeoServerExtensions.LOGGER.fine("ApplicationContext override " + name + ": "+ conflict);
+      }
+    }
+  }
+ else {
+    GeoServerExtensions.isSpringContext=false;
+  }
+  if (name == null || bean == null) {
+    return;
+  }
+  GeoServerExtensions.singletonBeanCache.put(name,bean);
+  if (declaredClasses != null && declaredClasses.length > 0) {
+    for (    Class<?> clazz : declaredClasses) {
+      addToCache(GeoServerExtensions.extensionsCache,clazz,name);
+    }
+  }
+ else {
+    Class<?> type=bean.getClass();
+    addToCache(GeoServerExtensions.extensionsCache,type,name);
+  }
+}

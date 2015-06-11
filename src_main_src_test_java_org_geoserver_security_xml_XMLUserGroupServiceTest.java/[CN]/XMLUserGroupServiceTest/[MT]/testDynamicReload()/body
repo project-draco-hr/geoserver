@@ -1,29 +1,34 @@
 {
   File xmlFile=File.createTempFile("users",".xml");
-  FileUtils.copyURLToFile(getClass().getResource("usersTemplate.xml"),xmlFile);
-  GeoServerUserGroupService service1=createUserGroupService("reload1",xmlFile.getCanonicalPath());
-  GeoServerUserGroupService service2=createUserGroupService("reload2",xmlFile.getCanonicalPath());
-  GeoServerUserGroupStore store1=createStore(service1);
-  GeoServerUserGroup group=store1.createGroupObject("group",true);
-  checkEmpty(service1);
-  checkEmpty(service2);
-  UserGroupLoadedListener listener=new UserGroupLoadedListener(){
-    @Override public void usersAndGroupsChanged(    UserGroupLoadedEvent event){
+  try {
+    FileUtils.copyURLToFile(getClass().getResource("usersTemplate.xml"),xmlFile);
+    GeoServerUserGroupService service1=createUserGroupService("reload1",xmlFile.getCanonicalPath());
+    GeoServerUserGroupService service2=createUserGroupService("reload2",xmlFile.getCanonicalPath());
+    GeoServerUserGroupStore store1=createStore(service1);
+    GeoServerUserGroup group=store1.createGroupObject("group",true);
+    checkEmpty(service1);
+    checkEmpty(service2);
+    UserGroupLoadedListener listener=new UserGroupLoadedListener(){
+      @Override public void usersAndGroupsChanged(      UserGroupLoadedEvent event){
 synchronized (this) {
-        this.notifyAll();
+          this.notifyAll();
+        }
       }
     }
-  }
 ;
-  service2.registerUserGroupLoadedListener(listener);
-  store1.addGroup(group);
-  store1.store();
-  assertTrue(service1.getUserGroups().size() == 1);
-  assertTrue(service1.getGroupCount() == 1);
-  xmlFile.setLastModified(xmlFile.lastModified() + 2000);
+    service2.registerUserGroupLoadedListener(listener);
+    store1.addGroup(group);
+    store1.store();
+    assertTrue(service1.getUserGroups().size() == 1);
+    assertTrue(service1.getGroupCount() == 1);
+    xmlFile.setLastModified(xmlFile.lastModified() + 2000);
 synchronized (listener) {
-    listener.wait();
+      listener.wait();
+    }
+    assertTrue(service2.getUserGroups().size() == 1);
+    assertTrue(service2.getGroupCount() == 1);
   }
-  assertTrue(service2.getUserGroups().size() == 1);
-  assertTrue(service2.getGroupCount() == 1);
+  finally {
+    xmlFile.delete();
+  }
 }

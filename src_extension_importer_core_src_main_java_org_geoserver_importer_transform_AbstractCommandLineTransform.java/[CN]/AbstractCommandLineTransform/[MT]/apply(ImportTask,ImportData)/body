@@ -1,0 +1,54 @@
+{
+  boolean inline=isInline();
+  File executable=getExecutable();
+  File inputFile=getInputFile(data);
+  Map<String,File> substitutions=new HashMap<>();
+  substitutions.put("input",inputFile);
+  File outputDirectory=null;
+  File outputFile=null;
+  if (!inline) {
+    outputDirectory=getOutputDirectory(data);
+    outputFile=new File(outputDirectory,inputFile.getName());
+    substitutions.put("output",outputFile);
+  }
+  CommandLine cmd=new CommandLine(executable);
+  cmd.setSubstitutionMap(substitutions);
+  setupCommandLine(inline,cmd);
+  DefaultExecutor executor=new DefaultExecutor();
+  executor.setWatchdog(new ExecuteWatchdog(DEFAULT_TIMEOUT));
+  int limit=16 * 1024;
+  try {
+    try (OutputStream os=new BoundedOutputStream(new ByteArrayOutputStream(),limit);OutputStream es=new BoundedOutputStream(new ByteArrayOutputStream(),limit)){
+      PumpStreamHandler streamHandler=new PumpStreamHandler(os,es);
+      executor.setStreamHandler(streamHandler);
+      try {
+        int result=executor.execute(cmd);
+        if (executor.isFailure(result)) {
+          throw new IOException("Failed to execute command " + cmd.toString() + "\nStandard output is:\n"+ os.toString()+ "\nStandard error is:\n"+ es.toString());
+        }
+      }
+ catch (      Exception e) {
+        throw new IOException("Failure to execute command " + cmd.toString() + "\nStandard output is:\n"+ os.toString()+ "\nStandard error is:\n"+ es.toString(),e);
+      }
+    }
+     if (!inline) {
+      List<String> names=getReplacementTargetNames(data);
+      File inputParent=inputFile.getParentFile();
+      for (      String name : names) {
+        File output=new File(outputDirectory,name);
+        File input=new File(inputParent,name);
+        if (output.exists()) {
+          IOUtils.rename(output,input);
+        }
+ else         if (input.exists()) {
+          input.delete();
+        }
+      }
+    }
+  }
+  finally {
+    if (outputDirectory != null) {
+      FileUtils.deleteQuietly(outputDirectory);
+    }
+  }
+}

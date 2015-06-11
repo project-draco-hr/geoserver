@@ -3,35 +3,30 @@
   if (!WMS.VERSION_1_3_0.equals(requestVersion)) {
     return;
   }
-  tx.start("inspire_vs:ExtendedCapabilities");
-  tx.start("inspire_common:MetadataUrl",atts("xsi:type","inspire_common:resourceLocatorType"));
   String metadataURL=(String)wms.getMetadata().get(SERVICE_METADATA_URL.key);
-  tx.start("inspire_common:URL");
-  if (metadataURL != null) {
-    tx.chars(metadataURL);
-  }
-  tx.end("inspire_common:URL");
-  String metadataMediaType=(String)wms.getMetadata().get(SERVICE_METADATA_TYPE.key);
-  if (metadataMediaType == null) {
-    metadataMediaType="application/vnd.iso.19139+xml";
-  }
-  tx.start("inspire_common:MediaType");
-  tx.chars(metadataMediaType);
-  tx.end("inspire_common:MediaType");
-  tx.end("inspire_common:MetadataUrl");
-  tx.start("inspire_common:SupportedLanguages",atts("xsi:type","inspire_common:supportedLanguagesType"));
+  String mediaType=(String)wms.getMetadata().get(SERVICE_METADATA_TYPE.key);
   String language=(String)wms.getMetadata().get(LANGUAGE.key);
+  if (metadataURL == null) {
+    return;
+  }
+  tx.start("inspire_vs:ExtendedCapabilities");
+  tx.start("inspire_common:MetadataUrl");
+  tx.start("inspire_common:URL");
+  tx.chars(metadataURL);
+  tx.end("inspire_common:URL");
+  if (mediaType != null) {
+    tx.start("inspire_common:MediaType");
+    tx.chars(mediaType);
+    tx.end("inspire_common:MediaType");
+  }
+  tx.end("inspire_common:MetadataUrl");
+  tx.start("inspire_common:SupportedLanguages");
   language=language != null ? language : "eng";
   tx.start("inspire_common:DefaultLanguage");
   tx.start("inspire_common:Language");
   tx.chars(language);
   tx.end("inspire_common:Language");
   tx.end("inspire_common:DefaultLanguage");
-  tx.start("inspire_common:SupportedLanguage");
-  tx.start("inspire_common:Language");
-  tx.chars(language);
-  tx.end("inspire_common:Language");
-  tx.end("inspire_common:SupportedLanguage");
   tx.end("inspire_common:SupportedLanguages");
   tx.start("inspire_common:ResponseLanguage");
   tx.start("inspire_common:Language");

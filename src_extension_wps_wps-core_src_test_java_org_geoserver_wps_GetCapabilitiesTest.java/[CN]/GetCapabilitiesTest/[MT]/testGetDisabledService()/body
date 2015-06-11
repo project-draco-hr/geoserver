@@ -1,0 +1,14 @@
+{
+  GeoServer gs=getGeoServer();
+  WPSInfo info=gs.getService(WPSInfo.class);
+  try {
+    info.setEnabled(false);
+    gs.save(info);
+    Document dom=getAsDOM("wps?service=wps&request=getcapabilities");
+    checkOws10Exception(dom);
+  }
+  finally {
+    info.setEnabled(true);
+    gs.save(info);
+  }
+}

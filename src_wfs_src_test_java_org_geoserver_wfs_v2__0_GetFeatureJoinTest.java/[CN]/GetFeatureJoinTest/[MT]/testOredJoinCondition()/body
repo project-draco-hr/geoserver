@@ -1,0 +1,7 @@
+{
+  String xml="<wfs:GetFeature xmlns:wfs='" + WFS.NAMESPACE + "' xmlns:fes='"+ FES.NAMESPACE+ "'"+ " xmlns:gs='"+ SystemTestData.DEFAULT_URI+ "' version='2.0.0'>"+ "<wfs:Query typeNames='gs:Forests gs:Lakes' aliases='c d'>"+ "<fes:Filter> "+ "<Or>"+ "<PropertyIsEqualTo>"+ "<ValueReference>c/FID</ValueReference>"+ "<ValueReference>d/FID</ValueReference>"+ "</PropertyIsEqualTo>"+ "<And>"+ "<PropertyIsEqualTo>"+ "<ValueReference>c/NAME</ValueReference>"+ "<Literal>Bar Forest</Literal>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>d/NAME</ValueReference>"+ "<Literal>Green Lake</Literal>"+ "</PropertyIsEqualTo>"+ "</And>"+ "</Or>"+ "</fes:Filter> "+ "</wfs:Query>"+ "</wfs:GetFeature>";
+  Document dom=postAsDOM("wfs",xml);
+  XMLAssert.assertXpathEvaluatesTo("2","count(//wfs:Tuple)",dom);
+  XMLAssert.assertXpathExists("//wfs:Tuple[wfs:member/gs:Forests/gs:NAME = 'Foo Forest' " + "and wfs:member/gs:Lakes/gs:NAME = 'Black Lake']",dom);
+  XMLAssert.assertXpathExists("//wfs:Tuple[wfs:member/gs:Forests/gs:NAME = 'Bar Forest' " + "and wfs:member/gs:Lakes/gs:NAME = 'Green Lake']",dom);
+}

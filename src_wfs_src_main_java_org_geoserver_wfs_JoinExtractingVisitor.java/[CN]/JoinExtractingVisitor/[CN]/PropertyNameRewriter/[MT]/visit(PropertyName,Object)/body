@@ -1,6 +1,27 @@
 {
-  if (expression.equals(from)) {
-    return to;
+  String n=expression.getPropertyName();
+  int idx=n.indexOf('/');
+  String prefix=null;
+  if (idx > 0) {
+    prefix=n.substring(0,idx);
+    if (prefixes.contains(prefix)) {
+      if (nameToAlias.get(prefix) != null) {
+        prefix=nameToAlias.get(prefix);
+      }
+      n=n.substring(idx + 1);
+    }
+ else {
+      n=null;
+    }
   }
-  return super.visit(expression,extraData);
+ else {
+    n=null;
+  }
+  if (n != null) {
+    if (addPrefix) {
+      n=(prefix != null ? prefix : "") + "." + n;
+    }
+    return ff.property(n);
+  }
+  return null;
 }

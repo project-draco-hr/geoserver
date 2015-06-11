@@ -1,0 +1,186 @@
+{
+  ResourceAccessManager resourceManager=getResourceAccessManager(buildLegacyAccessManager("complex.properties"));
+  Class<? extends CatalogInfo> clazz=WorkspaceInfo.class;
+  Filter security=resourceManager.getSecurityFilter(anonymous,clazz);
+  Filter security2=resourceManager.getSecurityFilter(rwUser,clazz);
+  Filter security3=resourceManager.getSecurityFilter(milUser,clazz);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertNotSame(security,Filter.INCLUDE);
+  assertSame(security2,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  List<WorkspaceInfo> ws=catalog.getWorkspaces();
+  Iterator<WorkspaceInfo> it=Iterators.filter(ws.iterator(),new PredicateFilter(security));
+  while (it.hasNext()) {
+    assertSame(it.next(),toppWs);
+  }
+  it=Iterators.filter(ws.iterator(),new PredicateFilter(security3));
+  while (it.hasNext()) {
+    assertSame(it.next(),toppWs);
+  }
+  clazz=PublishedInfo.class;
+  security=resourceManager.getSecurityFilter(anonymous,clazz);
+  security2=resourceManager.getSecurityFilter(rwUser,clazz);
+  security3=resourceManager.getSecurityFilter(milUser,clazz);
+  assertNotSame(security,Filter.INCLUDE);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertNotSame(security2,Filter.INCLUDE);
+  assertNotSame(security2,Filter.EXCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  List<LayerInfo> ly=catalog.getLayers();
+  Iterator<LayerInfo> it1=Iterators.filter(ly.iterator(),new PredicateFilter(security));
+  boolean hasRoadsLayer=false;
+  boolean hasLandmLayer=false;
+  while (it1.hasNext()) {
+    LayerInfo next=it1.next();
+    assertNotSame("Unexpectedly found bases with security filter " + security,next,basesLayer);
+    assertNotSame("Unexpectedly found states with security filter " + security,next,statesLayer);
+    hasLandmLayer|=next.equals(landmarksLayer);
+    hasRoadsLayer|=next.equals(roadsLayer);
+    assertNotSame(next,arcGridLayer);
+  }
+  assertTrue(hasRoadsLayer);
+  assertTrue(hasLandmLayer);
+  hasRoadsLayer=false;
+  boolean hasStatesLayer=false;
+  hasLandmLayer=false;
+  it1=Iterators.filter(ly.iterator(),new PredicateFilter(security2));
+  while (it1.hasNext()) {
+    LayerInfo next=it1.next();
+    assertNotSame(next,basesLayer);
+    hasStatesLayer|=next.equals(statesLayer);
+    hasLandmLayer|=next.equals(landmarksLayer);
+    hasRoadsLayer|=next.equals(roadsLayer);
+    assertNotSame(next,arcGridLayer);
+  }
+  assertTrue(hasLandmLayer);
+  assertTrue(hasStatesLayer);
+  assertTrue(hasRoadsLayer);
+  boolean hasArcGridLayer=false;
+  boolean hasBasesLayer=false;
+  hasLandmLayer=false;
+  hasRoadsLayer=false;
+  it1=Iterators.filter(ly.iterator(),new PredicateFilter(security3));
+  while (it1.hasNext()) {
+    LayerInfo next=it1.next();
+    assertNotSame(next,statesLayer);
+    hasLandmLayer|=next.equals(landmarksLayer);
+    hasRoadsLayer|=next.equals(roadsLayer);
+    hasBasesLayer|=next.equals(basesLayer);
+    hasArcGridLayer|=next.equals(arcGridLayer);
+  }
+  assertTrue(hasLandmLayer);
+  assertTrue(hasBasesLayer);
+  assertTrue(hasArcGridLayer);
+  assertTrue(hasRoadsLayer);
+  clazz=StyleInfo.class;
+  security=resourceManager.getSecurityFilter(anonymous,clazz);
+  security2=resourceManager.getSecurityFilter(rwUser,clazz);
+  security3=resourceManager.getSecurityFilter(milUser,clazz);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertNotSame(security,Filter.INCLUDE);
+  assertSame(security2,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  List<StyleInfo> sy=catalog.getStyles();
+  Iterator<StyleInfo> it2=Iterators.filter(sy.iterator(),new PredicateFilter(security));
+  while (it2.hasNext()) {
+    StyleInfo next=it2.next();
+    WorkspaceInfo wsi=next.getWorkspace();
+    if (wsi != null) {
+      String wsName=wsi.getName();
+      assertTrue(wsName.equalsIgnoreCase("topp"));
+    }
+  }
+  it2=Iterators.filter(sy.iterator(),new PredicateFilter(security3));
+  while (it2.hasNext()) {
+    StyleInfo next=it2.next();
+    WorkspaceInfo wsi=next.getWorkspace();
+    if (wsi != null) {
+      String wsName=wsi.getName();
+      assertTrue(wsName.equalsIgnoreCase("topp"));
+    }
+  }
+  clazz=ResourceInfo.class;
+  security=resourceManager.getSecurityFilter(anonymous,clazz);
+  security2=resourceManager.getSecurityFilter(rwUser,clazz);
+  security3=resourceManager.getSecurityFilter(milUser,clazz);
+  assertNotSame(security,Filter.INCLUDE);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertNotSame(security2,Filter.INCLUDE);
+  assertNotSame(security2,Filter.EXCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  List<FeatureTypeInfo> fy=catalog.getFeatureTypes();
+  Iterator<FeatureTypeInfo> it3=Iterators.filter(fy.iterator(),new PredicateFilter(security));
+  hasRoadsLayer=false;
+  hasLandmLayer=false;
+  while (it3.hasNext()) {
+    FeatureTypeInfo next=it3.next();
+    assertNotSame(next,bases);
+    assertNotSame(next,states);
+    hasLandmLayer|=next.equals(landmarks);
+    hasRoadsLayer|=next.equals(roads);
+    assertNotSame(next,arcGrid);
+  }
+  assertTrue(hasRoadsLayer);
+  assertTrue(hasLandmLayer);
+  hasRoadsLayer=false;
+  hasStatesLayer=false;
+  hasLandmLayer=false;
+  it3=Iterators.filter(fy.iterator(),new PredicateFilter(security2));
+  while (it3.hasNext()) {
+    FeatureTypeInfo next=it3.next();
+    assertNotSame(next,bases);
+    hasStatesLayer|=next.equals(states);
+    hasLandmLayer|=next.equals(landmarks);
+    hasRoadsLayer|=next.equals(roads);
+    assertNotSame(next,arcGrid);
+  }
+  assertTrue(hasLandmLayer);
+  assertTrue(hasStatesLayer);
+  assertTrue(hasRoadsLayer);
+  hasBasesLayer=false;
+  hasLandmLayer=false;
+  hasRoadsLayer=false;
+  it3=Iterators.filter(fy.iterator(),new PredicateFilter(security3));
+  while (it3.hasNext()) {
+    FeatureTypeInfo next=it3.next();
+    assertNotSame(next,states);
+    hasLandmLayer|=next.equals(landmarks);
+    hasRoadsLayer|=next.equals(roads);
+    hasBasesLayer|=next.equals(bases);
+  }
+  assertTrue(hasLandmLayer);
+  assertTrue(hasBasesLayer);
+  assertTrue(hasRoadsLayer);
+  clazz=CoverageInfo.class;
+  security=resourceManager.getSecurityFilter(anonymous,clazz);
+  security2=resourceManager.getSecurityFilter(rwUser,clazz);
+  security3=resourceManager.getSecurityFilter(milUser,clazz);
+  assertNotSame(security,Filter.INCLUDE);
+  assertNotSame(security,Filter.EXCLUDE);
+  assertNotSame(security2,Filter.INCLUDE);
+  assertNotSame(security2,Filter.EXCLUDE);
+  assertNotSame(security3,Filter.INCLUDE);
+  assertNotSame(security3,Filter.EXCLUDE);
+  List<CoverageInfo> cy=catalog.getCoverages();
+  Iterator<CoverageInfo> it4=Iterators.filter(cy.iterator(),new PredicateFilter(security));
+  while (it4.hasNext()) {
+    CoverageInfo next=it4.next();
+    assertNotSame(next,arcGrid);
+  }
+  it4=Iterators.filter(cy.iterator(),new PredicateFilter(security2));
+  while (it4.hasNext()) {
+    CoverageInfo next=it4.next();
+    assertNotSame(next,arcGrid);
+  }
+  hasArcGridLayer=false;
+  it4=Iterators.filter(cy.iterator(),new PredicateFilter(security3));
+  while (it4.hasNext()) {
+    CoverageInfo next=it4.next();
+    hasArcGridLayer|=next.equals(arcGrid);
+  }
+  assertTrue(hasArcGridLayer);
+}

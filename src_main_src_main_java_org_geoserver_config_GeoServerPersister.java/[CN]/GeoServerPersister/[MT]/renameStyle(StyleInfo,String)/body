@@ -1,18 +1,17 @@
 {
-  LOGGER.fine("Renameing style " + s.getName() + " to "+ newName);
+  LOGGER.fine("Renaming style " + s.getName() + " to "+ newName);
   Resource xml=dd.config(s);
   renameRes(xml,newName + ".xml");
   Resource style=dd.style(s);
-  String sldFileName=newName + ".sld";
-  Resource target=style.parent().get(sldFileName);
-  int i=1;
-  while (target.getType() != Type.UNDEFINED && i <= MAX_RENAME_ATTEMPTS) {
-    sldFileName=newName + i + ".sld";
-    target=style.parent().get(sldFileName);
-  }
-  if (i > MAX_RENAME_ATTEMPTS) {
-    throw new IOException("All target files between " + newName + "1.sld and "+ newName+ MAX_RENAME_ATTEMPTS+ ".sld are in use already, giving up");
-  }
+  StyleHandler format=Styles.handler(s.getFormat());
+  Resource target=uniqueResource(style,newName,format.getFileExtension());
   renameRes(style,target.name());
-  s.setFilename(sldFileName);
+  s.setFilename(target.name());
+  if (!SLDHandler.FORMAT.equals(format.getFormat())) {
+    Resource sld=style.parent().get(FilenameUtils.getBaseName(style.name()) + ".sld");
+    if (sld.getType() == Type.RESOURCE) {
+      Resource generated=uniqueResource(sld,newName,"sld");
+      renameRes(sld,generated.name());
+    }
+  }
 }

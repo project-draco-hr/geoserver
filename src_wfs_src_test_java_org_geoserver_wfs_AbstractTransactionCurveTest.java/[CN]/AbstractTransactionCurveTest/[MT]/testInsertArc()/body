@@ -1,0 +1,12 @@
+{
+  String xml=IOUtils.toString(getClass().getResourceAsStream("insertArc.xml"));
+  Document dom=postAsDOM("wfs",xml);
+  checkSuccesfulTransaction(dom,1,0,0);
+  SimpleFeature first=getSingleFeature(CURVELINES,"Arc far away");
+  Geometry g=(Geometry)first.getDefaultGeometry();
+  assertNotNull(g);
+  assertTrue(g instanceof SingleCurvedGeometry);
+  SingleCurvedGeometry<?> curved=(SingleCurvedGeometry<?>)g;
+  double[] cp=curved.getControlPoints();
+  assertArrayEquals(new double[]{10,15,15,20,20,15},cp,0d);
+}

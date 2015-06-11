@@ -1,0 +1,29 @@
+{
+  CoverageInfo info=getCatalog().getCoverageByName(getLayerId(name));
+  info.setSRS("EPSG:4326");
+  info.setProjectionPolicy(ProjectionPolicy.REPROJECT_TO_DECLARED);
+  String layerName=name.getLocalPart().toUpperCase();
+  boolean isPackedLayer=layerName.contains("PACKED");
+  boolean isCF=layerName.contains("CF");
+  CoverageDimensionInfo dimension=info.getDimensions().get(0);
+  String originalUnit=ORIGINAL_UNIT;
+  dimension.setUnit(originalUnit);
+  List<Double> nullValues=dimension.getNullValues();
+  if (nullValues != null) {
+    nullValues.clear();
+    nullValues.add(ORIGINAL_FILL_VALUE);
+  }
+  NetCDFLayerSettingsContainer container=new NetCDFLayerSettingsContainer();
+  container.setCompressionLevel(0);
+  container.setShuffle(true);
+  container.setDataPacking(isPackedLayer ? DataPacking.SHORT : DataPacking.NONE);
+  List<GlobalAttribute> attributes=new ArrayList<GlobalAttribute>();
+  attributes.add(new GlobalAttribute("custom_attribute","testing WCS"));
+  attributes.add(new GlobalAttribute("Conventions","CF-1.6"));
+  container.setGlobalAttributes(attributes);
+  container.setLayerName(STANDARD_NAME);
+  container.setLayerUOM(isCF ? CANONICAL_UNIT : originalUnit);
+  String key="NetCDFOutput.Key";
+  info.getMetadata().put(key,container);
+  getCatalog().save(info);
+}

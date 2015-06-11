@@ -5,12 +5,13 @@
   }
   final Style style=preprocessStyle(params.getStyle(),params.getLayer().getFeature().getFeatureType());
   final int userBuffer=params.getBuffer() > 0 ? params.getBuffer() : MIN_BUFFER_SIZE;
-  final int buffer=Math.min(userBuffer,wms.getMaxBuffer());
+  final int buffer=getBuffer(userBuffer);
   final List<Rule> rules=getActiveRules(style,params.getScaleDenominator());
   if (rules.size() == 0) {
     return null;
   }
   GetMapRequest getMap=params.getGetMapRequest();
+  getMap.getFormatOptions().put("antialias","NONE");
   WMSMapContent mc=new WMSMapContent(getMap);
   try {
     mc.setTransparent(true);
@@ -30,35 +31,20 @@
     }
     Envelope targetRasterSpace=new Envelope(params.getX() - radius,params.getX() + radius,params.getY() - radius,params.getY() + radius);
     Envelope targetModelSpace=JTS.transform(targetRasterSpace,new AffineTransform2D(screenToWorld));
-    int paintAreaSize=radius * 2 + 1;
+    int paintAreaSize=radius * 2;
     final BufferedImage image=ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_INT_ARGB).createBufferedImage(paintAreaSize,paintAreaSize);
     image.setAccelerationPriority(0);
     int mid=radius;
     int hitAreaSize=buffer * 2 + 1;
+    if (hitAreaSize > paintAreaSize) {
+      hitAreaSize=paintAreaSize;
+    }
     Rectangle hitArea=new Rectangle(mid - buffer,mid - buffer,hitAreaSize,hitAreaSize);
     final FeatureInfoRenderListener featureInfoListener=new FeatureInfoRenderListener(image,hitArea,maxFeatures,params.getPropertyNames());
     mc.getViewport().setBounds(new ReferencedEnvelope(targetModelSpace,getMap.getCrs()));
     mc.setMapWidth(paintAreaSize);
     mc.setMapHeight(paintAreaSize);
-    RenderedImageMapOutputFormat rim=new RenderedImageMapOutputFormat(wms){
-      private Graphics2D graphics;
-      @Override protected RenderedImage prepareImage(      int width,      int height,      IndexColorModel palette,      boolean transparent){
-        return image;
-      }
-      @Override protected Graphics2D getGraphics(      boolean transparent,      Color bgColor,      RenderedImage preparedImage,      Map<Key,Object> hintsMap){
-        graphics=super.getGraphics(transparent,bgColor,preparedImage,hintsMap);
-        return graphics;
-      }
-      @Override protected void onBeforeRender(      StreamingRenderer renderer){
-        Map hints=renderer.getRendererHints();
-        hints.put(StreamingRenderer.OPTIMIZE_FTS_RENDERING_KEY,Boolean.FALSE);
-        hints.put(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
-        featureInfoListener.setGraphics(graphics);
-        featureInfoListener.setRenderer(renderer);
-        renderer.addRenderListener(featureInfoListener);
-      }
-    }
-;
+    GetMapOutputFormat rim=createMapOutputFormat(image,featureInfoListener);
     rim.produceMap(mc);
     List<SimpleFeature> features=featureInfoListener.getFeatures();
     return aggregateByFeatureType(features);

@@ -11,10 +11,16 @@
       LOGGER.fine("Unable to parse proxy base url to a uri: " + proxyBaseUrl);
     }
   }
+  if (ADDITIONAL_HOSTNAMES.contains(uri.host())) {
+    LOGGER.log(Level.FINE,"Hostname {0} is in known aliases for self",new Object[]{uri.host()});
+    return true;
+  }
   for (  InetAddress add : ADDRESSES) {
     if (uri.host().equals(add.getHostAddress()) || uri.host().equals(add.getHostName())) {
+      LOGGER.log(Level.FINE,"Hostname {0} identifies local network interface {1} {2}",new Object[]{uri.host(),add.getHostAddress(),add.getHostName()});
       return true;
     }
   }
+  LOGGER.log(Level.FINE,"Assuming hostname {0} does not refer to self.  If this is wrong may lead to deadlock.",new Object[]{uri.host()});
   return false;
 }

@@ -4,35 +4,39 @@
     throw new ServiceException("SpatiaLite support not avaialable, ensure all required " + "native libraries are installed");
   }
   File dbFile=File.createTempFile("spatialite",".db");
-  Map dbParams=new HashMap();
-  dbParams.put(SpatiaLiteDataStoreFactory.DBTYPE.key,"spatialite");
-  dbParams.put(SpatiaLiteDataStoreFactory.DATABASE.key,dbFile.getAbsolutePath());
-  DataStore dataStore=dsFactory.createDataStore(dbParams);
   try {
-    for (    FeatureCollection fc : featureCollection.getFeatures()) {
-      SimpleFeatureType featureType=(SimpleFeatureType)fc.getSchema();
-      dataStore.createSchema(featureType);
-      FeatureWriter fw=dataStore.getFeatureWriterAppend(featureType.getTypeName(),Transaction.AUTO_COMMIT);
-      SimpleFeatureIterator it=(SimpleFeatureIterator)fc.features();
-      while (it.hasNext()) {
-        SimpleFeature f=it.next();
-        SimpleFeature g=(SimpleFeature)fw.next();
-        for (        AttributeDescriptor att : f.getFeatureType().getAttributeDescriptors()) {
-          String attName=att.getLocalName();
-          g.setAttribute(attName,f.getAttribute(attName));
+    Map dbParams=new HashMap();
+    dbParams.put(SpatiaLiteDataStoreFactory.DBTYPE.key,"spatialite");
+    dbParams.put(SpatiaLiteDataStoreFactory.DATABASE.key,dbFile.getAbsolutePath());
+    DataStore dataStore=dsFactory.createDataStore(dbParams);
+    try {
+      for (      FeatureCollection fc : featureCollection.getFeatures()) {
+        SimpleFeatureType featureType=(SimpleFeatureType)fc.getSchema();
+        dataStore.createSchema(featureType);
+        FeatureWriter fw=dataStore.getFeatureWriterAppend(featureType.getTypeName(),Transaction.AUTO_COMMIT);
+        SimpleFeatureIterator it=(SimpleFeatureIterator)fc.features();
+        while (it.hasNext()) {
+          SimpleFeature f=it.next();
+          SimpleFeature g=(SimpleFeature)fw.next();
+          for (          AttributeDescriptor att : f.getFeatureType().getAttributeDescriptors()) {
+            String attName=att.getLocalName();
+            g.setAttribute(attName,f.getAttribute(attName));
+          }
+          fw.write();
         }
-        fw.write();
       }
     }
+  finally {
+      dataStore.dispose();
+    }
+    BufferedInputStream bin=new BufferedInputStream(new FileInputStream(dbFile));
+    ZipOutputStream zout=new ZipOutputStream(output);
+    zout.putNextEntry(new ZipEntry(getDbFileName(getFeature)));
+    IOUtils.copy(bin,zout);
+    zout.flush();
+    zout.closeEntry();
   }
   finally {
-    dataStore.dispose();
+    dbFile.delete();
   }
-  BufferedInputStream bin=new BufferedInputStream(new FileInputStream(dbFile));
-  ZipOutputStream zout=new ZipOutputStream(output);
-  zout.putNextEntry(new ZipEntry(getDbFileName(getFeature)));
-  IOUtils.copy(bin,zout);
-  zout.flush();
-  zout.closeEntry();
-  dbFile.delete();
 }

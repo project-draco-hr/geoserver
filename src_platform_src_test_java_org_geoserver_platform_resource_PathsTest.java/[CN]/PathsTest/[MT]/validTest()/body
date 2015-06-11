@@ -1,15 +1,34 @@
 {
-  List<String> valid=Arrays.asList(new String[]{"foo","foo.txt","directory/bar"});
-  for (  String name : valid) {
-    assertEquals(name,Paths.valid(name));
+  for (  String name : new String[]{"foo","foo.txt","directory/bar"}) {
+    assertEquals(name,Paths.valid(true,name));
+    assertEquals(name,Paths.valid(false,name));
   }
-  List<String> invalid=Arrays.asList(new String[]{".","..","foo?","foo:","foo*","foo\"","foo<","foo>?","foo|","foo\\"});
-  for (  String name : invalid) {
+  for (  String name : new String[]{".","..","foo\\"}) {
     try {
-      assertEquals(name,Paths.valid(name));
-      fail("invalid:" + name);
+      assertEquals(name,Paths.valid(true,name));
+      fail("invalid: " + name);
     }
  catch (    IllegalArgumentException expected) {
+    }
+    try {
+      assertEquals(name,Paths.valid(false,name));
+      fail("invalid: " + name);
+    }
+ catch (    IllegalArgumentException expected) {
+    }
+  }
+  for (  char c : "*:,'&?\"<>|".toCharArray()) {
+    for (    String prefix : new String[]{"foo",""}) {
+      for (      String suffix : new String[]{"bar",""}) {
+        String name=prefix + c + suffix;
+        try {
+          assertEquals(name,Paths.valid(true,name));
+          fail("invalid: " + name);
+        }
+ catch (        IllegalArgumentException expected) {
+        }
+        assertEquals(name,Paths.valid(false,name));
+      }
     }
   }
 }
