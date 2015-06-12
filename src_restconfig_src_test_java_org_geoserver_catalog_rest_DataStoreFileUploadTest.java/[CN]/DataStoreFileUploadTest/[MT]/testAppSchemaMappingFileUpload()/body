@@ -1,0 +1,25 @@
+{
+  byte[] bytes=appSchemaMappingAsBytes();
+  if (bytes == null) {
+    LOGGER.warning("app-schema test data not available: skipping test");
+    return;
+  }
+  loadAppSchemaTestData();
+  put("/rest/workspaces/gsml/datastores/mappedPolygons/file.appschema",bytes,"text/xml");
+  Document dom=getAsDOM("wfs?request=getfeature&typename=gsml:MappedFeature");
+  assertEquals("wfs:FeatureCollection",dom.getDocumentElement().getNodeName());
+  NodeList mappedFeatureNodes=dom.getDocumentElement().getElementsByTagNameNS("http://www.cgi-iugs.org/xml/GeoSciML/2","MappedFeature");
+  assertNotNull(mappedFeatureNodes);
+  assertEquals(2,mappedFeatureNodes.getLength());
+  int namesCount=countNameAttributes(mappedFeatureNodes.item(0));
+  assertEquals(2,namesCount);
+  bytes=appSchemaAlternativeMappingAsBytes();
+  put("/rest/workspaces/gsml/datastores/mappedPolygons/file.appschema?configure=none",bytes,"text/xml");
+  dom=getAsDOM("wfs?request=getfeature&typename=gsml:MappedFeature");
+  assertEquals("wfs:FeatureCollection",dom.getDocumentElement().getNodeName());
+  mappedFeatureNodes=dom.getDocumentElement().getElementsByTagNameNS("http://www.cgi-iugs.org/xml/GeoSciML/2","MappedFeature");
+  assertNotNull(mappedFeatureNodes);
+  assertEquals(2,mappedFeatureNodes.getLength());
+  namesCount=countNameAttributes(mappedFeatureNodes.item(0));
+  assertEquals(1,namesCount);
+}
