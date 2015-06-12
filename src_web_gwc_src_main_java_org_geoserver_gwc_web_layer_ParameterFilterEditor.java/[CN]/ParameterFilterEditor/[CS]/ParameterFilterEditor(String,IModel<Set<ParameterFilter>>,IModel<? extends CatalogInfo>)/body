@@ -20,20 +20,16 @@
       item.add(keyLabel);
       final Component subForm=getSubform("subform",item.getModel());
       item.add(subForm);
-      final Component removeLink;
-      removeLink=new ImageAjaxLink("removeLink",GWCIconFactory.DELETE_ICON){
+      final AjaxSubmitLink removeLink;
+      removeLink=new AjaxSubmitLink("removeLink"){
         private static final long serialVersionUID=1L;
-        @Override protected void onClick(        AjaxRequestTarget target){
-          List<ParameterFilter> list;
-          list=new ArrayList<ParameterFilter>(filters.getModelObject());
-          final ParameterFilter filter=(ParameterFilter)getDefaultModelObject();
-          list.remove(filter);
-          filters.setModelObject(list);
-          item.remove();
+        @Override protected void onSubmit(        AjaxRequestTarget target,        Form form){
+          getList().remove((ParameterFilter)getDefaultModelObject());
           target.addComponent(container);
         }
       }
 ;
+      removeLink.add(new Icon("removeIcon",GWCIconFactory.DELETE_ICON));
       removeLink.setDefaultModel(item.getModel());
       removeLink.add(new AttributeModifier("title",true,new ResourceModel("ParameterFilterEditor.removeLink")));
       item.add(removeLink);
@@ -42,7 +38,9 @@
 ;
   filters.setOutputMarkupId(true);
   filters.setReuseItems(true);
-  table.add(filters);
+  Form filtersForm=new Form("filtersForm",filters.getDefaultModel());
+  filtersForm.add(filters);
+  table.add(filtersForm);
   List<String> parameterKeys=new ArrayList<String>(GWC.get().getGridSetBroker().getNames());
   for (  ParameterFilter filter : model.getObject()) {
     parameterKeys.remove(filter.getKey());
