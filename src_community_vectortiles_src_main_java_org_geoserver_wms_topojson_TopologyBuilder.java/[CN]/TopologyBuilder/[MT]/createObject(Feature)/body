@@ -10,12 +10,13 @@
       return null;
     }
   }
-  geom=transformer.transform(geom);
-  if (clipBounds.overlaps(geom)) {
-    geom=clipBounds.intersection(geom);
-  }
   geom=fixedGeometryFactory.createGeometry(geom);
-  geom=TopologyPreservingSimplifier.simplify(geom,0.8);
+  if (geom.isEmpty()) {
+    return null;
+  }
+  if (geom instanceof GeometryCollection && geom.getNumGeometries() == 1) {
+    geom=geom.getGeometryN(0);
+  }
   TopoGeom geometry=createGeometry(geom);
   Map<String,Object> properties=getProperties(feature);
   geometry.setProperties(properties);

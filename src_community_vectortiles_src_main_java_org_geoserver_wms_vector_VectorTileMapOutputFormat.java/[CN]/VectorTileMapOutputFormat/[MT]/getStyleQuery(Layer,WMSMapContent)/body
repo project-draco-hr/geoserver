@@ -1,0 +1,35 @@
+{
+  final ReferencedEnvelope renderingArea=mapContent.getRenderingArea();
+  final Rectangle screenSize=new Rectangle(mapContent.getMapWidth(),mapContent.getMapHeight());
+  final double mapScale;
+  try {
+    mapScale=RendererUtilities.calculateScale(renderingArea,mapContent.getMapWidth(),mapContent.getMapHeight(),null);
+  }
+ catch (  TransformException|FactoryException e) {
+    throw Throwables.propagate(e);
+  }
+  FeatureSource<?,?> featureSource=layer.getFeatureSource();
+  FeatureType schema=featureSource.getSchema();
+  GeometryDescriptor geometryDescriptor=schema.getGeometryDescriptor();
+  AffineTransform worldToScreen=mapContent.getRenderingTransform();
+  Style style=layer.getStyle();
+  List<FeatureTypeStyle> featureStyles=style.featureTypeStyles();
+  List<LiteFeatureTypeStyle> styleList=createLiteFeatureTypeStyles(featureStyles,schema,mapScale,screenSize);
+  Query styleQuery;
+  CoordinateReferenceSystem mapCRS;
+  CoordinateReferenceSystem sourceCrs;
+  try {
+    mapCRS=renderingArea.getCoordinateReferenceSystem();
+    sourceCrs=geometryDescriptor.getCoordinateReferenceSystem();
+    styleQuery=VectorMapRenderUtils.getStyleQuery(featureSource,schema,styleList,renderingArea,mapCRS,sourceCrs,screenSize,geometryDescriptor,worldToScreen);
+  }
+ catch (  IllegalFilterException|FactoryException e1) {
+    throw Throwables.propagate(e1);
+  }
+  Query query=styleQuery;
+  query.setProperties(Query.ALL_PROPERTIES);
+  query.setCoordinateSystem(renderingArea.getCoordinateReferenceSystem());
+  Hints hints=query.getHints();
+  hints.put(Hints.FEATURE_2D,Boolean.TRUE);
+  return query;
+}

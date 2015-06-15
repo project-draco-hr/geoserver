@@ -1,0 +1,103 @@
+{
+  final ReferencedEnvelope renderingArea=mapContent.getRenderingArea();
+  final CoordinateReferenceSystem mapCrs=renderingArea.getCoordinateReferenceSystem();
+  final AffineTransform worldToScreen=mapContent.getRenderingTransform();
+  final Rectangle paintArea=new Rectangle(mapContent.getMapWidth(),mapContent.getMapHeight());
+  final Polygon mapBounds=JTS.toGeometry(renderingArea);
+  final Polygon screenBounds=JTS.toGeometry(new Envelope(0,mapContent.getMapWidth(),0,mapContent.getMapHeight()));
+  VectorTileBuilder vectorTileBuilder;
+  vectorTileBuilder=this.tileBuilderFactory.newBuilder(paintArea,renderingArea);
+  for (  Layer layer : mapContent.layers()) {
+    FeatureSource<?,?> featureSource=layer.getFeatureSource();
+    GeometryDescriptor geometryDescriptor=featureSource.getSchema().getGeometryDescriptor();
+    if (null == geometryDescriptor) {
+      continue;
+    }
+    CoordinateReferenceSystem sourceCrs=geometryDescriptor.getType().getCoordinateReferenceSystem();
+    ProjectionHandler projectionHandler;
+    MathTransform sourceToTargetCrs;
+    MathTransform targetToScreen;
+    MathTransform sourceToScreen;
+    try {
+      final boolean wrap=false;
+      projectionHandler=ProjectionHandlerFinder.getHandler(renderingArea,sourceCrs,wrap);
+      sourceToTargetCrs=buildTransform(sourceCrs,mapCrs);
+      targetToScreen=ProjectiveTransform.create(worldToScreen);
+      sourceToScreen=ConcatenatedTransform.create(sourceToTargetCrs,targetToScreen);
+    }
+ catch (    FactoryException e) {
+      throw new ServiceException(e);
+    }
+    Query query=getStyleQuery(layer,mapContent);
+    ScreenMap screenMap=(ScreenMap)query.getHints().get(Hints.SCREENMAP);
+    query.getHints().remove(Hints.SCREENMAP);
+    FeatureCollection<?,?> features=featureSource.getFeatures(query);
+    Feature next;
+    Stopwatch sw=Stopwatch.createStarted();
+    int count=0;
+    int total=0;
+    final boolean transformToScreenCoordinates=this.transformToScreenCoordinates;
+    final boolean clipToMapBounds=this.clipToMapBounds;
+    final MathTransform tx=transformToScreenCoordinates ? sourceToScreen : sourceToTargetCrs;
+    final double pixelDistance=0.5;
+    final double simplificationDistance=getSimplificationDistance(sourceToScreen,paintArea,pixelDistance);
+    final double distanceTolerance=transformToScreenCoordinates ? pixelDistance : simplificationDistance;
+    final Polygon clippingPolygon=transformToScreenCoordinates ? screenBounds : mapBounds;
+    try (FeatureIterator<?> it=features.features()){
+      while (it.hasNext()) {
+        next=it.next();
+        total++;
+        Geometry originalGeom;
+        Geometry preProcessed;
+        Geometry finalGeom;
+        originalGeom=(Geometry)next.getDefaultGeometryProperty().getValue();
+        try {
+          preProcessed=preprocess(originalGeom,projectionHandler,screenMap);
+        }
+ catch (        TransformException|FactoryException e) {
+          continue;
+        }
+        if (preProcessed == null) {
+          continue;
+        }
+        try {
+          finalGeom=JTS.transform(preProcessed,tx);
+        }
+ catch (        MismatchedDimensionException|TransformException e) {
+          e.printStackTrace();
+          continue;
+        }
+        if (finalGeom.getDimension() > 0) {
+          finalGeom=DouglasPeuckerSimplifier.simplify(finalGeom,distanceTolerance);
+        }
+        Geometry clipped=finalGeom;
+        if (clipToMapBounds) {
+          try {
+            clipped=finalGeom.intersection(clippingPolygon);
+          }
+ catch (          Exception e) {
+            e.printStackTrace();
+            continue;
+          }
+        }
+        if (clipped.isEmpty()) {
+          continue;
+        }
+        if (clipped instanceof GeometryCollection && clipped.getNumGeometries() == 1) {
+          clipped=clipped.getGeometryN(0);
+        }
+        ((SimpleFeature)next).setDefaultGeometry(clipped);
+        vectorTileBuilder.addFeature((SimpleFeature)next);
+        count++;
+      }
+    }
+     sw.stop();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      String msg=String.format("Added %,d out of %,d features of '%s' in %s",count,total,layer.getTitle(),sw);
+      System.err.println(msg);
+      LOGGER.fine(msg);
+    }
+  }
+  WebMap map=vectorTileBuilder.build(mapContent);
+  return map;
+}
