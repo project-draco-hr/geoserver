@@ -10,14 +10,10 @@
   final String localPropertyName=prop.getPropertyName();
   String[] steps=localPropertyName.split("\\.");
   for (int i=steps.length - 1; i >= 0; i--) {
-    String backPropName=steps[0];
-    for (int j=1; j < i; j++) {
-      backPropName+="." + steps[j];
-    }
+    String backPropName=Strings.join(".",Arrays.copyOfRange(steps,0,i));
     Object backProp=ff.property(backPropName).evaluate(info);
     if (backProp != null) {
-      if (prop.isCollectionProperty()) {
-        checkState(backProp instanceof Set || backProp instanceof List);
+      if (prop.isCollectionProperty() && (backProp instanceof Set || backProp instanceof List)) {
         List<?> list;
         if (backProp instanceof Set) {
           list=asValueList(backProp);
