@@ -5,7 +5,7 @@
   setModel(tileLayerModel);
   final GWC mediator=GWC.get();
   final IModel<String> createTileLayerLabelModel;
-  final CatalogInfo info=layerModel.getObject();
+  final PublishedInfo info=layerModel.getObject();
   final GeoServerTileLayerInfo tileLayerInfo=tileLayerModel.getObject();
   if (info instanceof LayerInfo) {
     createTileLayerLabelModel=new ResourceModel("createTileLayerForLayer");
@@ -81,7 +81,8 @@
   cacheFormats=new CheckGroup<String>("cacheFormatsGroup",mimeFormatsModel);
   cacheFormats.setLabel(new ResourceModel("cacheFormats"));
   configs.add(cacheFormats);
-  final List<String> formats=Arrays.asList("image/png","image/png8","image/jpeg","image/gif","application/json;type=topojson");
+  final List<String> formats;
+  formats=Lists.newArrayList(GWC.get().getAdvertisedCachedFormats(info.getType()));
   ListView<String> cacheFormatsList=new ListView<String>("cacheFormats",formats){
     private static final long serialVersionUID=1L;
     @Override protected void populateItem(    ListItem<String> item){
