@@ -1,0 +1,20 @@
+{
+  GWCConfig gwcConfig=new GWCConfig();
+  gwcConfig.setInnerCachingEnabled(true);
+  gwcConfig.setEnabledPersistence(true);
+  blobStore.setChanged(gwcConfig,false);
+  BlobStoreListener l1=Mockito.mock(BlobStoreListener.class);
+  BlobStoreListener l2=Mockito.mock(BlobStoreListener.class);
+  assertTrue(blobStore.getDelegate() instanceof MemoryBlobStore);
+  blobStore.addListener(l1);
+  blobStore.addListener(l2);
+  Mockito.verify(defaultStore,Mockito.times(2)).addListener(Mockito.any(BlobStoreListener.class));
+  Mockito.reset(defaultStore);
+  GWCConfig newConfig=new GWCConfig();
+  newConfig.setInnerCachingEnabled(false);
+  newConfig.setEnabledPersistence(true);
+  blobStore.setChanged(newConfig,false);
+  assertFalse(blobStore.getDelegate() instanceof MemoryBlobStore);
+  Mockito.verify(defaultStore,Mockito.times(2)).removeListener(Mockito.any(BlobStoreListener.class));
+  Mockito.verify(defaultStore,Mockito.times(2)).addListener(Mockito.any(BlobStoreListener.class));
+}
