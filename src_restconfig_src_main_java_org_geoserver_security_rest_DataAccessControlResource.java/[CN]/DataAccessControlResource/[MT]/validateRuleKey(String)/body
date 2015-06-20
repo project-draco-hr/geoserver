@@ -1,0 +1,22 @@
+{
+  String[] elements=parseElements(ruleKey);
+  if (elements.length != 3) {
+    return "Invalid rule " + ruleKey + ", the expected format is workspace.layer.mode=role1,role2,...";
+  }
+  String workspace=elements[0];
+  String layerName=elements[1];
+  String modeAlias=elements[2];
+  AccessMode mode=AccessMode.getByAlias(modeAlias);
+  if (mode == null) {
+    return "Unknown access mode " + modeAlias + " in "+ ruleKey;
+  }
+  if (ANY.equals(workspace)) {
+    if (!ANY.equals(layerName)) {
+      return "Invalid rule " + ruleKey + ", when namespace "+ "is * then also layer must be *.";
+    }
+  }
+  if (mode == AccessMode.ADMIN && !ANY.equals(layerName)) {
+    return "Invalid rule " + ruleKey + ", admin (a) privileges may only be applied "+ "globally to a workspace, layer must be *.";
+  }
+  return null;
+}

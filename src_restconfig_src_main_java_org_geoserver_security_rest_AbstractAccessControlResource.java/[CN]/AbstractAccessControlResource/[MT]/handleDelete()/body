@@ -1,0 +1,30 @@
+{
+  if (getManager().checkAuthenticationForAdminRole() == false)   throw createNonAdminException();
+  String ruleURI=(String)getRequest().getAttributes().get("rule");
+  String ruleString=null;
+  try {
+    ruleString=URLDecoder.decode(ruleURI,"utf-8");
+  }
+ catch (  UnsupportedEncodingException e1) {
+    throw new RestletException(e1.getMessage(),Status.SERVER_ERROR_INTERNAL,e1);
+  }
+  String msg=validateRuleKey(ruleString);
+  if (msg != null)   throw createRestletException(new RestletException(msg,Status.CLIENT_ERROR_UNPROCESSABLE_ENTITY));
+  Comparable<?> rule=null;
+  for (  Comparable<?> ruleCandidate : ruleDAO.getRules()) {
+    if (ruleString.equals(keyFor(ruleCandidate))) {
+      rule=ruleCandidate;
+      break;
+    }
+  }
+  if (rule == null) {
+    throw new RestletException("Rule not found: " + rule,Status.CLIENT_ERROR_NOT_FOUND);
+  }
+  try {
+    ruleDAO.removeRule(rule);
+    ruleDAO.storeRules();
+  }
+ catch (  Exception e) {
+    throw createRestletException(e);
+  }
+}
