@@ -1,4 +1,5 @@
 {
+  final FilterFactory2 FF=CommonFactoryFinder.getFilterFactory2(null);
   int totalCount=0;
   Catalog catalog=wfs.getGeoServer().getCatalog();
   GetFeatureType request=(GetFeatureType)operation.getParameters()[0];
@@ -11,6 +12,10 @@
     Filter filter=query.getFilter();
     if (filter == null) {
       filter=Filter.INCLUDE;
+    }
+ else {
+      ReprojectingFilterVisitor reprojector=new ReprojectingFilterVisitor(FF,source.getSchema());
+      filter=(Filter)filter.accept(reprojector,null);
     }
     Query countQuery=new Query(typeName.getLocalPart(),filter);
     Map<String,String> viewParam=viewParams != null && viewParams.size() > idx ? viewParams.get(idx) : null;
