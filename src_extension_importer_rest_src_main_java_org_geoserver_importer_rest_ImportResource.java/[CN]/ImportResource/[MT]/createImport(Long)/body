@@ -3,6 +3,7 @@
   try {
     Form query=getRequest().getResourceRef().getQueryAsForm();
     boolean async=query.getNames().contains("async");
+    boolean execute=query.getNames().contains("execute");
     if (async) {
       context=importer.registerContext(id);
     }
@@ -40,7 +41,15 @@
     context.reattach(importer.getCatalog(),true);
     importer.changed(context);
     if (async && context.getData() != null) {
-      importer.initAsynch(context,true);
+      if (execute) {
+        importer.runAsync(context,ImportFilter.ALL,true);
+      }
+ else {
+        importer.initAsync(context,true);
+      }
+    }
+ else     if (execute && context.getData() != null) {
+      importer.run(context);
     }
     getResponse().redirectSeeOther(getPageInfo().rootURI("/imports/" + context.getId()));
     getResponse().setEntity(getFormatGet().toRepresentation(context));
