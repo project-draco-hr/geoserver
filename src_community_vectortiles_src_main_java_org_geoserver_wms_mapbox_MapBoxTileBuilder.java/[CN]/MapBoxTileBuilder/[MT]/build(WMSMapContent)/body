@@ -1,0 +1,26 @@
+{
+  int extent=Math.max(256,Math.max((int)mapSize.getWidth(),(int)mapSize.getHeight()));
+  CoordinateReferenceSystem targetCRS=forceCrs || mapContent.getRequest().getCrs() == null ? standardCrs : mapContent.getRequest().getCrs();
+  ReferencedEnvelope targetMapArea;
+  if (!CRS.equalsIgnoreMetadata(mapArea.getCoordinateReferenceSystem(),targetCRS)) {
+    try {
+      targetMapArea=mapArea.transform(targetCRS,true);
+    }
+ catch (    TransformException|FactoryException e) {
+      throw new RuntimeException(e);
+    }
+  }
+ else {
+    targetMapArea=mapArea;
+  }
+  AffineTransform2D worldToScreen=new AffineTransform2D(RendererUtilities.worldToScreenTransform(targetMapArea,mapSize));
+  VectorTileEncoder encoder=new VectorTileEncoder(extent,extent / 32,false);
+  for (  SimpleFeature feature : features) {
+    Collection<Property> properties=feature.getProperties();
+    Map<String,Object> attributes=propertiesToAttributes(properties);
+    Geometry geometry=(Geometry)feature.getDefaultGeometry();
+    Geometry tilegeometry=convertMapCoordsToTileCoords(geometry,feature.getFeatureType().getCoordinateReferenceSystem(),targetCRS,worldToScreen);
+    encoder.addFeature(feature.getName().getLocalPart(),attributes,tilegeometry);
+  }
+  return new RawMap(mapContent,encoder.encode(),MIME_TYPE);
+}

@@ -1,0 +1,19 @@
+{
+  WMSMapContent mapContent=createMapContent("EPSG:27571",null,POINTS,POLYGONS);
+  mapContent.setMapHeight(1024);
+  mapContent.setMapWidth(1024);
+  MapBoxTileBuilderFactory builderFact=new MapBoxTileBuilderFactory();
+  VectorTileMapOutputFormat outputFormat=new VectorTileMapOutputFormat(getWMS(),builderFact);
+  RawMap map=(RawMap)outputFormat.produceMap(mapContent);
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  map.writeTo(bos);
+  VectorTileDecoder decoder=new VectorTileDecoder();
+  decoder.setAutoScale(false);
+  FeatureIterable feats=decoder.decode(bos.toByteArray());
+  for (  Feature feat : feats) {
+    System.out.println(feat.getLayerName() + ": ");
+    System.out.print(feat.getAttributes());
+    System.out.println(feat.getGeometry());
+  }
+  bos.close();
+}

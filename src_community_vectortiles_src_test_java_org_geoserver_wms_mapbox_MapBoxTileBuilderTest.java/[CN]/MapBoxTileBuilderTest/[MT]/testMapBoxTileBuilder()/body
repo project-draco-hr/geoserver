@@ -1,0 +1,27 @@
+{
+  WMSMapContent mapContent=createMapContent(null,new Envelope(-0.17578125,-0.087890625,0.17578125,0.087890625),POINTS,POLYGONS);
+  mapContent.setMapHeight(1024);
+  mapContent.setMapWidth(1024);
+  MapBoxTileBuilderFactory builderFact=new MapBoxTileBuilderFactory();
+  VectorTileMapOutputFormat outputFormat=new VectorTileMapOutputFormat(getWMS(),builderFact);
+  RawMap map=(RawMap)outputFormat.produceMap(mapContent);
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  map.writeTo(bos);
+  VectorTileDecoder decoder=new VectorTileDecoder();
+  decoder.setAutoScale(false);
+  FeatureIterable feats=decoder.decode(bos.toByteArray());
+  for (  Feature feat : feats) {
+    System.out.println(feat.getLayerName() + ": ");
+    System.out.print(feat.getAttributes());
+    System.out.println(feat.getGeometry());
+  }
+  bos.close();
+  List<Feature> featList=feats.asList();
+  assertEquals(2,featList.size());
+  assertEquals("Points",featList.get(0).getLayerName());
+  assertTrue(featList.get(0).getGeometry() instanceof Point);
+  assertEquals(new Coordinate(0,512),((Point)featList.get(0).getGeometry()).getCoordinate());
+  assertEquals("Polygons",featList.get(1).getLayerName());
+  assertTrue(featList.get(1).getGeometry() instanceof Polygon);
+  assertEquals(new Coordinate(796,1024),(((Polygon)featList.get(1).getGeometry()).getCoordinates()[0]));
+}
