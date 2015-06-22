@@ -1,0 +1,9 @@
+{
+  File dir=unpack("csv/locations.zip");
+  String wsName=getCatalog().getDefaultWorkspace().getName();
+  File locations=new File(dir,"locations.csv");
+  String contextDefinition="{\n" + "   \"import\": {\n" + "      \"targetWorkspace\": {\n"+ "         \"workspace\": {\n"+ "            \"name\": \"" + wsName + "\"\n"+ "         }\n"+ "      },\n"+ "      \"data\": {\n"+ "        \"type\": \"file\",\n"+ "        \"file\": \""+ locations.getCanonicalPath()+ "\"\n"+ "      },\n"+ "      targetStore: {\n"+ "        dataStore: {\n"+ "        name: \"h2\",\n"+ "        }\n"+ "      },\n"+ "      \"transforms\": [\n"+ "        {\n"+ "          \"type\": \"AttributesToPointGeometryTransform\",\n"+ "          \"latField\": \"LAT\","+ "          \"lngField\": \"LON\""+ "        }\n"+ "      ]"+ "   }\n"+ "}";
+  JSONObject json=(JSONObject)json(postAsServletResponse("/rest/imports",contextDefinition,"application/json"));
+  int importId=json.getJSONObject("import").getInt("id");
+  checkLatLonTransformedImport(importId);
+}
