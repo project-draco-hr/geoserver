@@ -28,7 +28,7 @@
     if (charset != null && charset.length() > 0) {
       info.getConnectionParameters().put("charset",charset);
     }
-    DataStoreFactorySpi targetFactory=factory;
+    DataAccessFactory targetFactory=factory;
     if (!targetDataStoreFormat.equals(sourceDataStoreFormat)) {
       targetFactory=lookupDataStoreFactory(targetDataStoreFormat);
       if (targetFactory == null) {
@@ -67,32 +67,37 @@
       catalog.save(info);
     }
   }
-  HashMap params=new HashMap();
-  if (charset != null && charset.length() > 0) {
-    params.put("charset",charset);
-  }
-  updateParameters(params,factory,uploadedFile);
-  DataStore source;
+  boolean createNewSource=false;
+  DataAccess<?,?> source=null;
   try {
-    source=factory.createDataStore(params);
+    HashMap params=new HashMap();
+    if (charset != null && charset.length() > 0) {
+      params.put("charset",charset);
+    }
+    params.put("namespace",namespace.getURI());
+    updateParameters(params,factory,uploadedFile);
+    createNewSource=!sameTypeAndUrl(params,info.getConnectionParameters());
+    source=(createNewSource) ? factory.createDataStore(params) : info.getDataStore(null);
   }
  catch (  IOException e) {
     throw new RuntimeException("Unable to create source data store",e);
   }
   try {
-    DataStore ds=(DataStore)info.getDataStore(null);
-    if (!targetDataStoreFormat.equals(sourceDataStoreFormat)) {
-      for (      String featureTypeName : source.getTypeNames()) {
+    DataAccess ds=info.getDataStore(null);
+    if (!targetDataStoreFormat.equals(sourceDataStoreFormat) && (source instanceof DataStore && ds instanceof DataStore)) {
+      DataStore sourceDataStore=(DataStore)source;
+      DataStore targetDataStore=(DataStore)ds;
+      for (      String featureTypeName : sourceDataStore.getTypeNames()) {
         SimpleFeatureType featureType=null;
         try {
-          featureType=ds.getSchema(featureTypeName);
+          featureType=targetDataStore.getSchema(featureTypeName);
         }
  catch (        Exception e) {
           LOGGER.info(featureTypeName + " does not exist in data store " + datastore+ ". Attempting to create it");
-          ds.createSchema(source.getSchema(featureTypeName));
-          featureType=source.getSchema(featureTypeName);
+          targetDataStore.createSchema(sourceDataStore.getSchema(featureTypeName));
+          featureType=sourceDataStore.getSchema(featureTypeName);
         }
-        FeatureSource featureSource=ds.getFeatureSource(featureTypeName);
+        FeatureSource featureSource=targetDataStore.getFeatureSource(featureTypeName);
         if (!(featureSource instanceof FeatureStore)) {
           LOGGER.warning(featureTypeName + " is not writable, skipping");
           continue;
@@ -107,7 +112,7 @@
             featureStore.removeFeatures(Filter.INCLUDE);
           }
           LOGGER.fine("Adding features to " + featureTypeName);
-          FeatureCollection features=source.getFeatureSource(featureTypeName).getFeatures();
+          FeatureCollection features=sourceDataStore.getFeatureSource(featureTypeName).getFeatures();
           featureStore.addFeatures(features);
           tx.commit();
         }
@@ -128,13 +133,13 @@
     for (    FeatureTypeInfo ftInfo : catalog.getFeatureTypesByDataStore(info)) {
       featureTypesByNativeName.put(ftInfo.getNativeName(),ftInfo);
     }
-    String[] featureTypeNames=source.getTypeNames();
-    for (int i=0; i < featureTypeNames.length; i++) {
+    List<Name> featureTypeNames=source.getNames();
+    for (int i=0; i < featureTypeNames.size(); i++) {
       if (!"all".equalsIgnoreCase(configure) && i > 0) {
         break;
       }
-      FeatureSource fs=ds.getFeatureSource(featureTypeNames[i]);
-      FeatureTypeInfo ftinfo=featureTypesByNativeName.get(featureTypeNames[i]);
+      FeatureSource fs=ds.getFeatureSource(featureTypeNames.get(i));
+      FeatureTypeInfo ftinfo=featureTypesByNativeName.get(featureTypeNames.get(i).getLocalPart());
       if (ftinfo == null) {
         ftinfo=builder.buildFeatureType(fs);
         builder.lookupSRS(ftinfo,true);
@@ -148,10 +153,10 @@
           int x=1;
           String originalName=ftinfo.getName();
           do {
-            ftinfo.setName(originalName + i);
-            i++;
+            ftinfo.setName(originalName + x);
+            x++;
           }
- while (i < 10 && catalog.getFeatureTypeByName(namespace,ftinfo.getName()) != null);
+ while (x < 10 && catalog.getFeatureTypeByName(namespace,ftinfo.getName()) != null);
         }
         catalog.validate(ftinfo,true).throwIfInvalid();
         catalog.add(ftinfo);
@@ -181,7 +186,9 @@
     throw new RuntimeException(e);
   }
  finally {
-    source.dispose();
+    if (createNewSource) {
+      source.dispose();
+    }
     if (isInlineUpload(method) && canRemoveFiles) {
       if (uploadedFile.isFile())       uploadedFile=uploadedFile.getParentFile();
       try {
