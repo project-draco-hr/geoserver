@@ -1,10 +1,10 @@
 {
-  WMSMapContent mapContent=createMapContent(null,new Envelope(-0.17578125,-0.087890625,0.17578125,0.087890625),POINTS,POLYGONS);
-  mapContent.setMapHeight(1024);
-  mapContent.setMapWidth(1024);
+  WMSMapContent mapContent=createMapContent("EPSG:4326",new Envelope(-92.8,-93.2,4.5,4.6),POINTS,POLYGONS);
+  mapContent.setMapHeight(256);
+  mapContent.setMapWidth(256);
   MapBoxTileBuilderFactory builderFact=new MapBoxTileBuilderFactory();
-  builderFact.setForceCrs(true);
   VectorTileMapOutputFormat outputFormat=new VectorTileMapOutputFormat(getWMS(),builderFact);
+  outputFormat.setTransformToScreenCoordinates(true);
   RawMap map=(RawMap)outputFormat.produceMap(mapContent);
   ByteArrayOutputStream bos=new ByteArrayOutputStream();
   map.writeTo(bos);
@@ -21,8 +21,8 @@
   assertEquals(2,featList.size());
   assertEquals("Points",featList.get(0).getLayerName());
   assertTrue(featList.get(0).getGeometry() instanceof Point);
-  assertEquals(new Coordinate(0,512),((Point)featList.get(0).getGeometry()).getCoordinate());
+  assertEquals(new Coordinate(641,973),((Point)featList.get(0).getGeometry()).getCoordinate());
   assertEquals("Polygons",featList.get(1).getLayerName());
   assertTrue(featList.get(1).getGeometry() instanceof Polygon);
-  assertEquals(new Coordinate(796,1024),(((Polygon)featList.get(1).getGeometry()).getCoordinates()[0]));
+  assertEquals(new Coordinate(646,976),(((Polygon)featList.get(1).getGeometry()).getCoordinates()[0]));
 }

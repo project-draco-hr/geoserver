@@ -1,14 +1,16 @@
 {
   GetMapRequest mapRequest=createGetMapRequest(layers);
+  CoordinateReferenceSystem crs=null;
   if (srs != null) {
+    crs=CRS.decode(srs);
     mapRequest.setSRS(srs);
-    CoordinateReferenceSystem crs=CRS.decode(srs);
     mapRequest.setCrs(crs);
   }
   if (bbox != null) {
     mapRequest.setBbox(bbox);
   }
   WMSMapContent map=new WMSMapContent(mapRequest);
+  map.getViewport().setBounds(new ReferencedEnvelope(bbox,crs));
   for (  QName l : layers) {
     map.addLayer(createMapLayer(l));
   }
