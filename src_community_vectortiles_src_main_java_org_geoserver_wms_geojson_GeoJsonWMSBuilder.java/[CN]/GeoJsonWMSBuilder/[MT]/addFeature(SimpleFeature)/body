@@ -1,0 +1,62 @@
+{
+  CoordinateReferenceSystem crs=null;
+  boolean hasGeom=false;
+  jsonWriter.object();
+  jsonWriter.key("type").value("Feature");
+  SimpleFeatureType fType=feature.getFeatureType();
+  List<AttributeDescriptor> types=fType.getAttributeDescriptors();
+  jsonWriter.key("id").value(feature.getID());
+  GeometryDescriptor defaultGeomType=fType.getGeometryDescriptor();
+  if (defaultGeomType != null) {
+    CoordinateReferenceSystem featureCrs=defaultGeomType.getCoordinateReferenceSystem();
+    jsonWriter.setAxisOrder(CRS.getAxisOrder(featureCrs));
+    if (crs == null)     crs=featureCrs;
+  }
+ else {
+    jsonWriter.setAxisOrder(CRS.AxisOrder.EAST_NORTH);
+  }
+  jsonWriter.key("geometry");
+  Geometry aGeom=(Geometry)feature.getDefaultGeometry();
+  if (aGeom == null) {
+    for (int j=0; j < types.size() && aGeom == null; j++) {
+      Object value=feature.getAttribute(j);
+      if (value != null && value instanceof Geometry) {
+        aGeom=(Geometry)value;
+      }
+    }
+  }
+  if (aGeom != null) {
+    jsonWriter.writeGeom(aGeom);
+    hasGeom=true;
+  }
+ else {
+    jsonWriter.value(null);
+  }
+  if (defaultGeomType != null)   jsonWriter.key("geometry_name").value(defaultGeomType.getLocalName());
+  jsonWriter.key("properties");
+  jsonWriter.object();
+  for (int j=0; j < types.size(); j++) {
+    Object value=feature.getAttribute(j);
+    AttributeDescriptor ad=types.get(j);
+    if (value != null) {
+      if (value instanceof Geometry) {
+        if (ad.equals(defaultGeomType)) {
+        }
+ else {
+          jsonWriter.key(ad.getLocalName());
+          jsonWriter.writeGeom((Geometry)value);
+        }
+      }
+ else {
+        jsonWriter.key(ad.getLocalName());
+        jsonWriter.value(value);
+      }
+    }
+ else {
+      jsonWriter.key(ad.getLocalName());
+      jsonWriter.value(null);
+    }
+  }
+  jsonWriter.endObject();
+  jsonWriter.endObject();
+}
