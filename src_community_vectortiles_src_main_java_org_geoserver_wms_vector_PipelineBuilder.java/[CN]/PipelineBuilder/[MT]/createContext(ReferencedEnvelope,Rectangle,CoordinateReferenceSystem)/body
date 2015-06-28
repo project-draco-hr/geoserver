@@ -1,0 +1,26 @@
+{
+  Context context=new Context();
+  context.renderingArea=mapArea;
+  context.paintArea=paintArea;
+  context.sourceCrs=sourceCrs;
+  context.worldToScreen=RendererUtilities.worldToScreenTransform(mapArea,paintArea);
+  context.pixelDistance=0.25;
+  final boolean wrap=false;
+  context.projectionHandler=ProjectionHandlerFinder.getHandler(mapArea,sourceCrs,wrap);
+  CoordinateReferenceSystem mapCrs=context.renderingArea.getCoordinateReferenceSystem();
+  context.sourceToTargetCrs=buildTransform(sourceCrs,mapCrs);
+  context.targetToScreen=ProjectiveTransform.create(context.worldToScreen);
+  context.sourceToScreen=ConcatenatedTransform.create(context.sourceToTargetCrs,context.targetToScreen);
+  double[] spans;
+  try {
+    spans=Decimator.computeGeneralizationDistances(context.sourceToScreen.inverse(),context.paintArea,context.pixelDistance);
+  }
+ catch (  TransformException e) {
+    throw Throwables.propagate(e);
+  }
+  context.simplificationDistance=Math.max(spans[0],spans[1]);
+  context.screenMap=new ScreenMap(0,0,paintArea.width,paintArea.height);
+  context.screenMap.setSpans(spans[0],spans[1]);
+  context.screenMap.setTransform(context.sourceToScreen);
+  return context;
+}

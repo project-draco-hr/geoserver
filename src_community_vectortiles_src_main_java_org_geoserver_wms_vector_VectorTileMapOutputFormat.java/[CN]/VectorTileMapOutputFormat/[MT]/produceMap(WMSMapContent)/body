@@ -1,100 +1,53 @@
 {
   final ReferencedEnvelope renderingArea=mapContent.getRenderingArea();
-  final CoordinateReferenceSystem mapCrs=renderingArea.getCoordinateReferenceSystem();
-  final AffineTransform worldToScreen=mapContent.getRenderingTransform();
   final Rectangle paintArea=new Rectangle(mapContent.getMapWidth(),mapContent.getMapHeight());
-  final Polygon mapBounds=JTS.toGeometry(renderingArea);
-  final Polygon screenBounds=JTS.toGeometry(new Envelope(0,mapContent.getMapWidth(),0,mapContent.getMapHeight()));
   VectorTileBuilder vectorTileBuilder;
   vectorTileBuilder=this.tileBuilderFactory.newBuilder(paintArea,renderingArea);
+  CoordinateReferenceSystem sourceCrs;
   for (  Layer layer : mapContent.layers()) {
     FeatureSource<?,?> featureSource=layer.getFeatureSource();
     GeometryDescriptor geometryDescriptor=featureSource.getSchema().getGeometryDescriptor();
     if (null == geometryDescriptor) {
       continue;
     }
-    CoordinateReferenceSystem sourceCrs=geometryDescriptor.getType().getCoordinateReferenceSystem();
-    ProjectionHandler projectionHandler;
-    MathTransform sourceToTargetCrs;
-    MathTransform targetToScreen;
-    MathTransform sourceToScreen;
+    sourceCrs=geometryDescriptor.getType().getCoordinateReferenceSystem();
+    PipelineBuilder builder;
     try {
-      final boolean wrap=false;
-      projectionHandler=ProjectionHandlerFinder.getHandler(renderingArea,sourceCrs,wrap);
-      sourceToTargetCrs=buildTransform(sourceCrs,mapCrs);
-      targetToScreen=ProjectiveTransform.create(worldToScreen);
-      sourceToScreen=ConcatenatedTransform.create(sourceToTargetCrs,targetToScreen);
+      builder=PipelineBuilder.newBuilder(renderingArea,paintArea,sourceCrs);
     }
  catch (    FactoryException e) {
       throw new ServiceException(e);
     }
+    Pipeline pipeline=builder.transformToScreenCoordinates(transformToScreenCoordinates).clipToMapBounds(clipToMapBounds).preprocess().transform().simplify().clip().collapseCollections().build();
     Query query=getStyleQuery(layer,mapContent);
-    ScreenMap screenMap=(ScreenMap)query.getHints().get(Hints.SCREENMAP);
     query.getHints().remove(Hints.SCREENMAP);
     FeatureCollection<?,?> features=featureSource.getFeatures(query);
     Feature feature;
     Stopwatch sw=Stopwatch.createStarted();
     int count=0;
     int total=0;
-    final boolean transformToScreenCoordinates=this.transformToScreenCoordinates;
-    final boolean clipToMapBounds=this.clipToMapBounds;
-    final MathTransform tx=transformToScreenCoordinates ? sourceToScreen : sourceToTargetCrs;
-    final double pixelDistance=0.25;
-    final double simplificationDistance=getSimplificationDistance(sourceToScreen,paintArea,pixelDistance);
-    final double distanceTolerance=transformToScreenCoordinates ? pixelDistance : simplificationDistance;
-    final Polygon clippingPolygon=transformToScreenCoordinates ? screenBounds : mapBounds;
     try (FeatureIterator<?> it=features.features()){
       while (it.hasNext()) {
         feature=it.next();
         total++;
         Geometry originalGeom;
-        Geometry preProcessed;
         Geometry finalGeom;
         originalGeom=(Geometry)feature.getDefaultGeometryProperty().getValue();
         try {
-          preProcessed=preprocess(originalGeom,projectionHandler,screenMap);
+          finalGeom=pipeline.execute(originalGeom);
         }
- catch (        TransformException|FactoryException e) {
+ catch (        Exception processingException) {
+          processingException.printStackTrace();
           continue;
         }
-        if (preProcessed == null) {
+        if (finalGeom.isEmpty()) {
           continue;
-        }
-        try {
-          finalGeom=JTS.transform(preProcessed,tx);
-        }
- catch (        MismatchedDimensionException|TransformException e) {
-          e.printStackTrace();
-          continue;
-        }
-        if (finalGeom.getDimension() > 0) {
-          finalGeom=DouglasPeuckerSimplifier.simplify(finalGeom,distanceTolerance);
-          if (finalGeom.isEmpty()) {
-            continue;
-          }
-        }
-        Geometry clipped=finalGeom;
-        if (clipToMapBounds) {
-          try {
-            clipped=finalGeom.intersection(clippingPolygon);
-          }
- catch (          Exception e) {
-            e.printStackTrace();
-            continue;
-          }
-        }
-        if (clipped.isEmpty()) {
-          continue;
-        }
-        if (clipped instanceof GeometryCollection && clipped.getNumGeometries() == 1) {
-          clipped=clipped.getGeometryN(0);
         }
         final String layerName=feature.getName().getLocalPart();
         final String featureId=feature.getIdentifier().toString();
         final String geometryName=geometryDescriptor.getName().getLocalPart();
         final Map<String,Object> properties=getProperties(feature);
-        final Geometry geometry=clipped;
-        vectorTileBuilder.addFeature(layerName,featureId,geometryName,geometry,properties);
+        vectorTileBuilder.addFeature(layerName,featureId,geometryName,finalGeom,properties);
         count++;
       }
     }
