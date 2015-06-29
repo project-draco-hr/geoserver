@@ -1,30 +1,25 @@
 {
-  Envelope env=new Envelope(-92.8,-93.2,4.5,4.6);
-  env=JTS.transform(env,CRS.findMathTransform(CRS.decode("EPSG:4326"),CRS.decode("EPSG:900913"),true));
-  WMSMapContent mapContent=createMapContent("EPSG:900913",env,POINTS,POLYGONS);
-  mapContent.setMapHeight(256);
-  mapContent.setMapWidth(256);
   MapBoxTileBuilderFactory builderFact=new MapBoxTileBuilderFactory();
-  VectorTileMapOutputFormat outputFormat=new VectorTileMapOutputFormat(getWMS(),builderFact);
-  outputFormat.setTransformToScreenCoordinates(true);
-  RawMap map=(RawMap)outputFormat.produceMap(mapContent);
-  ByteArrayOutputStream bos=new ByteArrayOutputStream();
-  map.writeTo(bos);
-  VectorTileDecoder decoder=new VectorTileDecoder();
-  decoder.setAutoScale(false);
-  FeatureIterable feats=decoder.decode(bos.toByteArray());
-  for (  Feature feat : feats) {
-    System.out.println(feat.getLayerName() + ": ");
-    System.out.print(feat.getAttributes());
-    System.out.println(feat.getGeometry());
-  }
-  bos.close();
-  List<Feature> featList=feats.asList();
-  assertEquals(2,featList.size());
-  assertEquals("Points",featList.get(0).getLayerName());
-  assertTrue(featList.get(0).getGeometry() instanceof Point);
-  assertEquals(new Coordinate(641,973),((Point)featList.get(0).getGeometry()).getCoordinate());
-  assertEquals("Polygons",featList.get(1).getLayerName());
-  assertTrue(featList.get(1).getGeometry() instanceof Polygon);
-  assertEquals(new Coordinate(646,976),(((Polygon)featList.get(1).getGeometry()).getCoordinates()[0]));
+  Rectangle screenSize=new Rectangle(256,256);
+  ReferencedEnvelope mapArea=new ReferencedEnvelope();
+  MapBoxTileBuilder tileBuilder=builderFact.newBuilder(screenSize,mapArea);
+  Geometry point=geom("POINT(1 10)");
+  Map<String,Object> pointProps=ImmutableMap.<String,Object>of("name","point1");
+  Geometry line=geom("LINESTRING(0 0, 1 1, 2 2)");
+  Map<String,Object> lineProps=ImmutableMap.<String,Object>of("name","line1");
+  tileBuilder.addFeature("Points","unused","unused",point,pointProps);
+  tileBuilder.addFeature("Lines","unused","unused",line,lineProps);
+  WMSMapContent mapContent=mock(WMSMapContent.class);
+  RawMap map=tileBuilder.build(mapContent);
+  ListMultimap<String,Feature> features=decode(map);
+  assertEquals(2,features.size());
+  assertEquals(ImmutableSet.of("Points","Lines"),features.keySet());
+  Feature pointFeature=features.get("Points").get(0);
+  Feature lineFeature=features.get("Lines").get(0);
+  assertTrue(pointFeature.getGeometry() instanceof Point);
+  assertEquals(point,pointFeature.getGeometry());
+  assertEquals(pointProps,pointFeature.getAttributes());
+  assertTrue(lineFeature.getGeometry() instanceof LineString);
+  assertEquals(line,lineFeature.getGeometry());
+  assertEquals(lineProps,lineFeature.getAttributes());
 }
