@@ -1,0 +1,20 @@
+{
+  final FeatureType schema=source.getSchema();
+  Query query=new Query(schema.getName().getLocalPart());
+  query.setProperties(Query.ALL_PROPERTIES);
+  String geomName=geometryAttribute.getLocalName();
+  Filter filter=FF.bbox(FF.property(geomName),mapArea);
+  query.setFilter(filter);
+  LiteFeatureTypeStyle[] styles=styleList.toArray(new LiteFeatureTypeStyle[styleList.size()]);
+  try {
+    processRuleForQuery(styles,query);
+  }
+ catch (  Exception e) {
+    throw Throwables.propagate(e);
+  }
+  SimplifyingFilterVisitor simplifier=new SimplifyingFilterVisitor();
+  simplifier.setFeatureType(source.getSchema());
+  Filter simplifiedFilter=(Filter)query.getFilter().accept(simplifier,null);
+  query.setFilter(simplifiedFilter);
+  return query;
+}
