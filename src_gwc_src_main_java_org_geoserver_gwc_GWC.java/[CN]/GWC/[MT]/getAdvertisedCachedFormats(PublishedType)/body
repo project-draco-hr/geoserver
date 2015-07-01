@@ -1,37 +1,11 @@
 {
   final String resourceName="org/geoserver/gwc/advertised_formats.properties";
-  final String formatsKey;
-switch (type) {
-case VECTOR:
-case REMOTE:
-    formatsKey="formats.vector";
-  break;
-case RASTER:
-case WMS:
-formatsKey="formats.raster";
-break;
-case GROUP:
-formatsKey="formats.layergroup";
-break;
-default :
-throw new IllegalArgumentException("Unknown published type: " + type);
-}
-Set<String> formats=new TreeSet<String>();
-try {
-ClassLoader classLoader=getClass().getClassLoader();
-ArrayList<URL> urls=newArrayList(forEnumeration(classLoader.getResources(resourceName)));
-for (URL url : urls) {
-Properties props=new Properties();
-props.load(url.openStream());
-String commaSeparatedFormats=props.getProperty(formatsKey);
-if (commaSeparatedFormats != null) {
-List<String> splitToList=Splitter.on(",").omitEmptyStrings().trimResults().splitToList(commaSeparatedFormats);
-formats.addAll(splitToList);
-}
-}
-}
- catch (IOException e) {
-throw Throwables.propagate(e);
-}
-return formats;
+  try {
+    ClassLoader classLoader=GWC.class.getClassLoader();
+    List<URL> urls=newArrayList(forEnumeration(classLoader.getResources(resourceName)));
+    return GWC.getAdvertisedCachedFormats(type,urls);
+  }
+ catch (  IOException e) {
+    throw Throwables.propagate(e);
+  }
 }
