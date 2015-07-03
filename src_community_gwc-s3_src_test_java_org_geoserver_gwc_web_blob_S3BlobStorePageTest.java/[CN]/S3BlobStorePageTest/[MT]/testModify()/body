@@ -1,0 +1,30 @@
+{
+  S3BlobStoreConfig sconfig=new S3BlobStoreConfig();
+  Field id=BlobStoreConfig.class.getDeclaredField("id");
+  id.setAccessible(true);
+  id.set(sconfig,"myblobstore");
+  sconfig.setMaxConnections(50);
+  sconfig.setBucket("mybucket");
+  sconfig.setAwsAccessKey("myaccesskey");
+  sconfig.setAwsSecretKey("mysecretkey");
+  GWC.get().addBlobStore(sconfig);
+  TileLayer layer=GWC.get().getTileLayerByName("cite:Lakes");
+  layer.setBlobStoreId("myblobstore");
+  GWC.get().save(layer);
+  BlobStorePage page=new BlobStorePage(sconfig);
+  tester.startPage(page);
+  tester.assertVisible("blobConfigContainer:blobStoreForm");
+  tester.assertComponent("blobConfigContainer:blobStoreForm:blobSpecificPanel",S3BlobStorePanel.class);
+  FormTester formTester=tester.newFormTester("blobConfigContainer:blobStoreForm");
+  formTester.setValue("id","yourblobstore");
+  formTester.setValue("blobSpecificPanel:bucket","yourbucket");
+  formTester.submit();
+  tester.executeAjaxEvent("blobConfigContainer:blobStoreForm:save","onclick");
+  BlobStoreConfig config=GWC.get().getBlobStores().get(0);
+  assertTrue(config instanceof S3BlobStoreConfig);
+  assertEquals("yourblobstore",config.getId());
+  assertEquals("yourbucket",((S3BlobStoreConfig)config).getBucket());
+  layer=GWC.get().getTileLayerByName("cite:Lakes");
+  assertEquals("yourblobstore",layer.getBlobStoreId());
+  GWC.get().removeBlobStores(Collections.singleton("yourblobstore"));
+}
