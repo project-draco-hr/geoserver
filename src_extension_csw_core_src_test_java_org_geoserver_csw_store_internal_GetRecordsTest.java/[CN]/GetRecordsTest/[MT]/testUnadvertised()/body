@@ -1,0 +1,16 @@
+{
+  ResourceInfo forests=getCatalog().getResourceByName("Forests",ResourceInfo.class);
+  forests.setAdvertised(false);
+  getCatalog().save(forests);
+  String request="csw?service=CSW&version=2.0.2&request=GetRecords&typeNames=csw:Record" + "&resultType=results&elementSetName=full&maxRecords=100";
+  Document d=getAsDOM(request);
+  checkValidationErrors(d,new CSWConfiguration());
+  assertXpathEvaluatesTo("1","count(/csw:GetRecordsResponse)",d);
+  assertXpathEvaluatesTo("28","//csw:SearchResults/@numberOfRecordsMatched",d);
+  assertXpathEvaluatesTo("28","//csw:SearchResults/@numberOfRecordsReturned",d);
+  assertXpathEvaluatesTo("0","//csw:SearchResults/@nextRecord",d);
+  assertXpathEvaluatesTo("28","count(//csw:SearchResults/*)",d);
+  assertXpathNotExists("//csw:Record[dc:title='Forests']",d);
+  forests.setAdvertised(true);
+  getCatalog().save(forests);
+}
