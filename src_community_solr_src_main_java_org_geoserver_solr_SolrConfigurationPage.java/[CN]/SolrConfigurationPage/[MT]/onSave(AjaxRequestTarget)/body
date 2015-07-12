@@ -29,27 +29,8 @@
       target.addComponent(feedbackPanel);
       return;
     }
-    Catalog catalog=((GeoServerApplication)this.getPage().getApplication()).getCatalog();
-    LayerInfo layerInfo=catalog.getLayerByName(ri.getQualifiedName());
-    FeatureTypeInfo typeInfo;
-    Boolean isNew=true;
-    if (layerInfo == null) {
-      DataStoreInfo dsInfo=catalog.getStore(ri.getStore().getId(),DataStoreInfo.class);
-      SolrDataStore ds=(SolrDataStore)dsInfo.getDataStore(null);
-      CatalogBuilder builder=new CatalogBuilder(catalog);
-      builder.setStore(dsInfo);
-      ds.setSolrConfigurations(layerConfiguration);
-      typeInfo=builder.buildFeatureType(ds.getFeatureSource(ri.getQualifiedName()));
-      typeInfo.getMetadata().put(SolrLayerConfiguration.KEY,layerConfiguration);
-      layerInfo=builder.buildLayer(typeInfo);
-    }
- else {
-      isNew=false;
-      ResourceInfo resourceInfo=layerInfo.getResource();
-      FeatureTypeInfo featureTypeInfo=(FeatureTypeInfo)resourceInfo;
-      featureTypeInfo.getMetadata().put(SolrLayerConfiguration.KEY,layerConfiguration);
-    }
-    done(target,layerInfo,isNew);
+    ri.getMetadata().put(SolrLayerConfiguration.KEY,layerConfiguration);
+    done(target,ri);
   }
  catch (  Exception e) {
     LOGGER.log(Level.SEVERE,e.getMessage(),e);

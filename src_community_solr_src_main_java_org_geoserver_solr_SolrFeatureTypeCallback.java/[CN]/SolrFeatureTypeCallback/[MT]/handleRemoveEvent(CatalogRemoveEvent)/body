@@ -1,0 +1,19 @@
+{
+  if (event.getSource() instanceof FeatureTypeInfo) {
+    FeatureTypeInfo ft=(FeatureTypeInfo)event.getSource();
+    Serializable config=ft.getMetadata().get(SolrLayerConfiguration.KEY);
+    if (config instanceof SolrLayerConfiguration) {
+      SolrLayerConfiguration slc=(SolrLayerConfiguration)config;
+      try {
+        DataAccess<? extends FeatureType,? extends Feature> dataStore=catalog.getResourcePool().getDataStore(ft.getStore());
+        if (dataStore instanceof SolrDataStore) {
+          SolrDataStore solr=(SolrDataStore)dataStore;
+          solr.getSolrConfigurations().remove(slc.getLayerName());
+        }
+      }
+ catch (      IOException e) {
+        throw new CatalogException("Failed to remove layer configuration from data store",e);
+      }
+    }
+  }
+}
