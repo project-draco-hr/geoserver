@@ -1,0 +1,14 @@
+{
+  String xml="<wfs:GetFeature xmlns:wfs='" + WFS.NAMESPACE + "' xmlns:fes='"+ FES.NAMESPACE+ "'"+ " xmlns:gs='"+ SystemTestData.DEFAULT_URI+ "' outputFormat='csv' version='2.0.0'>"+ "<wfs:Query typeNames='gs:t1 gs:t2 gs:t3' aliases='a b c'>"+ "<fes:Filter> "+ "<And>"+ "<PropertyIsEqualTo>"+ "<ValueReference>a/name1</ValueReference>"+ "<Literal>First</Literal>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>a/code1</ValueReference>"+ "<ValueReference>b/code2</ValueReference>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>b/name2</ValueReference>"+ "<Literal>Second</Literal>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>c/name3</ValueReference>"+ "<Literal>Third</Literal>"+ "</PropertyIsEqualTo>"+ "<PropertyIsEqualTo>"+ "<ValueReference>b/code2</ValueReference>"+ "<ValueReference>c/code3</ValueReference>"+ "</PropertyIsEqualTo>"+ "</And>"+ "</fes:Filter> "+ "</wfs:Query>"+ "</wfs:GetFeature>";
+  MockHttpServletResponse resp=postAsServletResponse("wfs",xml,"application/xml","UTF-8");
+  assertEquals("text/csv",resp.getContentType());
+  assertEquals("UTF-8",resp.getCharacterEncoding());
+  assertEquals("attachment; filename=t1.csv",resp.getHeader("Content-Disposition"));
+  List<String[]> lines=readLines(resp.getOutputStreamContent());
+  FeatureSource fs1=getFeatureSource(new QName("t1"));
+  FeatureSource fs2=getFeatureSource(new QName("t2"));
+  FeatureSource fs3=getFeatureSource(new QName("t3"));
+  for (  String[] line : lines) {
+    assertEquals(fs1.getSchema().getDescriptors().size() + fs2.getSchema().getDescriptors().size() + fs3.getSchema().getDescriptors().size()+ 1,line.length);
+  }
+}

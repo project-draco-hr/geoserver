@@ -1,0 +1,13 @@
+{
+  SimpleFeatureType schema=collection.getSchema();
+  List<AttributeDescriptor> attributeDescriptors=new ArrayList<AttributeDescriptor>();
+  scanAttributeDescriptors(attributeDescriptors,schema,null);
+  SimpleFeatureTypeBuilder builder=new SimpleFeatureTypeBuilder();
+  builder.setName(schema.getName());
+  for (  AttributeDescriptor desc : attributeDescriptors)   builder.add(desc);
+  SimpleFeatureType flattenedType=builder.buildFeatureType();
+  if (collection.getSchema().getAttributeCount() == flattenedType.getAttributeCount()) {
+    return collection;
+  }
+  return new FlatteningFeatureCollection(collection,flattenedType);
+}

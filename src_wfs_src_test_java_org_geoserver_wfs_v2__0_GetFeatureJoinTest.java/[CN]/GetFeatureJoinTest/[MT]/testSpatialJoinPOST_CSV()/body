@@ -1,0 +1,13 @@
+{
+  String xml="<wfs:GetFeature xmlns:wfs='" + WFS.NAMESPACE + "' xmlns:fes='"+ FES.NAMESPACE+ "'"+ " xmlns:gs='"+ SystemTestData.DEFAULT_URI+ "' outputFormat='csv' version='2.0.0'>"+ "<wfs:Query typeNames='gs:Forests gs:Lakes' aliases='a b'>"+ "<fes:Filter> "+ "<fes:Intersects> "+ "<fes:ValueReference>a/the_geom</fes:ValueReference> "+ "<fes:ValueReference>b/the_geom</fes:ValueReference>"+ "</fes:Intersects> "+ "</fes:Filter> "+ "</wfs:Query>"+ "</wfs:GetFeature>";
+  MockHttpServletResponse resp=postAsServletResponse("wfs",xml,"application/xml","UTF-8");
+  assertEquals("text/csv",resp.getContentType());
+  assertEquals("UTF-8",resp.getCharacterEncoding());
+  assertEquals("attachment; filename=Forests.csv",resp.getHeader("Content-Disposition"));
+  List<String[]> lines=readLines(resp.getOutputStreamContent());
+  FeatureSource fs1=getFeatureSource(MockData.FORESTS);
+  FeatureSource fs2=getFeatureSource(MockData.LAKES);
+  for (  String[] line : lines) {
+    assertEquals(fs1.getSchema().getDescriptors().size() + fs2.getSchema().getDescriptors().size() + 1,line.length);
+  }
+}
