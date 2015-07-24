@@ -1,0 +1,29 @@
+{
+  final String formatsKey;
+switch (type) {
+case VECTOR:
+case REMOTE:
+    formatsKey="formats.vector";
+  break;
+case RASTER:
+case WMS:
+formatsKey="formats.raster";
+break;
+case GROUP:
+formatsKey="formats.layergroup";
+break;
+default :
+throw new IllegalArgumentException("Unknown published type: " + type);
+}
+Set<String> formats=new TreeSet<String>();
+for (URL url : urls) {
+Properties props=new Properties();
+props.load(url.openStream());
+String commaSeparatedFormats=props.getProperty(formatsKey);
+if (commaSeparatedFormats != null) {
+List<String> splitToList=Splitter.on(",").omitEmptyStrings().trimResults().splitToList(commaSeparatedFormats);
+formats.addAll(splitToList);
+}
+}
+return formats;
+}

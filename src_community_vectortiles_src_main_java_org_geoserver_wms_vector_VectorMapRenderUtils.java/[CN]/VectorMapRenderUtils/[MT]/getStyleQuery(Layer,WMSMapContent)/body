@@ -1,0 +1,29 @@
+{
+  final ReferencedEnvelope renderingArea=mapContent.getRenderingArea();
+  final Rectangle screenSize=new Rectangle(mapContent.getMapWidth(),mapContent.getMapHeight());
+  final double mapScale;
+  try {
+    mapScale=RendererUtilities.calculateScale(renderingArea,mapContent.getMapWidth(),mapContent.getMapHeight(),null);
+  }
+ catch (  TransformException|FactoryException e) {
+    throw Throwables.propagate(e);
+  }
+  FeatureSource<?,?> featureSource=layer.getFeatureSource();
+  FeatureType schema=featureSource.getSchema();
+  GeometryDescriptor geometryDescriptor=schema.getGeometryDescriptor();
+  Style style=layer.getStyle();
+  List<FeatureTypeStyle> featureStyles=style.featureTypeStyles();
+  List<LiteFeatureTypeStyle> styleList=createLiteFeatureTypeStyles(featureStyles,schema,mapScale,screenSize);
+  Query styleQuery;
+  try {
+    styleQuery=VectorMapRenderUtils.getStyleQuery(featureSource,styleList,renderingArea,screenSize,geometryDescriptor);
+  }
+ catch (  IllegalFilterException|FactoryException e1) {
+    throw Throwables.propagate(e1);
+  }
+  Query query=styleQuery;
+  query.setProperties(Query.ALL_PROPERTIES);
+  Hints hints=query.getHints();
+  hints.put(Hints.FEATURE_2D,Boolean.TRUE);
+  return query;
+}

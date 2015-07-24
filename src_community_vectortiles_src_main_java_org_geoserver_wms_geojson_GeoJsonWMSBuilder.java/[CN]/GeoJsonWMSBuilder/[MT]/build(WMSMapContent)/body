@@ -1,0 +1,21 @@
+{
+  jsonWriter.endArray();
+  jsonWriter.endObject();
+  writer.flush();
+  writer.close();
+  out.close();
+  long length;
+  RawMap map;
+  if (out.isInMemory()) {
+    byte[] data=out.getData();
+    length=data.length;
+    map=new RawMap(mapContent,data,MIME_TYPE);
+  }
+ else {
+    File f=out.getFile();
+    length=f.length();
+    map=new DeferredFileOutputStreamWebMap(mapContent,out,MIME_TYPE);
+  }
+  map.setResponseHeader("Content-Length",String.valueOf(length));
+  return map;
+}

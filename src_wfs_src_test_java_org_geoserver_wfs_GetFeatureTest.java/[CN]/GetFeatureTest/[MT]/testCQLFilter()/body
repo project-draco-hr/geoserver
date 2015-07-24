@@ -1,0 +1,13 @@
+{
+  String layer=getLayerId(MockData.FORESTS);
+  String request="wfs?request=GetFeature&typename=" + layer + "&version=1.0.0&service=wfs";
+  Document doc=getAsDOM(request);
+  NodeList featureMembers=doc.getElementsByTagName("gml:featureMember");
+  assertTrue(featureMembers.getLength() > 0);
+  FeatureTypeInfo info=getCatalog().getFeatureTypeByName(layer);
+  info.setCqlFilter("NAME LIKE 'Red%'");
+  getCatalog().save(info);
+  doc=getAsDOM(request);
+  featureMembers=doc.getElementsByTagName("gml:featureMember");
+  assertTrue(featureMembers.getLength() == 0);
+}

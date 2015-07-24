@@ -1,0 +1,66 @@
+{
+  checkNotNull(mapContent);
+  checkNotNull(mapContent.getRenderingArea());
+  checkArgument(mapContent.getMapWidth() > 0);
+  checkArgument(mapContent.getMapHeight() > 0);
+  final ReferencedEnvelope renderingArea=mapContent.getRenderingArea();
+  final Rectangle paintArea=new Rectangle(mapContent.getMapWidth(),mapContent.getMapHeight());
+  VectorTileBuilder vectorTileBuilder;
+  vectorTileBuilder=this.tileBuilderFactory.newBuilder(paintArea,renderingArea);
+  CoordinateReferenceSystem sourceCrs;
+  for (  Layer layer : mapContent.layers()) {
+    FeatureSource<?,?> featureSource=layer.getFeatureSource();
+    GeometryDescriptor geometryDescriptor=featureSource.getSchema().getGeometryDescriptor();
+    if (null == geometryDescriptor) {
+      continue;
+    }
+    sourceCrs=geometryDescriptor.getType().getCoordinateReferenceSystem();
+    PipelineBuilder builder;
+    try {
+      builder=PipelineBuilder.newBuilder(renderingArea,paintArea,sourceCrs);
+    }
+ catch (    FactoryException e) {
+      throw new ServiceException(e);
+    }
+    Pipeline pipeline=builder.preprocess().transform(transformToScreenCoordinates).simplify(transformToScreenCoordinates).clip(clipToMapBounds,transformToScreenCoordinates).collapseCollections().build();
+    Query query=getStyleQuery(layer,mapContent);
+    query.getHints().remove(Hints.SCREENMAP);
+    FeatureCollection<?,?> features=featureSource.getFeatures(query);
+    Feature feature;
+    Stopwatch sw=Stopwatch.createStarted();
+    int count=0;
+    int total=0;
+    try (FeatureIterator<?> it=features.features()){
+      while (it.hasNext()) {
+        feature=it.next();
+        total++;
+        Geometry originalGeom;
+        Geometry finalGeom;
+        originalGeom=(Geometry)feature.getDefaultGeometryProperty().getValue();
+        try {
+          finalGeom=pipeline.execute(originalGeom);
+        }
+ catch (        Exception processingException) {
+          processingException.printStackTrace();
+          continue;
+        }
+        if (finalGeom.isEmpty()) {
+          continue;
+        }
+        final String layerName=feature.getName().getLocalPart();
+        final String featureId=feature.getIdentifier().toString();
+        final String geometryName=geometryDescriptor.getName().getLocalPart();
+        final Map<String,Object> properties=getProperties(feature);
+        vectorTileBuilder.addFeature(layerName,featureId,geometryName,finalGeom,properties);
+        count++;
+      }
+    }
+     sw.stop();
+    if (LOGGER.isLoggable(Level.FINE)) {
+      String msg=String.format("Added %,d out of %,d features of '%s' in %s",count,total,layer.getTitle(),sw);
+      LOGGER.fine(msg);
+    }
+  }
+  WebMap map=vectorTileBuilder.build(mapContent);
+  return map;
+}

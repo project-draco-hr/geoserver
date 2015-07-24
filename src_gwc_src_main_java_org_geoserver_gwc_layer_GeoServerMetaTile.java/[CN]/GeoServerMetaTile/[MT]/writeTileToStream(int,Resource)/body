@@ -1,8 +1,19 @@
 {
   checkNotNull(metaTileMap,"webMap is not set");
+  if (metaTileMap instanceof RawMap) {
+    OutputStream outStream=target.getOutputStream();
+    try {
+      ((RawMap)metaTileMap).writeTo(outStream);
+    }
+  finally {
+      outStream.close();
+    }
+    return true;
+  }
   if (!(metaTileMap instanceof RenderedImageMap)) {
     throw new IllegalArgumentException("Only RenderedImageMaps are supported so far: " + metaTileMap.getClass().getName());
   }
+  final RenderedImageMap metaTileMap=(RenderedImageMap)this.metaTileMap;
   final RenderedImageMapResponse mapEncoder;
 {
     final GWC mediator=GWC.get();

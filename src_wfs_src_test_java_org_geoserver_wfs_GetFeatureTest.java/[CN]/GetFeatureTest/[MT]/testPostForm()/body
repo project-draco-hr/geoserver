@@ -1,0 +1,18 @@
+{
+  String contentType="application/x-www-form-urlencoded; charset=UTF-8";
+  String body="request=GetFeature&typename=cdf:Fifteen&version=1.0.0&service=wfs";
+  MockHttpServletRequest request=createRequest("wfs");
+  request.setBodyContent(body);
+  request.setupAddParameter("request","GetFeature");
+  request.setupAddParameter("typename","cdf:Fifteen");
+  request.setupAddParameter("version","1.0.0");
+  request.setupAddParameter("service","wfs");
+  request.setContentType(contentType);
+  MockHttpServletResponse response=dispatch(request);
+  try (ByteArrayInputStream bis=new ByteArrayInputStream(response.getOutputStreamContent().getBytes())){
+    Document doc=dom(bis);
+    assertEquals("wfs:FeatureCollection",doc.getDocumentElement().getNodeName());
+    NodeList featureMembers=doc.getElementsByTagName("gml:featureMember");
+    assertEquals(15,featureMembers.getLength());
+  }
+ }

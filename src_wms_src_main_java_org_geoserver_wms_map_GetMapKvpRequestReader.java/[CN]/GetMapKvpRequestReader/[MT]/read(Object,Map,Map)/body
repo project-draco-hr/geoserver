@@ -100,13 +100,24 @@
         }
       }
     }
-    InputStream input=Requests.getInputStream(styleUrl);
-    try {
+    try (InputStream input=Requests.getInputStream(styleUrl)){
       StyledLayerDescriptor sld=parseStyle(getMap,input);
       processSld(getMap,requestedLayerInfos,sld,styleNameList);
     }
-  finally {
-      input.close();
+ catch (    Exception ex) {
+      final Level l=Level.WARNING;
+      if (ex.getCause() instanceof SAXException) {
+        if (ex.getCause().getMessage().contains("Entity resolution disallowed")) {
+          throw ex;
+        }
+      }
+      LOGGER.log(l,"Exception while getting SLD.",ex);
+      if (LOGGER.isLoggable(l)) {
+        throw new ServiceException("Error while getting SLD.  See the log for details.");
+      }
+ else {
+        throw new ServiceException("Error while getting SLD.");
+      }
     }
     getMap.setFilter(filters);
   }

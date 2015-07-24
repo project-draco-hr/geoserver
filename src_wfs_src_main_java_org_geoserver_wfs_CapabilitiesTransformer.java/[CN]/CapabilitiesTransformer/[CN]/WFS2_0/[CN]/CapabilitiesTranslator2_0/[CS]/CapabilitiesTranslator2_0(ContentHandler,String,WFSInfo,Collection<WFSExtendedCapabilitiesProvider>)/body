@@ -14,7 +14,10 @@ class CapabilitiesTranslator1_1_v2MetadataLinks extends CapabilitiesTranslator1_
         super(handler,baseUrl,wfs,extCapsProviders);
       }
       @Override protected void metadataLink(      MetadataLinkInfo link){
-        AttributesImpl mtAtts=attributes("xlink:href",link.getContent());
+        if ((link.getContent() == null) || link.getContent().isEmpty()) {
+          return;
+        }
+        AttributesImpl mtAtts=attributes("xlink:href",ResponseUtils.proxifyMetadataLink(link,request.getBaseUrl()));
         start("MetadataURL",mtAtts);
         end("MetadataURL");
       }

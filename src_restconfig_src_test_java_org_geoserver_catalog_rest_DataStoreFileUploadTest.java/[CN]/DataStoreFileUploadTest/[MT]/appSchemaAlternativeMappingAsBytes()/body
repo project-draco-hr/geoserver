@@ -1,0 +1,23 @@
+{
+  byte[] mapping=appSchemaMappingAsBytes();
+  if (mapping != null) {
+    Document mappingDom=dom(new ByteArrayInputStream(mapping));
+    NodeList attrMappingNodes=mappingDom.getDocumentElement().getElementsByTagName("AttributeMapping");
+    for (int i=0; i < attrMappingNodes.getLength(); i++) {
+      Node attrMapping=attrMappingNodes.item(i);
+      NodeList children=attrMapping.getChildNodes();
+      for (int j=0; j < children.getLength(); j++) {
+        if ("MappedFeature/gml:name[2]".equals(children.item(j).getTextContent())) {
+          attrMapping.getParentNode().removeChild(attrMapping);
+          break;
+        }
+      }
+    }
+    ByteArrayOutputStream output=new ByteArrayOutputStream();
+    print(mappingDom,output);
+    return output.toByteArray();
+  }
+ else {
+    return null;
+  }
+}
