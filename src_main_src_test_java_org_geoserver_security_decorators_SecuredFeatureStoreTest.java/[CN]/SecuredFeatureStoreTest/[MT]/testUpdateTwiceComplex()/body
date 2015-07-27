@@ -1,0 +1,13 @@
+{
+  FeatureStore fs=createMock(FeatureStore.class);
+  Name[] names=new Name[]{new NameImpl("foo")};
+  Object[] values=new Object[]{"abc"};
+  Filter filter=Filter.INCLUDE;
+  fs.modifyFeatures(eq(names),eq(values),eq(filter));
+  expectLastCall().once();
+  replay(fs);
+  VectorAccessLimits limits=new VectorAccessLimits(CatalogMode.HIDE,null,Filter.INCLUDE,null,Filter.INCLUDE);
+  SecuredFeatureStore store=new SecuredFeatureStore(fs,WrapperPolicy.readWrite(limits));
+  store.modifyFeatures(names,values,filter);
+  verify(fs);
+}
