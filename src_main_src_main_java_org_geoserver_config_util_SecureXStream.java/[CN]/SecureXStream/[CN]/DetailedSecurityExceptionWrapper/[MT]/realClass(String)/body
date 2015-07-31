@@ -1,0 +1,14 @@
+{
+  try {
+    return super.realClass(elementName);
+  }
+ catch (  ForbiddenClassException e) {
+    StringBuilder sb=new StringBuilder();
+    sb.append("Class {0} is not whitelisted for XML parsing. \n");
+    sb.append("This is done to prevent Remote Code Execution attacks, but it might be \n").append("you need this class to be authorized for GeoServer to actually work\n");
+    sb.append("If you are a user, you can set a variable named ").append(WHITELIST_KEY).append("\n").append("  with a semicolon separated list of fully qualified names, or patterns\n").append("  to match several classes.The variable can be set as a system variable\n").append("  a enviromment variable, or a servlet context variable, just like \n").append("  GEOSERVER_DATA_DIR.\n").append("  For example, in order to authorize the org.geoserver.Foo class, \n").append("  plus any class in the org.geoserver.custom package, one could set\n").append("  a system variable: \n").append("  -D").append(WHITELIST_KEY).append("=org.geoserver.Foo;org.geoserver.custom.**\n");
+    sb.append("If instead you are a developer, you can call allowTypes/allowTypeHierarchy against \n").append("  the XStream used for serialization by rolling a custom \n").append("  XStreamPersisterInitializer or customizing your XStreamServiceLoader.");
+    LOGGER.log(Level.SEVERE,sb.toString(),e.getMessage());
+    throw new ForbiddenClassExceptionEx("Unauthorized class found, see logs for more details on how to handle it: " + e.getMessage(),e);
+  }
+}
