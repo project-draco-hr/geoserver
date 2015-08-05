@@ -3,14 +3,13 @@
   if ("1.0.0".equals(version)) {
     return;
   }
-  String metadataURL=(String)wfs.getMetadata().get(SERVICE_METADATA_URL.key);
-  String mediaType=(String)wfs.getMetadata().get(SERVICE_METADATA_TYPE.key);
-  String language=(String)wfs.getMetadata().get(LANGUAGE.key);
-  UniqueResourceIdentifiers ids=(UniqueResourceIdentifiers)wfs.getMetadata().get(SPATIAL_DATASET_IDENTIFIER_TYPE.key,UniqueResourceIdentifiers.class);
-  if (metadataURL == null) {
-    return;
-  }
-  if (ids == null || ids.isEmpty()) {
+  MetadataMap serviceMetadata=wfs.getMetadata();
+  Boolean createExtendedCapabilities=(Boolean)serviceMetadata.get(CREATE_EXTENDED_CAPABILITIES.key);
+  String metadataURL=(String)serviceMetadata.get(SERVICE_METADATA_URL.key);
+  String mediaType=(String)serviceMetadata.get(SERVICE_METADATA_TYPE.key);
+  String language=(String)serviceMetadata.get(LANGUAGE.key);
+  UniqueResourceIdentifiers ids=(UniqueResourceIdentifiers)serviceMetadata.get(SPATIAL_DATASET_IDENTIFIER_TYPE.key,UniqueResourceIdentifiers.class);
+  if (metadataURL == null || ids == null || ids.isEmpty() || createExtendedCapabilities != null && !createExtendedCapabilities) {
     return;
   }
   tx.start("ows:ExtendedCapabilities");

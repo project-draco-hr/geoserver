@@ -1,16 +1,22 @@
 {
-  WMSInfo wms=getGeoServer().getService(WMSInfo.class);
-  wms.getSRS().add("EPSG:4326");
-  wms.getMetadata().put(InspireMetadata.LANGUAGE.key,"fre");
-  wms.getMetadata().put(InspireMetadata.SERVICE_METADATA_URL.key,"http://foo.com?bar=baz");
-  wms.getMetadata().put(InspireMetadata.SERVICE_METADATA_TYPE.key,"application/vnd.iso.19139+xml");
-  getGeoServer().save(wms);
+  final ServiceInfo serviceInfo=getGeoServer().getService(WMSInfo.class);
+  final MetadataMap metadata=serviceInfo.getMetadata();
+  clearInspireMetadata(metadata);
+  metadata.put(CREATE_EXTENDED_CAPABILITIES.key,true);
+  metadata.put(SERVICE_METADATA_URL.key,"http://foo.com?bar=baz");
+  metadata.put(SERVICE_METADATA_TYPE.key,"application/vnd.iso.19139+xml");
+  metadata.put(LANGUAGE.key,"fre");
+  getGeoServer().save(serviceInfo);
   Document dom=getAsDOM(WMS_1_3_0_GETCAPREQUEST);
-  assertEquals(VS_NAMESPACE,dom.getDocumentElement().getAttribute("xmlns:inspire_vs"));
-  assertMetadataUrlAndMediaType(dom,"http://foo.com?bar=baz","application/vnd.iso.19139+xml");
-  wms.getMetadata().put(InspireMetadata.SERVICE_METADATA_TYPE.key,"application/xml");
-  getGeoServer().save(wms);
+  NodeList nodeList=dom.getElementsByTagNameNS(COMMON_NAMESPACE,"MetadataUrl");
+  assertEquals("Number of MediaType elements",1,nodeList.getLength());
+  Element mdUrl=(Element)nodeList.item(0);
+  assertInspireMetadataUrlResponse(mdUrl,"http://foo.com?bar=baz","application/vnd.iso.19139+xml");
+  serviceInfo.getMetadata().put(SERVICE_METADATA_TYPE.key,"application/vnd.ogc.csw.GetRecordByIdResponse_xml");
+  getGeoServer().save(serviceInfo);
   dom=getAsDOM(WMS_1_3_0_GETCAPREQUEST);
-  assertEquals(VS_NAMESPACE,dom.getDocumentElement().getAttribute("xmlns:inspire_vs"));
-  assertMetadataUrlAndMediaType(dom,"http://foo.com?bar=baz","application/xml");
+  nodeList=dom.getElementsByTagNameNS(COMMON_NAMESPACE,"MetadataUrl");
+  assertEquals("Number of MediaType elements",1,nodeList.getLength());
+  mdUrl=(Element)nodeList.item(0);
+  assertInspireMetadataUrlResponse(mdUrl,"http://foo.com?bar=baz","application/vnd.ogc.csw.GetRecordByIdResponse_xml");
 }

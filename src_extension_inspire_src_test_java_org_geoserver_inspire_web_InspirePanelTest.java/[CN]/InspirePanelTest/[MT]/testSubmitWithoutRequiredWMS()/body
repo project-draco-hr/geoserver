@@ -1,0 +1,16 @@
+{
+  final ServiceInfo serviceInfo=getGeoServer().getService(WMSInfo.class);
+  final MetadataMap metadata=serviceInfo.getMetadata();
+  clearInspireMetadata(metadata);
+  metadata.put(SERVICE_METADATA_TYPE.key,"application/vnd.iso.19139+xml");
+  metadata.put(LANGUAGE.key,"fre");
+  getGeoServer().save(serviceInfo);
+  startPage(serviceInfo);
+  FormTester ft=tester.newFormTester("form");
+  ft.setValue("panel:createExtendedCapabilities",true);
+  tester.executeAjaxEvent("form:panel:createExtendedCapabilities","onchange");
+  tester.submitForm("form");
+  List<Serializable> messages=tester.getMessages(FeedbackMessage.ERROR);
+  assertEquals(1,messages.size());
+  assertTrue(((ValidationErrorFeedback)messages.get(0)).getMessage().contains("Service Metadata URL"));
+}

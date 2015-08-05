@@ -1,0 +1,14 @@
+{
+  final ServiceInfo serviceInfo=getGeoServer().getService(WFSInfo.class);
+  final MetadataMap metadata=serviceInfo.getMetadata();
+  clearInspireMetadata(metadata);
+  metadata.put(CREATE_EXTENDED_CAPABILITIES.key,true);
+  metadata.put(SERVICE_METADATA_URL.key,"http://foo.com?bar=baz");
+  metadata.put(SERVICE_METADATA_TYPE.key,"application/vnd.iso.19139+xml");
+  metadata.put(LANGUAGE.key,"fre");
+  metadata.put(SPATIAL_DATASET_IDENTIFIER_TYPE.key,"one,http://www.geoserver.org/one;two,http://www.geoserver.org/two,http://metadata.geoserver.org/id?two");
+  getGeoServer().save(serviceInfo);
+  final Document dom=getAsDOM(WFS_1_0_0_GETCAPREQUEST);
+  final NodeList nodeList=dom.getElementsByTagNameNS(DLS_NAMESPACE,"ExtendedCapabilities");
+  assertTrue(nodeList.getLength() == 0);
+}

@@ -1,0 +1,26 @@
+{
+  final ServiceInfo serviceInfo=getGeoServer().getService(WMSInfo.class);
+  final MetadataMap metadata=serviceInfo.getMetadata();
+  clearInspireMetadata(metadata);
+  metadata.put(CREATE_EXTENDED_CAPABILITIES.key,true);
+  metadata.put(SERVICE_METADATA_URL.key,"http://foo.com?bar=baz");
+  metadata.put(SERVICE_METADATA_TYPE.key,"application/vnd.iso.19139+xml");
+  metadata.put(LANGUAGE.key,"fre");
+  getGeoServer().save(serviceInfo);
+  startPage(serviceInfo);
+  tester.assertComponent("form",Form.class);
+  tester.assertComponent("form:panel:createExtendedCapabilities",CheckBox.class);
+  tester.assertModelValue("form:panel:createExtendedCapabilities",true);
+  tester.assertComponent("form:panel:container:configs:language",LanguageDropDownChoice.class);
+  tester.assertModelValue("form:panel:container:configs:language","fre");
+  tester.assertComponent("form:panel:container:configs:border:metadataURL",TextField.class);
+  tester.assertModelValue("form:panel:container:configs:border:metadataURL","http://foo.com?bar=baz");
+  tester.assertComponent("form:panel:container:configs:metadataURLType",DropDownChoice.class);
+  tester.assertModelValue("form:panel:container:configs:metadataURLType","application/vnd.iso.19139+xml");
+  try {
+    tester.assertComponent("form:panel:container:configs:datasetIdentifiersContainer:spatialDatasetIdentifiers",UniqueResourceIdentifiersEditor.class);
+    fail("Shouldn't have found a Spatial Dataset Identifers section");
+  }
+ catch (  AssertionFailedError e) {
+  }
+}

@@ -1,0 +1,16 @@
+{
+  final ServiceInfo serviceInfo=getGeoServer().getService(WMSInfo.class);
+  final MetadataMap metadata=serviceInfo.getMetadata();
+  clearInspireMetadata(metadata);
+  getGeoServer().save(serviceInfo);
+  startPage(serviceInfo);
+  tester.assertComponent("form",Form.class);
+  tester.assertComponent("form:panel:createExtendedCapabilities",CheckBox.class);
+  tester.assertModelValue("form:panel:createExtendedCapabilities",false);
+  try {
+    tester.assertComponent("form:panel:container:configs:language",LanguageDropDownChoice.class);
+    fail("Shouldn't have found section for INSPIRE extension configuration");
+  }
+ catch (  AssertionFailedError e) {
+  }
+}
