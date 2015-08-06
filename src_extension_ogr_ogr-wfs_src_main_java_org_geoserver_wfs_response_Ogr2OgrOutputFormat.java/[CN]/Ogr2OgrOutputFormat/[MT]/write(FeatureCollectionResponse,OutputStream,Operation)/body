@@ -1,11 +1,11 @@
 {
   GetFeatureRequest request=GetFeatureRequest.adapt(getFeature.getParameters()[0]);
   String outputFormat=request.getOutputFormat();
-  OgrFormat format=formats.get(outputFormat);
+  Format format=formats.get(outputFormat);
   if (format == null)   throw new WFSException("Unknown output format " + outputFormat);
   File tempGS=org.geoserver.data.util.IOUtils.createTempDirectory("ogrtmpin");
   File tempOGR=org.geoserver.data.util.IOUtils.createTempDirectory("ogrtmpout");
-  OGRWrapper wrapper=new OGRWrapper(ogrExecutable,gdalData);
+  ToolWrapper wrapper=new OGRWrapper(ogrExecutable,environment);
   try {
     Iterator outputFeatureCollections=featureCollection.getFeature().iterator();
     SimpleFeatureCollection curCollection;
@@ -18,7 +18,7 @@
       outputFile=wrapper.convert(intermediate,tempOGR,schema.getTypeName(),format,crs);
       IOUtils.emptyDirectory(tempGS);
     }
-    if (format.singleFile && featureCollection.getFeature().size() == 1) {
+    if (format.isSingleFile() && featureCollection.getFeature().size() == 1) {
       FileInputStream fis=null;
       try {
         fis=new FileInputStream(outputFile);

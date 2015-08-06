@@ -1,0 +1,16 @@
+{
+  File tempFile=prepareInput();
+  try {
+    GridCoverage2DReader covReader=new GeoTiffReader(tempFile);
+    GridCoverage2D cov=covReader.read(null);
+    try (ByteArrayOutputStream bos=new ByteArrayOutputStream()){
+      gdalCovRespDelegate.encode(cov,"GDAL-ArcInfoGrid",null,bos);
+      GdalTestUtil.checkZippedGridData(new ByteArrayInputStream(bos.toByteArray()));
+    }
+   }
+  finally {
+    if (tempFile != null) {
+      tempFile.delete();
+    }
+  }
+}

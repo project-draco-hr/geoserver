@@ -1,0 +1,32 @@
+{
+  Utilities.ensureNonNull("sourceCoverage",coverage);
+  Format format=getGdalFormat(outputFormat);
+  File tempGS=org.geoserver.data.util.IOUtils.createTempDirectory("gdaltmpin");
+  File tempGDAL=org.geoserver.data.util.IOUtils.createTempDirectory("gdaltmpout");
+  ToolWrapper wrapper=gdalWrapperFactory.createWrapper(gdalTranslateExecutable,environment);
+  try {
+    File outputFile=null;
+    File intermediate=writeToDisk(tempGS,coverage);
+    final CoordinateReferenceSystem crs=coverage.getCoordinateReferenceSystem();
+    outputFile=wrapper.convert(intermediate,tempGDAL,coverage.getName().toString(),format,crs);
+    IOUtils.emptyDirectory(tempGS);
+    if (format.isSingleFile()) {
+      try (FileInputStream fis=new FileInputStream(outputFile)){
+        org.apache.commons.io.IOUtils.copy(fis,output);
+      }
+     }
+ else {
+      try (ZipOutputStream zipOut=new ZipOutputStream(output)){
+        IOUtils.zipDirectory(tempGDAL,zipOut,null);
+        zipOut.finish();
+      }
+     }
+  }
+ catch (  Exception e) {
+    throw new ServiceException("Exception occurred during output generation",e);
+  }
+ finally {
+    IOUtils.delete(tempGS);
+    IOUtils.delete(tempGDAL);
+  }
+}

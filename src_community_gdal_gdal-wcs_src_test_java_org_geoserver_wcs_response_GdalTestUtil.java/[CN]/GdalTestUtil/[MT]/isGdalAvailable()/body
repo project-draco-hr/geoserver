@@ -1,0 +1,22 @@
+{
+  if (IS_GDAL_AVAILABLE == null) {
+    try {
+      InputStream conf=GdalTestUtil.class.getResourceAsStream("/gdal_translate.properties");
+      Properties p=new Properties();
+      if (conf != null) {
+        p.load(conf);
+      }
+      GDAL_TRANSLATE=p.getProperty("gdal_translate");
+      if (GDAL_TRANSLATE == null)       GDAL_TRANSLATE="gdal_translate";
+      GDAL_DATA=p.getProperty("gdalData");
+      GdalWrapper gdal=new GdalWrapper(GDAL_TRANSLATE,Collections.singletonMap("GDAL_DATA",GDAL_DATA));
+      IS_GDAL_AVAILABLE=gdal.isAvailable();
+    }
+ catch (    Exception e) {
+      IS_GDAL_AVAILABLE=false;
+      e.printStackTrace();
+      LOGGER.log(Level.SEVERE,"Disabling gdal_translate output format tests, as gdal_translate lookup failed",e);
+    }
+  }
+  return IS_GDAL_AVAILABLE;
+}
