@@ -1,0 +1,31 @@
+{
+  List<String> cmd=new ArrayList<String>();
+  cmd.add(executable);
+  String toolFormatParameter=getToolFormatParameter();
+  if (toolFormatParameter != null) {
+    cmd.add(toolFormatParameter);
+    cmd.add(format.getToolFormat());
+  }
+  if (format.getOptions() != null) {
+    for (    String option : format.getOptions()) {
+      cmd.add(option);
+    }
+  }
+  StringBuilder sb=new StringBuilder();
+  String outFileName=null;
+  int exitCode=-1;
+  try {
+    onBeforeRun(cmd,inputData,outputDirectory,typeName,format,crs);
+    outFileName=setInputOutput(cmd,inputData,outputDirectory,typeName,format);
+    exitCode=run(cmd,sb);
+  }
+  finally {
+    onAfterRun(exitCode);
+  }
+  if (exitCode != 0)   throw new IOException(executable + " did not terminate successfully, exit code " + exitCode+ ". Was trying to run: "+ cmd+ "\nResulted in:\n"+ sb);
+  File output=new File(outputDirectory,outFileName);
+  if (output.isDirectory()) {
+    output=new File(output,outFileName);
+  }
+  return output;
+}
