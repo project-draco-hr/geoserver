@@ -1,0 +1,13 @@
+{
+  checkNotNull(blobStoreIds);
+  Map<String,BlobStoreConfig> stores=Maps.uniqueIndex(new ArrayList<>(getXmlConfiguration().getBlobStores()),new Function<BlobStoreConfig,String>(){
+    @Override public String apply(    BlobStoreConfig c){
+      return c.getId();
+    }
+  }
+);
+  Map<String,BlobStoreConfig> filtered=Maps.filterKeys(stores,Predicates.not(Predicates.in(ImmutableList.copyOf(blobStoreIds))));
+  if (!filtered.equals(stores)) {
+    setBlobStores(new ArrayList<>(filtered.values()));
+  }
+}

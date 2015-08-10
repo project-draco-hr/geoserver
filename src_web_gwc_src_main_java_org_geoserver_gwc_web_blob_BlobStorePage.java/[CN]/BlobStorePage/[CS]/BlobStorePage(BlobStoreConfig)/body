@@ -1,0 +1,133 @@
+{
+  final List<String> assignedLayers=new ArrayList<String>();
+  add(dialog=new GeoServerDialog("confirmDisableDialog"));
+  dialog.setTitle(new ParamResourceModel("confirmDisableDialog.title",getPage()));
+  dialog.setInitialHeight(200);
+  typeOfBlobStore=new DropDownChoice<BlobStoreType>("typeOfBlobStore",new Model<BlobStoreType>(),BlobStoreTypes.getAll());
+  typeOfBlobStore.setOutputMarkupId(true);
+  typeOfBlobStore.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    private static final long serialVersionUID=359589121400814043L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      blobStoreForm.setVisible(typeOfBlobStore.getModelObject() != null);
+      if (typeOfBlobStore.getModelObject() != null) {
+        blobStoreForm.getModel().setObject(typeOfBlobStore.getModelObject().newConfigObject());
+        blobStoreForm.addOrReplace(typeOfBlobStore.getModelObject().createPanel("blobSpecificPanel",blobStoreForm.getModel()));
+      }
+      target.addComponent(blobConfigContainer);
+    }
+  }
+);
+  typeOfBlobStore.add(new AttributeModifier("title",true,new ResourceModel("typeOfBlobStore.title")));
+  Form selector=new Form("selector");
+  selector.add(typeOfBlobStore);
+  add(selector);
+  blobConfigContainer=new WebMarkupContainer("blobConfigContainer");
+  blobConfigContainer.setOutputMarkupId(true);
+  add(blobConfigContainer);
+  blobStoreForm=new Form<BlobStoreConfig>("blobStoreForm",new CompoundPropertyModel<BlobStoreConfig>(originalStore == null ? null : originalStore.clone()));
+  blobConfigContainer.add(blobStoreForm);
+  blobStoreForm.setVisible(originalStore != null);
+  blobStoreForm.add((tfId=new TextField<String>("id")).setRequired(true));
+  tfId.add(new AttributeModifier("title",true,new ResourceModel("id.title")));
+  blobStoreForm.add(cbEnabled=new CheckBox("enabled"));
+  cbEnabled.add(new AttributeModifier("title",true,new ResourceModel("enabled.title")));
+  blobStoreForm.add(cbDefault=new CheckBox("default"));
+  cbDefault.add(new AttributeModifier("title",true,new ResourceModel("default.title")));
+  if (originalStore != null) {
+    typeOfBlobStore.getModel().setObject(BlobStoreTypes.getFromClass(originalStore.getClass()));
+    blobStoreForm.addOrReplace(typeOfBlobStore.getModelObject().createPanel("blobSpecificPanel",blobStoreForm.getModel()));
+    typeOfBlobStore.setEnabled(false);
+    for (    TileLayer layer : GWC.get().getTileLayers()) {
+      if (originalStore.getId().equals(layer.getBlobStoreId())) {
+        assignedLayers.add(layer.getName());
+      }
+    }
+  }
+  blobStoreForm.add(new AbstractFormValidator(){
+    private static final long serialVersionUID=5240602030478856537L;
+    @Override public FormComponent<?>[] getDependentFormComponents(){
+      return new FormComponent<?>[]{cbDefault,cbEnabled};
+    }
+    @Override public void validate(    Form<?> form){
+      BlobStoreConfig blobStore=(BlobStoreConfig)form.getModelObject();
+      if (blobStore.isDefault() && !cbDefault.getConvertedInput()) {
+        form.error(new ParamResourceModel("defaultError",getPage()).getString());
+      }
+ else       if (cbDefault.getConvertedInput() && !cbEnabled.getConvertedInput()) {
+        form.error(new ParamResourceModel("enabledError",getPage()).getString());
+      }
+    }
+  }
+);
+  blobStoreForm.add(new AbstractFormValidator(){
+    private static final long serialVersionUID=5240602030478856537L;
+    @Override public FormComponent<?>[] getDependentFormComponents(){
+      return new FormComponent<?>[]{tfId};
+    }
+    @Override public void validate(    Form<?> form){
+      for (      BlobStoreConfig otherBlobStore : GWC.get().getBlobStores()) {
+        if (otherBlobStore != originalStore && otherBlobStore.getId().equals(tfId.getConvertedInput())) {
+          form.error(new ParamResourceModel("duplicateIdError",getPage()).getString());
+        }
+      }
+    }
+  }
+);
+  blobStoreForm.add(new AjaxSubmitLink("save"){
+    private static final long serialVersionUID=3735176778941168701L;
+    @Override public void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      final BlobStoreConfig blobStore=(BlobStoreConfig)getForm().getModelObject();
+      if (originalStore != null && originalStore.isEnabled() && !blobStore.isEnabled() && assignedLayers.size() > 0) {
+        dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+          private static final long serialVersionUID=5257987095800108993L;
+          private boolean success;
+          private String error=null;
+          @Override protected Component getContents(          String id){
+            StringBuilder sb=new StringBuilder();
+            sb.append(new ParamResourceModel("confirmDisableDialog.content",getPage()).getString());
+            for (            String layer : assignedLayers) {
+              sb.append("\n&nbsp;&nbsp;");
+              sb.append(escapeHtml(layer));
+            }
+            return new MultiLineLabel("userPanel",sb.toString()).setEscapeModelStrings(false);
+          }
+          @Override protected boolean onSubmit(          AjaxRequestTarget target,          Component contents){
+            try {
+              save(originalStore,blobStore,assignedLayers);
+              success=true;
+            }
+ catch (            ConfigurationException e) {
+              error=e.getMessage();
+            }
+            return true;
+          }
+          @Override public void onClose(          AjaxRequestTarget target){
+            if (success) {
+              doReturn(BlobStoresPage.class);
+            }
+ else             if (error != null) {
+              error(error);
+              target.addComponent(feedbackPanel);
+            }
+          }
+        }
+);
+      }
+ else {
+        try {
+          save(originalStore,blobStore,assignedLayers);
+          doReturn(BlobStoresPage.class);
+        }
+ catch (        ConfigurationException e) {
+          error(e.getMessage());
+          target.addComponent(feedbackPanel);
+        }
+      }
+    }
+    protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      target.addComponent(feedbackPanel);
+    }
+  }
+);
+  blobStoreForm.add(new BookmarkablePageLink<BlobStoreConfig>("cancel",BlobStoresPage.class));
+}

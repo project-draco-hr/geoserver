@@ -1,0 +1,10 @@
+{
+  when(xmlConfig.getBlobStores()).thenReturn(ImmutableList.<BlobStoreConfig>of());
+  CompositeBlobStore composite=mock(CompositeBlobStore.class);
+  doReturn(composite).when(mediator).getCompositeBlobStore();
+  StorageException se=new StorageException("expected");
+  doThrow(se).when(composite).setBlobStores(any(Iterable.class));
+  expected.expect(ConfigurationException.class);
+  expected.expectMessage("Error connecting to BlobStore");
+  mediator.setBlobStores(ImmutableList.<BlobStoreConfig>of());
+}

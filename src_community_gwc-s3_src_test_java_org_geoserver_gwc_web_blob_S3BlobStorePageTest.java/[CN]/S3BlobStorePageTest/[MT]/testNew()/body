@@ -1,0 +1,21 @@
+{
+  BlobStorePage page=new BlobStorePage();
+  tester.startPage(page);
+  executeAjaxEventBehavior("selector:typeOfBlobStore","onchange","1");
+  FormTester formTester=tester.newFormTester("blobConfigContainer:blobStoreForm");
+  formTester.setValue("id","myblobstore");
+  formTester.setValue("enabled",false);
+  formTester.setValue("blobSpecificPanel:bucket","mybucket");
+  formTester.setValue("blobSpecificPanel:awsAccessKey","myaccesskey");
+  formTester.setValue("blobSpecificPanel:awsSecretKey","mysecretkey");
+  tester.executeAjaxEvent("blobConfigContainer:blobStoreForm:save","onclick");
+  List<BlobStoreConfig> blobStores=GWC.get().getBlobStores();
+  BlobStoreConfig config=blobStores.get(0);
+  assertTrue(config instanceof S3BlobStoreConfig);
+  assertEquals("myblobstore",config.getId());
+  assertEquals("mybucket",((S3BlobStoreConfig)config).getBucket());
+  assertEquals("myaccesskey",((S3BlobStoreConfig)config).getAwsAccessKey());
+  assertEquals("mysecretkey",((S3BlobStoreConfig)config).getAwsSecretKey());
+  assertEquals(50,((S3BlobStoreConfig)config).getMaxConnections().intValue());
+  GWC.get().removeBlobStores(Collections.singleton("myblobstore"));
+}
