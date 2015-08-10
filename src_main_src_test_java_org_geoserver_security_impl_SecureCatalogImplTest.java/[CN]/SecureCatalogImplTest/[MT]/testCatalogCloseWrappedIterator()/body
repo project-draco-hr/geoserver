@@ -1,0 +1,19 @@
+{
+  final CloseableIterator<?> mockIterator=createNiceMock(CloseableIterator.class);
+  mockIterator.close();
+  expectLastCall().once();
+  replay(mockIterator);
+  Catalog withLayers=new AbstractCatalogDecorator(catalog){
+    @SuppressWarnings("unchecked") @Override public <T extends CatalogInfo>CloseableIterator<T> list(    Class<T> of,    Filter filter,    Integer offset,    Integer count,    SortBy sortBy){
+      return (CloseableIterator<T>)mockIterator;
+    }
+  }
+;
+  this.catalog=withLayers;
+  GeoServerExtensionsHelper.singleton("catalog",catalog,Catalog.class);
+  buildManager("publicRead.properties");
+  CloseableIterator<LayerInfo> iterator;
+  iterator=sc.list(LayerInfo.class,Predicates.acceptAll());
+  iterator.close();
+  verify(mockIterator);
+}
