@@ -1,16 +1,21 @@
 {
+  boolean deleted;
 switch (resource.getType()) {
 case DIRECTORY:
     for (    Resource child : resource.list()) {
-      delete(child);
+      deleted=delete(child);
+      if (!deleted) {
+        return false;
+      }
     }
 case RESOURCE:
-  boolean deleted=resource.delete();
+  deleted=resource.delete();
 if (!deleted) {
-  throw new IOException("Failed to delete resource: " + resource);
+  return false;
 }
 break;
 case UNDEFINED:
 break;
 }
+return true;
 }
