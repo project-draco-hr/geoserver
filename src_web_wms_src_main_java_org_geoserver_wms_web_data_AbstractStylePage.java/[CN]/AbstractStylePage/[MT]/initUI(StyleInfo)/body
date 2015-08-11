@@ -51,6 +51,20 @@
       Session.get().error(new ParamResourceModel("styleNotFound",this,style.getFilename()).getString());
     }
   }
+  templates=new DropDownChoice("templates",new Model(),new StyleTypeModel(),new StyleTypeChoiceRenderer());
+  templates.setOutputMarkupId(true);
+  templates.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      templates.validate();
+      generateLink.setEnabled(templates.getConvertedInput() != null);
+      target.addComponent(generateLink);
+    }
+  }
+);
+  styleForm.add(templates);
+  generateLink=generateLink();
+  generateLink.setEnabled(false);
+  styleForm.add(generateLink);
   styles=new DropDownChoice("existingStyles",new Model(),new StylesModel(),new StyleChoiceRenderer());
   styles.setOutputMarkupId(true);
   styles.add(new AjaxFormComponentUpdatingBehavior("onchange"){
