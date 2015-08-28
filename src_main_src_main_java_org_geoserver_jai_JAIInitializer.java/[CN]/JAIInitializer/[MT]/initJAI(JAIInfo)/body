@@ -1,31 +1,32 @@
 {
   JAI jaiDef=JAI.getDefaultInstance();
   jai.setJAI(jaiDef);
-  JAIExt.initJAIEXT();
-  if (jai.getJAIEXTInfo() != null) {
-    JAIEXTInfo jaiext=jai.getJAIEXTInfo();
-    Set<String> jaiOperations=jaiext.getJAIOperations();
-    Set<String> jaiExtOperations=jaiext.getJAIEXTOperations();
-    if (jaiOperations != null && !jaiOperations.isEmpty()) {
-      JAIExt.registerOperations(jaiOperations,false);
-      for (      String opName : jaiOperations) {
-        CoverageProcessor.removeOperationFromProcessors(opName);
-        JAIExt.setJAIAcceleration(opName,true);
-      }
-    }
-    if (jaiExtOperations != null && !jaiExtOperations.isEmpty()) {
-      Set<String> newJai=new TreeSet<String>(jaiExtOperations);
+  if (ImageWorker.isJaiExtEnabled()) {
+    if (jai.getJAIEXTInfo() != null) {
+      JAIEXTInfo jaiext=jai.getJAIEXTInfo();
+      Set<String> jaiOperations=jaiext.getJAIOperations();
+      Set<String> jaiExtOperations=jaiext.getJAIEXTOperations();
       if (jaiOperations != null && !jaiOperations.isEmpty()) {
-        newJai.removeAll(jaiOperations);
-      }
-      for (      String opName : newJai) {
-        if (!JAIExt.isJAIExtOperation(opName)) {
+        JAIExt.registerOperations(jaiOperations,false);
+        for (        String opName : jaiOperations) {
           CoverageProcessor.removeOperationFromProcessors(opName);
+          JAIExt.setJAIAcceleration(opName,true);
         }
       }
-      JAIExt.registerOperations(newJai,true);
+      if (jaiExtOperations != null && !jaiExtOperations.isEmpty()) {
+        Set<String> newJai=new TreeSet<String>(jaiExtOperations);
+        if (jaiOperations != null && !jaiOperations.isEmpty()) {
+          newJai.removeAll(jaiOperations);
+        }
+        for (        String opName : newJai) {
+          if (!JAIExt.isJAIExtOperation(opName)) {
+            CoverageProcessor.removeOperationFromProcessors(opName);
+          }
+        }
+        JAIExt.registerOperations(newJai,true);
+      }
+      CoverageProcessor.updateProcessors();
     }
-    CoverageProcessor.updateProcessors();
   }
   jaiDef.setRenderingHint(JAI.KEY_CACHED_TILE_RECYCLING_ENABLED,jai.isRecycling());
   if (jai.isRecycling() && !(jaiDef.getRenderingHint(JAI.KEY_TILE_FACTORY) instanceof ConcurrentTileFactory)) {
