@@ -19,28 +19,46 @@
   login();
   tester.startPage(JAIPage.class);
   tester.assertRenderedPage(JAIPage.class);
-  tester.assertComponent("form:jaiext",JAIEXTPanel.class);
-  tester.assertComponent("form:jaiext:jaiextOps",Palette.class);
-  Palette p=(Palette)tester.getComponentFromLastRenderedPage("form:jaiext:jaiextOps");
-  Collection jaiext=p.getChoices();
-  assertNotNull(jaiext);
-  assertTrue(!jaiext.contains("Warp"));
+  Palette p;
+  Collection jaiext;
+  Object factory;
+  boolean isJAIExtEnabled=ImageWorker.isJaiExtEnabled();
+  if (isJAIExtEnabled) {
+    tester.assertComponent("form:jaiext",JAIEXTPanel.class);
+    tester.assertComponent("form:jaiext:jaiextOps",Palette.class);
+    p=(Palette)tester.getComponentFromLastRenderedPage("form:jaiext:jaiextOps");
+    jaiext=p.getChoices();
+    assertNotNull(jaiext);
+    assertTrue(!jaiext.contains("Warp"));
+  }
+ else {
+    tester.assertInvisible("form:jaiext");
+  }
   FormTester form=tester.newFormTester("form");
   form.setValue("allowNativeWarp",true);
   form.submit("submit");
   tester.assertNoErrorMessage();
   info=(JAIInfo)global.getJAI();
-  Assert.assertTrue(info.isAllowNativeWarp());
-  Object factory=info.getJAI().getOperationRegistry().getFactory(RenderedRegistryMode.MODE_NAME,"Warp");
-  Assert.assertTrue(factory instanceof MlibWarpRIF);
+  if (isJAIExtEnabled) {
+    Assert.assertTrue(info.isAllowNativeWarp());
+    factory=info.getJAI().getOperationRegistry().getFactory(RenderedRegistryMode.MODE_NAME,"Warp");
+    Assert.assertTrue(factory instanceof MlibWarpRIF);
+  }
+ else {
+    Assert.assertFalse(info.isAllowNativeWarp());
+    factory=info.getJAI().getOperationRegistry().getFactory(RenderedRegistryMode.MODE_NAME,"Warp");
+    Assert.assertTrue(factory instanceof WarpRIF);
+  }
   tester.startPage(JAIPage.class);
   tester.assertRenderedPage(JAIPage.class);
-  tester.assertComponent("form:jaiext",JAIEXTPanel.class);
-  tester.assertComponent("form:jaiext:jaiextOps",Palette.class);
-  p=(Palette)tester.getComponentFromLastRenderedPage("form:jaiext:jaiextOps");
-  jaiext=p.getChoices();
-  assertNotNull(jaiext);
-  assertTrue(!jaiext.contains("Warp"));
+  if (isJAIExtEnabled) {
+    tester.assertComponent("form:jaiext",JAIEXTPanel.class);
+    tester.assertComponent("form:jaiext:jaiextOps",Palette.class);
+    p=(Palette)tester.getComponentFromLastRenderedPage("form:jaiext:jaiextOps");
+    jaiext=p.getChoices();
+    assertNotNull(jaiext);
+    assertTrue(!jaiext.contains("Warp"));
+  }
   form=tester.newFormTester("form");
   form.setValue("allowNativeWarp",false);
   form.submit("submit");
