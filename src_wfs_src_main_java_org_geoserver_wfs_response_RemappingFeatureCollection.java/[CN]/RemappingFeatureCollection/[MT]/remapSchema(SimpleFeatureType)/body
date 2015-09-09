@@ -6,7 +6,13 @@
       GeometryDescriptor geoDesc=(GeometryDescriptor)attDesc;
       builder.add(attributesMapping.get(attDesc.getLocalName()),attDesc.getType().getBinding(),geoDesc.getCoordinateReferenceSystem());
     }
- else     builder.add(attributesMapping.get(attDesc.getLocalName()),attDesc.getType().getBinding());
+ else {
+      List<Filter> filters=attDesc.getType().getRestrictions();
+      if (filters != null && !filters.isEmpty()) {
+        builder.restrictions(filters);
+      }
+      builder.add(attributesMapping.get(attDesc.getLocalName()),attDesc.getType().getBinding());
+    }
   }
   return builder.buildFeatureType();
 }

@@ -1,0 +1,17 @@
+{
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  AttributeTypeBuilder ab=new AttributeTypeBuilder();
+  tb.add("geom",Point.class);
+  ab.setName("name");
+  ab.setBinding(String.class);
+  ab.setLength(20);
+  tb.add(ab.buildDescriptor("name"));
+  tb.setName("testType");
+  SimpleFeatureType original=tb.buildFeatureType();
+  int length=FeatureTypes.getFieldLength(original.getDescriptor("name"));
+  assertEquals(20,length);
+  ListFeatureCollection fc=new ListFeatureCollection(original);
+  RemappingFeatureCollection remapped=new RemappingFeatureCollection(fc,Collections.singletonMap("name","xyz"));
+  int remappedLength=FeatureTypes.getFieldLength(remapped.getSchema().getDescriptor("xyz"));
+  assertEquals(20,remappedLength);
+}
