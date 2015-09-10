@@ -1,0 +1,24 @@
+{
+  String message=(String)attrs.get(EXCEPTION_MESSAGE);
+  Exception exc=new Exception(message);
+  try {
+    Constructor<?> con=this.getClass().getClassLoader().loadClass((String)attrs.get(EXCEPTION_CLASS)).getConstructor(String.class);
+    exc=(Exception)con.newInstance(message);
+  }
+ catch (  InstantiationException|IllegalAccessException|ClassNotFoundException|NoSuchMethodException|SecurityException|IllegalArgumentException|InvocationTargetException e) {
+    LOGGER.log(Level.FINE,"COuldn't reinstaniate Exception for WPS status",e);
+  }
+  String r=(String)attrs.get(STACK_TRACE);
+  ArrayList<StackTraceElement> trace=new ArrayList<>();
+  for (  String line : r.split("\n")) {
+    String[] parts=line.split(STACKTRACESEPERATOR);
+    String declaringClass=parts[0];
+    String fileName=parts[1];
+    String methodName=parts[2];
+    int lineNumber=Integer.parseInt(parts[3]);
+    StackTraceElement t=new StackTraceElement(declaringClass,methodName,fileName,lineNumber);
+    trace.add(t);
+  }
+  exc.setStackTrace(trace.toArray(new StackTraceElement[]{}));
+  return exc;
+}

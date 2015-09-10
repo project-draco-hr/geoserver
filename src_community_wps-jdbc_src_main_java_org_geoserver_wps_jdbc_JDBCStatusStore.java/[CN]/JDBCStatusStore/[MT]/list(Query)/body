@@ -1,0 +1,31 @@
+{
+  LOGGER.fine("listing statuses matching " + query);
+  SimpleFeatureSource source;
+  try {
+    ArrayList<ExecutionStatus> ret=new ArrayList<>();
+    source=statuses.getFeatureSource(STATUS);
+    LOGGER.fine("requesting " + query);
+    SimpleFeatureCollection features=source.getFeatures(query);
+    int size=features.size();
+    LOGGER.fine(query + " " + size);
+    SimpleFeatureIterator itr=features.features();
+    try {
+      while (itr.hasNext()) {
+        SimpleFeature f=itr.next();
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("adding " + f);
+        }
+        ret.add(featureToStatus(f));
+      }
+      return ret;
+    }
+  finally {
+      itr.close();
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.info("failed to fetch any WPS statuses");
+    LOGGER.fine(e.getMessage());
+  }
+  return Collections.emptyList();
+}

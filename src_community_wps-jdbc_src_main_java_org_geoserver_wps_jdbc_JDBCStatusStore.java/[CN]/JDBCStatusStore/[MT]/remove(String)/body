@@ -1,0 +1,37 @@
+{
+  LOGGER.fine("removing status " + executionId);
+  try {
+    SimpleFeatureSource source=statuses.getFeatureSource(STATUS);
+    Filter filter=ECQL.toFilter(PROCESS_ID + " = '" + executionId+ "'");
+    SimpleFeatureCollection features=source.getFeatures(filter);
+    SimpleFeature f=DataUtilities.first(features);
+    ExecutionStatus stat=featureToStatus(f);
+    DefaultTransaction transaction=new DefaultTransaction("create");
+    try {
+      if (source instanceof SimpleFeatureStore) {
+        SimpleFeatureStore store=(SimpleFeatureStore)source;
+        store.setTransaction(transaction);
+        store.removeFeatures(filter);
+        transaction.commit();
+      }
+    }
+ catch (    IOException e) {
+      LOGGER.info("failed to remove WPS Status " + executionId);
+      LOGGER.fine(e.getMessage());
+      try {
+        transaction.rollback();
+      }
+ catch (      IOException e1) {
+      }
+    }
+ finally {
+      transaction.close();
+    }
+    return stat;
+  }
+ catch (  IOException|CQLException e) {
+    LOGGER.info("failed to remove WPS Status " + executionId);
+    LOGGER.fine(e.getMessage());
+  }
+  return null;
+}

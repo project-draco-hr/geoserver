@@ -1,0 +1,16 @@
+{
+  LOGGER.fine("getting status " + executionId);
+  try {
+    SimpleFeatureSource source=statuses.getFeatureSource(STATUS);
+    Filter filter=ECQL.toFilter(PROCESS_ID + " = '" + executionId+ "'");
+    SimpleFeatureCollection features=source.getFeatures(filter);
+    SimpleFeature f=DataUtilities.first(features);
+    ExecutionStatus stat=featureToStatus(f);
+    return stat;
+  }
+ catch (  IOException|CQLException e) {
+    LOGGER.info("failed to fetch WPS Status " + executionId);
+    LOGGER.fine(e.getMessage());
+  }
+  return null;
+}

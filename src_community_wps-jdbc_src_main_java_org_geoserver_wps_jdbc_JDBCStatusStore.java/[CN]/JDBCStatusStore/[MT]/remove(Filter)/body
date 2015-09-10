@@ -1,0 +1,37 @@
+{
+  LOGGER.fine("removing statuses matching " + filter);
+  int ret=0;
+  DefaultTransaction transaction=new DefaultTransaction("create");
+  try {
+    SimpleFeatureSource source=statuses.getFeatureSource(STATUS);
+    SimpleFeatureCollection features=source.getFeatures(filter);
+    ret=features.size();
+    if (ret == 0) {
+      return ret;
+    }
+    SimpleFeatureIterator itr=features.features();
+    itr.close();
+    if (source instanceof SimpleFeatureStore) {
+      SimpleFeatureStore store=(SimpleFeatureStore)source;
+      store.setTransaction(transaction);
+      store.removeFeatures(filter);
+      transaction.commit();
+    }
+ else {
+      LOGGER.info("Readonly status store found, probably not what you wanted");
+    }
+  }
+ catch (  IOException e) {
+    LOGGER.info("failed to remove WPS Status matching " + filter);
+    LOGGER.fine(e.getMessage());
+    try {
+      transaction.rollback();
+    }
+ catch (    IOException e1) {
+    }
+  }
+ finally {
+    transaction.close();
+  }
+  return ret;
+}

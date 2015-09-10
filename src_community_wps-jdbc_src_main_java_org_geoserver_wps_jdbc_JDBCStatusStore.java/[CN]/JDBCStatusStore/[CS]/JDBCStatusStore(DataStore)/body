@@ -1,0 +1,28 @@
+{
+  if (store == null) {
+    throw new RuntimeException("Attempted to create a JDBCStatusStore with a null datastore");
+  }
+  statuses=store;
+  try {
+    boolean statusSchema=statuses.getNames().contains(new NameImpl(STATUS));
+    if (statusSchema) {
+      LOGGER.fine("using exisiting status store DB " + STATUS);
+      SimpleFeatureSource source=statuses.getFeatureSource(STATUS);
+      schema=source.getSchema();
+    }
+ else {
+      LOGGER.fine("creating new DB table for statuses");
+      try {
+        schema=DataUtilities.createType(STATUS,PROCESS_ID + ":String," + CREATION+ ":Date,"+ LASTUPDATE+ ":Date,"+ COMPLETION+ ":Date,"+ NODE_ID+ ":String,"+ PHASE+ ":String,"+ PROCESS_NAME+ ":String,"+ PROCESS_NAME_URI+ ":String,"+ PROGRESS+ ":Float,"+ REQUEST+ ":String,"+ PROPERTIES+ ":String,"+ SIMPLE_PROCESS_NAME+ ":String,"+ TASK+ ":String,"+ USER_NAME+ ":String,"+ ASYNC+ ":Boolean,"+ EXCEPTION_CLASS+ ":String,"+ EXCEPTION_MESSAGE+ ":String,"+ STACK_TRACE+ ":String");
+      }
+ catch (      SchemaException e) {
+        LOGGER.fine(e.getLocalizedMessage());
+      }
+      statuses.createSchema(schema);
+    }
+  }
+ catch (  IOException e1) {
+    LOGGER.info("failed to create WPS status store");
+    LOGGER.fine(e1.getMessage());
+  }
+}
