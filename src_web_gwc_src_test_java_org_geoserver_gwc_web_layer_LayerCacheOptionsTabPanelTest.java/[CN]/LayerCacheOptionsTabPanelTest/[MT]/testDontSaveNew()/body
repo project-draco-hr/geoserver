@@ -17,10 +17,13 @@
   }
 ));
   tester.assertComponent("form:panel",LayerCacheOptionsTabPanel.class);
+  tester.isVisible("form:panel:tileLayerEditor:container:configs");
   FormTester formTester=tester.newFormTester("form");
   formTester.setValue("panel:tileLayerEditor:createTileLayer",false);
-  formTester.submit();
+  tester.executeAjaxEvent("form:panel:tileLayerEditor:createTileLayer","onchange");
+  tester.isInvisible("form:panel:tileLayerEditor:container:configs");
   LayerCacheOptionsTabPanel panel=(LayerCacheOptionsTabPanel)tester.getComponentFromLastRenderedPage("form:panel");
+  formTester.getForm().onFormSubmitted();
   panel.save();
   assertNotNull(tileLayerModel.getEnabled());
   assertFalse(tileLayerModel.getEnabled().booleanValue());
