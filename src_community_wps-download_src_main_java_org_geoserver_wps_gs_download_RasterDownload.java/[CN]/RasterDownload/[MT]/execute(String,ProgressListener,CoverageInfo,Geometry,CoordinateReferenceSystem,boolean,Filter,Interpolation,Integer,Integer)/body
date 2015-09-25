@@ -1,0 +1,116 @@
+{
+  GridCoverage2D scaledGridCoverage=null, clippedGridCoverage=null, reprojectedGridCoverage=null, originalGridCoverage=null;
+  try {
+    CoordinateReferenceSystem nativeCRS=DownloadUtilities.getNativeCRS(coverageInfo);
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Native CRS is " + nativeCRS.toWKT());
+    }
+    ROIManager roiManager=null;
+    if (roi != null) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Pushing ROI to native CRS");
+      }
+      final CoordinateReferenceSystem roiCRS=(CoordinateReferenceSystem)roi.getUserData();
+      roiManager=new ROIManager(roi,roiCRS);
+    }
+    boolean reproject=false;
+    MathTransform reprojectionTrasform=null;
+    if (targetCRS != null && !CRS.equalsIgnoreMetadata(nativeCRS,targetCRS)) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Checking if reprojection is needed");
+      }
+      reprojectionTrasform=CRS.findMathTransform(nativeCRS,targetCRS,true);
+      if (!reprojectionTrasform.isIdentity()) {
+        reproject=true;
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.log(Level.FINE,"Reprojection needed");
+        }
+      }
+    }
+ else {
+      targetCRS=nativeCRS;
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Getting reader for the coverage");
+    }
+    final GridCoverage2DReader reader=(GridCoverage2DReader)coverageInfo.getGridCoverageReader(null,null);
+    final ParameterValueGroup readParametersDescriptor=reader.getFormat().getReadParameters();
+    final List<GeneralParameterDescriptor> parameterDescriptors=readParametersDescriptor.getDescriptor().descriptors();
+    GeneralParameterValue[] readParameters=CoverageUtils.getParameters(readParametersDescriptor,coverageInfo.getParameters(),false);
+    if (filter != null) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Add the filter");
+      }
+      readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,filter,"FILTER","Filter");
+    }
+    ScaleToTarget scaling=null;
+    if (roi != null) {
+      roiManager.useNativeCRS(reader.getCoordinateReferenceSystem());
+      roiManager.useTargetCRS(targetCRS);
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Preparing the GridGeometry for cropping input layer with ROI");
+      }
+      final ReferencedEnvelope roiEnvelope=new ReferencedEnvelope(roiManager.getSafeRoiInNativeCRS().getEnvelopeInternal(),nativeCRS);
+      final Polygon originalEnvelopeAsPolygon=FeatureUtilities.getPolygon(reader.getOriginalEnvelope(),new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING)));
+      originalEnvelopeAsPolygon.setUserData(nativeCRS);
+      final ReferencedEnvelope originalEnvelope=JTS.toEnvelope(originalEnvelopeAsPolygon);
+      final ReferencedEnvelope intersection=originalEnvelope.intersection(roiEnvelope);
+      scaling=new ScaleToTarget(reader,intersection);
+      scaling.setTargetSize(targetSizeX,targetSizeY);
+      GridGeometry2D gg2D=scaling.getGridGeometry();
+      readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,gg2D,AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().getCode());
+    }
+ else {
+      scaling=new ScaleToTarget(reader);
+      scaling.setTargetSize(targetSizeX,targetSizeY);
+    }
+    readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,Boolean.TRUE,AbstractGridFormat.USE_JAI_IMAGEREAD.getName().getCode());
+    originalGridCoverage=reader.read(readParameters);
+    if (reproject) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Reprojecting the layer");
+      }
+      reprojectedGridCoverage=(GridCoverage2D)Operations.DEFAULT.resample(originalGridCoverage,targetCRS,null,interpolation);
+    }
+ else {
+      reprojectedGridCoverage=originalGridCoverage;
+    }
+    if (roi != null) {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.log(Level.FINE,"Cropping the layer");
+      }
+      final CropCoverage cropCoverage=new CropCoverage();
+      if (clip) {
+        clippedGridCoverage=cropCoverage.execute(reprojectedGridCoverage,roiManager.getSafeRoiInTargetCRS(),progressListener);
+      }
+ else {
+        clippedGridCoverage=cropCoverage.execute(reprojectedGridCoverage,roiManager.getSafeRoiInTargetCRS(),progressListener);
+      }
+    }
+ else {
+      clippedGridCoverage=reprojectedGridCoverage;
+    }
+    if (interpolation != null) {
+      scaling.setInterpolation(interpolation);
+    }
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Scaling the layer");
+    }
+    scaledGridCoverage=scaling.scale(clippedGridCoverage);
+    return writeRaster(mimeType,coverageInfo,scaledGridCoverage);
+  }
+  finally {
+    if (originalGridCoverage != null) {
+      resourceManager.addResource(new GridCoverageResource(originalGridCoverage));
+    }
+    if (reprojectedGridCoverage != null) {
+      resourceManager.addResource(new GridCoverageResource(reprojectedGridCoverage));
+    }
+    if (clippedGridCoverage != null) {
+      resourceManager.addResource(new GridCoverageResource(clippedGridCoverage));
+    }
+    if (scaledGridCoverage != null) {
+      resourceManager.addResource(new GridCoverageResource(scaledGridCoverage));
+    }
+  }
+}

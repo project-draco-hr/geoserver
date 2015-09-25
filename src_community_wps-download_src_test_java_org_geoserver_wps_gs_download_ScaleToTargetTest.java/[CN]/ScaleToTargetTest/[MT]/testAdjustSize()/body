@@ -1,0 +1,31 @@
+{
+  GeoTiffReader reader=null;
+  try {
+    reader=new GeoTiffReader(inputTempFile);
+    assertNotNull(reader);
+    Envelope fullSizeEnvelope=reader.getOriginalEnvelope();
+    ScaleToTarget scalingFullSize=new ScaleToTarget(reader,fullSizeEnvelope);
+    scalingFullSize.setTargetSize(160,null);
+    Integer[] targetSize=scalingFullSize.getTargetSize();
+    assertEquals(160,targetSize[0].intValue());
+    assertEquals(160,targetSize[1].intValue());
+    scalingFullSize.setTargetSize(null,200);
+    targetSize=scalingFullSize.getTargetSize();
+    assertEquals(200,targetSize[0].intValue());
+    assertEquals(200,targetSize[1].intValue());
+    ScaleToTarget scalingRoi=new ScaleToTarget(reader,ROI);
+    scalingRoi.setTargetSize(150,null);
+    targetSize=scalingRoi.getTargetSize();
+    assertEquals(150,targetSize[0].intValue());
+    assertEquals(50,targetSize[1].intValue());
+    scalingRoi.setTargetSize(null,100);
+    targetSize=scalingRoi.getTargetSize();
+    assertEquals(300,targetSize[0].intValue());
+    assertEquals(100,targetSize[1].intValue());
+  }
+  finally {
+    if (reader != null) {
+      reader.dispose();
+    }
+  }
+}
