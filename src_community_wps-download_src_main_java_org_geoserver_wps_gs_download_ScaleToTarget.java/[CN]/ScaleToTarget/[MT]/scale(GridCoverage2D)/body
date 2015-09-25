@@ -1,0 +1,45 @@
+{
+  checkNotNull(sourceGC,"sourceGC)");
+  if (!isTargetSizeSet() && (interpolation instanceof InterpolationNearest)) {
+    return sourceGC;
+  }
+  final Hints hints=GeoTools.getDefaultHints();
+  final GridEnvelope2D sourceGE=getGridGeometry().getGridRange2D();
+  if ((isTargetSizeSet() && this.adjustedTargetSizeX.equals(sourceGE.width) && this.adjustedTargetSizeY == sourceGE.height) || (!isTargetSizeSet())) {
+    if (interpolation instanceof InterpolationNearest) {
+      return sourceGC;
+    }
+ else {
+      final Operation operation=CoverageProcessor.getInstance().getOperation("Warp");
+      final ParameterValueGroup parameters=operation.getParameters();
+      parameters.parameter("Source").setValue(sourceGC);
+      parameters.parameter("warp").setValue(new WarpAffine(AffineTransform.getScaleInstance(1,1)));
+      parameters.parameter("interpolation").setValue(interpolation);
+      parameters.parameter("backgroundValues").setValue(CoverageUtilities.getBackgroundValues(sourceGC));
+      return (GridCoverage2D)CoverageProcessor.getInstance().doOperation(parameters,hints);
+    }
+  }
+  final double scaleX=1.0 * this.adjustedTargetSizeX / sourceGE.width;
+  final double scaleY=1.0 * this.adjustedTargetSizeY / sourceGE.height;
+  final RenderedImage sourceImage=sourceGC.getRenderedImage();
+  final int sourceMinX=sourceImage.getMinX();
+  final int sourceMinY=sourceImage.getMinY();
+  final AffineTransform affineTransform=new AffineTransform(scaleX,0,0,scaleY,sourceMinX - scaleX * sourceMinX,sourceMinY - scaleY * sourceMinY);
+  Warp warp;
+  try {
+    warp=new WarpAffine(affineTransform.createInverse());
+  }
+ catch (  NoninvertibleTransformException e) {
+    throw new RuntimeException(e);
+  }
+  final ImageLayout2 layout=new ImageLayout2(sourceMinX,sourceMinY,this.adjustedTargetSizeX,this.adjustedTargetSizeY);
+  hints.add(new Hints(JAI.KEY_IMAGE_LAYOUT,layout));
+  final Operation operation=CoverageProcessor.getInstance().getOperation("Warp");
+  final ParameterValueGroup parameters=operation.getParameters();
+  parameters.parameter("Source").setValue(sourceGC);
+  parameters.parameter("warp").setValue(warp);
+  parameters.parameter("interpolation").setValue(interpolation);
+  parameters.parameter("backgroundValues").setValue(CoverageUtilities.getBackgroundValues(sourceGC));
+  GridCoverage2D gc=(GridCoverage2D)CoverageProcessor.getInstance().doOperation(parameters,hints);
+  return gc;
+}

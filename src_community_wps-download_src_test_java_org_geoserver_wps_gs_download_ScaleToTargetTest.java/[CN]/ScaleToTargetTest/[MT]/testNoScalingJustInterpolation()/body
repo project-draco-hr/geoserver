@@ -1,0 +1,21 @@
+{
+  GeoTiffReader reader=null;
+  GridCoverage2D gc=null;
+  try {
+    reader=new GeoTiffReader(inputTempFile);
+    assertNotNull(reader);
+    Envelope fullSizeEnvelope=reader.getOriginalEnvelope();
+    ScaleToTarget noScaling=new ScaleToTarget(reader,fullSizeEnvelope);
+    noScaling.setInterpolation(Interpolation.getInstance(Interpolation.INTERP_BILINEAR));
+    gc=noScaling.scale(reader.read(null));
+    assertNotNull(gc);
+  }
+  finally {
+    if (reader != null) {
+      reader.dispose();
+    }
+    if (gc != null) {
+      CoverageCleanerCallback.disposeCoverage(gc);
+    }
+  }
+}
