@@ -1,0 +1,26 @@
+{
+  Request request=Dispatcher.REQUEST.get();
+  String baseURL=null;
+  try {
+    if (baseURL == null) {
+      baseURL=ResponseUtils.baseURL(request.getHttpRequest());
+    }
+    baseURL=ResponseUtils.buildURL(baseURL,"/",null,URLType.SERVICE);
+  }
+ catch (  Exception e) {
+  }
+  if (baseURL == null) {
+    throw new IllegalArgumentException("baseURL is required to create download links");
+  }
+  baseURL+=LINK;
+  baseURL=baseURL.replace("${version}",request.getVersion());
+  if (info instanceof CoverageInfo) {
+    return linksFromCoverage(baseURL,(CoverageInfo)info);
+  }
+ else {
+    if (LOGGER.isLoggable(Level.WARNING)) {
+      LOGGER.warning("Download link for vectors isn't supported." + " Returning null");
+    }
+  }
+  return null;
+}

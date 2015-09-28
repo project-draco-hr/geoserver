@@ -1,2 +1,14 @@
 {
+  CSWInfo model=(CSWInfo)info.getObject();
+  MetadataMap metadata=model.getMetadata();
+  DirectDownloadSettings settings=DirectDownloadSettings.getSettingsFromMetadata(metadata,null);
+  metadata=metadata == null ? new MetadataMap() : metadata;
+  if (settings == null) {
+    metadata.getMap().put(DirectDownloadSettings.DIRECTDOWNLOAD_KEY,new DirectDownloadSettings());
+  }
+  IModel<DirectDownloadSettings> directDownloadModel=new MetadataMapModel(metadata,DirectDownloadSettings.DIRECTDOWNLOAD_KEY,DirectDownloadSettings.class);
+  form.add(new CheckBox("directDownloadEnabled",new PropertyModel(directDownloadModel,"directDownloadEnabled")));
+  TextField maxDownloadSize=new TextField<Integer>("maxDownloadSize",new PropertyModel(directDownloadModel,"maxDownloadSize"));
+  maxDownloadSize.add(new MinimumValidator(0l));
+  form.add(maxDownloadSize);
 }

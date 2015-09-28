@@ -1,0 +1,22 @@
+{
+  FeatureCustomizer customizer=null;
+  if (info instanceof CoverageInfo) {
+    CoverageInfo coverageInfo=((CoverageInfo)info);
+    MetadataMap metadata=coverageInfo.getMetadata();
+    boolean directDownloadEnabled=false;
+    DirectDownloadSettings settings=DirectDownloadSettings.getSettingsFromMetadata(metadata,GeoServerExtensions.bean(GeoServer.class).getService(CSWInfo.class));
+    if (settings != null) {
+      directDownloadEnabled=settings.isDirectDownloadEnabled();
+    }
+    if (directDownloadEnabled) {
+      String typeName=recordDescriptor.getFeatureType().getName().getLocalPart();
+      customizer=FeatureCustomizer.getCustomizer(typeName);
+      if (customizer == null) {
+        if (LOGGER.isLoggable(Level.WARNING)) {
+          LOGGER.warning("No Mapping customizer have been found for " + typeName + ". Mapping customizations will not be made");
+        }
+      }
+    }
+  }
+  return customizer;
+}
