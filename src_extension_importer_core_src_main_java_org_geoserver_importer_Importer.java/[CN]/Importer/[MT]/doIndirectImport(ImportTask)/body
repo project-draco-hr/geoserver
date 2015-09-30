@@ -24,12 +24,15 @@
           addToCatalog(task);
         }
         FeatureTypeInfo resource=getCatalog().getResourceByName(featureType.getQualifiedName(),FeatureTypeInfo.class);
-        if (resource.getNativeBoundingBox().isEmpty() || resource.getMetadata().get("recalculate-bounds") != null) {
+        if (resource.getNativeBoundingBox().isEmpty() || resource.getMetadata().get("recalculate-bounds").equals(Boolean.TRUE)) {
           CatalogBuilder cb=new CatalogBuilder(getCatalog());
           ReferencedEnvelope nativeBounds=cb.getNativeBounds(resource);
           resource.setNativeBoundingBox(nativeBounds);
           resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds,resource.getCRS()));
           getCatalog().save(resource);
+          if (resource.getMetadata().get("recalculate-bounds") != null) {
+            resource.getMetadata().remove("recalculate-bounds");
+          }
         }
       }
     }
