@@ -1,7 +1,7 @@
 {
   LOGGER.fine("getting status " + executionId);
   try {
-    SimpleFeatureSource source=statuses.getFeatureSource(STATUS);
+    SimpleFeatureSource source=getStatusFeatureStore();
     Filter filter=ECQL.toFilter(PROCESS_ID + " = '" + executionId+ "'");
     SimpleFeatureCollection features=source.getFeatures(filter);
     SimpleFeature f=DataUtilities.first(features);
@@ -9,8 +9,6 @@
     return stat;
   }
  catch (  IOException|CQLException e) {
-    LOGGER.info("failed to fetch WPS Status " + executionId);
-    LOGGER.fine(e.getMessage());
+    throw new WPSException("Failed to get execution status " + executionId,e);
   }
-  return null;
 }

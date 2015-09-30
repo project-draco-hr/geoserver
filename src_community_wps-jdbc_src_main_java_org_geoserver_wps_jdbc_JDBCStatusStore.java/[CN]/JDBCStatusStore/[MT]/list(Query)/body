@@ -1,15 +1,11 @@
 {
   LOGGER.fine("listing statuses matching " + query);
-  SimpleFeatureSource source;
   try {
     ArrayList<ExecutionStatus> ret=new ArrayList<>();
-    source=statuses.getFeatureSource(STATUS);
+    SimpleFeatureStore source=getStatusFeatureStore();
     LOGGER.fine("requesting " + query);
     SimpleFeatureCollection features=source.getFeatures(query);
-    int size=features.size();
-    LOGGER.fine(query + " " + size);
-    SimpleFeatureIterator itr=features.features();
-    try {
+    try (SimpleFeatureIterator itr=features.features()){
       while (itr.hasNext()) {
         SimpleFeature f=itr.next();
         if (LOGGER.isLoggable(Level.FINE)) {
@@ -19,13 +15,8 @@
       }
       return ret;
     }
-  finally {
-      itr.close();
-    }
-  }
+   }
  catch (  IOException e) {
-    LOGGER.info("failed to fetch any WPS statuses");
-    LOGGER.fine(e.getMessage());
+    throw new WPSException("Failed to list statuses by query " + query,e);
   }
-  return Collections.emptyList();
 }

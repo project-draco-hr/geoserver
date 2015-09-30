@@ -1,31 +1,21 @@
 {
   DefaultTransaction transaction=new DefaultTransaction("create");
+  boolean committed=false;
   try {
-    SimpleFeatureSource source=statuses.getFeatureSource(STATUS);
-    if (source instanceof SimpleFeatureStore) {
-      SimpleFeatureStore store=(SimpleFeatureStore)source;
-      store.setTransaction(transaction);
-      SimpleFeature feature=statusToFeature(status);
-      FeatureCollection<SimpleFeatureType,SimpleFeature> featureCollection=DataUtilities.collection(feature);
-      Filter filter=ECQL.toFilter(PROCESS_ID + " = '" + status.getExecutionId()+ "'");
-      store.removeFeatures(filter);
-      store.addFeatures(featureCollection);
-      transaction.commit();
-    }
+    SimpleFeatureStore store=getStatusFeatureStore();
+    store.setTransaction(transaction);
+    SimpleFeature feature=statusToFeature(status);
+    FeatureCollection<SimpleFeatureType,SimpleFeature> featureCollection=DataUtilities.collection(feature);
+    Filter filter=ECQL.toFilter(PROCESS_ID + " = '" + status.getExecutionId()+ "'");
+    store.removeFeatures(filter);
+    store.addFeatures(featureCollection);
+    transaction.commit();
+    committed=true;
   }
- catch (  IOException e) {
-    LOGGER.info("failed to save WPS Status " + status.getExecutionId());
-    LOGGER.fine(e.getMessage());
-    try {
-      transaction.rollback();
-    }
- catch (    IOException e1) {
-      LOGGER.fine("failed to rollback failed save");
-    }
-  }
-catch (  CQLException e) {
+ catch (  Exception e) {
+    throw new WPSException("Failure saving status " + status,e);
   }
  finally {
-    transaction.close();
+    closeTransaction(transaction,committed);
   }
 }
