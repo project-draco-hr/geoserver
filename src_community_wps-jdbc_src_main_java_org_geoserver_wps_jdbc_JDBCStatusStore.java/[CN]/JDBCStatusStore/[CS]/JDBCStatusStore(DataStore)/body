@@ -1,0 +1,40 @@
+{
+  if (store == null) {
+    throw new RuntimeException("Attempted to create a JDBCStatusStore with a null datastore");
+  }
+  SimpleFeatureTypeBuilder tb=new SimpleFeatureTypeBuilder();
+  tb.add(PROCESS_ID,String.class);
+  tb.add(CREATION,Timestamp.class);
+  tb.add(LASTUPDATE,Timestamp.class);
+  tb.add(COMPLETION,Timestamp.class);
+  tb.add(NODE_ID,String.class);
+  tb.add(PHASE,String.class);
+  tb.add(PROCESS_NAME,String.class);
+  tb.add(PROCESS_NAME_URI,String.class);
+  tb.add(PROGRESS,Float.class);
+  tb.add(REQUEST,byte[].class);
+  tb.add(PROPERTIES,String.class);
+  tb.add(SIMPLE_PROCESS_NAME,String.class);
+  tb.add(TASK,String.class);
+  tb.add(USER_NAME,String.class);
+  tb.add(ASYNC,String.class);
+  tb.add(EXCEPTION_CLASS,String.class);
+  tb.add(EXCEPTION_MESSAGE,String.class);
+  tb.add(STACK_TRACE,byte[].class);
+  tb.setName(STATUS);
+  schema=tb.buildFeatureType();
+  statuses=store;
+  try {
+    SimpleFeatureType storeSchema=lookupStatusSchema();
+    if (storeSchema == null) {
+      LOGGER.fine("creating new DB table for statuses");
+      statuses.createSchema(schema);
+      storeSchema=lookupStatusSchema();
+    }
+    actualStatusName=storeSchema.getTypeName();
+    mappingDefinitions=buildDefinitions(storeSchema,schema);
+  }
+ catch (  IOException e) {
+    throw new WPSException("Failed to setup the underlying store",e);
+  }
+}

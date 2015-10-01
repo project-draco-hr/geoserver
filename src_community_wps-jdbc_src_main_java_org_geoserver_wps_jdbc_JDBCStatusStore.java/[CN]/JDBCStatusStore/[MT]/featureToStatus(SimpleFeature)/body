@@ -1,0 +1,36 @@
+{
+  HashMap<String,Object> attrs=new HashMap<>();
+  if (f == null) {
+    return null;
+  }
+  for (  Property p : f.getProperties()) {
+    if (p.getValue() != null) {
+      attrs.put(p.getName().toString(),p.getValue());
+    }
+  }
+  Name processName=new NameImpl((String)attrs.get(PROCESS_NAME));
+  String executionId=(String)attrs.get(PROCESS_ID);
+  boolean asynchronous=Converters.convert(attrs.get(ASYNC),Boolean.class);
+  ExecutionStatus status=new ExecutionStatus(processName,executionId,asynchronous);
+  if (attrs.containsKey(REQUEST)) {
+    ExecuteType request=buildRequest(attrs);
+    status.setRequest(request);
+  }
+  String phase=(String)attrs.get(PHASE);
+  ProcessState state=ProcessState.valueOf(phase);
+  status.setPhase(state);
+  status.setProgress((float)attrs.get(PROGRESS));
+  status.setTask((String)attrs.get(TASK));
+  status.setUserName((String)attrs.get(USER_NAME));
+  if (attrs.containsKey(EXCEPTION_MESSAGE)) {
+    status.setException(buildException(attrs,status));
+  }
+  status.setCreationTime((Date)attrs.get(CREATION));
+  if (attrs.containsKey(COMPLETION)) {
+    status.setCompletionTime((Date)attrs.get(COMPLETION));
+  }
+  if (attrs.containsKey(LASTUPDATE)) {
+    status.setLastUpdated((Date)attrs.get(LASTUPDATE));
+  }
+  return status;
+}
