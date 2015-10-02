@@ -7,6 +7,15 @@
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Executing GetCoverage request on coverage :" + linfo.toString());
   }
+  if (request.getFormat() == null) {
+    try {
+      String nativeFormat=mimeMapper.mapNativeFormat(cinfo);
+      request.setFormat(nativeFormat);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"Could not compute the native type of the coverage, defaulting to image/tiff",e);
+    }
+  }
   GridCoverage coverage=null;
   try {
     Map<String,ExtensionItemType> extensions=extractExtensions(request);
