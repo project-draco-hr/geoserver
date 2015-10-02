@@ -1,0 +1,37 @@
+{
+  GMLOutputParams gmlParams=new GMLOutputParams();
+  if (layerInfo != null) {
+    if (layerInfo.getResource() instanceof FeatureTypeInfo) {
+      FeatureTypeInfo ftInfo=(FeatureTypeInfo)layerInfo.getResource();
+      if (ftInfo.getStore() != null) {
+        Map<String,Serializable> connParams=ftInfo.getStore().getConnectionParameters();
+        if (connParams != null) {
+          String dbtype=(String)connParams.get("dbtype");
+          if ("app-schema".equals(dbtype)) {
+            String mappingUrl=connParams.get("url").toString();
+            if (gmlParamsCache != null && gmlParamsCache.containsKey(mappingUrl)) {
+              gmlParams=gmlParamsCache.get(mappingUrl);
+            }
+ else {
+              gmlParams.baseUrl=getBaseUrl("ows",true);
+              gmlParams.wfsVersion=org.geotools.wfs.v1_1.WFS.getInstance().getVersion();
+              try {
+                gmlParams.gmlVersion=findGmlVersion(ftInfo);
+              }
+ catch (              IOException e) {
+                LOGGER.log(Level.FINE,"Could not determine GML version, using default",e);
+                gmlParams.gmlVersion=null;
+              }
+              if (gmlParamsCache != null) {
+                gmlParamsCache.put(mappingUrl,gmlParams);
+              }
+            }
+          }
+ else {
+          }
+        }
+      }
+    }
+  }
+  return buildGmlLink(gmlParams);
+}
