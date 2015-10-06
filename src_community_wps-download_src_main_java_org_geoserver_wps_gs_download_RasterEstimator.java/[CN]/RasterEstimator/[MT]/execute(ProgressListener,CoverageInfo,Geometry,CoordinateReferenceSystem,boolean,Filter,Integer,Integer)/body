@@ -26,7 +26,7 @@
     roiManager.useNativeCRS(nativeCRS);
   }
   final GridCoverage2DReader reader=(GridCoverage2DReader)coverageInfo.getGridCoverageReader(null,null);
-  final double areaRead;
+  final long areaRead;
   ScaleToTarget scaling=null;
   if (roi != null) {
     if (LOGGER.isLoggable(Level.FINE)) {
@@ -48,9 +48,20 @@
   }
   scaling.setTargetSize(targetSizeX,targetSizeY);
   GridGeometry2D gg=scaling.getGridGeometry();
-  areaRead=gg.getGridRange2D().width * gg.getGridRange2D().height;
+  areaRead=(long)gg.getGridRange2D().width * gg.getGridRange2D().height;
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Area to read in pixels: " + areaRead);
+  }
+  long targetArea=1L;
+  Integer[] targetSize=scaling.getTargetSize();
+  if (targetSize[0] != null && targetSize[1] != null) {
+    targetArea=(long)targetSize[0] * targetSize[1];
+  }
+  if (areaRead >= Integer.MAX_VALUE || targetArea >= Integer.MAX_VALUE) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Area to read or target image size exceed maximum integer value: " + Integer.MAX_VALUE);
+    }
+    return false;
   }
   if (areaRead > rasterSizeLimits) {
     if (LOGGER.isLoggable(Level.FINE)) {
