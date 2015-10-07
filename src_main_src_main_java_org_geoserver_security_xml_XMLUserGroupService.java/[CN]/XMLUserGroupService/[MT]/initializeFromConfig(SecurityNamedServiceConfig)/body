@@ -15,19 +15,22 @@
   enc.initializeFor(this);
   if (config instanceof XMLSecurityServiceConfig) {
     validatingXMLSchema=((XMLSecurityServiceConfig)config).isValidating();
-    File xsdFile=new File(getConfigRoot(),XMLConstants.FILE_UR_SCHEMA);
-    if (xsdFile.exists() == false) {
-      FileUtils.copyURLToFile(getClass().getResource(XMLConstants.FILE_UR_SCHEMA),xsdFile);
+    Resource xsdFile=getConfigRoot().get(XMLConstants.FILE_UR_SCHEMA);
+    if (xsdFile.getType() == Type.UNDEFINED) {
+      IOUtils.copy(getClass().getResourceAsStream(XMLConstants.FILE_UR_SCHEMA),xsdFile.out());
     }
   }
   if (config instanceof FileBasedSecurityServiceConfig) {
     String fileName=((FileBasedSecurityServiceConfig)config).getFileName();
-    userFile=new File(fileName);
-    if (userFile.isAbsolute() == false) {
-      userFile=new File(getConfigRoot(),fileName);
+    File userFile=new File(fileName);
+    if (userFile.isAbsolute()) {
+      userResource=Files.asResource(userFile);
     }
-    if (userFile.exists() == false) {
-      FileUtils.copyURLToFile(getClass().getResource("usersTemplate.xml"),userFile);
+ else {
+      userResource=getConfigRoot().get(fileName);
+    }
+    if (userResource.getType() == Type.UNDEFINED) {
+      IOUtils.copy(getClass().getResourceAsStream("usersTemplate.xml"),userResource.out());
     }
   }
  else {

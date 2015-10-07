@@ -57,6 +57,9 @@
   GeoServerRoleService activeRoleService=createNiceMock(GeoServerRoleService.class);
   expect(activeRoleService.getName()).andReturn("foo").anyTimes();
   expect(secMgr.getActiveRoleService()).andReturn(activeRoleService).anyTimes();
+  TemporaryFolder tempFolder=new TemporaryFolder();
+  tempFolder.create();
+  expect(secMgr.role()).andReturn(Files.asResource(tempFolder.getRoot())).anyTimes();
   expect(secMgr.listRoleServices()).andReturn(new TreeSet<String>(Arrays.asList("test1","test2","test3","test4"))).anyTimes();
   replay(roleService1,roleService2,roleService3,roleService4,activeRoleService,secMgr);
   validator=new XMLSecurityConfigValidator(secMgr);
@@ -75,7 +78,7 @@
     assertEquals(ROLE_SERVICE_NOT_EMPTY_$1,ex.getId());
     assertEquals("test2",ex.getArgs()[0]);
   }
-  xmlConfig=(XMLRoleServiceConfig)createRoleConfig("test3",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,new File(getSecurityManager().getRoleRoot(),"test3.xml").getAbsolutePath());
+  xmlConfig=(XMLRoleServiceConfig)createRoleConfig("test3",XMLRoleService.class,XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE,new File(getSecurityManager().role().dir(),"test3.xml").getAbsolutePath());
   try {
     validator.validateRemoveRoleService(xmlConfig);
   }

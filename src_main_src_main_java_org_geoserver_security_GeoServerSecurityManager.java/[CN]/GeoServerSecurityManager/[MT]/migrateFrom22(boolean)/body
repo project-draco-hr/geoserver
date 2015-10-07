@@ -1,12 +1,12 @@
 {
   String filterName=GeoServerSecurityFilterChain.ROLE_FILTER;
   GeoServerSecurityFilter filter=loadFilter(filterName);
-  File logoutFilterDir=new File(getFilterRoot(),GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
-  File oldLogoutFilterConfig=new File(logoutFilterDir,"config.xml.2.2.x");
-  File oldSecManagerConfig=new File(getSecurityRoot(),"config.xml.2.2.x");
+  Resource logoutFilterDir=filterRoot().get(GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
+  Resource oldLogoutFilterConfig=logoutFilterDir.get("config.xml.2.2.x");
+  Resource oldSecManagerConfig=security().get("config.xml.2.2.x");
   if (filter != null) {
-    if (oldLogoutFilterConfig.exists())     LOGGER.warning(oldLogoutFilterConfig.getCanonicalPath() + " could be removed manually");
-    if (oldSecManagerConfig.exists())     LOGGER.warning(oldSecManagerConfig.getCanonicalPath() + " could be removed manually");
+    if (oldLogoutFilterConfig.getType() == Type.RESOURCE)     LOGGER.warning(oldLogoutFilterConfig.path() + " could be removed manually");
+    if (oldSecManagerConfig.getType() == Type.RESOURCE)     LOGGER.warning(oldSecManagerConfig.path() + " could be removed manually");
     return false;
   }
   RoleFilterConfig rfConfig=new RoleFilterConfig();
@@ -20,11 +20,11 @@
   sslConfig.setName(GeoServerSecurityFilterChain.SSL_FILTER);
   sslConfig.setSslPort(443);
   saveFilter(sslConfig);
-  if (migratedFrom21 == false)   FileUtils.copyFile(new File(logoutFilterDir,"config.xml"),oldLogoutFilterConfig);
+  if (migratedFrom21 == false)   org.geoserver.data.util.IOUtils.copy(logoutFilterDir.get("config.xml").in(),oldLogoutFilterConfig.out());
   LogoutFilterConfig loConfig=(LogoutFilterConfig)loadFilterConfig(GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
   loConfig.setRedirectURL(GeoServerLogoutFilter.URL_AFTER_LOGOUT);
   saveFilter(loConfig);
-  if (migratedFrom21 == false)   FileUtils.copyFile(new File(getSecurityRoot(),"config.xml"),oldSecManagerConfig);
+  if (migratedFrom21 == false)   org.geoserver.data.util.IOUtils.copy(security().get("config.xml").in(),oldSecManagerConfig.out());
   SecurityManagerConfig config=loadSecurityConfig();
   for (  RequestFilterChain chain : config.getFilterChain().getRequestChains()) {
     if (chain.getFilterNames().contains(GeoServerSecurityFilterChain.SECURITY_CONTEXT_ASC_FILTER)) {

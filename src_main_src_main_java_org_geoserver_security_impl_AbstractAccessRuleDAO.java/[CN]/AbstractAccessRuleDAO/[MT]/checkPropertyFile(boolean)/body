@@ -1,18 +1,18 @@
 {
   try {
     if (rules == null || force) {
-      if (securityDir == null || !securityDir.exists()) {
+      if (securityDir == null || securityDir.getType() == Type.UNDEFINED) {
         this.rules=new TreeSet<R>();
       }
  else {
-        File layers=new File(securityDir,propertyFileName);
-        if (!layers.exists()) {
+        Resource layers=securityDir.get(propertyFileName);
+        if (layers.getType() == Type.UNDEFINED) {
           InputStream in=getClass().getResourceAsStream(propertyFileName + ".template");
           if (in != null) {
-            dd.copyToSecurityDir(in,propertyFileName);
+            IOUtils.copy(in,layers.out());
           }
         }
-        if (!layers.exists()) {
+        if (layers.getType() == Type.UNDEFINED) {
           this.rules=new TreeSet<R>();
         }
  else {
