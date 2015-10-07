@@ -1,6 +1,6 @@
 {
   GetLegendGraphicRequest legendGraphicRequest=new GetLegendGraphicRequest();
-  File sampleLegendFolder=getSamplesFolder();
+  Resource sampleLegendFolder=getSamplesFolder();
   legendGraphicRequest.setStrict(false);
   legendGraphicRequest.setLayer((FeatureType)null);
   legendGraphicRequest.setStyle(style.getStyle());
@@ -9,13 +9,10 @@
   if (legendGraphic instanceof BufferedImageLegendGraphic) {
     BufferedImage image=((BufferedImageLegendGraphic)legendGraphic).getLegend();
     PNGWriter writer=new PNGWriter();
-    FileOutputStream outStream=null;
+    OutputStream outStream=null;
     try {
-      File sampleFile=new File(sampleLegendFolder.getAbsolutePath() + File.separator + getSampleFileName(style));
-      if (!sampleFile.getParentFile().exists()) {
-        sampleFile.getParentFile().mkdirs();
-      }
-      outStream=new FileOutputStream(sampleFile);
+      Resource sampleFile=sampleLegendFolder.get(getSampleFileName(style));
+      outStream=sampleFile.out();
       writer.writePNG(image,outStream,0.0f,FilterType.FILTER_NONE);
       removeStyleSampleInvalidation(style);
       return new Dimension(image.getWidth(),image.getHeight());

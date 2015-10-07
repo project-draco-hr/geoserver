@@ -22,17 +22,16 @@
     }
   }
   for (  Resource resource : paletteFiles) {
-    final File file=resource.file();
-    final String fileName=file.getName();
+    final String fileName=resource.name();
     if (fileName.endsWith("pal")) {
-      final IndexColorModel icm=new PALFileLoader(file).getIndexColorModel();
+      final IndexColorModel icm=new PALFileLoader(resource).getIndexColorModel();
       if (icm != null) {
-        paletteCache.put(name,new PaletteCacheEntry(file,icm));
+        paletteCache.put(name,new PaletteCacheEntry(resource,icm));
         return icm;
       }
     }
  else {
-      ImageInputStream iis=ImageIO.createImageInputStream(file);
+      ImageInputStream iis=ImageIO.createImageInputStream(resource.in());
       final Iterator it=ImageIO.getImageReaders(iis);
       if (it.hasNext()) {
         final ImageReader reader=(ImageReader)it.next();
@@ -40,7 +39,7 @@
         final ColorModel cm=((ImageTypeSpecifier)reader.getImageTypes(0).next()).getColorModel();
         if (cm instanceof IndexColorModel) {
           final IndexColorModel icm=(IndexColorModel)cm;
-          paletteCache.put(name,new PaletteCacheEntry(file,icm));
+          paletteCache.put(name,new PaletteCacheEntry(resource,icm));
           return icm;
         }
       }
