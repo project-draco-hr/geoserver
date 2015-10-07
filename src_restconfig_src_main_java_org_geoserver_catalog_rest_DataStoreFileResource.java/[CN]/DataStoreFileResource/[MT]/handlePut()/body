@@ -5,7 +5,7 @@
   String method=getUploadMethod(getRequest());
   getResponse().setStatus(Status.SUCCESS_ACCEPTED);
   Form form=getRequest().getResourceRef().getQueryAsForm();
-  File uploadedFile=doFileUpload(method,workspace,datastore,format).get(0);
+  Resource uploadedFile=doFileUpload(method,workspace,datastore,format).get(0);
   String sourceDataStoreFormat=dataStoreFormat;
   String targetDataStoreFormat=RESTUtils.getQueryStringValue(getRequest(),"target");
   if (targetDataStoreFormat == null) {
@@ -190,15 +190,9 @@
       source.dispose();
     }
     if (isInlineUpload(method) && canRemoveFiles) {
-      if (uploadedFile.isFile())       uploadedFile=uploadedFile.getParentFile();
-      try {
-        FileUtils.deleteDirectory(uploadedFile);
-      }
- catch (      IOException ie) {
-        LOGGER.info("Unable to delete " + uploadedFile.getAbsolutePath());
-        if (LOGGER.isLoggable(Level.FINE)) {
-          LOGGER.log(Level.FINE,"",ie);
-        }
+      if (uploadedFile.getType() == Type.RESOURCE)       uploadedFile=uploadedFile.parent();
+      if (!uploadedFile.delete()) {
+        LOGGER.info("Unable to delete " + uploadedFile.path());
       }
     }
   }

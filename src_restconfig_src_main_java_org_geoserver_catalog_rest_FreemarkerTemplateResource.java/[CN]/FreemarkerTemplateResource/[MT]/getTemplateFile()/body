@@ -1,8 +1,8 @@
 {
   try {
-    File directory=catalog.getResourceLoader().find(getDirectoryPath(getRequest()));
-    File templateFile=catalog.getResourceLoader().find(directory,getAttribute("template") + "." + MEDIATYPE_FTL_EXTENSION);
-    if (templateFile == null) {
+    Resource directory=catalog.getResourceLoader().get(Paths.path(getDirectoryPath(getRequest())));
+    Resource templateFile=directory.get(getAttribute("template") + "." + MEDIATYPE_FTL_EXTENSION);
+    if (!Resources.exists(templateFile)) {
       if (LOGGER.isLoggable(Level.INFO)) {
         LOGGER.info("File not found: " + getDirectoryPathAsString(getRequest()) + "/"+ getAttribute("template")+ "."+ MEDIATYPE_FTL_EXTENSION);
       }
@@ -12,7 +12,7 @@
       return templateFile;
     }
   }
- catch (  IOException e) {
+ catch (  IllegalStateException e) {
     throw new RestletException(e.getMessage(),Status.CLIENT_ERROR_NOT_FOUND,e);
   }
 }

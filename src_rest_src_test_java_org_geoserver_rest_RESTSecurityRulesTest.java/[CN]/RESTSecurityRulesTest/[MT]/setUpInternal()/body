@@ -1,8 +1,10 @@
 {
   defSource=(RESTfulDefinitionSource)applicationContext.getBean("restFilterDefinitionMap");
   dao=(RESTAccessRuleDAO)applicationContext.getBean("restRulesDao");
-  File restProperties=new File(getDataDirectory().findSecurityRoot(),"rest.properties");
+  Resource restProperties=getDataDirectory().getSecurity("rest.properties");
   restProperties.delete();
   String defaultRules="/**;GET=ROLE_ADMINISTRATOR\n" + "/**;POST,DELETE,PUT=ROLE_ADMINISTRATOR";
-  FileUtils.writeStringToFile(restProperties,defaultRules);
+  OutputStream os=restProperties.out();
+  os.write(defaultRules.getBytes());
+  os.close();
 }
