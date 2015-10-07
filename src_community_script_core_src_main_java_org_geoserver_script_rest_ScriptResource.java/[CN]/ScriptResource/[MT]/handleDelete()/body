@@ -1,11 +1,11 @@
 {
-  File script;
+  org.geoserver.platform.resource.Resource script;
   try {
     if (path.contains(":")) {
       path=path.replace(":","/");
     }
-    script=scriptMgr.findScriptFile(path);
-    if (script == null) {
+    script=scriptMgr.script(path);
+    if (!Resources.exists(script)) {
       throw new IOException(format("Unable to find script file %s",path));
     }
   }
@@ -13,10 +13,10 @@
     throw new RestletException(format("Error finding script file %s",path),Status.SERVER_ERROR_INTERNAL,e);
   }
   boolean success=false;
-  if (script != null && script.exists()) {
+  if (script != null && Resources.exists(script)) {
     success=script.delete();
     if (path.startsWith("apps")) {
-      success=script.getParentFile().delete();
+      success=script.parent().delete();
     }
   }
   if (!success) {

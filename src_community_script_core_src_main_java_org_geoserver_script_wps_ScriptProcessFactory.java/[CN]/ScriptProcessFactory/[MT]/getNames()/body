@@ -3,20 +3,20 @@
   ScriptManager scriptMgr=scriptMgr();
   Set<Name> names=new TreeSet<Name>();
   try {
-    File wpsRoot=scriptMgr.getWpsRoot();
+    Resource wpsRoot=scriptMgr.wps();
     new CollectProcessNames(wpsRoot,scriptMgr,names){
-      @Override String getScriptNamespace(      File f){
-        return getExtension(f.getName());
+      @Override String getScriptNamespace(      Resource f){
+        return getExtension(f.name());
       }
     }
 ;
-    for (    final File directory : wpsRoot.listFiles()) {
-      if (directory.isHidden() || !directory.isDirectory()) {
+    for (    final Resource directory : wpsRoot.list()) {
+      if (Resources.isHidden(directory) || directory.getType() != Type.DIRECTORY) {
         continue;
       }
       new CollectProcessNames(directory,scriptMgr,names){
-        @Override String getScriptNamespace(        File f){
-          return directory.getName();
+        @Override String getScriptNamespace(        Resource f){
+          return directory.name();
         }
       }
 ;

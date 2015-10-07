@@ -1,20 +1,9 @@
 {
-  File appRoot;
-  try {
-    appRoot=scriptMgr.getAppRoot();
-  }
- catch (  IOException e) {
-    throw new RestletException("Error looking up apps",Status.SERVER_ERROR_INTERNAL,e);
-  }
-  File[] apps=appRoot.listFiles(new FileFilter(){
-    @Override public boolean accept(    File pathname){
-      return pathname.isDirectory();
-    }
-  }
-);
+  org.geoserver.platform.resource.Resource appRoot=scriptMgr.app();
+  List<org.geoserver.platform.resource.Resource> apps=Resources.list(appRoot,Resources.DirectoryFilter.INSTANCE);
   JSONArray array=new JSONArray();
-  for (  File f : apps) {
-    array.add(f.getName());
+  for (  org.geoserver.platform.resource.Resource f : apps) {
+    array.add(f.name());
   }
   getResponse().setEntity(new StringRepresentation(array.toString(),MediaType.APPLICATION_JSON));
   getResponse().setStatus(Status.SUCCESS_OK);

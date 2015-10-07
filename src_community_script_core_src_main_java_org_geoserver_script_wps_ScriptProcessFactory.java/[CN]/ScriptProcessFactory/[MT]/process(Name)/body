@@ -8,23 +8,23 @@ synchronized (this) {
           ScriptManager scriptMgr=scriptMgr();
           String localName=name.getLocalPart();
           String namespace=name.getNamespaceURI();
-          File f=new File(scriptMgr.getWpsRoot(),localName + "." + namespace);
-          if (!f.exists()) {
-            File directory=new File(scriptMgr.getWpsRoot(),namespace);
-            if (!directory.exists()) {
-              throw new FileNotFoundException("Could not find script file " + f.getName() + " nor a directory of scripts named "+ directory.getName());
+          Resource f=scriptMgr.wps().get(localName + "." + namespace);
+          if (!Resources.exists(f)) {
+            Resource directory=scriptMgr.wps().get(namespace);
+            if (!Resources.exists(directory)) {
+              throw new FileNotFoundException("Could not find script file " + f.name() + " nor a directory of scripts named "+ directory.name());
             }
-            File script=null;
-            for (            File file : directory.listFiles()) {
-              if (file.isHidden() || !file.isFile()) {
+            Resource script=null;
+            for (            Resource file : directory.list()) {
+              if (Resources.isHidden(file) || file.getType() != Type.RESOURCE) {
                 continue;
               }
-              if (localName.equals(getBaseName(file.getName()))) {
+              if (localName.equals(getBaseName(file.name()))) {
                 script=file;
               }
             }
             if (script == null) {
-              throw new FileNotFoundException("Could not find script file " + f.getName() + " nor a script named "+ localName+ " in the "+ directory.getName()+ " sub-directory");
+              throw new FileNotFoundException("Could not find script file " + f.name() + " nor a script named "+ localName+ " in the "+ directory.name()+ " sub-directory");
             }
             f=script;
           }

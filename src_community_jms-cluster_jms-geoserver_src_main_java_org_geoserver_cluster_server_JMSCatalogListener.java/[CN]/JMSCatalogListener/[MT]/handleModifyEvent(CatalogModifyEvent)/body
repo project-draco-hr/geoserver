@@ -14,11 +14,11 @@
     final CatalogInfo info=event.getSource();
     if (info instanceof StyleInfo) {
       final String canonicalStyleFileName=File.separator + "styles" + File.separator+ ((StyleInfo)info).getFilename();
-      File styleFile=new File(loader.getBaseDirectory().getCanonicalPath(),canonicalStyleFileName);
-      if (!styleFile.exists()) {
+      Resource styleFile=loader.get(canonicalStyleFileName);
+      if (!Resources.exists(styleFile)) {
         final String workspace=((StyleInfo)info).getWorkspace().getName();
         final String styleFileName=File.separator + "workspaces" + File.separator+ workspace+ File.separator+ "styles"+ File.separator+ ((StyleInfo)info).getFilename();
-        styleFile=new File(loader.getBaseDirectory().getCanonicalPath(),styleFileName);
+        styleFile=loader.get(styleFileName);
       }
       jmsPublisher.publish(getTopic(),getJmsTemplate(),options,new DocumentFile(styleFile));
     }

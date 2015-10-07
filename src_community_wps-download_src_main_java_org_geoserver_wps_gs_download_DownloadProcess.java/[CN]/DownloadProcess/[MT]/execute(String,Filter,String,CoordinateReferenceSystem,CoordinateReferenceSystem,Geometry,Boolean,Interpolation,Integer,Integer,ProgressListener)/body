@@ -49,7 +49,7 @@
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.log(Level.FINE,"The resource to work on is " + resourceInfo.getName());
     }
-    File internalOutput=null;
+    Resource internalOutput=null;
     if (resourceInfo instanceof FeatureTypeInfo) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"The resource to work on is a vector layer");
@@ -69,26 +69,27 @@
     if (internalOutput == null) {
       throw new IllegalStateException("Could not complete the Download Process, output file is null");
     }
-    if (!internalOutput.exists() || !internalOutput.canRead()) {
-      throw new IllegalStateException("Could not complete the Download Process, output file invalid! --> " + internalOutput.getAbsolutePath());
+    if (!Resources.exists(internalOutput) || !Resources.canRead(internalOutput)) {
+      throw new IllegalStateException("Could not complete the Download Process, output file invalid! --> " + internalOutput.path());
     }
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.log(Level.FINE,"Preparing the result");
     }
-    final File result=resourceManager.getOutputResource(resourceManager.getExecutionId(true),resourceInfo.getName() + ".zip").file();
-    FileOutputStream os1=null;
+    final Resource result=resourceManager.getOutputResource(resourceManager.getExecutionId(true),resourceInfo.getName() + ".zip");
+    OutputStream os1=null;
     try {
-      os1=new FileOutputStream(result);
+      os1=result.out();
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"Listing files");
       }
       List<File> filesToDownload=new ArrayList<File>();
-      filesToDownload.add(internalOutput);
+      filesToDownload.add(internalOutput.file());
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"Collecting styles");
       }
-      List<File> styles=DownloadUtilities.collectStyles(layerInfo);
-      filesToDownload.addAll(styles);
+      for (      Resource style : DownloadUtilities.collectStyles(layerInfo)) {
+        filesToDownload.add(style.file());
+      }
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"Zipping files");
       }
@@ -106,7 +107,7 @@
     if (progressListener != null) {
       progressListener.complete();
     }
-    return result;
+    return result.file();
   }
  catch (  Throwable e) {
     if (LOGGER.isLoggable(Level.FINE)) {

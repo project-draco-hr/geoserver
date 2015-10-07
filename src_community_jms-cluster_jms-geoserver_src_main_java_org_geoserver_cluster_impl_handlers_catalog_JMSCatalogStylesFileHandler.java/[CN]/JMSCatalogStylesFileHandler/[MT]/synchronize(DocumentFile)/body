@@ -8,13 +8,13 @@
  else   if (!ReadOnlyConfiguration.isReadOnly(config)) {
     try {
       GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
-      final String fileName=File.separator + "styles" + File.separator+ event.getPath().getName();
-      File file=new File(loader.getBaseDirectory().getCanonicalPath(),fileName);
-      if (!file.exists()) {
-        final String styleAbsolutePath=event.getPath().getAbsolutePath();
+      final String fileName=File.separator + "styles" + File.separator+ event.getPath().name();
+      Resource file=loader.get(fileName);
+      if (!Resources.exists(file)) {
+        final String styleAbsolutePath=event.getPath().path();
         if (styleAbsolutePath.indexOf("workspaces") > 0) {
           final String styleFileName=File.separator + styleAbsolutePath.substring(styleAbsolutePath.indexOf("workspaces"));
-          file=new File(loader.getBaseDirectory().getCanonicalPath(),styleFileName);
+          file=loader.get(styleFileName);
         }
       }
       event.writeTo(file);

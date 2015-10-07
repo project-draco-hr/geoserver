@@ -1,16 +1,16 @@
 {
-  File script;
+  org.geoserver.platform.resource.Resource script;
   try {
     if (path.contains(":")) {
       path=path.replace(":","/");
     }
-    script=scriptMgr.findOrCreateScriptFile(path);
+    script=scriptMgr.script(path);
   }
- catch (  IOException e) {
+ catch (  IllegalStateException e) {
     throw new RestletException(format("Error creating script file %s",path),Status.SERVER_ERROR_INTERNAL,e);
   }
   try {
-    BufferedWriter w=new BufferedWriter(new FileWriter(script));
+    BufferedWriter w=new BufferedWriter(new OutputStreamWriter(script.out()));
     try {
       IOUtils.copy(getRequest().getEntity().getStream(),w);
       w.flush();
