@@ -2,19 +2,14 @@
   Parser p=new Parser(new WFSConfiguration());
   List<StoredQuery> queries=new ArrayList();
   queries.add(StoredQuery.DEFAULT);
-  try {
-    File dir=storedQueryDir();
-    for (    String f : dir.list()) {
-      try {
-        queries.add(parseStoredQuery(new File(dir,f),p));
-      }
- catch (      Exception e) {
-        LOGGER.log(Level.WARNING,"Error occured parsing stored query: " + f,e);
-      }
+  Resource dir=storedQueryDir();
+  for (  Resource f : dir.list()) {
+    try {
+      queries.add(parseStoredQuery(f,p));
     }
-  }
- catch (  IOException e) {
-    throw new RuntimeException("i/o error listing stored queries",e);
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"Error occured parsing stored query: " + f,e);
+    }
   }
   return queries;
 }

@@ -2,23 +2,18 @@
   String prefix=featureTypeInfo.getNamespace().getPrefix();
   String store=featureTypeInfo.getStore().getName();
   String name=featureTypeInfo.getName();
-  File schemaFile=null;
-  try {
-    schemaFile=catalog.getResourceLoader().find("workspaces" + "/" + prefix + "/"+ store+ "/"+ name+ "/schema.xsd");
-  }
- catch (  IOException e1) {
-  }
-  if (schemaFile != null) {
+  Resource schemaFile=catalog.getResourceLoader().get("workspaces" + "/" + prefix + "/"+ store+ "/"+ name+ "/schema.xsd");
+  if (schemaFile.getType() == Type.RESOURCE) {
     List locators=new ArrayList();
     for (    XSD xsd : wfs.getAllDependencies()) {
       locators.add(xsd.createSchemaLocator());
     }
     XSDSchema ftSchema=null;
     try {
-      ftSchema=Schemas.parse(schemaFile.getAbsolutePath(),locators,null);
+      ftSchema=Schemas.parse(schemaFile.file().getAbsolutePath(),locators,null);
     }
  catch (    IOException e) {
-      LOGGER.log(Level.WARNING,"Unable to parse schema: " + schemaFile.getAbsolutePath(),e);
+      LOGGER.log(Level.WARNING,"Unable to parse schema: " + schemaFile.file().getAbsolutePath(),e);
     }
     if (ftSchema != null) {
       List contents=ftSchema.getContents();
