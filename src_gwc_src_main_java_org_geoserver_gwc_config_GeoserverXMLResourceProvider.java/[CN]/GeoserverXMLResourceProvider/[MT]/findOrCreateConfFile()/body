@@ -1,0 +1,16 @@
+{
+  Resource xmlFile=findConfigFile();
+  if (Resources.exists(xmlFile)) {
+    log.info("Found configuration file in " + configDirectory.path());
+  }
+ else   if (templateLocation != null) {
+    log.warn("Found no configuration file in config directory, will create one at '" + xmlFile.path() + "' from template "+ getClass().getResource(templateLocation).toExternalForm());
+    try {
+      IOUtils.copy(getClass().getResourceAsStream(templateLocation),xmlFile.out());
+    }
+ catch (    IOException e) {
+      throw new IOException("Error copying template config to " + xmlFile.path(),e);
+    }
+  }
+  return xmlFile;
+}

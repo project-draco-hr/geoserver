@@ -1,11 +1,17 @@
 {
-  File configFile=new File(storageFinder.getDefaultPath(),"geowebcache-diskquota-jdbc.xml");
+  Resource configFile=configDir.get("geowebcache-diskquota-jdbc.xml");
   if ("JDBC".equals(config.getQuotaStore())) {
     JDBCConfiguration encrypted=passwordHelper.encryptPassword(jdbcConfig);
-    JDBCConfiguration.store(encrypted,configFile);
+    OutputStream os=configFile.out();
+    try {
+      JDBCConfiguration.store(encrypted,os);
+    }
+  finally {
+      os.close();
+    }
   }
  else {
-    if (configFile.exists() && !configFile.delete()) {
+    if (Resources.exists(configFile) && !configFile.delete()) {
       LOGGER.log(Level.SEVERE,"Failed to delete " + configFile + ", this might cause misbehavior on GeoServer restart");
     }
   }

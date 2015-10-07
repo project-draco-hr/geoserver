@@ -1,10 +1,17 @@
 {
-  File configFile=new File(storageFinder.getDefaultPath(),"geowebcache-diskquota-jdbc.xml");
-  if (!configFile.exists()) {
+  Resource configFile=configDir.get("geowebcache-diskquota-jdbc.xml");
+  if (!Resources.exists(configFile)) {
     return null;
   }
   try {
-    JDBCConfiguration configuration=JDBCConfiguration.load(configFile);
+    JDBCConfiguration configuration;
+    InputStream is=configFile.in();
+    try {
+      configuration=JDBCConfiguration.load(is);
+    }
+  finally {
+      is.close();
+    }
     return passwordHelper.unencryptPassword(configuration);
   }
  catch (  Exception e) {

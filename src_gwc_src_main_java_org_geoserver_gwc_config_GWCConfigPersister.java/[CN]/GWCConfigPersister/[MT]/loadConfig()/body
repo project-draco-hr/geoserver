@@ -1,10 +1,10 @@
 {
-  File configFile=findConfigFile();
+  Resource configFile=findConfigFile();
   checkNotNull(configFile,"gwc config file does not exist: ",GWC_CONFIG_FILE);
   XStreamPersister xmlPersister=this.persisterFactory.createXMLPersister();
   configureXstream(xmlPersister.getXStream());
   try {
-    InputStream in=new FileInputStream(configFile);
+    InputStream in=configFile.in();
     try {
       this.config=xmlPersister.load(in,GWCConfig.class);
     }
@@ -14,7 +14,7 @@
     LOGGER.fine("GWC GeoServer specific configuration loaded from " + GWC_CONFIG_FILE);
   }
  catch (  Exception e) {
-    LOGGER.log(Level.WARNING,"Error loading GWC GeoServer specific " + "configuration from " + configFile.getAbsolutePath() + ". Applying defaults.",e);
+    LOGGER.log(Level.WARNING,"Error loading GWC GeoServer specific " + "configuration from " + configFile.path() + ". Applying defaults.",e);
     this.config=new GWCConfig();
   }
 }

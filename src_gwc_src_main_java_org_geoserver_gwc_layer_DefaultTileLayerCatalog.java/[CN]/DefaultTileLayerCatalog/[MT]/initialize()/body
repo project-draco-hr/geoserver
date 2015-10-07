@@ -1,28 +1,21 @@
 {
   layersById.clear();
-  File baseDir;
-  try {
-    baseDir=resourceLoader.findOrCreateDirectory(baseDirectory);
-  }
- catch (  IOException e) {
-    throw propagate(e);
-  }
-  LOGGER.info("GeoServer TileLayer store base directory is: " + baseDir.getAbsolutePath());
-  final String[] tileLayerFiles=baseDir.list(new FilenameFilter(){
-    @Override public boolean accept(    File dir,    String name){
-      return name.endsWith(".xml");
+  Resource baseDir=resourceLoader.get(baseDirectory);
+  LOGGER.info("GeoServer TileLayer store base directory is: " + baseDir.path());
+  final List<Resource> tileLayerFiles=Resources.list(baseDir,new Filter<Resource>(){
+    @Override public boolean accept(    Resource res){
+      return res.name().endsWith(".xml");
     }
   }
 );
-  LOGGER.info("Loading tile layers from " + baseDir.getAbsolutePath());
-  for (  String fileName : tileLayerFiles) {
+  LOGGER.info("Loading tile layers from " + baseDir.path());
+  for (  Resource res : tileLayerFiles) {
     GeoServerTileLayerInfoImpl info;
     try {
-      File file=new File(baseDir,fileName);
-      info=depersist(file);
+      info=depersist(res);
     }
  catch (    Exception e) {
-      LOGGER.log(Level.SEVERE,"Error depersisting tile layer information from file " + fileName,e);
+      LOGGER.log(Level.SEVERE,"Error depersisting tile layer information from file " + res.name(),e);
       continue;
     }
     layersById.put(info.getId(),info.getName());

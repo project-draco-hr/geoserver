@@ -2,11 +2,18 @@
   try {
     JDBCConfiguration config=getJDBCDiskQuotaConfig();
     if (config != null) {
-      File configFile=new File(storageFinder.getDefaultPath(),"geowebcache-diskquota-jdbc.xml");
-      if (!configFile.exists()) {
+      Resource configFile=configDir.get("geowebcache-diskquota-jdbc.xml");
+      if (!Resources.exists(configFile)) {
         return;
       }
-      JDBCConfiguration c1=JDBCConfiguration.load(configFile);
+      JDBCConfiguration c1;
+      InputStream is=configFile.in();
+      try {
+        c1=JDBCConfiguration.load(is);
+      }
+  finally {
+        is.close();
+      }
       if (c1 == null || c1.getConnectionPool() == null) {
         return;
       }
@@ -18,7 +25,13 @@
       JDBCConfiguration c3=passwordHelper.encryptPassword(c2);
       String newEncrypted=c3.getConnectionPool().getPassword();
       if (!originalEncrypted.equals(newEncrypted)) {
-        JDBCConfiguration.store(c3,configFile);
+        OutputStream os=configFile.out();
+        try {
+          JDBCConfiguration.store(c3,os);
+        }
+  finally {
+          os.close();
+        }
       }
     }
   }
