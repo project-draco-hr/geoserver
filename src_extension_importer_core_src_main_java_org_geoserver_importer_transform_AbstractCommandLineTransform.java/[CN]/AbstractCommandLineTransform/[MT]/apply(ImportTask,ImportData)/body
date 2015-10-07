@@ -1,15 +1,15 @@
 {
   boolean inline=isInline();
   File executable=getExecutable();
-  File inputFile=getInputFile(data);
+  Resource inputFile=getInputFile(data);
   Map<String,File> substitutions=new HashMap<>();
-  substitutions.put("input",inputFile);
-  File outputDirectory=null;
-  File outputFile=null;
+  substitutions.put("input",inputFile.file());
+  Resource outputDirectory=null;
+  Resource outputFile=null;
   if (!inline) {
     outputDirectory=getOutputDirectory(data);
-    outputFile=new File(outputDirectory,inputFile.getName());
-    substitutions.put("output",outputFile);
+    outputFile=outputDirectory.get(inputFile.name());
+    substitutions.put("output",outputFile.file());
   }
   CommandLine cmd=new CommandLine(executable);
   cmd.setSubstitutionMap(substitutions);
@@ -33,14 +33,14 @@
     }
      if (!inline) {
       List<String> names=getReplacementTargetNames(data);
-      File inputParent=inputFile.getParentFile();
+      Resource inputParent=inputFile.parent();
       for (      String name : names) {
-        File output=new File(outputDirectory,name);
-        File input=new File(inputParent,name);
-        if (output.exists()) {
-          IOUtils.rename(output,input);
+        Resource output=outputDirectory.get(name);
+        Resource input=inputParent.get(name);
+        if (Resources.exists(output)) {
+          output.renameTo(input);
         }
- else         if (input.exists()) {
+ else         if (Resources.exists(input)) {
           input.delete();
         }
       }
@@ -48,7 +48,7 @@
   }
   finally {
     if (outputDirectory != null) {
-      FileUtils.deleteQuietly(outputDirectory);
+      outputDirectory.delete();
     }
   }
 }

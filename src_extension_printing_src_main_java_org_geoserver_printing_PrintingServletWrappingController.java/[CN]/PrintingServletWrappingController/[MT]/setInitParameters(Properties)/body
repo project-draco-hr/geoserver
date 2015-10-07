@@ -6,14 +6,13 @@
     Resource config=loader.get(configPath);
     if (config.getType() == Type.UNDEFINED) {
       InputStream conf=getClass().getResourceAsStream("default-config.yaml");
-      IOUtils.copy(conf,config.file());
+      IOUtils.copy(conf,config.out());
     }
-    File qualifiedConfig=config.file();
-    if (!qualifiedConfig.canRead()) {
+    if (!Resources.canRead(config)) {
       LOG.warning("Printing module missing its configuration.  Any actions it takes will fail.");
       return;
     }
-    initParameters.setProperty("config",qualifiedConfig.getCanonicalPath());
+    initParameters.setProperty("config",config.path());
   }
  catch (  java.io.IOException e) {
     LOG.warning("Unable to calcule canonical path for MapFish printing servlet. " + "Module will fail when run.  IO Exception is: " + e);
