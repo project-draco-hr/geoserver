@@ -1,0 +1,16 @@
+{
+  List<LayerInfo> result=new ArrayList<LayerInfo>();
+  Filter styleFilter=ff.equal(ff.property("defaultStyle.id"),ff.literal(style.getId()),true);
+  if (includeSecondaryStyles) {
+    styleFilter=ff.or(styleFilter,ff.equal(ff.property("styles.id"),ff.literal(style.getId()),true,MatchAction.ANY));
+  }
+  try (CloseableIterator<LayerInfo> it=getCatalog().list(LayerInfo.class,styleFilter)){
+    while (it.hasNext()) {
+      result.add(it.next());
+    }
+  }
+ catch (  Exception e) {
+    log.log(Level.SEVERE,"Failed to layers associated to style " + style.prefixedName(),e);
+  }
+  return result;
+}
