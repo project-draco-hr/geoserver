@@ -1,7 +1,12 @@
 {
   GridCoverage2D targetCoverage=null, sourceCoverage=null;
+  GridCoverageReader coverageReader=null;
   try {
-    sourceCoverage=(GridCoverage2D)this.getCatalog().getCoverageByName(LAMBERTMOSAIC.getLocalPart()).getGridCoverageReader(null,null).read(null);
+    CoverageInfo coverageInfo=this.getCatalog().getCoverageByName(LAMBERTMOSAIC.getLocalPart());
+    coverageReader=coverageInfo.getGridCoverageReader(null,null);
+    final ParameterValue<Boolean> useJAI=ImageMosaicFormat.USE_JAI_IMAGEREAD.createValue();
+    useJAI.setValue(false);
+    sourceCoverage=(GridCoverage2D)coverageReader.read(new GeneralParameterValue[]{useJAI});
     final Envelope2D sourceEnvelope=sourceCoverage.getEnvelope2D();
     MockHttpServletResponse response=getAsServletResponse("wcs?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__lambert&&Format=application/custom" + "&subset=E,http://www.opengis.net/def/crs/EPSG/0/31300(" + sourceEnvelope.x + ","+ (sourceEnvelope.x + 25)+ ")"+ "&subset=N,http://www.opengis.net/def/crs/EPSG/0/31300("+ sourceEnvelope.y+ ","+ (sourceEnvelope.y + 25)+ ")");
     assertNotNull(response);
@@ -15,17 +20,26 @@
     assertEquals(326,firstResult.getGridGeometry().getGridRange().getLow(1));
   }
   finally {
-    try {
-      scheduleForCleaning(targetCoverage);
+    if (coverageReader != null) {
+      try {
+        coverageReader.dispose();
+      }
+ catch (      Exception e) {
+      }
     }
- catch (    Exception e) {
-      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    if (targetCoverage != null) {
+      try {
+        CoverageCleanerCallback.disposeCoverage(targetCoverage);
+      }
+ catch (      Exception e) {
+      }
     }
-    try {
-      scheduleForCleaning(sourceCoverage);
-    }
- catch (    Exception e) {
-      LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
+    if (sourceCoverage != null) {
+      try {
+        CoverageCleanerCallback.disposeCoverage(sourceCoverage);
+      }
+ catch (      Exception e) {
+      }
     }
   }
 }
