@@ -33,14 +33,15 @@
   }
   boolean isNumberMatchedSkipped=false;
   int count=0;
-  int totalCount=0;
+  BigInteger totalCount=BigInteger.ZERO;
   int totalOffset=request.getStartIndex() != null ? request.getStartIndex().intValue() : -1;
   if (totalOffset == -1 && request.getVersion().startsWith("2") && wfs.isCiteCompliant()) {
     totalOffset=0;
   }
   int offset=totalOffset;
+  boolean calculateSize=!(("1.0".equals(request.getVersion()) || "1.0.0".equals(request.getVersion())) && (queries.size() == 1 || maxFeatures == Integer.MAX_VALUE));
   List results=new ArrayList();
-  List<CountExecutor> totalCountExecutors=new ArrayList<CountExecutor>();
+  final List<CountExecutor> totalCountExecutors=new ArrayList<CountExecutor>();
   try {
     for (int i=0; (i < queries.size()) && (count < maxFeatures); i++) {
       Query query=queries.get(i);
@@ -164,8 +165,6 @@
           features.getSchema().getUserData().put("targetCrs",query.getSrsName());
           features.getSchema().getUserData().put("targetVersion",request.getVersion());
         }
-        boolean calculateSize=true;
-        calculateSize=!(("1.0".equals(request.getVersion()) || "1.0.0".equals(request.getVersion())) && (queries.size() == 1 || maxFeatures == Integer.MAX_VALUE));
         if (!calculateSize) {
           calculateSize=offset > 0 && i < queries.size() - 1;
         }
@@ -217,19 +216,19 @@
         throw e;
       }
     }
-    if (!request.getVersion().startsWith("2")) {
-      totalCount=-1;
+    if (isNumberMatchedSkipped) {
+      totalCount=BigInteger.valueOf(-1);
+      totalOffset=0;
+    }
+ else     if (count < maxFeatures && calculateSize) {
+      totalCount=BigInteger.valueOf(count);
     }
  else {
-      if (isNumberMatchedSkipped) {
-        totalCount=-1;
-        totalOffset=0;
-      }
- else {
-        if (count < maxFeatures) {
-          totalCount=count;
-        }
- else {
+      Enhancer enhancer=new Enhancer();
+      enhancer.setSuperclass(BigInteger.class);
+      enhancer.setCallback(new LazyLoader(){
+        @Override public Object loadObject() throws Exception {
+          long totalCount=0;
           for (          CountExecutor q : totalCountExecutors) {
             int result=q.getCount();
             if (result == -1) {
@@ -240,8 +239,11 @@
               totalCount+=result;
             }
           }
+          return BigInteger.valueOf(totalCount);
         }
       }
+);
+      totalCount=(BigInteger)enhancer.create(new Class[]{String.class},new Object[]{"0"});
     }
   }
  catch (  IOException e) {
