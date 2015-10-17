@@ -1,0 +1,33 @@
+{
+  return new BaseMatcher<Document>(){
+    @Override public boolean matches(    Object item){
+      XpathEngine engine=XMLUnit.newXpathEngine();
+      engine.setNamespaceContext(namespaceContext);
+      try {
+        List<Node> nodes=nodeCollection(engine.getMatchingNodes(xPath,(Document)item));
+        return matcher.matches(nodes);
+      }
+ catch (      XpathException e) {
+        return false;
+      }
+    }
+    @Override public void describeTo(    Description description){
+      description.appendText("Document where the list of nodes matching ").appendValue(xPath).appendText(" is ").appendDescriptionOf(matcher);
+    }
+    @Override public void describeMismatch(    Object item,    Description description){
+      XpathEngine engine=XMLUnit.newXpathEngine();
+      engine.setNamespaceContext(namespaceContext);
+      try {
+        List<Node> nodes=nodeCollection(engine.getMatchingNodes(xPath,(Document)item));
+        matcher.describeMismatch(nodes,description);
+        if (showXML != null) {
+          printDom((Document)item,showXML);
+        }
+      }
+ catch (      XpathException e) {
+        description.appendText("exception occured: ").appendText(e.getMessage());
+      }
+    }
+  }
+;
+}
