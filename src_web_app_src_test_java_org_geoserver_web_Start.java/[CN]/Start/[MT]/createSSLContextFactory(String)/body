@@ -1,0 +1,27 @@
+{
+  String password="changeit";
+  File userHome=new File(System.getProperty("user.home"));
+  File geoserverDir=new File(userHome,".geoserver");
+  if (!geoserverDir.exists()) {
+    geoserverDir.mkdir();
+  }
+  File keyStoreFile=new File(geoserverDir,"keystore.jks");
+  try {
+    assureSelfSignedServerCertificate(hostname,keyStoreFile,password);
+  }
+ catch (  Exception e) {
+    log.log(Level.WARNING,"NO SSL available",e);
+    return null;
+  }
+  SslContextFactory ssl=new SslContextFactory();
+  ssl.setKeyStorePath(keyStoreFile.getAbsolutePath());
+  ssl.setKeyStorePassword(password);
+  File javaHome=new File(System.getProperty("java.home"));
+  File cacerts=new File(javaHome,"lib").toPath().resolve("security/cacerts").toFile();
+  if (!cacerts.exists()) {
+    return null;
+  }
+  ssl.setTrustStorePath(cacerts.getAbsolutePath());
+  ssl.setTrustStorePassword("changeit");
+  return ssl;
+}
