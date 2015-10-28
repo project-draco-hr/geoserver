@@ -1,0 +1,12 @@
+{
+  if (resource.getNativeBoundingBox() == null || resource.getNativeBoundingBox().isEmpty() || Boolean.TRUE.equals(resource.getMetadata().get("recalculate-bounds")) || "true".equals(resource.getMetadata().get("recalculate-bounds"))) {
+    CatalogBuilder cb=new CatalogBuilder(getCatalog());
+    ReferencedEnvelope nativeBounds=cb.getNativeBounds(resource);
+    resource.setNativeBoundingBox(nativeBounds);
+    resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds,resource.getCRS()));
+    getCatalog().save(resource);
+    if (resource.getMetadata().get("recalculate-bounds") != null) {
+      resource.getMetadata().remove("recalculate-bounds");
+    }
+  }
+}
