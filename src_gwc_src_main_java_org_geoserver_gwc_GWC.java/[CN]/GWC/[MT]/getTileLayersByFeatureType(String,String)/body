@@ -15,17 +15,29 @@
       affectedLayers.add(tileLayerName);
     }
   }
-  for (  LayerGroupInfo lgi : getLayerGroups()) {
+  List<Filter> filters=new ArrayList<>();
+  for (  LayerInfo layer : layers) {
+    filters.add(ff.equal(ff.property("layers.id"),ff.literal(layer.getId()),true,MatchAction.ANY));
+    filters.add(ff.equal(ff.property("rootLayer.id"),ff.literal(layer.getId())));
+  }
+  Or groupFilter=ff.or(filters);
+  List<LayerGroupInfo> groups=new ArrayList<>();
+  try (CloseableIterator<LayerGroupInfo> it=getCatalog().list(LayerGroupInfo.class,groupFilter)){
+    while (it.hasNext()) {
+      LayerGroupInfo lg=it.next();
+      groups.add(lg);
+    }
+  }
+ catch (  Exception e) {
+    log.log(Level.SEVERE,"Failed to load groups associated to feature type " + typeName,e);
+  }
+  loadGroupParents(groups);
+  for (  LayerGroupInfo lgi : groups) {
     final String tileLayerName=tileLayerName(lgi);
     if (!tileLayerExists(tileLayerName)) {
       continue;
     }
-    for (    LayerInfo li : lgi.layers()) {
-      ResourceInfo resource=li.getResource();
-      if (typeInfo.equals(resource)) {
-        affectedLayers.add(tileLayerName);
-      }
-    }
+    affectedLayers.add(tileLayerName);
   }
   return affectedLayers;
 }

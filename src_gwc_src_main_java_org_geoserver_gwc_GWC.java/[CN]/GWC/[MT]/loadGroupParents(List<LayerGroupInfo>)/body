@@ -1,0 +1,26 @@
+{
+  boolean foundNewParents=true;
+  List<LayerGroupInfo> newGroups=new ArrayList<>(layerGroups);
+  while (foundNewParents && !newGroups.isEmpty()) {
+    List<Filter> parentFilters=new ArrayList<>();
+    for (    LayerGroupInfo lg : newGroups) {
+      parentFilters.add(ff.equal(ff.property("layers.id"),ff.literal(lg.getId()),true,MatchAction.ANY));
+    }
+    Or parentFilter=ff.or(parentFilters);
+    newGroups.clear();
+    foundNewParents=false;
+    try (CloseableIterator<LayerGroupInfo> it=getCatalog().list(LayerGroupInfo.class,parentFilter)){
+      while (it.hasNext()) {
+        LayerGroupInfo lg=it.next();
+        if (!layerGroups.contains(lg)) {
+          newGroups.add(lg);
+          layerGroups.add(lg);
+          foundNewParents=true;
+        }
+      }
+    }
+ catch (    Exception e) {
+      log.log(Level.SEVERE,"Failed to recursively load parents group parents ");
+    }
+  }
+}
