@@ -1,0 +1,32 @@
+{
+  File tempDir=IOUtils.createTempDirectory("ziptemp");
+  if (value == null) {
+    throw new ServiceException("No value to be written has been provided");
+  }
+  try {
+    List<File> files=null;
+    if (value instanceof List) {
+      files=(List<File>)value;
+    }
+ else     if (value instanceof File) {
+      files=Collections.singletonList((File)value);
+    }
+ else {
+      throw new IllegalArgumentException(value.getClass() + " type isn't supported yet");
+    }
+    for (    File file : files) {
+      FileUtils.copyFile(file,new File(tempDir,file.getName()));
+    }
+    ZipOutputStream zipOut=new ZipOutputStream(output);
+    IOUtils.zipDirectory(tempDir,zipOut,null);
+    zipOut.finish();
+  }
+  finally {
+    try {
+      FileUtils.deleteDirectory(tempDir);
+    }
+ catch (    IOException e) {
+      LOGGER.warning("Could not delete temp directory: " + tempDir.getAbsolutePath() + " due to: "+ e.getMessage());
+    }
+  }
+}

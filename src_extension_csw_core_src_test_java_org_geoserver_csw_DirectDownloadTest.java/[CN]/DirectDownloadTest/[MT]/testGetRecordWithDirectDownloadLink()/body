@@ -1,0 +1,56 @@
+{
+  Document dom=getAsDOM(GET_RECORD_REQUEST);
+  assertXpathEvaluatesTo("1","count(//csw:Record/dc:identifier)",dom);
+  assertXpathEvaluatesTo("6","count(//csw:Record/dct:references)",dom);
+  assertXpathEvaluatesTo("csw:watertemp","//csw:Record/dc:identifier",dom);
+  NodeList nodes=getMatchingNodes("//csw:Record/dct:references",dom);
+  int size=nodes.getLength();
+  Set<String> links=new HashSet<String>();
+  for (int i=0; i < size; i++) {
+    Node node=nodes.item(i);
+    String link=node.getTextContent();
+    if (link.toUpperCase().contains("DIRECTDOWNLOAD") && link.contains("TIME")) {
+      links.add(link);
+    }
+  }
+  final Catalog cat=getCatalog();
+  String name="watertemp";
+  final CoverageInfo coverageInfo=cat.getCoverageByName(name);
+  GridCoverage2DReader reader=null;
+  CloseableLinksIterator<String> iterator=null;
+  Set<String> generatedLinks=new HashSet<String>();
+  try {
+    reader=(GridCoverage2DReader)coverageInfo.getGridCoverageReader(null,null);
+    FileResourceInfo resourceInfo=(FileResourceInfo)reader.getInfo(name);
+    CloseableIterator<FileGroup> files=resourceInfo.getFiles(null);
+    String baseLink=DownloadLinkHandler.LINK;
+    MockHttpServletRequest request=createRequest(baseLink);
+    baseLink=request.getRequestURL().toString();
+    baseLink=baseLink.replace("${nameSpace}",coverageInfo.getNamespace().getName()).replace("${layerName}",coverageInfo.getName()).replace("${version}","2.0.2");
+    iterator=new CloseableLinksIterator<String>(baseLink,files);
+    while (iterator.hasNext()) {
+      generatedLinks.add(iterator.next());
+    }
+  }
+  finally {
+    if (iterator != null) {
+      iterator.close();
+    }
+    if (reader != null) {
+      try {
+        reader.dispose();
+      }
+ catch (      Throwable t) {
+      }
+    }
+  }
+  Iterator<String> it=links.iterator();
+  int matches=0;
+  while (it.hasNext()) {
+    String cswLink=it.next();
+    if (generatedLinks.contains(cswLink)) {
+      matches++;
+    }
+  }
+  assertEquals(4,matches);
+}

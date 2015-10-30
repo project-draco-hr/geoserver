@@ -1,0 +1,31 @@
+{
+  CloseableIterator<FileGroup> files=null;
+  try {
+    String hash=fileId;
+    String fileBaseName=hash.substring(41);
+    Query query=new Query();
+    query.setFilter(FF.like(FF.property("location"),"*" + fileBaseName + "*"));
+    files=fileGroupProvider.getFiles(query);
+    while (files.hasNext()) {
+      FileGroup fileGroup=files.next();
+      File mainFile=fileGroup.getMainFile();
+      String hashedName=DownloadLinkHandler.hashFile(mainFile);
+      if (hash.equalsIgnoreCase(hashedName)) {
+        result.add(mainFile);
+        List<File> supportFile=fileGroup.getSupportFiles();
+        if (supportFile != null && !supportFile.isEmpty()) {
+          result.addAll(supportFile);
+        }
+      }
+    }
+  }
+ catch (  NoSuchAlgorithmException e) {
+    throw new ServiceException("Exception occurred while looking for raw files for :" + fileId,e);
+  }
+catch (  IOException e) {
+    throw new ServiceException("Exception occurred while looking for raw files for :" + fileId,e);
+  }
+ finally {
+    closeIterator(files);
+  }
+}
