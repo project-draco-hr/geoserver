@@ -76,6 +76,17 @@
     }
   }
 );
+  form.add(new GeoServerAjaxFormLink("generateBoundsFromCRS"){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+      LOGGER.log(Level.FINE,"Computing bounds for LG based off CRS");
+      LayerGroupInfo lg=AbstractLayerGroupPage.this.lgModel.getObject();
+      CoordinateReferenceSystem crs=envelopePanel.getCoordinateReferenceSystem();
+      new CatalogBuilder(getCatalog()).calculateLayerGroupBoundsFromCRS(lg,crs);
+      envelopePanel.modelChanged();
+      target.addComponent(envelopePanel);
+    }
+  }
+);
   form.add(lgEntryPanel=new LayerGroupEntryPanel("layers",layerGroup));
   form.add(extensionPanels=extensionPanels());
   form.add(saveLink());
