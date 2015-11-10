@@ -12,27 +12,27 @@
   if (LOGGER.isLoggable(Level.FINER)) {
     LOGGER.finer("Metatile type " + type);
   }
-  if (DEBUG) {
-    writeRenderedImage(metaTile,"metaTile");
-  }
-  for (int i=0; i < metaFactor; i++) {
-    for (int j=0; j < metaFactor; j++) {
-      int x=j * tileSize;
-      int y=(tileSize * (metaFactor - 1)) - (i * tileSize);
-      RenderedImage tile;
+  try {
+    if (DEBUG) {
+      writeRenderedImage(metaTile,"metaTile");
+    }
+    for (int i=0; i < metaFactor; i++) {
+      for (int j=0; j < metaFactor; j++) {
+        int x=j * tileSize;
+        int y=(tileSize * (metaFactor - 1)) - (i * tileSize);
+        RenderedImage tile;
 switch (type) {
 case 0:
-        if (LOGGER.isLoggable(Level.FINER)) {
-          LOGGER.finer("Metatile split on RenderedImage");
-        }
-      metaTile=PlanarImage.wrapRenderedImage(metaTile);
-    RasterCleaner.addImage(metaTile);
+          if (LOGGER.isLoggable(Level.FINER)) {
+            LOGGER.finer("Metatile split on RenderedImage");
+          }
+        metaTile=PlanarImage.wrapRenderedImage(metaTile);
 case 1:
-  if (LOGGER.isLoggable(Level.FINER)) {
-    LOGGER.finer("Metatile split on PlanarImage");
-  }
-final PlanarImage pImage=(PlanarImage)metaTile;
-final WritableRaster wTile=WritableRaster.createWritableRaster(pImage.getSampleModel().createCompatibleSampleModel(tileSize,tileSize),new Point(x,y));
+      if (LOGGER.isLoggable(Level.FINER)) {
+        LOGGER.finer("Metatile split on PlanarImage");
+      }
+    final PlanarImage pImage=(PlanarImage)metaTile;
+  final WritableRaster wTile=WritableRaster.createWritableRaster(pImage.getSampleModel().createCompatibleSampleModel(tileSize,tileSize),new Point(x,y));
 Rectangle sourceArea=new Rectangle(x,y,tileSize,tileSize);
 sourceArea=sourceArea.intersection(pImage.getBounds());
 pImage.copyData(wTile);
@@ -59,6 +59,9 @@ writeRenderedImage(tile,"tile" + i + "-"+ j);
 }
 }
 }
+}
+  finally {
 RasterCleaner.addImage(metaTile);
+}
 return tiles;
 }
