@@ -4,13 +4,13 @@
   String metadataURL=(String)serviceMetadata.get(SERVICE_METADATA_URL.key);
   String mediaType=(String)serviceMetadata.get(SERVICE_METADATA_TYPE.key);
   String language=(String)serviceMetadata.get(LANGUAGE.key);
-  boolean isWfs=model.getObject() instanceof WFSInfo;
+  boolean isDownloadService=model.getObject() instanceof WFSInfo || model.getObject() instanceof WCSInfo;
   UniqueResourceIdentifiers ids=null;
-  if (isWfs) {
+  if (isDownloadService) {
     ids=(UniqueResourceIdentifiers)serviceMetadata.get(SPATIAL_DATASET_IDENTIFIER_TYPE.key,UniqueResourceIdentifiers.class);
   }
   if (!serviceMetadata.containsKey(CREATE_EXTENDED_CAPABILITIES.key)) {
-    if (metadataURL == null || isWfs && (ids == null || ids.isEmpty())) {
+    if (metadataURL == null || isDownloadService && (ids == null || ids.isEmpty())) {
       serviceMetadata.put(CREATE_EXTENDED_CAPABILITIES.key,false);
     }
  else {
@@ -67,7 +67,7 @@
   serviceMetadataRecordType.setNullValid(true);
   configs.add(serviceMetadataRecordType);
   WebMarkupContainer identifiersContainer=new WebMarkupContainer("datasetIdentifiersContainer");
-  identifiersContainer.setVisible(isWfs);
+  identifiersContainer.setVisible(isDownloadService);
   configs.add(identifiersContainer);
   IModel<UniqueResourceIdentifiers> sdiModel=new MetadataMapModel(metadata,SPATIAL_DATASET_IDENTIFIER_TYPE.key,UniqueResourceIdentifiers.class);
   UniqueResourceIdentifiersEditor identifiersEditor=new UniqueResourceIdentifiersEditor("spatialDatasetIdentifiers",sdiModel);
