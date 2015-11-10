@@ -25,8 +25,19 @@
   String q=request.getQueryString();
   try {
     Style style=styleInfo.getStyle();
-    Map<String,String> properties=q != null ? KvpUtils.parseQueryString("?" + q) : Collections.EMPTY_MAP;
-    Style adjustedStyle=IconPropertyInjector.injectProperties(style,properties);
+    Map<String,Object> properties=q != null ? KvpUtils.parseQueryString("?" + q) : Collections.EMPTY_MAP;
+    Map<String,String> kvp=new HashMap<String,String>();
+    for (    String key : properties.keySet()) {
+      Object value=properties.get(key);
+      if (value instanceof String) {
+        kvp.put(key,(String)value);
+      }
+ else {
+        String[] values=(String[])value;
+        kvp.put(key,values[0]);
+      }
+    }
+    Style adjustedStyle=IconPropertyInjector.injectProperties(style,kvp);
     BufferedImage image=IconRenderer.renderIcon(adjustedStyle);
     response.setContentType("image/png");
     ImageIO.write(image,"PNG",response.getOutputStream());
