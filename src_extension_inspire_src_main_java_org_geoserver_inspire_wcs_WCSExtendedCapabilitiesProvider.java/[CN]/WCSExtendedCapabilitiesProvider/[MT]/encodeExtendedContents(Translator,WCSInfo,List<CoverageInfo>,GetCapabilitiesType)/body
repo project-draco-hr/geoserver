@@ -1,0 +1,55 @@
+{
+  MetadataMap serviceMetadata=wcs.getMetadata();
+  Boolean createExtendedCapabilities=serviceMetadata.get(CREATE_EXTENDED_CAPABILITIES.key,Boolean.class);
+  String metadataURL=(String)serviceMetadata.get(SERVICE_METADATA_URL.key);
+  String mediaType=(String)serviceMetadata.get(SERVICE_METADATA_TYPE.key);
+  String language=(String)serviceMetadata.get(LANGUAGE.key);
+  UniqueResourceIdentifiers ids=(UniqueResourceIdentifiers)serviceMetadata.get(SPATIAL_DATASET_IDENTIFIER_TYPE.key,UniqueResourceIdentifiers.class);
+  if (metadataURL == null || ids == null || ids.isEmpty() || createExtendedCapabilities != null && !createExtendedCapabilities) {
+    return;
+  }
+  tx.start("ows:ExtendedCapabilities");
+  tx.start("inspire_dls:ExtendedCapabilities");
+  tx.start("inspire_common:MetadataUrl");
+  tx.start("inspire_common:URL");
+  tx.chars(metadataURL);
+  tx.end("inspire_common:URL");
+  if (mediaType != null) {
+    tx.start("inspire_common:MediaType");
+    tx.chars(mediaType);
+    tx.end("inspire_common:MediaType");
+  }
+  tx.end("inspire_common:MetadataUrl");
+  tx.start("inspire_common:SupportedLanguages");
+  language=language != null ? language : "eng";
+  tx.start("inspire_common:DefaultLanguage");
+  tx.start("inspire_common:Language");
+  tx.chars(language);
+  tx.end("inspire_common:Language");
+  tx.end("inspire_common:DefaultLanguage");
+  tx.end("inspire_common:SupportedLanguages");
+  tx.start("inspire_common:ResponseLanguage");
+  tx.start("inspire_common:Language");
+  tx.chars(language);
+  tx.end("inspire_common:Language");
+  tx.end("inspire_common:ResponseLanguage");
+  for (  UniqueResourceIdentifier id : ids) {
+    if (id.getMetadataURL() != null) {
+      tx.start("inspire_dls:SpatialDataSetIdentifier",atts("metadataURL",id.getMetadataURL()));
+    }
+ else {
+      tx.start("inspire_dls:SpatialDataSetIdentifier");
+    }
+    tx.start("inspire_common:Code");
+    tx.chars(id.getCode());
+    tx.end("inspire_common:Code");
+    if (id.getNamespace() != null) {
+      tx.start("inspire_common:Namespace");
+      tx.chars(id.getNamespace());
+      tx.end("inspire_common:Namespace");
+    }
+    tx.end("inspire_dls:SpatialDataSetIdentifier");
+  }
+  tx.end("inspire_dls:ExtendedCapabilities");
+  tx.end("ows:ExtendedCapabilities");
+}
