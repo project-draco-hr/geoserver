@@ -39,11 +39,19 @@ catch (  Exception e) {
   if (queryLayers.size() > 0) {
     throw new ServiceException("QUERY_LAYERS contains layers not cited in LAYERS. " + "It should be a proper subset of those instead");
   }
-  for (  MapLayerInfo l : request.getQueryLayers()) {
+  for (  MapLayerInfo l : request.getQueryLayers().toArray(new MapLayerInfo[0])) {
     LayerInfo layerInfo=l.getLayerInfo();
     if (!wms.isQueryable(layerInfo)) {
-      throw new ServiceException("Layer " + l.getName() + " is not queryable",WMSErrorCode.LAYER_NOT_QUERYABLE.get(request.getVersion()),"QUERY_LAYERS");
+      int layerIndex=getMapLayers.indexOf(l);
+      getMapLayers.remove(l);
+      request.getQueryLayers().remove(l);
+      if (layerIndex != -1) {
+        request.getGetMapRequest().getStyles().remove(layerIndex);
+      }
     }
+  }
+  if (request.getQueryLayers().size() == 0) {
+    throw new ServiceException("GetFeatureInfo request has not queryable layers",WMSErrorCode.LAYER_NOT_QUERYABLE.get(request.getVersion()),"QUERY_LAYERS");
   }
   String format=(String)(kvp.containsKey("INFO_FORMAT") ? kvp.get("INFO_FORMAT") : null);
   if (format == null) {
