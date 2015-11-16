@@ -1,0 +1,11 @@
+{
+  GridCoverage2D cov=getCoverage();
+  ReferencedEnvelope re=ReferencedEnvelope.reference(coverage.getEnvelope2D());
+  re.expandBy(-0.1);
+  this.coverage=new CropCoverage().execute(coverage,JTS.toGeometry(re),null);
+  GeoTiffPPIO ppio=new GeoTiffPPIO();
+  try (FileOutputStream fos=new FileOutputStream(target)){
+    ppio.encode(coverage,fos);
+  }
+   assertNotEquals(geotiff.length(),target.length());
+}
