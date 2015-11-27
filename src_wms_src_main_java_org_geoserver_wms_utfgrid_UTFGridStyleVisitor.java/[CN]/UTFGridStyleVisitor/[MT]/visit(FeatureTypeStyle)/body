@@ -1,0 +1,31 @@
+{
+  super.visit(fts);
+  FeatureTypeStyle copy=(FeatureTypeStyle)pages.peek();
+  List<Rule> rules=new ArrayList<>(copy.rules());
+  for (Iterator<Rule> it=rules.iterator(); it.hasNext(); ) {
+    Rule rule=it.next();
+    if (rule.symbolizers().isEmpty()) {
+      it.remove();
+    }
+  }
+  copy.rules().clear();
+  copy.rules().addAll(rules);
+  if (copy.getTransformation() instanceof Function) {
+    transformations=true;
+    Function f=(Function)fts.getTransformation();
+    Class returnType=getFunctionReturnType(f);
+    if (Object.class.equals(returnType) || FeatureCollection.class.isAssignableFrom(returnType)) {
+      vectorTransformations=true;
+      super.visit(fts);
+    }
+ else {
+      copy.rules().clear();
+    }
+  }
+  Map<String,String> options=copy.getOptions();
+  String composite=options.get(FeatureTypeStyle.COMPOSITE);
+  if (composite != null && BlendingMode.lookupByName(composite) != null) {
+    options.remove(FeatureTypeStyle.COMPOSITE);
+    options.remove(FeatureTypeStyle.COMPOSITE_BASE);
+  }
+}

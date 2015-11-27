@@ -1,0 +1,29 @@
+{
+  JSONBuilder builder=new JSONStringer().object();
+  builder.key("id").value(feature.getIdentifier().toString());
+  if (feature instanceof SimpleFeature) {
+    SimpleFeature sf=(SimpleFeature)feature;
+    for (    AttributeDescriptor ad : sf.getFeatureType().getAttributeDescriptors()) {
+      if (ad instanceof GeometryDescriptor) {
+        continue;
+      }
+ else {
+        String name=ad.getLocalName();
+        Object value=sf.getAttribute(name);
+        addAttribute(builder,name,value);
+      }
+    }
+  }
+ else {
+    for (    Property p : feature.getProperties()) {
+      if (p.getType() instanceof GeometryPropertyType) {
+        continue;
+      }
+      String name=p.getName().getLocalPart();
+      Object value=p.getValue();
+      addAttribute(builder,name,value);
+    }
+  }
+  builder.endObject();
+  return builder.toString();
+}

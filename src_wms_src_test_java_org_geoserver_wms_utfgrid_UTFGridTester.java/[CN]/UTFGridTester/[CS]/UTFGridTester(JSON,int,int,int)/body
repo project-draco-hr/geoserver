@@ -1,0 +1,35 @@
+{
+  JSONObject utfGrid=(JSONObject)json;
+  assertTrue("Missing grid property",utfGrid.has("grid"));
+  assertTrue("Missing keys property",utfGrid.has("keys"));
+  assertTrue("Missing data property",utfGrid.has("data"));
+  keys=utfGrid.getJSONArray("keys");
+  data=utfGrid.getJSONObject("data");
+  for (int i=0; i < keys.size(); i++) {
+    String key=keys.getString(i);
+    if (i == 0) {
+      assertEquals("",key);
+    }
+ else {
+      assertEquals("" + i,key);
+      assertTrue(data.has(key));
+    }
+  }
+  grid=utfGrid.getJSONArray("grid");
+  int gridWidth=width / resolution;
+  int gridHeight=height / resolution;
+  assertEquals(grid.size(),gridHeight);
+  for (int r=0; r < gridHeight; r++) {
+    String gridRow=grid.getString(r);
+    assertEquals(gridWidth,gridRow.length());
+    for (int c=0; c < gridWidth; c++) {
+      char code=gridRow.charAt(c);
+      if (code == ' ') {
+        continue;
+      }
+      code=gridToKey(code);
+      assertTrue(code < keys.size());
+      assertTrue(data.has(String.valueOf((int)code)));
+    }
+  }
+}

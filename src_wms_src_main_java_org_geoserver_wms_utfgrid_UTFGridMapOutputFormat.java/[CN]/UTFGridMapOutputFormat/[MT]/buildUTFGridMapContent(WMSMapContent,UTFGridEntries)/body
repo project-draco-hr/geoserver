@@ -1,0 +1,47 @@
+{
+  UTFGridColorFunction colorFunction=new UTFGridColorFunction(entries);
+  UTFGridMapContent result=new UTFGridMapContent(original,entries,DEFAULT_UTFRESOLUTION);
+  List<Layer> utfLayers=new ArrayList<>();
+  for (  Layer layer : original.layers()) {
+    if (!(layer instanceof StyleLayer)) {
+      continue;
+    }
+    StyleLayer sl=(StyleLayer)layer;
+    UTFGridStyleVisitor styleVisitor=new UTFGridStyleVisitor(colorFunction);
+    layer.getStyle().accept(styleVisitor);
+    Style copy=(Style)styleVisitor.getCopy();
+    if (copy.featureTypeStyles().isEmpty() || (styleVisitor.hasTransformations() && !styleVisitor.hasVectorTransformations())) {
+      continue;
+    }
+    if (layer instanceof RasterLayer && !styleVisitor.hasVectorTransformations()) {
+      continue;
+    }
+    if (layer instanceof FeatureLayer) {
+      FeatureLayer fl=new FeatureLayer(new UTFGridFeatureSource(layer.getFeatureSource(),null),copy);
+      fl.setQuery(layer.getQuery());
+      sl=fl;
+    }
+ else     if (layer instanceof GridCoverageLayer) {
+      GridCoverageLayer gc=(GridCoverageLayer)sl;
+      sl=new GridCoverageLayer(gc.getCoverage(),copy);
+    }
+ else     if (layer instanceof WMSLayer) {
+      continue;
+    }
+ else     if (layer instanceof CachedGridReaderLayer) {
+      CachedGridReaderLayer gr=(CachedGridReaderLayer)sl;
+      sl=new CachedGridReaderLayer(gr.getReader(),copy);
+    }
+ else     if (layer instanceof GridReaderLayer) {
+      GridReaderLayer gr=(GridReaderLayer)sl;
+      sl=new GridReaderLayer(gr.getReader(),copy);
+    }
+ else {
+      LOGGER.log(Level.WARNING,"Skipping unknown layer " + sl + " of type "+ sl.getClass());
+      continue;
+    }
+    utfLayers.add(sl);
+  }
+  result.layers().addAll(utfLayers);
+  return result;
+}
