@@ -6,15 +6,15 @@
     if (getResource().getType() == Type.UNDEFINED) {
       ks.load(null,passwd);
       addInitialKeys();
-      OutputStream fos=getResource().out();
-      ks.store(fos,passwd);
-      fos.close();
-    }
+      try (OutputStream fos=getResource().out()){
+        ks.store(fos,passwd);
+      }
+     }
  else {
-      InputStream fis=getResource().in();
-      ks.load(fis,passwd);
-      fis.close();
-    }
+      try (InputStream fis=getResource().in()){
+        ks.load(fis,passwd);
+      }
+     }
   }
  catch (  Exception ex) {
     if (ex instanceof IOException)     throw (IOException)ex;

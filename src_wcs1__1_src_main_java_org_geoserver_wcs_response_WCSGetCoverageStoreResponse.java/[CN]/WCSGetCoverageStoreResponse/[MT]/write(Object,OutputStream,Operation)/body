@@ -19,16 +19,11 @@
     coverageFile=wcsStore.get(coverageInfo.getName().replace(':','_') + "_" + System.nanoTime()+ "."+ delegate.getFileExtension(outputFormat));
     if (!Resources.exists(coverageFile))     break;
   }
-  OutputStream os=null;
-  try {
-    os=new BufferedOutputStream(coverageFile.out());
+  try (OutputStream os=new BufferedOutputStream(coverageFile.out())){
     delegate.encode(coverage,outputFormat,Collections.EMPTY_MAP,os);
     os.flush();
   }
-  finally {
-    if (os != null)     os.close();
-  }
-  System.out.println(coverageFile);
+   System.out.println(coverageFile);
   final String coverageLocation=buildURL(request.getBaseUrl(),appendPath("temp/wcs",coverageFile.name()),null,URLType.RESOURCE);
   WCSInfo wcs=geoServer.getService(WCSInfo.class);
   CoveragesTransformer tx=new CoveragesTransformer(wcs,request,coverageLocation);

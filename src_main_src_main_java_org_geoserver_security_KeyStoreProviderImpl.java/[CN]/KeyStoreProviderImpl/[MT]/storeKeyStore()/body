@@ -1,15 +1,15 @@
 {
   assertActivatedKeyStore();
-  OutputStream fos=getResource().out();
-  char[] passwd=securityManager.getMasterPassword();
-  try {
-    ks.store(fos,passwd);
-  }
- catch (  Exception e) {
-    throw new IOException(e);
-  }
+  try (OutputStream fos=getResource().out()){
+    char[] passwd=securityManager.getMasterPassword();
+    try {
+      ks.store(fos,passwd);
+    }
+ catch (    Exception e) {
+      throw new IOException(e);
+    }
  finally {
-    securityManager.disposePassword(passwd);
+      securityManager.disposePassword(passwd);
+    }
   }
-  fos.close();
-}
+ }

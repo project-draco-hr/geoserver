@@ -244,18 +244,22 @@
   }
   for (  String filename : new String[]{"services.properties","layers.properties","rest.properties"}) {
     Resource file=security().get(filename);
-    if (file.getType() == Type.UNDEFINED)     continue;
-    List<String> lines=new ArrayList<String>();
-    BufferedReader reader=new BufferedReader(new InputStreamReader(file.in()));
-    String line;
-    while ((line=reader.readLine()) != null)     lines.add(line.replace(GeoServerRole.ADMIN_ROLE.getAuthority(),XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE));
-    reader.close();
-    PrintWriter writer=new PrintWriter(new OutputStreamWriter(file.out()));
-    for (    String s : lines) {
-      writer.println(s);
+    if (file.getType() == Type.UNDEFINED) {
+      continue;
     }
-    writer.close();
-  }
+    List<String> lines=new ArrayList<String>();
+    try (BufferedReader reader=new BufferedReader(new InputStreamReader(file.in()))){
+      String line;
+      while ((line=reader.readLine()) != null) {
+        lines.add(line.replace(GeoServerRole.ADMIN_ROLE.getAuthority(),XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE));
+      }
+      try (PrintWriter writer=new PrintWriter(new OutputStreamWriter(file.out()))){
+        for (        String s : lines) {
+          writer.println(s);
+        }
+      }
+     }
+   }
   serviceFile=security().get("services.properties");
   if (serviceFile.getType() != Type.UNDEFINED) {
     Properties props=Util.loadPropertyFile(serviceFile);
@@ -264,7 +268,9 @@
       while (tokenizer.hasMoreTokens()) {
         String roleName=tokenizer.nextToken().trim();
         if (roleName.length() > 0) {
-          if (roleStore.getRoleByName(roleName) == null)           roleStore.addRole(roleStore.createRoleObject(roleName));
+          if (roleStore.getRoleByName(roleName) == null) {
+            roleStore.addRole(roleStore.createRoleObject(roleName));
+          }
         }
       }
     }

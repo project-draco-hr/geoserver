@@ -76,9 +76,7 @@
       LOGGER.log(Level.FINE,"Preparing the result");
     }
     final Resource result=resourceManager.getOutputResource(resourceManager.getExecutionId(true),resourceInfo.getName() + ".zip");
-    OutputStream os1=null;
-    try {
-      os1=result.out();
+    try (OutputStream os1=result.out()){
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"Listing files");
       }
@@ -96,9 +94,6 @@
       new ZipArchivePPIO(estimator.getDownloadServiceConfiguration().getCompressionLevel()).encode(filesToDownload,os1);
     }
   finally {
-      if (os1 != null) {
-        IOUtils.closeQuietly(os1);
-      }
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"Prepare the result for deletion");
       }

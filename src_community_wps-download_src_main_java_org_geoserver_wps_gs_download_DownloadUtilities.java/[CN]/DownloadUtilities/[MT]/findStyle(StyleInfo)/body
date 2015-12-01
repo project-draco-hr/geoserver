@@ -1,6 +1,6 @@
 {
   GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
-  Resource styleFile=loader.get("/styles/" + style.getFilename());
+  Resource styleFile=loader.get(Paths.path("styles",style.getFilename()));
   if (styleFile != null && styleFile.getType() == Resource.Type.RESOURCE && Resources.canRead(styleFile)) {
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.log(Level.FINE,"Style " + style.getName() + " found");
@@ -11,8 +11,7 @@
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.log(Level.FINE,"Style " + style.getName() + " not found. Trying to search in the layer workspace");
     }
-    Resource workspaces=loader.get("/workspaces");
-    styleFile=workspaces.get(style.getWorkspace().getName() + "/styles/" + style.getFilename());
+    styleFile=loader.get(Paths.path("workspaces",style.getWorkspace().getName(),"styles",style.getFilename()));
     if (styleFile != null && styleFile.getType() == Resource.Type.RESOURCE && Resources.canRead(styleFile)) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"The style file cannot be found anywhere. We need to skip the SLD file");

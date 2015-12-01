@@ -1,16 +1,12 @@
 {
   Resource file;
   if (Resources.exists(file=directory.get(getFilename()))) {
-    BufferedInputStream in=new BufferedInputStream(file.in());
-    try {
+    try (BufferedInputStream in=new BufferedInputStream(file.in())){
       XStreamPersister xp=xpf.createXMLPersister();
       initXStreamPersister(xp,gs);
       return initialize(xp.load(in,getServiceClass()));
     }
-  finally {
-      in.close();
-    }
-  }
+   }
  else {
     ServiceInfo service=createServiceFromScratch(gs);
     return initialize((T)service);

@@ -7,14 +7,10 @@
         return;
       }
       JDBCConfiguration c1;
-      InputStream is=configFile.in();
-      try {
+      try (InputStream is=configFile.in()){
         c1=JDBCConfiguration.load(is);
       }
-  finally {
-        is.close();
-      }
-      if (c1 == null || c1.getConnectionPool() == null) {
+       if (c1 == null || c1.getConnectionPool() == null) {
         return;
       }
       String originalEncrypted=c1.getConnectionPool().getPassword();
@@ -25,14 +21,10 @@
       JDBCConfiguration c3=passwordHelper.encryptPassword(c2);
       String newEncrypted=c3.getConnectionPool().getPassword();
       if (!originalEncrypted.equals(newEncrypted)) {
-        OutputStream os=configFile.out();
-        try {
+        try (OutputStream os=configFile.out()){
           JDBCConfiguration.store(c3,os);
         }
-  finally {
-          os.close();
-        }
-      }
+       }
     }
   }
  catch (  Exception e) {
