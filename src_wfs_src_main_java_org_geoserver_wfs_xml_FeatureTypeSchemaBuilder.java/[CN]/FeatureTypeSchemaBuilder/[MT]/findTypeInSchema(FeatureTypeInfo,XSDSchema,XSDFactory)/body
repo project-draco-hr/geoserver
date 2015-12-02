@@ -2,15 +2,10 @@
   String ws=featureTypeMeta.getStore().getWorkspace().getName();
   String ds=featureTypeMeta.getStore().getName();
   String name=featureTypeMeta.getName();
-  File schemaFile=null;
-  try {
-    schemaFile=resourceLoader.find("workspaces/" + ws + "/"+ ds+ "/"+ name+ "/schema.xsd");
-  }
- catch (  IOException e1) {
-  }
-  if (schemaFile != null) {
+  Resource schemaFile=resourceLoader.get("workspaces/" + ws + "/"+ ds+ "/"+ name+ "/schema.xsd");
+  if (schemaFile.getType() == Type.RESOURCE) {
     if (logger.isLoggable(Level.FINE)) {
-      logger.fine("Found customized schema.xsd: " + schemaFile.getAbsolutePath());
+      logger.fine("Found customized schema.xsd: " + schemaFile.path());
     }
     List resolvers=Schemas.findSchemaLocationResolvers(xmlConfiguration);
     List locators=new ArrayList();
@@ -25,10 +20,10 @@
 );
     XSDSchema ftSchema=null;
     try {
-      ftSchema=Schemas.parse(schemaFile.getAbsolutePath(),locators,resolvers);
+      ftSchema=Schemas.parse(schemaFile.file().getAbsolutePath(),locators,resolvers);
     }
  catch (    IOException e) {
-      logger.log(Level.WARNING,"Unable to parse schema: " + schemaFile.getAbsolutePath(),e);
+      logger.log(Level.WARNING,"Unable to parse schema: " + schemaFile.file().getAbsolutePath(),e);
     }
     if (ftSchema != null) {
       if (ftSchema.getSchemaForSchemaQNamePrefix() != null) {

@@ -12,14 +12,14 @@
         }
         style.setWorkspace(ws);
       }
-      File sld=findStyleFile(style);
-      if (sld == null || !sld.exists()) {
+      Resource sld=findStyleFile(style);
+      if (sld == null || !Resources.exists(sld)) {
         catalog.getResourcePool().writeStyle(style,new ByteArrayInputStream(cssText2sldText(defaultStyle,style).getBytes()));
         sld=findStyleFile(style);
       }
-      File css=new File(sld.getParent(),name + ".css");
-      if (!css.exists()) {
-        FileWriter writer=new FileWriter(css);
+      Resource css=sld.parent().get(name + ".css");
+      if (!Resources.exists(css)) {
+        OutputStreamWriter writer=new OutputStreamWriter(css.out());
         writer.write(defaultStyle);
         writer.close();
       }

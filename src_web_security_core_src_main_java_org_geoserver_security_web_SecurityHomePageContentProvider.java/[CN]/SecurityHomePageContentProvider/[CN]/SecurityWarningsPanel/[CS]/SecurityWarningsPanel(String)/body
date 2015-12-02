@@ -1,26 +1,26 @@
 {
   super(id);
   GeoServerSecurityManager manager=GeoServerApplication.get().getSecurityManager();
-  File mpInfo=null;
+  Resource mpInfo=null;
   Label mpInfoLabel=null;
   try {
-    mpInfo=new File(manager.getSecurityRoot(),GeoServerSecurityManager.MASTER_PASSWD_INFO_FILENAME);
-    mpInfoLabel=new Label("mpfile",new StringResourceModel("masterPasswordFile",(Component)this,null,new Object[]{mpInfo.getCanonicalFile()}));
+    mpInfo=manager.get("security").get(GeoServerSecurityManager.MASTER_PASSWD_INFO_FILENAME);
+    mpInfoLabel=new Label("mpfile",new StringResourceModel("masterPasswordFile",(Component)this,null,new Object[]{mpInfo.path()}));
     mpInfoLabel.setEscapeModelStrings(false);
     add(mpInfoLabel);
-    mpInfoLabel.setVisible(mpInfo.exists());
+    mpInfoLabel.setVisible(Resources.exists(mpInfo));
   }
  catch (  Exception ex) {
     throw new RuntimeException(ex);
   }
-  File userprops=null;
+  Resource userprops=null;
   Label userpropsLabel=null;
   try {
-    userprops=new File(manager.getSecurityRoot(),"users.properties.old");
-    userpropsLabel=new Label("userpropsold",new StringResourceModel("userPropertiesOldFile",(Component)this,null,new Object[]{userprops.getCanonicalFile()}));
+    userprops=manager.get("security").get("users.properties.old");
+    userpropsLabel=new Label("userpropsold",new StringResourceModel("userPropertiesOldFile",(Component)this,null,new Object[]{userprops.path()}));
     userpropsLabel.setEscapeModelStrings(false);
     add(userpropsLabel);
-    userpropsLabel.setVisible(userprops.exists());
+    userpropsLabel.setVisible(Resources.exists(userprops));
   }
  catch (  Exception ex) {
     throw new RuntimeException(ex);

@@ -3,19 +3,22 @@
   validatingXMLSchema=false;
   if (config instanceof XMLSecurityServiceConfig) {
     validatingXMLSchema=((XMLSecurityServiceConfig)config).isValidating();
-    File xsdFile=new File(getConfigRoot(),XMLConstants.FILE_RR_SCHEMA);
-    if (xsdFile.exists() == false) {
-      FileUtils.copyURLToFile(getClass().getResource(XMLConstants.FILE_RR_SCHEMA),xsdFile);
+    Resource xsdFile=getConfigRoot().get(XMLConstants.FILE_RR_SCHEMA);
+    if (xsdFile.getType() == Type.UNDEFINED) {
+      IOUtils.copy(getClass().getResourceAsStream(XMLConstants.FILE_RR_SCHEMA),xsdFile.out());
     }
   }
   if (config instanceof FileBasedSecurityServiceConfig) {
     String fileName=((FileBasedSecurityServiceConfig)config).getFileName();
-    roleFile=new File(fileName);
-    if (roleFile.isAbsolute() == false) {
-      roleFile=new File(getConfigRoot(),fileName);
+    File roleFile=new File(fileName);
+    if (roleFile.isAbsolute()) {
+      roleResource=Files.asResource(roleFile);
     }
-    if (roleFile.exists() == false) {
-      FileUtils.copyURLToFile(getClass().getResource("rolesTemplate.xml"),roleFile);
+ else {
+      roleResource=getConfigRoot().get(fileName);
+    }
+    if (roleResource.getType() == Type.UNDEFINED) {
+      IOUtils.copy(getClass().getResourceAsStream("rolesTemplate.xml"),roleResource.out());
     }
   }
  else {

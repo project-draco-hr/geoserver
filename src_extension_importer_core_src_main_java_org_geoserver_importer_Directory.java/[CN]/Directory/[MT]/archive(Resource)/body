@@ -1,0 +1,31 @@
+{
+  Resource archiveDir=output.parent();
+  String outputName=output.name().replace(".zip","");
+  int id=0;
+  while (Resources.exists(output)) {
+    output=archiveDir.get(outputName + id + ".zip");
+    id++;
+  }
+  ZipOutputStream zout=new ZipOutputStream(new BufferedOutputStream(output.out()));
+  Exception error=null;
+  try {
+    IOUtils.zipDirectory(file.dir(),zout,null);
+  }
+ catch (  Exception ex) {
+    error=ex;
+    try {
+      zout.close();
+    }
+ catch (    Exception ex2) {
+    }
+    output.delete();
+    if (ex instanceof IOException)     throw (IOException)ex;
+    throw (IOException)new IOException("Error archiving").initCause(ex);
+  }
+  try {
+    zout.close();
+  }
+  finally {
+    cleanup();
+  }
+}

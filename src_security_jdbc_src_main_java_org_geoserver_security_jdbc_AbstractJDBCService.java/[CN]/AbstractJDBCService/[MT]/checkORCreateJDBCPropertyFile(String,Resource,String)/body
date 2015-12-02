@@ -1,0 +1,18 @@
+{
+  Resource resource;
+  fileName=fileName != null ? fileName : defaultResource;
+  File file=new File(fileName);
+  if (file.isAbsolute()) {
+    resource=Files.asResource(file);
+  }
+ else {
+    resource=namedRoot.get(fileName);
+  }
+  if (Resources.exists(resource)) {
+    return resource;
+  }
+  InputStream is=this.getClass().getResourceAsStream(fileName);
+  if (is != null)   IOUtils.copy(is,resource.out());
+ else   FileUtils.copyURLToFile(getClass().getResource(defaultResource),file);
+  return resource;
+}

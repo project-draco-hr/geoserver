@@ -1,21 +1,21 @@
 {
-  File monitoringDir=dataDirectory.findOrCreateDir("monitoring");
-  File dbprops=new File(monitoringDir,"db.properties");
-  if (dbprops.exists()) {
-    LOGGER.info("Configuring monitoring database from: " + dbprops.getAbsolutePath());
+  Resource monitoringDir=dataDirectory.get("monitoring");
+  Resource dbprops=monitoringDir.get("db.properties");
+  if (Resources.exists(dbprops)) {
+    LOGGER.info("Configuring monitoring database from: " + dbprops.path());
     try {
       configureDataSource(dbprops,monitoringDir);
     }
  catch (    SQLException e) {
-      dbprops=new File(monitoringDir,"db1.properties");
-      if (dbprops.exists()) {
+      dbprops=monitoringDir.get("db1.properties");
+      if (Resources.exists(dbprops)) {
         try {
           configureDataSource(dbprops,monitoringDir);
           return;
         }
  catch (        SQLException e1) {
-          dbprops=new File(monitoringDir,"db2.properties");
-          if (dbprops.exists()) {
+          dbprops=monitoringDir.get("db2.properties");
+          if (Resources.exists(dbprops)) {
             try {
               configureDataSource(dbprops,monitoringDir);
               return;

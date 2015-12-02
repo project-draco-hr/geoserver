@@ -5,7 +5,7 @@
   String coveragestore=getAttribute("coveragestore");
   String format=getAttribute("format");
   String method=getUploadMethod(request);
-  final File uploadedFile=doFileUpload(method,workspace,coveragestore,format).get(0);
+  final Resource uploadedFile=doFileUpload(method,workspace,coveragestore,format).get(0);
   Form form=request.getResourceRef().getQueryAsForm();
   if ("yes".equalsIgnoreCase(form.getFirstValue("overviews"))) {
     ;
@@ -23,12 +23,12 @@
     LOGGER.info("Using existing coverage store: " + coveragestore);
   }
   info.setType(coverageFormat.getName());
-  URL uploadedFileURL=DataUtilities.fileToURL(uploadedFile);
+  URL uploadedFileURL=DataUtilities.fileToURL(Resources.find(uploadedFile));
   if (isInlineUpload(method)) {
-    String defaultRoot=File.separator + "data" + File.separator+ workspace+ File.separator+ coveragestore;
-    StringBuilder fileBuilder=new StringBuilder(uploadedFile.getAbsolutePath());
+    String defaultRoot="/data/" + workspace + "/"+ coveragestore;
+    StringBuilder fileBuilder=new StringBuilder(Resources.find(uploadedFile).getAbsolutePath());
     String url;
-    if (uploadedFile.isDirectory() && uploadedFile.getName().equals(coveragestore)) {
+    if (uploadedFile.getType() == Type.DIRECTORY && uploadedFile.name().equals(coveragestore)) {
       int def=fileBuilder.indexOf(defaultRoot);
       if (def >= 0) {
         url="file:data/" + workspace + "/"+ coveragestore;
@@ -41,7 +41,7 @@
       int def=fileBuilder.indexOf(defaultRoot);
       if (def >= 0) {
         String itemPath=fileBuilder.substring(def + defaultRoot.length());
-        url="file:data/" + workspace + "/"+ coveragestore+ "/"+ itemPath;
+        url="file:data/" + workspace + "/"+ coveragestore+ itemPath;
       }
  else {
         url=fileBuilder.toString();
@@ -78,7 +78,7 @@
   }
   GridCoverage2DReader reader=null;
   try {
-    reader=(GridCoverage2DReader)((AbstractGridFormat)coverageFormat).getReader(DataUtilities.fileToURL(uploadedFile));
+    reader=(GridCoverage2DReader)((AbstractGridFormat)coverageFormat).getReader(uploadedFileURL);
     if (reader == null) {
       throw new RestletException("Could not aquire reader for coverage.",Status.SERVER_ERROR_INTERNAL);
     }

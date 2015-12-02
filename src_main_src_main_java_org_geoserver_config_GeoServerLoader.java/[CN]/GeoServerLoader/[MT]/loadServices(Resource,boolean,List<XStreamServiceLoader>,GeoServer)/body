@@ -1,0 +1,18 @@
+{
+  for (  XStreamServiceLoader<ServiceInfo> l : loaders) {
+    try {
+      ServiceInfo s=l.load(geoServer,directory);
+      if (!global && s.getWorkspace() == null)       continue;
+      geoServer.add(s);
+      LOGGER.info("Loaded service '" + s.getId() + "', "+ (s.isEnabled() ? "enabled" : "disabled"));
+    }
+ catch (    Throwable t) {
+      if (Resources.exists(directory)) {
+        LOGGER.log(Level.SEVERE,"Failed to load the service configuration in directory: " + directory + " with loader for "+ l.getServiceClass(),t);
+      }
+ else {
+        LOGGER.log(Level.SEVERE,"Failed to load the root service configuration with loader for " + l.getServiceClass(),t);
+      }
+    }
+  }
+}

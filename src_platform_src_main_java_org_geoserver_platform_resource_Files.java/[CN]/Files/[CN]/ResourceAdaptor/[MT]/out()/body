@@ -1,4 +1,8 @@
 {
+  final File actualFile=file();
+  if (!actualFile.exists()) {
+    throw new IllegalStateException("Cannot access " + actualFile);
+  }
   final File temp;
 synchronized (this) {
     File tryTemp;
@@ -35,10 +39,9 @@ synchronized (this) {
 ;
   }
  catch (  IOException ex) {
-    LOGGER.log(Level.WARNING,"Could not create temporary file {0} writing directly to {1} instead.",new Object[]{temp,file});
+    LOGGER.log(Level.WARNING,"Could not create temporary file {0} writing directly to {1} instead.",new Object[]{temp,actualFile});
     try {
-      file.createNewFile();
-      return new FileOutputStream(file);
+      return new FileOutputStream(actualFile);
     }
  catch (    IOException e) {
       throw new IllegalStateException(e);

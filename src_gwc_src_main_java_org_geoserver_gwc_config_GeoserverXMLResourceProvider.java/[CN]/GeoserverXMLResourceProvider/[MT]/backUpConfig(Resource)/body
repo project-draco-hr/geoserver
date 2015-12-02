@@ -1,0 +1,33 @@
+{
+  String timeStamp=new SimpleDateFormat("yyyy-MM-dd'T'HHmmss").format(new Date());
+  String backUpFileName="geowebcache_" + timeStamp + ".bak";
+  Resource parentFile=xmlFile.parent();
+  log.debug("Backing up config file " + xmlFile.name() + " to "+ backUpFileName);
+  List<Resource> previousBackUps=Resources.list(parentFile,new Filter<Resource>(){
+    public boolean accept(    Resource res){
+      if (configFileName.equals(res.name())) {
+        return false;
+      }
+      if (res.name().startsWith(configFileName) && res.name().endsWith(".bak")) {
+        return true;
+      }
+      return false;
+    }
+  }
+);
+  final int maxBackups=10;
+  if (previousBackUps.size() > maxBackups) {
+    Collections.sort(previousBackUps,new Comparator<Resource>(){
+      @Override public int compare(      Resource o1,      Resource o2){
+        return (int)(o1.lastmodified() - o2.lastmodified());
+      }
+    }
+);
+    Resource oldest=previousBackUps.get(0);
+    log.debug("Deleting oldest config backup " + oldest + " to keep a maximum of "+ maxBackups+ " backups.");
+    oldest.delete();
+  }
+  Resource backUpFile=parentFile.get(backUpFileName);
+  IOUtils.copy(xmlFile.in(),backUpFile.out());
+  log.debug("Config backup done");
+}

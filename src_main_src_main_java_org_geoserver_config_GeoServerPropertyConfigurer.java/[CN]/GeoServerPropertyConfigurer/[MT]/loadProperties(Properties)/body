@@ -3,14 +3,11 @@
     super.loadProperties(props);
   }
  catch (  FileNotFoundException e) {
-    if (this.location != null && copyOutTemplate) {
-      File f=location.getFile();
-      f.getParentFile().mkdirs();
-      f.createNewFile();
-      FileOutputStream fout=new FileOutputStream(f);
-      props.store(fout,comments);
-      fout.flush();
-      fout.close();
-    }
+    if (configFile != null && copyOutTemplate) {
+      try (OutputStream fout=configFile.out()){
+        props.store(fout,comments);
+        fout.flush();
+      }
+     }
   }
 }

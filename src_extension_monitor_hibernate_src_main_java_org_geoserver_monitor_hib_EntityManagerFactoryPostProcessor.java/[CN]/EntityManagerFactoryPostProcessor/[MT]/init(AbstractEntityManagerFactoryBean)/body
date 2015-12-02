@@ -1,20 +1,20 @@
 {
   try {
-    File f=data.findDataFile("monitoring","hibernate.properties");
-    if (f == null) {
+    Resource f=data.get(Paths.path("monitoring","hibernate.properties"));
+    if (!Resources.exists(f)) {
       Properties props=new Properties();
       props.putAll(factory.getJpaVendorAdapter().getJpaPropertyMap());
       props.putAll(factory.getJpaPropertyMap());
-      File monitoring=data.findOrCreateDataDir("monitoring");
-      File file=new File(monitoring,"hibernate.properties");
-      FileOutputStream fout=new FileOutputStream(file);
+      Resource monitoring=data.get("monitoring");
+      Resource file=monitoring.get("hibernate.properties");
+      OutputStream fout=file.out();
       props.store(fout,"hibernate configuration");
       fout.flush();
       fout.close();
     }
  else {
       Properties props=new Properties();
-      FileInputStream fin=new FileInputStream(f);
+      InputStream fin=f.in();
       props.load(fin);
       fin.close();
       HibernateJpaVendorAdapter adapter=(HibernateJpaVendorAdapter)factory.getJpaVendorAdapter();

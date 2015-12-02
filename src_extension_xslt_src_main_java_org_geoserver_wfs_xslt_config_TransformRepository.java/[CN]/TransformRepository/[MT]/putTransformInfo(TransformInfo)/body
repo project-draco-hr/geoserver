@@ -2,14 +2,9 @@
   if (transform.getName() == null) {
     throw new IllegalArgumentException("Transformation does not have a name set");
   }
-  File file=getTransformInfoFile(transform.getName());
-  FileOutputStream fos=null;
-  try {
-    fos=new FileOutputStream(file);
+  Resource file=getTransformInfoFile(transform.getName());
+  try (OutputStream fos=file.out()){
     xs.toXML(transform,fos);
   }
-  finally {
-    IOUtils.closeQuietly(fos);
-  }
-  infoCache.put(transform,file);
+   infoCache.put(transform,file);
 }

@@ -1,0 +1,48 @@
+{
+  Catalog catalog2=new CatalogImpl();
+  catalog2.setResourceLoader(resourceLoader);
+  GeoServerPersister p=new GeoServerPersister(resourceLoader,xp);
+  if (!legacy) {
+    catalog2.addListener(p);
+  }
+  LegacyCatalogImporter importer=new LegacyCatalogImporter(catalog2);
+  importer.setResourceLoader(resourceLoader);
+  importer.imprt(resourceLoader.getBaseDirectory());
+  if (!legacy) {
+    catalog2.removeListener(p);
+  }
+  if (!legacy) {
+    Resource featureTypesDir=resourceLoader.get("featureTypes");
+    if (featureTypesDir != null) {
+      LegacyCatalogReader creader=new LegacyCatalogReader();
+      creader.read(f);
+      Map<String,Map<String,Object>> dataStores=creader.dataStores();
+      for (      Resource featureTypeDir : featureTypesDir.list()) {
+        if (featureTypeDir.getType() != Type.DIRECTORY) {
+          continue;
+        }
+        Resource featureTypeInfo=featureTypeDir.get("info.xml");
+        if (!Resources.exists(featureTypeInfo)) {
+          continue;
+        }
+        LegacyFeatureTypeInfoReader reader=new LegacyFeatureTypeInfoReader();
+        reader.read(featureTypeInfo);
+        Map<String,Object> dataStore=dataStores.get(reader.dataStore());
+        if (dataStore == null) {
+          continue;
+        }
+        String namespace=(String)dataStore.get("namespace");
+        Resource destFeatureTypeDir=resourceLoader.get(Paths.path("workspaces",namespace,reader.dataStore(),reader.name()));
+        if (destFeatureTypeDir != null) {
+          for (          Resource file : featureTypeDir.list()) {
+            if (file.getType() == Type.RESOURCE && !featureTypeInfo.equals(file)) {
+              IOUtils.copy(file.in(),destFeatureTypeDir.get(file.name()).out());
+            }
+          }
+        }
+      }
+    }
+    f.renameTo(f.parent().get("catalog.xml.old"));
+  }
+  return catalog2;
+}

@@ -23,32 +23,32 @@
   if (mosaic.getTimeMode() != TimeMode.NONE) {
     typeBuilder.add("time",Date.class);
   }
-  File indexerFile=new File(mosaic.getFile(),"indexer.properties");
+  Resource indexerFile=mosaic.getFile().get("indexer.properties");
   Properties indexer=new Properties();
   indexer.put(Utils.Prop.NAME,mosaic.getName());
   indexer.put(Utils.Prop.INDEX_NAME,mosaic.getName());
   indexer.put(Utils.Prop.USE_EXISTING_SCHEMA,"true");
-  FileOutputStream ifos=null;
+  OutputStream ifos=null;
   try {
-    ifos=new FileOutputStream(indexerFile);
+    ifos=indexerFile.out();
     indexer.store(ifos,null);
   }
   finally {
     IOUtils.closeQuietly(ifos);
   }
   ShapefileDataStoreFactory shpFactory=new ShapefileDataStoreFactory();
-  DirectoryDataStore dir=new DirectoryDataStore(mosaic.getFile(),new ShapefileDataStoreFactory.ShpFileStoreFactory(shpFactory,new HashMap()));
+  DirectoryDataStore dir=new DirectoryDataStore(mosaic.getFile().dir(),new ShapefileDataStoreFactory.ShpFileStoreFactory(shpFactory,new HashMap()));
   try {
     dir.createSchema(typeBuilder.buildFeatureType());
     FeatureWriter<SimpleFeatureType,SimpleFeature> w=dir.getFeatureWriterAppend(mosaic.getName(),Transaction.AUTO_COMMIT);
     try {
       for (      Granule g : mosaic.granules()) {
         if (g.getEnvelope() == null) {
-          LOGGER.warning("Skipping " + g.getFile().getAbsolutePath() + ", no envelope");
+          LOGGER.warning("Skipping " + g.getFile().path() + ", no envelope");
         }
         SimpleFeature f=w.next();
         f.setDefaultGeometry(JTS.toGeometry((BoundingBox)g.getEnvelope()));
-        f.setAttribute("location",g.getFile().getName());
+        f.setAttribute("location",g.getFile().name());
         if (mosaic.getTimeMode() != TimeMode.NONE) {
           f.setAttribute("time",g.getTimestamp());
         }
@@ -64,19 +64,19 @@
     dir.dispose();
   }
   ImageMosaicFormat format=new ImageMosaicFormat();
-  ImageMosaicReader reader=format.getReader(mosaic.getFile());
+  ImageMosaicReader reader=format.getReader(Resources.find(mosaic.getFile()));
   reader.dispose();
   if (mosaic.getTimeMode() != TimeMode.NONE) {
-    File propertyFile=new File(mosaic.getFile(),mosaic.getName() + ".properties");
-    FileInputStream fis=null;
-    FileOutputStream fos=null;
+    Resource propertyFile=mosaic.getFile().get(mosaic.getName() + ".properties");
+    InputStream fis=null;
+    OutputStream fos=null;
     try {
-      fis=new FileInputStream(propertyFile);
+      fis=propertyFile.in();
       Properties props=new Properties();
       props.load(fis);
       fis.close();
       props.setProperty("TimeAttribute","time");
-      fos=new FileOutputStream(propertyFile);
+      fos=propertyFile.out();
       props.store(fos,null);
     }
   finally {
