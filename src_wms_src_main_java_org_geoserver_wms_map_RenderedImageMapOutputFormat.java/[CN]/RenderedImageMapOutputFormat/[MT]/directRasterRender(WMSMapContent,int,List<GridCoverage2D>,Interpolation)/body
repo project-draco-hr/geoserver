@@ -70,7 +70,7 @@
       final GridCoverageRenderer gcr=new GridCoverageRenderer(mapEnvelope.getCoordinateReferenceSystem(),mapEnvelope,mapRasterArea,worldToScreen,interpolationHints);
       gcr.setAdvancedProjectionHandlingEnabled(true);
       gcr.setWrapEnabled(wms.isContinuousMapWrappingEnabled());
-      image=gcr.renderImage(reader,readParameters,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
+      image=gcr.renderImage(reader,readParameters,symbolizer,interpolation,null,tileSizeX,tileSizeY);
       if (image == null) {
         image=createBkgImage(mapWidth,mapHeight,bgColor,null);
       }
@@ -81,7 +81,7 @@
       final boolean equalsMetadata=CRS.equalsIgnoreMetadata(mapCRS,coverageCRS);
       boolean sameCRS;
       try {
-        sameCRS=equalsMetadata ? true : CRS.findMathTransform(mapCRS,coverageCRS,true).isIdentity();
+        sameCRS=equalsMetadata || CRS.findMathTransform(mapCRS,coverageCRS,true).isIdentity();
       }
  catch (      FactoryException e1) {
         final IOException ioe=new IOException();
@@ -133,7 +133,7 @@
       if (image == null) {
         final GridCoverageRenderer gcr=new GridCoverageRenderer(mapCRS,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),worldToScreen,interpolationHints);
         gcr.setAdvancedProjectionHandlingEnabled(false);
-        image=gcr.renderImage(coverage,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
+        image=gcr.renderImage(coverage,symbolizer,interpolation,null,tileSizeX,tileSizeY);
       }
     }
   }
