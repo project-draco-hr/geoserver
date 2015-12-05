@@ -17,10 +17,10 @@ catch (  Exception e) {
     request.setQueryLayers(getMapLayers);
   }
  else {
-    request.setQueryLayers(new MapLayerInfoKvpParser("QUERY_LAYERS",wms).parse((String)rawKvp.get("QUERY_LAYERS")));
+    request.setQueryLayers(new GetFeatureInfoKvpParser("QUERY_LAYERS",wms).parse((String)rawKvp.get("QUERY_LAYERS")));
   }
   if (request.getQueryLayers().isEmpty()) {
-    throw new ServiceException("No QUERY_LAYERS has been requested, or no " + "queriable layer in the request anyways");
+    throw new ServiceException("Either no layer was queryable, or no layers were specified using QUERY_LAYERS",WMSErrorCode.LAYER_NOT_QUERYABLE.get(request.getVersion()),"QUERY_LAYERS");
   }
   if (kvp.containsKey("propertyName")) {
     List<List<String>> propertyNames=(List<List<String>>)kvp.get("propertyName");
@@ -38,20 +38,6 @@ catch (  Exception e) {
   queryLayers.removeAll(getMapLayers);
   if (queryLayers.size() > 0) {
     throw new ServiceException("QUERY_LAYERS contains layers not cited in LAYERS. " + "It should be a proper subset of those instead");
-  }
-  for (  MapLayerInfo l : request.getQueryLayers().toArray(new MapLayerInfo[0])) {
-    LayerInfo layerInfo=l.getLayerInfo();
-    if (!wms.isQueryable(layerInfo)) {
-      int layerIndex=getMapLayers.indexOf(l);
-      getMapLayers.remove(l);
-      request.getQueryLayers().remove(l);
-      if (layerIndex != -1) {
-        request.getGetMapRequest().getStyles().remove(layerIndex);
-      }
-    }
-  }
-  if (request.getQueryLayers().size() == 0) {
-    throw new ServiceException("GetFeatureInfo request has not queryable layers",WMSErrorCode.LAYER_NOT_QUERYABLE.get(request.getVersion()),"QUERY_LAYERS");
   }
   String format=(String)(kvp.containsKey("INFO_FORMAT") ? kvp.get("INFO_FORMAT") : null);
   if (format == null) {
