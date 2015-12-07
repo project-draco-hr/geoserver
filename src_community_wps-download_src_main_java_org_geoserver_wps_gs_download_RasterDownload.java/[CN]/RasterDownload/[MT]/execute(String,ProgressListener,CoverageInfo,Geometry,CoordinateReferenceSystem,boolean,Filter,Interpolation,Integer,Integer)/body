@@ -66,6 +66,9 @@
     }
     readParameters=CoverageUtils.mergeParameter(parameterDescriptors,readParameters,Boolean.TRUE,AbstractGridFormat.USE_JAI_IMAGEREAD.getName().getCode());
     originalGridCoverage=reader.read(readParameters);
+    if (originalGridCoverage == null) {
+      throw new WPSException("The reader did not return any data for current input " + "parameters. It normally means there is nothing there, or the data got filtered out by the ROI or filter");
+    }
     if (reproject) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"Reprojecting the layer");
@@ -85,6 +88,9 @@
       }
  else {
         clippedGridCoverage=cropCoverage.execute(reprojectedGridCoverage,roiManager.getSafeRoiInTargetCRS(),progressListener);
+      }
+      if (clippedGridCoverage == null) {
+        throw new WPSException("No data left after applying the ROI. This means there " + "is source data, but none matching the requested ROI");
       }
     }
  else {
