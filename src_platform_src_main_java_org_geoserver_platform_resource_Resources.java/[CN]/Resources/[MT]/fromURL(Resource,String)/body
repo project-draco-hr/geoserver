@@ -1,0 +1,39 @@
+{
+  if (url.startsWith("resource:")) {
+    url=url.substring(9);
+    return baseDirectory.get(url);
+  }
+  if (url.startsWith("file:/")) {
+    try {
+      return Files.asResource(DataUtilities.urlToFile(new URL(url)));
+    }
+ catch (    Exception e) {
+    }
+  }
+  if (url.startsWith("file:")) {
+    url=url.substring(5);
+    File f=new File(url);
+    if (f.isAbsolute() || f.exists()) {
+      return Files.asResource(f);
+    }
+ else {
+      if (baseDirectory != null) {
+        return baseDirectory.get(url);
+      }
+      return Files.asResource(f);
+    }
+  }
+ else {
+    File file=new File(url);
+    if (file.isAbsolute() || file.exists()) {
+      return Files.asResource(file);
+    }
+    if (baseDirectory != null) {
+      Resource res=baseDirectory.get(url);
+      if (exists(res)) {
+        return res;
+      }
+    }
+    return null;
+  }
+}
