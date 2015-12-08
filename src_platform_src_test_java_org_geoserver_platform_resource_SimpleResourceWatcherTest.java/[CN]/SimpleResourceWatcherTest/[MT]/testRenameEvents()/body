@@ -1,0 +1,19 @@
+{
+  Resource src=store.get("DirA");
+  Resource dest=store.get("DirB");
+  List<Event> events=SimpleResourceWatcher.createRenameEvents(src,dest);
+  assertEquals(6,events.size());
+  Set<String> set=new HashSet<String>();
+  set.add("DirB");
+  set.add("DirB/FileA1");
+  set.add("DirB/FileA2");
+  set.add("DirB/DirC");
+  set.add("DirB/DirC/FileC1");
+  set.add("DirB/DirC/FileC2");
+  for (  Event event : events) {
+    String path=event.getPath();
+    assertEquals(path.equals("DirB") || path.equals("DirB/FileA2") ? Kind.ENTRY_MODIFY : Kind.ENTRY_CREATE,event.getKind());
+    assertTrue(set.remove(path));
+  }
+  assertTrue(set.isEmpty());
+}

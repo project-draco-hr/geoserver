@@ -1,0 +1,17 @@
+{
+  Resource res=store.get("DirA");
+  List<Event> events=SimpleResourceWatcher.createEvents(res,Kind.ENTRY_DELETE);
+  assertEquals(6,events.size());
+  Set<String> set=new HashSet<String>();
+  set.add("DirA");
+  set.add("DirA/FileA1");
+  set.add("DirA/FileA2");
+  set.add("DirA/DirC");
+  set.add("DirA/DirC/FileC1");
+  set.add("DirA/DirC/FileC2");
+  for (  Event event : events) {
+    assertEquals(Kind.ENTRY_DELETE,event.getKind());
+    assertTrue(set.remove(event.getPath()));
+  }
+  assertTrue(set.isEmpty());
+}

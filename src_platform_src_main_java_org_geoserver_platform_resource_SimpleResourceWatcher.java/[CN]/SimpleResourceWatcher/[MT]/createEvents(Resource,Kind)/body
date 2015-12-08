@@ -1,0 +1,17 @@
+{
+  List<Event> events=new ArrayList<Event>();
+  events.add(new ResourceNotification.Event(resource.path(),kind));
+  if (resource.getType() == Type.DIRECTORY && kind == Kind.ENTRY_DELETE) {
+    for (    Resource child : Resources.listRecursively(resource)) {
+      events.add(new ResourceNotification.Event(child.path(),kind));
+    }
+  }
+  if (kind == Kind.ENTRY_CREATE) {
+    Resource parent=resource.parent();
+    while (parent != null && !Resources.exists(parent)) {
+      events.add(new ResourceNotification.Event(parent.path(),kind));
+      parent=parent.parent();
+    }
+  }
+  return events;
+}
