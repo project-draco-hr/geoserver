@@ -14,7 +14,9 @@
   assertSame(config,persister.getConfig());
   persister=new GWCConfigPersister(new XStreamPersisterFactory(),resourceLoader);
   assertEquals(config,persister.getConfig());
-  when(resourceLoader.get(eq(GWCConfigPersister.GWC_CONFIG_FILE))).thenReturn(Files.asResource(new File("shall_not_exist")));
+  TemporaryFolder tempFolder=new TemporaryFolder();
+  tempFolder.create();
+  when(resourceLoader.get(eq(GWCConfigPersister.GWC_CONFIG_FILE))).thenReturn(Files.asResource(tempFolder.newFile("shall_not_exist")));
   persister=new GWCConfigPersister(new XStreamPersisterFactory(),resourceLoader);
   GWCConfig expected=new GWCConfig();
   GWCConfig actual=persister.getConfig();
