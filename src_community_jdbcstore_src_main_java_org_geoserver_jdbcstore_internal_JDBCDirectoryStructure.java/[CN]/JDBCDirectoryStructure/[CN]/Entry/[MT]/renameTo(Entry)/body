@@ -1,0 +1,37 @@
+{
+  Integer oid=getOid();
+  if (oid == null) {
+    LOGGER.warning("Attempted to rename undefined entry: " + toString());
+    return false;
+  }
+  Integer destParentOid=dest.getValue(PARENT);
+  if (destParentOid != null) {
+    if (config.isDeleteDestinationOnRename()) {
+      if (!dest.delete()) {
+        LOGGER.warning("Rename operation failed for entry " + toString() + ": unable to delete destination of rename operation.");
+        return false;
+      }
+    }
+ else {
+      LOGGER.warning("Rename operation failed for entry " + toString() + ": destination of rename operation is defined.");
+      return false;
+    }
+  }
+ else {
+    Entry destParent=dest.getParent();
+    try {
+      destParent.createDirectory();
+    }
+ catch (    IllegalStateException e) {
+      LOGGER.log(Level.WARNING,"Rename operation failed for entry " + toString() + ": could not create parent directory.",e);
+      return false;
+    }
+    destParentOid=destParent.getOid();
+  }
+  if (helper.updateQuery(TABLE_RESOURCE,new FieldSelector<Integer>(OID,oid),new Assignment<String>(NAME,dest.getName()),new Assignment<Integer>(PARENT,destParentOid)) <= 0) {
+    LOGGER.warning("Unable to perform rename operation for entry " + toString());
+    return false;
+  }
+  ;
+  return true;
+}

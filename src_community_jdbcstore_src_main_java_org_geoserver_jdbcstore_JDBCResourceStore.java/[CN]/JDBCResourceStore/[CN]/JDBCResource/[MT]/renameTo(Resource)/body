@@ -1,0 +1,16 @@
+{
+  List<ResourceNotification.Event> eventsDelete=SimpleResourceWatcher.createEvents(this,ResourceNotification.Kind.ENTRY_DELETE);
+  List<ResourceNotification.Event> eventsRename=SimpleResourceWatcher.createRenameEvents(this,dest);
+  boolean result;
+  if (dest instanceof JDBCResource) {
+    result=entry.renameTo(((JDBCResource)dest).entry);
+  }
+ else {
+    result=Resources.renameByCopy(this,dest);
+  }
+  if (result) {
+    resourceWatcher.changed(new ResourceNotification(path(),ResourceNotification.Kind.ENTRY_DELETE,System.currentTimeMillis(),eventsDelete));
+    resourceWatcher.changed(new ResourceNotification(path(),eventsRename.get(0).getKind(),System.currentTimeMillis(),eventsRename));
+  }
+  return result;
+}

@@ -1,0 +1,30 @@
+{
+  standardData();
+  ResourceStore store=new JDBCResourceStore(support.getDataSource(),getConfig(false,false));
+  TestResourceListener listener=new TestResourceListener();
+  Resource fileD=store.get("DirC/FileD");
+  fileD.addListener(listener);
+  long before=fileD.lastmodified();
+  try (OutputStream out=fileD.out()){
+    out.write(1234);
+  }
+   long after=fileD.lastmodified();
+  assertTrue(after > before);
+  assertNotNull(listener.getNotify());
+  assertEquals(Kind.ENTRY_MODIFY,listener.getNotify().getKind());
+  assertEquals(1,listener.getNotify().events().size());
+  long timeStamp=listener.getNotify().getTimestamp();
+  assertTrue(timeStamp > before);
+  listener.reset();
+  fileD.delete();
+  assertNotNull(listener.getNotify());
+  assertEquals(Kind.ENTRY_DELETE,listener.getNotify().getKind());
+  assertEquals(1,listener.getNotify().events().size());
+  listener.reset();
+  try (OutputStream out=fileD.out()){
+    assertNotNull(listener.getNotify());
+    assertEquals(Kind.ENTRY_CREATE,listener.getNotify().getKind());
+    assertEquals(1,listener.getNotify().events().size());
+  }
+   fileD.removeListener(listener);
+}

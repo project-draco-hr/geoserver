@@ -1,0 +1,29 @@
+{
+  String path=res.path();
+  long mtime=res.lastmodified();
+  File cached=new File(base,path);
+  if (!cached.exists() || cached.lastModified() > mtime) {
+    Resource.Type type=res.getType();
+switch (type) {
+case RESOURCE:
+      cached.getParentFile().mkdirs();
+    cacheData(res,cached);
+  break;
+case DIRECTORY:
+cached.mkdirs();
+if (cacheChildren) {
+cacheChildren(res,cached);
+}
+break;
+case UNDEFINED:
+if (createDirectory) {
+cached.mkdirs();
+}
+ else {
+cached.getParentFile().mkdirs();
+}
+break;
+}
+}
+return cached;
+}

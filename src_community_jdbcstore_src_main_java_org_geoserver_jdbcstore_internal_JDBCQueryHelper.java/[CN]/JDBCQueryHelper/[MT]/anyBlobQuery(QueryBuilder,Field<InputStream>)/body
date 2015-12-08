@@ -1,0 +1,47 @@
+{
+  Connection c;
+  boolean closeConnection=false;
+  try {
+    c=ds.getConnection();
+  }
+ catch (  SQLException ex) {
+    throw new IllegalStateException("Could not connect to DataSource.",ex);
+  }
+  try {
+    LOGGER.log(Level.FINEST,query.toString());
+    PreparedStatement stmt=query.toStatement(c);
+    try {
+      ResultSet rs=stmt.executeQuery();
+      try {
+        if (rs.next()) {
+          assert(rs.last());
+          InputStream is=field.getValue(rs);
+          return is == null ? null : new ClosingInputStreamWrapper(is,c);
+        }
+ else {
+          closeConnection=true;
+          return null;
+        }
+      }
+  finally {
+        rs.close();
+      }
+    }
+  finally {
+      stmt.close();
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IllegalStateException("BlobQuery Failed",ex);
+  }
+ finally {
+    if (closeConnection) {
+      try {
+        c.close();
+      }
+ catch (      SQLException ex) {
+        throw new IllegalArgumentException("Error while closing connection.",ex);
+      }
+    }
+  }
+}

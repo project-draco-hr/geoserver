@@ -1,0 +1,31 @@
+{
+  try (Connection c=ds.getConnection()){
+    LOGGER.log(Level.FINEST,query.toString());
+    PreparedStatement stmt=query.toStatement(c);
+    try {
+      ResultSet rs=stmt.executeQuery();
+      try {
+        if (rs.next()) {
+          assert(rs.last());
+          Map<String,Object> result=new HashMap<String,Object>();
+          for (int i=0; i < fields.length; i++) {
+            result.put(fields[i].getFieldName(),fields[i].getValue(rs));
+          }
+          return result;
+        }
+ else {
+          return null;
+        }
+      }
+  finally {
+        rs.close();
+      }
+    }
+  finally {
+      stmt.close();
+    }
+  }
+ catch (  SQLException ex) {
+    throw new IllegalStateException("SelectQuery Failed",ex);
+  }
+}
