@@ -1,0 +1,40 @@
+{
+  Graphic copy=null;
+  Displacement displacementCopy=copy(gr.getDisplacement());
+  Expression rotationCopy=copy(gr.getRotation());
+  Expression sizeCopy=copy(gr.getSize());
+  AnchorPoint anchorCopy=copy(gr.getAnchorPoint());
+  List<GraphicalSymbol> symbolsCopy=new ArrayList<>();
+  for (  GraphicalSymbol gs : gr.graphicalSymbols()) {
+    if (gs instanceof Mark) {
+      Mark markCopy=copy((Mark)gs);
+      symbolsCopy.add(markCopy);
+    }
+ else     if (gs instanceof ExternalGraphic) {
+      if (gr.getSize() != null && !Expression.NIL.equals(gr.getSize())) {
+        Mark mark=sf.createMark(ff.literal("square"),null,sf.createFill(colorFunction),sizeCopy,Expression.NIL);
+        symbolsCopy.add(mark);
+      }
+ else {
+        ExternalGraphic eg=(ExternalGraphic)gs;
+        Literal sizeExpression=estimateGraphicSize(eg);
+        Mark mark=sf.createMark(ff.literal("square"),null,sf.createFill(colorFunction),sizeExpression,Expression.NIL);
+        symbolsCopy.add(mark);
+      }
+    }
+  }
+  copy=sf.createDefaultGraphic();
+  copy.setDisplacement(displacementCopy);
+  copy.setAnchorPoint(anchorCopy);
+  copy.setOpacity(LITERAL_ONE);
+  copy.setRotation(rotationCopy);
+  copy.setSize(sizeCopy);
+  copy.graphicalSymbols().clear();
+  copy.graphicalSymbols().addAll(symbolsCopy);
+  if (STRICT) {
+    if (!copy.equals(gr)) {
+      throw new IllegalStateException("Was unable to duplicate provided Graphic:" + gr);
+    }
+  }
+  pages.push(copy);
+}

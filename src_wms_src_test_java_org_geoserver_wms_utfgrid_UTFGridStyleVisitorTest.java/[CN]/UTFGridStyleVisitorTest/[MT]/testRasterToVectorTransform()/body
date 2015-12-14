@@ -1,0 +1,17 @@
+{
+  FeatureTypeStyle fts=sb.createFeatureTypeStyle(sb.createLineSymbolizer());
+  Function data=ff.function("parameter",ff.literal("data"));
+  Function levels=ff.function("parameter",ff.literal("levels"),ff.literal("1100"),ff.literal("1200"));
+  Function tx=ff.function("ras:Contour",data,levels);
+  fts.setTransformation(tx);
+  fts.getOptions().put(FeatureTypeStyle.COMPOSITE_BASE,"true");
+  Style style=sb.createStyle();
+  style.featureTypeStyles().add(fts);
+  style.accept(visitor);
+  Style copy=(Style)visitor.getCopy();
+  assertTrue(visitor.hasTransformations());
+  assertTrue(visitor.hasVectorTransformations());
+  assertThat(copy.featureTypeStyles().get(0).getTransformation(),instanceOf(Function.class));
+  Function txCopy=(Function)copy.featureTypeStyles().get(0).getTransformation();
+  assertEquals("ras:Contour",txCopy.getName());
+}

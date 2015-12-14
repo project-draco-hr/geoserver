@@ -1,0 +1,36 @@
+{
+  UTFGridEntries entries=getEntries();
+  PrintWriter pw=new PrintWriter(out);
+  pw.println("{");
+  pw.println("\"grid\": [");
+  List<UTFGridEntry> encodedEntries=writeGrid(pw,image,entries);
+  pw.println("],");
+  pw.println("\"keys\": [");
+  pw.println("  \"\",");
+  for (Iterator<UTFGridEntry> it=encodedEntries.iterator(); it.hasNext(); ) {
+    UTFGridEntry entry=(UTFGridEntry)it.next();
+    pw.print("  \"");
+    pw.print(entry.getKey());
+    if (it.hasNext()) {
+      pw.println("\",");
+    }
+ else {
+      pw.println("\"");
+    }
+  }
+  pw.println("],");
+  pw.println("\"data\": {");
+  for (Iterator<UTFGridEntry> it=encodedEntries.iterator(); it.hasNext(); ) {
+    UTFGridEntry entry=(UTFGridEntry)it.next();
+    pw.print("  \"");
+    pw.print(entry.getKey());
+    pw.print("\" : ");
+    pw.print(getAttributesJson(entry.getFeature()));
+    if (it.hasNext()) {
+      pw.println(",");
+    }
+  }
+  pw.println("}");
+  pw.println("}");
+  pw.flush();
+}
