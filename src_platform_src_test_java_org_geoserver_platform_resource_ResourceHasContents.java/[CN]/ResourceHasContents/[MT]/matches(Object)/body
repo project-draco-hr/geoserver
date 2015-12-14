@@ -1,17 +1,15 @@
 {
   if (item instanceof Resource) {
-    try {
-      InputStream in=((Resource)item).in();
-      try {
-        byte[] result=new byte[contents.length];
-        int len=in.read(result);
-        if (len != contents.length)         return false;
-        if (in.read() != -1)         return false;
-        return Arrays.equals(contents,result);
+    try (InputStream in=((Resource)item).in()){
+      byte[] result=new byte[contents.length];
+      int len=in.read(result);
+      if (len != contents.length) {
+        return false;
       }
-  finally {
-        in.close();
+      if (in.read() != -1) {
+        return false;
       }
+      return Arrays.equals(contents,result);
     }
  catch (    IOException ex) {
       throw new IllegalStateException("Exception while reading resource contents",ex);
