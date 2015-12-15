@@ -1,4 +1,5 @@
 {
+  LOGGER.log(Level.FINEST,query.toString());
   Connection c;
   boolean closeConnection=false;
   try {
@@ -8,11 +9,8 @@
     throw new IllegalStateException("Could not connect to DataSource.",ex);
   }
   try {
-    LOGGER.log(Level.FINEST,query.toString());
-    PreparedStatement stmt=query.toStatement(c);
-    try {
-      ResultSet rs=stmt.executeQuery();
-      try {
+    try (PreparedStatement stmt=query.toStatement(c)){
+      try (ResultSet rs=stmt.executeQuery()){
         if (rs.next()) {
           assert(rs.last());
           InputStream is=field.getValue(rs);
@@ -23,14 +21,8 @@
           return null;
         }
       }
-  finally {
-        rs.close();
-      }
-    }
-  finally {
-      stmt.close();
-    }
-  }
+     }
+   }
  catch (  SQLException ex) {
     throw new IllegalStateException("BlobQuery Failed",ex);
   }
