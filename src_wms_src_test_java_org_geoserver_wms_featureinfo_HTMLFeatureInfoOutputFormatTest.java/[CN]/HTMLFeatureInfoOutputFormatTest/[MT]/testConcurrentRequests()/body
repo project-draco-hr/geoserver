@@ -1,0 +1,57 @@
+{
+  FeatureTypeInfo featureType1=getFeatureTypeInfo(MockData.PRIMITIVEGEOFEATURE);
+  List<MapLayerInfo> layers1=Collections.singletonList(new MapLayerInfo(getCatalog().getLayerByName(featureType1.prefixedName())));
+  FeatureCollectionType type1=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  type1.getFeature().add(featureType1.getFeatureSource(null,null).getFeatures());
+  final FeatureTypeInfo featureType2=getFeatureTypeInfo(MockData.BASIC_POLYGONS);
+  List<MapLayerInfo> layers2=Collections.singletonList(new MapLayerInfo(getCatalog().getLayerByName(featureType2.prefixedName())));
+  FeatureCollectionType type2=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  type2.getFeature().add(featureType2.getFeatureSource(null,null).getFeatures());
+  final HTMLFeatureInfoOutputFormat format=new HTMLFeatureInfoOutputFormat(getWMS());
+  format.templateLoader=new GeoServerTemplateLoader(getClass(),getDataDirectory()){
+    @Override public Object findTemplateSource(    String path) throws IOException {
+      String templatePath="empty.ftl";
+      if (path.toLowerCase().contains("content") && (this.resource != null) && this.resource.prefixedName().equals(featureType2.prefixedName())) {
+        templatePath="test_content.ftl";
+      }
+      try {
+        return new File(this.getClass().getResource(templateFolder + templatePath).toURI());
+      }
+ catch (      URISyntaxException e) {
+        return null;
+      }
+    }
+  }
+;
+  int numRequests=50;
+  List<Callable<String>> tasks=new ArrayList<>(numRequests);
+  for (int i=0; i < numRequests; i++) {
+    final GetFeatureInfoRequest request=new GetFeatureInfoRequest();
+    request.setQueryLayers(((i % 2) == 0) ? layers1 : layers2);
+    final FeatureCollectionType type=(((i % 2) == 0) ? type1 : type2);
+    tasks.add(new Callable<String>(){
+      @Override public String call() throws Exception {
+        ByteArrayOutputStream output=new ByteArrayOutputStream();
+        format.write(type,request,output);
+        return new String(output.toByteArray());
+      }
+    }
+);
+  }
+  ExecutorService executor=Executors.newFixedThreadPool(8);
+  try {
+    List<Future<String>> futures=executor.invokeAll(tasks);
+    for (int i=0; i < numRequests; i++) {
+      String info=futures.get(i).get();
+      if ((i % 2) == 0) {
+        assertEquals("",info);
+      }
+ else {
+        assertNotEquals("",info);
+      }
+    }
+  }
+  finally {
+    executor.shutdown();
+  }
+}
