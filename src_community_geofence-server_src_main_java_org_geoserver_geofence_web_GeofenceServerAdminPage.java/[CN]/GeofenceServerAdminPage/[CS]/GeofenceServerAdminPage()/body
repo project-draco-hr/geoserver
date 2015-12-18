@@ -1,0 +1,54 @@
+{
+  add(new AjaxLink<Object>("addNew"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      setResponsePage(new GeofenceAdminRulePage(rulesModel.newRule(),rulesModel));
+    }
+  }
+);
+  add(remove=new AjaxLink<Object>("removeSelected"){
+    @Override public void onClick(    AjaxRequestTarget target){
+      rulesModel.remove(rulesPanel.getSelection());
+      target.addComponent(rulesPanel);
+    }
+  }
+);
+  remove.setOutputMarkupId(true);
+  remove.setEnabled(false);
+  add(rulesPanel=new GeoServerTablePanel<ShortAdminRule>("rulesPanel",rulesModel=new GeofenceAdminRulesModel(),true){
+    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<ShortAdminRule> property){
+      if (property == GeofenceAdminRulesModel.BUTTONS) {
+        return new ButtonPanel(id,(ShortAdminRule)itemModel.getObject());
+      }
+      return null;
+    }
+    @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
+      remove.setEnabled(rulesPanel.getSelection().size() > 0);
+      target.addComponent(remove);
+    }
+  }
+);
+  rulesPanel.add(CSSPackageResource.getHeaderContribution(new WebTheme()));
+  rulesPanel.add(new DragSource(Operation.MOVE).drag("tr"));
+  rulesPanel.add(new DropTarget(Operation.MOVE){
+    public void onDrop(    AjaxRequestTarget target,    Transfer transfer,    Location location){
+      if (location == null || !(location.getComponent().getDefaultModel().getObject() instanceof ShortAdminRule)) {
+        return;
+      }
+      ShortAdminRule movedRule=transfer.getData();
+      ShortAdminRule targetRule=(ShortAdminRule)location.getComponent().getDefaultModel().getObject();
+      if (movedRule.getId().equals(targetRule.getId())) {
+        return;
+      }
+      if (movedRule.getPriority() < targetRule.getPriority()) {
+        movedRule.setPriority(targetRule.getPriority() + 1);
+      }
+ else {
+        movedRule.setPriority(targetRule.getPriority());
+      }
+      rulesModel.save(movedRule);
+      doReturn(GeofenceServerAdminPage.class);
+    }
+  }
+.dropCenter("tr"));
+  rulesPanel.setOutputMarkupId(true);
+}
