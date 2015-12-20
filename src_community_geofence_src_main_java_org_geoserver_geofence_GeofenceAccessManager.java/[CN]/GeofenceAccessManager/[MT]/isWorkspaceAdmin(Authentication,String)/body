@@ -1,0 +1,21 @@
+{
+  LOGGER.log(Level.FINE,"Getting admin auth for Workspace {0}",workspaceName);
+  RuleFilter ruleFilter=new RuleFilter(RuleFilter.SpecialFilterType.ANY);
+  ruleFilter.setInstance(configurationManager.getConfiguration().getInstanceName());
+  ruleFilter.setWorkspace(workspaceName);
+  ruleFilter.setUser(user.getName());
+  String sourceAddress=retrieveCallerIpAddress();
+  if (sourceAddress != null) {
+    ruleFilter.setSourceAddress(sourceAddress);
+  }
+ else {
+    LOGGER.log(Level.WARNING,"No source IP address found");
+    ruleFilter.setSourceAddress(RuleFilter.SpecialFilterType.DEFAULT);
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"AdminAuth filter: {0}",ruleFilter);
+  }
+  AccessInfo auth=rules.getAdminAuthorization(ruleFilter);
+  LOGGER.log(Level.FINE,"Admin auth for User:{0} Workspace:{1}: {2}",new Object[]{user.getName(),workspaceName,auth.getAdminRights()});
+  return auth.getAdminRights();
+}

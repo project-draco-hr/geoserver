@@ -5,7 +5,9 @@
       LOGGER.log(Level.FINE,"Admin level access, returning " + "full rights for workspace {0}",workspace.getName());
       return new WorkspaceAccessLimits(DEFAULT_CATALOG_MODE,true,true);
     }
-    return new WorkspaceAccessLimits(DEFAULT_CATALOG_MODE,true,configurationManager.getConfiguration().isGrantWriteToWorkspacesToAuthenticatedUsers());
+    boolean canWrite=configurationManager.getConfiguration().isGrantWriteToWorkspacesToAuthenticatedUsers();
+    boolean canAdmin=isWorkspaceAdmin(user,workspace.getName());
+    return new WorkspaceAccessLimits(DEFAULT_CATALOG_MODE,true,canWrite,canAdmin);
   }
   return new WorkspaceAccessLimits(DEFAULT_CATALOG_MODE,true,false);
 }
