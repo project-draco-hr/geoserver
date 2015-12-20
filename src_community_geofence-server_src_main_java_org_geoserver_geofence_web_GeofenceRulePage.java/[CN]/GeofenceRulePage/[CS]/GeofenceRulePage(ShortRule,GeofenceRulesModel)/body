@@ -1,60 +1,98 @@
 {
-  final Form<ShortRule> form=new Form<ShortRule>("form",new CompoundPropertyModel<ShortRule>(rule));
+  RuleFormData ruleFormData=new RuleFormData();
+  ruleFormData.rule=rule;
+  final RuleLimits ruleLimits=rules.getRulesLimits(rule.getId());
+  if (ruleLimits == null) {
+    ruleFormData.ruleLimits=new RuleLimits();
+  }
+ else {
+    ruleFormData.ruleLimits=ruleLimits;
+    ruleFormData.allowedArea=getAllowedAreaAsString(ruleLimits);
+  }
+  CompoundPropertyModel ruleFormModel=new CompoundPropertyModel<RuleFormData>(ruleFormData);
+  final Form<RuleFormData> form=new Form<>("form",ruleFormModel);
   add(form);
-  form.add(new TextField<Integer>("priority").setRequired(true));
-  form.add(roleChoice=new DropDownChoice<String>("roleName",getRoleNames()));
+  form.add(new TextField<>("priority",ruleFormModel.bind("rule.priority")).setRequired(true));
+  form.add(roleChoice=new DropDownChoice<>("roleName",ruleFormModel.bind("rule.roleName"),getRoleNames()));
   roleChoice.add(new OnChangeAjaxBehavior(){
     private static final long serialVersionUID=-2880886409750911044L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
       userChoice.setChoices(getUserNames(roleChoice.getConvertedInput()));
-      ((ShortRule)form.getModelObject()).setUserName(null);
+      form.getModelObject().rule.setUserName(null);
       userChoice.modelChanged();
       target.addComponent(userChoice);
     }
   }
 );
   roleChoice.setNullValid(true);
-  form.add(userChoice=new DropDownChoice<String>("userName",getUserNames(rule.getRoleName())));
+  form.add(userChoice=new DropDownChoice<>("userName",ruleFormModel.bind("rule.userName"),getUserNames(rule.getRoleName())));
   userChoice.setOutputMarkupId(true);
   userChoice.setNullValid(true);
-  form.add(serviceChoice=new DropDownChoice<String>("service",getServiceNames()));
+  form.add(serviceChoice=new DropDownChoice<>("service",ruleFormModel.bind("rule.service"),getServiceNames()));
   serviceChoice.add(new OnChangeAjaxBehavior(){
     private static final long serialVersionUID=-5925784823433092831L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
       requestChoice.setChoices(getOperationNames(serviceChoice.getConvertedInput()));
-      ((ShortRule)form.getModelObject()).setRequest(null);
+      form.getModelObject().rule.setRequest(null);
       requestChoice.modelChanged();
       target.addComponent(requestChoice);
     }
   }
 );
   serviceChoice.setNullValid(true);
-  form.add(requestChoice=new DropDownChoice<String>("request",getOperationNames(rule.getService()),new CaseConversionRenderer()));
+  form.add(requestChoice=new DropDownChoice<>("request",ruleFormModel.bind("rule.request"),getOperationNames(rule.getService()),new CaseConversionRenderer()));
   requestChoice.setOutputMarkupId(true);
   requestChoice.setNullValid(true);
-  form.add(workspaceChoice=new DropDownChoice<String>("workspace",getWorkspaceNames()));
+  form.add(workspaceChoice=new DropDownChoice<>("workspace",ruleFormModel.bind("rule.workspace"),getWorkspaceNames()));
   workspaceChoice.add(new OnChangeAjaxBehavior(){
     private static final long serialVersionUID=732177308220189475L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
       layerChoice.setChoices(getLayerNames(workspaceChoice.getConvertedInput()));
-      ((ShortRule)form.getModelObject()).setLayer(null);
+      form.getModelObject().rule.setLayer(null);
       layerChoice.modelChanged();
       target.addComponent(layerChoice);
     }
   }
 );
   workspaceChoice.setNullValid(true);
-  form.add(layerChoice=new DropDownChoice<String>("layer",getLayerNames(rule.getWorkspace())));
+  form.add(layerChoice=new DropDownChoice<>("layer",ruleFormModel.bind("rule.layer"),getLayerNames(rule.getWorkspace())));
   layerChoice.setOutputMarkupId(true);
   layerChoice.setNullValid(true);
-  form.add(grantTypeChoice=new DropDownChoice<GrantType>("access",Arrays.asList(GrantType.values()),new GrantTypeRenderer()));
+  form.add(grantTypeChoice=new DropDownChoice<>("access",ruleFormModel.bind("rule.access"),Arrays.asList(GrantType.values()),new GrantTypeRenderer()));
   grantTypeChoice.setRequired(true);
+  grantTypeChoice.add(new OnChangeAjaxBehavior(){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      if (grantTypeChoice.getConvertedInput().equals(GrantType.LIMIT)) {
+        allowedAreaLabel.setVisible(true);
+        allowedArea.setVisible(true);
+      }
+ else {
+        allowedAreaLabel.setVisible(false);
+        allowedArea.setVisible(false);
+      }
+      target.addComponent(allowedAreaLabel);
+      target.addComponent(allowedArea);
+    }
+  }
+);
+  form.add(allowedAreaLabel=new Label("allowedAreaLabel",new ResourceModel("allowedArea","Allow area")));
+  allowedAreaLabel.setVisible(form.getModelObject().rule.getAccess() != null && form.getModelObject().rule.getAccess().equals(GrantType.LIMIT));
+  allowedAreaLabel.setOutputMarkupId(true);
+  allowedAreaLabel.setOutputMarkupPlaceholderTag(true);
+  form.add(allowedArea=new TextArea<>("allowedArea",ruleFormModel.bind("allowedArea")));
+  allowedArea.setConvertedInput(form.getModelObject().allowedArea);
+  allowedArea.setVisible(form.getModelObject().rule.getAccess() != null && form.getModelObject().rule.getAccess().equals(GrantType.LIMIT));
+  allowedArea.setOutputMarkupId(true);
+  allowedArea.setOutputMarkupPlaceholderTag(true);
   form.add(new SubmitLink("save"){
     private static final long serialVersionUID=3735176778941168701L;
     @Override public void onSubmit(){
-      ShortRule rule=(ShortRule)getForm().getModelObject();
+      RuleFormData ruleFormData=(RuleFormData)getForm().getModelObject();
       try {
-        rules.save(rule);
+        rules.save(ruleFormData.rule);
+        if (ruleFormData.rule.getAccess().equals(GrantType.LIMIT)) {
+          rules.save(ruleFormData.rule.getId(),parseAllowedArea(ruleFormData.allowedArea));
+        }
         doReturn(GeofenceServerPage.class);
       }
  catch (      DuplicateKeyException e) {
