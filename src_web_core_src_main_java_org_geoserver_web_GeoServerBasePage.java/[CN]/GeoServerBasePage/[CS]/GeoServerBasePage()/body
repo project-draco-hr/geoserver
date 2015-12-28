@@ -4,15 +4,7 @@
   for (  HeaderContribution csscontrib : cssContribs) {
     try {
       if (csscontrib.appliesTo(this)) {
-        ResourceReference ref=csscontrib.getCSS();
-        if (ref != null) {
-          add(HeaderContributor.forCss(ref));
-        }
-        ref=csscontrib.getJavaScript();
-        if (ref != null) {
-          add(HeaderContributor.forJavaScript(ref));
-        }
-        ref=csscontrib.getFavicon();
+        ResourceReference ref=csscontrib.getFavicon();
         if (ref != null) {
           faviconReference=ref;
         }
@@ -23,9 +15,9 @@
     }
   }
   if (faviconReference == null) {
-    faviconReference=new ResourceReference(GeoServerBasePage.class,"favicon.ico");
+    faviconReference=new PackageResourceReference(GeoServerBasePage.class,"favicon.ico");
   }
-  String faviconUrl=RequestCycle.get().urlFor(faviconReference).toString();
+  String faviconUrl=RequestCycle.get().urlFor(faviconReference,null).toString();
   add(new ExternalLink("faviconLink",faviconUrl,null));
   add(new Label("pageTitle",getPageTitle()));
   WebMarkupContainer loginForm=new WebMarkupContainer("loginform");
@@ -40,30 +32,30 @@
   add(new BookmarkablePageLink("home",GeoServerHomePage.class).add(new Label("label",new StringResourceModel("home",(Component)null,null))));
   DeveloperToolbar devToolbar=new DeveloperToolbar("devButtons");
   add(devToolbar);
-  devToolbar.setVisible(Application.DEVELOPMENT.equalsIgnoreCase(getApplication().getConfigurationType()));
+  devToolbar.setVisible(RuntimeConfigurationType.DEVELOPMENT.equals(getApplication().getConfigurationType()));
   final Map<Category,List<MenuPageInfo>> links=splitByCategory(filterByAuth(getGeoServerApplication().getBeansOfType(MenuPageInfo.class)));
   List<MenuPageInfo> standalone=links.containsKey(null) ? links.get(null) : new ArrayList<MenuPageInfo>();
   links.remove(null);
-  List<Category> categories=new ArrayList(links.keySet());
+  List<Category> categories=new ArrayList<>(links.keySet());
   Collections.sort(categories);
-  add(new ListView("category",categories){
-    public void populateItem(    ListItem item){
-      Category category=(Category)item.getModelObject();
+  add(new ListView<Category>("category",categories){
+    public void populateItem(    ListItem<Category> item){
+      Category category=item.getModelObject();
       item.add(new Label("category.header",new StringResourceModel(category.getNameKey(),(Component)null,null)));
-      item.add(new ListView("category.links",links.get(category)){
-        public void populateItem(        ListItem item){
-          MenuPageInfo info=(MenuPageInfo)item.getModelObject();
-          BookmarkablePageLink link=new BookmarkablePageLink("link",info.getComponentClass());
-          link.add(new AttributeModifier("title",true,new StringResourceModel(info.getDescriptionKey(),(Component)null,null)));
+      item.add(new ListView<MenuPageInfo>("category.links",links.get(category)){
+        public void populateItem(        ListItem<MenuPageInfo> item){
+          MenuPageInfo info=item.getModelObject();
+          BookmarkablePageLink<Page> link=new BookmarkablePageLink<>("link",info.getComponentClass());
+          link.add(AttributeModifier.replace("title",new StringResourceModel(info.getDescriptionKey(),(Component)null,null)));
           link.add(new Label("link.label",new StringResourceModel(info.getTitleKey(),(Component)null,null)));
           Image image;
           if (info.getIcon() != null) {
-            image=new Image("link.icon",new ResourceReference(info.getComponentClass(),info.getIcon()));
+            image=new Image("link.icon",new PackageResourceReference(info.getComponentClass(),info.getIcon()));
           }
  else {
-            image=new Image("link.icon",new ResourceReference(GeoServerBasePage.class,"img/icons/silk/wrench.png"));
+            image=new Image("link.icon",new PackageResourceReference(GeoServerBasePage.class,"img/icons/silk/wrench.png"));
           }
-          image.add(new AttributeModifier("alt",true,new ParamResourceModel(info.getTitleKey(),null)));
+          image.add(AttributeModifier.replace("alt",new ParamResourceModel(info.getTitleKey(),null)));
           link.add(image);
           item.add(link);
         }
@@ -72,11 +64,11 @@
     }
   }
 );
-  add(new ListView("standalone",standalone){
-    public void populateItem(    ListItem item){
-      MenuPageInfo info=(MenuPageInfo)item.getModelObject();
-      BookmarkablePageLink link=new BookmarkablePageLink("link",info.getComponentClass());
-      link.add(new AttributeModifier("title",true,new StringResourceModel(info.getDescriptionKey(),(Component)null,null)));
+  add(new ListView<MenuPageInfo>("standalone",standalone){
+    public void populateItem(    ListItem<MenuPageInfo> item){
+      MenuPageInfo info=item.getModelObject();
+      BookmarkablePageLink<Page> link=new BookmarkablePageLink<>("link",info.getComponentClass());
+      link.add(AttributeModifier.replace("title",new StringResourceModel(info.getDescriptionKey(),(Component)null,null)));
       link.add(new Label("link.label",new StringResourceModel(info.getTitleKey(),(Component)null,null)));
       item.add(link);
     }
@@ -84,7 +76,7 @@
 );
   add(feedbackPanel=new FeedbackPanel("feedback"));
   feedbackPanel.setOutputMarkupId(true);
-  add(new Image("ajaxFeedbackImage",new ResourceReference(GeoServerBasePage.class,"img/ajax-loader.gif")));
+  add(new Image("ajaxFeedbackImage",new PackageResourceReference(GeoServerBasePage.class,"img/ajax-loader.gif")));
   add(new WebMarkupContainer(HEADER_PANEL));
   add(new Label("gbpTitle",new LoadableDetachableModel<String>(){
     @Override protected String load(){
