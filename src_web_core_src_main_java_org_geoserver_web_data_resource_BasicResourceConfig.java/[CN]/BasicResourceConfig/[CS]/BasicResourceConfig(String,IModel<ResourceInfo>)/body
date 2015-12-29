@@ -1,0 +1,39 @@
+{
+  super(id,model);
+  TextField<String> name=new TextField<String>("name");
+  name.setRequired(true);
+  add(name);
+  add(new CheckBox("enabled"));
+  add(new CheckBox("advertised"));
+  add(new TextField<String>("title"));
+  add(new TextArea<String>("abstract"));
+  add(new KeywordsEditor("keywords",LiveCollectionModel.list(new PropertyModel<List<KeywordInfo>>(model,"keywords"))));
+  add(new MetadataLinkEditor("metadataLinks",model));
+  add(new DataLinkEditor("dataLinks",model));
+  final Form<ResourceInfo> refForm=new Form<ResourceInfo>("referencingForm");
+  add(refForm);
+  PropertyModel<ReferencedEnvelope> nativeBBoxModel=new PropertyModel<ReferencedEnvelope>(model,"nativeBoundingBox");
+  final EnvelopePanel nativeBBox=new EnvelopePanel("nativeBoundingBox",nativeBBoxModel);
+  nativeBBox.setOutputMarkupId(true);
+  refForm.add(nativeBBox);
+  refForm.add(computeNativeBoundsLink(refForm,nativeBBox));
+  final EnvelopePanel latLonPanel=new EnvelopePanel("latLonBoundingBox",new PropertyModel<ReferencedEnvelope>(model,"latLonBoundingBox"));
+  latLonPanel.setOutputMarkupId(true);
+  latLonPanel.setRequired(true);
+  refForm.add(latLonPanel);
+  refForm.add(computeLatLonBoundsLink(refForm,nativeBBox,latLonPanel));
+  CRSPanel nativeCRS=new CRSPanel("nativeSRS",new PropertyModel<CoordinateReferenceSystem>(model,"nativeCRS"));
+  nativeCRS.setReadOnly(true);
+  refForm.add(nativeCRS);
+  declaredCRS=new CRSPanel("declaredSRS",new SRSToCRSModel(new PropertyModel<String>(model,"sRS")));
+  declaredCRS.setRequired(true);
+  refForm.add(declaredCRS);
+  refForm.add(computeBoundsFromSRS(refForm,nativeBBox));
+  projectionPolicy=new DropDownChoice<ProjectionPolicy>("srsHandling",new PropertyModel<ProjectionPolicy>(model,"projectionPolicy"),Arrays.asList(ProjectionPolicy.values()),new ProjectionPolicyRenderer());
+  ResourceInfo ri=(ResourceInfo)model.getObject();
+  if (((ResourceInfo)model.getObject()).getCRS() == null) {
+    ri.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  }
+  refForm.add(projectionPolicy);
+  refForm.add(new ReprojectionIsPossibleValidator(nativeCRS,declaredCRS,projectionPolicy));
+}

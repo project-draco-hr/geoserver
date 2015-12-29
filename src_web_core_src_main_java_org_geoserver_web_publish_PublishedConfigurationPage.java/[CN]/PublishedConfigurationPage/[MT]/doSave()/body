@@ -1,0 +1,22 @@
+{
+  try {
+    doSaveInternal();
+    if (hasErrorMessage()) {
+      return;
+    }
+    for (    Entry<Class<? extends PublishedEditTabPanel<T>>,IModel<?>> e : tabPanelCustomModels.entrySet()) {
+      Class<? extends PublishedEditTabPanel<T>> panelClass=e.getKey();
+      IModel<?> customModel=e.getValue();
+      if (customModel == null) {
+        continue;
+      }
+      PublishedEditTabPanel<?> tabPanel=panelClass.getConstructor(String.class,IModel.class,IModel.class).newInstance("temp",myModel,customModel);
+      tabPanel.save();
+    }
+    onSuccessfulSave();
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.INFO,"Error saving layer",e);
+    error(e.getMessage() == null ? e.toString() : e.getMessage());
+  }
+}

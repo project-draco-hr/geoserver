@@ -1,0 +1,19 @@
+{
+  return new AjaxSubmitLink("computeLatLonFromNativeSRS",refForm){
+    private static final long serialVersionUID=9211250161114770325L;
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      LOGGER.log(Level.FINE,"Computing bounds from native CRS");
+      ResourceInfo resource=(ResourceInfo)BasicResourceConfig.this.getDefaultModelObject();
+      CatalogBuilder cb=new CatalogBuilder(GeoServerApplication.get().getCatalog());
+      ReferencedEnvelope nativeBBox=cb.getBoundsFromCRS(resource);
+      if (nativeBBox != null) {
+        nativeBoundsPanel.setModelObject(nativeBBox);
+      }
+      target.addComponent(nativeBoundsPanel);
+    }
+    @Override public boolean getDefaultFormProcessing(){
+      return false;
+    }
+  }
+;
+}

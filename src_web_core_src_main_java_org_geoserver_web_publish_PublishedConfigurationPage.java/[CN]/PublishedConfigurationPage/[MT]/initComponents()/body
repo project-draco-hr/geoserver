@@ -1,0 +1,83 @@
+{
+  this.tabPanelCustomModels=new LinkedHashMap<Class<? extends PublishedEditTabPanel<T>>,IModel<?>>();
+  add(new Label("publishedinfoname",getPublishedInfo().prefixedName()));
+  Form<T> theForm=new Form<T>("publishedinfo",myModel);
+  add(theForm);
+  List<ITab> tabs=new ArrayList<ITab>();
+  tabs.add(new AbstractTab(new org.apache.wicket.model.ResourceModel("ResourceConfigurationPage.Data")){
+    private static final long serialVersionUID=1L;
+    public Panel getPanel(    String panelID){
+      return createMainTab(panelID).setInputEnabled(inputEnabled);
+    }
+  }
+);
+  tabs.add(new AbstractTab(new org.apache.wicket.model.ResourceModel("ResourceConfigurationPage.Publishing")){
+    private static final long serialVersionUID=1L;
+    public Panel getPanel(    String panelID){
+      return new PublishingEditTabPanel(panelID).setInputEnabled(inputEnabled);
+    }
+  }
+);
+  List<PublishedEditTabPanelInfo> tabPanels=getGeoServerApplication().getBeansOfType(PublishedEditTabPanelInfo.class);
+  Collections.sort(tabPanels,new Comparator<PublishedEditTabPanelInfo>(){
+    public int compare(    PublishedEditTabPanelInfo o1,    PublishedEditTabPanelInfo o2){
+      Integer order1=o1.getOrder() >= 0 ? o1.getOrder() : Integer.MAX_VALUE;
+      Integer order2=o2.getOrder() >= 0 ? o2.getOrder() : Integer.MAX_VALUE;
+      return order1.compareTo(order2);
+    }
+  }
+);
+  for (  PublishedEditTabPanelInfo ttabPanelInfo : tabPanels) {
+    if (ttabPanelInfo.supports(getPublishedInfo())) {
+      @SuppressWarnings("unchecked") PublishedEditTabPanelInfo<T> tabPanelInfo=(PublishedEditTabPanelInfo<T>)ttabPanelInfo;
+      String titleKey=tabPanelInfo.getTitleKey();
+      IModel<String> titleModel=null;
+      if (titleKey != null) {
+        titleModel=new org.apache.wicket.model.ResourceModel(titleKey);
+      }
+ else {
+        titleModel=new Model<String>(tabPanelInfo.getComponentClass().getSimpleName());
+      }
+      final Class<PublishedEditTabPanel<T>> panelClass=tabPanelInfo.getComponentClass();
+      IModel<?> panelCustomModel=tabPanelInfo.createOwnModel(myModel,isNew);
+      tabPanelCustomModels.put(panelClass,panelCustomModel);
+      tabs.add(new AbstractTab(titleModel){
+        private static final long serialVersionUID=-6637277497986497791L;
+        private final Class<PublishedEditTabPanel<T>> panelType=panelClass;
+        @Override public Panel getPanel(        String panelId){
+          PublishedEditTabPanel<?> tabPanel;
+          final IModel<?> panelCustomModel=tabPanelCustomModels.get(panelType);
+          try {
+            if (panelCustomModel == null) {
+              tabPanel=panelClass.getConstructor(String.class,IModel.class).newInstance(panelId,myModel);
+            }
+ else {
+              tabPanel=panelClass.getConstructor(String.class,IModel.class,IModel.class).newInstance(panelId,myModel,panelCustomModel);
+            }
+          }
+ catch (          Exception e) {
+            throw new WicketRuntimeException(e);
+          }
+          return tabPanel.setInputEnabled(inputEnabled);
+        }
+      }
+);
+    }
+  }
+  tabbedPanel=new TabbedPanel("tabs",tabs){
+    private static final long serialVersionUID=1L;
+    @Override protected WebMarkupContainer newLink(    String linkId,    final int index){
+      return new SubmitLink(linkId){
+        private static final long serialVersionUID=1L;
+        @Override public void onSubmit(){
+          setSelectedTab(index);
+        }
+      }
+;
+    }
+  }
+;
+  theForm.add(tabbedPanel);
+  theForm.add(saveLink());
+  theForm.add(cancelLink());
+}

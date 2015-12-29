@@ -1,0 +1,17 @@
+{
+  LayerGroupEditPage page=new LayerGroupEditPage();
+  tester.startPage(page);
+  tester.assertRenderedPage(LayerGroupEditPage.class);
+  FormTester form=tester.newFormTester("publishedinfo");
+  form.setValue("tabs:panel:name","lakes");
+  form.setValue("tabs:panel:bounds:minX","0");
+  form.setValue("tabs:panel:bounds:minY","0");
+  form.setValue("tabs:panel:bounds:maxX","0");
+  form.setValue("tabs:panel:bounds:maxY","0");
+  form.setValue("tabs:panel:bounds:crsContainer:crs:srs","EPSG:4326");
+  page.lgEntryPanel.getEntries().add(new LayerGroupEntry(getCatalog().getLayerByName(getLayerId(MockData.LAKES)),null));
+  form.submit("save");
+  tester.assertRenderedPage(LayerGroupEditPage.class);
+  assertEquals(1,tester.getMessages(FeedbackMessage.ERROR).size());
+  assertTrue(tester.getMessages(FeedbackMessage.ERROR).get(0).toString().endsWith("Layer group named 'lakes' already exists"));
+}

@@ -1,0 +1,19 @@
+{
+  LayerGroupEditPage page=new LayerGroupEditPage();
+  tester.startPage(page);
+  tester.assertRenderedPage(LayerGroupEditPage.class);
+  tester.assertComponent("publishedinfo:tabs:panel:metadataLinks",MetadataLinkEditor.class);
+  FormTester form=tester.newFormTester("publishedinfo");
+  form.setValue("tabs:panel:name","lakes");
+  form.setValue("tabs:panel:bounds:minX","0");
+  form.setValue("tabs:panel:bounds:minY","0");
+  form.setValue("tabs:panel:bounds:maxX","0");
+  form.setValue("tabs:panel:bounds:maxY","0");
+  form.setValue("tabs:panel:bounds:crsContainer:crs:srs","EPSG:4326");
+  tester.executeAjaxEvent("publishedinfo:tabs:panel:metadataLinks:addlink","onclick");
+  form.setValue("tabs:panel:metadataLinks:container:table:links:0:urlBorder:metadataLinkURL","http://test.me");
+  tester.executeAjaxEvent("publishedinfo:tabs:panel:metadataLinks:addlink","onclick");
+  LayerGroupInfo info=page.getPublishedInfo();
+  assertEquals(2,info.getMetadataLinks().size());
+  assertEquals("http://test.me",info.getMetadataLinks().get(0).getContent());
+}
