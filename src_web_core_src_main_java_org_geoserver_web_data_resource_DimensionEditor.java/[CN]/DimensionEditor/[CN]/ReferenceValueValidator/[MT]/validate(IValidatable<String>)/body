@@ -1,6 +1,6 @@
 {
   if (((strategyModel.getObject() == Strategy.FIXED) || (strategyModel.getObject() == Strategy.NEAREST)) && value.getValue() == null) {
-    error(value,"emptyReferenceValue");
+    value.error(new ValidationError("emptyReferenceValue"));
   }
  else   if (dimension.equals("time")) {
     try {
@@ -9,11 +9,13 @@
  catch (    IllegalArgumentException iae) {
       if (strategyModel.getObject() == Strategy.NEAREST) {
         if (!DimensionDefaultValueSetting.TIME_CURRENT.equalsIgnoreCase(value.getValue())) {
-          error(value,"invalidNearestTimeReferenceValue",Collections.singletonMap("value",(Object)value.getValue()));
+          IValidationError err=new ValidationError("invalidNearestTimeReferenceValue " + Collections.singletonMap("value",(Object)value.getValue()));
+          value.error(err);
         }
       }
  else {
-        error(value,"invalidTimeReferenceValue",Collections.singletonMap("value",(Object)value.getValue()));
+        IValidationError err=new ValidationError("invalidTimeReferenceValue" + Collections.singletonMap("value",(Object)value.getValue()));
+        value.error(err);
       }
     }
   }
@@ -22,7 +24,8 @@
       Double.parseDouble(value.getValue());
     }
  catch (    NumberFormatException nfe) {
-      error(value,"invalidElevationReferenceValue",Collections.singletonMap("value",(Object)value.getValue()));
+      IValidationError err=new ValidationError("invalidElevationReferenceValue " + Collections.singletonMap("value",(Object)value.getValue()));
+      value.error(err);
     }
   }
 }

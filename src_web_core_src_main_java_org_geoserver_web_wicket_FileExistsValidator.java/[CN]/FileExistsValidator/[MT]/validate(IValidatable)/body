@@ -12,7 +12,8 @@
           is=connection.getInputStream();
         }
  catch (        Exception e) {
-          error(validatable,"FileExistsValidator.unreachable",Collections.singletonMap("file",uriSpec));
+          IValidationError err=new ValidationError("FileExistsValidator.unreachable" + e.getLocalizedMessage());
+          validatable.error(err);
         }
  finally {
           IOUtils.closeQuietly(is);
@@ -38,6 +39,7 @@
     relFile=loader.url(uriSpec);
   }
   if (relFile == null || !relFile.exists()) {
-    error(validatable,"FileExistsValidator.fileNotFoundError",Collections.singletonMap("file",uriSpec));
+    IValidationError err=new ValidationError("FileExistsValidator.fileNotFoundError: " + Collections.singletonMap("file",uriSpec));
+    validatable.error(err);
   }
 }
