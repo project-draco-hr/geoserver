@@ -1,24 +1,31 @@
 {
+  Map<String,Object> inputs=event.getInputs();
+  Map<String,Object> outputs=event.getOutputs();
+  if (((inputs == null) || inputs.isEmpty()) && ((outputs == null) || outputs.isEmpty())) {
+    return;
+  }
   String executionId=event.getStatus().getExecutionId();
   ResourceStatus status=resourceStates.get(executionId);
   if (status == null) {
     status=new ResourceStatus();
     resourceStates.put(executionId,status);
   }
-  if (!status.inputChecked) {
-    for (    Object input : event.getInputs().values()) {
-      if (input instanceof GridCoverage) {
-        resourceManager.addResource(new GridCoverageResource(((GridCoverage)input)));
+  Set<String> inputsChecked=status.inputsChecked;
+  if ((inputs != null) && (inputsChecked.size() < inputs.size())) {
+    for (    Entry<String,Object> entry : inputs.entrySet()) {
+      Object input=entry.getValue();
+      if ((input != null) && inputsChecked.add(entry.getKey()) && (input instanceof GridCoverage)) {
+        resourceManager.addResource(new GridCoverageResource((GridCoverage)input));
       }
     }
-    status.inputChecked=true;
   }
-  if (!status.outputChecked && event.getOutputs() != null) {
-    for (    Object output : event.getOutputs().values()) {
-      if (output instanceof GridCoverage) {
-        resourceManager.addResource(new GridCoverageResource(((GridCoverage)output)));
+  Set<String> outputsChecked=status.outputsChecked;
+  if ((outputs != null) && (outputsChecked.size() < outputs.size())) {
+    for (    Entry<String,Object> entry : outputs.entrySet()) {
+      Object output=entry.getValue();
+      if ((output != null) && outputsChecked.add(entry.getKey()) && (output instanceof GridCoverage)) {
+        resourceManager.addResource(new GridCoverageResource((GridCoverage)output));
       }
     }
-    status.outputChecked=true;
   }
 }
