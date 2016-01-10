@@ -1,0 +1,15 @@
+{
+  DiskQuotaMonitor monitor=GeoServerExtensions.bean(DiskQuotaMonitor.class);
+  Field enabledField=FieldUtils.getField(DiskQuotaMonitor.class,"diskQuotaEnabled",true);
+  try {
+    FieldUtils.writeField(enabledField,monitor,false,true);
+    CachedLayerProvider provider=new CachedLayerProvider();
+    List<TileLayer> layers=provider.getItems();
+    for (    TileLayer tileLayer : layers) {
+      assertNull(CachedLayerProvider.QUOTA_USAGE.getPropertyValue(tileLayer));
+    }
+  }
+  finally {
+    FieldUtils.writeField(enabledField,monitor,true,true);
+  }
+}
