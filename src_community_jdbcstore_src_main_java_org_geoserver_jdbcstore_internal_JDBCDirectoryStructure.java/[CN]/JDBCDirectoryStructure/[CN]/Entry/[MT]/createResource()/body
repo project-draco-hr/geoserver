@@ -1,0 +1,30 @@
+{
+  Boolean dir=isDirectory();
+  if (dir != null) {
+    if (dir) {
+      throw new IllegalStateException("Could not create resource at " + toString() + ": already a directory.");
+    }
+ else {
+      return false;
+    }
+  }
+  Entry parent=getParent();
+  try {
+    parent.createDirectory();
+  }
+ catch (  IllegalStateException e) {
+    throw new IllegalStateException("Could not create resource at " + toString() + ": could not create parent directory.",e);
+  }
+  ByteArrayInputStream is=new ByteArrayInputStream(new byte[0]);
+  Integer oid=helper.insertQuery(TABLE_RESOURCES,new Assignment<String>(NAME,getName()),new Assignment<Integer>(PARENT,parent.getOid()),new Assignment<InputStream>(CONTENT,is));
+  try {
+    is.close();
+  }
+ catch (  IOException e) {
+    LOGGER.warning("Failed to close stream: " + toString());
+  }
+  if (oid == null) {
+    throw new IllegalStateException("Did not get OID for new entry " + toString());
+  }
+  return true;
+}

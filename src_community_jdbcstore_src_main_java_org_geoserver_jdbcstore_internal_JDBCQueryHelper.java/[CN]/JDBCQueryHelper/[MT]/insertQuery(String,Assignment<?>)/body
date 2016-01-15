@@ -1,0 +1,24 @@
+{
+  QueryBuilder builder=new QueryBuilder();
+  builder.append("INSERT INTO " + table + "( ");
+{
+    int i=0;
+    for (    Assignment<?> assign : assignments) {
+      if (i++ > 0)       builder.append(", ");
+      builder.append(assign.getField().getFieldName());
+    }
+  }
+  builder.append(") VALUES ( ");
+{
+    int i=0;
+    for (    Assignment<?> assign : assignments) {
+      if (i++ > 0)       builder.append(", ");
+      builder.append("?");
+      assign.addAsParameter(builder);
+    }
+  }
+  builder.append(");");
+  List<Integer> result=anyInsertQuery(builder);
+  assert(result == null || result.size() == 1);
+  return result == null ? null : result.get(0);
+}

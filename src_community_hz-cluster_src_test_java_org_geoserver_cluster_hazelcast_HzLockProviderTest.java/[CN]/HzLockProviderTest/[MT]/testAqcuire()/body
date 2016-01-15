@@ -1,0 +1,16 @@
+{
+  ILock lock=createMock(ILock.class);
+  expect(this.hz.getLock(eq("path1"))).andReturn(lock);
+  expect(lock.isLockedByCurrentThread()).andStubReturn(true);
+  lock.lock();
+  expectLastCall();
+  expect(lock.isLocked()).andReturn(true).times(1);
+  lock.unlock();
+  expectLastCall();
+  replay(lock,hz,cluster);
+  Lock gsLock=lockProvider.acquire("path1");
+  gsLock.release();
+  verify(hz);
+  verify(cluster);
+  verify(lock);
+}

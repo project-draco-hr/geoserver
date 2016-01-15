@@ -1,0 +1,18 @@
+{
+  standardData();
+  JDBCResourceStoreProperties config=getConfig(true,false);
+  JDBCResourceStore store=new JDBCResourceStore(support.getDataSource(),config);
+  store.setLockProvider(new NullLockProvider());
+  Resource r=store.get("FileA");
+  byte[] expected="FileA Contents".getBytes();
+  InputStream in=r.in();
+  try {
+    byte[] result=new byte[expected.length];
+    assertThat(in.read(result),describedAs("file contents same length",equalTo(expected.length)));
+    assertThat(result,equalTo(expected));
+    assertThat(in.read(),describedAs("stream is empty",equalTo(-1)));
+  }
+  finally {
+    in.close();
+  }
+}

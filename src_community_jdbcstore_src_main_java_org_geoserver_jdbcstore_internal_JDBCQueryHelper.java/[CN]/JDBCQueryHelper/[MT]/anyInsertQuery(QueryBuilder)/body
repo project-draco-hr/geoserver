@@ -1,0 +1,20 @@
+{
+  LOGGER.log(Level.FINEST,query.toString());
+  try (Connection c=ds.getConnection()){
+    try (PreparedStatement stmt=query.toStatement(c,Statement.RETURN_GENERATED_KEYS)){
+      if (stmt.executeUpdate() <= 0) {
+        return null;
+      }
+      try (ResultSet rs=stmt.getGeneratedKeys()){
+        List<Integer> list=new ArrayList<Integer>();
+        while (rs.next()) {
+          list.add(rs.getInt(1));
+        }
+        return list;
+      }
+     }
+   }
+ catch (  SQLException ex) {
+    throw new IllegalStateException("InsertQuery Failed",ex);
+  }
+}
