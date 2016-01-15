@@ -1,28 +1,17 @@
 {
-  if (((strategyModel.getObject() == Strategy.FIXED) || (strategyModel.getObject() == Strategy.NEAREST)) && value.getValue() == null) {
+  String stringValue=value.getValue();
+  if (((strategyModel.getObject() == Strategy.FIXED) || (strategyModel.getObject() == Strategy.NEAREST)) && stringValue == null) {
     error(value,"emptyReferenceValue");
   }
  else   if (dimension.equals("time")) {
-    try {
-      DateUtil.parseDateTime(value.getValue());
-    }
- catch (    IllegalArgumentException iae) {
-      if (strategyModel.getObject() == Strategy.NEAREST) {
-        if (!DimensionDefaultValueSetting.TIME_CURRENT.equalsIgnoreCase(value.getValue())) {
-          error(value,"invalidNearestTimeReferenceValue",Collections.singletonMap("value",(Object)value.getValue()));
-        }
-      }
- else {
-        error(value,"invalidTimeReferenceValue",Collections.singletonMap("value",(Object)value.getValue()));
-      }
+    if (!isValidTimeReference(stringValue,strategyModel.getObject())) {
+      String messageKey=strategyModel.getObject() == Strategy.NEAREST ? "invalidNearestTimeReferenceValue" : "invalidTimeReferenceValue";
+      error(value,messageKey,Collections.singletonMap("value",(Object)stringValue));
     }
   }
  else   if (dimension.equals("elevation")) {
-    try {
-      Double.parseDouble(value.getValue());
-    }
- catch (    NumberFormatException nfe) {
-      error(value,"invalidElevationReferenceValue",Collections.singletonMap("value",(Object)value.getValue()));
+    if (!isValidElevationReference(stringValue)) {
+      error(value,"invalidElevationReferenceValue",Collections.singletonMap("value",(Object)stringValue));
     }
   }
 }

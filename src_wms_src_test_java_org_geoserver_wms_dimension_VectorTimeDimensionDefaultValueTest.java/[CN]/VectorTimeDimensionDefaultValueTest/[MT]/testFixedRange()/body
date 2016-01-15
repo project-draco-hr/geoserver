@@ -1,0 +1,12 @@
+{
+  DimensionDefaultValueSetting defaultValueSetting=new DimensionDefaultValueSetting();
+  defaultValueSetting.setStrategyType(Strategy.FIXED);
+  defaultValueSetting.setReferenceValue("P1M/PRESENT");
+  setupFeatureTimeDimension(defaultValueSetting);
+  FeatureTypeInfo timeWithStartEnd=getCatalog().getFeatureTypeByName(TIME_WITH_START_END.getLocalPart());
+  java.util.Date curr=new java.util.Date();
+  Range d=(Range)wms.getDefaultTime(timeWithStartEnd);
+  assertTrue("Returns a valid Default range",d != null);
+  assertDateEquals(curr,(java.util.Date)d.getMaxValue(),MILLIS_IN_MINUTE);
+  assertDateEquals(new Date(curr.getTime() - 30l * MILLIS_IN_DAY),(java.util.Date)d.getMinValue(),60000);
+}

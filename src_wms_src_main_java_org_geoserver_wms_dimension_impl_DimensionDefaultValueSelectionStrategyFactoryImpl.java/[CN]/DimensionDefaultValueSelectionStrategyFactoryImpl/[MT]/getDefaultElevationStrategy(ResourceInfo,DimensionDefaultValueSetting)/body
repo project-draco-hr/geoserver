@@ -1,11 +1,10 @@
 {
   DimensionDefaultValueSelectionStrategy retval=null;
-  String referenceValue=null;
 switch (setting.getStrategyType()) {
 case NEAREST:
 {
       Number refNumber;
-      referenceValue=setting.getReferenceValue();
+      String referenceValue=setting.getReferenceValue();
       if (referenceValue != null) {
         try {
           refNumber=Long.parseLong(referenceValue);
@@ -52,25 +51,20 @@ case MAXIMUM:
 }
 case FIXED:
 {
-Number refNumber;
-referenceValue=setting.getReferenceValue();
+Object refNumber;
+String referenceValue=setting.getReferenceValue();
 if (referenceValue != null) {
   try {
-    refNumber=Long.parseLong(referenceValue);
+    refNumber=singleValue(elevationParser.parse(referenceValue),new Date());
   }
- catch (  NumberFormatException fne) {
-    try {
-      refNumber=Double.parseDouble(referenceValue);
-    }
- catch (    NumberFormatException e) {
-      throw new ServiceException("Unable to parse elevation dimension default value reference '" + referenceValue + "' as long or double",e);
-    }
+ catch (  ParseException e) {
+    throw new ServiceException("Unable to parse elevation dimension default value reference '" + referenceValue + "' as long or double",e);
   }
 }
  else {
   throw new ServiceException("No reference value given for elevation dimension default value 'fixed' strategy");
 }
-retval=fixedValueStrategyFactory.createFixedValueStrategy(refNumber);
+retval=fixedValueStrategyFactory.createFixedValueStrategy(refNumber,referenceValue);
 break;
 }
 }
