@@ -6,7 +6,7 @@
   checkNotNull(tileLayer.getInfo().getId(),"id is null");
   checkNotNull(tileLayer.getInfo().getName(),"name is null");
   final GeoServerTileLayerInfo info=tileLayer.getInfo();
-  lock.writeLock().lock();
+  lock.acquireWriteLock();
   try {
     final String layerId=info.getId();
     boolean exists=pendingModications.containsKey(layerId) || tileLayerCatalog.exists(layerId);
@@ -15,6 +15,6 @@
     layerCache.invalidate(layerId);
   }
   finally {
-    lock.writeLock().unlock();
+    lock.releaseWriteLock();
   }
 }

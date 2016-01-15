@@ -2,7 +2,7 @@
   final GWC mediator=GWC.get();
   final Set<String> deletedNames=Sets.newHashSet();
   final List<GeoServerTileLayerInfo[]> modifications=Lists.newLinkedList();
-  lock.writeLock().lock();
+  lock.acquireWriteLock();
   try {
     for (    String deletedId : pendingDeletes) {
       try {
@@ -29,8 +29,7 @@
     this.pendingDeletes.clear();
   }
   finally {
-    lock.readLock().lock();
-    lock.writeLock().unlock();
+    lock.downgradeToReadLock();
     try {
       for (      String deletedLayerName : deletedNames) {
         try {
@@ -58,7 +57,7 @@
       }
     }
   finally {
-      lock.readLock().unlock();
+      lock.releaseReadLock();
     }
   }
 }
