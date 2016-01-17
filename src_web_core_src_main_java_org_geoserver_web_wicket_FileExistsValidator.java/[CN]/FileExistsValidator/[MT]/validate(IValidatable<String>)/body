@@ -1,5 +1,5 @@
 {
-  String uriSpec=Converters.convert(validatable.getValue(),String.class);
+  String uriSpec=validatable.getValue();
   try {
     URI uri=new URI(uriSpec);
     if (uri.getScheme() != null && !"file".equals(uri.getScheme())) {
@@ -12,7 +12,7 @@
           is=connection.getInputStream();
         }
  catch (        Exception e) {
-          IValidationError err=new ValidationError("FileExistsValidator.unreachable" + e.getLocalizedMessage());
+          IValidationError err=new ValidationError("FileExistsValidator.unreachable").setVariable("file",uriSpec);
           validatable.error(err);
         }
  finally {
@@ -39,7 +39,7 @@
     relFile=loader.url(uriSpec);
   }
   if (relFile == null || !relFile.exists()) {
-    IValidationError err=new ValidationError("FileExistsValidator.fileNotFoundError: " + Collections.singletonMap("file",uriSpec));
+    IValidationError err=new ValidationError("FileExistsValidator.fileNotFoundError").setVariable("file",uriSpec);
     validatable.error(err);
   }
 }
