@@ -1,0 +1,25 @@
+{
+  GeoServerResourceLoader loader=GeoServerApplication.get().getBeanOfType(GeoServerResourceLoader.class);
+  List<String> logProfiles=null;
+  try {
+    Resource logsDirectory=loader.get("logs");
+    if (logsDirectory.getType() == Type.DIRECTORY) {
+      List<Resource> propFiles=Resources.list(logsDirectory,new Filter<Resource>(){
+        @Override public boolean accept(        Resource obj){
+          return obj.name().toLowerCase().endsWith("logging.properties");
+        }
+      }
+);
+      logProfiles=new ArrayList<String>();
+      for (      Resource res : propFiles) {
+        logProfiles.add(res.name());
+      }
+      Collections.sort(logProfiles,String.CASE_INSENSITIVE_ORDER);
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Could not load the list of log configurations from the data directory",e);
+  }
+  if (logProfiles == null || logProfiles.size() == 0)   logProfiles=DEFAULT_LOG_PROFILES;
+  form.add(new ListChoice<String>("log4jConfigFile",new PropertyModel<String>(loggingInfoModel,"level"),logProfiles));
+}

@@ -1,0 +1,24 @@
+{
+  standardData();
+  JDBCResourceStoreProperties config=getConfig(true,false);
+  JDBCResourceStore store=new JDBCResourceStore(support.getDataSource(),config);
+  store.setLockProvider(new NullLockProvider());
+{
+    ResultSet rs=support.getConnection().createStatement().executeQuery("SELECT * from resources where oid = 0");
+    assertThat(rs.next(),describedAs("found root record",is(true)));
+    assertThat(rs.getString("name"),equalTo(""));
+    rs.getInt("parent");
+    assertThat(rs.wasNull(),is(true));
+    assertThat(rs.getBlob("content"),nullValue());
+    assertThat(rs.next(),describedAs("only one root",is(false)));
+  }
+{
+    ResultSet rs=support.getConnection().createStatement().executeQuery("SELECT * from resources where parent = 0 and name='FileA'");
+    assertThat(rs.next(),describedAs("found child FileA",is(true)));
+    assertThat(rs.getString("name"),equalTo("FileA"));
+    assertThat(rs.getInt("parent"),equalTo(0));
+    assertThat(rs.wasNull(),is(false));
+    assertThat(rs.getBinaryStream("content"),not(nullValue()));
+    assertThat(rs.getInt("oid"),not(equalTo(0)));
+  }
+}

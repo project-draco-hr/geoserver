@@ -1,13 +1,12 @@
 {
   DimensionDefaultValueSelectionStrategy retval=null;
-  String referenceValue=null;
   Strategy getStrategyType=setting.getStrategyType();
 switch (getStrategyType) {
 case NEAREST:
 {
       Date refDate;
       String capabilitiesValue=null;
-      referenceValue=setting.getReferenceValue();
+      String referenceValue=setting.getReferenceValue();
       if (referenceValue != null) {
         if (referenceValue.equalsIgnoreCase(DimensionDefaultValueSetting.TIME_CURRENT)) {
           refDate=new Date();
@@ -55,16 +54,16 @@ case MAXIMUM:
 }
 case FIXED:
 {
-Date refDate;
-referenceValue=setting.getReferenceValue();
+Object refDate;
+String referenceValue=setting.getReferenceValue();
 if (referenceValue != null) {
   try {
-    refDate=new Date(DateUtil.parseDateTime(referenceValue));
+    refDate=singleValue(timeParser.parse(referenceValue),new Date());
   }
- catch (  IllegalArgumentException e) {
-    throw new ServiceException("Unable to parse time dimension default value reference '" + referenceValue + "' as date, an ISO 8601 datetime format is expected",e);
+ catch (  ParseException e) {
+    throw new ServiceException("Unable to parse time dimension default value reference '" + referenceValue + "' as date or a date range, an ISO 8601 datetime format is expected",e);
   }
-  retval=fixedValueStrategyFactory.createFixedValueStrategy(refDate);
+  retval=fixedValueStrategyFactory.createFixedValueStrategy(refDate,referenceValue);
 }
  else {
   throw new ServiceException("No reference value given for time dimension default value 'fixed' strategy");

@@ -1,0 +1,11 @@
+{
+  JDBCResourceStoreProperties config=getConfig(true,true);
+  @SuppressWarnings("unused") ResourceStore store=new JDBCResourceStore(support.getDataSource(),config);
+  ResultSet rs=support.getConnection().createStatement().executeQuery("SELECT * from resources where oid = 0");
+  assertThat(rs.next(),describedAs("found root record",is(true)));
+  assertThat(rs.getString("name"),equalTo(""));
+  rs.getInt("parent");
+  assertThat(rs.wasNull(),is(true));
+  assertThat(rs.getBlob("content"),nullValue());
+  assertThat(rs.next(),describedAs("only one root",is(false)));
+}

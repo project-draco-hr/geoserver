@@ -1,0 +1,24 @@
+{
+  Resource res=store.get("DirA");
+  final CheckingResourceListener chkDirA=new CheckingResourceListener(Kind.ENTRY_DELETE), chkDirC=new CheckingResourceListener(Kind.ENTRY_DELETE), chkFileA1=new CheckingResourceListener(Kind.ENTRY_DELETE), chkFileA2=new CheckingResourceListener(Kind.ENTRY_DELETE), chkFileC1=new CheckingResourceListener(Kind.ENTRY_DELETE), chkFileC2=new CheckingResourceListener(Kind.ENTRY_DELETE);
+  watcher.addListener(res,chkDirA);
+  watcher.addListener(res.get("FileA1"),chkFileA1);
+  watcher.addListener(res.get("FileA2"),chkFileA2);
+  watcher.addListener(res.get("DirC"),chkDirC);
+  watcher.addListener(res.get("DirC/FileC1"),chkFileC1);
+  watcher.addListener(res.get("DirC/FileC2"),chkFileC2);
+  List<Event> events=SimpleResourceNotificationDispatcher.createEvents(res,Kind.ENTRY_DELETE);
+  watcher.changed(new ResourceNotification("DirA",Kind.ENTRY_DELETE,System.currentTimeMillis(),events));
+  assertTrue(chkDirA.isChecked());
+  assertTrue(chkFileA1.isChecked());
+  assertTrue(chkFileA2.isChecked());
+  assertTrue(chkDirC.isChecked());
+  assertTrue(chkFileC1.isChecked());
+  assertTrue(chkFileC2.isChecked());
+  assertTrue(watcher.removeListener(res,chkDirA));
+  assertTrue(watcher.removeListener(res.get("FileA1"),chkFileA1));
+  assertTrue(watcher.removeListener(res.get("FileA2"),chkFileA2));
+  assertTrue(watcher.removeListener(res.get("DirC"),chkDirC));
+  assertTrue(watcher.removeListener(res.get("DirC/FileC1"),chkFileC1));
+  assertTrue(watcher.removeListener(res.get("DirC/FileC2"),chkFileC2));
+}

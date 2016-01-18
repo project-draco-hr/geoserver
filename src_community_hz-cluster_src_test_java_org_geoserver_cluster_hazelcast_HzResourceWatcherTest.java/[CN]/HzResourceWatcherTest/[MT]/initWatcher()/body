@@ -1,0 +1,32 @@
+{
+  final Capture<MessageListener<ResourceNotification>> captureTopicListener=new Capture<MessageListener<ResourceNotification>>();
+  final Capture<ResourceNotification> captureTopicPublish=new Capture<ResourceNotification>();
+  final Cluster cluster=createMock(Cluster.class);
+  final ITopic<ResourceNotification> topic=createMock(ITopic.class);
+  final HazelcastInstance hz=createMock(HazelcastInstance.class);
+  final HzCluster hzCluster=createMock(HzCluster.class);
+  expect(hz.getCluster()).andStubReturn(cluster);
+  expect(hz.<ResourceNotification>getTopic(HzResourceNotificationDispatcher.TOPIC_NAME)).andStubReturn(topic);
+  expect(topic.addMessageListener(capture(captureTopicListener))).andReturn("fake-id");
+  topic.publish(EasyMock.capture(captureTopicPublish));
+  expectLastCall().andStubAnswer(new IAnswer<Object>(){
+    @Override public Object answer() throws Throwable {
+      Message<ResourceNotification> message=createMock(Message.class);
+      expect(message.getMessageObject()).andStubReturn(captureTopicPublish.getValue());
+      EasyMock.replay(message);
+      for (      MessageListener<ResourceNotification> listener : captureTopicListener.getValues()) {
+        listener.onMessage(message);
+      }
+      return null;
+    }
+  }
+);
+  expect(hzCluster.isEnabled()).andStubReturn(true);
+  expect(hzCluster.isRunning()).andStubReturn(true);
+  expect(hzCluster.getHz()).andStubReturn(hz);
+  replay(cluster,topic,hz,hzCluster);
+  resourceWatcher=new HzResourceNotificationDispatcher();
+  resourceWatcher.setCluster(hzCluster);
+  resourceWatcher.afterPropertiesSet();
+  return resourceWatcher;
+}

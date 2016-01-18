@@ -1,0 +1,31 @@
+{
+  ResourceResponse rsp=new ResourceResponse();
+  rsp.setWriteCallback(new WriteCallback(){
+    @Override public void writeData(    Attributes attributes) throws IOException {
+      PageParameters pp=attributes.getParameters();
+      int width=pp.get("WIDTH").toInt(400);
+      int height=pp.get("HEIGHT").toInt(200);
+      String bboxStr=pp.get("BBOX").toOptionalString();
+      ByteArrayOutputStream output=null;
+      if (bboxStr != null) {
+        try {
+          CRSAreaOfValidityMapBuilder builder=new CRSAreaOfValidityMapBuilder(width,height);
+          Envelope envelope=parseEnvelope(bboxStr);
+          RenderedImage image=builder.createMapFor(crs,envelope);
+          output=new ByteArrayOutputStream();
+          ImageIO.write(image,"PNG",output);
+        }
+ catch (        Exception e) {
+          output=null;
+          e.printStackTrace();
+        }
+      }
+      final byte[] byteArray=output == null ? null : output.toByteArray();
+      if (byteArray != null) {
+        attributes.getResponse().write(byteArray);
+      }
+    }
+  }
+);
+  return rsp;
+}
