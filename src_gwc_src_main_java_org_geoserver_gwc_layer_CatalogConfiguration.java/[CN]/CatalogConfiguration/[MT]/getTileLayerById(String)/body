@@ -1,6 +1,7 @@
 {
   checkNotNull(layerId,"layer id is null");
   GeoServerTileLayer layer;
+  lock.acquireReadLock();
   try {
     layer=layerCache.get(layerId);
   }
@@ -9,6 +10,9 @@
   }
 catch (  UncheckedExecutionException e) {
     throw propagate(e.getCause());
+  }
+ finally {
+    lock.releaseReadLock();
   }
   return layer;
 }

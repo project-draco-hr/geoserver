@@ -1,4 +1,5 @@
 {
+  int numDecimals=getNumDecimals(featureCollection.getFeature(),gs,gs.getCatalog());
   if (LOGGER.isLoggable(Level.INFO))   LOGGER.info("about to encode JSON");
   WFSInfo wfs=getInfo();
   boolean featureBounding=wfs.isFeatureBounding();
@@ -19,6 +20,7 @@
       outWriter.write(getCallbackFunction() + "(");
     }
     final GeoJSONBuilder jsonWriter=new GeoJSONBuilder(outWriter);
+    jsonWriter.setNumberOfDecimals(numDecimals);
     jsonWriter.object().key("type").value("FeatureCollection");
     if (featureCount != null) {
       jsonWriter.key("totalFeatures").value(featureCount);
@@ -60,14 +62,6 @@
           }
           jsonWriter.key("geometry");
           Geometry aGeom=(Geometry)feature.getDefaultGeometry();
-          if (aGeom == null) {
-            for (int j=0; j < types.size() && aGeom == null; j++) {
-              Object value=feature.getAttribute(j);
-              if (value != null && value instanceof Geometry) {
-                aGeom=(Geometry)value;
-              }
-            }
-          }
           if (aGeom != null) {
             jsonWriter.writeGeom(aGeom);
             hasGeom=true;
@@ -84,23 +78,21 @@
             if (id_option != null && id_option.equals(ad.getLocalName())) {
               continue;
             }
-            if (value != null) {
-              if (value instanceof Geometry) {
-                if (ad.equals(defaultGeomType)) {
-                }
- else {
-                  jsonWriter.key(ad.getLocalName());
-                  jsonWriter.writeGeom((Geometry)value);
-                }
+            if (ad instanceof GeometryDescriptor) {
+              if (ad.equals(defaultGeomType)) {
+              }
+ else               if (value == null) {
+                jsonWriter.key(ad.getLocalName());
+                jsonWriter.value(null);
               }
  else {
                 jsonWriter.key(ad.getLocalName());
-                jsonWriter.value(value);
+                jsonWriter.writeGeom((Geometry)value);
               }
             }
  else {
               jsonWriter.key(ad.getLocalName());
-              jsonWriter.value(null);
+              jsonWriter.value(value);
             }
           }
           ReferencedEnvelope refenv=ReferencedEnvelope.reference(feature.getBounds());

@@ -1,0 +1,15 @@
+{
+  int parentOid=0;
+  for (  String name : path) {
+    Map<String,Object> record=helper.selectQuery(TABLE_RESOURCES,new ChildSelector(parentOid,name),OID,DIRECTORY);
+    if (record == null) {
+      parentOid=helper.insertQuery(TABLE_RESOURCES,new Assignment<String>(NAME,name),new Assignment<Integer>(PARENT,parentOid));
+    }
+ else {
+      if (!(Boolean)record.get(DIRECTORY.getFieldName())) {
+        throw new IllegalStateException("Could not create directory at " + toString() + ": one of its parents exists and is not a directory.");
+      }
+      parentOid=(Integer)record.get(OID.getFieldName());
+    }
+  }
+}

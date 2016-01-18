@@ -1,0 +1,32 @@
+{
+  final int LOOPS=1000;
+  ExecutorService service=Executors.newFixedThreadPool(8);
+  Runnable reloader=new Runnable(){
+    @Override public void run(){
+      config.initialize(gridSetBroker);
+    }
+  }
+;
+  Runnable tileLayerFetcher=new Runnable(){
+    @Override public void run(){
+      config.getTileLayer(layer1.getName());
+      config.getTileLayer(layer2.getName());
+      config.getTileLayer(group1.getName());
+      config.getTileLayer(group2.getName());
+    }
+  }
+;
+  try {
+    List<Future<?>> futures=new ArrayList<>();
+    for (int i=0; i < LOOPS; i++) {
+      futures.add(service.submit(reloader));
+      futures.add(service.submit(tileLayerFetcher));
+    }
+    for (    Future<?> future : futures) {
+      future.get();
+    }
+  }
+  finally {
+    service.shutdown();
+  }
+}

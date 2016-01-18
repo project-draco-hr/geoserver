@@ -1,0 +1,18 @@
+{
+  PGSimpleDataSource ds=new PGSimpleDataSource();
+  ds.setServerName("localhost");
+  ds.setDatabaseName("jdbcstoretest");
+  ds.setPortNumber(5432);
+  ds.setUser("jdbcstore");
+  ds.setPassword("jdbcstore");
+  try (Connection conn=ds.getConnection()){
+    try (Statement stmt=conn.createStatement()){
+      stmt.execute("DROP SCHEMA IF EXISTS public CASCADE;");
+      stmt.execute("CREATE SCHEMA public;");
+      stmt.execute("GRANT ALL ON SCHEMA public TO postgres;");
+      stmt.execute("GRANT ALL ON SCHEMA public TO public;");
+      stmt.execute("COMMENT ON SCHEMA public IS 'standard public schema';");
+    }
+   }
+   return ds;
+}

@@ -1,0 +1,24 @@
+{
+  this(ds,config);
+  this.oldResourceStore=oldResourceStore;
+  if (config.isImport()) {
+    if (oldResourceStore != null) {
+      try {
+        Resource root=oldResourceStore.get("");
+        for (        Resource child : root.list()) {
+          if (!ArrayUtils.contains(config.getIgnoreDirs(),child.name())) {
+            Resources.copy(child,get(child.name()));
+          }
+        }
+        config.setImport(false);
+        config.save();
+      }
+ catch (      IOException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+ else {
+      LOGGER.warning("Cannot import resources: no old resource store available.");
+    }
+  }
+}

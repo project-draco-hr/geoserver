@@ -1,16 +1,18 @@
 {
   if (clipToMapBounds) {
-    Geometry clippingPolygon;
+    Envelope clippingEnvelope;
     if (transformToScreenCoordinates) {
       Rectangle screen=context.paintArea;
       Envelope paintArea=new Envelope(0,screen.getWidth(),0,screen.getHeight());
-      clippingPolygon=JTS.toGeometry(paintArea);
+      paintArea.expandBy(clipBBOXSizeIncreasePixels);
+      clippingEnvelope=paintArea;
     }
  else {
       ReferencedEnvelope renderingArea=context.renderingArea;
-      clippingPolygon=JTS.toGeometry(renderingArea);
+      renderingArea.expandBy(clipBBOXSizeIncreasePixels * context.pixelSizeInTargetCRS);
+      clippingEnvelope=renderingArea;
     }
-    addLast(new Clip(clippingPolygon));
+    addLast(new Clip(clippingEnvelope));
   }
   return this;
 }

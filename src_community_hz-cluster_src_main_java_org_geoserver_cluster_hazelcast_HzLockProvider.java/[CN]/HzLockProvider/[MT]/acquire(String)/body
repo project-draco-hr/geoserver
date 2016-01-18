@@ -1,0 +1,11 @@
+{
+  Preconditions.checkState(cluster.isEnabled(),"Hazelcast cluster is not enabled. Either enable it or chose a different lock provider.");
+  Preconditions.checkState(cluster.isRunning(),"Hazelcast cluster is not running");
+  HazelcastInstance clusterInstance=cluster.getHz();
+  LOGGER.info(format("%s - Acquiring distributed lock '%s' (Thread %s)",nodeId(cluster),path,Thread.currentThread().getName()));
+  ILock lock=clusterInstance.getLock(path);
+  lock.lock();
+  LOGGER.info(format("%s - Successfully acquired distributed lock '%s' (Thread %s)",nodeId(cluster),path,Thread.currentThread().getName()));
+  Preconditions.checkState(lock.isLockedByCurrentThread());
+  return new LockAdapter(lock,path,cluster);
+}
