@@ -1,18 +1,19 @@
 {
-  super(id,new Model(new HashMap()));
-  add(new TextField("username",new MapModel(getModel(),"username")));
-  add(new PasswordTextField("password",new MapModel(getModel(),"password")).setRequired(false));
+  super(id,new Model<HashMap<String,Object>>(new HashMap<String,Object>()));
+  add(new TextField<HashMap<String,Object>>("username",new MapModel<HashMap<String,Object>>(getModel().getObject(),"username")));
+  add(new PasswordTextField("password",new MapModel<String>(getModel().getObject(),"password")).setRequired(false));
   add(new AjaxSubmitLink("test"){
+    private static final long serialVersionUID=2373404292655355758L;
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
-      ((FormComponent)TestLDAPConnectionPanel.this.get("username")).processInput();
-      ((FormComponent)TestLDAPConnectionPanel.this.get("password")).processInput();
-      ((FormComponent)LDAPAuthProviderPanel.this.get("serverURL")).processInput();
-      ((FormComponent)LDAPAuthProviderPanel.this.get("useTLS")).processInput();
-      ((FormComponent)LDAPAuthProviderPanel.this.get("userDnPattern")).processInput();
-      ((FormComponent)LDAPAuthProviderPanel.this.get("userFilter")).processInput();
-      ((FormComponent)LDAPAuthProviderPanel.this.get("userFormat")).processInput();
-      String username=(String)((FormComponent)TestLDAPConnectionPanel.this.get("username")).getConvertedInput();
-      String password=(String)((FormComponent)TestLDAPConnectionPanel.this.get("password")).getConvertedInput();
+      ((FormComponent<?>)TestLDAPConnectionPanel.this.get("username")).processInput();
+      ((FormComponent<?>)TestLDAPConnectionPanel.this.get("password")).processInput();
+      ((FormComponent<?>)LDAPAuthProviderPanel.this.get("serverURL")).processInput();
+      ((FormComponent<?>)LDAPAuthProviderPanel.this.get("useTLS")).processInput();
+      ((FormComponent<?>)LDAPAuthProviderPanel.this.get("userDnPattern")).processInput();
+      ((FormComponent<?>)LDAPAuthProviderPanel.this.get("userFilter")).processInput();
+      ((FormComponent<?>)LDAPAuthProviderPanel.this.get("userFormat")).processInput();
+      String username=(String)((FormComponent<?>)TestLDAPConnectionPanel.this.get("username")).getConvertedInput();
+      String password=(String)((FormComponent<?>)TestLDAPConnectionPanel.this.get("password")).getConvertedInput();
       LDAPSecurityServiceConfig ldapConfig=(LDAPSecurityServiceConfig)getForm().getModelObject();
       doTest(ldapConfig,username,password);
       target.add(getPage().get("feedback"));
@@ -30,7 +31,7 @@
           throw new AuthenticationException("Cannot authenticate " + username);
         }
         provider.destroy(null);
-        info(new StringResourceModel(LDAPAuthProviderPanel.class.getSimpleName() + ".connectionSuccessful",null).getObject());
+        info(new StringResourceModel(LDAPAuthProviderPanel.class.getSimpleName() + ".connectionSuccessful").getObject());
       }
  catch (      Exception e) {
         error(e);
