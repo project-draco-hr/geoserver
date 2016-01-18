@@ -1,9 +1,13 @@
 {
   storeId=getCatalog().getStoreByName(workspaceName,storeName,DataStoreInfo.class).getId();
-  Form form=new Form("form",new CompoundPropertyModel(this));
+  Form<CascadedWFSStoredQueryAbstractPage> form=new Form<>("form",new CompoundPropertyModel<>(this));
   form.add(getStoredQueryNameComponent());
   parameterProvider=new StoredQueryParameterAttributeProvider();
   parameters=new GeoServerTablePanel<StoredQueryParameterAttribute>("parameters",parameterProvider){
+    /** 
+ * serialVersionUID 
+ */
+    private static final long serialVersionUID=8282438267732625198L;
     @Override protected Component getComponentForProperty(    String id,    final IModel<StoredQueryParameterAttribute> itemModel,    Property<StoredQueryParameterAttribute> property){
       if (property == ATTR_MAPTYPE) {
         Fragment f=new Fragment(id,"parameterMappingType",CascadedWFSStoredQueryAbstractPage.this);
@@ -11,13 +15,13 @@
         for (        ParameterMappingType pmt : ParameterMappingType.values()) {
           choices.add(pmt);
         }
-        DropDownChoice<ParameterMappingType> choice=new DropDownChoice<ParameterMappingType>("dropdown",new PropertyModel(itemModel,"mappingType"),choices,new ParameterMappingTypeRenderer());
+        DropDownChoice<ParameterMappingType> choice=new DropDownChoice<>("dropdown",new PropertyModel<>(itemModel,"mappingType"),choices,new ParameterMappingTypeRenderer());
         f.add(choice);
         return f;
       }
  else       if (property == ATTR_VALUE) {
         Fragment f=new Fragment(id,"parameterMappingValue",CascadedWFSStoredQueryAbstractPage.this);
-        TextField textField=new TextField("text",new PropertyModel(itemModel,"value"));
+        TextField<String> textField=new TextField<>("text",new PropertyModel<>(itemModel,"value"));
         f.add(textField);
         return f;
       }
@@ -32,12 +36,20 @@
   form.add(parameters);
   add(form);
   form.add(new SubmitLink("save"){
+    /** 
+ * serialVersionUID 
+ */
+    private static final long serialVersionUID=2540349398885832870L;
     @Override public void onSubmit(){
       onSave();
     }
   }
 );
-  form.add(new Link("cancel"){
+  form.add(new Link<Void>("cancel"){
+    /** 
+ * serialVersionUID 
+ */
+    private static final long serialVersionUID=451678049485016709L;
     @Override public void onClick(){
       onCancel();
     }

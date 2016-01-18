@@ -16,13 +16,14 @@
         target.add(styleForm);
       }
     }
-    @Override protected IAjaxCallDecorator getAjaxCallDecorator(){
-      return new AjaxPreprocessingCallDecorator(super.getAjaxCallListener()){
-        @Override public CharSequence preDecorateScript(        CharSequence script){
-          return "var val = event.view.document.gsEditors ? " + "event.view.document.gsEditors." + editor.getTextAreaMarkupId() + ".getValue() : "+ "event.view.document.getElementById(\""+ editor.getTextAreaMarkupId()+ "\").value; "+ "if(val != '' &&"+ "!confirm('"+ new ParamResourceModel("confirmOverwrite",AbstractStylePage.this).getString()+ "')) return false;"+ script;
+    @Override protected void updateAjaxAttributes(    AjaxRequestAttributes attributes){
+      super.updateAjaxAttributes(attributes);
+      attributes.getAjaxCallListeners().add(new AjaxCallListener(){
+        @Override public CharSequence getPrecondition(        Component component){
+          return "var val = event.view.document.gsEditors ? " + "event.view.document.gsEditors." + editor.getTextAreaMarkupId() + ".getValue() : "+ "event.view.document.getElementById(\""+ editor.getTextAreaMarkupId()+ "\").value; "+ "if(val != '' &&"+ "!confirm('"+ new ParamResourceModel("confirmOverwrite",AbstractStylePage.this).getString()+ "')) return false;";
         }
       }
-;
+);
     }
     @Override public boolean getDefaultFormProcessing(){
       return false;
