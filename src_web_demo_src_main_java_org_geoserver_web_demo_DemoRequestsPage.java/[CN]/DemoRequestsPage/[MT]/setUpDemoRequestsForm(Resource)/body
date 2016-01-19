@@ -25,9 +25,9 @@
       String proxyBaseUrl;
       final String baseUrl;
 {
-        WebRequest request=(WebRequest)DemoRequestsPage.this.getRequest();
+        ServletWebRequest request=(ServletWebRequest)DemoRequestsPage.this.getRequest();
         HttpServletRequest httpServletRequest;
-        httpServletRequest=((WebRequest)request).getHttpServletRequest();
+        httpServletRequest=request.getContainerRequest();
         proxyBaseUrl=GeoServerExtensions.getProperty("PROXY_BASE_URL");
         if (StringUtils.isEmpty(proxyBaseUrl)) {
           GeoServer gs=getGeoServer();
@@ -83,7 +83,6 @@
   final ModalWindow responseWindow;
   responseWindow=new ModalWindow("responseWindow");
   add(responseWindow);
-  responseWindow.setPageMapName("demoResponse");
   responseWindow.setCookieName("demoResponse");
   responseWindow.setPageCreator(new ModalWindow.PageCreator(){
     public Page createPage(){
@@ -95,13 +94,14 @@
     @Override public void onSubmit(    AjaxRequestTarget target,    Form testWfsPostForm){
       responseWindow.show(target);
     }
-    @Override protected IAjaxCallDecorator getAjaxCallDecorator(){
-      return new AjaxCallDecorator(){
-        @Override public CharSequence decorateScript(        CharSequence script){
-          return "document.getElementById('requestBody').value = document.gsEditors.requestBody.getValue();" + script;
+    @Override protected void updateAjaxAttributes(    AjaxRequestAttributes attributes){
+      super.updateAjaxAttributes(attributes);
+      attributes.getAjaxCallListeners().add(new AjaxCallListener(){
+        @Override public CharSequence getBeforeHandler(        Component component){
+          return "document.getElementById('requestBody').value = document.gsEditors.requestBody.getValue();";
         }
       }
-;
+);
     }
   }
 );
