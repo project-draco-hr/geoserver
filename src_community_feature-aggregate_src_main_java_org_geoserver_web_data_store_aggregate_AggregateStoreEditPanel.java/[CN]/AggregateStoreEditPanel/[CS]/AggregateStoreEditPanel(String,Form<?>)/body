@@ -1,19 +1,19 @@
 {
   super(componentId,storeEditForm);
-  final IModel model=storeEditForm.getModel();
+  final IModel<?> model=storeEditForm.getModel();
   setDefaultModel(model);
-  final IModel paramsModel=new PropertyModel(model,"connectionParameters");
-  new MapModel(paramsModel,CONFIGURATION.key).setObject(null);
-  add(new TextParamPanel("parallelism",new MapModel(paramsModel,PARALLELISM.key),new ParamResourceModel("parallelism",this),true));
-  add(new CheckBoxParamPanel("tolerateErrors",new MapModel(paramsModel,TOLERATE_CONNECTION_FAILURE.key),new ParamResourceModel("tolerateErrors",this)));
-  configModel=new ConfigModel(new MapModel(paramsModel,CONFIGURATION_XML.key));
+  final IModel<Map<String,Object>> paramsModel=new PropertyModel<Map<String,Object>>(model,"connectionParameters");
+  new MapModel<Object>(paramsModel,CONFIGURATION.key).setObject(null);
+  add(new TextParamPanel("parallelism",new MapModel<Object>(paramsModel,PARALLELISM.key),new ParamResourceModel("parallelism",this),true));
+  add(new CheckBoxParamPanel("tolerateErrors",new MapModel<Object>(paramsModel,TOLERATE_CONNECTION_FAILURE.key),new ParamResourceModel("tolerateErrors",this)));
+  configModel=new ConfigModel(new MapModel<String>(paramsModel,CONFIGURATION_XML.key));
   configs=configModel.getObject();
   if (configs == null) {
     configs=new ArrayList<AggregateTypeConfiguration>();
     configModel.setObject(configs);
   }
   configTable=new GeoServerTablePanel<AggregateTypeConfiguration>("configTable",new ConfigurationListProvider(configs)){
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<AggregateTypeConfiguration> property){
+    @Override protected Component getComponentForProperty(    String id,    IModel<AggregateTypeConfiguration> itemModel,    Property<AggregateTypeConfiguration> property){
       if (property == ConfigurationListProvider.NAME) {
         return editLink(id,itemModel);
       }

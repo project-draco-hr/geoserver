@@ -1,15 +1,15 @@
 {
   final AggregateTypeConfiguration entry=(AggregateTypeConfiguration)itemModel.getObject();
-  ImageAjaxLink link=new ImageAjaxLink(id,new PackageResourceReference(GeoServerApplication.class,"img/icons/silk/delete.png")){
+  ImageAjaxLink<?> link=new ImageAjaxLink<Object>(id,new PackageResourceReference(GeoServerApplication.class,"img/icons/silk/delete.png")){
     @Override protected void onClick(    AjaxRequestTarget target){
       configs.remove(entry);
       target.add(configTable);
     }
-    @Override protected IAjaxCallDecorator getAjaxCallListener(){
-      return new AjaxPreprocessingCallDecorator(null){
-        @Override public CharSequence preDecorateScript(        CharSequence script){
+    protected IAjaxCallListener getAjaxCallListener(){
+      return new AjaxCallListener(){
+        @Override public CharSequence getBeforeHandler(        Component component){
           String msg=new ParamResourceModel("confirmTypeRemoval",AggregateStoreEditPanel.this,entry.getName()).getString();
-          return "if(!confirm('" + msg + "')) return false;"+ script;
+          return "if(!confirm('" + msg + "')) return false;";
         }
       }
 ;
