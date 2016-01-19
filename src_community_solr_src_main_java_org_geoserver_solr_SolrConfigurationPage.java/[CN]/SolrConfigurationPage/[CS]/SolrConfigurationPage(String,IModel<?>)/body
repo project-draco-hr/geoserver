@@ -4,13 +4,16 @@
   DataStoreInfo store=(DataStoreInfo)ri.getStore();
   Map<String,Serializable> connectionparameters=store.getConnectionParameters();
   solrurl=(String)connectionparameters.get("solr_url");
-  final Form solr_form=new Form("solr_form",new CompoundPropertyModel(this));
+  final Form<SolrConfigurationPage> solr_form=new Form<SolrConfigurationPage>("solr_form",new CompoundPropertyModel<SolrConfigurationPage>(this));
   add(solr_form);
   List<SolrAttribute> attributes=fillSolrAttributes((ResourceInfo)model.getObject()).getAttributes();
   final SolrAttributeProvider attProvider=new SolrAttributeProvider(attributes);
   final GeoServerTablePanel<SolrAttribute> solrAttributePanel=getSolrAttributePanel(attProvider);
   solr_form.add(solrAttributePanel);
   AjaxCheckBox checkBox=new AjaxCheckBox("hideEmpty",Model.of(Boolean.TRUE)){
+    /** 
+ */
+    private static final long serialVersionUID=8715377219204904531L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
       attProvider.reload((Boolean)this.getDefaultModelObject());
       target.add(solrAttributePanel);
@@ -20,7 +23,10 @@
   checkBox.setOutputMarkupId(true);
   solr_form.add(checkBox);
   solr_form.add(new AjaxButton("solr_save"){
-    protected void onSubmit(    AjaxRequestTarget target,    Form form){
+    /** 
+ */
+    private static final long serialVersionUID=819555072210390051L;
+    protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       onSave(target);
     }
   }
