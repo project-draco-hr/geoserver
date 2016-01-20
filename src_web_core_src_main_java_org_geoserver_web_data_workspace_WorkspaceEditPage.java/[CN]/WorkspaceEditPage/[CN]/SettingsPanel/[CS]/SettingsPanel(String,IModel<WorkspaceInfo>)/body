@@ -1,10 +1,11 @@
 {
-  super(id,new Model());
+  super(id,model);
   SettingsInfo settings=getGeoServer().getSettings(model.getObject());
   set=new Settings();
   set.enabled=settings != null;
   set.model=settings != null ? new ExistingSettingsModel(wsModel) : new NewSettingsModel(wsModel);
   add(new CheckBox("enabled",new PropertyModel<Boolean>(set,"enabled")).add(new AjaxFormComponentUpdatingBehavior("click"){
+    private static final long serialVersionUID=-7851699665702753119L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
       contactPanel.setVisible(set.enabled);
       otherSettingsPanel.setVisible(set.enabled);
@@ -26,9 +27,9 @@
   otherSettingsPanel.add(new CheckBox("verboseExceptions"));
   otherSettingsPanel.add(new CheckBox("localWorkspaceIncludesPrefix"));
   otherSettingsPanel.add(new TextField<Integer>("numDecimals").add(RangeValidator.minimum(0)));
-  otherSettingsPanel.add(new DropDownChoice("charset",GlobalSettingsPage.AVAILABLE_CHARSETS));
-  otherSettingsPanel.add(new TextField("proxyBaseUrl").add(new UrlValidator()));
-  ListView extensions=SettingsPluginPanelInfo.createExtensions("extensions",set.model,getGeoServerApplication());
+  otherSettingsPanel.add(new DropDownChoice<String>("charset",GlobalSettingsPage.AVAILABLE_CHARSETS));
+  otherSettingsPanel.add(new TextField<String>("proxyBaseUrl").add(new UrlValidator()));
+  ListView<SettingsPluginPanelInfo> extensions=SettingsPluginPanelInfo.createExtensions("extensions",set.model,getGeoServerApplication());
   otherSettingsPanel.add(extensions);
   settingsContainer.add(otherSettingsPanel);
 }

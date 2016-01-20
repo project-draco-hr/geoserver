@@ -3,7 +3,10 @@
   wsModel=new WorkspaceDetachableModel(ws);
   NamespaceInfo ns=getCatalog().getNamespaceByPrefix(ws.getName());
   nsModel=new NamespaceDetachableModel(ns);
-  Form form=new Form("form",new CompoundPropertyModel(nsModel)){
+  Form<NamespaceInfo> form=new Form<NamespaceInfo>("form",new CompoundPropertyModel<NamespaceInfo>(nsModel)){
+    /** 
+ */
+    private static final long serialVersionUID=5140757565172795453L;
     protected void onSubmit(){
       try {
         saveWorkspace();
@@ -17,16 +20,16 @@
 ;
   add(form);
   boolean isFullAdmin=isAuthenticatedAsAdmin();
-  TextField name=new TextField("name",new PropertyModel(wsModel,"name"));
+  TextField<String> name=new TextField<String>("name",new PropertyModel<String>(wsModel,"name"));
   name.setRequired(true);
   name.setEnabled(isFullAdmin);
   name.add(new XMLNameValidator());
   form.add(name);
-  TextField uri=new TextField("uri",new PropertyModel(nsModel,"uRI"),String.class);
+  TextField<String> uri=new TextField<String>("uri",new PropertyModel<String>(nsModel,"uRI"),String.class);
   uri.setRequired(true);
   uri.add(new URIValidator());
   form.add(uri);
-  CheckBox defaultChk=new CheckBox("default",new PropertyModel(this,"defaultWs"));
+  CheckBox defaultChk=new CheckBox("default",new PropertyModel<Boolean>(this,"defaultWs"));
   form.add(defaultChk);
   defaultChk.setEnabled(isFullAdmin);
   add(dialog=new GeoServerDialog("dialog"));
@@ -37,5 +40,5 @@
   SubmitLink submit=new SubmitLink("save");
   form.add(submit);
   form.setDefaultButton(submit);
-  form.add(new BookmarkablePageLink("cancel",WorkspacePage.class));
+  form.add(new BookmarkablePageLink<WorkspacePage>("cancel",WorkspacePage.class));
 }
