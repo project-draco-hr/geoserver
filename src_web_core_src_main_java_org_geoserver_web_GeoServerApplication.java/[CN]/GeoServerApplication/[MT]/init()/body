@@ -9,9 +9,7 @@
   getResourceSettings().getStringResourceLoaders().add(0,new GeoServerStringResourceLoader());
   getDebugSettings().setAjaxDebugModeEnabled(false);
   getApplicationSettings().setPageExpiredErrorPage(GeoServerExpiredPage.class);
-  getSecuritySettings().setCryptFactory(GeoserverWicketEncrypterFactory.get());
-  GeoServerCryptProvider cryptProvider=new GeoServerCryptProvider(getBeanOfType(GeoServerSecurityManager.class));
-  IRequestMapper cryptoMapper=new CryptoMapper(getRootRequestMapper(),cryptProvider);
-  setRootRequestMapper(cryptoMapper);
+  GeoServerSecurityManager securityManager=getBeanOfType(GeoServerSecurityManager.class);
+  setRootRequestMapper(new DynamicCryptoMapper(getRootRequestMapper(),securityManager,this));
   getRequestCycleListeners().add(new CallbackRequestCycleListener(this));
 }
