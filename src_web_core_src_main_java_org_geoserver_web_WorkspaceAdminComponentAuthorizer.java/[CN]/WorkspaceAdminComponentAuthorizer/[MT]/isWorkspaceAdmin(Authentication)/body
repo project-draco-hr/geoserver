@@ -1,0 +1,14 @@
+{
+  Catalog catalog=getSecurityManager().getCatalog();
+  SecureCatalogImpl secureCatalog=GeoServerApplication.get().getBeanOfType(SecureCatalogImpl.class);
+  ResourceAccessManager manager=secureCatalog.getResourceAccessManager();
+  if (manager != null) {
+    for (    WorkspaceInfo workspace : catalog.getWorkspaces()) {
+      WorkspaceAccessLimits accessLimits=manager.getAccessLimits(authentication,workspace);
+      if (accessLimits != null && accessLimits.isAdminable()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

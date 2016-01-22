@@ -18,12 +18,14 @@ synchronized (this) {
       FileOutputStream delegate=new FileOutputStream(temp);
       @Override public void close() throws IOException {
         delegate.close();
-        Lock lock=lock();
-        try {
-          Files.move(temp,actualFile);
-        }
+        if (temp.exists()) {
+          Lock lock=lock();
+          try {
+            Files.move(temp,actualFile);
+          }
   finally {
-          lock.release();
+            lock.release();
+          }
         }
       }
       @Override public void write(      byte[] b,      int off,      int len) throws IOException {

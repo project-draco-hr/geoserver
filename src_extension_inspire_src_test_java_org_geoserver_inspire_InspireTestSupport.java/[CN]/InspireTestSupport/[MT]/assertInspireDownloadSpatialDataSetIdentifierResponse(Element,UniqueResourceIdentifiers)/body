@@ -1,0 +1,31 @@
+{
+  final NodeList spatialDataSetIdentifiers=extendedCapabilities.getElementsByTagNameNS(DLS_NAMESPACE,"SpatialDataSetIdentifier");
+  assertEquals("Number of SpatialDataSetIdentifer elements",ids.size(),spatialDataSetIdentifiers.getLength());
+  final Map<String,UniqueResourceIdentifier> idMap=new HashMap<String,UniqueResourceIdentifier>();
+  for (  UniqueResourceIdentifier id : ids) {
+    idMap.put(id.getCode(),id);
+  }
+  for (int i=0; i < spatialDataSetIdentifiers.getLength(); i++) {
+    Element sdi=(Element)spatialDataSetIdentifiers.item(i);
+    NodeList nodeList=sdi.getElementsByTagNameNS(COMMON_NAMESPACE,"Code");
+    assertEquals("Number of Code elements",1,nodeList.getLength());
+    String code=((Element)nodeList.item(0)).getFirstChild().getNodeValue();
+    assertTrue("Should be an identifier with code " + code,idMap.containsKey(code));
+    nodeList=sdi.getElementsByTagNameNS(COMMON_NAMESPACE,"Namespace");
+    String expectedNamespace=idMap.get(code).getNamespace();
+    if (expectedNamespace == null) {
+      assertEquals("Number of Namespace elements for identifier with code " + code,0,nodeList.getLength());
+    }
+ else {
+      assertEquals("Number of Namespace elements for identifier with code " + code,1,nodeList.getLength());
+      String actualNamespace=((Element)nodeList.item(0)).getFirstChild().getNodeValue();
+      assertEquals("Namespace for identifier with code " + code,expectedNamespace,actualNamespace);
+    }
+    String expectedMetadataUrl=idMap.get(code).getMetadataURL();
+    String actualMetadataUrl=sdi.getAttribute("metadataURL");
+    if (expectedMetadataUrl == null) {
+      expectedMetadataUrl="";
+    }
+    assertEquals("metadataURL attribute for identifer with code" + code,expectedMetadataUrl,actualMetadataUrl);
+  }
+}

@@ -1,7 +1,6 @@
 {
   super(panelId,model);
   final FeatureTypeInfo fti=(FeatureTypeInfo)model.getObject();
-  final ResourceConfigurationPanel current=this;
   final ModalWindow modal=new ModalWindow("modal");
   modal.setInitialWidth(800);
   modal.setTitle(new ParamResourceModel("modalTitle",SolrConfigurationPanel.this));
@@ -23,13 +22,13 @@
     }
   }
 );
-  if (fti.getMetadata().get(SolrLayerConfiguration.KEY) == null) {
+  if (fti.getId() == null) {
     modal.add(new OpenWindowOnLoadBehavior());
   }
   modal.setContent(new SolrConfigurationPage(panelId,model){
-    @Override void done(    AjaxRequestTarget target,    LayerInfo layerInfo,    Boolean isNew){
-      _layerInfo=layerInfo;
-      _isNew=isNew;
+    @Override void done(    AjaxRequestTarget target,    ResourceInfo resource){
+      ResourceConfigurationPage page=(ResourceConfigurationPage)SolrConfigurationPanel.this.getPage();
+      page.updateResource(resource,target);
       modal.close(target);
     }
   }

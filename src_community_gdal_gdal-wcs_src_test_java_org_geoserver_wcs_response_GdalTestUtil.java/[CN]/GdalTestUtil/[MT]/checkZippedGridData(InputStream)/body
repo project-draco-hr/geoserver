@@ -1,0 +1,22 @@
+{
+  try (ZipInputStream zis=new ZipInputStream(input)){
+    boolean gridFileFound=false, auxFileFound=false, prjFileFound=false;
+    ZipEntry entry=null;
+    while ((entry=zis.getNextEntry()) != null) {
+      if (entry.getName().matches("^\\w+.asc.aux.xml$")) {
+        auxFileFound=true;
+      }
+ else       if (entry.getName().matches("^\\w+.prj$")) {
+        prjFileFound=true;
+        checkGridProjection(zis);
+      }
+ else       if (entry.getName().matches("^\\w+.asc$")) {
+        gridFileFound=true;
+        checkGridContent(zis);
+      }
+    }
+    assertTrue(gridFileFound);
+    assertTrue(auxFileFound);
+    assertTrue(prjFileFound);
+  }
+ }

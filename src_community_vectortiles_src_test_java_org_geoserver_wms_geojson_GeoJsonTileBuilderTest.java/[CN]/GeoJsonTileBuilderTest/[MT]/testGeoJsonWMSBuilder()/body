@@ -1,0 +1,16 @@
+{
+  GeoJsonBuilderFactory builderFact=new GeoJsonBuilderFactory();
+  Rectangle screenSize=new Rectangle(256,256);
+  ReferencedEnvelope mapArea=new ReferencedEnvelope(DefaultGeographicCRS.WGS84);
+  Geometry point=geom("POINT(1 10)");
+  Map<String,Object> pointProps=ImmutableMap.<String,Object>of("name","point1");
+  Geometry line=geom("LINESTRING(0 0, 1 1, 2 2)");
+  Map<String,Object> lineProps=ImmutableMap.<String,Object>of("name","line1");
+  GeoJsonWMSBuilder tileBuilder=builderFact.newBuilder(screenSize,mapArea);
+  tileBuilder.addFeature("Points","unused","unused",point,pointProps);
+  tileBuilder.addFeature("Lines","unused","unused",line,lineProps);
+  WMSMapContent mapContent=mock(WMSMapContent.class);
+  RawMap map=tileBuilder.build(mapContent);
+  String json=decode(map);
+  assertEquals("{\"type\":\"FeatureCollection\",\"totalFeatures\":\"unknown\",\"features\":[{\"type\":\"Feature\",\"id\":\"unused\",\"geometry\":{\"type\":\"Point\"," + "\"coordinates\":[1,10]},\"geometry_name\":\"unused\",\"properties\":{\"name\":\"point1\"}},{\"type\":\"Feature\",\"id\":\"unused\",\"geometry\":{\"type\":\"LineString\"," + "\"coordinates\":[[0,0],[1,1],[2,2]]},\"geometry_name\":\"unused\",\"properties\":{\"name\":\"line1\"}}]}",json);
+}

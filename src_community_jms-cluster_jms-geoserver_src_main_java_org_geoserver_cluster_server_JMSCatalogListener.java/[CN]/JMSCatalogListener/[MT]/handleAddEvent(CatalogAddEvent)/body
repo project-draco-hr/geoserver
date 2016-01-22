@@ -15,14 +15,14 @@
     if (info instanceof StyleInfo) {
       final StyleInfo sInfo=((StyleInfo)info);
       WorkspaceInfo wInfo=sInfo.getWorkspace();
-      File styleFile=null;
+      Resource styleFile=null;
       if (wInfo != null) {
-        styleFile=new File(loader.getBaseDirectory() + File.separator + "workspaces"+ File.separator+ wInfo.getName()+ File.separator+ "styles"+ File.separator+ sInfo.getFilename());
+        styleFile=loader.get(File.separator + "workspaces" + File.separator+ wInfo.getName()+ File.separator+ "styles"+ File.separator+ sInfo.getFilename());
       }
  else {
-        styleFile=loader.find("styles/" + sInfo.getFilename());
+        styleFile=loader.get("styles/" + sInfo.getFilename());
       }
-      if (!styleFile.exists() || !styleFile.canRead() || !styleFile.isFile()) {
+      if (!Resources.exists(styleFile) || !Resources.canRead(styleFile) || styleFile.getType() == Type.RESOURCE) {
         throw new IllegalStateException("Unable to find style for event: " + sInfo.toString());
       }
       jmsPublisher.publish(getTopic(),getJmsTemplate(),options,new DocumentFile(styleFile));

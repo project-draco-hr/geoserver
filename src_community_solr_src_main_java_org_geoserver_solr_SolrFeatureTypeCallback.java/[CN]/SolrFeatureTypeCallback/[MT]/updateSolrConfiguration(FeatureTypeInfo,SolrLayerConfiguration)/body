@@ -1,0 +1,18 @@
+{
+  try {
+    DataAccess<? extends FeatureType,? extends Feature> dataStore=catalog.getResourcePool().getDataStore(ft.getStore());
+    if (dataStore instanceof SolrDataStore) {
+      SolrDataStore solr=(SolrDataStore)dataStore;
+      solr.getSolrConfigurations().remove(slc.getLayerName());
+      slc.setLayerName(ft.getName());
+      solr.setSolrConfigurations(slc);
+    }
+  }
+ catch (  IOException e) {
+    throw new CatalogException("Failed to remove layer configuration from data store",e);
+  }
+  FeatureTypeInfo proxy=catalog.getFeatureType(ft.getId());
+  proxy.setNativeName(ft.getName());
+  proxy.getMetadata().put(SolrLayerConfiguration.KEY,slc);
+  catalog.save(proxy);
+}

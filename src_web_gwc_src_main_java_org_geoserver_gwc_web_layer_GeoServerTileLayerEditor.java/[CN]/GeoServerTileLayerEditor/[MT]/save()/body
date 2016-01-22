@@ -14,18 +14,6 @@
   }
   Preconditions.checkState(layer.getId() != null);
   tileLayerInfo.setId(layer.getId());
-  ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
-  if (store != null) {
-    CacheProvider cache=store.getCache();
-    if (cache != null) {
-      if (enableInMemoryCaching.getModelObject()) {
-        cache.removeUncachedLayer(getModel().getObject().getName());
-      }
- else {
-        cache.addUncachedLayer(getModel().getObject().getName());
-      }
-    }
-  }
   final String name;
   final GridSetBroker gridsets=gwc.getGridSetBroker();
   GeoServerTileLayer tileLayer;
@@ -40,6 +28,18 @@
     tileLayer=new GeoServerTileLayer(layerInfo,gridsets,tileLayerInfo);
   }
   tileLayerInfo.setName(name);
+  ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
+  if (store != null) {
+    CacheProvider cache=store.getCache();
+    if (cache != null) {
+      if (enableInMemoryCaching.getModelObject()) {
+        cache.removeUncachedLayer(name);
+      }
+ else {
+        cache.addUncachedLayer(name);
+      }
+    }
+  }
   if (tileLayerExists) {
     gwc.save(tileLayer);
   }

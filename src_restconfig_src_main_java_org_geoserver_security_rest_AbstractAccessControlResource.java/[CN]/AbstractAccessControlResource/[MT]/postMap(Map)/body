@@ -1,0 +1,14 @@
+{
+  validateMap(map);
+  Set<Object> commonKeys=intersection(map);
+  if (commonKeys.isEmpty() == false) {
+    String msg="Already existing rules: " + StringUtils.join(commonKeys.iterator(),",");
+    throw new RestletException(msg,Status.CLIENT_ERROR_CONFLICT);
+  }
+  List<Comparable<?>> toBeAdded=new ArrayList<Comparable<?>>();
+  for (  Object entry : map.entrySet()) {
+    Comparable rule=convertEntryToRule((Entry<String,String>)entry);
+    ruleDAO.addRule(rule);
+  }
+  ruleDAO.storeRules();
+}

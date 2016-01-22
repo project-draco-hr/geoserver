@@ -1,0 +1,17 @@
+{
+  final ServiceInfo serviceInfo=getGeoServer().getService(WMSInfo.class);
+  final MetadataMap metadata=serviceInfo.getMetadata();
+  clearInspireMetadata(metadata);
+  metadata.put(CREATE_EXTENDED_CAPABILITIES.key,true);
+  metadata.put(SERVICE_METADATA_URL.key,"http://foo.com?bar=baz");
+  metadata.put(SERVICE_METADATA_TYPE.key,"application/vnd.iso.19139+xml");
+  metadata.put(LANGUAGE.key,"fre");
+  getGeoServer().save(serviceInfo);
+  final Document dom=getAsDOM(WMS_1_3_0_GETCAPREQUEST);
+  NodeList nodeList=dom.getElementsByTagNameNS(VS_NAMESPACE,"ExtendedCapabilities");
+  assertEquals("Number of INSPIRE ExtendedCapabilities elements",1,nodeList.getLength());
+  String schemaLocation=dom.getDocumentElement().getAttribute("xsi:schemaLocation");
+  assertSchemaLocationContains(schemaLocation,VS_NAMESPACE,VS_SCHEMA);
+  final Element extendedCaps=(Element)nodeList.item(0);
+  assertInspireCommonScenario1Response(extendedCaps,"http://foo.com?bar=baz","application/vnd.iso.19139+xml","fre");
+}

@@ -1,9 +1,15 @@
 {
   GeoServerDataDirectory dd=GeoServerApplication.get().getBeanOfType(GeoServerDataDirectory.class);
-  File layouts=dd.findOrCreateDir("layouts");
-  File legend=new File(layouts,"css-legend.xml");
-  if (!legend.exists()) {
+  Resource layouts=dd.get("layouts");
+  Resource legend=layouts.get("css-legend.xml");
+  if (!Resources.exists(legend)) {
     String legendLayout=IOUtils.toString(OpenLayersMapPanel.class.getResourceAsStream("css-legend.xml"));
-    FileUtils.writeStringToFile(legend,legendLayout);
+    OutputStream os=legend.out();
+    try {
+      IOUtils.write(legendLayout,os);
+    }
+  finally {
+      os.close();
+    }
   }
 }

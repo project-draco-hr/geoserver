@@ -1,0 +1,14 @@
+{
+  DirectDownloadSettings settings=DirectDownloadSettings.getSettingsFromMetadata(info.getMetadata(),csw);
+  long maxSize=settings != null ? settings.getMaxDownloadSize() : 0;
+  long sizeLimit=maxSize * 1024;
+  if (fileList != null && !fileList.isEmpty() && sizeLimit > 0) {
+    long cumulativeSize=0;
+    for (    File file : fileList) {
+      cumulativeSize+=file.length();
+    }
+    if (cumulativeSize > sizeLimit) {
+      throw new CSWException(LIMIT_MESSAGE + "The limit is " + formatBytes(sizeLimit)+ " but the amount of raw data to be downloaded is "+ formatBytes(cumulativeSize));
+    }
+  }
+}

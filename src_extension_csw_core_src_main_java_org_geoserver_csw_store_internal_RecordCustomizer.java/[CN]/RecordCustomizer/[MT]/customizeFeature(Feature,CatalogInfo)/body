@@ -1,0 +1,41 @@
+{
+  CloseableIterator<String> links=null;
+  List<Property> newReferencesList=new ArrayList<Property>();
+  String link=null;
+  try {
+    links=downloadLinkHandler.generateDownloadLinks(resource);
+    if (links == null) {
+      return;
+    }
+    while (links.hasNext()) {
+      link=links.next();
+      newReferencesList.add(createReferencesElement(link));
+    }
+  }
+  finally {
+    if (links != null) {
+      try {
+        links.close();
+      }
+ catch (      IOException e) {
+      }
+    }
+  }
+  List<Property> propertyList=new ArrayList<Property>();
+  List<Property> oldValues=(List<Property>)feature.getValue();
+  Iterator<Property> oldValuesIterator=oldValues.iterator();
+  boolean insertReferences=false;
+  while (oldValuesIterator.hasNext()) {
+    Property prop=oldValuesIterator.next();
+    if (REFERENCES.equalsIgnoreCase(prop.getName().getLocalPart())) {
+      insertReferences=true;
+    }
+ else     if (insertReferences) {
+      newReferencesList.add(createReferencesElement(downloadLinkHandler.extractFullDownloadLink(link)));
+      propertyList.addAll(newReferencesList);
+      insertReferences=false;
+    }
+    propertyList.add(prop);
+  }
+  feature.setValue(propertyList);
+}

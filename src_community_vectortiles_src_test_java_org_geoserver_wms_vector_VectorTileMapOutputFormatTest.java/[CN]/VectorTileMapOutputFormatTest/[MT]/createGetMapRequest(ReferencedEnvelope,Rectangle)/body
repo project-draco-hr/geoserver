@@ -1,0 +1,23 @@
+{
+  GetMapRequest request=new GetMapRequest();
+  request.setBaseUrl("http://localhost:8080/geoserver");
+  List<MapLayerInfo> layers=new ArrayList<>();
+  List<Style> styles=new ArrayList<>();
+  request.setLayers(layers);
+  request.setStyles(styles);
+  request.setBbox((Envelope)requestEnvelope);
+  request.setCrs(requestEnvelope.getCoordinateReferenceSystem());
+  if (requestEnvelope.getCoordinateReferenceSystem() == WGS84) {
+    request.setSRS("EPSG:4326");
+  }
+ else   if (requestEnvelope.getCoordinateReferenceSystem() == WEB_MERCATOR) {
+    request.setSRS("EPSG:3857");
+  }
+ else {
+    throw new IllegalArgumentException("Please use one of the test CRS's");
+  }
+  request.setWidth(renderingArea.width);
+  request.setHeight(renderingArea.height);
+  request.setRawKvp(new HashMap<String,String>());
+  return request;
+}

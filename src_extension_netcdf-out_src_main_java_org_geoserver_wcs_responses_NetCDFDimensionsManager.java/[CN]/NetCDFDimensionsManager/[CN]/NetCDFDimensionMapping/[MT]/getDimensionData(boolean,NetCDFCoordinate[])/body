@@ -1,0 +1,45 @@
+{
+  final String dimensionName=getName();
+  boolean is2DCoordinate=false;
+  if (netCDFCoordinates != null && netCDFCoordinates.length > 0) {
+    for (    NetCDFCoordinate coordinate : netCDFCoordinates) {
+      if (dimensionName.equalsIgnoreCase(coordinate.getDimensionName())) {
+        is2DCoordinate=true;
+        break;
+      }
+    }
+  }
+  if (is2DCoordinate) {
+    return (Array)getDimensionValues().getValues();
+  }
+ else {
+    DimensionBean bean=getCoverageDimension();
+    DimensionType type=bean.getDimensionType();
+    final String dataType=bean.getDatatype();
+    boolean isTime=false;
+    if (type == DimensionType.TIME || NetCDFUtilities.isATime(dataType)) {
+      isTime=true;
+    }
+    final DimensionValues dimensionValues=getDimensionValues();
+    final Set<Object> values=(Set<Object>)dimensionValues.getValues();
+    final int numElements=values.size();
+    final String dimensionDataType=getCoverageDimension().getDatatype();
+    final DataType netCDFDataType=NetCDFUtilities.getNetCDFDataType(dimensionDataType);
+    final int[] dimensionSize=rangeValues ? new int[]{numElements,2} : new int[]{numElements};
+    final Array data=NetCDFUtilities.getArray(dimensionSize,netCDFDataType);
+    final Index index=data.getIndex();
+    final Iterator<Object> valuesIterator=values.iterator();
+    final int indexing[]=new int[rangeValues ? 2 : 1];
+    for (int pos=0; pos < numElements; pos++) {
+      indexing[0]=pos;
+      Object value=valuesIterator.next();
+      data.setObject(index.set(indexing),getValue(value,isTime,false));
+      if (rangeValues) {
+        indexing[1]=1;
+        data.setObject(index.set(indexing),getValue(value,isTime,rangeValues));
+        indexing[1]=0;
+      }
+    }
+    return data;
+  }
+}

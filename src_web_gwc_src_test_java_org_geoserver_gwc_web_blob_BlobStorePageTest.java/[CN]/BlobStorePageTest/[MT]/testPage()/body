@@ -1,0 +1,15 @@
+{
+  BlobStorePage page=new BlobStorePage();
+  tester.startPage(page);
+  tester.assertRenderedPage(BlobStorePage.class);
+  tester.assertComponent("selector",Form.class);
+  tester.assertComponent("selector:typeOfBlobStore",DropDownChoice.class);
+  tester.assertComponent("blobConfigContainer",MarkupContainer.class);
+  tester.assertInvisible("blobConfigContainer:blobStoreForm");
+  DropDownChoice typeOfBlobStore=(DropDownChoice)tester.getComponentFromLastRenderedPage("selector:typeOfBlobStore");
+  assertEquals(1,typeOfBlobStore.getChoices().size());
+  assertEquals("File BlobStore",typeOfBlobStore.getChoices().get(0).toString());
+  executeAjaxEventBehavior("selector:typeOfBlobStore","onchange","0");
+  tester.assertVisible("blobConfigContainer:blobStoreForm");
+  tester.assertComponent("blobConfigContainer:blobStoreForm:blobSpecificPanel",FileBlobStorePanel.class);
+}

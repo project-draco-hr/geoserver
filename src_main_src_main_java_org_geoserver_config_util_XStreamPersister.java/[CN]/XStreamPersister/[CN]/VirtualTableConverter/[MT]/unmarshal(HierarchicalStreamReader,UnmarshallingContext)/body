@@ -1,27 +1,41 @@
 {
-  String name=readValue("name",String.class,reader);
-  String sql=readValue("sql",String.class,reader);
-  VirtualTable vt=new VirtualTable(name,sql,false);
+  String name=null;
+  String sql=null;
+  String geomName=null;
+  Class type=null;
+  int srid=-1;
   List<String> primaryKeys=new ArrayList<String>();
+  List<VirtualTableParameter> params=new ArrayList<VirtualTableParameter>();
+  Boolean escapeSql=false;
   while (reader.hasMoreChildren()) {
     reader.moveDown();
     if (reader.getNodeName().equals("keyColumn")) {
       primaryKeys.add(reader.getValue());
     }
  else     if (reader.getNodeName().equals("geometry")) {
-      String geomName=readValue("name",String.class,reader);
-      Geometries geomType=Geometries.getForName(readValue("type",String.class,reader));
-      Class type=geomType == null ? Geometry.class : geomType.getBinding();
-      int srid=readValue("srid",Integer.class,reader);
-      vt.addGeometryMetadatata(geomName,type,srid);
+      while (reader.hasMoreChildren()) {
+        reader.moveDown();
+        if (reader.getNodeName().equals("name"))         geomName=reader.getValue();
+ else         if (reader.getNodeName().equals("type")) {
+          Geometries geomType=Geometries.getForName(reader.getValue());
+          type=geomType == null ? Geometry.class : geomType.getBinding();
+        }
+ else         if (reader.getNodeName().equals("srid")) {
+          srid=Converters.convert(reader.getValue(),Integer.class);
+        }
+        reader.moveUp();
+      }
     }
  else     if (reader.getNodeName().equals("parameter")) {
-      String pname=readValue("name",String.class,reader);
+      String pname=null;
       String defaultValue=null;
       Validator validator=null;
       while (reader.hasMoreChildren()) {
         reader.moveDown();
-        if (reader.getNodeName().equals("defaultValue")) {
+        if (reader.getNodeName().equals("name")) {
+          pname=reader.getValue();
+        }
+ else         if (reader.getNodeName().equals("defaultValue")) {
           defaultValue=reader.getValue();
         }
  else         if (reader.getNodeName().equals("regexpValidator")) {
@@ -29,13 +43,36 @@
         }
         reader.moveUp();
       }
-      vt.addParameter(new VirtualTableParameter(pname,defaultValue,validator));
+      if (pname == null) {
+        throw new IllegalArgumentException("Expect name but could not find it in property tag");
+      }
+      params.add(new VirtualTableParameter(pname,defaultValue,validator));
     }
  else     if (reader.getNodeName().equals("escapeSql")) {
-      vt.setEscapeSql(Boolean.valueOf(reader.getValue()));
+      escapeSql=Boolean.valueOf(reader.getValue());
+    }
+ else     if (reader.getNodeName().equals("name")) {
+      name=reader.getValue();
+    }
+ else     if (reader.getNodeName().equals("sql")) {
+      sql=reader.getValue();
     }
     reader.moveUp();
   }
+  if (name == null) {
+    throw new IllegalArgumentException("Expect name but could not find it");
+  }
+  if (sql == null) {
+    throw new IllegalArgumentException("Expect sql but could not find it");
+  }
+  VirtualTable vt=new VirtualTable(name,sql,false);
+  if (geomName != null && type != null) {
+    vt.addGeometryMetadatata(geomName,type,srid);
+  }
+  for (  VirtualTableParameter p : params) {
+    vt.addParameter(p);
+  }
+  vt.setEscapeSql(escapeSql);
   vt.setPrimaryKeyColumns(primaryKeys);
   return vt;
 }

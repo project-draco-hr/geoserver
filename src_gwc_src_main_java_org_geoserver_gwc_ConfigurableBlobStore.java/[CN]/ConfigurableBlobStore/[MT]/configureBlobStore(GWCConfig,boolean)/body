@@ -60,6 +60,9 @@
   if (LOGGER.isLoggable(Level.FINEST)) {
     LOGGER.finest("Configuring BlobStore delegate");
   }
+  for (  BlobStoreListener listener : listeners.getListeners()) {
+    delegate.removeListener(listener);
+  }
   if (gwcConfig.isInnerCachingEnabled()) {
     memoryStore.setCacheProvider(cache);
     if (!gwcConfig.isPersistenceEnabled()) {
@@ -72,6 +75,9 @@
   }
  else {
     delegate=defaultStore;
+  }
+  for (  BlobStoreListener listener : listeners.getListeners()) {
+    delegate.addListener(listener);
   }
   configured.getAndSet(true);
 }

@@ -1,0 +1,37 @@
+{
+  LegendInfo legendInfo=legend.getLegendInfo();
+  if (legendInfo == null) {
+    return null;
+  }
+  String onlineResource=legendInfo.getOnlineResource();
+  if (onlineResource == null || onlineResource.isEmpty()) {
+    return null;
+  }
+  URL url=null;
+  try {
+    url=new URL(onlineResource);
+  }
+ catch (  MalformedURLException invalid) {
+    LOGGER.fine("Unable to obtain " + onlineResource);
+    return null;
+  }
+  try {
+    BufferedImage image=ImageIO.read(url);
+    if (image.getWidth() == w && image.getHeight() == h) {
+      return image;
+    }
+    final BufferedImage rescale=ImageUtils.createImage(w,h,(IndexColorModel)null,true);
+    Graphics2D g=(Graphics2D)rescale.getGraphics();
+    g.setColor(new Color(255,255,255,0));
+    g.fillRect(0,0,w,h);
+    double aspect=((double)h) / ((double)image.getHeight());
+    int legendWidth=(int)(aspect * ((double)image.getWidth()));
+    g.drawImage(image,0,0,legendWidth,h,null);
+    g.dispose();
+    return rescale;
+  }
+ catch (  IOException notFound) {
+    LOGGER.log(Level.FINE,"Unable to legend graphic:" + url,notFound);
+    return null;
+  }
+}

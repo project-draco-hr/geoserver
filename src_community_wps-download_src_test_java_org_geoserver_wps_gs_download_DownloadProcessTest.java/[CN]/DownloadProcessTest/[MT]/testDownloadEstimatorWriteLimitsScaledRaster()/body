@@ -1,0 +1,33 @@
+{
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(new DownloadServiceConfiguration(DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.NO_LIMIT,921600,921600,DownloadServiceConfiguration.DEFAULT_COMPRESSION_LEVEL)),getGeoServer());
+  final WPSResourceManager resourceManager=getResourceManager();
+  DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  File nonScaled=downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),null,false,null,null,null,new NullProgressListener());
+  Assert.assertNotNull(nonScaled);
+  GeoTiffReader reader=null;
+  GridCoverage2D gc=null;
+  try {
+    final File[] tiffFiles=extractTIFFFile(nonScaled);
+    Assert.assertNotNull(tiffFiles);
+    Assert.assertTrue(tiffFiles.length > 0);
+    reader=new GeoTiffReader(tiffFiles[0]);
+    gc=reader.read(null);
+    Assert.assertNotNull(gc);
+    int targetSizeX=(int)(gc.getGridGeometry().getGridRange2D().getWidth() * 10);
+    int targetSizeY=(int)(gc.getGridGeometry().getGridRange2D().getHeight() * 10);
+    downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),null,false,null,targetSizeX,targetSizeY,new NullProgressListener());
+    Assert.assertFalse(true);
+  }
+ catch (  ProcessException e) {
+    Assert.assertEquals("org.geotools.process.ProcessException: java.io.IOException: Download Exceeded the maximum HARD allowed size!: java.io.IOException: Download Exceeded the maximum HARD allowed size!",e.getMessage() + (e.getCause() != null ? ": " + e.getCause().getMessage() : ""));
+  }
+ finally {
+    if (gc != null) {
+      CoverageCleanerCallback.disposeCoverage(gc);
+    }
+    if (reader != null) {
+      reader.dispose();
+    }
+    resourceManager.finished(resourceManager.getExecutionId(true));
+  }
+}

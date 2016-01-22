@@ -3,17 +3,17 @@
   if (app == null) {
     return new AppListResource(scriptMgr,request,response);
   }
-  File appDir;
+  org.geoserver.platform.resource.Resource appDir;
   try {
-    appDir=scriptMgr.findAppDir(app);
+    appDir=scriptMgr.app(app);
   }
- catch (  IOException e) {
+ catch (  IllegalStateException e) {
     throw new RestletException(format("Error looking up app directory %s",app),Status.SERVER_ERROR_INTERNAL,e);
   }
   if (appDir == null) {
     throw new RestletException(format("No such app %s",app),Status.CLIENT_ERROR_NOT_FOUND);
   }
-  File main=scriptMgr.findAppMainScript(appDir);
+  org.geoserver.platform.resource.Resource main=scriptMgr.findAppMainScript(appDir);
   if (main == null) {
     throw new RestletException(format("No main file for app %s",app),Status.CLIENT_ERROR_NOT_FOUND);
   }

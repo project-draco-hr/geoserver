@@ -1,6 +1,9 @@
 {
-  IModel<StyleInfo> styleModel=new CompoundPropertyModel(style != null ? new StyleDetachableModel(style) : getCatalog().getFactory().createStyle());
+  CompoundPropertyModel<StyleInfo> styleModel=new CompoundPropertyModel(style != null ? new StyleDetachableModel(style) : getCatalog().getFactory().createStyle());
   format=style != null ? style.getFormat() : getCatalog().getFactory().createStyle().getFormat();
+  if (null == styleModel.getObject().getLegend()) {
+    styleModel.getObject().setLegend(getCatalog().getFactory().createLegend());
+  }
   styleForm=new Form("form",styleModel){
     @Override protected void onSubmit(){
       super.onSubmit();
@@ -43,6 +46,9 @@
   editor.setOutputMarkupId(true);
   editor.setRequired(true);
   styleForm.add(editor);
+  ExternalGraphicPanel legendPanel=new ExternalGraphicPanel("legendPanel",styleModel,styleForm);
+  legendPanel.setOutputMarkupId(true);
+  styleForm.add(legendPanel);
   if (style != null) {
     try {
       setRawStyle(readFile(style));
@@ -51,6 +57,20 @@
       Session.get().error(new ParamResourceModel("styleNotFound",this,style.getFilename()).getString());
     }
   }
+  templates=new DropDownChoice("templates",new Model(),new StyleTypeModel(),new StyleTypeChoiceRenderer());
+  templates.setOutputMarkupId(true);
+  templates.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      templates.validate();
+      generateLink.setEnabled(templates.getConvertedInput() != null);
+      target.addComponent(generateLink);
+    }
+  }
+);
+  styleForm.add(templates);
+  generateLink=generateLink();
+  generateLink.setEnabled(false);
+  styleForm.add(generateLink);
   styles=new DropDownChoice("existingStyles",new Model(),new StylesModel(),new StyleChoiceRenderer());
   styles.setOutputMarkupId(true);
   styles.add(new AjaxFormComponentUpdatingBehavior("onchange"){
@@ -83,11 +103,11 @@
   legendContainer=new WebMarkupContainer("legendContainer");
   legendContainer.setOutputMarkupId(true);
   add(legendContainer);
-  legend=new Image("legend");
-  legendContainer.add(legend);
-  legend.setVisible(false);
-  legend.setOutputMarkupId(true);
-  legend.setImageResource(new DynamicWebResource(){
+  this.legendImg=new Image("legendImg");
+  legendContainer.add(this.legendImg);
+  this.legendImg.setVisible(false);
+  this.legendImg.setOutputMarkupId(true);
+  this.legendImg.setImageResource(new DynamicWebResource(){
     @Override protected ResourceState getResourceState(){
       return new ResourceState(){
         @Override public byte[] getData(){
@@ -98,23 +118,17 @@
           si.setFilename(styleFileName);
           si.setName(styleName);
           si.setWorkspace(wsChoice.getModel().getObject());
-          File styleFile=null;
+          Resource styleResource=null;
           try {
-            styleFile=dd.findOrCreateStyleSldFile(si);
-            FileUtils.writeStringToFile(styleFile,lastStyle);
-            StyledLayerDescriptor sld=styleHandler().parse(styleFile,null,null,null);
-            if (sld != null && sld.getStyledLayers().length > 0) {
-              Style style=null;
-              StyledLayer sl=sld.getStyledLayers()[0];
-              if (sl instanceof UserLayer) {
-                style=((UserLayer)sl).getUserStyles()[0];
-              }
- else {
-                style=((NamedLayer)sl).getStyles()[0];
-              }
+            styleResource=dd.style(si);
+            try (OutputStream os=styleResource.out()){
+              IOUtils.write(lastStyle,os);
+            }
+             Style style=dd.parsedStyle(si);
+            if (style != null) {
               GetLegendGraphicRequest request=new GetLegendGraphicRequest();
-              request.setStyle(style);
               request.setLayer(null);
+              request.setStyle(style);
               request.setStrict(false);
               Map<String,String> legendOptions=new HashMap<String,String>();
               legendOptions.put("forceLabels","on");
@@ -133,7 +147,9 @@
             throw new RuntimeException(e);
           }
  finally {
-            FileUtils.deleteQuietly(styleFile);
+            if (styleResource != null) {
+              styleResource.delete();
+            }
           }
         }
         @Override public String getContentType(){

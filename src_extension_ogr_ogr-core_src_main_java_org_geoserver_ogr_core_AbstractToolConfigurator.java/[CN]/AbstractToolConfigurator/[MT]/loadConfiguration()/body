@@ -1,0 +1,39 @@
+{
+  ToolConfiguration configuration=getDefaultConfiguration();
+  try {
+    if (configFile.getType() == Type.RESOURCE) {
+      InputStream in=configFile.in();
+      try {
+        XStream xstream=buildXStream();
+        configuration=(ToolConfiguration)xstream.fromXML(in);
+      }
+  finally {
+        in.close();
+      }
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Error reading the " + getConfigurationFile() + " configuration file",e);
+  }
+  if (configuration == null) {
+    LOGGER.log(Level.INFO,"Could not find/load the " + getConfigurationFile() + " configuration file, using internal defaults");
+    configuration=getDefaultConfiguration();
+  }
+  if (configuration == null) {
+    throw new IllegalStateException("No default configuration available, giving up");
+  }
+  ToolWrapper wrapper=wrapperFactory.createWrapper(configuration.getExecutable(),configuration.getEnvironment());
+  Set<String> supported=wrapper.getSupportedFormats();
+  of.setExecutable(configuration.getExecutable());
+  of.setEnvironment(configuration.getEnvironment());
+  List<Format> toBeAdded=new ArrayList<Format>();
+  for (  Format format : configuration.getFormats()) {
+    if (supported.contains(format.getToolFormat())) {
+      toBeAdded.add(format);
+    }
+ else {
+      LOGGER.severe("Skipping '" + format.getGeoserverFormat() + "' as its tool format '"+ format.getToolFormat()+ "' is not among the ones supported by "+ configuration.getExecutable());
+    }
+  }
+  of.replaceFormats(toBeAdded);
+}

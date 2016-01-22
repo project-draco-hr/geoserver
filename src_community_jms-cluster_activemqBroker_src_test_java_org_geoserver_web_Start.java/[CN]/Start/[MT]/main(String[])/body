@@ -1,8 +1,10 @@
 {
+  ThreadPoolExecutor tp=(ThreadPoolExecutor)Executors.newCachedThreadPool();
+  tp.setMaximumPoolSize(50);
   Server server=null;
-  SocketConnector conn=null;
+  ServerConnector conn=null;
   try {
-    server=new Server();
+    server=new Server(new ExecutorThreadPool(tp));
     File properties=null;
     if (args.length == 1) {
       String propertiesFileName=args[0];
@@ -26,7 +28,7 @@
     }
     setSystemProperties(prop);
     server.setHandler(configureContext(prop));
-    conn=configureConnection(prop);
+    conn=configureConnection(prop,server);
     server.setConnectors(new Connector[]{conn});
     server.start();
   }

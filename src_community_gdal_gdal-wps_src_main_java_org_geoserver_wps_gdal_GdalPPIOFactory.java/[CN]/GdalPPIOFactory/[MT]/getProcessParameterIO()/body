@@ -1,0 +1,32 @@
+{
+  List<ProcessParameterIO> gdalParams=new ArrayList<ProcessParameterIO>();
+  for (  Format of : this.delegate.getFormats()) {
+    ProcessParameterIO ppio=null;
+    String computedMimeType=delegate.getMimeType(of.getGeoserverFormat());
+    if (of.getGeoserverFormat() != null && !of.getGeoserverFormat().isEmpty()) {
+      computedMimeType=computedMimeType + "; subtype=" + of.getGeoserverFormat();
+    }
+    if (of.getType() == null) {
+      ppio=new GdalBinaryPPIO(of.getGeoserverFormat(),delegate,computedMimeType);
+    }
+ else {
+switch (of.getType()) {
+case BINARY:
+        ppio=new GdalBinaryPPIO(of.getGeoserverFormat(),delegate,computedMimeType);
+      break;
+case TEXT:
+    ppio=new GdalCDataPPIO(of.getGeoserverFormat(),delegate,computedMimeType);
+  break;
+case XML:
+ppio=new GdalXMLPPIO(of.getGeoserverFormat(),delegate);
+break;
+default :
+break;
+}
+}
+if (ppio != null) {
+gdalParams.add(ppio);
+}
+}
+return gdalParams;
+}

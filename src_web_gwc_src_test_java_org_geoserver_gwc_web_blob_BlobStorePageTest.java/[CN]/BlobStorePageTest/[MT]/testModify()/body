@@ -1,0 +1,25 @@
+{
+  FileBlobStoreConfig fconfig=new FileBlobStoreConfig("myblobstore");
+  fconfig.setFileSystemBlockSize(1024);
+  fconfig.setBaseDirectory("/mydir");
+  GWC.get().addBlobStore(fconfig);
+  TileLayer layer=GWC.get().getTileLayerByName("cite:Lakes");
+  layer.setBlobStoreId("myblobstore");
+  GWC.get().save(layer);
+  BlobStorePage page=new BlobStorePage(fconfig);
+  tester.startPage(page);
+  tester.assertVisible("blobConfigContainer:blobStoreForm");
+  tester.assertComponent("blobConfigContainer:blobStoreForm:blobSpecificPanel",FileBlobStorePanel.class);
+  FormTester formTester=tester.newFormTester("blobConfigContainer:blobStoreForm");
+  formTester.setValue("id","yourblobstore");
+  formTester.setValue("blobSpecificPanel:baseDirectory:border:paramValue","/yourdir");
+  formTester.submit();
+  tester.executeAjaxEvent("blobConfigContainer:blobStoreForm:save","onclick");
+  BlobStoreConfig config=GWC.get().getBlobStores().get(0);
+  assertTrue(config instanceof FileBlobStoreConfig);
+  assertEquals("yourblobstore",config.getId());
+  assertEquals("/yourdir",((FileBlobStoreConfig)config).getBaseDirectory());
+  layer=GWC.get().getTileLayerByName("cite:Lakes");
+  assertEquals("yourblobstore",layer.getBlobStoreId());
+  GWC.get().removeBlobStores(Collections.singleton("yourblobstore"));
+}

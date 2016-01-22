@@ -1,0 +1,23 @@
+{
+  GridCoverage2DReader reader;
+  try {
+    reader=(GridCoverage2DReader)coverageInfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
+    String name=DirectDownload.extractName(coverageInfo);
+    if (reader == null) {
+      throw new IllegalArgumentException("No reader available for the specified coverage: " + name);
+    }
+    ResourceInfo resourceInfo=reader.getInfo(name);
+    if (resourceInfo instanceof FileResourceInfo) {
+      FileResourceInfo fileResourceInfo=(FileResourceInfo)resourceInfo;
+      String baseLink=baseURL.replace("${nameSpace}",coverageInfo.getNamespace().getName()).replace("${layerName}",coverageInfo.getName());
+      CloseableIterator<org.geotools.data.FileGroupProvider.FileGroup> dataIterator=fileResourceInfo.getFiles(null);
+      return new CloseableLinksIterator(baseLink,dataIterator);
+    }
+ else {
+      throw new RuntimeException("Donwload links handler need to provide " + "download links to files. The ResourceInfo associated with the store should be a FileResourceInfo instance");
+    }
+  }
+ catch (  IOException e) {
+    throw new RuntimeException("Unable to generate download links",e.getCause());
+  }
+}

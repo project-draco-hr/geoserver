@@ -1,0 +1,22 @@
+{
+  LOGGER.fine("listing statuses matching " + query);
+  try {
+    ArrayList<ExecutionStatus> ret=new ArrayList<>();
+    SimpleFeatureStore source=getStatusFeatureStore();
+    LOGGER.fine("requesting " + query);
+    SimpleFeatureCollection features=source.getFeatures(query);
+    try (SimpleFeatureIterator itr=features.features()){
+      while (itr.hasNext()) {
+        SimpleFeature f=itr.next();
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("adding " + f);
+        }
+        ret.add(featureToStatus(f));
+      }
+      return ret;
+    }
+   }
+ catch (  IOException e) {
+    throw new WPSException("Failed to list statuses by query " + query,e);
+  }
+}

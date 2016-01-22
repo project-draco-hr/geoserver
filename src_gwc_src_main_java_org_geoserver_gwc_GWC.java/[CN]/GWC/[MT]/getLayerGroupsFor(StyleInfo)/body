@@ -1,20 +1,25 @@
 {
   List<LayerGroupInfo> layerGroups=new ArrayList<LayerGroupInfo>();
-  for (  LayerGroupInfo layerGroup : getLayerGroups()) {
-    LayerGroupHelper helper=new LayerGroupHelper(layerGroup);
-    final Iterator<LayerInfo> groupLayers=helper.allLayers().iterator();
-    final Iterator<StyleInfo> explicitLayerGroupStyles=helper.allStyles().iterator();
-    while (groupLayers.hasNext()) {
-      LayerInfo childLayer=groupLayers.next();
-      StyleInfo assignedLayerStyle=explicitLayerGroupStyles.next();
-      if (assignedLayerStyle == null) {
-        assignedLayerStyle=childLayer.getDefaultStyle();
-      }
-      if (style.equals(assignedLayerStyle)) {
-        layerGroups.add(layerGroup);
-        break;
+  Iterable<LayerInfo> layers=getLayerInfosFor(style);
+  List<Filter> filters=new ArrayList<>();
+  filters.add(ff.equal(ff.property("styles.id"),ff.literal(style.getId()),true,MatchAction.ANY));
+  filters.add(ff.equal(ff.property("rootLayerStyle.id"),ff.literal(style.getId())));
+  for (  LayerInfo layer : layers) {
+    filters.add(ff.equal(ff.property("layers.id"),ff.literal(layer.getId()),true,MatchAction.ANY));
+    filters.add(ff.equal(ff.property("rootLayer.id"),ff.literal(layer.getId())));
+  }
+  Or groupFilter=ff.or(filters);
+  try (CloseableIterator<LayerGroupInfo> it=getCatalog().list(LayerGroupInfo.class,groupFilter)){
+    while (it.hasNext()) {
+      LayerGroupInfo lg=it.next();
+      if (isLayerGroupFor(lg,style)) {
+        layerGroups.add(lg);
       }
     }
   }
+ catch (  Exception e) {
+    log.log(Level.SEVERE,"Failed to load groups associated to style " + style.prefixedName(),e);
+  }
+  loadGroupParents(layerGroups);
   return layerGroups;
 }

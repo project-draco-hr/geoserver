@@ -1,0 +1,30 @@
+{
+  GeoServerInfo info=getGeoServerApplication().getGeoServer().getGlobal();
+  MetadataMap map=info.getSettings().getMetadata();
+  login();
+  tester.startPage(new GlobalSettingsPage());
+  tester.assertRenderedPage(GlobalSettingsPage.class);
+  tester.assertNoErrorMessage();
+  tester.assertComponent("form:extensions:0:content",NetCDFOutSettingsPanel.class);
+  tester.assertComponent("form:extensions:0:content:panel",NetCDFPanel.class);
+  NetCDFSettingsContainer container=map.get(NetCDFSettingsContainer.NETCDFOUT_KEY,NetCDFSettingsContainer.class);
+  assertNotNull(container);
+  NetCDFPanel panel=(NetCDFPanel)tester.getComponentFromLastRenderedPage("form:extensions:0:content:panel");
+  assertNotNull(panel);
+  NetCDFSettingsContainer container2=(NetCDFSettingsContainer)panel.getModelObject();
+  assertNotNull(container2);
+  assertEquals(container.getCompressionLevel(),container2.getCompressionLevel(),0.001d);
+  assertEquals(container.isShuffle(),container2.isShuffle());
+  List<GlobalAttribute> attr1=container.getGlobalAttributes();
+  List<GlobalAttribute> attr2=container2.getGlobalAttributes();
+  assertNotNull(attr1);
+  assertNotNull(attr2);
+  assertTrue(attr1.size() == attr2.size());
+  int size=attr1.size();
+  for (int i=0; i < size; i++) {
+    GlobalAttribute at1=attr1.get(i);
+    GlobalAttribute at2=attr2.get(i);
+    assertTrue(at1.getKey().equalsIgnoreCase(at2.getKey()));
+    assertTrue(at1.getValue().equalsIgnoreCase(at2.getValue()));
+  }
+}

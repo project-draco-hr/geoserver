@@ -1,0 +1,25 @@
+{
+  LOGGER.fine("removing statuses matching " + filter);
+  int ret=0;
+  DefaultTransaction transaction=new DefaultTransaction("create");
+  boolean committed=false;
+  try {
+    SimpleFeatureStore store=getStatusFeatureStore();
+    SimpleFeatureCollection features=store.getFeatures(filter);
+    ret=features.size();
+    if (ret == 0) {
+      return ret;
+    }
+    store.setTransaction(transaction);
+    store.removeFeatures(filter);
+    transaction.commit();
+    committed=true;
+  }
+ catch (  Exception e) {
+    throw new WPSException("Failure to remove status by filter: " + filter,e);
+  }
+ finally {
+    closeTransaction(transaction,committed);
+  }
+  return ret;
+}

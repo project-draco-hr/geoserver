@@ -1,0 +1,12 @@
+{
+  URL url=getClass().getResource("applicationContext.xml");
+  FileSystemXmlApplicationContext context=new FileSystemXmlApplicationContext(url.toString());
+  Dispatcher dispatcher=(Dispatcher)context.getBean("dispatcher");
+  TestDispatcherCallback callback=new TestDispatcherCallback();
+  MockHttpServletRequest request=setupRequest();
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  dispatcher.callbacks.add(callback);
+  dispatcher.handleRequest(request,response);
+  assertEquals("Hello world!",response.getOutputStreamContent());
+  assertEquals(TestDispatcherCallback.Status.FINISHED,callback.dispatcherStatus.get());
+}

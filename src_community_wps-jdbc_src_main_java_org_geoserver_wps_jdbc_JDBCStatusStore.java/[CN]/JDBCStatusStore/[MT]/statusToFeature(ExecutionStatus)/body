@@ -1,0 +1,38 @@
+{
+  SimpleFeatureBuilder builder=new SimpleFeatureBuilder(schema);
+  builder.set(PROCESS_ID,status.getExecutionId());
+  builder.set(CREATION,status.getCreationTime());
+  builder.set(LASTUPDATE,status.getLastUpdated());
+  builder.set(COMPLETION,status.getCompletionTime());
+  builder.set(NODE_ID,status.getNodeId());
+  builder.set(PHASE,status.getPhase());
+  Name processName=status.getProcessName();
+  builder.set(PROCESS_NAME,processName.getLocalPart());
+  builder.set(PROCESS_NAME_URI,processName.getNamespaceURI());
+  builder.set(PROGRESS,status.getProgress());
+  ExecuteType request=status.getRequest();
+  if (request != null) {
+    builder.set(REQUEST,serializeRequest(request));
+  }
+  builder.set(SIMPLE_PROCESS_NAME,status.getSimpleProcessName());
+  builder.set(TASK,status.getTask());
+  builder.set(USER_NAME,status.getUserName());
+  builder.set(ASYNC,status.isAsynchronous());
+  Throwable exception=status.getException();
+  if (exception != null) {
+    builder.set(EXCEPTION_CLASS,exception.getClass().getName());
+    builder.set(EXCEPTION_MESSAGE,exception.getMessage());
+    StackTraceElement[] stackTrace=exception.getStackTrace();
+    StringBuffer buf=new StringBuffer();
+    for (    StackTraceElement el : stackTrace) {
+      buf.append(el.getClassName()).append(STACKTRACESEPERATOR);
+      buf.append(el.getFileName()).append(STACKTRACESEPERATOR);
+      buf.append(el.getMethodName()).append(STACKTRACESEPERATOR);
+      buf.append(el.getLineNumber());
+      buf.append("\n");
+    }
+    builder.set(STACK_TRACE,buf.toString().getBytes(Charset.forName("UTF-8")));
+  }
+  SimpleFeature feature=builder.buildFeature(null);
+  return feature;
+}

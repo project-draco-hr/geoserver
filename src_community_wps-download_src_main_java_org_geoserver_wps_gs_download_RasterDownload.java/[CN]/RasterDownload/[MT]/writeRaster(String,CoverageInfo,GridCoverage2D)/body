@@ -14,7 +14,8 @@
       LOGGER.log(Level.FINE,"Hard output limit unset");
     }
   }
-  ProcessParameterIO ppio_=DownloadUtilities.find(new Parameter<GridCoverage2D>("fakeParam",GridCoverage2D.class),null,mimeType,false);
+  Parameter<GridCoverage2D> gridParam=new Parameter<GridCoverage2D>("fakeParam",GridCoverage2D.class);
+  ProcessParameterIO ppio_=DownloadUtilities.find(gridParam,context,mimeType,false);
   if (ppio_ == null) {
     throw new ProcessException("Don't know how to encode in mime type " + mimeType);
   }
@@ -26,8 +27,8 @@
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.log(Level.FINE,"Writing file in a temporary folder");
   }
-  final File output=resourceManager.getTemporaryResource("." + extension).file();
-  final FileImageOutputStreamExtImpl fileImageOutputStreamExtImpl=new FileImageOutputStreamExtImpl(output);
+  final Resource output=resourceManager.getTemporaryResource("." + extension);
+  final ImageOutputStream fileImageOutputStreamExtImpl=new ImageOutputStreamAdapter(output.out());
   ImageOutputStream os=null;
   try {
     if (limit > DownloadServiceConfiguration.NO_LIMIT) {

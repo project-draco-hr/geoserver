@@ -1,7 +1,7 @@
 {
   GeoServerTileLayer tileLayer=null;
   final GridSetBroker gridSetBroker=CatalogConfiguration.this.gridSetBroker;
-  lock.readLock().lock();
+  lock.acquireReadLock();
   try {
     if (pendingDeletes.contains(layerId)) {
       throw new IllegalArgumentException("Tile layer '" + layerId + "' was deleted.");
@@ -16,7 +16,7 @@
     tileLayer=new GeoServerTileLayer(geoServerCatalog,layerId,gridSetBroker,tileLayerInfo);
   }
   finally {
-    lock.readLock().unlock();
+    lock.releaseReadLock();
   }
   if (null == tileLayer) {
     throw new IllegalArgumentException("GeoServer layer or layer group '" + layerId + "' does not exist");

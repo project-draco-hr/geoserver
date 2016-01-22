@@ -1,0 +1,25 @@
+{
+  final int memotyBufferThreshold=8096;
+  out=new DeferredFileOutputStream(memotyBufferThreshold,"geojson",".geojson",null);
+  writer=new OutputStreamWriter(out,Charsets.UTF_8);
+  jsonWriter=new org.geoserver.wfs.json.GeoJSONBuilder(writer);
+  jsonWriter.object();
+  jsonWriter.key("type").value("FeatureCollection");
+  jsonWriter.key("totalFeatures").value("unknown");
+  jsonWriter.key("features");
+  jsonWriter.array();
+  CoordinateReferenceSystem mapCrs=mapArea.getCoordinateReferenceSystem();
+  jsonWriter.setAxisOrder(CRS.getAxisOrder(mapCrs));
+  Unit<?> unit=mapCrs.getCoordinateSystem().getAxis(0).getUnit();
+  Unit<?> standardUnit=unit.getStandardUnit();
+  PrecisionModel pm=null;
+  if (SI.RADIAN.equals(standardUnit)) {
+    pm=new PrecisionModel(1e6);
+  }
+ else   if (SI.METRE.equals(standardUnit)) {
+    pm=new PrecisionModel(100);
+  }
+  if (pm != null) {
+    precisionReducerFilter=new CoordinatePrecisionReducerFilter(pm);
+  }
+}

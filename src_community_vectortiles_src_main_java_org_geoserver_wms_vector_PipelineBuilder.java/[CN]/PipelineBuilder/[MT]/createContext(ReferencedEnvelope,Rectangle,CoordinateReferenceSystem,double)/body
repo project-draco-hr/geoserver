@@ -1,0 +1,30 @@
+{
+  Context context=new Context();
+  context.renderingArea=mapArea;
+  context.paintArea=paintArea;
+  context.sourceCrs=sourceCrs;
+  context.worldToScreen=RendererUtilities.worldToScreenTransform(mapArea,paintArea);
+  final boolean wrap=false;
+  context.projectionHandler=ProjectionHandlerFinder.getHandler(mapArea,sourceCrs,wrap);
+  CoordinateReferenceSystem mapCrs=context.renderingArea.getCoordinateReferenceSystem();
+  context.sourceToTargetCrs=buildTransform(sourceCrs,mapCrs);
+  context.targetToScreen=ProjectiveTransform.create(context.worldToScreen);
+  context.sourceToScreen=ConcatenatedTransform.create(context.sourceToTargetCrs,context.targetToScreen);
+  double[] spans_sourceCRS;
+  double[] spans_targetCRS;
+  try {
+    MathTransform screenToWorld=context.sourceToScreen.inverse();
+    spans_sourceCRS=Decimator.computeGeneralizationDistances(screenToWorld,context.paintArea,0.8);
+    spans_targetCRS=Decimator.computeGeneralizationDistances(context.targetToScreen.inverse(),context.paintArea,1.0);
+    context.pixelSizeInTargetCRS=Math.max(spans_targetCRS[0],spans_targetCRS[1]);
+  }
+ catch (  TransformException e) {
+    throw Throwables.propagate(e);
+  }
+  context.screenSimplificationDistance=0.25 / overSampleFactor;
+  context.targetCRSSimplificationDistance=Math.min(spans_targetCRS[0],spans_targetCRS[1]) / overSampleFactor;
+  context.screenMap=new ScreenMap(0,0,paintArea.width,paintArea.height);
+  context.screenMap.setSpans(spans_sourceCRS[0] / overSampleFactor,spans_sourceCRS[1] / overSampleFactor);
+  context.screenMap.setTransform(context.sourceToScreen);
+  return context;
+}

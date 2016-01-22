@@ -1,0 +1,30 @@
+{
+  List<Definition> definitions=new ArrayList<>();
+  boolean mappingRequired=false;
+  if (!actual.getTypeName().equals(expected.getTypeName())) {
+    mappingRequired=true;
+  }
+  List<AttributeDescriptor> expectedDescriptors=expected.getAttributeDescriptors();
+  List<AttributeDescriptor> actualDescriptors=actual.getAttributeDescriptors();
+  FilterFactory ff=CommonFactoryFinder.getFilterFactory();
+  for (int i=0; i < expected.getAttributeCount(); i++) {
+    AttributeDescriptor expectedDescriptor=expectedDescriptors.get(i);
+    AttributeDescriptor actualDescriptor=actualDescriptors.get(i);
+    String expectedName=expectedDescriptor.getLocalName();
+    String actualName=actualDescriptor.getLocalName();
+    if (!expectedName.equals(actualName)) {
+      mappingRequired=true;
+    }
+    Class<?> expectedType=expectedDescriptor.getType().getBinding();
+    if (!expectedType.isAssignableFrom(actualDescriptor.getType().getBinding())) {
+      mappingRequired=true;
+    }
+    definitions.add(new Definition(expectedName,ff.property(actualName),expectedType));
+  }
+  if (mappingRequired) {
+    return definitions;
+  }
+ else {
+    return null;
+  }
+}

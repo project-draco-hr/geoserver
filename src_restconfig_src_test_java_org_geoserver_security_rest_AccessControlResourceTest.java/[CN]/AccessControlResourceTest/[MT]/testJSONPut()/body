@@ -1,0 +1,26 @@
+{
+  String[][] rules=getDefaultLayerRules();
+  String[][] toBeModified={rules[0],{"ws.layer1.r",TEST_ROLELIST}};
+  assertEquals(409,putAsServletResponse(DATA_URI_JSON,createJSONBody(toBeModified),"text/json").getStatusCode());
+  JSONObject json=(JSONObject)getAsJSON(DATA_URI_JSON);
+  checkJSONResponse(json,rules);
+  String[][] toBeModified2={{rules[0][0],TEST_ROLE1},{rules[1][0],TEST_ROLELIST}};
+  assertEquals(200,putAsServletResponse(DATA_URI_JSON,createJSONBody(toBeModified2),"text/json").getStatusCode());
+  json=(JSONObject)getAsJSON(DATA_URI_JSON);
+  checkJSONResponse(json,toBeModified2);
+  rules=getDefaultServiceRules();
+  toBeModified2=new String[][]{{"ws.*",TEST_ROLE1},{"ws2.GetFeature",TEST_ROLELIST}};
+  assertEquals(409,putAsServletResponse(SERVICE_URI_JSON,createJSONBody(toBeModified2),"text/json").getStatusCode());
+  json=(JSONObject)getAsJSON(SERVICE_URI_JSON);
+  checkJSONResponse(json,rules);
+  assertEquals(200,putAsServletResponse(SERVICE_URI_JSON,createJSONBody(new String[][]{}),"text/json").getStatusCode());
+  rules=getDefaultRestRules();
+  toBeModified=new String[][]{rules[0],{"/myworkspace/**:GET",TEST_ROLELIST}};
+  assertEquals(409,putAsServletResponse(REST_URI_JSON,createJSONBody(toBeModified),"text/json").getStatusCode());
+  json=(JSONObject)getAsJSON(REST_URI_JSON);
+  checkJSONResponse(json,rules);
+  toBeModified2=new String[][]{{rules[0][0],TEST_ROLE1},{rules[1][0],TEST_ROLELIST}};
+  assertEquals(200,putAsServletResponse(REST_URI_JSON,createJSONBody(toBeModified2),"text/json").getStatusCode());
+  json=(JSONObject)getAsJSON(REST_URI_JSON);
+  checkJSONResponse(json,toBeModified2);
+}

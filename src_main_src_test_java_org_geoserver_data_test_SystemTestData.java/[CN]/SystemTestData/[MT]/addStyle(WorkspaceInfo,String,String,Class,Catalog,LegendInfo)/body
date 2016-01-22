@@ -1,0 +1,20 @@
+{
+  StyleInfo style=catalog.getStyleByName(ws,name);
+  if (style == null) {
+    style=catalog.getFactory().createStyle();
+    style.setName(name);
+    style.setWorkspace(ws);
+  }
+  GeoServerDataDirectory data=new GeoServerDataDirectory(this.data);
+  File styles=data.get(style,"").dir();
+  String target=new File(filename).getName();
+  catalog.getResourceLoader().copyFromClassPath(filename,new File(styles,target),scope);
+  style.setFilename(target);
+  style.setLegend(legend);
+  if (style.getId() == null) {
+    catalog.add(style);
+  }
+ else {
+    catalog.save(style);
+  }
+}

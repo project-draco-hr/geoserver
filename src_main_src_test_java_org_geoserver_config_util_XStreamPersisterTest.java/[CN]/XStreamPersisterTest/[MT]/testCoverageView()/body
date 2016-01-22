@@ -1,0 +1,34 @@
+{
+  Catalog catalog=new CatalogImpl();
+  CatalogFactory cFactory=catalog.getFactory();
+  CoverageInfo coverage=cFactory.createCoverage();
+  MetadataMap metadata=coverage.getMetadata();
+  coverage.setName("test");
+  coverage.setEnabled(true);
+  coverage.getAlias().add("alias");
+  coverage.getKeywords().add(new Keyword("key"));
+  MetadataLinkInfoImpl metadataLink=new MetadataLinkInfoImpl();
+  metadataLink.setAbout("about");
+  coverage.getMetadataLinks().add(metadataLink);
+  CoverageDimensionImpl coverageDimension=new CoverageDimensionImpl("time");
+  coverageDimension.setNullValues(Collections.singletonList(new Double(0)));
+  coverage.getDimensions().add(coverageDimension);
+  coverage.getInterpolationMethods().add("Bilinear");
+  coverage.getParameters().put("ParameterKey","ParameterValue");
+  coverage.getSupportedFormats().add("GEOTIFF");
+  coverage.getRequestSRS().add("EPSG:4326");
+  coverage.getResponseSRS().add("EPSG:4326");
+  final InputCoverageBand band_u=new InputCoverageBand("u-component_of_current_surface","0");
+  final CoverageBand outputBand_u=new CoverageBand(Collections.singletonList(band_u),"u-component_of_current_surface@0",0,CompositionType.BAND_SELECT);
+  final InputCoverageBand band_v=new InputCoverageBand("v-component_of_current_surface","0");
+  final CoverageBand outputBand_v=new CoverageBand(Collections.singletonList(band_v),"v-component_of_current_surface@0",1,CompositionType.BAND_SELECT);
+  final List<CoverageBand> coverageBands=new ArrayList<CoverageBand>(2);
+  coverageBands.add(outputBand_u);
+  coverageBands.add(outputBand_v);
+  CoverageView coverageView=new CoverageView("regional_currents",coverageBands);
+  metadata.put("COVERAGE_VIEW",coverageView);
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  persister.save(coverage,out);
+  CoverageInfo coverage2=persister.load(in(out),CoverageInfo.class);
+  assertEquals(coverage,coverage2);
+}

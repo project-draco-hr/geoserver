@@ -1,12 +1,9 @@
 {
   try {
-    File dbprops=new File(dataDirectory.root(),file);
+    Resource dbprops=dataDirectory.get(file);
     Properties db=new Properties();
-    if (!dbprops.exists()) {
-      if (dbprops.getParentFile().exists()) {
-        dbprops.getParentFile().mkdirs();
-      }
-      FileOutputStream fout=new FileOutputStream(dbprops);
+    if (dbprops.getType() != Type.RESOURCE) {
+      OutputStream fout=dbprops.out();
       try {
         defaultParameters.store(fout,null);
       }
@@ -16,7 +13,7 @@
       db.putAll(defaultParameters);
     }
  else {
-      FileInputStream in=new FileInputStream(dbprops);
+      InputStream in=dbprops.in();
       db.load(in);
       in.close();
     }

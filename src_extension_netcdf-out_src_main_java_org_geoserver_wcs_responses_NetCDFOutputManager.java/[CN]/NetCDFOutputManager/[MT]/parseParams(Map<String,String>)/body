@@ -1,0 +1,30 @@
+{
+  Set<String> keys=encodingParameters.keySet();
+  if (keys != null && !keys.isEmpty() && keys.contains(WCS20GetCoverageResponse.COVERAGE_ID_PARAM)) {
+    String coverageId=encodingParameters.get(WCS20GetCoverageResponse.COVERAGE_ID_PARAM);
+    if (coverageId != null) {
+      GeoServer geoserver=GeoServerExtensions.bean(GeoServer.class);
+      MetadataMap map=null;
+      if (geoserver != null) {
+        Catalog gsCatalog=geoserver.getCatalog();
+        LayerInfo info=NCNameResourceCodec.getCoverage(gsCatalog,coverageId);
+        if (info != null) {
+          map=info.getResource().getMetadata();
+        }
+      }
+      if (map != null && !map.isEmpty() && map.containsKey(NetCDFSettingsContainer.NETCDFOUT_KEY)) {
+        NetCDFLayerSettingsContainer settings=(NetCDFLayerSettingsContainer)map.get(NetCDFSettingsContainer.NETCDFOUT_KEY,NetCDFLayerSettingsContainer.class);
+        shuffle=settings.isShuffle();
+        dataPacking=settings.getDataPacking();
+        compressionLevel=checkLevel(settings.getCompressionLevel());
+        variableName=settings.getLayerName();
+        variableUoM=settings.getLayerUOM();
+        globalAttributes=new HashMap<String,String>();
+        List<GlobalAttribute> globalAttributesSettings=settings.getGlobalAttributes();
+        for (        GlobalAttribute globalAttribute : globalAttributesSettings) {
+          globalAttributes.put(globalAttribute.getKey(),globalAttribute.getValue());
+        }
+      }
+    }
+  }
+}

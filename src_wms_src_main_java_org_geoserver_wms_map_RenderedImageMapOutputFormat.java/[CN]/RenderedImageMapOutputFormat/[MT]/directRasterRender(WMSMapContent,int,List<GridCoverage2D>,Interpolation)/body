@@ -62,15 +62,15 @@
   RenderingHints interpolationHints=new RenderingHints(JAI.KEY_INTERPOLATION,interpolation);
   try {
     final Color readerBgColor=transparent ? null : bgColor;
-    if (transformation == null && DefaultWebMapService.isAdvancedProjectionHandlingEnabled()) {
+    if (transformation == null && wms.isAdvancedProjectionHandlingEnabled()) {
       final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
       final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
       final Object params=feature.getProperty("params").getValue();
       GeneralParameterValue[] readParameters=getReadParameters(params,null,null,interpolation,readerBgColor);
       final GridCoverageRenderer gcr=new GridCoverageRenderer(mapEnvelope.getCoordinateReferenceSystem(),mapEnvelope,mapRasterArea,worldToScreen,interpolationHints);
       gcr.setAdvancedProjectionHandlingEnabled(true);
-      gcr.setWrapEnabled(DefaultWebMapService.isContinuousMapWrappingEnabled());
-      image=gcr.renderImage(reader,readParameters,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
+      gcr.setWrapEnabled(wms.isContinuousMapWrappingEnabled());
+      image=gcr.renderImage(reader,readParameters,symbolizer,interpolation,null,tileSizeX,tileSizeY);
       if (image == null) {
         image=createBkgImage(mapWidth,mapHeight,bgColor,null);
       }
@@ -81,7 +81,7 @@
       final boolean equalsMetadata=CRS.equalsIgnoreMetadata(mapCRS,coverageCRS);
       boolean sameCRS;
       try {
-        sameCRS=equalsMetadata ? true : CRS.findMathTransform(mapCRS,coverageCRS,true).isIdentity();
+        sameCRS=equalsMetadata || CRS.findMathTransform(mapCRS,coverageCRS,true).isIdentity();
       }
  catch (      FactoryException e1) {
         final IOException ioe=new IOException();
@@ -126,14 +126,14 @@
         final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
         final Object params=feature.getProperty("params").getValue();
         coverage=readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
-        if (coverage == null) {
-          image=createBkgImage(mapWidth,mapHeight,bgColor,null);
-        }
+      }
+      if (coverage == null) {
+        image=createBkgImage(mapWidth,mapHeight,bgColor,null);
       }
       if (image == null) {
         final GridCoverageRenderer gcr=new GridCoverageRenderer(mapCRS,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),worldToScreen,interpolationHints);
         gcr.setAdvancedProjectionHandlingEnabled(false);
-        image=gcr.renderImage(coverage,symbolizer,interpolation,mapContent.getBgColor(),tileSizeX,tileSizeY);
+        image=gcr.renderImage(coverage,symbolizer,interpolation,null,tileSizeX,tileSizeY);
       }
     }
   }
@@ -263,7 +263,8 @@
     }
   }
   if (!(imageBounds.contains(mapRasterArea) || imageBounds.equals(mapRasterArea)) || transparencyType != Transparency.OPAQUE) {
-    ROI[] rois=new ROI[]{new ROIShape(imageBounds)};
+    Rectangle roi=imageBounds.intersection(mapRasterArea);
+    ROI[] rois=new ROI[]{new ROIShape(!roi.isEmpty() ? roi : mapRasterArea)};
     double[][] thresholds=new double[][]{{ColorUtilities.getThreshold(image.getSampleModel().getDataType())}};
     ImageWorker w=new ImageWorker(image);
     w.setRenderingHint(JAI.KEY_IMAGE_LAYOUT,layout);

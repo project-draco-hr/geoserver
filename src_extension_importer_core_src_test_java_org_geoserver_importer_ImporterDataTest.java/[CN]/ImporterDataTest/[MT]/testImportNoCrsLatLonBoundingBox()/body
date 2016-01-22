@@ -4,7 +4,6 @@
   assertEquals(1,context.getTasks().size());
   ImportTask task=context.getTasks().get(0);
   assertEquals(ImportTask.State.NO_CRS,task.getState());
-  assertNull(task.getLayer().getResource().getLatLonBoundingBox());
   task.getLayer().getResource().setSRS("EPSG:26713");
   importer.changed(task);
   assertEquals(ImportTask.State.READY,task.getState());
@@ -12,4 +11,14 @@
   assertNotNull(r.getLatLonBoundingBox());
   assertNotNull(r.boundingBox());
   assertNotNull(r.boundingBox().getCoordinateReferenceSystem());
+  assertEquals("EPSG:26713",CRS.toSRS(r.boundingBox().getCoordinateReferenceSystem()));
+  importer.doDirectImport(task);
+  assertEquals(ImportTask.State.COMPLETE,task.getState());
+  r=task.getLayer().getResource();
+  assertNotNull(r.getLatLonBoundingBox());
+  assertNotEquals(VectorFormat.EMPTY_BOUNDS,r.getLatLonBoundingBox());
+  assertNotNull(r.boundingBox());
+  assertNotEquals(VectorFormat.EMPTY_BOUNDS,r.boundingBox());
+  assertNotNull(r.boundingBox().getCoordinateReferenceSystem());
+  assertEquals("EPSG:26713",CRS.toSRS(r.boundingBox().getCoordinateReferenceSystem()));
 }

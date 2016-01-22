@@ -1,6 +1,7 @@
 {
   Catalog catalog=getCatalog();
   getTestData().addRasterLayer(WATTEMP,"watertemp.zip",null,null,TestData.class,catalog);
+  int initialLayerCount=catalog.count(LayerInfo.class,Filter.INCLUDE);
   CoverageStoreInfo store=catalog.getCoverageStoreByName(WATTEMP.getLocalPart());
   StructuredGridCoverage2DReader reader=(StructuredGridCoverage2DReader)store.getGridCoverageReader(null,null);
   GranuleSource gs=reader.getGranules(reader.getGridCoverageNames()[0],true);
@@ -22,4 +23,6 @@
   assertEquals(originalCount + 2,gs.getCount(Query.ALL));
   assertEquals(1,gs.getCount(new Query(null,ECQL.toFilter("location = '" + fileName1 + "'"))));
   assertEquals(1,gs.getCount(new Query(null,ECQL.toFilter("location = '" + fileName2 + "'"))));
+  int layerCount=catalog.count(LayerInfo.class,Filter.INCLUDE);
+  assertEquals(initialLayerCount,layerCount);
 }

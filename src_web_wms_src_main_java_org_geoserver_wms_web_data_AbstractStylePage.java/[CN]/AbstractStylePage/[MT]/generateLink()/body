@@ -1,0 +1,33 @@
+{
+  return new AjaxSubmitLink("generate"){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      templates.processInput();
+      StyleType template=(StyleType)templates.getConvertedInput();
+      StyleGenerator styleGen=new StyleGenerator(getCatalog());
+      styleGen.setWorkspace(wsChoice.getModel().getObject());
+      if (template != null) {
+        try {
+          editor.reset();
+          setRawStyle(new StringReader(styleGen.generateStyle(styleHandler(),template,nameTextField.getInput())));
+          target.appendJavascript(String.format("if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }",styleHandler().getCodeMirrorEditMode()));
+        }
+ catch (        Exception e) {
+          error("Errors occurred generating the style");
+        }
+        target.addComponent(styleForm);
+      }
+    }
+    @Override protected IAjaxCallDecorator getAjaxCallDecorator(){
+      return new AjaxPreprocessingCallDecorator(super.getAjaxCallDecorator()){
+        @Override public CharSequence preDecorateScript(        CharSequence script){
+          return "var val = event.view.document.gsEditors ? " + "event.view.document.gsEditors." + editor.getTextAreaMarkupId() + ".getValue() : "+ "event.view.document.getElementById(\""+ editor.getTextAreaMarkupId()+ "\").value; "+ "if(val != '' &&"+ "!confirm('"+ new ParamResourceModel("confirmOverwrite",AbstractStylePage.this).getString()+ "')) return false;"+ script;
+        }
+      }
+;
+    }
+    @Override public boolean getDefaultFormProcessing(){
+      return false;
+    }
+  }
+;
+}

@@ -29,13 +29,13 @@
     for (    TransactionElement el : t.getElements()) {
       if (el instanceof Insert) {
         Insert in=(Insert)el;
-        for (Iterator j=in.getFeatures().iterator(); j.hasNext(); ) {
-          Feature f=(Feature)j.next();
-          Name n=f.getType().getName();
-          if (n.getNamespaceURI() != null && !ns.getURI().equals(n.getNamespaceURI())) {
-            throw new WFSException(t,"No such feature type " + n);
-          }
-        }
+        List features=in.getFeatures();
+        ensureFeatureNamespaceUriMatches(features,ns,t);
+      }
+ else       if (el instanceof Replace) {
+        Replace rep=(Replace)el;
+        List features=rep.getFeatures();
+        ensureFeatureNamespaceUriMatches(features,ns,t);
       }
  else {
         el.setTypeName(qualifyTypeName(el.getTypeName(),workspace,ns));

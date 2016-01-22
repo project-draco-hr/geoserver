@@ -1,4 +1,7 @@
 {
+  if (context.getState() == ImportContext.State.INIT) {
+    throw new IllegalStateException("Importer is still initializing, cannot run it");
+  }
   context.setProgress(monitor);
   context.setState(ImportContext.State.RUNNING);
   if (LOGGER.isLoggable(Level.FINE)) {
@@ -31,11 +34,11 @@
         directory=(Directory)context.getData();
       }
  else       if (context.getData() instanceof SpatialFile) {
-        directory=new Directory(((SpatialFile)context.getData()).getFile().getParentFile());
+        directory=new Directory(((SpatialFile)context.getData()).getFile().parent());
       }
       if (directory != null) {
         if (LOGGER.isLoggable(Level.FINE)) {
-          LOGGER.fine("Archiving directory " + directory.getFile().getAbsolutePath());
+          LOGGER.fine("Archiving directory " + directory.getFile().path());
         }
         try {
           directory.archive(getArchiveFile(context));

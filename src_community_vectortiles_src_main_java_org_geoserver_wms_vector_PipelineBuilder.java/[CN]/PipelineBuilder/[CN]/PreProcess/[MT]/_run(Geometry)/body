@@ -1,0 +1,19 @@
+{
+  Geometry preProcessed=geom;
+  if (this.projectionHandler != null) {
+    preProcessed=projectionHandler.preProcess(geom);
+  }
+  if (preProcessed == null || preProcessed.isEmpty()) {
+    return EMPTY;
+  }
+  if (preProcessed.getDimension() > 0) {
+    Envelope env=preProcessed.getEnvelopeInternal();
+    if (screenMap.canSimplify(env))     if (screenMap.checkAndSet(env)) {
+      return EMPTY;
+    }
+ else {
+      preProcessed=screenMap.getSimplifiedShape(env.getMinX(),env.getMinY(),env.getMaxX(),env.getMaxY(),preProcessed.getFactory(),preProcessed.getClass());
+    }
+  }
+  return preProcessed;
+}

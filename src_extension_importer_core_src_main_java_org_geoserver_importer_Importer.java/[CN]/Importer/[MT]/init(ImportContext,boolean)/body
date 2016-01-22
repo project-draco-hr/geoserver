@@ -1,7 +1,20 @@
 {
   context.reattach(catalog);
-  ImportData data=context.getData();
-  if (data != null) {
-    addTasks(context,data,prepData);
+  try {
+    ImportData data=context.getData();
+    if (data != null) {
+      if (data instanceof RemoteData) {
+        data=((RemoteData)data).resolve(this);
+        context.setData(data);
+      }
+      addTasks(context,data,prepData);
+    }
+    context.setState(ImportContext.State.PENDING);
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,"Failed to init the context ",e);
+    context.setState(ImportContext.State.INIT_ERROR);
+    context.setMessage(e.getMessage());
+    return;
   }
 }

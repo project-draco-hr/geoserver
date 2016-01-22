@@ -1,0 +1,39 @@
+{
+  Catalog catalog=getCatalog();
+  File root=getTestData().getDataDirectoryRoot();
+  String mosaicName="emptyMosaic";
+  File mosaicRoot=new File(root,mosaicName);
+  ensureClean(mosaicRoot);
+  File granulesRoot=new File(root,mosaicName + "_granules");
+  ensureClean(granulesRoot);
+  Properties props=new Properties();
+  props.put("SPI","org.geotools.data.h2.H2DataStoreFactory");
+  props.put("database","empty");
+  try (FileOutputStream fos=new FileOutputStream(new File(mosaicRoot,"datastore.properties"))){
+    props.store(fos,null);
+  }
+   props.clear();
+  props.put("CanBeEmpty","true");
+  try (FileOutputStream fos=new FileOutputStream(new File(mosaicRoot,"indexer.properties"))){
+    props.store(fos,null);
+  }
+   CatalogBuilder cb=new CatalogBuilder(catalog);
+  WorkspaceInfo ws=catalog.getDefaultWorkspace();
+  cb.setWorkspace(ws);
+  CoverageStoreInfo store=cb.buildCoverageStore(mosaicName);
+  store.setURL("./" + mosaicName);
+  store.setType("ImageMosaic");
+  catalog.save(store);
+  unpack("geotiff/EmissiveCampania.tif.bz2",granulesRoot);
+  File granule=new File(granulesRoot,"EmissiveCampania.tif");
+  store=catalog.getCoverageStoreByName(mosaicName);
+  String contextDefinition="{\n" + "   \"import\": {\n" + "      \"data\": {\n"+ "        \"type\": \"file\",\n"+ "        \"file\": \"" + jsonSafePath(granule.getAbsoluteFile()) + "\"\n"+ "      },"+ "      targetStore: {\n"+ "        dataStore: {\n"+ "        name: \""+ store.getName()+ "\",\n"+ "        }\n"+ "      }\n"+ "   }\n"+ "}";
+  JSONObject json=(JSONObject)json(postAsServletResponse("/rest/imports?exec=true",contextDefinition,"application/json"));
+  String state=json.getJSONObject("import").getString("state");
+  assertEquals("COMPLETE",state);
+  StructuredGridCoverage2DReader reader=(StructuredGridCoverage2DReader)store.getGridCoverageReader(null,null);
+  GranuleSource granules=reader.getGranules(reader.getGridCoverageNames()[0],true);
+  assertEquals(1,granules.getCount(Query.ALL));
+  LayerInfo layer=catalog.getLayerByName(mosaicName);
+  assertNotNull(layer);
+}

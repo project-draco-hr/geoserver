@@ -1,0 +1,31 @@
+{
+  GeoServer gs=getGeoServer();
+  WMSInfo wms=gs.getService(WMSInfo.class);
+  Boolean original=wms.getMetadata().get(WMS.ADVANCED_PROJECTION_KEY,Boolean.class);
+  try {
+    wms.getMetadata().put(WMS.ADVANCED_PROJECTION_KEY,Boolean.TRUE);
+    gs.save(wms);
+    String layer=getLayerId(LARGE_POLYGON);
+    String request="wms?version=1.1.1&bbox=-18643898.1832,0,18084728.7111,20029262&format=image/png" + "&request=GetMap&layers=" + layer + "&styles=polygon"+ "&width=400&height=400&srs=EPSG:3832";
+    String disabledRequest=request + "&format_options=advancedProjectionHandling:false";
+    String enabledRequest=request + "&format_options=advancedProjectionHandling:true";
+    BufferedImage image=getAsImage(request,"image/png");
+    assertPixel(image,200,200,Color.WHITE);
+    image=getAsImage(disabledRequest,"image/png");
+    assertPixel(image,200,200,new Color(170,170,170));
+    image=getAsImage(enabledRequest,"image/png");
+    assertPixel(image,200,200,Color.WHITE);
+    wms.getMetadata().put(WMS.ADVANCED_PROJECTION_KEY,Boolean.FALSE);
+    gs.save(wms);
+    image=getAsImage(request,"image/png");
+    assertPixel(image,200,200,new Color(170,170,170));
+    image=getAsImage(disabledRequest,"image/png");
+    assertPixel(image,200,200,new Color(170,170,170));
+    image=getAsImage(enabledRequest,"image/png");
+    assertPixel(image,200,200,new Color(170,170,170));
+  }
+  finally {
+    wms.getMetadata().put(WMS.ADVANCED_PROJECTION_KEY,original);
+    gs.save(wms);
+  }
+}

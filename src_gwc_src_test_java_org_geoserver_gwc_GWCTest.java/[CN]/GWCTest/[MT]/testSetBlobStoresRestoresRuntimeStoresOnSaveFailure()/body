@@ -1,0 +1,20 @@
+{
+  when(xmlConfig.getBlobStores()).thenReturn(ImmutableList.<BlobStoreConfig>of());
+  CompositeBlobStore composite=mock(CompositeBlobStore.class);
+  doReturn(composite).when(mediator).getCompositeBlobStore();
+  doThrow(new IOException("expected")).when(xmlConfig).save();
+  List<BlobStoreConfig> oldStores=Lists.newArrayList(mock(BlobStoreConfig.class),mock(BlobStoreConfig.class));
+  when(xmlConfig.getBlobStores()).thenReturn(oldStores);
+  BlobStoreConfig config=new FileBlobStoreConfig();
+  List<BlobStoreConfig> newStores=ImmutableList.<BlobStoreConfig>of(config);
+  try {
+    mediator.setBlobStores(newStores);
+    fail("Expected ConfigurationException");
+  }
+ catch (  ConfigurationException e) {
+    assertTrue(e.getMessage().contains("Error saving config"));
+  }
+  verify(xmlConfig,times(1)).save();
+  verify(composite,times(1)).setBlobStores(same(newStores));
+  verify(composite,times(1)).setBlobStores(eq(oldStores));
+}

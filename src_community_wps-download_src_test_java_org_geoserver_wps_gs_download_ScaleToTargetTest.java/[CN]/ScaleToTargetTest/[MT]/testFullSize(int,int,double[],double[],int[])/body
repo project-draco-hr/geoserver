@@ -1,0 +1,34 @@
+{
+  GeoTiffReader inputReader=null, outputReader=null;
+  GeoTiffWriter writer=null;
+  File outputTempFile=null;
+  GridCoverage2D gc=null;
+  try {
+    inputReader=new GeoTiffReader(inputTempFile);
+    assertNotNull(inputReader);
+    Envelope fullSizeEnvelope=inputReader.getOriginalEnvelope();
+    ScaleToTarget oneFourth=new ScaleToTarget(inputReader,fullSizeEnvelope);
+    oneFourth.setTargetSize(targetSizeX,targetSizeY);
+    double[] nativeResolution=oneFourth.computeNativeResolution();
+    checkResolution(EXP_NATIVE_RES,nativeResolution);
+    double[] requestedResolution=oneFourth.computeRequestedResolution();
+    checkResolution(expectedRequestedResolution,requestedResolution);
+    double[] readResolution=oneFourth.computeReadingResolution(requestedResolution);
+    checkResolution(expectedReadResolution,readResolution);
+    GridGeometry2D gridGeometry=oneFourth.getGridGeometry();
+    assertEquals(expectedGridSize[0],gridGeometry.getGridRange2D().width);
+    assertEquals(expectedGridSize[1],gridGeometry.getGridRange2D().height);
+    gc=oneFourth.scale(new GeneralParameterValue[]{});
+    outputTempFile=File.createTempFile("scale2target_","_out");
+    writer=new GeoTiffWriter(outputTempFile);
+    writer.write(gc,null);
+    outputReader=new GeoTiffReader(outputTempFile);
+    GridEnvelope2D outputGrid=(GridEnvelope2D)outputReader.getOriginalGridRange();
+    assertEquals(targetSizeX,outputGrid.width);
+    assertEquals(targetSizeY,outputGrid.height);
+    assertTrue(outputReader.getOriginalEnvelope().equals(fullSizeEnvelope,DELTA,false));
+  }
+  finally {
+    finalCleanUp(inputReader,outputReader,writer,gc,null,outputTempFile);
+  }
+}

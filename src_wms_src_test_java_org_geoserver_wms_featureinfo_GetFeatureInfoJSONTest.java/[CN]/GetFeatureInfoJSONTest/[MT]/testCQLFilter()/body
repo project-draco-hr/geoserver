@@ -1,0 +1,20 @@
+{
+  String layer=getLayerId(MockData.FORESTS);
+  String request="wms?version=1.1.1&bbox=-0.002,-0.002,0.002,0.002&styles=&format=jpeg" + "&request=GetFeatureInfo&layers=" + layer + "&query_layers="+ layer+ "&width=20&height=20&x=10&y=10"+ "&info_format="+ JSONType.json;
+  JSONObject json=(JSONObject)getAsJSON(request);
+  JSONArray features=json.getJSONArray("features");
+  assertTrue(features.size() > 0);
+  FeatureTypeInfo info=getCatalog().getFeatureTypeByName(layer);
+  try {
+    info.setCqlFilter("NAME LIKE 'Red%'");
+    getCatalog().save(info);
+    json=(JSONObject)getAsJSON(request);
+    features=json.getJSONArray("features");
+    assertEquals(0,features.size());
+  }
+  finally {
+    info=getCatalog().getFeatureTypeByName(layer);
+    info.setCqlFilter(null);
+    getCatalog().save(info);
+  }
+}

@@ -1,0 +1,16 @@
+{
+  BlobStoresPage page=new BlobStoresPage();
+  BlobStoreConfig dummy1=dummyStore1();
+  GWC.get().addBlobStore(dummy1);
+  List<BlobStoreConfig> blobStores=GWC.get().getBlobStores();
+  tester.startPage(page);
+  GeoServerTablePanel table=(GeoServerTablePanel)tester.getComponentFromLastRenderedPage("storesPanel");
+  assertEquals(blobStores.size(),table.getDataProvider().size());
+  assertTrue(getStoresFromTable(table).contains(dummy1));
+  BlobStoreConfig dummy2=dummyStore2();
+  GWC.get().addBlobStore(dummy2);
+  assertEquals(blobStores.size() + 1,table.getDataProvider().size());
+  assertTrue(getStoresFromTable(table).contains(dummy2));
+  GWC.get().removeBlobStores(Collections.singleton(ID_DUMMY1));
+  GWC.get().removeBlobStores(Collections.singleton(ID_DUMMY2));
+}

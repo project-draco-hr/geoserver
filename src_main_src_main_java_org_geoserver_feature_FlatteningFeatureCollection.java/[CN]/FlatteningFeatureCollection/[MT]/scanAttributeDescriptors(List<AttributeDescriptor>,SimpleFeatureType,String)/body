@@ -1,0 +1,17 @@
+{
+  List<AttributeDescriptor> descriptors=featureType.getAttributeDescriptors();
+  for (int i=0; i < descriptors.size(); i++) {
+    AttributeDescriptor ad=descriptors.get(i);
+    SimpleFeatureType joinedSchema=(SimpleFeatureType)ad.getUserData().get(ContentDataStore.JOINED_FEATURE_TYPE);
+    String name=(attrAlias != null ? attrAlias + "." : "") + ad.getLocalName();
+    if (joinedSchema != null) {
+      scanAttributeDescriptors(attributeDescriptors,joinedSchema,name);
+    }
+ else {
+      AttributeTypeBuilder build=new AttributeTypeBuilder();
+      build.init(ad);
+      AttributeDescriptor descriptor=build.buildDescriptor(name);
+      attributeDescriptors.add(descriptor);
+    }
+  }
+}

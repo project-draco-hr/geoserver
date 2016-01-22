@@ -1,6 +1,7 @@
 {
   XStream xstream=XMLConfiguration.getConfiguredXStream(new XStream(),(WebApplicationContext)null);
   xstream=new GWCGeoServerConfigurationProvider().getConfiguredXStream(xstream);
+  xstream.allowTypes(new Class[]{GeoServerTileLayerInfo.class,SortedSet.class});
   String marshalled=xstream.toXML(info);
   GeoServerTileLayerInfo unmarshalled=(GeoServerTileLayerInfo)xstream.fromXML(new StringReader(marshalled));
   assertNotNull(unmarshalled);
@@ -14,4 +15,5 @@
   assertEquals("mimeFormats",info.getMimeFormats(),unmarshalled.getMimeFormats());
   assertCollection("parameterFilters",info.getParameterFilters(),unmarshalled.getParameterFilters());
   assertEquals("info",info,unmarshalled);
+  return unmarshalled;
 }

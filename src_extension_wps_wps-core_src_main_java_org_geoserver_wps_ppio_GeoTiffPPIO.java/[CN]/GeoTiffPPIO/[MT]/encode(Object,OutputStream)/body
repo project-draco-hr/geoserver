@@ -3,25 +3,22 @@
   CoordinateReferenceSystem crs=coverage.getCoordinateReferenceSystem();
   boolean unreferenced=crs == null || crs instanceof EngineeringCRS;
   final Object fileSource=coverage.getProperty(AbstractGridCoverage2DReader.FILE_SOURCE_PROPERTY);
-  if (fileSource != null && fileSource instanceof String) {
+  if (fileSource != null && fileSource instanceof String && isUnprocessed(coverage)) {
     File file=new File((String)fileSource);
     if (file.exists()) {
       GeoTiffReader reader=null;
       FileInputStream fis=null;
       try {
-        if (unreferenced) {
-          String name=file.getName().toLowerCase();
-          if (!name.endsWith(".tiff") && !name.endsWith(".tif")) {
-            throw new IOException("Not a tiff");
-          }
+        reader=new GeoTiffReader(file);
+        GeneralEnvelope originalEnvelope=reader.getOriginalEnvelope();
+        Envelope envelope=coverage.getEnvelope();
+        if (originalEnvelope.equals(envelope,1e-9,false)) {
+          GridCoverage2D test=reader.read(null);
+          ImageUtilities.disposeImage(test.getRenderedImage());
+          fis=new FileInputStream(file);
+          IOUtils.copyLarge(fis,os);
+          return;
         }
- else {
-          reader=new GeoTiffReader(file);
-          reader.read(null);
-        }
-        fis=new FileInputStream(file);
-        IOUtils.copyLarge(fis,os);
-        return;
       }
  catch (      Exception e) {
       }

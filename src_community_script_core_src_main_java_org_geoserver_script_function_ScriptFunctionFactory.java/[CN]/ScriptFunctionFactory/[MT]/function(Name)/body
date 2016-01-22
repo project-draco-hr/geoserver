@@ -4,33 +4,28 @@
 synchronized (this) {
       function=functions.get(name);
       if (function == null) {
-        try {
-          ScriptManager scriptMgr=scriptMgr();
-          File filterRoot=scriptMgr.getFunctionRoot();
-          File f=null;
-          if (name.getNamespaceURI() != null) {
-            f=new File(filterRoot,name.getLocalPart() + "." + name.getNamespaceURI());
-          }
+        ScriptManager scriptMgr=scriptMgr();
+        Resource filterRoot=scriptMgr.function();
+        Resource f=null;
+        if (name.getNamespaceURI() != null) {
+          f=filterRoot.get(name.getLocalPart() + "." + name.getNamespaceURI());
+        }
  else {
-            for (            String filename : filterRoot.list()) {
-              if (name.getLocalPart().equals(getBaseName(filename))) {
-                f=new File(filterRoot,filename);
-                break;
-              }
+          for (          Resource file : filterRoot.list()) {
+            if (name.getLocalPart().equals(getBaseName(file.name()))) {
+              f=file;
+              break;
             }
           }
-          if (f == null) {
-            return null;
-          }
-          if (!f.exists()) {
-            LOGGER.log(Level.WARNING,"File not found : " + f.getPath());
-            return null;
-          }
-          function=new ScriptFunction(f,scriptMgr);
         }
- catch (        IOException e) {
-          throw new RuntimeException(e);
+        if (f == null) {
+          return null;
         }
+        if (!Resources.exists(f)) {
+          LOGGER.log(Level.WARNING,"File not found : " + f.path());
+          return null;
+        }
+        function=new ScriptFunction(f,scriptMgr);
         functions.put(name,function);
       }
     }

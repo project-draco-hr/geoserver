@@ -1,0 +1,23 @@
+{
+  if (allowedArea == null || allowedArea.isEmpty()) {
+    return null;
+  }
+  String[] allowedAreaParts=allowedArea.split(";");
+  if (allowedAreaParts.length != 2) {
+    throw new GeoServerRuntimException(String.format("Invalid allowed area '%s' expecting SRID=<CODE>;<WKT>.",allowedArea));
+  }
+  Integer srid;
+  Geometry geometry;
+  try {
+    srid=Integer.valueOf(allowedAreaParts[0].split("=")[1]);
+    geometry=new WKTReader().read(allowedAreaParts[1]);
+  }
+ catch (  Exception exception) {
+    String message=String.format("Error parsing SRID '%s' or WKT geometry '%s' expecting SRID=<CODE>;<WKT>.",allowedAreaParts[0],allowedAreaParts[1]);
+    LOGGER.log(Level.WARNING,message,exception);
+    throw new GeoServerRuntimException(message,exception);
+  }
+  MultiPolygon multiPolygon=castToMultiPolygon(geometry);
+  multiPolygon.setSRID(srid);
+  return multiPolygon;
+}

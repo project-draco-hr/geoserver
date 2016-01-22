@@ -1,0 +1,22 @@
+{
+  File gmlFile=file("gml/poi.gml2.gml");
+  String wsName=getCatalog().getDefaultWorkspace().getName();
+  String contextDefinition="{\n" + "   \"import\": {\n" + "      \"targetWorkspace\": {\n"+ "         \"workspace\": {\n"+ "            \"name\": \"" + wsName + "\"\n"+ "         }\n"+ "      },\n"+ "      \"data\": {\n"+ "        \"type\": \"file\",\n"+ "        \"file\": \""+ jsonSafePath(gmlFile)+ "\"\n"+ "      },"+ "      targetStore: {\n"+ "        dataStore: {\n"+ "        name: \"h2\",\n"+ "        }\n"+ "      }\n"+ "   }\n"+ "}";
+  JSONObject json=(JSONObject)json(postAsServletResponse("/rest/imports?exec=true" + (async ? "&async=true" : ""),contextDefinition,"application/json"));
+  String state=null;
+  if (async) {
+    int importId=json.getJSONObject("import").getInt("id");
+    for (int i=0; i < 60 * 2 * 2; i++) {
+      json=(JSONObject)getAsJSON("/rest/imports/" + importId);
+      state=json.getJSONObject("import").getString("state");
+      if ("INIT".equals(state) || "RUNNING".equals(state) || "PENDING".equals(state)) {
+        Thread.sleep(500);
+      }
+    }
+  }
+ else {
+    state=json.getJSONObject("import").getString("state");
+  }
+  assertEquals("COMPLETE",state);
+  checkPoiImport();
+}

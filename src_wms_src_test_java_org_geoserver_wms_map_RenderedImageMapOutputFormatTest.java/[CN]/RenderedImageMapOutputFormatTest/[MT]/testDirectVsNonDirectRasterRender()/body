@@ -1,0 +1,26 @@
+{
+  Catalog catalog=getCatalog();
+  CoverageInfo ci=catalog.getCoverageByName(SystemTestData.MULTIBAND.getPrefix(),SystemTestData.MULTIBAND.getLocalPart());
+  final Envelope env=ci.boundingBox();
+  LOGGER.info("about to create map ctx for BasicPolygons with bounds " + env);
+  GetMapRequest request=new GetMapRequest();
+  CoordinateReferenceSystem crs=DefaultGeographicCRS.WGS84;
+  ReferencedEnvelope bbox=new ReferencedEnvelope(new Envelope(-116.90673461649858211,-114.30988665660261461,32.07093728218402617,33.89032847348440214),crs);
+  request.setBbox(bbox);
+  request.setSRS("urn:x-ogc:def:crs:EPSG:4326");
+  request.setFormat("image/png");
+  final WMSMapContent map=new WMSMapContent(request);
+  map.setMapWidth(300);
+  map.setMapHeight(300);
+  map.setBgColor(Color.red);
+  map.setTransparent(false);
+  map.getViewport().setBounds(bbox);
+  StyleBuilder builder=new StyleBuilder();
+  GridCoverage2DReader reader=(GridCoverage2DReader)ci.getGridCoverageReader(null,null);
+  reader.getCoordinateReferenceSystem();
+  Layer l=new CachedGridReaderLayer(reader,builder.createStyle(builder.createRasterSymbolizer()));
+  map.addLayer(l);
+  RenderedImageMap imageMap=this.rasterMapProducer.produceMap(map);
+  ImageAssert.assertEquals(new File("src/test/resources/org/geoserver/wms/map/direct-raster-expected.tif"),imageMap.getImage(),0);
+  imageMap.dispose();
+}

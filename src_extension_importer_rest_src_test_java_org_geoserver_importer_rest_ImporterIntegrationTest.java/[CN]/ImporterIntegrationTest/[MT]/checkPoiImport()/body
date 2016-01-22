@@ -1,0 +1,15 @@
+{
+  FeatureTypeInfo fti=getCatalog().getResourceByName("poi",FeatureTypeInfo.class);
+  assertNotNull(fti);
+  SimpleFeatureType featureType=(SimpleFeatureType)fti.getFeatureType();
+  GeometryDescriptor geometryDescriptor=featureType.getGeometryDescriptor();
+  assertEquals("Expecting a point geometry",Point.class,geometryDescriptor.getType().getBinding());
+  assertEquals(4,featureType.getAttributeCount());
+  SimpleFeatureSource fs=(SimpleFeatureSource)fti.getFeatureSource(null,null);
+  SimpleFeatureCollection fc=fs.getFeatures(CQL.toFilter("NAME = 'museam'"));
+  assertEquals(1,fc.size());
+  SimpleFeature sf=DataUtilities.first(fc);
+  Point p=(Point)sf.getDefaultGeometry();
+  assertEquals(-74.0104611,p.getX(),1e-6);
+  assertEquals(40.70758763,p.getY(),1e-6);
+}

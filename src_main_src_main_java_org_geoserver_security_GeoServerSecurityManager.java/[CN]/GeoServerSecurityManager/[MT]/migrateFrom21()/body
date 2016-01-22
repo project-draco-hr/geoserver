@@ -1,18 +1,18 @@
 {
-  if (getRoleRoot(false) != null) {
-    File oldUserFile=new File(getSecurityRoot(),"users.properties.old");
-    if (oldUserFile.exists()) {
-      LOGGER.warning(oldUserFile.getCanonicalPath() + " could be removed manually");
+  if (role().getType() != Type.UNDEFINED) {
+    Resource oldUserFile=security().get("users.properties.old");
+    if (oldUserFile.getType() != Type.UNDEFINED) {
+      LOGGER.warning(oldUserFile.path() + " could be removed manually");
     }
     return false;
   }
   LOGGER.info("Start security migration");
-  getRoleRoot();
-  getUserGroupRoot();
-  getAuthRoot();
-  getPasswordPolicyRoot();
-  getFilterRoot();
-  getMasterPasswordProviderRoot();
+  get("security/role").dir();
+  get("security/usergroup").dir();
+  get("security/auth").dir();
+  get("security/pwpolicy").dir();
+  get("security/filter").dir();
+  get("security/masterpw").dir();
   MasterPasswordProviderConfig mpProviderConfig=loadMasterPassswordProviderConfig("default");
   if (mpProviderConfig == null) {
     mpProviderConfig=new URLMasterPasswordProviderConfig();
@@ -23,17 +23,17 @@
     ((URLMasterPasswordProviderConfig)mpProviderConfig).setEncrypting(true);
     saveMasterPasswordProviderConfig(mpProviderConfig,false);
     MasterPasswordProvider mpProvider=loadMasterPasswordProvider(mpProviderConfig.getName());
-    File propFile=new File(getSecurityRoot(),"users.properties");
+    Resource propFile=security().get("users.properties");
     Properties userprops=null;
-    if (propFile.exists())     userprops=Util.loadPropertyFile(propFile);
+    if (propFile.getType() == Type.RESOURCE)     userprops=Util.loadPropertyFile(propFile);
     mpProvider.setMasterPassword(extractMasterPasswordForMigration(userprops));
   }
   MasterPasswordConfig mpConfig=new MasterPasswordConfig();
   mpConfig.setProviderName(mpProviderConfig.getName());
   saveMasterPasswordConfig(mpConfig);
-  File serviceFile=new File(getSecurityRoot(),"services.properties");
-  if (serviceFile.exists() == false) {
-    FileUtils.copyURLToFile(Util.class.getResource("serviceTemplate.properties"),serviceFile);
+  Resource serviceFile=security().get("services.properties");
+  if (serviceFile.getType() == Type.UNDEFINED) {
+    org.geoserver.data.util.IOUtils.copy(Util.class.getResourceAsStream("serviceTemplate.properties"),serviceFile.out());
   }
   long checkInterval=10000;
   GeoServerUserGroupService userGroupService=loadUserGroupService(XMLUserGroupService.DEFAULT_NAME);
@@ -208,8 +208,8 @@
   roleService.setSecurityManager(this);
   GeoServerUserGroupStore userGroupStore=userGroupService.createStore();
   GeoServerRoleStore roleStore=roleService.createStore();
-  File usersFile=new File(getSecurityRoot(),"users.properties");
-  if (usersFile.exists()) {
+  Resource usersFile=security().get("users.properties");
+  if (usersFile.getType() == Type.RESOURCE) {
     Properties props=Util.loadPropertyFile(usersFile);
     UserAttributeEditor configAttribEd=new UserAttributeEditor();
     for (Iterator<Object> iter=props.keySet().iterator(); iter.hasNext(); ) {
@@ -243,34 +243,40 @@
     roleStore.addRole(roleStore.createRoleObject(XMLRoleService.DEFAULT_LOCAL_GROUP_ADMIN_ROLE));
   }
   for (  String filename : new String[]{"services.properties","layers.properties","rest.properties"}) {
-    File file=new File(getSecurityRoot(),filename);
-    if (file.exists() == false)     continue;
-    List<String> lines=new ArrayList<String>();
-    BufferedReader reader=new BufferedReader(new FileReader(file));
-    String line;
-    while ((line=reader.readLine()) != null)     lines.add(line.replace(GeoServerRole.ADMIN_ROLE.getAuthority(),XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE));
-    reader.close();
-    PrintWriter writer=new PrintWriter(new FileWriter(file));
-    for (    String s : lines) {
-      writer.println(s);
+    Resource file=security().get(filename);
+    if (file.getType() == Type.UNDEFINED) {
+      continue;
     }
-    writer.close();
-  }
-  serviceFile=new File(getSecurityRoot(),"services.properties");
-  if (serviceFile.exists()) {
+    List<String> lines=new ArrayList<String>();
+    try (BufferedReader reader=new BufferedReader(new InputStreamReader(file.in()))){
+      String line;
+      while ((line=reader.readLine()) != null) {
+        lines.add(line.replace(GeoServerRole.ADMIN_ROLE.getAuthority(),XMLRoleService.DEFAULT_LOCAL_ADMIN_ROLE));
+      }
+    }
+     try (PrintWriter writer=new PrintWriter(new OutputStreamWriter(file.out()))){
+      for (      String s : lines) {
+        writer.println(s);
+      }
+    }
+   }
+  serviceFile=security().get("services.properties");
+  if (serviceFile.getType() != Type.UNDEFINED) {
     Properties props=Util.loadPropertyFile(serviceFile);
     for (    Entry<Object,Object> entry : props.entrySet()) {
       StringTokenizer tokenizer=new StringTokenizer((String)entry.getValue(),",");
       while (tokenizer.hasMoreTokens()) {
         String roleName=tokenizer.nextToken().trim();
         if (roleName.length() > 0) {
-          if (roleStore.getRoleByName(roleName) == null)           roleStore.addRole(roleStore.createRoleObject(roleName));
+          if (roleStore.getRoleByName(roleName) == null) {
+            roleStore.addRole(roleStore.createRoleObject(roleName));
+          }
         }
       }
     }
   }
-  File dataFile=new File(getSecurityRoot(),"layers.properties");
-  if (dataFile.exists()) {
+  Resource dataFile=security().get("layers.properties");
+  if (dataFile.getType() == Type.RESOURCE) {
     Properties props=Util.loadPropertyFile(dataFile);
     for (    Entry<Object,Object> entry : props.entrySet()) {
       if ("mode".equals(entry.getKey().toString()))       continue;
@@ -285,10 +291,10 @@
   }
   roleStore.store();
   userGroupStore.store();
-  if (usersFile.exists()) {
-    File oldUserFile=new File(usersFile.getCanonicalPath() + ".old");
+  if (usersFile.getType() != Type.UNDEFINED) {
+    Resource oldUserFile=dataDir.get(usersFile.path() + ".old");
     usersFile.renameTo(oldUserFile);
-    LOGGER.info("Renamed " + usersFile.getCanonicalPath() + " to "+ oldUserFile.getCanonicalPath());
+    LOGGER.info("Renamed " + usersFile.path() + " to "+ oldUserFile.path());
   }
   LOGGER.info("End security migration");
   return true;

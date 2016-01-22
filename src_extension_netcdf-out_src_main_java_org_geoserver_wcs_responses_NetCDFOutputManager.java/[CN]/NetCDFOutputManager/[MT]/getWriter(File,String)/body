@@ -1,0 +1,20 @@
+{
+  if (NetCDFUtilities.NETCDF4_MIMETYPE.equalsIgnoreCase(outputFormat)) {
+    version=Version.netcdf4_classic;
+  }
+ else {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Requested output format " + outputFormat + " isn't "+ NetCDFUtilities.NETCDF4_MIMETYPE+ "\nFallback to Version 3");
+    }
+    version=Version.netcdf3;
+  }
+  NetcdfFileWriter writer=null;
+  if (version == Version.netcdf4_classic) {
+    if (!NetCDFUtilities.isNC4CAvailable()) {
+      throw new IOException(NetCDFUtilities.NC4_ERROR_MESSAGE);
+    }
+    Nc4Chunking chunker=new Nc4ChunkingDefault(compressionLevel,shuffle);
+    writer=NetcdfFileWriter.createNew(version,file.getAbsolutePath(),chunker);
+  }
+  return writer != null ? writer : NetcdfFileWriter.createNew(Version.netcdf3,file.getAbsolutePath());
+}

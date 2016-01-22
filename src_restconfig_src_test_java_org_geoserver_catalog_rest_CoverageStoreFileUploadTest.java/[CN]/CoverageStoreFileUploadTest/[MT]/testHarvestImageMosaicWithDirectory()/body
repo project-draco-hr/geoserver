@@ -21,15 +21,14 @@
   assertNotNull(ci);
   assertEquals(storeInfo,ci.getStore());
   URL zipHarvest=MockData.class.getResource("harvesting.zip");
-  File newZip=new File("./target/harvesting2.zip");
-  FileUtils.copyInputStreamToFile(zipHarvest.openStream(),newZip);
-  File outputDirectory=new File("./target/harvesting");
-  outputDirectory.mkdir();
+  Resource newZip=Files.asResource(new File("./target/harvesting2.zip"));
+  IOUtils.copyStream(zipHarvest.openStream(),newZip.out(),true,true);
+  Resource outputDirectory=Files.asResource(new File("./target/harvesting"));
   RESTUtils.unzipFile(newZip,outputDirectory);
   MockHttpServletRequest request=createRequest("/rest/workspaces/gs/coveragestores/watertemp3/external.imagemosaic");
   request.setMethod("POST");
   request.setContentType("text/plain");
-  request.setBodyContent("file:///" + outputDirectory.getAbsolutePath());
+  request.setBodyContent("file:///" + outputDirectory.dir().getAbsolutePath());
   request.setHeader("Content-type","text/plain");
   response=dispatch(request);
   GridCoverageReader reader=storeInfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
@@ -37,5 +36,5 @@
   assertNotNull(metadataNames);
   assertEquals("true",reader.getMetadataValue("HAS_TIME_DOMAIN"));
   assertEquals("2008-10-31T00:00:00.000Z,2008-11-01T00:00:00.000Z,2008-11-02T00:00:00.000Z",reader.getMetadataValue(metadataNames[0]));
-  FileUtils.deleteDirectory(outputDirectory);
+  outputDirectory.delete();
 }

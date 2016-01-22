@@ -1,0 +1,14 @@
+{
+  String queryString="&request=getcoverage&service=wcs&version=1.1.1&&format=image/geotiff" + "&BoundingBox=-45,146,-42,149,urn:ogc:def:crs:EPSG:6.6:4326";
+  Document dom=getAsDOM("wcs?request=GetCapabilities&service=WCS");
+  NodeList nodes=xpath.getMatchingNodes("//wcs:CoverageSummary/wcs:Identifier[text()[contains(.,'rain')]]",dom);
+  assertTrue(nodes.getLength() >= 2);
+  for (int i=0; i < nodes.getLength(); i++) {
+    String identifier=nodes.item(i).getTextContent();
+    dom=getAsDOM("wcs?request=DescribeCoverage&service=WCS&version=1.1.1&identifiers=" + identifier);
+    print(dom);
+    assertEquals("wcs:CoverageDescriptions",dom.getDocumentElement().getNodeName());
+    assertEquals(1,dom.getElementsByTagName("wcs:CoverageDescription").getLength());
+    assertEquals(identifier,dom.getElementsByTagName("wcs:Identifier").item(0).getTextContent());
+  }
+}

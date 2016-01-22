@@ -1,0 +1,18 @@
+{
+  tester.executeAjaxEvent("form:legendPanel:container:showhide:show","onclick");
+  tester.assertComponent("form:legendPanel:container:list:onlineResource",TextField.class);
+  tester.assertComponent("form:legendPanel:container:list:width",TextField.class);
+  tester.assertComponent("form:legendPanel:container:list:height",TextField.class);
+  tester.assertComponent("form:legendPanel:container:list:format",TextField.class);
+  FormTester form=tester.newFormTester("form");
+  File styleFile=new File(new java.io.File(getClass().getResource("default_point.sld").toURI()));
+  String sld=IOUtils.toString(new FileReader(styleFile)).replaceAll("\r\n","\n").replaceAll("\r","\n");
+  form.setValue("styleEditor:editorContainer:editorParent:editor",sld);
+  form.setValue("name","legendwrongvaluestest");
+  form.setValue("legendPanel:container:list:onlineResource","thisisnotavalidurl");
+  form.setValue("legendPanel:container:list:width","-1");
+  form.setValue("legendPanel:container:list:height","-1");
+  form.setValue("legendPanel:container:list:format","image/png");
+  form.submit();
+  tester.assertErrorMessages(new String[]{"Graphic resource must be a png, gif or jpeg","'-1' is smaller than the minimum of 0.","'-1' is smaller than the minimum of 0."});
+}

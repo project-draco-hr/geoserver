@@ -1,0 +1,83 @@
+{
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(),getGeoServer());
+  final WPSResourceManager resourceManager=getResourceManager();
+  DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  File rasterZip=downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),null,false,null,80,80,new NullProgressListener());
+  Assert.assertNotNull(rasterZip);
+  GeoTiffReader reader=null;
+  GridCoverage2D gc=null;
+  try {
+    final File[] tiffFiles=extractTIFFFile(rasterZip);
+    Assert.assertNotNull(tiffFiles);
+    Assert.assertTrue(tiffFiles.length > 0);
+    reader=new GeoTiffReader(tiffFiles[0]);
+    gc=reader.read(null);
+    Assert.assertNotNull(gc);
+    Rectangle2D originalGridRange=(GridEnvelope2D)reader.getOriginalGridRange();
+    Assert.assertEquals(80,Math.round(originalGridRange.getWidth()));
+    Assert.assertEquals(80,Math.round(originalGridRange.getHeight()));
+    Assert.assertEquals(-130.8866985,gc.getEnvelope().getLowerCorner().getOrdinate(0),1E-6);
+    Assert.assertEquals(48.5552613,gc.getEnvelope().getLowerCorner().getOrdinate(1),1E-6);
+    Assert.assertEquals(-123.8830077,gc.getEnvelope().getUpperCorner().getOrdinate(0),1E-6);
+    Assert.assertEquals(54.1420339,gc.getEnvelope().getUpperCorner().getOrdinate(1),1E-6);
+  }
+  finally {
+    if (gc != null) {
+      CoverageCleanerCallback.disposeCoverage(gc);
+    }
+    if (reader != null) {
+      reader.dispose();
+    }
+    resourceManager.finished(resourceManager.getExecutionId(true));
+  }
+  File largerZip=downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),null,false,null,160,null,new NullProgressListener());
+  Assert.assertNotNull(largerZip);
+  try {
+    final File[] tiffFiles=extractTIFFFile(largerZip);
+    Assert.assertNotNull(tiffFiles);
+    Assert.assertTrue(tiffFiles.length > 0);
+    reader=new GeoTiffReader(tiffFiles[0]);
+    gc=reader.read(null);
+    Assert.assertNotNull(gc);
+    Rectangle2D originalGridRange=(GridEnvelope2D)reader.getOriginalGridRange();
+    Assert.assertEquals(160,Math.round(originalGridRange.getWidth()));
+    Assert.assertEquals(160,Math.round(originalGridRange.getHeight()));
+  }
+  finally {
+    if (gc != null) {
+      CoverageCleanerCallback.disposeCoverage(gc);
+    }
+    if (reader != null) {
+      reader.dispose();
+    }
+    resourceManager.finished(resourceManager.getExecutionId(true));
+  }
+  Polygon roi=(Polygon)new WKTReader2().read("POLYGON (( -127.57473954542964 54.06575021619523, -130.88669845369998 52.00807146727025, -129.50812897394974 49.85372324691927, -130.5300633861675 49.20465679591609, -129.25955033314003 48.60392508062591, -128.00975216684665 50.986137055052474, -125.8623089087404 48.63154492960477, -123.984159178178 50.68231871628503, -126.91186316993704 52.15307567440926, -125.3444367403868 53.54787804784162, -127.57473954542964 54.06575021619523 ))");
+  roi.setSRID(4326);
+  File resampledZip=downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),roi,true,null,80,80,new NullProgressListener());
+  Assert.assertNotNull(resampledZip);
+  try {
+    final File[] tiffFiles=extractTIFFFile(resampledZip);
+    Assert.assertNotNull(tiffFiles);
+    Assert.assertTrue(tiffFiles.length > 0);
+    reader=new GeoTiffReader(tiffFiles[0]);
+    gc=reader.read(null);
+    Assert.assertNotNull(gc);
+    Rectangle2D originalGridRange=(GridEnvelope2D)reader.getOriginalGridRange();
+    Assert.assertEquals(80,Math.round(originalGridRange.getWidth()));
+    Assert.assertEquals(80,Math.round(originalGridRange.getHeight()));
+    Assert.assertEquals(-130.88669845369998,gc.getEnvelope().getLowerCorner().getOrdinate(0),1E-6);
+    Assert.assertEquals(48.611129008700004,gc.getEnvelope().getLowerCorner().getOrdinate(1),1E-6);
+    Assert.assertEquals(-123.95304462109999,gc.getEnvelope().getUpperCorner().getOrdinate(0),1E-6);
+    Assert.assertEquals(54.0861661371,gc.getEnvelope().getUpperCorner().getOrdinate(1),1E-6);
+  }
+  finally {
+    if (gc != null) {
+      CoverageCleanerCallback.disposeCoverage(gc);
+    }
+    if (reader != null) {
+      reader.dispose();
+    }
+    resourceManager.finished(resourceManager.getExecutionId(true));
+  }
+}

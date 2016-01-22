@@ -1,0 +1,21 @@
+{
+  DefaultTransaction transaction=new DefaultTransaction("create");
+  boolean committed=false;
+  try {
+    SimpleFeatureStore store=getStatusFeatureStore();
+    store.setTransaction(transaction);
+    SimpleFeature feature=statusToFeature(status);
+    FeatureCollection<SimpleFeatureType,SimpleFeature> featureCollection=DataUtilities.collection(feature);
+    Filter filter=ECQL.toFilter(PROCESS_ID + " = '" + status.getExecutionId()+ "'");
+    store.removeFeatures(filter);
+    store.addFeatures(featureCollection);
+    transaction.commit();
+    committed=true;
+  }
+ catch (  Exception e) {
+    throw new WPSException("Failure saving status " + status,e);
+  }
+ finally {
+    closeTransaction(transaction,committed);
+  }
+}

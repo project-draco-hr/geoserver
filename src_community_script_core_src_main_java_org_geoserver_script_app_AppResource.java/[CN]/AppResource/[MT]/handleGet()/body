@@ -2,13 +2,13 @@
   try {
     ScriptEngine eng=scriptMgr.createNewEngine(script);
     if (eng == null) {
-      throw new RestletException(format("Script engine for %s not found",script.getName()),Status.CLIENT_ERROR_BAD_REQUEST);
+      throw new RestletException(format("Script engine for %s not found",script.name()),Status.CLIENT_ERROR_BAD_REQUEST);
     }
     AppHook hook=scriptMgr.lookupAppHook(script);
     if (hook == null) {
-      throw new RestletException(format("No hook found for %s",script.getPath()),Status.SERVER_ERROR_INTERNAL);
+      throw new RestletException(format("No hook found for %s",script.path()),Status.SERVER_ERROR_INTERNAL);
     }
-    Reader in=new BufferedReader(new FileReader(script));
+    Reader in=new BufferedReader(new InputStreamReader(script.in()));
     try {
       eng.eval(in);
       hook.run(getRequest(),getResponse(),eng);
@@ -19,6 +19,6 @@
   }
  catch (  Exception e) {
     LOGGER.log(Level.WARNING,e.getLocalizedMessage(),e);
-    throw new RestletException("Error executing script " + script.getName(),Status.SERVER_ERROR_INTERNAL,e);
+    throw new RestletException("Error executing script " + script.name(),Status.SERVER_ERROR_INTERNAL,e);
   }
 }

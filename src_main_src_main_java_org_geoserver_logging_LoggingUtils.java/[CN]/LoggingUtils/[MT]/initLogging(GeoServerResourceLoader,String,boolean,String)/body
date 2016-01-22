@@ -24,13 +24,14 @@
   if (resource == null || resource.getType() != Type.RESOURCE) {
     throw new ConfigurationException("Unable to load logging configuration '" + configFileName + "'.  In addition, an attempt "+ "was made to create the 'logs' directory in your data dir, and to use the DEFAULT_LOGGING configuration, but"+ "this failed as well.  Is your data dir writeable?");
   }
-  InputStream loggingConfigStream=resource.in();
-  if (loggingConfigStream == null) {
-    LoggingInitializer.LOGGER.warning("Couldn't open Log4J configuration file '" + resource);
-    return;
-  }
+  try (InputStream loggingConfigStream=resource.in()){
+    if (loggingConfigStream == null) {
+      LoggingInitializer.LOGGER.warning("Couldn't open Log4J configuration file '" + resource);
+      return;
+    }
  else {
-    LoggingInitializer.LOGGER.fine("GeoServer logging profile '" + resource.name() + "' enabled.");
+      LoggingInitializer.LOGGER.fine("GeoServer logging profile '" + resource.name() + "' enabled.");
+    }
+    configureGeoServerLogging(resourceLoader,loggingConfigStream,suppressStdOutLogging,false,logFileName);
   }
-  configureGeoServerLogging(resourceLoader,loggingConfigStream,suppressStdOutLogging,false,logFileName);
-}
+ }

@@ -18,6 +18,12 @@
     map.put("yx",String.valueOf(isWms13FlippedCRS(request.getCrs())));
     map.put("maxResolution",new Double(getMaxResolution(mapContent.getRenderingArea())));
     String baseUrl=ResponseUtils.buildURL(request.getBaseUrl(),"/",null,URLType.RESOURCE);
+    String queryString=null;
+    if (baseUrl.indexOf("?") > 0) {
+      int idx=baseUrl.indexOf("?");
+      queryString=baseUrl.substring(idx);
+      baseUrl=baseUrl.substring(0,idx);
+    }
     map.put("baseUrl",canonicUrl(baseUrl));
     String servicePath="wms";
     if (LocalLayer.get() != null) {
@@ -25,6 +31,9 @@
     }
     if (LocalWorkspace.get() != null) {
       servicePath=LocalWorkspace.get().getName() + "/" + servicePath;
+    }
+    if (queryString != null) {
+      servicePath+=queryString;
     }
     map.put("servicePath",servicePath);
     map.put("parameters",getLayerParameter(request.getRawKvp()));

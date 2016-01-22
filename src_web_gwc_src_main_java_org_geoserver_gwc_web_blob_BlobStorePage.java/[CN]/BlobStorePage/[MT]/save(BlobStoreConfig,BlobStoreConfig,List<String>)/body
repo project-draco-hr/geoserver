@@ -1,0 +1,41 @@
+{
+  BlobStoreConfig defaultStore=null;
+  if (blobStore.isDefault() && (originalStore == null || !originalStore.isDefault())) {
+    defaultStore=GWC.get().getDefaultBlobStore();
+    if (defaultStore != null) {
+      defaultStore.setDefault(false);
+      GWC.get().modifyBlobStore(defaultStore.getId(),defaultStore);
+    }
+  }
+  try {
+    if (originalStore == null) {
+      GWC.get().addBlobStore(blobStore);
+    }
+ else {
+      GWC.get().modifyBlobStore(originalStore.getId(),blobStore);
+    }
+  }
+ catch (  ConfigurationException e) {
+    if (defaultStore != null) {
+      defaultStore.setDefault(true);
+      GWC.get().modifyBlobStore(defaultStore.getId(),defaultStore);
+    }
+    throw e;
+  }
+  if (originalStore != null) {
+    boolean updateId=!blobStore.getId().equals(originalStore.getId());
+    boolean disable=originalStore.isEnabled() && !blobStore.isEnabled();
+    if (updateId || disable) {
+      for (      String layerName : assignedLayers) {
+        TileLayer layer=GWC.get().getTileLayerByName(layerName);
+        if (updateId) {
+          layer.setBlobStoreId(blobStore.getId());
+        }
+        if (disable) {
+          layer.setEnabled(false);
+        }
+        GWC.get().save(layer);
+      }
+    }
+  }
+}

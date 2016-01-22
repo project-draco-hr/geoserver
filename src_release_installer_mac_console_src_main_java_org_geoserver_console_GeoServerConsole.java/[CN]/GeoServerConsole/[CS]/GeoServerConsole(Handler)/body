@@ -3,15 +3,23 @@
   w=new Frame();
   w.setVisible(true);
   dd=findDataDirectory();
-  LogManager.getRootLogger().addAppender(new AppenderSkeleton(){
-    protected void append(    LoggingEvent event){
-      w.addText(event.getMessage().toString() + "\n");
+  final OutputStream out=new BufferedOutputStream(new OutputStream(){
+    byte[] buf=new byte[1];
+    @Override public void write(    int b) throws IOException {
+      buf[0]=(byte)b;
+      write(buf,0,1);
     }
-    public void close(){
-    }
-    public boolean requiresLayout(){
-      return false;
+    @Override public void write(    byte[] b,    int off,    int len) throws IOException {
+      final String content=new String(b,off,len);
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run(){
+          w.addText(content);
+        }
+      }
+);
     }
   }
-);
+,100);
+  System.setOut(new PrintStream(out));
+  System.setErr(new PrintStream(out));
 }

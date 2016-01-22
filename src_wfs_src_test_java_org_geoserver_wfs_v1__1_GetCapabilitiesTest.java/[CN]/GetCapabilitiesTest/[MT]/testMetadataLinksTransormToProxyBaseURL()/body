@@ -1,0 +1,32 @@
+{
+  FeatureTypeInfo mpolys=getCatalog().getFeatureTypeByName(getLayerId(MockTestData.MPOLYGONS));
+  MetadataLinkInfo ml1=getCatalog().getFactory().createMetadataLink();
+  ml1.setMetadataType("ISO19115:2003");
+  ml1.setType("text/html");
+  ml1.setContent("/metadata?key=value");
+  mpolys.getMetadataLinks().add(ml1);
+  MetadataLinkInfo ml2=getCatalog().getFactory().createMetadataLink();
+  ml2.setMetadataType("FGDC");
+  ml2.setType("text/html");
+  ml2.setContent("/metadata?key=value");
+  mpolys.getMetadataLinks().add(ml2);
+  MetadataLinkInfo ml3=getCatalog().getFactory().createMetadataLink();
+  ml3.setMetadataType("other");
+  ml3.setType("text/html");
+  ml3.setContent("/metadata?key=value");
+  mpolys.getMetadataLinks().add(ml3);
+  MetadataLinkInfo ml4=getCatalog().getFactory().createMetadataLink();
+  ml4.setMetadataType("FGDC");
+  ml4.setType("application/zip");
+  ml4.setContent("/metadata?key=value");
+  mpolys.getMetadataLinks().add(ml4);
+  getCatalog().save(mpolys);
+  String proxyBaseUrl=getGeoServer().getGlobal().getSettings().getProxyBaseUrl();
+  Document doc=getAsDOM("wfs?service=WFS&version=1.1.0&request=getCapabilities");
+  XpathEngine xpath=XMLUnit.newXpathEngine();
+  assertEquals(2,xpath.getMatchingNodes("//wfs:FeatureType[wfs:Name='cgf:MPolygons']/wfs:MetadataURL",doc).getLength());
+  assertEquals(2,xpath.getMatchingNodes("//wfs:FeatureType[wfs:Name='cgf:MPolygons']/wfs:MetadataURL[@format='text/html']",doc).getLength());
+  assertEquals(1,xpath.getMatchingNodes("//wfs:FeatureType[wfs:Name='cgf:MPolygons']/wfs:MetadataURL[@type='19115']",doc).getLength());
+  assertEquals(1,xpath.getMatchingNodes("//wfs:FeatureType[wfs:Name='cgf:MPolygons']/wfs:MetadataURL[@type='FGDC']",doc).getLength());
+  assertEquals(2,xpath.getMatchingNodes("//wfs:FeatureType[wfs:Name='cgf:MPolygons']/wfs:MetadataURL[text() = '" + proxyBaseUrl + "/metadata?key=value']",doc).getLength());
+}

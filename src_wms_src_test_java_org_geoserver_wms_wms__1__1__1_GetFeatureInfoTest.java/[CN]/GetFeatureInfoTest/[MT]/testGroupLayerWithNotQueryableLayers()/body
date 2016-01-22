@@ -1,0 +1,33 @@
+{
+  Catalog catalog=getCatalog();
+  CatalogFactory factory=catalog.getFactory();
+  WorkspaceInfo workspace=catalog.getWorkspaceByName(MockData.CITE_PREFIX);
+  String groupLayer="glqueryable";
+  LayerInfo buildingsLayer=catalog.getLayerByName(getLayerId(MockData.BUILDINGS));
+  buildingsLayer.setQueryable(false);
+  catalog.save(buildingsLayer);
+  LayerInfo bridgesLayer=catalog.getLayerByName(getLayerId(MockData.BRIDGES));
+  bridgesLayer.setQueryable(false);
+  catalog.save(bridgesLayer);
+  LayerInfo forestLayer=catalog.getLayerByName(getLayerId(MockData.FORESTS));
+  forestLayer.setQueryable(true);
+  catalog.save(forestLayer);
+  LayerGroupInfo layerGroup=factory.createLayerGroup();
+  layerGroup.setName(groupLayer);
+  layerGroup.setWorkspace(workspace);
+  layerGroup.getLayers().add(buildingsLayer);
+  layerGroup.getLayers().add(bridgesLayer);
+  layerGroup.getLayers().add(forestLayer);
+  new CatalogBuilder(catalog).calculateLayerGroupBounds(layerGroup);
+  catalog.add(layerGroup);
+  String name=MockData.CITE_PREFIX + ":" + groupLayer;
+  String request="wms?bbox=-0.002,-0.002,0.002,0.002&styles=&format=jpeg" + "&info_format=text/plain&request=GetFeatureInfo&layers=" + name + "&query_layers="+ name+ "&width=20&height=20&x=10&y=10";
+  String result=getAsString(request);
+  assertNotNull(result);
+  assertTrue(result.indexOf("Green Forest") > 0);
+  buildingsLayer.setQueryable(true);
+  catalog.save(buildingsLayer);
+  bridgesLayer.setQueryable(true);
+  catalog.save(bridgesLayer);
+  catalog.remove(layerGroup);
+}

@@ -1,0 +1,13 @@
+{
+  when(xmlConfig.getBlobStores()).thenReturn(ImmutableList.<BlobStoreConfig>of());
+  CompositeBlobStore composite=mock(CompositeBlobStore.class);
+  doReturn(composite).when(mediator).getCompositeBlobStore();
+  List<BlobStoreConfig> configList=Lists.newArrayList(mock(BlobStoreConfig.class),mock(BlobStoreConfig.class));
+  when(xmlConfig.getBlobStores()).thenReturn(configList);
+  BlobStoreConfig config=new FileBlobStoreConfig();
+  List<BlobStoreConfig> newStores=ImmutableList.<BlobStoreConfig>of(config);
+  mediator.setBlobStores(newStores);
+  verify(composite,times(1)).setBlobStores(same(newStores));
+  verify(xmlConfig,times(1)).save();
+  assertEquals(newStores,configList);
+}

@@ -1,0 +1,22 @@
+{
+  checkTargetSize(targetSizeX,"X");
+  checkTargetSize(targetSizeY,"Y");
+  this.adjustedTargetSizeX=targetSizeX;
+  this.adjustedTargetSizeY=targetSizeY;
+  if (this.adjustedTargetSizeX == null && this.adjustedTargetSizeY == null) {
+    return;
+  }
+  if ((this.adjustedTargetSizeX == null && this.adjustedTargetSizeY != null) || (this.adjustedTargetSizeY == null && this.adjustedTargetSizeX != null)) {
+    MathTransform g2w=reader.getOriginalGridToWorld(PixelInCell.CELL_CENTER);
+    GridGeometry2D gg=new GridGeometry2D(PixelInCell.CELL_CENTER,g2w,envelope,GeoTools.getDefaultHints());
+    double width=gg.getGridRange2D().getWidth();
+    double height=gg.getGridRange2D().getHeight();
+    double whRatio=width / height;
+    if (this.adjustedTargetSizeY != null) {
+      this.adjustedTargetSizeX=(int)Math.round(this.adjustedTargetSizeY * whRatio);
+    }
+ else {
+      this.adjustedTargetSizeY=(int)Math.round(this.adjustedTargetSizeX / whRatio);
+    }
+  }
+}

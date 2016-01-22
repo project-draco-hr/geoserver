@@ -1,0 +1,19 @@
+{
+  if (resourceModel.getObject() instanceof CoverageInfo) {
+    ResourceInfo info=resourceModel.getObject();
+    MetadataMap map=info.getMetadata();
+    NetCDFLayerSettingsContainer container=map.get(NetCDFSettingsContainer.NETCDFOUT_KEY,NetCDFLayerSettingsContainer.class);
+    if (isNew || container == null) {
+      GeoServer gs=GeoServerExtensions.bean(GeoServer.class);
+      MetadataMap globalMap=gs.getGlobal().getSettings().getMetadata();
+      NetCDFSettingsContainer globalContainer=globalMap.get(NetCDFSettingsContainer.NETCDFOUT_KEY,NetCDFSettingsContainer.class);
+      if (globalContainer == null) {
+        globalContainer=new NetCDFSettingsContainer();
+      }
+      container=new NetCDFLayerSettingsContainer(globalContainer);
+      map.put(NetCDFSettingsContainer.NETCDFOUT_KEY,container);
+    }
+    return (IModel<ResourceInfo>)resourceModel;
+  }
+  return new Model<ResourceInfo>();
+}

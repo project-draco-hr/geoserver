@@ -1,0 +1,25 @@
+{
+  MapBoxTileBuilderFactory builderFact=new MapBoxTileBuilderFactory();
+  Rectangle screenSize=new Rectangle(256,256);
+  ReferencedEnvelope mapArea=new ReferencedEnvelope();
+  MapBoxTileBuilder tileBuilder=builderFact.newBuilder(screenSize,mapArea);
+  Geometry point=geom("POINT(1 10)");
+  Map<String,Object> pointProps=ImmutableMap.<String,Object>of("name","point1");
+  Geometry line=geom("LINESTRING(0 0, 1 1, 2 2)");
+  Map<String,Object> lineProps=ImmutableMap.<String,Object>of("name","line1");
+  tileBuilder.addFeature("Points","unused","unused",point,pointProps);
+  tileBuilder.addFeature("Lines","unused","unused",line,lineProps);
+  WMSMapContent mapContent=mock(WMSMapContent.class);
+  RawMap map=tileBuilder.build(mapContent);
+  ListMultimap<String,Feature> features=decode(map);
+  assertEquals(2,features.size());
+  assertEquals(ImmutableSet.of("Points","Lines"),features.keySet());
+  Feature pointFeature=features.get("Points").get(0);
+  Feature lineFeature=features.get("Lines").get(0);
+  assertTrue(pointFeature.getGeometry() instanceof Point);
+  assertEquals(point,pointFeature.getGeometry());
+  assertEquals(pointProps,pointFeature.getAttributes());
+  assertTrue(lineFeature.getGeometry() instanceof LineString);
+  assertEquals(line,lineFeature.getGeometry());
+  assertEquals(lineProps,lineFeature.getAttributes());
+}

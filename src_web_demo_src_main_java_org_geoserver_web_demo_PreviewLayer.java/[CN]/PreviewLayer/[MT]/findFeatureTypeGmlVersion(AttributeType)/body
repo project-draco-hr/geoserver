@@ -1,0 +1,20 @@
+{
+  if (featureType == null) {
+    return null;
+  }
+  if (isAbstractFeatureType(featureType)) {
+    String gmlNamespace=featureType.getName().getNamespaceURI();
+    if (org.geotools.gml3.GML.NAMESPACE.equals(gmlNamespace)) {
+      return "gml3";
+    }
+ else     if (org.geotools.gml3.v3_2.GML.NAMESPACE.equals(gmlNamespace)) {
+      return GML32OutputFormat.FORMATS.get(0);
+    }
+ else {
+      LOGGER.log(Level.FINE,"Cannot determine GML version from AbstractFeatureType type");
+      return null;
+    }
+  }
+  AttributeType parent=featureType.getSuper();
+  return findFeatureTypeGmlVersion(parent);
+}

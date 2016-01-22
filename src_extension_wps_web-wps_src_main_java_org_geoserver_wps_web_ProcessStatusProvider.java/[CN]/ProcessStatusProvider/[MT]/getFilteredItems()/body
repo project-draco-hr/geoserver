@@ -1,0 +1,23 @@
+{
+  ProcessStatusTracker tracker=GeoServerApplication.get().getBeanOfType(ProcessStatusTracker.class);
+  ProcessStatusStore store=tracker.getStore();
+  Query query=new Query("status",getFilter());
+  if (count > 0) {
+    query.setStartIndex(first);
+    query.setMaxFeatures(count);
+  }
+  SortParam sort=getSort();
+  if (sort != null) {
+    SortByImpl[] sortBys=new SortByImpl[1];
+    final Property<?> property=getProperty(sort);
+    if (property.isSearchable()) {
+      FF.sort(property.getName(),SortOrder.ASCENDING);
+      if (!sort.isAscending()) {
+        sortBys[0].setSortOrder(SortOrder.DESCENDING);
+      }
+      query.setSortBy(sortBys);
+    }
+  }
+  LOGGER.fine("built query " + query + " to filter statuses");
+  return store.list(query);
+}

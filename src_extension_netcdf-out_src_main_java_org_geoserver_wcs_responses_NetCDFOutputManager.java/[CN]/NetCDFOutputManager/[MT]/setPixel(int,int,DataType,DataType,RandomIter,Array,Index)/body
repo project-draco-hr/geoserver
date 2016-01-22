@@ -1,0 +1,49 @@
+{
+  int sample=Integer.MIN_VALUE;
+  boolean validSample=true;
+switch (imageDataType) {
+case BYTE:
+case SHORT:
+case INT:
+    sample=data.getSample(x,y,0);
+  validSample=!Double.isNaN(noDataValue) && !isNaN(sample,noDataValue);
+if (unitConverter != null && validSample) {
+  sample=(int)unitConverter.convert(sample);
+}
+if (dataPacker != null) {
+sample=dataPacker.pack((double)sample);
+}
+setIntegerSample(netCDFDataType,matrix,matrixIndex,sample);
+break;
+case FLOAT:
+float sampleFloat=data.getSampleFloat(x,y,0);
+validSample=!Double.isNaN(noDataValue) && !isNaN(sampleFloat,noDataValue);
+if (unitConverter != null && validSample) {
+sampleFloat=(float)unitConverter.convert(sampleFloat);
+}
+if (dataPacker != null) {
+sample=validSample ? dataPacker.pack(sampleFloat) : dataPacker.getReservedValue();
+setIntegerSample(netCDFDataType,matrix,matrixIndex,sample);
+}
+ else {
+matrix.setFloat(matrixIndex,sampleFloat);
+}
+break;
+case DOUBLE:
+double sampleDouble=data.getSampleDouble(x,y,0);
+validSample=!Double.isNaN(noDataValue) && !isNaN(sampleDouble,noDataValue);
+if (unitConverter != null && !Double.isNaN(noDataValue) && !isNaN(sampleDouble,noDataValue)) {
+sampleDouble=unitConverter.convert(sampleDouble);
+}
+if (dataPacker != null) {
+sample=validSample ? dataPacker.pack(sampleDouble) : dataPacker.getReservedValue();
+setIntegerSample(netCDFDataType,matrix,matrixIndex,sample);
+}
+ else {
+matrix.setDouble(matrixIndex,sampleDouble);
+}
+break;
+default :
+throw new UnsupportedOperationException("Operation not supported for this dataType: " + netCDFDataType);
+}
+}

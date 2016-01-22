@@ -1,11 +1,10 @@
 {
-  File prj=getPrjFile();
-  if (prj == null || !prj.exists()) {
+  Resource prj=getPrjFile();
+  if (prj == null || !Resources.exists(prj)) {
     return null;
   }
-  String wkt=FileUtils.readFileToString(prj);
-  try {
-    return CRS.parseWKT(wkt);
+  try (InputStream is=prj.in()){
+    return CRS.parseWKT(IOUtils.toString(is));
   }
  catch (  Exception e) {
     throw (IOException)new IOException().initCause(e);

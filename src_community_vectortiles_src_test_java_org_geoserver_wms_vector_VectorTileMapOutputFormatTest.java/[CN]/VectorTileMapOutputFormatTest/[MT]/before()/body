@@ -1,0 +1,28 @@
+{
+  wmsMock=mock(WMS.class);
+  tileBuilderMock=mock(VectorTileBuilder.class);
+  VectorTileBuilderFactory tileBuilderFactory=mock(VectorTileBuilderFactory.class);
+  when(tileBuilderFactory.getMimeType()).thenReturn("testMime");
+  when(tileBuilderFactory.getOutputFormats()).thenReturn(ImmutableSet.of("testMime","testFormat"));
+  when(tileBuilderFactory.newBuilder(any(Rectangle.class),any(ReferencedEnvelope.class))).thenReturn(tileBuilderMock);
+  outptFormat=new VectorTileMapOutputFormat(wmsMock,tileBuilderFactory);
+  MemoryDataStore ds=new MemoryDataStore();
+  final String pointsTypeSpec="sp:String,ip:Integer,geom:Point:srid=4326";
+  final String linesTypeSpec="sp:String,ip:Integer,geom:LineString:srid=4326";
+  final String polyTypeSpec="sp:String,ip:Integer,geom:Polygon:srid=4326";
+  SimpleFeatureType pointType=DataUtilities.createType("points",pointsTypeSpec);
+  SimpleFeatureType lineType=DataUtilities.createType("lines",linesTypeSpec);
+  SimpleFeatureType polyType=DataUtilities.createType("polygons",polyTypeSpec);
+  ds.addFeature(feature(pointType,"point1","StringProp1_1",1000,"POINT(1 1)"));
+  ds.addFeature(feature(pointType,"point2","StringProp1_2",2000,"POINT(2 2)"));
+  ds.addFeature(feature(pointType,"point3","StringProp1_3",3000,"POINT(3 3)"));
+  ds.addFeature(feature(lineType,"line1","StringProp2_1",1000,"LINESTRING (1 1, 2 2)"));
+  ds.addFeature(feature(lineType,"line1","StringProp2_2",2000,"LINESTRING (3 3, 4 4)"));
+  ds.addFeature(feature(lineType,"line1","StringProp2_3",3000,"LINESTRING (5 5, 6 6)"));
+  ds.addFeature(feature(polyType,"polygon1","StringProp3_1",1000,"POLYGON ((1 1, 2 2, 3 3, 4 4, 1 1))"));
+  ds.addFeature(feature(polyType,"polygon2","StringProp3_2",2000,"POLYGON ((6 6, 7 7, 8 8, 9 9, 6 6))"));
+  ds.addFeature(feature(polyType,"polygon3","StringProp3_3",3000,"POLYGON ((11 11, 12 12, 13 13, 14 14, 11 11))"));
+  pointLayer=new FeatureLayer(ds.getFeatureSource("points"),defaultPointStyle);
+  lineLayer=new FeatureLayer(ds.getFeatureSource("lines"),defaultLineStyle);
+  polygonLayer=new FeatureLayer(ds.getFeatureSource("polygons"),defaultPolygonStyle);
+}

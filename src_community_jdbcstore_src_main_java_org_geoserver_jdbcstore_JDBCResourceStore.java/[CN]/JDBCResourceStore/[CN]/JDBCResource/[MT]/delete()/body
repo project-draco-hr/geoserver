@@ -1,0 +1,19 @@
+{
+  List<Lock> locks=new ArrayList<Lock>();
+  lockRecursively(locks);
+  try {
+    List<ResourceNotification.Event> events=SimpleResourceNotificationDispatcher.createEvents(this,ResourceNotification.Kind.ENTRY_DELETE);
+    if (entry.delete()) {
+      resourceWatcher.changed(new ResourceNotification(path(),ResourceNotification.Kind.ENTRY_DELETE,System.currentTimeMillis(),events));
+      return true;
+    }
+ else {
+      return false;
+    }
+  }
+  finally {
+    for (    Lock lock : locks) {
+      lock.release();
+    }
+  }
+}

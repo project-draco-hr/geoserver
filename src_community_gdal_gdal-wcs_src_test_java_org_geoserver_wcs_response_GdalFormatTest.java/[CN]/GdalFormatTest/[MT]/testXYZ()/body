@@ -1,0 +1,18 @@
+{
+  File tempFile=prepareInput();
+  try {
+    GridCoverage2DReader covReader=new GeoTiffReader(tempFile);
+    GridCoverage2D cov=covReader.read(null);
+    try (ByteArrayOutputStream bos=new ByteArrayOutputStream()){
+      gdalCovRespDelegate.encode(cov,"GDAL-XYZ",null,bos);
+      try (InputStream is=new ByteArrayInputStream(bos.toByteArray())){
+        GdalTestUtil.checkXyzData(is);
+      }
+     }
+   }
+  finally {
+    if (tempFile != null) {
+      tempFile.delete();
+    }
+  }
+}

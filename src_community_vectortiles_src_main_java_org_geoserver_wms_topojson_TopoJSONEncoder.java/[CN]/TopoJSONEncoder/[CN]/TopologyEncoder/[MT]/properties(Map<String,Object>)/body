@@ -1,0 +1,32 @@
+{
+  if (properties.isEmpty()) {
+    return null;
+  }
+  JsonObject props=new JsonObject();
+  for (  Map.Entry<String,Object> e : properties.entrySet()) {
+    String name=e.getKey();
+    Object value=e.getValue();
+    JsonElement jsonValue;
+    if (value instanceof Map) {
+      jsonValue=properties((Map<String,Object>)value);
+    }
+ else     if (value instanceof Boolean) {
+      jsonValue=new JsonPrimitive((Boolean)value);
+    }
+ else     if (value instanceof Number) {
+      Number n=(Number)value;
+      if (n instanceof Double && n.doubleValue() % 1 == 0) {
+        n=Long.valueOf(n.longValue());
+      }
+ else       if (n instanceof Float && n.floatValue() % 1 == 0) {
+        n=Integer.valueOf(n.intValue());
+      }
+      jsonValue=new JsonPrimitive(n);
+    }
+ else {
+      jsonValue=new JsonPrimitive(String.valueOf(value));
+    }
+    props.add(name,jsonValue);
+  }
+  return props;
+}

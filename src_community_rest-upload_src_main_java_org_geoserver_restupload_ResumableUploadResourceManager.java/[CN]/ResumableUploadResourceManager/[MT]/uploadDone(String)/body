@@ -5,9 +5,8 @@
   StringBuilder remappingPath=new StringBuilder(destinationPath);
   String tempFile=resource.getFile().getCanonicalPath();
   RESTUtils.remapping(null,FilenameUtils.getBaseName(destinationPath),remappingPath,tempFile,storeParams);
-  File destinationFile=new File(remappingPath.toString());
-  destinationFile.getParentFile().mkdirs();
-  IOUtils.copyFile(resource.getFile(),destinationFile);
+  Resource destinationFile=Resources.fromPath(remappingPath.toString());
+  IOUtils.copyStream(new FileInputStream(resource.getFile()),destinationFile.out(),true,true);
   resource.delete();
   getSideCarFile(uploadId).createNewFile();
   return destinationPath.toString();

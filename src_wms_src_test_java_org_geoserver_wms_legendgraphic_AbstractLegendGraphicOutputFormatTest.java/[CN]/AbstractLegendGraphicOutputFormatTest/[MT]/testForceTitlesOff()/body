@@ -1,21 +1,20 @@
 {
+  Catalog cat=getCatalog();
   GetLegendGraphicRequest req=new GetLegendGraphicRequest();
   Map<String,String> options=new HashMap<String,String>();
   options.put("forceTitles","off");
   req.setLegendOptions(options);
-  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(MockData.ROAD_SEGMENTS.getNamespaceURI(),MockData.ROAD_SEGMENTS.getLocalPart());
+  FeatureTypeInfo ftInfo=cat.getFeatureTypeByName(MockData.ROAD_SEGMENTS.getNamespaceURI(),MockData.ROAD_SEGMENTS.getLocalPart());
   List<FeatureType> layers=new ArrayList<FeatureType>();
-  layers.add(ftInfo.getFeatureType());
-  req.setLayers(layers);
-  List<Style> styles=new ArrayList<Style>();
-  styles.add(getCatalog().getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle());
-  req.setStyles(styles);
+  req.setLayer(ftInfo.getFeatureType());
+  req.setStyle(cat.getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle());
   this.legendProducer.buildLegendGraphic(req);
   BufferedImage image=this.legendProducer.buildLegendGraphic(req);
   assertNotBlank("testMultipleLayers",image,LegendUtils.DEFAULT_BG_COLOR);
   int height=image.getHeight();
-  layers.add(ftInfo.getFeatureType());
-  styles.add(getCatalog().getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle());
+  LegendRequest legend=req.new LegendRequest(ftInfo.getFeatureType());
+  legend.setStyle(cat.getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle());
+  req.getLegends().add(legend);
   this.legendProducer.buildLegendGraphic(req);
   image=this.legendProducer.buildLegendGraphic(req);
   assertNotBlank("testForceTitlesOff",image,LegendUtils.DEFAULT_BG_COLOR);

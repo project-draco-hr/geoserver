@@ -1,0 +1,29 @@
+{
+  JSONObject json=(JSONObject)getAsJSON(CATALOG_URI_JSON);
+  String mode=(String)json.get(CatalogModeResource.MODE_ELEMENT);
+  assertEquals(CatalogMode.HIDE.toString(),mode);
+  Document dom=getAsDOM(CATALOG_URI_XML);
+  print(dom);
+  assertEquals(CatalogModeResource.XML_ROOT_ELEM,dom.getDocumentElement().getNodeName());
+  NodeList nl=dom.getElementsByTagName(CatalogModeResource.MODE_ELEMENT);
+  assertEquals(1,nl.getLength());
+  mode=nl.item(0).getTextContent();
+  assertEquals(CatalogMode.HIDE.toString(),mode);
+  String jsonTemplate="'{'\"" + CatalogModeResource.MODE_ELEMENT + "\":\"{0}\"'}'";
+  String xmlTemplate="<" + CatalogModeResource.XML_ROOT_ELEM + ">"+ "\n";
+  xmlTemplate+=" <" + CatalogModeResource.MODE_ELEMENT + ">{0}";
+  xmlTemplate+="</" + CatalogModeResource.MODE_ELEMENT + ">"+ "\n";
+  xmlTemplate+="</" + CatalogModeResource.XML_ROOT_ELEM + ">"+ "\n";
+  assertEquals(404,putAsServletResponse(CATALOG_URI_JSON,"{\"modexxxxx\": \"HIDE\"}","text/json").getStatusCode());
+  assertEquals(422,putAsServletResponse(CATALOG_URI_JSON,MessageFormat.format(jsonTemplate,"ABC"),"text/json").getStatusCode());
+  assertEquals(422,putAsServletResponse(CATALOG_URI_XML,MessageFormat.format(xmlTemplate,"ABC"),"text/xml").getStatusCode());
+  assertEquals(200,putAsServletResponse(CATALOG_URI_JSON,MessageFormat.format(jsonTemplate,CatalogMode.MIXED.toString()),"text/json").getStatusCode());
+  json=(JSONObject)getAsJSON(CATALOG_URI_JSON);
+  mode=(String)json.get(CatalogModeResource.MODE_ELEMENT);
+  assertEquals(CatalogMode.MIXED.toString(),mode);
+  assertEquals(200,putAsServletResponse(CATALOG_URI_XML,MessageFormat.format(xmlTemplate,CatalogMode.CHALLENGE.toString()),"text/xml").getStatusCode());
+  dom=getAsDOM(CATALOG_URI_XML);
+  nl=dom.getElementsByTagName(CatalogModeResource.MODE_ELEMENT);
+  mode=nl.item(0).getTextContent();
+  assertEquals(CatalogMode.CHALLENGE.toString(),mode);
+}

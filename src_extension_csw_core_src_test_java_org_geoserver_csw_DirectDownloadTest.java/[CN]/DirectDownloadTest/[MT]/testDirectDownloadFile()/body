@@ -1,0 +1,16 @@
+{
+  Document dom=getAsDOM(GET_RECORD_REQUEST);
+  NodeList nodes=getMatchingNodes("//csw:Record/dct:references",dom);
+  int size=nodes.getLength();
+  String link=null;
+  for (int i=0; i < size; i++) {
+    Node node=nodes.item(i);
+    link=node.getTextContent();
+    if (link.toUpperCase().contains("DIRECTDOWNLOAD") && link.contains("TIME")) {
+      break;
+    }
+  }
+  link=link.substring(link.indexOf("ows?"));
+  MockHttpServletResponse response=getAsServletResponse(link);
+  assertEquals("application/zip",response.getContentType());
+}

@@ -1,0 +1,16 @@
+{
+  Catalog catalog=getCatalog();
+  CoverageInfo ci=catalog.getCoverageByName(getLayerId(TASMANIA_DEM));
+  MetadataLinkInfo ml=catalog.getFactory().createMetadataLink();
+  ml.setContent("/metadata?key=value");
+  ml.setAbout("http://www.geoserver.org");
+  ci.getMetadataLinks().add(ml);
+  catalog.save(ci);
+  String proxyBaseUrl=getGeoServer().getGlobal().getSettings().getProxyBaseUrl();
+  Document dom=getAsDOM("wcs?request=DescribeCoverage&service=WCS&version=1.1.1&identifiers=" + TASMANIA_DEM.getLocalPart());
+  checkValidationErrors(dom,WCS11_SCHEMA);
+  String xpathBase="//wcs:CoverageDescription/ows:Metadata";
+  assertXpathEvaluatesTo("http://www.geoserver.org",xpathBase + "/@about",dom);
+  assertXpathEvaluatesTo("simple",xpathBase + "/@xlink:type",dom);
+  assertXpathEvaluatesTo(proxyBaseUrl + "/metadata?key=value",xpathBase + "/@xlink:href",dom);
+}

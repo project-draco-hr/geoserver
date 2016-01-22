@@ -1,0 +1,26 @@
+{
+  Directory target=Directory.createNew(importer.getUploadRoot());
+  FileSystemManager manager=null;
+  FileObject fo=null;
+  try {
+    manager=VFS.getManager();
+    if (username != null) {
+      StaticUserAuthenticator auth=new StaticUserAuthenticator(domain,username,password);
+      FileSystemOptions opts=new FileSystemOptions();
+      DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts,auth);
+      fo=manager.resolveFile(location,opts);
+    }
+ else {
+      fo=manager.resolveFile(location);
+    }
+    target.accept(fo);
+  }
+  finally {
+    if (fo != null) {
+      FileSystem fs=fo.getFileSystem();
+      fo.close();
+      manager.closeFileSystem(fs);
+    }
+  }
+  return target;
+}

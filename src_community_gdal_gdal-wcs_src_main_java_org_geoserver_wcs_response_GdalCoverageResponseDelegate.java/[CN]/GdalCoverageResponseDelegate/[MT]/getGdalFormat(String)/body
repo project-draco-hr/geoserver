@@ -1,0 +1,17 @@
+{
+  Format format=null;
+  formatsLock.readLock().lock();
+  try {
+    format=formats.get(outputFormat.toUpperCase());
+    if (format == null) {
+      format=formatsByMimeType.get(outputFormat.toUpperCase());
+    }
+  }
+  finally {
+    formatsLock.readLock().unlock();
+  }
+  if (format == null) {
+    throw new WcsException("Unknown output format: " + outputFormat);
+  }
+  return format;
+}

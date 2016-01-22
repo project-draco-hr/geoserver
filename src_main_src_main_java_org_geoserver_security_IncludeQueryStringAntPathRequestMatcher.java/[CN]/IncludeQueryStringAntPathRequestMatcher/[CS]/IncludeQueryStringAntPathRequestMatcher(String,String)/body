@@ -1,0 +1,30 @@
+{
+  Assert.hasText(pattern,"Pattern cannot be null or empty");
+  String queryStringPattern="";
+  String originalPattern=pattern;
+  if (pattern.contains(QUERYSTRING_SEPARATOR)) {
+    queryStringPattern=pattern.substring(pattern.indexOf(QUERYSTRING_SEPARATOR) + 1);
+    pattern=pattern.substring(0,pattern.indexOf(QUERYSTRING_SEPARATOR));
+  }
+  if (pattern.equals(MATCH_ALL) || pattern.equals("**")) {
+    pattern=MATCH_ALL;
+    matcher=null;
+  }
+ else {
+    pattern=pattern.toLowerCase();
+    if (pattern.endsWith(MATCH_ALL) && pattern.indexOf('?') == -1 && pattern.indexOf("*") == pattern.length() - 2) {
+      matcher=new SubpathMatcher(pattern.substring(0,pattern.length() - 3));
+    }
+ else {
+      matcher=new SpringAntMatcher(pattern);
+    }
+  }
+  this.pattern=originalPattern;
+  if (StringUtils.hasLength(queryStringPattern)) {
+    queryStringMatcher=new QueryStringMatcher(queryStringPattern);
+  }
+ else {
+    queryStringMatcher=null;
+  }
+  this.httpMethod=StringUtils.hasText(httpMethod) ? HttpMethod.valueOf(httpMethod) : null;
+}

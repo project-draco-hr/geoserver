@@ -1,0 +1,22 @@
+{
+  Document dom=getAsDOM(GET_RECORD_REQUEST);
+  NodeList nodes=getMatchingNodes("//csw:Record/dct:references",dom);
+  int size=nodes.getLength();
+  String downloadLink=null;
+  for (int i=0; i < size; i++) {
+    Node node=nodes.item(i);
+    String link=node.getTextContent();
+    if (link.toUpperCase().contains("DIRECTDOWNLOAD") && !link.contains("TIME")) {
+      downloadLink=link;
+      break;
+    }
+  }
+  downloadLink=downloadLink.substring(downloadLink.indexOf("ows?"));
+  MockHttpServletResponse response=getAsServletResponse(downloadLink);
+  assertEquals("application/xml",response.getContentType());
+  Document domResponse=dom(new ByteArrayInputStream(response.getOutputStreamContent().getBytes()));
+  Element root=domResponse.getDocumentElement();
+  assertEquals("ows:ExceptionReport",root.getNodeName());
+  String exceptionText=evaluate("//ows:ExceptionReport/ows:Exception/ows:ExceptionText",domResponse);
+  assertTrue(exceptionText.contains(DirectDownload.LIMIT_MESSAGE));
+}

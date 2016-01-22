@@ -96,11 +96,11 @@
           return Styles.string(sld,new SLDHandler(),SLDHandler.VERSION_10,true);
         }
  else {
-          File file=findStyleFile(style);
-          if (file != null && file.isFile()) {
+          Resource file=findStyleFile(style);
+          if (file != null && file.getType() == Type.RESOURCE) {
             BufferedReader reader=null;
             try {
-              reader=new BufferedReader(new FileReader(file));
+              reader=new BufferedReader(new InputStreamReader(file.in()));
               StringBuilder builder=new StringBuilder();
               char[] line=new char[4096];
               int len=0;
@@ -165,8 +165,8 @@
     }
   }
 );
-  File sldFile=findStyleFile(style);
-  File cssFile=new File(sldFile.getParentFile(),style.getName() + ".css");
+  Resource sldFile=findStyleFile(style);
+  Resource cssFile=sldFile.parent().get(style.getName() + ".css");
   mainContent.add(new StylePanel("style.editing",model,CssDemoPage.this,cssFile));
   mainContent.add(new AjaxTabbedPanel("context",tabs));
   add(mainContent);

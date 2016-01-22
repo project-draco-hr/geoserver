@@ -1,0 +1,39 @@
+{
+  FileGroup element=dataIterator.next();
+  File mainFile=element.getMainFile();
+  String canonicalPath=null;
+  try {
+    canonicalPath=mainFile.getCanonicalPath();
+    String hashFile=hashFile(mainFile);
+    StringBuilder builder=new StringBuilder(baseLink.replace(FILE_TEMPLATE,hashFile));
+    Map<String,Object> metadata=element.getMetadata();
+    if (metadata != null && !metadata.isEmpty()) {
+      Set<String> keys=metadata.keySet();
+      if (keys.contains(Utils.BBOX)) {
+        Object bbox=metadata.get(Utils.BBOX);
+        appendBBOXToLink((ReferencedEnvelope)bbox,builder);
+      }
+      if (keys.contains(Utils.TIME_DOMAIN)) {
+        Object time=metadata.get(Utils.TIME_DOMAIN);
+        appendRangeToLink(Utils.TIME_DOMAIN,time,builder);
+      }
+      if (keys.contains(Utils.ELEVATION_DOMAIN)) {
+        Object elevation=metadata.get(Utils.ELEVATION_DOMAIN);
+        appendRangeToLink(Utils.ELEVATION_DOMAIN,elevation,builder);
+      }
+      for (      String key : keys) {
+        if (!STANDARD_DOMAINS.contains(key)) {
+          Object additional=metadata.get(key);
+          appendRangeToLink(key,additional,builder);
+        }
+      }
+    }
+    return builder.toString();
+  }
+ catch (  IOException e) {
+    throw new RuntimeException("Unable to encode the specified file:" + canonicalPath,e.getCause());
+  }
+catch (  NoSuchAlgorithmException e) {
+    throw new RuntimeException("Unable to encode the specified file:" + canonicalPath,e.getCause());
+  }
+}

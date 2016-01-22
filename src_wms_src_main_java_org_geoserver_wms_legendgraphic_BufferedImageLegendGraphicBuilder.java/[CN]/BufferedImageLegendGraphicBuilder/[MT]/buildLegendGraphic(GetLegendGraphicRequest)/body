@@ -1,8 +1,6 @@
 {
   List<RenderedImage> layersImages=new ArrayList<RenderedImage>();
-  List<FeatureType> layers=request.getLayers();
-  List<Style> styles=request.getStyles();
-  List<String> rules=request.getRules();
+  List<LegendRequest> layers=request.getLegends();
   boolean forceLabelsOn=false;
   boolean forceLabelsOff=false;
   if (request.getLegendOptions().get("forceLabels") instanceof String) {
@@ -21,19 +19,13 @@
       forceTitlesOff=true;
     }
   }
-  for (int pos=0; pos < layers.size(); pos++) {
-    FeatureType layer=layers.get(pos);
-    Style gt2Style=styles.get(pos);
-    String ruleName=null;
+  for (  LegendRequest legend : layers) {
+    FeatureType layer=legend.getFeatureType();
+    Style gt2Style=legend.getStyle();
     if (gt2Style == null) {
       throw new NullPointerException("request.getStyle()");
     }
-    if (rules.size() > 0) {
-      ruleName=rules.get(pos);
-    }
-    if (ruleName != null && ruleName.equals("")) {
-      ruleName=null;
-    }
+    String ruleName=legend.getRule();
     int w=request.getWidth();
     int h=request.getHeight();
     double dpi=RendererUtilities.getDpi(request.getLegendOptions());
@@ -56,7 +48,7 @@
     final boolean transparent=request.isTransparent();
     RenderedImage titleImage=null;
     if (layers.size() > 1 && !forceTitlesOff) {
-      titleImage=getLayerTitle(layer,w,h,transparent,request);
+      titleImage=getLayerTitle(legend,w,h,transparent,request);
     }
     boolean hasVectorTransformation=false;
     boolean hasRasterTransformation=false;
@@ -83,6 +75,11 @@
       }
     }
     final boolean buildRasterLegend=(!strict && layer == null && LegendUtils.checkRasterSymbolizer(gt2Style)) || (LegendUtils.checkGridLayer(layer) && !hasVectorTransformation) || hasRasterTransformation;
+    final boolean useProvidedLegend=layer != null && legend.getLayerInfo() != null;
+    RenderedImage legendImage=null;
+    if (useProvidedLegend) {
+      legendImage=getLayerLegend(legend,w,h,transparent,request);
+    }
     if (buildRasterLegend) {
       final RasterLayerLegendHelper rasterLegendHelper=new RasterLayerLegendHelper(request,gt2Style,ruleName);
       final BufferedImage image=rasterLegendHelper.getLegend();
@@ -92,6 +89,12 @@
         }
         layersImages.add(image);
       }
+    }
+ else     if (useProvidedLegend && legendImage != null) {
+      if (titleImage != null) {
+        layersImages.add(titleImage);
+      }
+      layersImages.add(legendImage);
     }
  else {
       final Feature sampleFeature;
@@ -137,8 +140,8 @@
         Feature sample=getSampleFeatureForRule(layer,sampleFeature,applicableRules[i]);
         FilterFactory ff=CommonFactoryFinder.getFilterFactory();
         final Symbolizer[] symbolizers=applicableRules[i].getSymbolizers();
-        final GraphicLegend legend=applicableRules[i].getLegend();
-        if (legend != null) {
+        final GraphicLegend graphic=applicableRules[i].getLegend();
+        if (graphic != null) {
           if (this.samplePoint == null) {
             Coordinate coord=new Coordinate(w / 2,h / 2);
             try {
@@ -148,7 +151,7 @@
               this.samplePoint=null;
             }
           }
-          shapePainter.paint(graphics,this.samplePoint,legend,scaleDenominator,false);
+          shapePainter.paint(graphics,this.samplePoint,graphic,scaleDenominator,false);
         }
  else {
           for (int sIdx=0; sIdx < symbolizers.length; sIdx++) {

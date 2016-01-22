@@ -1,33 +1,48 @@
 {
-  File f=resourceLoader.find("services.xml");
-  if (f == null) {
-    f=resourceLoader.find("global.xml");
-    if (f != null) {
-      GeoServerInfo global=depersist(xp,f,GeoServerInfo.class);
-      geoServer.setGlobal(global);
+  Resource f=resourceLoader.get("services.xml");
+  if (!Resources.exists(f)) {
+    f=resourceLoader.get("global.xml");
+    if (Resources.exists(f)) {
+      try {
+        GeoServerInfo global=depersist(xp,f,GeoServerInfo.class);
+        geoServer.setGlobal(global);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Failed to load global configuration file '" + f.name() + "'",e);
+      }
     }
-    f=resourceLoader.find("logging.xml");
-    if (f != null) {
-      LoggingInfo logging=depersist(xp,f,LoggingInfo.class);
-      geoServer.setLogging(logging);
+    f=resourceLoader.get("logging.xml");
+    if (Resources.exists(f)) {
+      try {
+        LoggingInfo logging=depersist(xp,f,LoggingInfo.class);
+        geoServer.setLogging(logging);
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Failed to load logging configuration file '" + f.name() + "'",e);
+      }
     }
-    File workspaces=resourceLoader.find("workspaces");
-    if (workspaces != null) {
-      for (      File dir : workspaces.listFiles()) {
-        if (!dir.isDirectory() && !dir.isHidden())         continue;
-        f=resourceLoader.find(dir,"settings.xml");
-        if (f != null) {
-          SettingsInfo settings=depersist(xp,f,SettingsInfo.class);
-          geoServer.add(settings);
+    Resource workspaces=resourceLoader.get("workspaces");
+    if (Resources.exists(workspaces)) {
+      for (      Resource dir : workspaces.list()) {
+        if (dir.getType() != Type.DIRECTORY)         continue;
+        f=dir.get("settings.xml");
+        if (Resources.exists(f)) {
+          try {
+            SettingsInfo settings=depersist(xp,f,SettingsInfo.class);
+            geoServer.add(settings);
+          }
+ catch (          Exception e) {
+            LOGGER.log(Level.WARNING,"Failed to load configuration file '" + f.name() + "' for workspace "+ dir.name(),e);
+          }
         }
       }
     }
     final List<XStreamServiceLoader> loaders=GeoServerExtensions.extensions(XStreamServiceLoader.class);
-    loadServices(null,loaders,geoServer);
+    loadServices(resourceLoader.get(""),true,loaders,geoServer);
     if (workspaces != null) {
-      for (      File dir : workspaces.listFiles()) {
-        if (!dir.isDirectory() && !dir.isHidden())         continue;
-        loadServices(dir,loaders,geoServer);
+      for (      Resource dir : workspaces.list()) {
+        if (dir.getType() != Type.DIRECTORY)         continue;
+        loadServices(dir,false,loaders,geoServer);
       }
     }
   }
@@ -36,6 +51,6 @@
     geoServer.addListener(p);
     new LegacyConfigurationImporter(geoServer).imprt(resourceLoader.getBaseDirectory());
     geoServer.removeListener(p);
-    f.renameTo(new File(f.getParentFile(),"services.xml.old"));
+    f.renameTo(f.parent().get("services.xml.old"));
   }
 }

@@ -8,14 +8,17 @@
       names.add(name + extension);
     }
   }
+  Set<String> found=new HashSet<>();
   while ((entry=zis.getNextEntry()) != null) {
     final String name=entry.getName();
-    if (name.endsWith(".txt")) {
+    found.add(name);
+    if (name.toLowerCase().endsWith(".txt")) {
       continue;
     }
-    assertTrue("Missing " + name,names.contains(name));
+    assertTrue("Unexpected " + name,names.contains(name));
     names.remove(name);
     zis.closeEntry();
   }
+  assertTrue("Could not find all expected files, missing ones are: " + names + "\nFound in zip are: "+ found,names.isEmpty());
   zis.close();
 }

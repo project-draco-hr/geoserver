@@ -1,0 +1,23 @@
+{
+  LOGGER.fine("removing status " + executionId);
+  DefaultTransaction transaction=new DefaultTransaction("create");
+  boolean committed=false;
+  try {
+    SimpleFeatureStore store=getStatusFeatureStore();
+    Filter filter=ECQL.toFilter(PROCESS_ID + " = '" + executionId+ "'");
+    store.setTransaction(transaction);
+    SimpleFeatureCollection features=store.getFeatures(filter);
+    SimpleFeature f=DataUtilities.first(features);
+    ExecutionStatus stat=featureToStatus(f);
+    store.removeFeatures(filter);
+    transaction.commit();
+    committed=true;
+    return stat;
+  }
+ catch (  Exception e) {
+    throw new WPSException("Failure to remove status by id: " + executionId,e);
+  }
+ finally {
+    closeTransaction(transaction,committed);
+  }
+}

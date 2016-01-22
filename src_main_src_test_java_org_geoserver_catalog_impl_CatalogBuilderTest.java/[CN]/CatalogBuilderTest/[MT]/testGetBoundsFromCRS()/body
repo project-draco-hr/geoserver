@@ -1,0 +1,24 @@
+{
+  Catalog cat=getCatalog();
+  CatalogBuilder cb=new CatalogBuilder(cat);
+  cb.setStore(cat.getDataStoreByName(MockData.LINES.getPrefix()));
+  FeatureTypeInfo fti=cb.buildFeatureType(toName(MockData.LINES));
+  CoordinateReferenceSystem resourceCRS=fti.getCRS();
+  assertNotNull(resourceCRS);
+  assertEquals("EPSG:32615",fti.getSRS());
+  ReferencedEnvelope crsBounds=cb.getBoundsFromCRS(fti);
+  assertNotNull(crsBounds);
+  CoordinateReferenceSystem exptectedCRS=CRS.decode("EPSG:32615");
+  assertEquals(new ReferencedEnvelope(CRS.getEnvelope(exptectedCRS)),crsBounds);
+  fti.setSRS("EPSG:4326");
+  fti.setProjectionPolicy(ProjectionPolicy.NONE);
+  crsBounds=cb.getBoundsFromCRS(fti);
+  assertEquals(new ReferencedEnvelope(CRS.getEnvelope(exptectedCRS)),crsBounds);
+  fti.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  crsBounds=cb.getBoundsFromCRS(fti);
+  assertNotEquals(new ReferencedEnvelope(CRS.getEnvelope(exptectedCRS)),crsBounds);
+  CoordinateReferenceSystem crs4326=CRS.decode("EPSG:4326");
+  assertEquals(new ReferencedEnvelope(CRS.getEnvelope(crs4326)),crsBounds);
+  fti.setProjectionPolicy(ProjectionPolicy.REPROJECT_TO_DECLARED);
+  assertEquals(new ReferencedEnvelope(CRS.getEnvelope(crs4326)),crsBounds);
+}

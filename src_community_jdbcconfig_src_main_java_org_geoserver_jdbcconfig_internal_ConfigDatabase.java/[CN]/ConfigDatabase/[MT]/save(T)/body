@@ -8,6 +8,12 @@
   cache.invalidate(id);
   final Iterable<Property> changedProperties=dbMappings.changedProperties(oldObject,info);
   final boolean updateResouceLayersName=info instanceof ResourceInfo && modificationProxy.getPropertyNames().contains("name");
+  final boolean updateResourceLayersKeywords=CollectionUtils.exists(modificationProxy.getPropertyNames(),new Predicate(){
+    @Override public boolean evaluate(    Object input){
+      return ((String)input).contains("keyword");
+    }
+  }
+);
   modificationProxy.commit();
   Map<String,?> params;
   final Integer objectId=findObjectId(info);
@@ -29,6 +35,9 @@
   if (info instanceof ResourceInfo) {
     if (updateResouceLayersName) {
       updateResourceLayerName((ResourceInfo)info);
+    }
+    if (updateResourceLayersKeywords) {
+      updateResourceLayerKeywords((ResourceInfo)info);
     }
   }
   return getById(id,clazz);

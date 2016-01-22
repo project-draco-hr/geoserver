@@ -1,0 +1,24 @@
+{
+  File outFile=new File(tempDir,coverage.getName().toString() + ".tiff");
+  GeoTiffWriter writer=null;
+  try {
+    writer=(GeoTiffWriter)GEOTIF_FORMAT.getWriter(outFile);
+    final GeoTiffWriteParams wp=new GeoTiffWriteParams();
+    final ParameterValueGroup writerParams=GEOTIF_FORMAT.getWriteParameters();
+    writerParams.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+    WCSInfo wcsService=geoServer.getService(WCSInfo.class);
+    if (wcsService != null && wcsService.isLatLon()) {
+      writerParams.parameter(GeoTiffFormat.RETAIN_AXES_ORDER.getName().toString()).setValue(true);
+    }
+    if (writer != null)     writer.write(coverage,(GeneralParameterValue[])writerParams.values().toArray(new GeneralParameterValue[1]));
+  }
+  finally {
+    try {
+      if (writer != null)       writer.dispose();
+    }
+ catch (    Throwable e) {
+    }
+    coverage.dispose(false);
+  }
+  return outFile;
+}

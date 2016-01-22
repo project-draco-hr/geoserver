@@ -1,0 +1,30 @@
+{
+  Preconditions.checkNotNull(stores,"stores is null");
+  XMLConfiguration xmlConfig=getXmlConfiguration();
+  CompositeBlobStore compositeBlobStore=getCompositeBlobStore();
+  List<BlobStoreConfig> oldStores=new ArrayList<BlobStoreConfig>(xmlConfig.getBlobStores());
+  try {
+    compositeBlobStore.setBlobStores(stores);
+  }
+ catch (  ConfigurationException ce) {
+    throw ce;
+  }
+catch (  StorageException se) {
+    throw new ConfigurationException("Error connecting to BlobStore: " + se.getMessage(),se);
+  }
+  xmlConfig.getBlobStores().clear();
+  xmlConfig.getBlobStores().addAll(stores);
+  try {
+    xmlConfig.save();
+  }
+ catch (  IOException e) {
+    xmlConfig.getBlobStores().clear();
+    xmlConfig.getBlobStores().addAll(oldStores);
+    try {
+      compositeBlobStore.setBlobStores(oldStores);
+    }
+ catch (    StorageException e1) {
+    }
+    throw new ConfigurationException("Error saving configuration",e);
+  }
+}
