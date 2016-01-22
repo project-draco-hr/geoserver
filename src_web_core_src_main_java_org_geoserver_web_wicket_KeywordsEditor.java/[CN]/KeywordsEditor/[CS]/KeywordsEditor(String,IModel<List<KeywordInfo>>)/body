@@ -1,0 +1,40 @@
+{
+  super(id,keywords);
+  choices=new ListMultipleChoice<KeywordInfo>("keywords",new Model<ArrayList<KeywordInfo>>(),new ArrayList<KeywordInfo>(keywords.getObject()),new ChoiceRenderer<KeywordInfo>(){
+    private static final long serialVersionUID=1L;
+    @Override public Object getDisplayValue(    KeywordInfo kw){
+      StringBuffer sb=new StringBuffer(kw.getValue());
+      if (kw.getLanguage() != null) {
+        sb.append(" (").append(kw.getLanguage()).append(")");
+      }
+      if (kw.getVocabulary() != null) {
+        sb.append(" [").append(kw.getVocabulary()).append("]");
+      }
+      return sb.toString();
+    }
+  }
+);
+  choices.setOutputMarkupId(true);
+  add(choices);
+  add(removeKeywordsButton());
+  newKeyword=new TextField<String>("newKeyword",new Model<String>());
+  newKeyword.setOutputMarkupId(true);
+  add(newKeyword);
+  langChoice=new DropDownChoice<String>("lang",new Model<String>(),Arrays.asList(Locale.getISOLanguages()),new ChoiceRenderer<String>(){
+    private static final long serialVersionUID=1L;
+    @Override public String getDisplayValue(    String object){
+      return new Locale(object).getDisplayLanguage();
+    }
+    @Override public String getIdValue(    String object,    int index){
+      return object;
+    }
+  }
+);
+  langChoice.setNullValid(true);
+  langChoice.setOutputMarkupId(true);
+  add(langChoice);
+  vocabTextField=new TextField<String>("vocab",new Model<String>());
+  vocabTextField.setOutputMarkupId(true);
+  add(vocabTextField);
+  add(addKeywordsButton());
+}
