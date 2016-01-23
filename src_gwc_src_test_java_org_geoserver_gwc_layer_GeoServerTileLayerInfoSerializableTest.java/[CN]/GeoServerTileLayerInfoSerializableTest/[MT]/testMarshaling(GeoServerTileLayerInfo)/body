@@ -1,0 +1,22 @@
+{
+  File f=temp.newFile();
+  try (ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(f))){
+    out.writeObject(info);
+  }
+   GeoServerTileLayerInfo unmarshalled;
+  try (ObjectInputStream in=new ObjectInputStream(new FileInputStream(f))){
+    unmarshalled=(GeoServerTileLayerInfo)in.readObject();
+  }
+   assertThat(unmarshalled,notNullValue());
+  assertThat(unmarshalled,sameProperty(info,"enabled"));
+  assertThat(unmarshalled,sameProperty(info,"autoCacheStyles"));
+  assertThat(unmarshalled,sameProperty(info,"gutter"));
+  assertThat(unmarshalled,sameProperty(info,"metaTilingX"));
+  assertThat(unmarshalled,sameProperty(info,"metaTilingY"));
+  assertThat(unmarshalled,sameProperty(info,"gridSubsets"));
+  assertThat(unmarshalled,sameProperty(info,"mimeFormats"));
+  assertThat(unmarshalled,sameProperty(info,"parameterFilters"));
+  assertThat(unmarshalled,equalTo(info));
+  assertThat("cachedStyles",unmarshalled.cachedStyles(),equalTo(info.cachedStyles()));
+  return unmarshalled;
+}

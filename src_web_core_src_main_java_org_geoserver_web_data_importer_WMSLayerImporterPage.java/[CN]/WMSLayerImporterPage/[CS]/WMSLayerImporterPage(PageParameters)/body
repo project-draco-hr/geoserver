@@ -1,16 +1,17 @@
 {
-  storeId=params.getString("storeId");
+  storeId=params.get("storeId").toString();
   WMSStoreInfo store=getCatalog().getStore(storeId,WMSStoreInfo.class);
   provider=new WMSLayerProvider();
   provider.setStoreId(storeId);
   if (provider.size() <= 0) {
     error(new ParamResourceModel("storeEmpty",this,store.getName(),store.getWorkspace().getName()).getString());
   }
-  form=new Form("form",new CompoundPropertyModel(this));
+  form=new Form<WMSLayerImporterPage>("form",new CompoundPropertyModel<WMSLayerImporterPage>(this));
   form.setOutputMarkupId(true);
   add(form);
   layers=new GeoServerTablePanel<LayerResource>("layerChooser",provider,true){
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<LayerResource> property){
+    private static final long serialVersionUID=-5817898784100419973L;
+    @Override protected Component getComponentForProperty(    String id,    IModel<LayerResource> itemModel,    Property<LayerResource> property){
       if (property == WMSLayerProvider.NAME) {
         return new Label(id,property.getModel(itemModel));
       }

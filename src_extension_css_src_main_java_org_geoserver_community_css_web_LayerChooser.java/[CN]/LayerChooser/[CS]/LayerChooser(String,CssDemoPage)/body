@@ -2,25 +2,28 @@
   super(id);
   LayerProvider provider=new LayerProvider(demo);
   GeoServerTablePanel<LayerInfo> table=new GeoServerTablePanel<LayerInfo>("layer.table",provider){
-    @Override public Component getComponentForProperty(    String id,    IModel value,    Property<LayerInfo> property){
+    private static final long serialVersionUID=1196129584558094662L;
+    @Override public Component getComponentForProperty(    String id,    IModel<LayerInfo> value,    Property<LayerInfo> property){
       final LayerInfo layer=(LayerInfo)value.getObject();
       final String text=property.getPropertyValue(layer).toString();
       if (property == LayerProvider.name) {
         return new Fragment(id,"layer.link",LayerChooser.this){
+          private static final long serialVersionUID=-7619814477490657757L;
 {
-            add(new AjaxLink("link"){
+            add(new AjaxLink<Object>("link"){
+              private static final long serialVersionUID=-986789496671734252L;
 {
-                add(new Label("layer.name",new Model(text)));
+                add(new Label("layer.name",new Model<String>(text)));
               }
               @Override public void onClick(              AjaxRequestTarget target){
                 PageParameters params=new PageParameters();
-                params.put("layer",layer.prefixedName());
+                params.add("layer",layer.prefixedName());
                 WorkspaceInfo workspace=demo.getStyleInfo().getWorkspace();
                 if (workspace == null) {
-                  params.put("style",demo.getStyleInfo().getName());
+                  params.add("style",demo.getStyleInfo().getName());
                 }
  else {
-                  params.put("style",workspace.getName() + ":" + demo.getStyleInfo().getName());
+                  params.add("style",workspace.getName() + ":" + demo.getStyleInfo().getName());
                 }
                 setResponsePage(CssDemoPage.class,params);
               }

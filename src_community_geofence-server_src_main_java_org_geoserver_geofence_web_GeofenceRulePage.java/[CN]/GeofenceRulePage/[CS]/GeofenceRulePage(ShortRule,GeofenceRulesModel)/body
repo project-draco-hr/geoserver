@@ -9,8 +9,8 @@
     ruleFormData.ruleLimits=ruleLimits;
     ruleFormData.allowedArea=getAllowedAreaAsString(ruleLimits);
   }
-  CompoundPropertyModel ruleFormModel=new CompoundPropertyModel<RuleFormData>(ruleFormData);
-  final Form<RuleFormData> form=new Form<>("form",ruleFormModel);
+  CompoundPropertyModel<RuleFormData> ruleFormModel=new CompoundPropertyModel<RuleFormData>(ruleFormData);
+  final Form<RuleFormData> form=new Form<RuleFormData>("form",ruleFormModel);
   add(form);
   form.add(new TextField<>("priority",ruleFormModel.bind("rule.priority")).setRequired(true));
   form.add(roleChoice=new DropDownChoice<>("roleName",ruleFormModel.bind("rule.roleName"),getRoleNames()));
@@ -20,7 +20,7 @@
       userChoice.setChoices(getUserNames(roleChoice.getConvertedInput()));
       form.getModelObject().rule.setUserName(null);
       userChoice.modelChanged();
-      target.addComponent(userChoice);
+      target.add(userChoice);
     }
   }
 );
@@ -35,7 +35,7 @@
       requestChoice.setChoices(getOperationNames(serviceChoice.getConvertedInput()));
       form.getModelObject().rule.setRequest(null);
       requestChoice.modelChanged();
-      target.addComponent(requestChoice);
+      target.add(requestChoice);
     }
   }
 );
@@ -50,7 +50,7 @@
       layerChoice.setChoices(getLayerNames(workspaceChoice.getConvertedInput()));
       form.getModelObject().rule.setLayer(null);
       layerChoice.modelChanged();
-      target.addComponent(layerChoice);
+      target.add(layerChoice);
     }
   }
 );
@@ -61,6 +61,7 @@
   form.add(grantTypeChoice=new DropDownChoice<>("access",ruleFormModel.bind("rule.access"),Arrays.asList(GrantType.values()),new GrantTypeRenderer()));
   grantTypeChoice.setRequired(true);
   grantTypeChoice.add(new OnChangeAjaxBehavior(){
+    private static final long serialVersionUID=-4302901248019983282L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
       if (grantTypeChoice.getConvertedInput().equals(GrantType.LIMIT)) {
         allowedAreaLabel.setVisible(true);
@@ -70,8 +71,8 @@
         allowedAreaLabel.setVisible(false);
         allowedArea.setVisible(false);
       }
-      target.addComponent(allowedAreaLabel);
-      target.addComponent(allowedArea);
+      target.add(allowedAreaLabel);
+      target.add(allowedArea);
     }
   }
 );

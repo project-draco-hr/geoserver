@@ -3,20 +3,28 @@
   String requiredMark=required ? " *" : "";
   Label label=new Label("paramName",paramLabelModel.getObject() + requiredMark);
   add(label);
-  ColorPickerField textField=new ColorPickerField("paramValue",paramVale,Color.class){
-    @Override public IConverter getConverter(    Class type){
-      return new IConverter(){
-        public String convertToString(        Object value,        Locale locale){
-          String input=(String)value;
-          if (input.startsWith("#"))           return input.substring(1);
- else           return input;
+  ColorPickerField textField=new ColorPickerField("paramValue",paramVale){
+    private static final long serialVersionUID=4185457152965032989L;
+    @SuppressWarnings("unchecked") @Override public <C>IConverter<C> getConverter(    Class<C> type){
+      if (type.isAssignableFrom(String.class)) {
+        return (IConverter<C>)new IConverter<String>(){
+          private static final long serialVersionUID=4343895199315509104L;
+          public String convertToString(          String input,          Locale locale){
+            if (input.startsWith("#")) {
+              return input.substring(1);
+            }
+ else {
+              return input;
+            }
+          }
+          public String convertToObject(          String value,          Locale locale){
+            if (value.equals(""))             return value;
+            return "#" + value;
+          }
         }
-        public Object convertToObject(        String value,        Locale locale){
-          if (value.equals(""))           return value;
-          return "#" + value;
-        }
-      }
 ;
+      }
+      return super.getConverter(type);
     }
   }
 ;

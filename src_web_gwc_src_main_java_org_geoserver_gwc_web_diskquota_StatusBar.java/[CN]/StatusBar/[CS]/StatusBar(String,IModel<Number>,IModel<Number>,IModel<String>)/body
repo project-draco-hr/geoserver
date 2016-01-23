@@ -1,7 +1,13 @@
 {
   super(id);
   setOutputMarkupId(true);
-  add(HeaderContributor.forCss(StatusBar.class,"statusbar.css"));
+  add(new Behavior(){
+    private static final long serialVersionUID=-8058471260136015254L;
+    @Override public void renderHead(    Component component,    IHeaderResponse response){
+      response.render(CssHeaderItem.forReference(new PackageResourceReference(StatusBar.class,"statusbar.css")));
+    }
+  }
+);
   WebMarkupContainer usageBar=new WebMarkupContainer("statusBarProgress");
   WebMarkupContainer excessBar=new WebMarkupContainer("statusBarExcess");
   final double limit=limitModel.getObject().doubleValue();
@@ -18,9 +24,9 @@
     usedPercentage=(int)Math.round(used * progressWidth / limit);
     excessPercentage=0;
   }
-  usageBar.add(new AttributeModifier("style",true,new Model<String>("width: " + usedPercentage + "px; left: 5px; border-left: inherit;")));
+  usageBar.add(new AttributeModifier("style",new Model<String>("width: " + usedPercentage + "px; left: 5px; border-left: inherit;")));
   String redStyle="width: " + excessPercentage + "px; left: "+ (5 + usedPercentage)+ "px;";
-  excessBar.add(new AttributeModifier("style",true,new Model<String>(redStyle)));
+  excessBar.add(new AttributeModifier("style",new Model<String>(redStyle)));
   add(usageBar);
   add(excessBar);
   add(new Label("progressLabel",progressMessageModel));

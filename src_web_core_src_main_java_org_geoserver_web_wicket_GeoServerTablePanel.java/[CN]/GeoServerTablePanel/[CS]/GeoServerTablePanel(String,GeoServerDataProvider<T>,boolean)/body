@@ -3,10 +3,11 @@
   this.dataProvider=dataProvider;
   selection=new boolean[DEFAULT_ITEMS_PER_PAGE];
   listContainer=new WebMarkupContainer("listContainer");
-  filterForm=new Form("filterForm");
+  filterForm=new Form<>("filterForm");
   filterForm.setOutputMarkupId(true);
   add(filterForm);
   filter=new TextField<String>("filter",new Model<String>()){
+    private static final long serialVersionUID=-1252520208030081584L;
     @Override protected void onComponentTag(    ComponentTag tag){
       super.onComponentTag(tag);
       tag.put("onkeypress","if(event.keyCode == 13) {document.getElementById('" + hiddenSubmit.getMarkupId() + "').click();return false;}");
@@ -14,19 +15,20 @@
   }
 ;
   filterForm.add(filter);
-  filter.add(new SimpleAttributeModifier("title",String.valueOf(new ResourceModel("GeoServerTablePanel.search","Search").getObject())));
+  filter.add(AttributeModifier.replace("title",String.valueOf(new ResourceModel("GeoServerTablePanel.search","Search").getObject())));
   filterForm.add(hiddenSubmit=hiddenSubmit());
   filterForm.setDefaultButton(hiddenSubmit);
   listContainer.setOutputMarkupId(true);
   add(listContainer);
-  dataView=new DataView("items",dataProvider){
-    @Override protected Item newItem(    String id,    int index,    IModel model){
-      OddEvenItem item=new OddEvenItem(id,index,model);
+  dataView=new DataView<T>("items",dataProvider){
+    private static final long serialVersionUID=7201317388415148823L;
+    @Override protected Item<T> newItem(    String id,    int index,    IModel<T> model){
+      OddEvenItem<T> item=new OddEvenItem<T>(id,index,model);
       item.setOutputMarkupId(true);
       return item;
     }
-    @Override protected void populateItem(    Item item){
-      final IModel itemModel=item.getModel();
+    @Override protected void populateItem(    Item<T> item){
+      final IModel<T> itemModel=item.getModel();
       WebMarkupContainer cnt=new WebMarkupContainer("selectItemContainer");
       cnt.add(selectOneCheckbox(item));
       cnt.setVisible(selectable);

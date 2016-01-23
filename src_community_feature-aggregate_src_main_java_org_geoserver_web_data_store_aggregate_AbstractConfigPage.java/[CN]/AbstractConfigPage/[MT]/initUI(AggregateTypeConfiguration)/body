@@ -11,12 +11,12 @@
   sources.setOutputMarkupId(true);
   form.add(sources);
   stores=new DropDownChoice<StoreInfo>("stores",new Model(null),new StoreListModel(),new StoreListChoiceRenderer());
-  stores.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  stores.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
       types.setChoices(new TypeListModel(stores.getModel()));
       addLink.setEnabled(false);
-      target.addComponent(types);
-      target.addComponent(addLink);
+      target.add(types);
+      target.add(addLink);
     }
   }
 );
@@ -24,10 +24,10 @@
   types=new DropDownChoice<String>("types",new Model(null),new TypeListModel(stores.getModel()));
   types.setOutputMarkupId(true);
   sources.add(types);
-  types.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  types.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
       addLink.setEnabled(stores.getModelObject() != null && types.getModelObject() != null);
-      target.addComponent(addLink);
+      target.add(addLink);
     }
   }
 );
@@ -36,7 +36,7 @@
   addLink.setEnabled(false);
   sources.add(addLink);
   sourceTypes=new GeoServerTablePanel<SourceType>("sourceTypes",new SourceTypeProvider(configModel)){
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<SourceType> property){
+    @Override protected Component getComponentForProperty(    String id,    IModel<SourceType> itemModel,    Property<SourceType> property){
       if (property.getName().equals("default")) {
         return new Label(id,property.getModel(itemModel));
       }

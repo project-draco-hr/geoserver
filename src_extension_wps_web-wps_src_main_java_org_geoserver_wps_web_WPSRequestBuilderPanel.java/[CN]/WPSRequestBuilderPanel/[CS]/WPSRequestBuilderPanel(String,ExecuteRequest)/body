@@ -73,12 +73,11 @@
   outputContainer.add(outputView);
   responseWindow=new ModalWindow("responseWindow");
   add(responseWindow);
-  responseWindow.setPageMapName("demoResponse");
   responseWindow.setCookieName("demoResponse");
   responseWindow.setPageCreator(new ModalWindow.PageCreator(){
     public Page createPage(){
       DemoRequest request=new DemoRequest(null);
-      HttpServletRequest http=((WebRequest)WPSRequestBuilderPanel.this.getRequest()).getHttpServletRequest();
+      HttpServletRequest http=(HttpServletRequest)WPSRequestBuilderPanel.this.getRequest().getContainerRequest();
       String url=ResponseUtils.buildURL(ResponseUtils.baseURL(http),"ows",Collections.singletonMap("strict","true"),URLType.SERVICE);
       request.setRequestUrl(url);
       request.setRequestBody((String)responseWindow.getDefaultModelObject());
@@ -100,13 +99,13 @@
   feedback=new FeedbackPanel("feedback");
   feedback.setOutputMarkupId(true);
   add(feedback);
-  processChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  processChoice.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
       initProcessView();
-      target.addComponent(WPSRequestBuilderPanel.this);
+      target.add(WPSRequestBuilderPanel.this);
       WebPage page=getWebPage();
       if (page instanceof GeoServerBasePage) {
-        target.addComponent(((GeoServerBasePage)page).getFeedbackPanel());
+        target.add(((GeoServerBasePage)page).getFeedbackPanel());
       }
     }
   }
@@ -125,10 +124,10 @@
   password.setRequired(false);
   userpwdContainer.add(password);
   CheckBox checkbox=new CheckBox("authenticate",new PropertyModel(this,"authenticate"));
-  checkbox.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  checkbox.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
       userpwdContainer.setVisible(authenticate);
-      target.addComponent(authenticationContainer);
+      target.add(authenticationContainer);
     }
   }
 );

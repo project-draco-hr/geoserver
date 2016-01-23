@@ -10,19 +10,20 @@
   form.add(new TextField<String>("instanceName",new PropertyModel<String>(configModel,"instanceName")).setRequired(true));
   form.add(new TextField<String>("servicesUrl",new ExtPropertyModel<String>(configModel,"servicesUrl").setReadOnly(config.isInternal())).setRequired(true).setEnabled(!config.isInternal()));
   form.add(new AjaxSubmitLink("test"){
+    private static final long serialVersionUID=-91239899377941223L;
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
-      ((FormComponent)form.get("servicesUrl")).processInput();
-      String servicesUrl=(String)((FormComponent)form.get("servicesUrl")).getConvertedInput();
+      ((FormComponent<?>)form.get("servicesUrl")).processInput();
+      String servicesUrl=(String)((FormComponent<?>)form.get("servicesUrl")).getConvertedInput();
       RuleReaderService ruleReader=getRuleReaderService(servicesUrl);
       try {
-        List<ShortRule> rules=ruleReader.getMatchingRules(new RuleFilter());
-        info(new StringResourceModel(GeofencePage.class.getSimpleName() + ".connectionSuccessful",null).getObject());
+        ruleReader.getMatchingRules(new RuleFilter());
+        info(new StringResourceModel(GeofencePage.class.getSimpleName() + ".connectionSuccessful").getObject());
       }
  catch (      Exception e) {
         error(e);
         LOGGER.log(Level.WARNING,e.getMessage(),e);
       }
-      target.addComponent(getPage().get("feedback"));
+      target.add(getPage().get("feedback"));
     }
     private RuleReaderService getRuleReaderService(    String servicesUrl){
       if (config.isInternal()) {
@@ -72,21 +73,22 @@
   CachedRuleReader cacheRuleReader=GeoServerExtensions.bean(CachedRuleReader.class);
   updateStatsValues(cacheRuleReader);
   for (  String key : statsValues.keySet()) {
-    Label label=new Label(key,new MapModel(statsValues,key));
+    Label label=new Label(key,new MapModel<String>(statsValues,key));
     label.setOutputMarkupId(true);
     form.add(label);
     statsLabels.add(label);
   }
   form.add(new AjaxSubmitLink("invalidate"){
+    private static final long serialVersionUID=3847903240475052867L;
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       CachedRuleReader cacheRuleReader=GeoServerExtensions.bean(CachedRuleReader.class);
       cacheRuleReader.invalidateAll();
-      info(new StringResourceModel(GeofencePage.class.getSimpleName() + ".cacheInvalidated",null).getObject());
+      info(new StringResourceModel(GeofencePage.class.getSimpleName() + ".cacheInvalidated").getObject());
       updateStatsValues(cacheRuleReader);
       for (      Label label : statsLabels) {
-        target.addComponent(label);
+        target.add(label);
       }
-      target.addComponent(getPage().get("feedback"));
+      target.add(getPage().get("feedback"));
     }
   }
 .setDefaultFormProcessing(false));

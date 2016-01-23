@@ -8,7 +8,7 @@
   add(feedback);
   final DropDownChoice<Version> version=new DropDownChoice<Version>("version",new PropertyModel<Version>(getCoverage,"version"),Arrays.asList(Version.values()));
   add(version);
-  version.add(new AjaxFormSubmitBehavior("onchange"){
+  version.add(new AjaxFormSubmitBehavior("change"){
     @Override protected void onError(    AjaxRequestTarget target){
       onSubmit(target);
     }
@@ -26,13 +26,13 @@
         g2w.setModelObject(null);
         g2w.setVisible(false);
       }
-      target.addComponent(WCSRequestBuilderPanel.this);
+      target.add(WCSRequestBuilderPanel.this);
     }
   }
 );
   coverage=new DropDownChoice<String>("coverage",new PropertyModel<String>(getCoverage,"coverage"),new CoverageNamesModel());
   add(coverage);
-  coverage.add(new AjaxFormSubmitBehavior("onchange"){
+  coverage.add(new AjaxFormSubmitBehavior("change"){
     @Override protected void onError(    AjaxRequestTarget target){
       onSubmit(target);
     }
@@ -47,7 +47,7 @@
       gc.targetCRS=ri.getCoordinateReferenceSystem();
       gc.sourceGridRange=null;
       describeLink.setEnabled(true);
-      target.addComponent(WCSRequestBuilderPanel.this);
+      target.add(WCSRequestBuilderPanel.this);
     }
   }
 );
@@ -71,7 +71,7 @@
   responseWindow.setPageCreator(new ModalWindow.PageCreator(){
     public Page createPage(){
       DemoRequest request=new DemoRequest(null);
-      HttpServletRequest http=((WebRequest)WCSRequestBuilderPanel.this.getRequest()).getHttpServletRequest();
+      HttpServletRequest http=GeoServerApplication.get().servletRequest(getRequest());
       String url=ResponseUtils.buildURL(ResponseUtils.baseURL(http),"ows",Collections.singletonMap("strict","true"),URLType.SERVICE);
       request.setRequestUrl(url);
       request.setRequestBody((String)responseWindow.getDefaultModelObject());

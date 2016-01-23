@@ -1,6 +1,6 @@
 {
   this.storeId=storeId;
-  Form selector=new Form("selector");
+  Form<?> selector=new Form<Void>("selector");
   selector.add(storesDropDown());
   selector.setVisible(storeId == null);
   add(selector);
@@ -10,7 +10,7 @@
   selectLayers=new WebMarkupContainer("selectLayers");
   selectLayers.setVisible(storeId != null);
   selectLayersContainer.add(selectLayers);
-  selectLayers.add(storeName=new Label("storeName",new Model()));
+  selectLayers.add(storeName=new Label("storeName",new Model<String>()));
   if (storeId != null) {
     StoreInfo store=getCatalog().getStore(storeId,StoreInfo.class);
     storeName.setDefaultModelObject(store.getName());
@@ -19,16 +19,16 @@
   provider.setStoreId(storeId);
   provider.setShowPublished(true);
   layers=new GeoServerTablePanel<Resource>("layers",provider){
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<Resource> property){
+    @Override protected Component getComponentForProperty(    String id,    IModel<Resource> itemModel,    Property<Resource> property){
       if (property == NewLayerPageProvider.NAME) {
         return new Label(id,property.getModel(itemModel));
       }
  else       if (property == NewLayerPageProvider.PUBLISHED) {
-        final Resource resource=(Resource)itemModel.getObject();
+        final Resource resource=itemModel.getObject();
         final CatalogIconFactory icons=CatalogIconFactory.get();
         if (resource.isPublished()) {
-          ResourceReference icon=icons.getEnabledIcon();
-          Fragment f=new Fragment(id,"iconFragment",NewLayerPage.this);
+          PackageResourceReference icon=icons.getEnabledIcon();
+          Fragment f=new Fragment(id,"iconFragment",selectLayers);
           f.add(new Image("layerIcon",icon));
           return f;
         }
@@ -37,7 +37,7 @@
         }
       }
  else       if (property == NewLayerPageProvider.ACTION) {
-        final Resource resource=(Resource)itemModel.getObject();
+        final Resource resource=itemModel.getObject();
         if (resource.isPublished()) {
           return resourceChooserLink(id,itemModel,new ParamResourceModel("publishAgain",this));
         }

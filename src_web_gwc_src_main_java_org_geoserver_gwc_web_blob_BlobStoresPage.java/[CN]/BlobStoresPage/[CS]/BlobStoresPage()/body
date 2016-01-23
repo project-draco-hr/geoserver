@@ -18,7 +18,7 @@
       for (      BlobStoreConfig config : blobStoresPanel.getSelection()) {
         if (config.isDefault()) {
           error(new ParamResourceModel("deleteError",getPage()).getString());
-          target.addComponent(feedbackPanel);
+          target.add(feedbackPanel);
           return;
         }
         ids.add(config.getId());
@@ -60,10 +60,10 @@
           @Override public void onClose(          AjaxRequestTarget target){
             if (error != null) {
               error(error);
-              target.addComponent(feedbackPanel);
+              target.add(feedbackPanel);
             }
  else {
-              target.addComponent(blobStoresPanel);
+              target.add(blobStoresPanel);
             }
           }
         }
@@ -75,9 +75,9 @@
         }
  catch (        ConfigurationException e) {
           error(e.toString());
-          target.addComponent(feedbackPanel);
+          target.add(feedbackPanel);
         }
-        target.addComponent(blobStoresPanel);
+        target.add(blobStoresPanel);
       }
     }
   }
@@ -87,10 +87,10 @@
   setHeaderPanel(header);
   add(blobStoresPanel=new GeoServerTablePanel<BlobStoreConfig>("storesPanel",new BlobStoresProvider(),true){
     private static final long serialVersionUID=-5380703588873422601L;
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<BlobStoreConfig> property){
+    @Override protected Component getComponentForProperty(    String id,    IModel<BlobStoreConfig> itemModel,    Property<BlobStoreConfig> property){
       final BlobStoreConfig blobStore=(BlobStoreConfig)itemModel.getObject();
       if (property == BlobStoresProvider.ID) {
-        return new SimpleAjaxLink(id,itemModel,property.getModel(itemModel)){
+        return new SimpleAjaxLink<BlobStoreConfig>(id,itemModel,property.getModel(itemModel)){
           private static final long serialVersionUID=1L;
           @Override protected void onClick(          AjaxRequestTarget target){
             setResponsePage(new BlobStorePage(blobStore));
@@ -121,7 +121,7 @@
     }
     @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
       remove.setEnabled(blobStoresPanel.getSelection().size() > 0);
-      target.addComponent(remove);
+      target.add(remove);
     }
   }
 );

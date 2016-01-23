@@ -7,13 +7,13 @@
   Map<String,String> parameters=model.getObject().getMapperParameters();
   final ParamsPanel paramsPanel=createParamsPanel("authKeyMapperParamsPanel",model.getObject().getAuthKeyMapperName(),parameters);
   AuthenticationKeyMapperChoice authenticationKeyMapperChoice=new AuthenticationKeyMapperChoice("authKeyMapperName");
-  authenticationKeyMapperChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  authenticationKeyMapperChoice.add(new AjaxFormComponentUpdatingBehavior("change"){
     protected void onUpdate(    AjaxRequestTarget target){
       String newSelection=(String)getFormComponent().getConvertedInput();
       Map<String,String> parameters=getMapperParameters(newSelection);
       AuthenticationKeyFilterPanel.this.model.getObject().setMapperParameters(parameters);
       paramsPanel.updateParameters(newSelection,parameters);
-      target.addComponent(paramsPanel);
+      target.add(paramsPanel);
     }
   }
 );
@@ -29,14 +29,14 @@
         mapper.setSecurityManager(getSecurityManager());
         mapper.setUserGroupServiceName(config.getUserGroupServiceName());
         int numberOfNewKeys=mapper.synchronize();
-        info(new StringResourceModel("synchronizeSuccessful",AuthenticationKeyFilterPanel.this,null,new Object[]{numberOfNewKeys}).getObject());
+        info(new StringResourceModel("synchronizeSuccessful",AuthenticationKeyFilterPanel.this).setParameters(numberOfNewKeys).getObject());
       }
  catch (      Exception e) {
         error(e);
         LOGGER.log(Level.WARNING,"Authentication key  error ",e);
       }
  finally {
-        target.addComponent(getPage().get("feedback"));
+        target.add(getPage().get("feedback"));
       }
     }
   }

@@ -1,0 +1,33 @@
+{
+  String expression=iv.getValue();
+  if (expression == null || expression.isEmpty() || expression.trim().isEmpty()) {
+    return;
+  }
+  Expression ecql=null;
+  try {
+    ecql=ECQL.toExpression(expression);
+  }
+ catch (  CQLException e) {
+    ValidationError error=new ValidationError(this);
+    error.setVariable("expression",expression);
+    error.setVariable("error",e.getMessage());
+    error.setMessage("ecql.invalidExpression");
+    iv.error(error);
+  }
+  if (ecql != null && validAttributes != null) {
+    FilterAttributeExtractor filter=new FilterAttributeExtractor();
+    ecql.accept(filter,null);
+    List<String> invalids=new ArrayList<>(Arrays.asList(filter.getAttributeNames()));
+    invalids.removeAll(validAttributes);
+    if (!invalids.isEmpty()) {
+      String invalidList=commaSeparated(invalids);
+      String validList=commaSeparated(validAttributes);
+      ValidationError error=new ValidationError(this);
+      error.setVariable("expression",expression);
+      error.setVariable("invalidAttributes",invalidList);
+      error.setVariable("validAttributes",validList);
+      error.setMessage("ecql.invalidAttributes");
+      iv.error(error);
+    }
+  }
+}

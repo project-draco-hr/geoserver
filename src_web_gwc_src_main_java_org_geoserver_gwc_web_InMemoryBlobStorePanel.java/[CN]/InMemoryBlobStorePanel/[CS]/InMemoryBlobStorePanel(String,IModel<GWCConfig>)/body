@@ -17,9 +17,9 @@
   if (store != null) {
     final Map<String,String> cacheProviders=store.getCacheProvidersNames();
     final IModel<String> providerClass=new PropertyModel<String>(gwcConfigModel,"cacheProviderClass");
-    IChoiceRenderer<String> renderer=new CacheProviderRenderer(cacheProviders);
+    ChoiceRenderer<String> renderer=new CacheProviderRenderer(cacheProviders);
     choice=new DropDownChoice<String>("caches",providerClass,new ArrayList<String>(cacheProviders.keySet()),renderer);
-    choice.add(new AjaxFormComponentUpdatingBehavior("onChange"){
+    choice.add(new AjaxFormComponentUpdatingBehavior("change"){
       @Override protected void onUpdate(      AjaxRequestTarget target){
         ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
         String cacheClass=providerClass.getObject();
@@ -34,7 +34,7 @@
           }
           cacheConfigContainer.setMapKey(cacheClass,gwcConfigModel);
         }
-        target.addComponent(cacheConfigContainer);
+        target.add(cacheConfigContainer);
       }
     }
 );
@@ -46,11 +46,11 @@
   container.add(choice);
   persistenceEnabledChoice.setOutputMarkupId(true).setEnabled(true);
   container.add(cacheConfigContainer);
-  innerCachingEnabledChoice.add(new AjaxFormComponentUpdatingBehavior("onChange"){
+  innerCachingEnabledChoice.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
       boolean isVisible=innerCachingEnabledChoice.getModelObject() == null ? false : innerCachingEnabledChoice.getModelObject();
       container.setVisible(isVisible);
-      target.addComponent(container.getParent());
+      target.add(container.getParent());
     }
   }
 );
@@ -115,7 +115,7 @@
  catch (      Throwable t) {
         error(t);
       }
-      target.addComponent(statsContainer);
+      target.add(statsContainer);
     }
   }
 ;

@@ -1,14 +1,15 @@
 {
   startPage();
   WorkspaceInfo defaultWs=getCatalog().getDefaultWorkspace();
-  tester.assertModelValue("dataStoreForm:workspacePanel:border:paramValue",defaultWs);
-  FormTester ft=tester.newFormTester("dataStoreForm");
-  ft.setValue("dataStoreNamePanel:border:paramValue","testStore");
-  ft.setValue("parametersPanel:parameters:0:parameterPanel:border:paramValue","file://" + new File("./target").getCanonicalPath());
-  ft.select("workspacePanel:border:paramValue",2);
-  ft.submit();
-  tester.executeAjaxEvent("dataStoreForm:workspacePanel:border:paramValue","onchange");
-  tester.executeAjaxEvent("dataStoreForm:save","onclick");
+  tester.assertModelValue("dataStoreForm:workspacePanel:border:border_body:paramValue",defaultWs);
+  FormTester ft=tester.newFormTester("dataStoreForm",false);
+  ft.select("workspacePanel:border:border_body:paramValue",2);
+  tester.executeAjaxEvent("dataStoreForm:workspacePanel:border:border_body:paramValue","change");
+  ft.setValue("dataStoreNamePanel:border:border_body:paramValue","testStore");
+  ft.setValue("parametersPanel:parameters:0:parameterPanel:border:border_body:paramValue","file://" + new File("./target").getCanonicalPath());
+  ft.select("workspacePanel:border:border_body:paramValue",2);
+  ft.submit("save");
+  tester.assertNoFeedbackMessage(FeedbackMessage.ERROR);
   WorkspacesModel wm=new WorkspacesModel();
   List<WorkspaceInfo> wl=(List<WorkspaceInfo>)wm.getObject();
   WorkspaceInfo ws=wl.get(2);

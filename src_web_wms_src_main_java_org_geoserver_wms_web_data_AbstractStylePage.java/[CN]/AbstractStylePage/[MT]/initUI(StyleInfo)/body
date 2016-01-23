@@ -31,9 +31,9 @@
     }
   }
 );
-  formatChoice.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  formatChoice.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
-      target.appendJavascript(String.format("if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }",styleHandler().getCodeMirrorEditMode()));
+      target.appendJavaScript(String.format("if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }",styleHandler().getCodeMirrorEditMode()));
     }
   }
 );
@@ -59,11 +59,11 @@
   }
   templates=new DropDownChoice("templates",new Model(),new StyleTypeModel(),new StyleTypeChoiceRenderer());
   templates.setOutputMarkupId(true);
-  templates.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  templates.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
       templates.validate();
       generateLink.setEnabled(templates.getConvertedInput() != null);
-      target.addComponent(generateLink);
+      target.add(generateLink);
     }
   }
 );
@@ -73,11 +73,11 @@
   styleForm.add(generateLink);
   styles=new DropDownChoice("existingStyles",new Model(),new StylesModel(),new StyleChoiceRenderer());
   styles.setOutputMarkupId(true);
-  styles.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  styles.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
       styles.validate();
       copyLink.setEnabled(styles.getConvertedInput() != null);
-      target.addComponent(copyLink);
+      target.add(copyLink);
     }
   }
 );
@@ -103,14 +103,12 @@
   legendContainer=new WebMarkupContainer("legendContainer");
   legendContainer.setOutputMarkupId(true);
   add(legendContainer);
-  this.legendImg=new Image("legendImg");
-  legendContainer.add(this.legendImg);
-  this.legendImg.setVisible(false);
-  this.legendImg.setOutputMarkupId(true);
-  this.legendImg.setImageResource(new DynamicWebResource(){
-    @Override protected ResourceState getResourceState(){
-      return new ResourceState(){
-        @Override public byte[] getData(){
+  this.legendImg=new Image("legendImg",new AbstractResource(){
+    @Override protected ResourceResponse newResourceResponse(    Attributes attributes){
+      ResourceResponse rr=new ResourceResponse();
+      rr.setContentType("image/png");
+      rr.setWriteCallback(new WriteCallback(){
+        @Override public void writeData(        Attributes attributes) throws IOException {
           GeoServerDataDirectory dd=GeoServerExtensions.bean(GeoServerDataDirectory.class,getGeoServerApplication().getApplicationContext());
           StyleInfo si=new StyleInfoImpl(getCatalog());
           String styleName="tmp" + UUID.randomUUID().toString();
@@ -137,11 +135,9 @@
               BufferedImageLegendGraphicBuilder builder=new BufferedImageLegendGraphicBuilder();
               BufferedImage image=builder.buildLegendGraphic(request);
               ByteArrayOutputStream bos=new ByteArrayOutputStream();
-              ImageIO.write(image,"PNG",bos);
-              return bos.toByteArray();
+              ImageIO.write(image,"PNG",attributes.getResponse().getOutputStream());
             }
             error("Failed to build legend preview");
-            return null;
           }
  catch (          IOException e) {
             throw new RuntimeException(e);
@@ -152,12 +148,13 @@
             }
           }
         }
-        @Override public String getContentType(){
-          return "image/png";
-        }
       }
-;
+);
+      return rr;
     }
   }
 );
+  legendContainer.add(this.legendImg);
+  this.legendImg.setVisible(false);
+  this.legendImg.setOutputMarkupId(true);
 }

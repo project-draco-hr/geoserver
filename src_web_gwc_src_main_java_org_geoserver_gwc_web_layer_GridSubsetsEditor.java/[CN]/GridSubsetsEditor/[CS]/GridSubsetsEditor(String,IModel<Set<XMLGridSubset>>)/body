@@ -14,7 +14,7 @@
     }
     @Override protected void populateItem(    final ListItem<XMLGridSubset> item){
       final int index=item.getIndex();
-      item.add(new SimpleAttributeModifier("class",index % 2 == 0 ? "even" : "odd"));
+      item.add(AttributeModifier.replace("class",index % 2 == 0 ? "even" : "odd"));
       final XMLGridSubset gridSubset=item.getModelObject();
       GridSetBroker gridSetBroker=GWC.get().getGridSetBroker();
       String gridsetDescription=null;
@@ -35,12 +35,12 @@
       final Component gridSetBounds;
       gridSetLabel=new Label("gridSet",new PropertyModel<String>(item.getModel(),"gridSetName"));
       if (!gridsetExists) {
-        gridSetLabel.add(new AttributeModifier("style",true,new Model<String>("color:red;text-decoration:line-through;")));
+        gridSetLabel.add(new AttributeModifier("style",new Model<String>("color:red;text-decoration:line-through;")));
         getPage().warn("GridSet " + gridSubset.getGridSetName() + " does not exist");
       }
       item.add(gridSetLabel);
       if (null != gridsetDescription) {
-        gridSetLabel.add(new AttributeModifier("title",true,new Model<String>(gridsetDescription)));
+        gridSetLabel.add(new AttributeModifier("title",new Model<String>(gridsetDescription)));
       }
       final Component removeLink;
       final int maxZoomLevel=gridsetLevels - 1;
@@ -85,8 +85,8 @@
       updateValidZoomRanges(zoomStart,zoomStop,minCachedLevel,maxCachedLevel,null);
       gridSetBounds=new Label("bounds",new ResourceModel("GridSubsetsEditor.bounds.dynamic"));
       item.add(gridSetBounds);
-      removeLink=new ImageAjaxLink("removeLink",GWCIconFactory.DELETE_ICON){
-        private static final long serialVersionUID=1L;
+      removeLink=new ImageAjaxLink<Object>("removeLink",GWCIconFactory.DELETE_ICON){
+        private static final long serialVersionUID=-5072597940769821889L;
         @Override protected void onClick(        AjaxRequestTarget target){
           List<XMLGridSubset> list;
           list=new ArrayList<XMLGridSubset>(grids.getModelObject());
@@ -97,13 +97,13 @@
           choices.add(subset.getGridSetName());
           Collections.sort(choices);
           availableGridSets.setChoices(choices);
-          target.addComponent(container);
-          target.addComponent(availableGridSets);
+          target.add(container);
+          target.add(availableGridSets);
         }
       }
 ;
       removeLink.setDefaultModel(item.getModel());
-      removeLink.add(new AttributeModifier("title",true,new ResourceModel("GridSubsetsEditor.removeLink")));
+      removeLink.add(new AttributeModifier("title",new ResourceModel("GridSubsetsEditor.removeLink")));
       item.add(removeLink);
     }
   }
@@ -118,7 +118,7 @@
   Collections.sort(gridSetNames);
   GeoServerAjaxFormLink addGridsubsetLink=new GeoServerAjaxFormLink("addGridSubset"){
     private static final long serialVersionUID=1L;
-    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+    @Override protected void onClick(    AjaxRequestTarget target,    Form<?> form){
       availableGridSets.processInput();
       final String selectedGridset=availableGridSets.getModelObject();
       if (null == selectedGridset) {
@@ -131,8 +131,8 @@
       XMLGridSubset newSubset=new XMLGridSubset();
       newSubset.setGridSetName(selectedGridset);
       grids.getModelObject().add(newSubset);
-      target.addComponent(table);
-      target.addComponent(availableGridSets);
+      target.add(table);
+      target.add(availableGridSets);
     }
   }
 ;

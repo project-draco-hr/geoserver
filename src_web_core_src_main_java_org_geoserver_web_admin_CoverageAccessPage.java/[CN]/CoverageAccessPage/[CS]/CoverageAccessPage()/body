@@ -1,24 +1,25 @@
 {
-  final IModel geoServerModel=getGeoServerModel();
-  final IModel coverageModel=getCoverageAccessModel();
-  Form form=new Form("form",new CompoundPropertyModel(coverageModel));
+  final IModel<?> geoServerModel=getGeoServerModel();
+  final IModel<CoverageAccessInfo> coverageModel=getCoverageAccessModel();
+  Form<CoverageAccessInfo> form=new Form<CoverageAccessInfo>("form",new CompoundPropertyModel<CoverageAccessInfo>(coverageModel));
   add(form);
   form.add(new PoolSizeValidator());
-  TextField corePoolSize=new TextField("corePoolSize");
-  corePoolSize.add(new MinimumValidator(1));
+  NumberTextField<Integer> corePoolSize=new NumberTextField<Integer>("corePoolSize",Integer.class);
+  corePoolSize.setMinimum(1);
   form.add(corePoolSize);
-  TextField maxPoolSize=new TextField("maxPoolSize");
-  maxPoolSize.add(new MinimumValidator(1));
+  NumberTextField<Integer> maxPoolSize=new NumberTextField<Integer>("maxPoolSize",Integer.class);
+  maxPoolSize.add(RangeValidator.minimum(1));
   form.add(maxPoolSize);
-  TextField keepAliveTime=new TextField("keepAliveTime");
-  keepAliveTime.add(new MinimumValidator(1));
+  NumberTextField<Integer> keepAliveTime=new NumberTextField<Integer>("keepAliveTime",Integer.class);
+  keepAliveTime.add(RangeValidator.minimum(1));
   form.add(keepAliveTime);
-  final DropDownChoice queueType=new DropDownChoice("queueType",Arrays.asList(CoverageAccessInfo.QueueType.values()),new QueueTypeRenderer());
+  final DropDownChoice<QueueType> queueType=new DropDownChoice<QueueType>("queueType",Arrays.asList(CoverageAccessInfo.QueueType.values()),new QueueTypeRenderer());
   form.add(queueType);
-  TextField imageIOCacheThreshold=new TextField("imageIOCacheThreshold");
-  imageIOCacheThreshold.add(new MinimumValidator(0l));
+  TextField<String> imageIOCacheThreshold=new TextField<String>("imageIOCacheThreshold");
+  imageIOCacheThreshold.add(RangeValidator.minimum(0l));
   form.add(imageIOCacheThreshold);
   Button submit=new Button("submit",new StringResourceModel("submit",this,null)){
+    private static final long serialVersionUID=4149741045073254811L;
     @Override public void onSubmit(){
       GeoServer gs=(GeoServer)geoServerModel.getObject();
       GeoServerInfo global=gs.getGlobal();
@@ -30,6 +31,7 @@
 ;
   form.add(submit);
   Button cancel=new Button("cancel"){
+    private static final long serialVersionUID=-57093747603810865L;
     @Override public void onSubmit(){
       doReturn();
     }

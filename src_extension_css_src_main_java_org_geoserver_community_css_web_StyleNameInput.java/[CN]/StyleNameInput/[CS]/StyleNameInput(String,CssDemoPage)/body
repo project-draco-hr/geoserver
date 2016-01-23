@@ -1,7 +1,8 @@
 {
   super(id);
-  final Form form=new Form("layer.name.form");
+  final Form<?> form=new Form<Object>("layer.name.form");
   IValidator<String> nameValidator=new IValidator<String>(){
+    private static final long serialVersionUID=1558466250290018192L;
     @Override public void validate(    IValidatable<String> text){
       final String value=text.getValue();
       if (value.matches("\\s")) {
@@ -17,6 +18,7 @@
     workspaces.add(info.getName());
   }
   IChoiceRenderer<String> workspaceRenderer=new ChoiceRenderer<String>(){
+    private static final long serialVersionUID=2319702138663206028L;
     @Override public Object getDisplayValue(    String value){
       return value == null ? "No workspace" : value;
     }
@@ -30,7 +32,8 @@
   warning.setVisible(false);
   warningContainer.add(warning);
   final DropDownChoice<String> workspaceChooser=new DropDownChoice<String>("layer.workspace.field",new PropertyModel<String>(this,"workspace"),workspaces,workspaceRenderer);
-  workspaceChooser.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  workspaceChooser.add(new AjaxFormComponentUpdatingBehavior("change"){
+    private static final long serialVersionUID=1645220914767539957L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
       LayerInfo layer=demo.getLayer();
       WorkspaceInfo layerWorkspace=layer.getResource().getStore().getWorkspace();
@@ -39,29 +42,30 @@
         warning.setVisible(false);
       }
  else {
-        warning.setDefaultModel(new Model("Warning, the layer " + layer.getName() + " is in workspace "+ layerWorkspace.getName()+ ",  cannot be used with a style in workspace "+ selected));
+        warning.setDefaultModel(new Model<String>("Warning, the layer " + layer.getName() + " is in workspace "+ layerWorkspace.getName()+ ",  cannot be used with a style in workspace "+ selected));
         warning.setVisible(true);
       }
-      target.addComponent(warningContainer);
+      target.add(warningContainer);
     }
   }
 );
   form.add(workspaceChooser);
-  TextField nameField=new TextField("layer.name.field",new PropertyModel<String>(this,"name"));
+  TextField<String> nameField=new TextField<String>("layer.name.field",new PropertyModel<String>(this,"name"));
   nameField.add(nameValidator);
   AjaxButton submitButton=new AjaxButton("submit.button",form){
-    @Override public void onSubmit(    AjaxRequestTarget target,    Form f){
+    private static final long serialVersionUID=-2701440643314381309L;
+    @Override public void onSubmit(    AjaxRequestTarget target,    Form<?> f){
       if (demo.catalog().getStyleByName(workspace,name) != null) {
         throw new RuntimeException("Trying to create style with same name as existing one!");
       }
       demo.createCssTemplate(workspace,name);
       PageParameters params=new PageParameters();
-      params.put("layer",demo.getLayer().prefixedName());
+      params.add("layer",demo.getLayer().prefixedName());
       if (workspace == null) {
-        params.put("style",name);
+        params.add("style",name);
       }
  else {
-        params.put("style",workspace + ":" + name);
+        params.add("style",workspace + ":" + name);
       }
       setResponsePage(CssDemoPage.class,params);
     }

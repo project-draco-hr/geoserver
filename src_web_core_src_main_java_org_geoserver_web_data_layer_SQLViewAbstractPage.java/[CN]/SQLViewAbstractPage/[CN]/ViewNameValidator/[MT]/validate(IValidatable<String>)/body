@@ -1,0 +1,17 @@
+{
+  String vtName=validatable.getValue();
+  final DataStoreInfo store=getCatalog().getStore(storeId,DataStoreInfo.class);
+  List<FeatureTypeInfo> ftis=getCatalog().getResourcesByStore(store,FeatureTypeInfo.class);
+  for (  FeatureTypeInfo curr : ftis) {
+    VirtualTable currvt=curr.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE,VirtualTable.class);
+    if (currvt != null) {
+      if (typeInfoId == null || !typeInfoId.equals(curr.getId())) {
+        if (currvt.getName().equals(vtName)) {
+          IValidationError err=new ValidationError("duplicateSqlViewName").addKey("duplicateSqlViewName").setVariable("name",vtName).setVariable("typeName",curr.getName());
+          validatable.error(err);
+          return;
+        }
+      }
+    }
+  }
+}

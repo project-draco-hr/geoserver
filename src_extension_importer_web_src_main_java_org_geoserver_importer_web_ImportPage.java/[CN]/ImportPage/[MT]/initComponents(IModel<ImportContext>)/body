@@ -63,7 +63,7 @@
         filter.add(t);
       }
       running.set(true);
-      target.addComponent(cancelLink(this));
+      target.add(cancelLink(this));
       final Long jobid=importer().runAsync(imp,filter,false);
       setDefaultModelObject(jobid);
       final AjaxLink self=this;
@@ -71,18 +71,18 @@
         @Override protected void onTimer(        AjaxRequestTarget target){
           Task<ImportContext> job=importer().getTask(jobid);
           if (job == null || job.isDone()) {
-            stop();
+            stop(null);
             self.setEnabled(true);
-            target.addComponent(self);
+            target.add(self);
             running.set(false);
-            target.addComponent(cancelLink(self));
+            target.add(cancelLink(self));
           }
-          target.addComponent(taskTable);
-          target.addComponent(headerTable);
+          target.add(taskTable);
+          target.add(headerTable);
         }
       }
 );
-      target.addComponent(taskTable);
+      target.add(taskTable);
       setLinkEnabled(this,false,target);
     }
   }
@@ -126,7 +126,7 @@
   selectPanel.add(new AjaxLink<ImportContext>("select-all",model){
     @Override public void onClick(    AjaxRequestTarget target){
       taskTable.selectAll();
-      target.addComponent(taskTable);
+      target.add(taskTable);
       updateImportLink(importLink,taskTable,target);
     }
   }
@@ -134,7 +134,7 @@
   selectPanel.add(new AjaxLink<ImportContext>("select-none",model){
     @Override public void onClick(    AjaxRequestTarget target){
       taskTable.clearSelection();
-      target.addComponent(taskTable);
+      target.add(taskTable);
       updateImportLink(importLink,taskTable,target);
     }
   }
@@ -142,7 +142,7 @@
   selectPanel.add(new AjaxLink<ImportContext>("select-ready",model){
     @Override public void onClick(    AjaxRequestTarget target){
       doSelectReady(getModelObject(),taskTable,target);
-      target.addComponent(taskTable);
+      target.add(taskTable);
       updateImportLink(importLink,taskTable,target);
     }
   }

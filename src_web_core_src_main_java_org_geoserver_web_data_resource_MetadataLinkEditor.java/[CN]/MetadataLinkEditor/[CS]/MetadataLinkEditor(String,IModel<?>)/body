@@ -3,14 +3,14 @@
   final WebMarkupContainer container=new WebMarkupContainer("container");
   container.setOutputMarkupId(true);
   add(container);
-  metadataLinksModel=new PropertyModel<List<MetadataLinkInfo>>(resourceModel,"metadataLinks");
+  metadataLinksModel=new PropertyModel<>(resourceModel,"metadataLinks");
   table=new WebMarkupContainer("table");
   table.setOutputMarkupId(true);
   container.add(table);
   links=new ListView<MetadataLinkInfo>("links",metadataLinksModel){
     private static final long serialVersionUID=-3241009112151911288L;
     @Override protected void populateItem(    ListItem<MetadataLinkInfo> item){
-      item.add(new SimpleAttributeModifier("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
+      item.add(AttributeModifier.replace("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
       DropDownChoice<String> dropDownChoice=new DropDownChoice<>("type",new PropertyModel<String>(item.getModel(),"metadataType"),LINK_TYPES);
       dropDownChoice.setRequired(true);
       item.add(dropDownChoice);
@@ -28,7 +28,7 @@
         @Override public void onClick(        AjaxRequestTarget target){
           metadataLinksModel.getObject().remove(getModelObject());
           updateLinksVisibility();
-          target.addComponent(container);
+          target.add(container);
         }
       }
 ;
@@ -45,12 +45,11 @@
     private static final long serialVersionUID=-695617463194724617L;
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       MetadataLinkInfo link=getCatalog().getFactory().createMetadataLink();
-      ;
       link.setMetadataType(LINK_TYPES.get(0));
       link.setType("text/plain");
       metadataLinksModel.getObject().add(link);
       updateLinksVisibility();
-      target.addComponent(container);
+      target.add(container);
     }
   }
 ;

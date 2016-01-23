@@ -5,10 +5,8 @@
   tester.startPage(page);
   final String gridsetName="fromScratch";
   FormTester ft=tester.newFormTester("gridSetForm");
-  ft.setValue("name:border:paramValue",gridsetName);
-  ft.setValue("description","sample description");
   ft.setValue("crs:srs","EPSG:3857");
-  tester.executeAjaxEvent("gridSetForm:crs:srs","onblur");
+  tester.executeAjaxEvent("gridSetForm:crs:srs","blur");
   Component computeBounds=tester.getComponentFromLastRenderedPage("gridSetForm:computeBounds");
   assertTrue(computeBounds.isEnabled());
   page.computeBounds();
@@ -29,17 +27,17 @@
     ft.setValue("bounds:maxX","1000000");
     ft.setValue("bounds:maxY","1000000");
   }
-  ft.setValue("tileWidth:border:paramValue","512");
-  tester.executeAjaxEvent("gridSetForm:tileWidth:border:paramValue","onblur");
-  ft.setValue("tileHeight:border:paramValue","512");
-  tester.executeAjaxEvent("gridSetForm:tileHeight:border:paramValue","onblur");
+  ft.setValue("tileWidth:border:border_body:paramValue","512");
+  ft.setValue("tileHeight:border:border_body:paramValue","512");
   final int numLevels=6;
   for (int i=0; i < numLevels; i++) {
-    AjaxRequestTarget target=new AjaxRequestTarget(page);
+    AjaxRequestTarget target=new AjaxRequestHandler(page);
     page.addZoomLevel(target);
   }
+  ft.setValue("name:border:border_body:paramValue",gridsetName);
+  ft.setValue("description","sample description");
   Session.get().getFeedbackMessages().clear();
-  tester.executeAjaxEvent("gridSetForm:save","onclick");
+  tester.executeAjaxEvent("gridSetForm:save","click");
   tester.assertNoErrorMessage();
   assertTrue(gridSetBroker.getNames().toString(),gridSetBroker.getNames().contains(gridsetName));
   GridSet created=gridSetBroker.get(gridsetName);

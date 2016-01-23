@@ -6,12 +6,12 @@
   layerStyle=group.getRootLayerStyle();
   Link link=new Link("rootLayer"){
     @Override public void onClick(){
-      Map<String,String> params=new HashMap<String,String>(2);
+      PageParameters pp=new PageParameters();
       if (layer.getResource().getStore().getWorkspace() != null) {
-        params.put(ResourceConfigurationPage.WORKSPACE,layer.getResource().getStore().getWorkspace().getName());
+        pp.add(ResourceConfigurationPage.WORKSPACE,layer.getResource().getStore().getWorkspace().getName());
       }
-      params.put(ResourceConfigurationPage.NAME,layer.getName());
-      setResponsePage(ResourceConfigurationPage.class,new PageParameters(params));
+      pp.add(ResourceConfigurationPage.NAME,layer.getName());
+      setResponsePage(ResourceConfigurationPage.class,pp);
     }
   }
 ;
@@ -31,7 +31,7 @@
   }
   Collections.sort(styles,new StyleInfoNameComparator());
   DropDownChoice<StyleInfo> styleField=new DropDownChoice<StyleInfo>("rootLayerStyle",new PropertyModel<StyleInfo>(this,"layerStyle"),styles){
-    @Override public IConverter getConverter(    Class<?> type){
+    @Override public <C>IConverter<C> getConverter(    Class<C> type){
       return form.getConverter(type);
     }
   }

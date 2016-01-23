@@ -13,12 +13,11 @@
 );
   responseWindow=new ModalWindow("responseWindow");
   add(responseWindow);
-  responseWindow.setPageMapName("demoResponse");
   responseWindow.setCookieName("demoResponse");
   responseWindow.setPageCreator(new ModalWindow.PageCreator(){
     public Page createPage(){
       DemoRequest request=new DemoRequest(null);
-      HttpServletRequest http=((WebRequest)WCSRequestBuilder.this.getRequest()).getHttpServletRequest();
+      HttpServletRequest http=GeoServerApplication.get().servletRequest();
       String url=ResponseUtils.buildURL(ResponseUtils.baseURL(http),"ows",Collections.singletonMap("strict","true"),URLType.SERVICE);
       request.setRequestUrl(url);
       request.setRequestBody((String)responseWindow.getDefaultModelObject());
@@ -33,7 +32,7 @@
     }
     @Override protected void onError(    AjaxRequestTarget target,    Form form){
       super.onError(target,form);
-      target.addComponent(builder.getFeedbackPanel());
+      target.add(builder.getFeedbackPanel());
     }
   }
 );
@@ -45,11 +44,11 @@
       }
  catch (      Exception e) {
         error(e.getMessage());
-        target.addComponent(getFeedbackPanel());
+        target.add(getFeedbackPanel());
       }
     }
     @Override protected void onError(    AjaxRequestTarget target,    Form form){
-      target.addComponent(getFeedbackPanel());
+      target.add(getFeedbackPanel());
     }
   }
 );

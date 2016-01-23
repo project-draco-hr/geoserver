@@ -1,21 +1,25 @@
 {
   AjaxSubmitLink link=new AjaxSubmitLink("chooser"){
+    private static final long serialVersionUID=-2860146532287292092L;
     @Override public boolean getDefaultFormProcessing(){
       return false;
     }
-    @Override public void onSubmit(    AjaxRequestTarget target,    Form form){
-      gsDialog.setTitle(new Model(windowTitle));
+    @Override public void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      gsDialog.setTitle(new Model<String>(windowTitle));
       gsDialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+        /** 
+ */
+        private static final long serialVersionUID=1576266249751904398L;
         @Override protected boolean onSubmit(        AjaxRequestTarget target,        Component contents){
           GeoServerFileChooser chooser=(GeoServerFileChooser)contents;
           String path=((File)chooser.getDefaultModelObject()).getAbsolutePath();
           textField.clearInput();
           textField.setModelValue(new String[]{path});
-          target.addComponent(textField);
+          target.add(textField);
           return true;
         }
         @Override public void onClose(        AjaxRequestTarget target){
-          target.addComponent(textField);
+          target.add(textField);
         }
         @Override protected Component getContents(        String id){
           File file=null;
@@ -24,7 +28,7 @@
           if (input != null && !input.equals("")) {
             file=new File(input);
           }
-          GeoServerFileChooser chooser=new GeoServerFileChooser(id,new Model(file));
+          GeoServerFileChooser chooser=new GeoServerFileChooser(id,new Model<File>(file));
           chooser.setFilter(fileFilter);
           return chooser;
         }

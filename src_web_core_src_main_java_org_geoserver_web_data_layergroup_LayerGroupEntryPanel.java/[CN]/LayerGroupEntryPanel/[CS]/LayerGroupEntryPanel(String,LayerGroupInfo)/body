@@ -10,7 +10,8 @@
   add(dialog=new GeoServerDialog("dialog"));
   add(new HelpLink("layersHelp").setDialog(dialog));
   add(layerTable=new ReorderableTablePanel<LayerGroupEntry>("layers",items,PROPERTIES){
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<LayerGroupEntry> property){
+    private static final long serialVersionUID=-3270471094618284639L;
+    @Override protected Component getComponentForProperty(    String id,    IModel<LayerGroupEntry> itemModel,    Property<LayerGroupEntry> property){
       if (property == LAYER) {
         return layerLink(id,itemModel);
       }
@@ -29,16 +30,18 @@
 .setFilterable(false));
   layerTable.setItemReuseStrategy(new DefaultItemReuseStrategy());
   layerTable.setOutputMarkupId(true);
-  add(new AjaxLink("addLayer"){
+  add(new AjaxLink<LayerInfo>("addLayer"){
+    private static final long serialVersionUID=-6143440041597461787L;
     @Override public void onClick(    AjaxRequestTarget target){
       popupWindow.setInitialHeight(375);
       popupWindow.setInitialWidth(525);
       popupWindow.setTitle(new ParamResourceModel("chooseLayer",this));
       popupWindow.setContent(new LayerListPanel(popupWindow.getContentId()){
+        private static final long serialVersionUID=-47811496174289699L;
         @Override protected void handleLayer(        LayerInfo layer,        AjaxRequestTarget target){
           popupWindow.close(target);
           items.add(new LayerGroupEntry(layer,layer.getDefaultStyle()));
-          target.addComponent(layerTable);
+          target.add(layerTable);
         }
       }
 );
@@ -46,16 +49,18 @@
     }
   }
 );
-  add(new AjaxLink("addLayerGroup"){
+  add(new AjaxLink<LayerGroupInfo>("addLayerGroup"){
+    private static final long serialVersionUID=-6600366636542152188L;
     @Override public void onClick(    AjaxRequestTarget target){
       popupWindow.setInitialHeight(375);
       popupWindow.setInitialWidth(525);
       popupWindow.setTitle(new ParamResourceModel("chooseLayerGroup",this));
       popupWindow.setContent(new LayerGroupListPanel(popupWindow.getContentId()){
+        private static final long serialVersionUID=4052338807144204692L;
         @Override protected void handleLayerGroup(        LayerGroupInfo layerGroup,        AjaxRequestTarget target){
           popupWindow.close(target);
           items.add(new LayerGroupEntry(layerGroup,null));
-          target.addComponent(layerTable);
+          target.add(layerTable);
         }
       }
 );

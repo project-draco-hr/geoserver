@@ -20,13 +20,13 @@
     @Override protected void onUpdate(    AjaxRequestTarget target){
       resolutionsOrScales.processInput();
       final boolean useResolutions=resolutionsOrScales.getModelObject().booleanValue();
-      Iterator<? extends ListItem<Grid>> iterator=grids.iterator();
+      Iterator<Component> iterator=grids.iterator();
       while (iterator.hasNext()) {
-        ListItem<Grid> next=iterator.next();
+        @SuppressWarnings("unchecked") ListItem<Grid> next=(ListItem<Grid>)iterator.next();
         next.get("resolution").setEnabled(useResolutions);
         next.get("scale").setEnabled(!useResolutions);
       }
-      target.addComponent(table);
+      target.add(table);
     }
   }
 );
@@ -45,7 +45,7 @@
     }
     @Override protected void populateItem(    final ListItem<Grid> item){
       final int index=item.getIndex();
-      item.add(new SimpleAttributeModifier("class",index % 2 == 0 ? "even" : "odd"));
+      item.add(AttributeModifier.replace("class",index % 2 == 0 ? "even" : "odd"));
       item.add(new Label("zoomLevel",String.valueOf(index)));
       final TextField<Double> resolution;
       final TextField<Double> scale;
@@ -92,25 +92,25 @@
         removeLink=new Label("removeLink","");
       }
  else {
-        removeLink=new ImageAjaxLink("removeLink",GWCIconFactory.DELETE_ICON){
+        removeLink=new ImageAjaxLink<Void>("removeLink",GWCIconFactory.DELETE_ICON){
           private static final long serialVersionUID=1L;
           @Override protected void onClick(          AjaxRequestTarget target){
             List<Grid> list=new ArrayList<Grid>(grids.getModelObject());
             int index=((Integer)getDefaultModelObject()).intValue();
             list.remove(index);
             grids.setModelObject(list);
-            target.addComponent(container);
+            target.add(container);
           }
         }
 ;
         removeLink.setDefaultModel(new Model<Integer>(Integer.valueOf(index)));
-        removeLink.add(new AttributeModifier("title",true,new ResourceModel("TileMatrixSetEditor.removeLink")));
+        removeLink.add(new AttributeModifier("title",new ResourceModel("TileMatrixSetEditor.removeLink")));
       }
       item.add(removeLink);
       final boolean isResolutionsPreserved=preserveesolutionsModel.getObject();
       resolution.setEnabled(isResolutionsPreserved);
       scale.setEnabled(!isResolutionsPreserved);
-      resolution.add(new AjaxFormComponentUpdatingBehavior("onblur"){
+      resolution.add(new AjaxFormComponentUpdatingBehavior("blur"){
         private static final long serialVersionUID=1L;
         @Override protected void onUpdate(        AjaxRequestTarget target){
           resolution.processInput();
@@ -124,13 +124,13 @@
             }
           }
           scale.setModelObject(scaleDenominator);
-          target.addComponent(resolution);
-          target.addComponent(scale);
-          target.addComponent(tiles);
+          target.add(resolution);
+          target.add(scale);
+          target.add(tiles);
         }
       }
 );
-      scale.add(new AjaxFormComponentUpdatingBehavior("onblur"){
+      scale.add(new AjaxFormComponentUpdatingBehavior("blur"){
         private static final long serialVersionUID=1L;
         @Override protected void onUpdate(        AjaxRequestTarget target){
           scale.processInput();
@@ -145,9 +145,9 @@
             }
           }
           resolution.setModelObject(res);
-          target.addComponent(resolution);
-          target.addComponent(scale);
-          target.addComponent(tiles);
+          target.add(resolution);
+          target.add(scale);
+          target.add(tiles);
         }
       }
 );

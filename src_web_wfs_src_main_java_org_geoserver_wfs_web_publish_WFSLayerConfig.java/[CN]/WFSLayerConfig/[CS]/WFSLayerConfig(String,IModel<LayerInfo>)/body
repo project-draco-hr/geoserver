@@ -1,12 +1,12 @@
 {
   super(id,model);
   TextField<Integer> maxFeatures=new TextField<Integer>("perReqFeatureLimit",new PropertyModel<Integer>(model,"resource.maxFeatures"));
-  maxFeatures.add(NumberValidator.minimum(0));
+  maxFeatures.add(RangeValidator.minimum(0));
   Border mfb=new FormComponentFeedbackBorder("perReqFeaturesBorder");
   mfb.add(maxFeatures);
   add(mfb);
   TextField<Integer> maxDecimals=new TextField<Integer>("maxDecimals",new PropertyModel<Integer>(model,"resource.numDecimals"));
-  maxFeatures.add(NumberValidator.minimum(0));
+  maxFeatures.add(RangeValidator.minimum(0));
   Border mdb=new FormComponentFeedbackBorder("maxDecimalsBorder");
   mdb.add(maxDecimals);
   add(mdb);
@@ -20,16 +20,16 @@
   final WebMarkupContainer otherSrsContainer=new WebMarkupContainer("otherSRSContainer");
   otherSrsContainer.setOutputMarkupId(true);
   add(otherSrsContainer);
-  final TextArea<List<String>> srsList=new SRSListTextArea("srs",LiveCollectionModel.list(new PropertyModel<String>(model,"resource.responseSRS")));
+  final TextArea<List<String>> srsList=new SRSListTextArea("srs",LiveCollectionModel.list(new PropertyModel<List<String>>(model,"resource.responseSRS")));
   srsList.setOutputMarkupId(true);
   srsList.setVisible(Boolean.TRUE.equals(overrideServiceSRSModel.getObject()));
   otherSrsContainer.add(srsList);
-  overrideServiceSRS.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  overrideServiceSRS.add(new AjaxFormComponentUpdatingBehavior("change"){
     private static final long serialVersionUID=-6590810763209350915L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
       Boolean visible=overrideServiceSRS.getConvertedInput();
       srsList.setVisible(visible);
-      target.addComponent(otherSrsContainer);
+      target.add(otherSrsContainer);
     }
   }
 );

@@ -7,15 +7,15 @@
   table.setOutputMarkupId(true);
   IModel<String> bind=styleModel.bind("legend.onlineResource");
   onlineResource=new TextField<String>("onlineResource",bind);
-  onlineResource.add(new StringValidator(){
+  onlineResource.add(new IValidator<String>(){
     final List<String> EXTENSIONS=Arrays.asList(new String[]{"png","gif","jpeg","jpg"});
-    protected void onValidate(    IValidatable<String> input){
+    @Override public void validate(    IValidatable<String> input){
       String value=input.getValue();
       int last=value == null ? -1 : value.lastIndexOf('.');
       if (last == -1 || !EXTENSIONS.contains(value.substring(last + 1).toLowerCase())) {
         ValidationError error=new ValidationError();
         error.setMessage("Not an image");
-        error.addMessageKey("nonImage");
+        error.addKey("nonImage");
         input.error(error);
         return;
       }
@@ -36,7 +36,7 @@
           if ("text/html".equals(conn.getContentType())) {
             ValidationError error=new ValidationError();
             error.setMessage("Unable to access image");
-            error.addMessageKey("imageUnavailable");
+            error.addKey("imageUnavailable");
             input.error(error);
             return;
           }
@@ -44,13 +44,13 @@
  catch (        MalformedURLException e) {
           ValidationError error=new ValidationError();
           error.setMessage("Unable to access image");
-          error.addMessageKey("imageUnavailable");
+          error.addKey("imageUnavailable");
           input.error(error);
         }
 catch (        IOException e) {
           ValidationError error=new ValidationError();
           error.setMessage("Unable to access image");
-          error.addMessageKey("imageUnavailable");
+          error.addKey("imageUnavailable");
           input.error(error);
         }
         return;
@@ -64,14 +64,14 @@ catch (        IOException e) {
           if (test == null) {
             ValidationError error=new ValidationError();
             error.setMessage("File not found in styles directory");
-            error.addMessageKey("imageNotFound");
+            error.addKey("imageNotFound");
             input.error(error);
           }
         }
  catch (        IOException e) {
           ValidationError error=new ValidationError();
           error.setMessage("File not found in styles directory");
-          error.addMessageKey("imageNotFound");
+          error.addKey("imageNotFound");
           input.error(error);
         }
       }
@@ -103,10 +103,10 @@ catch (        IOException e) {
             form.error("Unable to access url");
             return;
           }
-          format.setModelValue(conn.getContentType());
+          format.setModelValue(new String[]{conn.getContentType()});
           BufferedImage image=ImageIO.read(conn.getInputStream());
-          width.setModelValue("" + image.getWidth());
-          height.setModelValue("" + image.getHeight());
+          width.setModelValue(new String[]{"" + image.getWidth()});
+          height.setModelValue(new String[]{"" + image.getHeight()});
         }
  catch (        FileNotFoundException notFound) {
           form.error("Unable to access " + url);
@@ -116,9 +116,9 @@ catch (        Exception e) {
           form.error("Recommend use of styles directory at " + e);
         }
       }
-      target.addComponent(format);
-      target.addComponent(width);
-      target.addComponent(height);
+      target.add(format);
+      target.add(width);
+      target.add(height);
     }
   }
 ;
@@ -127,14 +127,14 @@ catch (        Exception e) {
   format.setOutputMarkupId(true);
   table.add(format);
   width=new TextField("width",styleModel.bind("legend.width"),Integer.class);
-  width.add(NumberValidator.minimum(0));
+  width.add(RangeValidator.minimum(0));
   width.setOutputMarkupId(true);
   table.add(width);
   height=new TextField("height",styleModel.bind("legend.height"),Integer.class);
-  height.add(NumberValidator.minimum(0));
+  height.add(RangeValidator.minimum(0));
   height.setOutputMarkupId(true);
   table.add(height);
-  table.add(new AttributeModifier("style",true,showhideStyleModel));
+  table.add(new AttributeModifier("style",showhideStyleModel));
   container.add(table);
   showhideForm=new Form("showhide"){
     @Override protected void onSubmit(){
@@ -148,7 +148,7 @@ catch (        Exception e) {
     private static final long serialVersionUID=1L;
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       updateVisibility(true);
-      target.addComponent(ExternalGraphicPanel.this);
+      target.add(ExternalGraphicPanel.this);
     }
   }
 ;
@@ -162,7 +162,7 @@ catch (        Exception e) {
       width.setModelObject("0");
       height.setModelObject("0");
       updateVisibility(false);
-      target.addComponent(ExternalGraphicPanel.this);
+      target.add(ExternalGraphicPanel.this);
     }
   }
 ;

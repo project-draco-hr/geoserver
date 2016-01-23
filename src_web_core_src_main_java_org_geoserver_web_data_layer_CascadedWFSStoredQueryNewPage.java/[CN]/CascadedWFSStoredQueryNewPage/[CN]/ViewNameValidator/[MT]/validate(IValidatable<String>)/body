@@ -1,0 +1,18 @@
+{
+  String csqName=(String)validatable.getValue();
+  final DataStoreInfo store=getCatalog().getStore(storeId,DataStoreInfo.class);
+  List<FeatureTypeInfo> ftis=getCatalog().getResourcesByStore(store,FeatureTypeInfo.class);
+  for (  FeatureTypeInfo curr : ftis) {
+    StoredQueryConfiguration config=curr.getMetadata().get(FeatureTypeInfo.STORED_QUERY_CONFIGURATION,StoredQueryConfiguration.class);
+    if (config != null) {
+      if (curr.getNativeName().equals(csqName)) {
+        Map<String,Object> map=new HashMap<>();
+        map.put("name",csqName);
+        map.put("dataStore",store.getName());
+        IValidationError err=new ValidationError("duplicateSqlViewName").addKey("duplicateSqlViewName").setVariables(map);
+        validatable.error(err);
+        return;
+      }
+    }
+  }
+}

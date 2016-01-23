@@ -6,8 +6,8 @@
     templateName=null;
   }
  else {
-    gridSetName=parameters.getString(GRIDSET_NAME);
-    templateName=parameters.getString(GRIDSET_TEMPLATE_NAME);
+    gridSetName=parameters.get(GRIDSET_NAME).toOptionalString();
+    templateName=parameters.get(GRIDSET_TEMPLATE_NAME).toOptionalString();
   }
   GridSetInfo gridsetInfo;
   if (templateName != null) {
@@ -23,7 +23,7 @@
   }
   IModel<GridSetInfo> model=new Model<GridSetInfo>(gridsetInfo);
   form=new Form<GridSetInfo>("gridSetForm",model);
-  FeedbackPanel feedback=new FeedbackPanel("feedback");
+  feedback=new FeedbackPanel("feedback");
   feedback.setOutputMarkupId(true);
   form.add(feedback);
   form.add(name=name(model));
@@ -35,30 +35,35 @@
   form.add(tileHeight=tileHeight(model));
   form.add(tileMatrixSetEditor=new TileMatrixSetEditor("tileMatrixSetEditor",model));
   tileMatrixSetEditor.setOutputMarkupId(true);
-  cancelLink=new BookmarkablePageLink("cancel",GridSetsPage.class);
+  cancelLink=new BookmarkablePageLink<>("cancel",GridSetsPage.class);
   form.add(cancelLink);
   saveLink=saveLink(form);
   form.add(saveLink);
   add(form);
-  tileWidth.getFormComponent().add(new AjaxFormComponentUpdatingBehavior("onblur"){
+  tileWidth.getFormComponent().add(new AjaxFormComponentUpdatingBehavior("blur"){
     private static final long serialVersionUID=1L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
-      target.addComponent(tileMatrixSetEditor);
+      target.add(tileMatrixSetEditor);
     }
   }
 );
-  tileHeight.getFormComponent().add(new AjaxFormComponentUpdatingBehavior("onblur"){
+  tileHeight.getFormComponent().add(new AjaxFormComponentUpdatingBehavior("blur"){
     private static final long serialVersionUID=1L;
     @Override protected void onUpdate(    AjaxRequestTarget target){
-      target.addComponent(tileMatrixSetEditor);
+      target.add(tileMatrixSetEditor);
     }
   }
 );
   addLevelLink=new GeoServerAjaxFormLink("addZoomLevel",form){
-    private static final long serialVersionUID=1L;
-    @Override protected void onClick(    AjaxRequestTarget target,    Form form){
+    private static final long serialVersionUID=1202251941625034786L;
+    @Override protected void onClick(    AjaxRequestTarget target,    Form<?> form){
+      crs.processInput();
+      bounds.processInput();
+      tileWidth.getFormComponent().processInput();
+      tileHeight.getFormComponent().processInput();
       addZoomLevel(target);
-      target.addComponent(tileMatrixSetEditor);
+      target.add(tileMatrixSetEditor);
+      target.add(feedback);
     }
   }
 ;

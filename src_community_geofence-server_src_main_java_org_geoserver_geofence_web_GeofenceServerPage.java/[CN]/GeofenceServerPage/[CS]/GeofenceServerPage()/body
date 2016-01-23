@@ -1,21 +1,24 @@
 {
   add(new AjaxLink<Object>("addNew"){
+    private static final long serialVersionUID=8443763075141885559L;
     @Override public void onClick(    AjaxRequestTarget target){
       setResponsePage(new GeofenceRulePage(rulesModel.newRule(),rulesModel));
     }
   }
 );
   add(remove=new AjaxLink<Object>("removeSelected"){
+    private static final long serialVersionUID=3581476968062788921L;
     @Override public void onClick(    AjaxRequestTarget target){
       rulesModel.remove(rulesPanel.getSelection());
-      target.addComponent(rulesPanel);
+      target.add(rulesPanel);
     }
   }
 );
   remove.setOutputMarkupId(true);
   remove.setEnabled(false);
   add(rulesPanel=new GeoServerTablePanel<ShortRule>("rulesPanel",rulesModel=new GeofenceRulesModel(),true){
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<ShortRule> property){
+    private static final long serialVersionUID=-8943273843044917552L;
+    @Override protected Component getComponentForProperty(    String id,    IModel<ShortRule> itemModel,    Property<ShortRule> property){
       if (property == GeofenceRulesModel.BUTTONS) {
         return new ButtonPanel(id,(ShortRule)itemModel.getObject());
       }
@@ -23,13 +26,14 @@
     }
     @Override protected void onSelectionUpdate(    AjaxRequestTarget target){
       remove.setEnabled(rulesPanel.getSelection().size() > 0);
-      target.addComponent(remove);
+      target.add(remove);
     }
   }
 );
-  rulesPanel.add(CSSPackageResource.getHeaderContribution(new WebTheme()));
+  rulesPanel.add(new WebTheme());
   rulesPanel.add(new DragSource(Operation.MOVE).drag("tr"));
   rulesPanel.add(new DropTarget(Operation.MOVE){
+    private static final long serialVersionUID=543875667418965337L;
     public void onDrop(    AjaxRequestTarget target,    Transfer transfer,    Location location){
       if (location == null || !(location.getComponent().getDefaultModel().getObject() instanceof ShortRule)) {
         return;

@@ -14,9 +14,9 @@
   coveragesContainer.setOutputMarkupId(true);
   form.add(coveragesContainer);
   GeoServerTablePanel<EoCoverageSelection> coverages=new GeoServerTablePanel<EoCoverageSelection>("coverages",new EoCoverageSelectionProvider(selections)){
-    @Override protected Component getComponentForProperty(    String id,    IModel itemModel,    Property<EoCoverageSelection> property){
+    @Override protected Component getComponentForProperty(    String id,    IModel<EoCoverageSelection> itemModel,    Property<EoCoverageSelection> property){
       if ("type".equals(property.getName())) {
-        DropDownChoice<EoLayerType> layerTypes=new DropDownChoice<EoLayerType>("type",property.getModel(itemModel),EoLayerType.getRasterTypes(true),new EoLayerTypeRenderer());
+        DropDownChoice<EoLayerType> layerTypes=new DropDownChoice<EoLayerType>("type",(IModel<EoLayerType>)property.getModel(itemModel),EoLayerType.getRasterTypes(true),new EoLayerTypeRenderer());
         Fragment fragment=new Fragment(id,"typeFragment",EoCoverageSelectorPage.this);
         fragment.add(layerTypes);
         return fragment;
@@ -27,11 +27,11 @@
 ;
   coverages.setItemReuseStrategy(ReuseIfModelsEqualStrategy.getInstance());
   coveragesContainer.add(coverages);
-  stores.add(new AjaxFormComponentUpdatingBehavior("onchange"){
+  stores.add(new AjaxFormComponentUpdatingBehavior("change"){
     @Override protected void onUpdate(    AjaxRequestTarget target){
       updateCoveragesList(true);
-      target.addComponent(coveragesContainer);
-      target.addComponent(feedbackPanel);
+      target.add(coveragesContainer);
+      target.add(feedbackPanel);
     }
   }
 );

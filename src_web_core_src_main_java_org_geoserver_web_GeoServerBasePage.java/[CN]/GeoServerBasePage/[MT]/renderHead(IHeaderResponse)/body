@@ -1,0 +1,21 @@
+{
+  List<HeaderContribution> cssContribs=getGeoServerApplication().getBeansOfType(HeaderContribution.class);
+  for (  HeaderContribution csscontrib : cssContribs) {
+    try {
+      if (csscontrib.appliesTo(this)) {
+        PackageResourceReference ref=csscontrib.getCSS();
+        if (ref != null) {
+          response.render(CssReferenceHeaderItem.forReference(ref));
+        }
+        ref=csscontrib.getJavaScript();
+        if (ref != null) {
+          response.render(JavaScriptHeaderItem.forReference(ref));
+        }
+        ref=csscontrib.getFavicon();
+      }
+    }
+ catch (    Throwable t) {
+      LOGGER.log(Level.WARNING,"Problem adding header contribution",t);
+    }
+  }
+}

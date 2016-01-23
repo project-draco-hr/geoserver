@@ -4,24 +4,23 @@
     return;
   }
   final GeoServerTileLayer geoserverTileLayer=(GeoServerTileLayer)getModelObject();
-  LayerInfo layerInfo=geoserverTileLayer.getLayerInfo();
-  if (layerInfo != null) {
+  PublishedInfo publishedInfo=geoserverTileLayer.getPublishedInfo();
+  if (publishedInfo instanceof LayerInfo) {
     ResourceConfigurationPage resourceConfigPage;
-    resourceConfigPage=new ResourceConfigurationPage(layerInfo,false);
+    resourceConfigPage=new ResourceConfigurationPage((LayerInfo)publishedInfo,false);
     resourceConfigPage.setSelectedTab(LayerCacheOptionsTabPanel.class);
     if (returnPage != null) {
       resourceConfigPage.setReturnPage(returnPage);
     }
     setResponsePage(resourceConfigPage);
   }
- else {
-    LayerGroupInfo layerGroup=geoserverTileLayer.getLayerGroupInfo();
+ else   if (publishedInfo instanceof LayerGroupInfo) {
+    LayerGroupInfo layerGroup=(LayerGroupInfo)publishedInfo;
     WorkspaceInfo workspace=layerGroup.getWorkspace();
     String wsName=workspace == null ? null : workspace.getName();
-    Map<String,String> params=new HashMap<String,String>();
-    params.put(LayerGroupEditPage.GROUP,layerGroup.getName());
-    params.put(LayerGroupEditPage.WORKSPACE,wsName);
-    PageParameters parameters=new PageParameters(params);
+    PageParameters parameters=new PageParameters();
+    parameters.add(LayerGroupEditPage.GROUP,layerGroup.getName());
+    parameters.add(LayerGroupEditPage.WORKSPACE,wsName);
     LayerGroupEditPage layerGroupEditPage=new LayerGroupEditPage(parameters);
     if (returnPage != null) {
       layerGroupEditPage.setReturnPage(returnPage);
