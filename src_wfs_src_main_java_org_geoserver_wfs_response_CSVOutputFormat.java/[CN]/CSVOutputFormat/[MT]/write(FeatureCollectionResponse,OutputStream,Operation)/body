@@ -36,6 +36,7 @@
   NumberFormat coordFormatter=NumberFormat.getInstance(Locale.US);
   coordFormatter.setMaximumFractionDigits(getInfo().getGeoServer().getSettings().getNumDecimals());
   coordFormatter.setGroupingUsed(false);
+  AttrFormatter[] formatters=getFormatters(fc.getSchema());
   FeatureIterator<?> i=fc.features();
   try {
     while (i.hasNext()) {
@@ -46,8 +47,8 @@
         for (int j=0; j < ((SimpleFeature)f).getAttributeCount(); j++) {
           Object att=((SimpleFeature)f).getAttribute(j);
           if (att != null) {
-            String value=formatToString(att,coordFormatter);
-            w.write(prepCSVField(value));
+            String value=formatters[j].format(att);
+            w.write(value);
           }
           if (j < ((SimpleFeature)f).getAttributeCount() - 1) {
             w.write(",");
