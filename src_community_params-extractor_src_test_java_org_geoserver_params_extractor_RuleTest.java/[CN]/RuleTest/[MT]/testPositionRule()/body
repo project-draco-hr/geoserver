@@ -1,0 +1,9 @@
+{
+  Rule ruleA=new RuleBuilder().withId("0").withPosition(3).withParameter("CQL_FILTER").withTransform("CFCC='$2'").build();
+  Rule ruleB=new RuleBuilder().withId("1").withPosition(4).withParameter("CQL_FILTER").withTransform("CFCC='$2'").withCombine("$1 AND $2").build();
+  UrlTransform urlTransform=new UrlTransform("/geoserver/tiger/wms/H11/D68",Utils.parseParameters(Optional.of("REQUEST=GetMap")));
+  ruleA.apply(urlTransform);
+  assertThat(urlTransform.toString(),is("/geoserver/tiger/wms/D68?REQUEST=GetMap&CQL_FILTER=CFCC%3D%27H11%27"));
+  ruleB.apply(urlTransform);
+  assertThat(urlTransform.toString(),is("/geoserver/tiger/wms?REQUEST=GetMap&CQL_FILTER=CFCC%3D%27H11%27+AND+CFCC%3D%27D68%27"));
+}

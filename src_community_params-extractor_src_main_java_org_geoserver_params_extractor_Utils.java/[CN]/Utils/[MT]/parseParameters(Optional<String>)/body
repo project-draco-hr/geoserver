@@ -1,0 +1,25 @@
+{
+  Map<String,String[]> parameters=new HashMap<>();
+  if (!queryString.isPresent()) {
+    return parameters;
+  }
+  final String[] parametersParts=queryString.get().split("&");
+  for (  String parametersPart : parametersParts) {
+    String[] parameterParts=parametersPart.split("=");
+    if (parameterParts.length < 2) {
+      continue;
+    }
+    String name=URLDecoder.decode(parameterParts[0]);
+    String value=URLDecoder.decode(parameterParts[1]);
+    String[] values=parameters.get(name);
+    if (values == null) {
+      parameters.put(name,new String[]{value});
+    }
+ else {
+      values=Arrays.copyOf(values,value.length() + 1);
+      values[value.length()]=value;
+      parameters.put(name,values);
+    }
+  }
+  return parameters;
+}
