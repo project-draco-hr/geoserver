@@ -4,17 +4,10 @@
   if (policy.level == AccessLevel.HIDDEN) {
     return null;
   }
-  boolean needsWrapping=false;
   LayerInfo rootLayer=group.getRootLayer();
   if (LayerGroupInfo.Mode.EO.equals(group.getMode())) {
-    LayerInfo checked=checkAccess(user,rootLayer);
-    if (checked != null) {
-      if (checked != rootLayer) {
-        needsWrapping=true;
-        rootLayer=checked;
-      }
-    }
- else {
+    rootLayer=checkAccess(user,rootLayer);
+    if (rootLayer == null) {
       return null;
     }
   }
@@ -23,15 +16,8 @@
   for (  PublishedInfo layer : layers) {
     PublishedInfo checked=checkAccess(user,layer);
     if (checked != null) {
-      if (checked != layer) {
-        needsWrapping=true;
-      }
       wrapped.add(checked);
     }
- else {
-      needsWrapping=true;
-    }
   }
-  if (needsWrapping)   return new SecuredLayerGroupInfo(group,rootLayer,wrapped);
- else   return group;
+  return new SecuredLayerGroupInfo(group,rootLayer,wrapped);
 }

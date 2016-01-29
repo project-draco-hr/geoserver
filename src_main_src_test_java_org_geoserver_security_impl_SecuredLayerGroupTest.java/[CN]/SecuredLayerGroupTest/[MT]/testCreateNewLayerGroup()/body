@@ -1,0 +1,13 @@
+{
+  final LayerGroupInfo lg=createNiceMock(LayerGroupInfo.class);
+  final CatalogFactory factory=createNiceMock(CatalogFactory.class);
+  final Catalog catalog=createNiceMock(Catalog.class);
+  expect(catalog.getFactory()).andReturn(factory);
+  replay(catalog);
+  expect(factory.createLayerGroup()).andReturn(lg);
+  replay(factory);
+  final Catalog secureCatalog=new SecureCatalogImpl(catalog);
+  final LayerGroupInfo layerGroup=secureCatalog.getFactory().createLayerGroup();
+  assertTrue(layerGroup instanceof SecuredLayerGroupInfo);
+  assertTrue(((SecuredLayerGroupInfo)layerGroup).unwrap(LayerGroupInfo.class) == lg);
+}

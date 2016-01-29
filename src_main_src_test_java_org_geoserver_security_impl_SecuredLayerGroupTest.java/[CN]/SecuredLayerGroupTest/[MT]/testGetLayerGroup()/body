@@ -1,0 +1,14 @@
+{
+  final LayerGroupInfo lg=createNiceMock(LayerGroupInfo.class);
+  expect(lg.getWorkspace()).andReturn(null);
+  final ArrayList<PublishedInfo> layers=new ArrayList<PublishedInfo>();
+  expect(lg.getLayers()).andReturn(layers);
+  replay(lg);
+  final Catalog catalog=createNiceMock(Catalog.class);
+  expect(catalog.getLayerGroup("lg")).andReturn(lg);
+  replay(catalog);
+  final Catalog secureCatalog=new SecureCatalogImpl(catalog);
+  final LayerGroupInfo layerGroup=secureCatalog.getLayerGroup("lg");
+  assertTrue(layerGroup instanceof SecuredLayerGroupInfo);
+  assertTrue(((SecuredLayerGroupInfo)layerGroup).unwrap(LayerGroupInfo.class) == lg);
+}
