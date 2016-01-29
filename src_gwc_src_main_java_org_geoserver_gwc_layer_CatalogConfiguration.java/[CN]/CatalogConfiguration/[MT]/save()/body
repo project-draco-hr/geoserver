@@ -1,18 +1,14 @@
 {
   final GWC mediator=GWC.get();
-  final Set<String> deletedNames=Sets.newHashSet();
   final List<GeoServerTileLayerInfo[]> modifications=Lists.newLinkedList();
   lock.acquireWriteLock();
   try {
     for (    String deletedId : pendingDeletes) {
       try {
-        GeoServerTileLayerInfo info=tileLayerCatalog.delete(deletedId);
-        if (info != null) {
-          deletedNames.add(info.getName());
-        }
+        tileLayerCatalog.delete(deletedId);
       }
  catch (      RuntimeException e) {
-        LOGGER.log(Level.SEVERE,"Error deleting tile layer '" + deletedId + "'",e);
+        LOGGER.log(Level.SEVERE,"Error deleting tile layer '" + deletedId + "' from catalog",e);
       }
     }
     for (    GeoServerTileLayerInfo modified : pendingModications.values()) {
@@ -31,14 +27,6 @@
   finally {
     lock.downgradeToReadLock();
     try {
-      for (      String deletedLayerName : deletedNames) {
-        try {
-          mediator.layerRemoved(deletedLayerName);
-        }
- catch (        RuntimeException e) {
-          LOGGER.log(Level.SEVERE,"Error deleting tile layer '" + deletedLayerName + "'",e);
-        }
-      }
       for (      GeoServerTileLayerInfo[] oldNew : modifications) {
         final GeoServerTileLayerInfo old=oldNew[0];
         final GeoServerTileLayerInfo modified=oldNew[1];
