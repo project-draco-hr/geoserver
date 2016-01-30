@@ -6,6 +6,12 @@
     if (tileLayerInfo != null) {
       final String layerId=tileLayerInfo.getId();
       pendingModications.remove(layerId);
+      try {
+        GWC.get().layerRemoved(tileLayerInfo.getName());
+      }
+ catch (      RuntimeException e) {
+        LOGGER.log(Level.SEVERE,"Error deleting tile layer '" + tileLayerInfo.getName() + "' from cache",e);
+      }
       pendingDeletes.add(layerId);
       layerCache.invalidate(layerId);
       return true;

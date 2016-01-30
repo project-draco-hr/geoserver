@@ -1,0 +1,17 @@
+{
+  String layerName=getLayerId(MockData.BASIC_POLYGONS);
+  assertEquals("cite:BasicPolygons",layerName);
+  String cacheDirectory="gwc/cite_BasicPolygons";
+  String cachedTile="gwc/cite_BasicPolygons/EPSG_4326_00/0_0/00_00.png";
+  GeoServerResourceLoader loader=getResourceLoader();
+  assertNull("Unexpected cache directory " + cacheDirectory,loader.find(cacheDirectory));
+  assertNull("Unexpected cached tile " + cachedTile,loader.find(cachedTile));
+  MockHttpServletResponse response=getAsServletResponse("gwc/service/wmts" + "?request=GetTile" + "&layer=" + layerName + "&format=image/png"+ "&tilematrixset=EPSG:4326"+ "&tilematrix=EPSG:4326:0"+ "&tilerow=0"+ "&tilecol=0");
+  assertEquals(200,response.getErrorCode());
+  assertEquals("image/png",response.getContentType());
+  assertNotNull("Missing cache directory " + cacheDirectory,loader.find(cacheDirectory));
+  assertNotNull("Missing cached tile " + cachedTile,loader.find(cachedTile));
+  getCatalog().remove(getCatalog().getLayerByName(layerName));
+  assertNull("Unexpected cache directory " + cacheDirectory,loader.find(cacheDirectory));
+  assertNull("Unexpected cached tile " + cachedTile,loader.find(cachedTile));
+}
