@@ -1,3 +1,9 @@
 {
-  return cluster.getHz().getTopic(TOPIC_NAME);
+  if (cluster == null) {
+    cluster=HzCluster.getInstanceIfAvailable().orNull();
+    if (cluster != null) {
+      topic().addMessageListener(this);
+    }
+  }
+  return cluster == null ? null : cluster.getHz().getTopic(TOPIC_NAME);
 }
