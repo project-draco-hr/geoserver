@@ -1,0 +1,17 @@
+{
+  Utils.debug(LOGGER,"Start applying rule %s to URL '%s'.",id,urlTransform);
+  if (activationPattern.isPresent()) {
+    if (!activationPattern.get().matcher(urlTransform.getOriginalRequestUri()).matches()) {
+      Utils.debug(LOGGER,"Rule %s doesn't apply to URL '%s'.",id,urlTransform);
+      return urlTransform;
+    }
+  }
+  Matcher matcher=matchPattern.matcher(urlTransform.getOriginalRequestUri());
+  if (!matcher.matches()) {
+    Utils.debug(LOGGER,"Rule %s doesn't match URL '%s'.",id,urlTransform);
+    return urlTransform;
+  }
+  urlTransform.removeMatch(matcher.group(remove.orElse(1)));
+  urlTransform.addParameter(parameter,URLDecoder.decode(matcher.replaceAll(transform)),combine);
+  return urlTransform;
+}
