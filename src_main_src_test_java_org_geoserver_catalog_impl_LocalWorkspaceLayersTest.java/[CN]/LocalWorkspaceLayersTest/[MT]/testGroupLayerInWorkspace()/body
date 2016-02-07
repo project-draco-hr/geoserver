@@ -22,5 +22,13 @@
   assertNotNull(catalog.getLayerGroupByName("localGroup"));
   assertEquals(1,catalog.getLayerGroups().size());
   assertEquals("localGroup",catalog.getLayerGroupByName("localGroup").prefixedName());
+  GeoServer gs=getGeoServer();
+  SettingsInfo settings=gs.getFactory().createSettings();
+  settings.setLocalWorkspaceIncludesPrefix(true);
+  settings.setWorkspace(workspace);
+  gs.add(settings);
+  assertEquals("sf:localGroup",catalog.getLayerGroupByName("localGroup").prefixedName());
+  assertEquals("sf:localGroup",catalog.getLayerGroups().get(0).prefixedName());
+  gs.remove(settings);
   LocalWorkspace.remove();
 }
