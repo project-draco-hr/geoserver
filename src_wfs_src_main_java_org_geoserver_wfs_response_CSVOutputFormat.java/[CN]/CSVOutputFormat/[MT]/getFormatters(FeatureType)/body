@@ -1,0 +1,33 @@
+{
+  if (schema instanceof SimpleFeatureType) {
+    NumberFormat coordFormatter=NumberFormat.getInstance(Locale.US);
+    coordFormatter.setMaximumFractionDigits(getInfo().getGeoServer().getSettings().getNumDecimals());
+    coordFormatter.setGroupingUsed(false);
+    SimpleFeatureType sft=(SimpleFeatureType)schema;
+    AttrFormatter[] formatters=new AttrFormatter[sft.getAttributeCount()];
+    int i=0;
+    for (    AttributeDescriptor attributeDescriptor : sft.getAttributeDescriptors()) {
+      Class<?> binding=attributeDescriptor.getType().getBinding();
+      if (Number.class.isAssignableFrom(binding)) {
+        formatters[i]=new NumberFormatter(coordFormatter);
+      }
+ else       if (java.sql.Date.class.isAssignableFrom(binding)) {
+        formatters[i]=sqlDateFormatter;
+      }
+ else       if (java.sql.Time.class.isAssignableFrom(binding)) {
+        formatters[i]=sqlTimeFormatter;
+      }
+ else       if (java.util.Date.class.isAssignableFrom(binding)) {
+        formatters[i]=juDateFormatter;
+      }
+ else {
+        formatters[i]=defaultFormatter;
+      }
+      i++;
+    }
+    return formatters;
+  }
+ else {
+    return null;
+  }
+}
