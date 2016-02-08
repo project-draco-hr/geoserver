@@ -1,0 +1,33 @@
+{
+  MockHttpServletRequest request=new MockHttpServletRequest();
+  RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+  List<PublishedInfo> layers=new ArrayList<>();
+  layers.add(getCatalog().getLayerByName("Buildings"));
+  layers.add(getCatalog().getLayerByName("DividedRoutes"));
+  List<StyleInfo> styles=new ArrayList<>();
+  styles.add(getCatalog().getLayerByName("Buildings").getDefaultStyle());
+  styles.add(getCatalog().getLayerByName("DividedRoutes").getDefaultStyle());
+  LayerGroupInfoImpl layerGroup=new LayerGroupInfoImpl();
+  layerGroup.setName("layer_group");
+  layerGroup.setLayers(layers);
+  layerGroup.setStyles(styles);
+  getCatalog().add(layerGroup);
+  Map kvp=new HashMap<>();
+  kvp.put("LAYERS","layer_group,Bridges");
+  kvp.put("layers","layer_group,Bridges");
+  kvp.put("STYLES",",lines");
+  Request gsRequest=new Request();
+  gsRequest.setKvp(kvp);
+  gsRequest.setRawKvp(kvp);
+  String service="WMS";
+  String requestName="GetMap";
+  Authentication user=new UsernamePasswordAuthenticationToken("admin","geoserver",Arrays.asList(new GrantedAuthority[]{new SimpleGrantedAuthority("ROLE_ADMINISTRATOR")}));
+  SecurityContextHolder.getContext().setAuthentication(user);
+  List<MapLayerInfo> mapLayersInfos=new ArrayList<>();
+  mapLayersInfos.add(new MapLayerInfo(getCatalog().getLayerByName("Buildings")));
+  mapLayersInfos.add(new MapLayerInfo(getCatalog().getLayerByName("DividedRoutes")));
+  mapLayersInfos.add(new MapLayerInfo(getCatalog().getLayerByName("Bridges")));
+  GetMapRequest getMap=new GetMapRequest();
+  getMap.setLayers(mapLayersInfos);
+  accessManager.overrideGetMapRequest(gsRequest,service,requestName,user,getMap);
+}
