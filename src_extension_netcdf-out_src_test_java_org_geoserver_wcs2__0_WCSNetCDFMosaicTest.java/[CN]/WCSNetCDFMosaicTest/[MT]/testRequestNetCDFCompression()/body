@@ -1,0 +1,21 @@
+{
+  boolean isNC4Available=NetCDFUtilities.isNC4CAvailable();
+  if (!isNC4Available && LOGGER.isLoggable(Level.INFO)) {
+    LOGGER.info("NetCDF C library not found. NetCDF4 output will not be created");
+  }
+  MockHttpServletResponse response=getAsServletResponse("ows?request=GetCoverage&service=WCS&version=2.0.1" + "&coverageId=wcs__visibilityCompressed&format=application/x-netcdf4");
+  assertNotNull(response);
+  assertEquals((isNC4Available ? "application/x-netcdf4" : "application/xml"),response.getContentType());
+  if (isNC4Available) {
+    byte[] netcdfOut=getBinary(response);
+    File file=File.createTempFile("netcdf","outCompressed.nc",new File("./target"));
+    FileUtils.writeByteArrayToFile(file,netcdfOut);
+    NetcdfDataset dataset=NetcdfDataset.openDataset(file.getAbsolutePath());
+    assertNotNull(dataset);
+    Variable var=dataset.findVariable(STANDARD_NAME);
+    assertNotNull(var);
+    final long varByteSize=var.getSize() * var.getDataType().getSize();
+    assertTrue(netcdfOut.length < varByteSize);
+    dataset.close();
+  }
+}
