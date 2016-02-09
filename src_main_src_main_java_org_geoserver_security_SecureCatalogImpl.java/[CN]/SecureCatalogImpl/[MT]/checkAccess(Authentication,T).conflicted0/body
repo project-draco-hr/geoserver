@@ -1,21 +1,18 @@
 {
-  if (info instanceof WorkspaceInfo) {
-    return (T)checkAccess(user,(WorkspaceInfo)info);
+  if (info == null)   return null;
+  WrapperPolicy policy=buildWrapperPolicy(user,info,info.getName());
+  if (policy.level == AccessLevel.HIDDEN)   return null;
+ else   if (policy.level == AccessLevel.READ_WRITE && policy.getLimits() == null)   return info;
+  if (info instanceof FeatureTypeInfo) {
+    return (T)new SecuredFeatureTypeInfo((FeatureTypeInfo)info,policy);
   }
-  if (info instanceof NamespaceInfo) {
-    return (T)checkAccess(user,(NamespaceInfo)info);
+ else   if (info instanceof CoverageInfo) {
+    return (T)new SecuredCoverageInfo((CoverageInfo)info,policy);
   }
-  if (info instanceof StoreInfo) {
-    return (T)checkAccess(user,(StoreInfo)info);
+ else   if (info instanceof WMSLayerInfo) {
+    return (T)new SecuredWMSLayerInfo((WMSLayerInfo)info,policy);
   }
-  if (info instanceof ResourceInfo) {
-    return (T)checkAccess(user,(ResourceInfo)info);
+ else {
+    throw new RuntimeException("Unknown resource type " + info.getClass());
   }
-  if (info instanceof LayerInfo) {
-    return (T)checkAccess(user,(LayerInfo)info);
-  }
-  if (info instanceof LayerGroupInfo) {
-    return (T)checkAccess(user,(LayerGroupInfo)info);
-  }
-  return info;
 }
