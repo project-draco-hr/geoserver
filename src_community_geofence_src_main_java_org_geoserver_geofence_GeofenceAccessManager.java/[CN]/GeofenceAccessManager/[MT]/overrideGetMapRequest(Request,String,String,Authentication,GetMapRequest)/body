@@ -7,11 +7,7 @@
       throw new ServiceException("Dynamic style usage is forbidden");
     }
   }
-  String stylesParam=(String)gsRequest.getRawKvp().get("STYLES");
-  List<String> styleNameList=new ArrayList<String>();
-  if (stylesParam != null) {
-    styleNameList.addAll(KvpUtils.readFlat(stylesParam));
-  }
+  List<String> styleNameList=getRequestedStyles(gsRequest,getMap);
   List<MapLayerInfo> layers=getMap.getLayers();
   for (int i=0; i < layers.size(); i++) {
     MapLayerInfo layer=layers.get(i);
@@ -37,7 +33,7 @@
     }
     LOGGER.log(Level.FINE,"Getting access limits for getMap",ruleFilter);
     AccessInfo rule=rules.getAccessInfo(ruleFilter);
-    String styleName=(styleNameList.size() > 0) ? styleNameList.get(i) : null;
+    String styleName=styleNameList.get(i);
     if (styleName != null) {
       checkStyleAllowed(rule,styleName);
     }
