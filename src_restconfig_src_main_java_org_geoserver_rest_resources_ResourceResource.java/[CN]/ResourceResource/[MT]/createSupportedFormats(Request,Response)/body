@@ -1,0 +1,54 @@
+{
+  List<DataFormat> formats=new ArrayList<DataFormat>();
+  if (operation == Operation.METADATA || resource.getType() == Type.DIRECTORY) {
+    formats.add(new ReflectiveHTMLFormat(request,response,this){
+      @Override protected Configuration createConfiguration(      Object data,      Class clazz){
+        Configuration cfg=super.createConfiguration(data,clazz);
+        cfg.setClassForTemplateLoading(ResourceResource.class,"");
+        cfg.setObjectWrapper(new ObjectToMapWrapper<ResourceMetadata>(ResourceMetadata.class){
+          @Override protected void wrapInternal(          Map properties,          SimpleHash model,          ResourceMetadata object){
+            super.wrapInternal(properties,model,object);
+            properties.put("path",object.getParent() == null ? "/" : Paths.get(object.getParent().getPath(),object.getName()));
+            properties.put("parent_path",object.getParent() == null ? "" : object.getParent().getPath());
+            properties.put("parent_href",object.getParent() == null ? "" : formatHtmlLink(object.getParent().getLink().getHref()));
+            if (object instanceof ResourceDirectory) {
+              properties.put("children",new CollectionModel(((ResourceDirectory)object).getChildren(),new ObjectToMapWrapper<ResourceChild>(ResourceChild.class){
+                @Override protected void wrapInternal(                Map properties,                SimpleHash model,                ResourceChild object){
+                  super.wrapInternal(properties,model,object);
+                  properties.put("href",formatHtmlLink(object.getLink().getHref()));
+                }
+              }
+));
+            }
+          }
+        }
+);
+        return cfg;
+      }
+      @Override protected String getTemplateName(      Object data){
+        if (operation == Operation.METADATA) {
+          return "resourceMetadata";
+        }
+ else {
+          return "resourceDirectory";
+        }
+      }
+    }
+);
+  }
+  ReflectiveXMLFormat xmlFormat=new ReflectiveXMLFormat();
+  AtomLink.configureXML(xmlFormat.getXStream());
+  xmlFormat.getXStream().processAnnotations(ResourceChild.class);
+  xmlFormat.getXStream().processAnnotations(ResourceMetadata.class);
+  xmlFormat.getXStream().processAnnotations(ResourceDirectory.class);
+  xmlFormat.getXStream().aliasField("atom:link",ResourceReference.class,"link");
+  xmlFormat.getXStream().aliasField("atom:link",ResourceChild.class,"link");
+  formats.add(xmlFormat);
+  ReflectiveJSONFormat jsonFormat=new ReflectiveJSONFormat();
+  AtomLink.configureJSON(jsonFormat.getXStream());
+  jsonFormat.getXStream().processAnnotations(ResourceChild.class);
+  jsonFormat.getXStream().processAnnotations(ResourceMetadata.class);
+  jsonFormat.getXStream().processAnnotations(ResourceDirectory.class);
+  formats.add(jsonFormat);
+  return formats;
+}

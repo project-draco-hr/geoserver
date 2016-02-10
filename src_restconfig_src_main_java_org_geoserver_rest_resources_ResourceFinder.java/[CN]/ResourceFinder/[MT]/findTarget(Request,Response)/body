@@ -1,0 +1,17 @@
+{
+  String path=request.getResourceRef().getRelativeRef().getPath();
+  if (".".equals(path)) {
+    path="/";
+  }
+  request.getAttributes().put("format",RESTUtils.getQueryStringValue(request,"format"));
+  ResourceResource.Operation operation=ResourceResource.Operation.DEFAULT;
+  String strOp=RESTUtils.getQueryStringValue(request,"operation");
+  if (strOp != null) {
+    try {
+      operation=ResourceResource.Operation.valueOf(strOp.trim().toUpperCase());
+    }
+ catch (    IllegalArgumentException e) {
+    }
+  }
+  return new ResourceResource(getContext(),request,response,store.get(path),operation,store);
+}

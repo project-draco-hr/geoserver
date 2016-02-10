@@ -1,0 +1,43 @@
+{
+  if (resource.getType() == Type.DIRECTORY) {
+    throw new RestletException("Attempting to write data to a directory.",Status.CLIENT_ERROR_METHOD_NOT_ALLOWED);
+  }
+ else {
+    try {
+      boolean isNew=resource.getType() == Type.UNDEFINED;
+      if (operation == Operation.COPY || operation == Operation.MOVE) {
+        try (InputStream is=getRequest().getEntity().getStream()){
+          Resource source=store.get(IOUtils.toString(is,"UTF-8"));
+          if (source.getType() == Type.UNDEFINED) {
+            throw new RestletException("Undefined source path.",Status.CLIENT_ERROR_NOT_FOUND);
+          }
+          try {
+            if (operation == Operation.MOVE) {
+              if (!source.renameTo(resource)) {
+                throw new RestletException("Rename operation failed.",Status.SERVER_ERROR_INTERNAL);
+              }
+            }
+ else {
+              if (source.getType() == Type.DIRECTORY) {
+                throw new RestletException("Cannot copy directory.",Status.CLIENT_ERROR_METHOD_NOT_ALLOWED);
+              }
+              IOUtils.copyStream(source.in(),resource.out(),true,true);
+            }
+          }
+ catch (          IllegalStateException e) {
+            throw new RestletException("I/O Error",Status.SERVER_ERROR_INTERNAL,e);
+          }
+        }
+       }
+ else {
+        IOUtils.copyStream(getRequest().getEntity().getStream(),resource.out(),true,true);
+      }
+      if (isNew) {
+        getResponse().setStatus(Status.SUCCESS_CREATED);
+      }
+    }
+ catch (    IOException e) {
+      throw new RestletException("I/O Error",Status.SERVER_ERROR_INTERNAL,e);
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  if (resource.getType() == Type.DIRECTORY) {
+    return getFormatGet(false).getMediaType();
+  }
+ else   if (resource.getType() == Type.RESOURCE) {
+    String mimeType=URLConnection.guessContentTypeFromName(resource.name());
+    if (mimeType == null || MediaType.APPLICATION_OCTET_STREAM.getName().equals(mimeType)) {
+      try (InputStream is=new BufferedInputStream(resource.in())){
+        mimeType=URLConnection.guessContentTypeFromStream(is);
+      }
+ catch (      IOException e) {
+      }
+    }
+    return mimeType == null ? MediaType.APPLICATION_OCTET_STREAM : MediaType.valueOf(mimeType);
+  }
+ else {
+    return null;
+  }
+}
