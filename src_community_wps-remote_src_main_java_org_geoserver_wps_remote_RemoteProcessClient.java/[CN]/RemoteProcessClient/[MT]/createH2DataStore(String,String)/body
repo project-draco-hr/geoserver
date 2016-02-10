@@ -1,0 +1,18 @@
+{
+  Catalog cat=getGeoServer().getCatalog();
+  WorkspaceInfo ws=wsName != null ? cat.getWorkspaceByName(wsName) : cat.getDefaultWorkspace();
+  DataStoreInfo ds=cat.getFactory().createDataStore();
+  ds.setWorkspace(ws);
+  ds.setName(dsName);
+  ds.setType("H2");
+  GeoServerResourceLoader loader=cat.getResourceLoader();
+  final String dataDir=loader.getBaseDirectory().getAbsolutePath();
+  Map params=new HashMap();
+  params.put("database",dataDir + "/" + dsName);
+  params.put("dbtype","h2");
+  params.put("namespace",cat.getNamespaceByPrefix(ws.getName()).getURI());
+  ds.getConnectionParameters().putAll(params);
+  ds.setEnabled(true);
+  cat.add(ds);
+  return ds;
+}

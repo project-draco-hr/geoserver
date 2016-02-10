@@ -1,0 +1,67 @@
+{
+  if (packet instanceof Presence) {
+    Presence p=(Presence)packet;
+    try {
+      if (p.isAvailable()) {
+        if (p.getFrom().indexOf("@") > 0) {
+          final String channel=p.getFrom().substring(0,p.getFrom().indexOf("@"));
+          if (xmppClient.serviceChannels.contains(channel))           xmppClient.handleMemberJoin(p);
+        }
+      }
+ else       if (!p.isAvailable()) {
+        if (p.getFrom().indexOf("@") > 0 && p.getFrom().indexOf("/master") > 0) {
+          boolean mustDeregisterService=true;
+          final String channel=p.getFrom().substring(0,p.getFrom().indexOf("@"));
+          final NameImpl serviceName=xmppClient.extractServiceName(p.getFrom());
+          for (          MultiUserChat mucServiceChannel : xmppClient.mucServiceChannels) {
+            if (mucServiceChannel.getRoom().startsWith(channel)) {
+              for (              String occupant : mucServiceChannel.getOccupants()) {
+                if (!occupant.equals(p.getFrom())) {
+                  final Name occupantServiceName=xmppClient.extractServiceName(occupant);
+                  String[] serviceJIDParts=occupant.split("/");
+                  if (serviceJIDParts.length == 3 && (serviceJIDParts[2].startsWith("master") || serviceJIDParts[2].indexOf("@") < 0)) {
+                    if (serviceName.equals(occupantServiceName)) {
+                      mustDeregisterService=false;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          if (mustDeregisterService && xmppClient.serviceChannels.contains(channel))           xmppClient.handleMemberLeave(p);
+        }
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,e.getMessage(),e);
+    }
+  }
+ else   if (packet instanceof Message) {
+    Message message=(Message)packet;
+    String origin=message.getFrom().split("/")[0];
+    Chat chat=xmppClient.setupChat(origin);
+    if (message.getBody() != null) {
+      LOGGER.fine("ReceivedMessage('" + message.getBody() + "','"+ origin+ "','"+ message.getPacketID()+ "');");
+      Map<String,String> signalArgs=new HashMap<String,String>();
+      try {
+        String[] messageParts=message.getBody().split("&");
+        for (        String mp : messageParts) {
+          String[] signalArg=mp.split("=");
+          signalArgs.put(signalArg[0],signalArg[1]);
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"Wrong message! [" + message.getBody() + "]");
+        signalArgs.clear();
+      }
+      if (!signalArgs.isEmpty() && signalArgs.containsKey("topic")) {
+        for (        XMPPMessage xmppMessage : GeoServerExtensions.extensions(XMPPMessage.class)) {
+          if (xmppMessage.canHandle(signalArgs)) {
+            xmppMessage.handleSignal(xmppClient,packet,message,signalArgs);
+          }
+        }
+      }
+    }
+  }
+}

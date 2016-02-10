@@ -1,0 +1,21 @@
+{
+  final String extension=((String)((Object[])XMPPClient.PRIMITIVE_NAME_TYPE_MAP.get(type))[4]);
+  final String fileName="wps-remote-str-rawdata_" + pID + extension;
+  final String content=FileUtils.readFileToString(new File((String)value));
+  LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] encodeAsPlainRawData:" + fileName);
+  value=new StringRawData(content,((String)((Object[])XMPPClient.PRIMITIVE_NAME_TYPE_MAP.get(type))[3]).split(",")[0]);
+  if (publish) {
+    final File tempFile=new File(FileUtils.getTempDirectory(),fileName);
+    LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] encodeAsPlainRawData:" + tempFile.getAbsolutePath());
+    FileUtils.writeStringToFile(tempFile,((StringRawData)value).getData());
+    String wsName=xmppClient.getGeoServer().getCatalog().getDefaultWorkspace().getName();
+    DataStoreInfo h2DataStore=xmppClient.createH2DataStore(wsName,FilenameUtils.getBaseName(fileName));
+    try {
+      xmppClient.importLayer(tempFile,h2DataStore,name + "_" + pID,title,description,defaultStyle,targetWorkspace,metadata);
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.WARNING,"There was an issue while trying to automatically publish the Layer into the Catalog!",e);
+    }
+  }
+  return value;
+}

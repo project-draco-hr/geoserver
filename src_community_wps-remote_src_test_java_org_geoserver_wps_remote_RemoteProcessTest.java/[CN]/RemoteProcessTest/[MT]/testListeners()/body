@@ -1,0 +1,24 @@
+{
+  setupFactory();
+  assertNotNull(factory);
+  RemoteProcessClient remoteClient=factory.getRemoteClient();
+  assertNotNull(remoteClient);
+  assertTrue(remoteClient instanceof MockRemoteClient);
+  Set<Name> names=factory.getNames();
+  assertNotNull(names);
+  assertTrue(names.size() == 0);
+  final NameImpl name=new NameImpl("default","Service");
+  try {
+    remoteClient.execute(name,null,null,null);
+    assertTrue(names.size() == 1);
+    assertTrue(names.contains(name));
+    factory.deregisterProcess(name);
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    fail(e.getLocalizedMessage());
+  }
+ finally {
+    assertTrue(names.size() == 0);
+  }
+}

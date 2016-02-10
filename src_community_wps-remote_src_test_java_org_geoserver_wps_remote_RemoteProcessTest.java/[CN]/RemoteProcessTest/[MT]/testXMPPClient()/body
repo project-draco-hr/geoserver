@@ -1,0 +1,49 @@
+{
+  if (DISABLE) {
+    return;
+  }
+  setupFactory();
+  try {
+    StorageProviderRegistry providerRegistry=new MemoryStorageProviderRegistry();
+    final AccountManagement accountManagement=(AccountManagement)providerRegistry.retrieve(AccountManagement.class);
+    final RemoteProcessFactoryConfiguration configuration=factory.getRemoteClient().getConfiguration();
+    final String xmppDomain=configuration.get("xmpp_domain");
+    final String xmppUserName=configuration.get("xmpp_manager_username");
+    final String xmppUserPassword=configuration.get("xmpp_manager_password");
+    if (!accountManagement.verifyAccountExists(EntityImpl.parse(xmppUserName + "@" + xmppDomain))) {
+      accountManagement.addUser(EntityImpl.parse(xmppUserName + "@" + xmppDomain),xmppUserPassword);
+    }
+    XMPPServer server=new XMPPServer(xmppDomain);
+    TCPEndpoint tcpEndpoint=new TCPEndpoint();
+    tcpEndpoint.setPort(Integer.parseInt(configuration.get("xmpp_port")));
+    server.addEndpoint(tcpEndpoint);
+    server.setStorageProviderRegistry(providerRegistry);
+    final File certfile=new File(testData.getDataDirectoryRoot(),"bogus_mina_tls.cert");
+    char[] password="boguspw".toCharArray();
+    KeyStore trustStore=KeyStore.getInstance(KeyStore.getDefaultType());
+    FileInputStream instream=new FileInputStream(certfile);
+    try {
+      trustStore.load(instream,password);
+    }
+  finally {
+      instream.close();
+    }
+    SSLContext sslcontext=SSLContexts.custom().loadTrustMaterial(trustStore,new TrustSelfSignedStrategy()).build();
+    server.setTLSCertificateInfo(certfile,"boguspw");
+    server.start();
+    server.addModule(new SoftwareVersionModule());
+    server.addModule(new EntityTimeModule());
+    server.addModule(new VcardTempModule());
+    server.addModule(new XmppPingModule());
+    server.addModule(new PrivateDataModule());
+    Conference conference=new Conference(configuration.get("xmpp_bus"));
+    server.addModule(new MUCModule(configuration.get("xmpp_bus"),conference));
+    XMPPClient xmppRemoteClient=(XMPPClient)applicationContext.getBean("xmppRemoteProcessClient");
+    assertNotNull(xmppRemoteClient);
+    xmppRemoteClient.init(sslcontext);
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    fail(e.getLocalizedMessage());
+  }
+}

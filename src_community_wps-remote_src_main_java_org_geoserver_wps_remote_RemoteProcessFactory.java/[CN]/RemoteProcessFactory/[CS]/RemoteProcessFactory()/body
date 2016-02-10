@@ -1,0 +1,22 @@
+{
+  try {
+    List<RemoteProcessClient> availableRemoteClientInstances=GeoServerExtensions.extensions(RemoteProcessClient.class);
+    Collections.sort(availableRemoteClientInstances,new Comparator<RemoteProcessClient>(){
+      @Override public int compare(      RemoteProcessClient o1,      RemoteProcessClient o2){
+        return Integer.compare(o2.getPriority(),o1.getPriority());
+      }
+    }
+);
+    for (    RemoteProcessClient ext : availableRemoteClientInstances) {
+      if (ext.isEnabled()) {
+        remoteClient=ext;
+        remoteClient.init(null);
+        remoteClient.registerProcessFactoryListener(this);
+        break;
+      }
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.SEVERE,e.getMessage(),e);
+  }
+}

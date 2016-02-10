@@ -1,0 +1,39 @@
+{
+  final String wmcTemplatePath=xmppClient.getConfiguration().get("owc_wms_json_template");
+  LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] wmcTemplatePath:" + wmcTemplatePath);
+  String content="";
+  if (wmcTemplatePath != null) {
+    try {
+      final HashMap<String,Object> map=new HashMap<String,Object>();
+      Map<String,Object> featureList=new HashMap<String,Object>();
+      ReferencedEnvelope renderingArea=null;
+      for (      LayerInfo layer : wmc) {
+        WmcFeature feature=wrapFeature(xmppClient,baseURL,layer);
+        featureList.put(layer.getId(),feature);
+        if (renderingArea == null) {
+          renderingArea=new ReferencedEnvelope(layer.getResource().getLatLonBoundingBox());
+        }
+ else {
+          renderingArea.expandToInclude(layer.getResource().getLatLonBoundingBox());
+        }
+      }
+      map.put("owcProperties",metadata);
+      map.put("featureList",featureList);
+      map.put("renderingArea",bboxToJSON(renderingArea));
+      content=FileUtils.readFileToString(new File(wmcTemplatePath));
+      Template template=new Template("name",new StringReader(content),new Configuration());
+      template.setOutputEncoding("UTF-8");
+      ByteArrayOutputStream buff=new ByteArrayOutputStream();
+      template.process(map,new OutputStreamWriter(buff,Charset.forName("UTF-8")));
+      content=buff.toString();
+      LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] wmcTemplate Processed:" + content);
+    }
+ catch (    Exception e) {
+      StringWriter errors=new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      content=errors.toString();
+    }
+  }
+  StringRawData value=new StringRawData(content,((String)((Object[])XMPPClient.PRIMITIVE_NAME_TYPE_MAP.get(type))[3]).split(",")[0]);
+  return value;
+}

@@ -1,0 +1,41 @@
+{
+  try {
+    LOGGER.info("Generating a unique Process ID for Remote Process [" + name + "] with the following parameters:");
+    LOGGER.info(" - name: " + name);
+    LOGGER.info(" - input: " + input);
+    LOGGER.info(" - metadata: " + metadata);
+    LOGGER.info(" - monitor: " + monitor);
+    if (remoteClient == null) {
+      LOGGER.log(Level.SEVERE,"Cannot execute Remote Process [" + name + "] since the RemoteClient is not available!");
+      throw new Exception("Cannot execute Remote Process [" + name + "] since the RemoteClient is not available!");
+    }
+    listener=monitor;
+    pid=remoteClient.execute(name,input,metadata,monitor);
+    LOGGER.info("Starting the execution of Remote Process with pId [" + pid + "]");
+    running=pid != null;
+    if (running && (listener != null && !listener.isCanceled())) {
+      remoteClient.registerProcessClientListener(this);
+      doneSignal.await();
+    }
+    LOGGER.info("Stopping the execution of Remote Process with pId [" + pid + "]");
+  }
+ catch (  Exception e) {
+    if (listener != null) {
+      listener.exceptionOccurred(e);
+    }
+    LOGGER.log(Level.SEVERE,"The Remote Process with pId [" + pid + "] rasied an Exeption",e);
+    throw new ProcessException(e);
+  }
+ finally {
+    remoteClient.deregisterProcessClientListener(this);
+  }
+  if (exception != null) {
+    LOGGER.log(Level.SEVERE,"The Remote Service associated to the Process with pId [" + pid + "] rasied an Exeption",exception);
+    throw new ProcessException(exception);
+  }
+  if (listener != null && listener.isCanceled()) {
+    LOGGER.log(Level.WARNING,"The Remote Service associated to the Process with pId [" + pid + "] has been cancelled");
+    throw new ProcessException("The Remote Service associated to the Process with pId [" + pid + "] has been cancelled");
+  }
+  return outputs;
+}

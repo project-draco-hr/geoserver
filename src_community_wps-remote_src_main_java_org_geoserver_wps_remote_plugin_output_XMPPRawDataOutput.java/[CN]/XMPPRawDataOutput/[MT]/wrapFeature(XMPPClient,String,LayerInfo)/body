@@ -1,0 +1,30 @@
+{
+  GeoServer geoserver=xmppClient.getGeoServer();
+  Catalog catalog=geoserver.getCatalog();
+  WmcFeature ft=new WmcFeature();
+  ft.setType(layer.getType().toString());
+  ft.setName(layer.getName());
+  ft.setTitle(layer.getTitle());
+  ft.setDescription(layer.getAbstract());
+  ft.setLayers(layer.prefixedName());
+  ft.setStyles(layer.getDefaultStyle().prefixedName());
+  ft.setSrs(layer.getResource().getSRS());
+  ft.setBbox(bboxToString(layer.getResource().getNativeBoundingBox()));
+  ft.setLatLonBbox(bboxToString(layer.getResource().getLatLonBoundingBox()));
+  ft.setGeometryCoords(bboxToJSON(layer.getResource().getLatLonBoundingBox()));
+  NamespaceInfo namespace=catalog.getNamespace(layer.getResource().getNamespace().getId());
+  WorkspaceInfo workspace=catalog.getWorkspaceByName(namespace.getPrefix());
+  ft.setWorkspace(workspace.getName());
+  SimpleDateFormat sdf=new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");
+  sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+  ft.setLastUpdated(sdf.format(new Date()));
+  Map<String,String> kvps=new HashMap<String,String>();
+  String baseUrl=ResponseUtils.buildURL(baseURL,"/" + ft.getWorkspace() + "/ows/",kvps,URLType.SERVICE);
+  ft.setGetMapBaseUrl(canonicUrl(baseUrl));
+  MetadataMap layerMetadata=layer.getMetadata();
+  String owcProperties=owcTemplate(ft,(String)(layerMetadata.containsKey("owc_properties") ? layerMetadata.get("owc_properties") : ""));
+  ft.setOwcProperties(owcProperties);
+  String test1=layer.getResource().getStore().getType();
+  MetadataMap test2=layer.getResource().getMetadata();
+  return ft;
+}

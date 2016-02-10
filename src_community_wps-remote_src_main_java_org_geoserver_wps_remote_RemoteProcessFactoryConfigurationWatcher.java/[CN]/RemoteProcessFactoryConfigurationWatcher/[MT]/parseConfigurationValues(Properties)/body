@@ -1,0 +1,36 @@
+{
+  Utilities.ensureNonNull("remoteProcessFactoryProperties",remoteProcessFactoryProperties);
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Parsing the properties file");
+  }
+  long remoteProcessStubCycleSleepTime=RemoteProcessFactoryConfiguration.DEFAULT_SLEEP_TIME;
+  Map<String,String> configKvPs=new HashMap<String,String>();
+  Set<Object> properties=remoteProcessFactoryProperties.keySet();
+  for (  Object property : properties) {
+    String prop=(String)property;
+    if (prop.equalsIgnoreCase(RemoteProcessFactoryConfiguration.DEFAULT_SLEEP_TIME_NAME)) {
+      String value=(String)remoteProcessFactoryProperties.get(RemoteProcessFactoryConfiguration.DEFAULT_SLEEP_TIME_NAME);
+      try {
+        final long parseLong=Long.parseLong(value);
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("maxFeatures parsed to " + parseLong);
+        }
+        if (parseLong > 0) {
+          remoteProcessStubCycleSleepTime=parseLong;
+        }
+      }
+ catch (      NumberFormatException e) {
+        if (LOGGER.isLoggable(Level.INFO)) {
+          LOGGER.log(Level.INFO,e.getLocalizedMessage(),e);
+        }
+      }
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("remoteProcessStubCycleSleepTime assigned to " + remoteProcessStubCycleSleepTime);
+      }
+    }
+ else {
+      configKvPs.put(prop,remoteProcessFactoryProperties.getProperty(prop));
+    }
+  }
+  return new RemoteProcessFactoryConfiguration(remoteProcessStubCycleSleepTime,configKvPs);
+}

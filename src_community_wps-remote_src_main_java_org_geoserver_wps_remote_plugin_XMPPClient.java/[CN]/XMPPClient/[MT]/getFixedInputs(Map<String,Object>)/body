@@ -1,0 +1,22 @@
+{
+  Map<String,Object> fixedInputs=new HashMap<String,Object>();
+  for (  Entry<String,Object> entry : input.entrySet()) {
+    final String key=entry.getKey();
+    final Object value=entry.getValue();
+    Object fixedValue=value;
+    if (value instanceof RawData) {
+      fixedValue=IOUtils.toString(((RawData)value).getInputStream(),"UTF-8");
+    }
+ else     if (value instanceof List) {
+      List<Object> values=(List<Object>)value;
+      if (values != null && values.size() > 0 && values.get(0) instanceof RawData) {
+        fixedValue=new ArrayList<String>();
+        for (        Object o : values) {
+          ((List<String>)fixedValue).add(IOUtils.toString(((RawData)o).getInputStream(),"UTF-8"));
+        }
+      }
+    }
+    fixedInputs.put(key,fixedValue);
+  }
+  return fixedInputs;
+}

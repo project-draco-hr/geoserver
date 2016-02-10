@@ -1,0 +1,17 @@
+{
+  Map<String,Object> metadata=new HashMap<String,Object>();
+  metadata.put("serviceJID",packet.getFrom());
+  Exception cause=null;
+  try {
+    cause=new Exception(URLDecoder.decode(signalArgs.get("message"),"UTF-8"));
+  }
+ catch (  UnsupportedEncodingException e) {
+    cause=e;
+  }
+  final String pID=(signalArgs != null ? signalArgs.get("id") : null);
+  final String serviceJID=message.getFrom();
+  xmppClient.sendMessage(serviceJID,"topic=abort");
+  for (  RemoteProcessClientListener listener : xmppClient.getRemoteClientListeners()) {
+    listener.exceptionOccurred(pID,cause,metadata);
+  }
+}
