@@ -1,0 +1,14 @@
+{
+  File dir=unpack("shape/archsites_epsg_prj.zip");
+  String sld="<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<StyledLayerDescriptor version=\"1.0.0\" " + " xsi:schemaLocation=\"http://www.opengis.net/sld StyledLayerDescriptor.xsd\" "+ " xmlns:ogc=\"http://www.opengis.net/ogc\" "+ " xmlns=\"http://www.opengis.net/sld\" "+ " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"+ "  <!-- a Named Layer is the basic building block of an SLD document -->"+ "  <NamedLayer>"+ "    <UserStyle>"+ "      <FeatureTypeStyle>"+ "        <Rule>"+ "            <PointSymbolizer>"+ "              <Graphic>"+ "                <Mark>"+ "                  <WellKnownName>square</WellKnownName>"+ "                  <Fill>"+ "                    <CssParameter name=\"fill\">#FF0000</CssParameter>"+ "                  </Fill>"+ "                </Mark>"+ "              <Size>6</Size>"+ "            </Graphic>"+ "          </PointSymbolizer>"+ "          <TextSymbolizer>"+ "            <Label>"+ "             <ogc:PropertyName>CAT_ID</ogc:PropertyName>"+ "           </Label>"+ "          </TextSymbolizer>"+ "        </Rule>"+ "      </FeatureTypeStyle>"+ "    </UserStyle>"+ "  </NamedLayer>"+ "</StyledLayerDescriptor>";
+  FileUtils.write(new File(dir,"archsites.sld"),sld);
+  ImportContext imp=importer.createContext(new Directory(dir));
+  importer.run(imp);
+  assertEquals(ImportContext.State.COMPLETE,imp.getState());
+  checkNoErrors(imp);
+  StyleInfo info=getCatalog().getStyle(imp.getTasks().get(0).getLayer().getDefaultStyle().getId());
+  Style style=info.getStyle();
+  StyleAttributeExtractor atts=new StyleAttributeExtractor();
+  style.accept(atts);
+  assertTrue(atts.getAttributeNameSet().contains("CAT_ID"));
+}
