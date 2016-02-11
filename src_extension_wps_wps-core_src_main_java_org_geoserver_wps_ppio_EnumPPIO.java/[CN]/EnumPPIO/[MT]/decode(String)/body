@@ -1,0 +1,25 @@
+{
+  if (value == null) {
+    throw new IllegalArgumentException("Unable to look up enum value from null");
+  }
+  Method valueOf=getType().getMethod("valueOf",String.class);
+  try {
+    return valueOf.invoke(null,value);
+  }
+ catch (  IllegalAccessException e) {
+    return new LiteralPPIO(getType()).decode(value);
+  }
+catch (  Exception e) {
+    try {
+      return valueOf.invoke(null,value.toUpperCase());
+    }
+ catch (    Exception e1) {
+      try {
+        return valueOf.invoke(null,value.toLowerCase());
+      }
+ catch (      Exception e2) {
+        throw e;
+      }
+    }
+  }
+}
