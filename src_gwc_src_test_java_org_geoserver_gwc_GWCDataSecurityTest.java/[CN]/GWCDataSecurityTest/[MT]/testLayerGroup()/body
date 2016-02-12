@@ -1,0 +1,18 @@
+{
+  setRequestAuth(null,null);
+  String path="gwc/service/wms?bgcolor=0x000000&LAYERS=" + NATURE_GROUP + "&STYLES=&FORMAT=image/png&SERVICE=WMS&VERSION=1.1.1"+ "&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,-90,180,90&WIDTH=256&HEIGHT=256&transparent=false";
+  MockHttpServletResponse response=getAsServletResponse(path);
+  assertEquals("image/png",response.getContentType());
+  TestResourceAccessManager tam=(TestResourceAccessManager)applicationContext.getBean("testResourceAccessManager");
+  LayerInfo lakes=getCatalog().getLayerByName(getLayerId(MockData.LAKES));
+  tam.putLimits("cite_nogroup",lakes,new DataAccessLimits(CatalogMode.HIDE,Filter.EXCLUDE));
+  tam.putLimits("cite",lakes,new DataAccessLimits(CatalogMode.HIDE,Filter.INCLUDE));
+  setRequestAuth("cite_nogroup","cite");
+  response=getAsServletResponse(path);
+  assertEquals("application/xml",response.getContentType());
+  String str=string(getBinaryInputStream(response));
+  assertTrue(str.contains("org.geotools.ows.ServiceException: Could not find layer " + NATURE_GROUP));
+  setRequestAuth("cite","cite");
+  response=getAsServletResponse(path);
+  assertEquals("image/png",response.getContentType());
+}
