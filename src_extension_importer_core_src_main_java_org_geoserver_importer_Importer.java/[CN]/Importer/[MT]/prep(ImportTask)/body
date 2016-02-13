@@ -30,20 +30,28 @@
   if (l.getDefaultStyle() == null) {
     try {
       StyleInfo style=null;
-      if (r instanceof FeatureTypeInfo) {
-        FeatureType featureType=(FeatureType)task.getMetadata().get(FeatureType.class);
-        if (featureType != null) {
-          style=styleGen.createStyle(styleHandler,(FeatureTypeInfo)r,featureType);
-        }
- else {
-          throw new RuntimeException("Unable to compute style");
+      if (task.getData() instanceof SpatialFile) {
+        SpatialFile file=(SpatialFile)task.getData();
+        if (file.getStyleFile() != null) {
+          style=createStyleFromFile(file.getStyleFile(),task);
         }
       }
- else       if (r instanceof CoverageInfo) {
-        style=styleGen.createStyle(styleHandler,(CoverageInfo)r);
-      }
+      if (style == null) {
+        if (r instanceof FeatureTypeInfo) {
+          FeatureType featureType=(FeatureType)task.getMetadata().get(FeatureType.class);
+          if (featureType != null) {
+            style=styleGen.createStyle(styleHandler,(FeatureTypeInfo)r,featureType);
+          }
  else {
-        throw new RuntimeException("Unknown resource type :" + r.getClass());
+            throw new RuntimeException("Unable to compute style");
+          }
+        }
+ else         if (r instanceof CoverageInfo) {
+          style=styleGen.createStyle(styleHandler,(CoverageInfo)r);
+        }
+ else {
+          throw new RuntimeException("Unknown resource type :" + r.getClass());
+        }
       }
       l.setDefaultStyle(style);
     }

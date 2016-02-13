@@ -1,6 +1,13 @@
 {
   suppFiles=new ArrayList();
   prjFile=null;
+  styleFile=null;
+  final List<String> styleExtensions=Lists.transform(Styles.handlers(),new Function<StyleHandler,String>(){
+    @Nullable @Override public String apply(    @Nullable StyleHandler input){
+      return input.getFileExtension();
+    }
+  }
+);
   final String baseName=getBaseName(file.name());
   for (  Resource f : file.parent().list()) {
     if (f.equals(file)) {
@@ -12,10 +19,13 @@
     if (f.getType() != Type.RESOURCE) {
       continue;
     }
-    String ext=f.name().substring(baseName.length());
+    String ext=f.name().substring(baseName.length()).toLowerCase();
     if (ext.charAt(0) == '.') {
       if (".prj".equalsIgnoreCase(ext)) {
         prjFile=f;
+      }
+ else       if (styleFile == null && styleExtensions.contains(ext.substring(1))) {
+        styleFile=f;
       }
  else {
         suppFiles.add(f);
