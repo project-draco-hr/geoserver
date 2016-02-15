@@ -1,9 +1,18 @@
 {
   CompoundPropertyModel<RuleModel> simpleRuleModel=new CompoundPropertyModel<>(optionalRuleModel.orElse(new RuleModel()));
   CompoundPropertyModel<RuleModel> complexRuleModel=new CompoundPropertyModel<>(optionalRuleModel.orElse(new RuleModel()));
+  CompoundPropertyModel<RuleModel> echoParameterModel=new CompoundPropertyModel<>(optionalRuleModel.orElse(new RuleModel(true)));
   Form<RuleModel> form=new Form<>("form");
   add(form);
   List<WrappedTab> tabs=new ArrayList<>();
+  if (!optionalRuleModel.isPresent() || optionalRuleModel.get().isEchoOnly()) {
+    tabs.add(new WrappedTab("Echo Parameter",echoParameterModel){
+      public Panel getPanel(      String panelId){
+        return new EchoParameterPanel(panelId,echoParameterModel);
+      }
+    }
+);
+  }
   if (!optionalRuleModel.isPresent() || optionalRuleModel.get().getPosition() != null) {
     tabs.add(new WrappedTab("Basic Rule",simpleRuleModel){
       public Panel getPanel(      String panelId){
