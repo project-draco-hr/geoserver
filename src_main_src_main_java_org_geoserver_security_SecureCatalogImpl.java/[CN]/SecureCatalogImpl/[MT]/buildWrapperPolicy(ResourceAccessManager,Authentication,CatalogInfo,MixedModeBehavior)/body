@@ -1,0 +1,42 @@
+{
+  Assert.notNull(info);
+  if (info instanceof NamespaceInfo) {
+    WorkspaceInfo ws=delegate.getWorkspaceByName(((NamespaceInfo)info).getPrefix());
+    if (ws == null) {
+      ws=delegate.getFactory().createWorkspace();
+      ws.setName(((NamespaceInfo)info).getPrefix());
+    }
+    return buildWrapperPolicy(accessManager,user,ws,ws.getName(),mixedModeBehavior);
+  }
+  if (info instanceof WorkspaceInfo) {
+    return buildWrapperPolicy(accessManager,user,info,((WorkspaceInfo)info).getName(),mixedModeBehavior);
+  }
+  if (info instanceof StoreInfo) {
+    return buildWrapperPolicy(accessManager,user,((StoreInfo)info).getWorkspace(),((StoreInfo)info).getName(),mixedModeBehavior);
+  }
+  if (info instanceof ResourceInfo) {
+    return buildWrapperPolicy(accessManager,user,info,((ResourceInfo)info).getName(),mixedModeBehavior);
+  }
+  if (info instanceof LayerInfo) {
+    return buildWrapperPolicy(accessManager,user,info,((LayerInfo)info).getName(),mixedModeBehavior);
+  }
+  if (info instanceof LayerGroupInfo) {
+    WrapperPolicy mostRestrictive=WrapperPolicy.readWrite(null);
+    for (    PublishedInfo layer : ((LayerGroupInfo)info).getLayers()) {
+      WrapperPolicy policy=buildWrapperPolicy(accessManager,user,layer,layer.getName(),mixedModeBehavior);
+      if (AccessLevel.HIDDEN.equals(policy.getAccessLevel())) {
+        return policy;
+      }
+      int comparison=policy.compareTo(mostRestrictive);
+      boolean thisOneIsMoreRestrictive=comparison < 0;
+      if (thisOneIsMoreRestrictive) {
+        mostRestrictive=policy;
+      }
+    }
+    return mostRestrictive;
+  }
+ else   if (info instanceof StyleInfo) {
+    return buildWrapperPolicy(accessManager,user,info,((StyleInfo)info).getName(),mixedModeBehavior);
+  }
+  throw new IllegalArgumentException("Can't build wrapper policy for objects of type " + info.getClass().getName());
+}

@@ -1,0 +1,23 @@
+{
+  if (group == null)   return null;
+  WrapperPolicy policy=buildWrapperPolicy(user,group,group.getName(),mixedModeBehavior);
+  if (policy.level == AccessLevel.HIDDEN) {
+    return null;
+  }
+  LayerInfo rootLayer=group.getRootLayer();
+  if (LayerGroupInfo.Mode.EO.equals(group.getMode())) {
+    rootLayer=checkAccess(user,rootLayer,MixedModeBehavior.CHALLENGE);
+    if (rootLayer == null) {
+      return null;
+    }
+  }
+  final List<PublishedInfo> layers=group.getLayers();
+  ArrayList<PublishedInfo> wrapped=new ArrayList<PublishedInfo>(layers.size());
+  for (  PublishedInfo layer : layers) {
+    PublishedInfo checked=checkAccess(user,layer,MixedModeBehavior.HIDE);
+    if (checked != null) {
+      wrapped.add(checked);
+    }
+  }
+  return new SecuredLayerGroupInfo(group,rootLayer,wrapped);
+}
