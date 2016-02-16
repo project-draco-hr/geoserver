@@ -1,0 +1,11 @@
+{
+  setRequestAuth("admin","geoserver");
+  Document doc=getAsDOM("cite/wfs?request=DescribeFeatureType&version=1.1.0&service=wfs");
+  assertXpathEvaluatesTo("1","count(//xsd:complexType[@name='BuildingsType'])",doc);
+  setRequestAuth("cite_mixed","cite");
+  doc=getAsDOM("cite/wfs?request=DescribeFeatureType&version=1.1.0&service=wfs");
+  assertXpathEvaluatesTo("0","count(//xsd:complexType[@name='BuildingsType'])",doc);
+  setRequestAuth("cite_mixed","cite");
+  MockHttpServletResponse response=getAsServletResponse("cite/wfs?request=DescribeFeatureType&version=1.1.0&service=wfs&typeName=" + getLayerId(SystemTestData.BUILDINGS));
+  assertEquals(403,response.getErrorCode());
+}
