@@ -1,0 +1,15 @@
+{
+  AggregateProcess.Results processResult=(AggregateProcess.Results)value;
+  Map<Object,Object> json=new HashMap<>();
+  json.put("AggregationAttribute",processResult.getAggregateAttribute());
+  json.put("AggregationFunctions",extractAggregateFunctionsNames(processResult));
+  if (processResult.getGroupByAttributes() == null || processResult.getGroupByAttributes().isEmpty()) {
+    json.put("GroupByAttributes",new String[0]);
+    json.put("AggregationResults",new Number[][]{encodeSimpleResult(processResult)});
+  }
+ else {
+    json.put("GroupByAttributes",processResult.getGroupByAttributes().toArray());
+    json.put("AggregationResults",processResult.getGroupByResult().toArray());
+  }
+  output.write(JSONObject.fromObject(json).toString().getBytes());
+}
