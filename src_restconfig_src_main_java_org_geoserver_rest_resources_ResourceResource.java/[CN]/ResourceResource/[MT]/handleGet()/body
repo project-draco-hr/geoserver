@@ -1,0 +1,30 @@
+{
+  if (operation == Operation.METADATA) {
+    getVariants().add(getFormatGet(false).toRepresentation(new ResourceMetadata(resource,this)));
+  }
+ else {
+    if (resource.getType() == Type.UNDEFINED) {
+      throw new RestletException("Undefined resource path.",Status.CLIENT_ERROR_NOT_FOUND);
+    }
+ else {
+      Representation rep;
+      if (getRequest().getMethod().equals(Method.HEAD)) {
+        rep=RESTUtils.emptyBody();
+        rep.setMediaType(getMediaType(resource));
+      }
+ else       if (resource.getType() == Type.DIRECTORY) {
+        rep=getFormatGet(false).toRepresentation(new ResourceDirectory(resource,this));
+      }
+ else {
+        rep=new InputRepresentation(resource.in(),getMediaType(resource));
+      }
+      rep.setModificationDate(new Date(resource.lastmodified()));
+      getVariants().add(rep);
+      if (!"".equals(resource.path())) {
+        getResponseHeaders().add("Resource-Parent","/" + resource.parent().path());
+      }
+      getResponseHeaders().add("Resource-Type",resource.getType().toString().toLowerCase());
+    }
+  }
+  super.handleGet();
+}
