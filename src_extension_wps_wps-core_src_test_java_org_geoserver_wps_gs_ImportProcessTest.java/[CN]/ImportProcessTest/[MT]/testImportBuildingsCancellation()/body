@@ -1,0 +1,41 @@
+{
+  FeatureTypeInfo ti=getCatalog().getFeatureTypeByName(getLayerId(SystemTestData.BUILDINGS));
+  SimpleFeatureCollection rawSource=(SimpleFeatureCollection)ti.getFeatureSource(null,null).getFeatures();
+  final CountDownLatch latch=new CountDownLatch(1);
+  final SimpleFeatureCollection testFeatureCollection=new DecoratingSimpleFeatureCollection(rawSource){
+    @Override public SimpleFeatureIterator features(){
+      return new DecoratingSimpleFeatureIterator(super.features()){
+        @Override public SimpleFeature next() throws NoSuchElementException {
+          return super.next();
+        }
+      }
+;
+    }
+  }
+;
+  ImportProcess importer=new ImportProcess(getCatalog());
+  final DefaultProgressListener listener=new DefaultProgressListener();
+  ExecutorService executor=Executors.newCachedThreadPool();
+  try {
+    Future<?> future=executor.submit(new Runnable(){
+      @Override public void run(){
+        importer.execute(testFeatureCollection,null,SystemTestData.CITE_PREFIX,SystemTestData.CITE_PREFIX,"Buildings2",null,null,null,listener);
+      }
+    }
+);
+    listener.setTask(new SimpleInternationalString("Test message"));
+    listener.setCanceled(true);
+    latch.countDown();
+    try {
+      future.get();
+      fail("Should have failed with an exception");
+    }
+ catch (    ExecutionException e) {
+      assertThat(e.getCause(),instanceOf(ProcessException.class));
+      assertEquals("Test message",e.getCause().getMessage());
+    }
+  }
+  finally {
+    executor.shutdown();
+  }
+}

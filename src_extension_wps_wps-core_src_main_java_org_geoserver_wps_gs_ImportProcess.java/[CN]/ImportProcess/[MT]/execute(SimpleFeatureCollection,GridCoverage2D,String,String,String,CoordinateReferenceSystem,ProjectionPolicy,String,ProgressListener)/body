@@ -1,4 +1,9 @@
 {
+  if (listener == null) {
+    listener=new NullProgressListener();
+  }
+  listener.started();
+  listener.progress(0);
   WorkspaceInfo ws;
   if (workspace != null) {
     ws=catalog.getWorkspaceByName(workspace);
@@ -52,6 +57,7 @@
       throw new ProcessException("Could not find a default store in workspace " + ws.getName());
     }
   }
+  checkForCancellation(listener);
   StyleInfo targetStyle=null;
   if (styleName != null) {
     targetStyle=catalog.getStyleByName(styleName);
@@ -110,9 +116,10 @@
         }
       }
     }
+    checkForCancellation(listener);
     SimpleFeatureType targetType;
     try {
-      targetType=importDataIntoStore(features,name,(DataStoreInfo)storeInfo);
+      targetType=importDataIntoStore(features,name,(DataStoreInfo)storeInfo,listener);
     }
  catch (    IOException e) {
       throw new ProcessException("Failed to import data into the target store",e);
@@ -131,8 +138,11 @@
       if (targetStyle != null) {
         layerInfo.setDefaultStyle(targetStyle);
       }
+      checkForCancellation(listener);
       catalog.add(typeInfo);
       catalog.add(layerInfo);
+      listener.progress(100);
+      listener.complete();
       return layerInfo.prefixedName();
     }
  catch (    Exception e) {
@@ -187,6 +197,7 @@
           }
         }
       }
+      checkForCancellation(listener);
       MathTransform tx=CRS.findMathTransform(cvCrs,srs);
       if (!tx.isIdentity() || !CRS.equalsIgnoreMetadata(cvCrs,srs)) {
         coverage=WCSUtils.resample(coverage,cvCrs,srs,null,Interpolation.getInstance(Interpolation.INTERP_NEAREST));
@@ -205,6 +216,7 @@
  catch (        Exception e) {
         }
       }
+      checkForCancellation(listener);
       if (add) {
         catalog.add((CoverageStoreInfo)storeInfo);
       }
@@ -221,6 +233,7 @@
       if (name != null) {
         cinfo.setName(name);
       }
+      checkForCancellation(listener);
       if (!add) {
         CoverageInfo existing=catalog.getCoverageByCoverageStore((CoverageStoreInfo)storeInfo,name != null ? name : coverage.getName().toString());
         if (existing == null) {
@@ -244,9 +257,11 @@
       if ("UNKNOWN".equals(cinfo.getSRS())) {
         cinfo.setSRS("EPSG:4326");
       }
+      checkForCancellation(listener);
+      LayerInfo layerInfo;
       if (add) {
         catalog.add(cinfo);
-        LayerInfo layerInfo=cb.buildLayer(cinfo);
+        layerInfo=cb.buildLayer(cinfo);
         if (styleName != null && targetStyle != null) {
           layerInfo.setDefaultStyle(targetStyle);
         }
@@ -265,12 +280,14 @@
       }
  else {
         catalog.save(cinfo);
-        LayerInfo layerInfo=catalog.getLayerByName(cinfo.getName());
+        layerInfo=catalog.getLayerByName(cinfo.getName());
         if (styleName != null && targetStyle != null) {
           layerInfo.setDefaultStyle(targetStyle);
         }
-        return layerInfo.prefixedName();
       }
+      listener.progress(100);
+      listener.complete();
+      return layerInfo.prefixedName();
     }
  catch (    MalformedURLException e) {
       throw new ProcessException("URL Error",e);

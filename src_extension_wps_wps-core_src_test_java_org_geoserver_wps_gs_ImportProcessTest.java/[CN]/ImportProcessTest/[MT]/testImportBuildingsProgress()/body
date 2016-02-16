@@ -1,0 +1,18 @@
+{
+  FeatureTypeInfo ti=getCatalog().getFeatureTypeByName(getLayerId(SystemTestData.BUILDINGS));
+  SimpleFeatureCollection rawSource=(SimpleFeatureCollection)ti.getFeatureSource(null,null).getFeatures();
+  ForceCoordinateSystemFeatureResults forced=new ForceCoordinateSystemFeatureResults(rawSource,CRS.decode("EPSG:4326"));
+  ImportProcess importer=new ImportProcess(getCatalog());
+  DefaultProgressListener testProgressListener=new DefaultProgressListener(){
+    float previousProgress=0;
+    @Override public void progress(    float percent){
+      super.progress(percent);
+      assertTrue(percent >= previousProgress);
+      previousProgress=percent;
+    }
+  }
+;
+  String result=importer.execute(forced,null,SystemTestData.CITE_PREFIX,SystemTestData.CITE_PREFIX,"Buildings6",null,null,null,testProgressListener);
+  assertEquals(100,testProgressListener.getProgress(),0f);
+  checkBuildings(result,"Buildings6");
+}

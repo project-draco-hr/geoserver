@@ -24,21 +24,30 @@
     }
   }
   Map<String,String> mapping=buildAttributeMapping(sourceType,targetType);
-  Transaction t=new DefaultTransaction();
   SimpleFeatureStore fstore=(SimpleFeatureStore)ds.getFeatureSource(targetType.getTypeName());
+  Transaction t=new DefaultTransaction();
   fstore.setTransaction(t);
-  SimpleFeatureIterator fi=features.features();
-  SimpleFeatureBuilder fb=new SimpleFeatureBuilder(targetType);
-  while (fi.hasNext()) {
-    SimpleFeature source=fi.next();
-    fb.reset();
-    for (    String sname : mapping.keySet()) {
-      fb.set(mapping.get(sname),source.getAttribute(sname));
+  boolean complete=false;
+  try (SimpleFeatureIterator fi=features.features()){
+    SimpleFeatureBuilder fb=new SimpleFeatureBuilder(targetType);
+    while (fi.hasNext()) {
+      SimpleFeature source=fi.next();
+      fb.reset();
+      for (      String sname : mapping.keySet()) {
+        fb.set(mapping.get(sname),source.getAttribute(sname));
+      }
+      SimpleFeature target=fb.buildFeature(null);
+      fstore.addFeatures(DataUtilities.collection(target));
+      checkForCancellation(listener);
     }
-    SimpleFeature target=fb.buildFeature(null);
-    fstore.addFeatures(DataUtilities.collection(target));
+    t.commit();
+    complete=true;
   }
-  t.commit();
-  t.close();
+  finally {
+    if (!complete) {
+      t.rollback();
+    }
+    t.close();
+  }
   return targetType;
 }
