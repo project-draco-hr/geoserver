@@ -8,7 +8,13 @@
   try {
     String method=(String)getRequest().getResourceRef().getLastSegment();
     if (method != null && method.toLowerCase().startsWith("file.")) {
-      uploadedFile=RESTUtils.handleBinUpload(store + "." + format,workspace,directory,getRequest());
+      boolean cleanPreviousContents=getRequest().getMethod() == Method.PUT;
+      Form form=getRequest().getResourceRef().getQueryAsForm();
+      String filename=form.getFirstValue("filename",true);
+      if (filename == null) {
+        filename=store + "." + format;
+      }
+      uploadedFile=RESTUtils.handleBinUpload(filename,directory,cleanPreviousContents,getRequest(),workspace);
     }
  else     if (method != null && method.toLowerCase().startsWith("url.")) {
       uploadedFile=RESTUtils.handleURLUpload(store + "." + format,workspace,directory,getRequest());

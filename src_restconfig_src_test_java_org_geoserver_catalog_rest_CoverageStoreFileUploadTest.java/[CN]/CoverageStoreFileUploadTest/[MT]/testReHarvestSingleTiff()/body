@@ -1,0 +1,62 @@
+{
+  URL resource=getClass().getResource("test-data/mosaic");
+  if (resource != null) {
+    File oldDir=DataUtilities.urlToFile(resource);
+    if (oldDir.exists()) {
+      FileUtils.deleteDirectory(oldDir);
+    }
+  }
+  Resource mosaic=readMosaic();
+  CatalogBuilder builder=new CatalogBuilder(getCatalog());
+  WorkspaceInfo ws=getCatalog().getWorkspaceByName("gs");
+  CoverageStoreInfo store=builder.buildCoverageStore("watertemp5");
+  store.setURL(DataUtilities.fileToURL(Resources.find(mosaic)).toExternalForm());
+  store.setWorkspace(ws);
+  ImageMosaicFormat imageMosaicFormat=new ImageMosaicFormat();
+  store.setType((imageMosaicFormat.getName()));
+  getCatalog().add(store);
+  builder.setStore(store);
+  GridCoverage2DReader reader=null;
+  StructuredGridCoverage2DReader reader2=null;
+  try {
+    reader=imageMosaicFormat.getReader(DataUtilities.fileToURL(Resources.find(mosaic)));
+    configureCoverageInfo(builder,store,reader);
+    CoverageStoreInfo storeInfo=getCatalog().getCoverageStoreByName("watertemp5");
+    assertNotNull(storeInfo);
+    CoverageInfo ci=getCatalog().getCoverageByName("mosaic");
+    assertNotNull(ci);
+    assertEquals(storeInfo,ci.getStore());
+    URL zipHarvest=MockData.class.getResource("harvesting.zip");
+    byte[] bytes=null;
+    try (ZipInputStream zis=new ZipInputStream(zipHarvest.openStream())){
+      ZipEntry entry=null;
+      while ((entry=zis.getNextEntry()) != null) {
+        if ("NCOM_wattemp_000_20081102T0000000_12.tiff".equals(entry.getName())) {
+          bytes=IOUtils.toByteArray(zis);
+        }
+      }
+      if (bytes == null) {
+        fail("Could not find the expected zip entry NCOM_wattemp_000_20081102T0000000_12.tiff");
+      }
+    }
+     reader2=uploadGeotiffAndCheck(storeInfo,bytes,"NCOM_wattemp_000_20081102T0000000_12.tiff");
+    reader2=uploadGeotiffAndCheck(storeInfo,bytes,"NCOM_wattemp_000_20081102T0000000_12.tiff");
+    reader2.delete(true);
+  }
+  finally {
+    if (reader != null) {
+      try {
+        reader.dispose();
+      }
+ catch (      Throwable t) {
+      }
+    }
+    if (reader2 != null) {
+      try {
+        reader2.dispose();
+      }
+ catch (      Throwable t) {
+      }
+    }
+  }
+}
