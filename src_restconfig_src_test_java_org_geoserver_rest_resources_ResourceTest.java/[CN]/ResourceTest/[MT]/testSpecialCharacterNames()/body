@@ -1,6 +1,9 @@
 {
-  MockHttpServletResponse response=getAsServletResponse("/rest/resource/po??zie/caf??");
+  XMLUnit.setXpathNamespaceContext(NS_XML);
+  Document doc=getAsDOM("/rest/resource/po%c3%abzie?format=xml");
+  XMLAssert.assertXpathEvaluatesTo("http://localhost:8080/geoserver/rest/resource/po%c3%abzie/caf%c3%a9","/ResourceDirectory/children/child/atom:link/@href",doc);
+  MockHttpServletResponse response=getAsServletResponse("/rest/resource/po%c3%abzie/caf%c3%a9");
   Assert.assertEquals(200,response.getStatusCode());
   Assert.assertEquals("resource",response.getHeader("Resource-Type"));
-  Assert.assertEquals("/po??zie",response.getHeader("Resource-Parent"));
+  Assert.assertEquals("http://localhost:8080/geoserver/rest/resource/po%c3%abzie",response.getHeader("Resource-Parent"));
 }
