@@ -1,0 +1,30 @@
+{
+  LOGGER.info(String.format("Initializing connection to server %1$s port %2$d",server,port));
+  int packetReplyTimeout=DEFAULT_PACKET_REPLY_TIMEOUT;
+  if (getConfiguration().get("xmpp_packet_reply_timeout") != null) {
+    packetReplyTimeout=Integer.parseInt(getConfiguration().get("xmpp_packet_reply_timeout"));
+  }
+  SmackConfiguration.setDefaultPacketReplyTimeout(packetReplyTimeout);
+  config=new ConnectionConfiguration(server,port);
+  if (customSSLContext != null) {
+    config.setSecurityMode(SecurityMode.enabled);
+    config.setCustomSSLContext(customSSLContext);
+  }
+ else {
+    config.setSecurityMode(SecurityMode.disabled);
+  }
+  connection=new XMPPTCPConnection(config);
+  connection.connect();
+  LOGGER.info("Connected: " + connection.isConnected());
+  if (connection.isConnected()) {
+    chatManager=ChatManager.getInstanceFor(connection);
+    discoStu=ServiceDiscoveryManager.getInstanceFor(connection);
+    discoProperties();
+    performLogin(getConfiguration().get("xmpp_manager_username"),getConfiguration().get("xmpp_manager_password"));
+    startPingTask();
+    sendInvitations();
+  }
+ else {
+    setEnabled(false);
+  }
+}

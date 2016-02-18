@@ -1,0 +1,16 @@
+{
+  if (connection != null && connection.isConnected()) {
+    connection.login(username,password,getResource(username));
+    DiscussionHistory history=new DiscussionHistory();
+    history.setMaxStanzas(5);
+    mucManagementChannel=new MultiUserChat(connection,managementChannel + "@" + bus+ "."+ domain);
+    mucManagementChannel.join(getJID(username),managementChannelPassword);
+    for (    String channel : serviceChannels) {
+      MultiUserChat serviceChannel=new MultiUserChat(connection,channel + "@" + bus+ "."+ domain);
+      serviceChannel.join(getJID(username),managementChannelPassword);
+      mucServiceChannels.add(serviceChannel);
+    }
+    setStatus(true,"Orchestrator Active");
+    setupListeners();
+  }
+}

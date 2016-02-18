@@ -1,0 +1,42 @@
+{
+  int arraySize=0;
+  while (name.endsWith("[]")) {
+    name=name.substring(0,name.length() - 2);
+    arraySize++;
+  }
+  String mimeTypes="";
+  Class c=null;
+  if (name.equalsIgnoreCase("complex") || name.equalsIgnoreCase("complex")) {
+    c=RawData.class;
+  }
+ else   if (PRIMITIVE_NAME_TYPE_MAP.get(name) != null) {
+    c=(Class)((Object[])PRIMITIVE_NAME_TYPE_MAP.get(name))[0];
+  }
+  if (c == null) {
+    try {
+      c=cl.loadClass(name);
+    }
+ catch (    ClassNotFoundException cnfe) {
+      throw new ClassNotFoundException("Parameter class not found: " + name);
+    }
+  }
+  if (arraySize > 0) {
+    int[] dims=new int[arraySize];
+    for (int i=0; i < arraySize; i++) {
+      dims[i]=1;
+    }
+    c=Array.newInstance(c,dims).getClass();
+  }
+  Object sample;
+  if (defaultValue != null && CType.SIMPLE.equals(((Object[])PRIMITIVE_NAME_TYPE_MAP.get(name))[1])) {
+    sample=defaultValue;
+  }
+ else   if (CType.COMPLEX.equals(((Object[])PRIMITIVE_NAME_TYPE_MAP.get(name))[1]) && ((Object[])PRIMITIVE_NAME_TYPE_MAP.get(name)).length > 2) {
+    sample=((Object[])PRIMITIVE_NAME_TYPE_MAP.get(name))[2];
+  }
+ else {
+    sample=null;
+  }
+  if (PRIMITIVE_NAME_TYPE_MAP.get(name) != null)   mimeTypes=(String)((Object[])PRIMITIVE_NAME_TYPE_MAP.get(name))[3];
+  return new ParameterTemplate(c,sample,mimeTypes);
+}

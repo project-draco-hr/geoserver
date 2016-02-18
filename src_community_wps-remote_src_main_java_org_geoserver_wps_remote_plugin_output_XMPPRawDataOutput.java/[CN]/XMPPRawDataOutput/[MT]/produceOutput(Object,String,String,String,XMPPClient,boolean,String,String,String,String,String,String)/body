@@ -1,0 +1,53 @@
+{
+  LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] " + value + " - type:"+ type+ " - pID:"+ pID+ " - name:"+ name+ " - title:"+ title+ " - description:"+ description+ " - style:"+ defaultStyle+ " - workspace:"+ targetWorkspace+ " - metadata:"+ metadata);
+  if (XMPPClient.PRIMITIVE_NAME_TYPE_MAP.get(type) != null) {
+    Object sample=((Object[])XMPPClient.PRIMITIVE_NAME_TYPE_MAP.get(type))[2];
+    if (sample instanceof StreamRawData) {
+      final String fileName=FilenameUtils.getBaseName(((String)value)) + "_" + pID+ "."+ ((StreamRawData)sample).getFileExtension();
+      LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] StreamRawData:" + fileName);
+      value=new StreamRawData(((StreamRawData)sample).getMimeType(),new FileInputStream(((String)value)),((StreamRawData)sample).getFileExtension());
+      if (publish) {
+        final File tempFile=new File(FileUtils.getTempDirectory(),fileName);
+        FileUtils.copyInputStreamToFile(((StreamRawData)value).getInputStream(),tempFile);
+        try {
+          xmppClient.importLayer(tempFile,null,name + "_" + pID,title,description,defaultStyle,targetWorkspace,metadata);
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.WARNING,"There was an issue while trying to automatically publish the Layer into the Catalog!",e);
+        }
+        value=new StreamRawData(((StreamRawData)sample).getMimeType(),new FileInputStream(tempFile),((StreamRawData)sample).getFileExtension());
+      }
+      LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] Value:" + value);
+      return value;
+    }
+ else     if (sample instanceof ResourceRawData) {
+      final String fileName=FilenameUtils.getBaseName(((String)value)) + "_" + pID+ "."+ ((ResourceRawData)sample).getFileExtension();
+      LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] FileRawData:" + fileName);
+      value=new ResourceRawData(Files.asResource(new File(((String)value))),((ResourceRawData)sample).getMimeType(),((ResourceRawData)sample).getFileExtension());
+      if (publish) {
+        final File tempFile=new File(FileUtils.getTempDirectory(),fileName);
+        FileUtils.copyFile(((ResourceRawData)value).getResource().file(),tempFile);
+        try {
+          xmppClient.importLayer(tempFile,null,name + "_" + pID,title,description,defaultStyle,targetWorkspace,metadata);
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.WARNING,"There was an issue while trying to automatically publish the Layer into the Catalog!",e);
+        }
+      }
+      LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] Value:" + value);
+      return value;
+    }
+ else     if (sample instanceof StringRawData) {
+      LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] StringRawData:" + type);
+      if (type.equals("application/owc")) {
+        value=encodeAsPlainOWCMapContext(value,type,pID,baseURL,xmppClient,publish,name + "_" + pID,title,description,defaultStyle,targetWorkspace,metadata);
+      }
+ else {
+        value=encodeAsPlainRawData(value,type,pID,baseURL,xmppClient,publish,name + "_" + pID,title,description,defaultStyle,targetWorkspace,metadata);
+      }
+      LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] Value:" + value);
+      return value;
+    }
+  }
+  return null;
+}

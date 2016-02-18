@@ -1,0 +1,19 @@
+{
+  IQ req=new IQ(){
+    public String getChildElementXML(){
+      return "<ping xmlns='urn:xmpp:ping'/>";
+    }
+  }
+;
+  req.setType(IQ.Type.GET);
+  PacketFilter filter=new AndFilter(new PacketIDFilter(req.getPacketID()),new PacketTypeFilter(IQ.class));
+  PacketCollector collector=connection.createPacketCollector(filter);
+  connection.sendPacket(req);
+  IQ result=(IQ)collector.nextResult(timeout);
+  if (result == null) {
+    LOGGER.warning("ping timeout");
+    return false;
+  }
+  collector.cancel();
+  return true;
+}

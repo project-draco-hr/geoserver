@@ -1,0 +1,53 @@
+{
+  try {
+    Thread.sleep(start_delay);
+  }
+ catch (  InterruptedException ie) {
+  }
+  while (connection != null && pingThread == thread) {
+    if (connection.isConnected() && connection.isAuthenticated()) {
+      LOGGER.log(Level.FINER,"ping");
+      try {
+        if (!sendPing()) {
+          LOGGER.severe("ping failed - close connection");
+          try {
+            connection.disconnect();
+          }
+ catch (          NotConnectedException e) {
+            LOGGER.log(Level.SEVERE,e.getMessage(),e);
+          }
+        }
+      }
+ catch (      NotConnectedException e) {
+        LOGGER.log(Level.SEVERE,e.getMessage(),e);
+      }
+    }
+ else {
+      LOGGER.log(Level.FINER,"Try to reconnect...");
+      try {
+        connection.connect();
+        LOGGER.info("Connected: " + connection.isConnected());
+        if (connection.isConnected()) {
+          chatManager=ChatManager.getInstanceFor(connection);
+          discoStu=ServiceDiscoveryManager.getInstanceFor(connection);
+          discoProperties();
+          performLogin(getConfiguration().get("xmpp_manager_username"),getConfiguration().get("xmpp_manager_password"));
+          startPingTask();
+          sendInvitations();
+        }
+ else {
+          setEnabled(false);
+        }
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,"XMPP Could not reconnect!",e);
+      }
+    }
+    try {
+      Thread.sleep(delay);
+    }
+ catch (    InterruptedException ie) {
+    }
+  }
+  LOGGER.log(Level.FINER,"pinger exit");
+}

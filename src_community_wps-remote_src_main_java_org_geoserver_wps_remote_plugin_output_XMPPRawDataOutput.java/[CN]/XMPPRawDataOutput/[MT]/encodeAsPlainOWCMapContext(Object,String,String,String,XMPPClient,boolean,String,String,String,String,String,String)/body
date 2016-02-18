@@ -1,0 +1,36 @@
+{
+  String[] layerToPublish=((String)value).split(";");
+  String[] styles=(defaultStyle != null ? defaultStyle.split(";") : null);
+  String[] workspaces=(targetWorkspace != null ? targetWorkspace.split(";") : null);
+  LOGGER.info(" - TEST - [XMPP Raw Data Output - ProduceOutput] encodeAsPlainOWCMapContext:" + layerToPublish);
+  List<LayerInfo> wmc=new ArrayList<LayerInfo>();
+  if (layerToPublish != null && layerToPublish.length > 0) {
+    final Catalog catalog=xmppClient.getGeoServer().getCatalog();
+    for (int fi=0; fi < layerToPublish.length; fi++) {
+      final String layerBaseName=layerToPublish[fi];
+      final String layerStyle=styles[fi];
+      final String layerWorkspace=workspaces[fi];
+      LayerInfo layerInfo=catalog.getLayerByName(layerBaseName + "_" + pID);
+      if (layerInfo != null) {
+        if (layerStyle.trim().length() > 0) {
+          StyleInfo style=catalog.getStyleByName(layerStyle);
+          if (style != null) {
+            layerInfo.setDefaultStyle(style);
+          }
+        }
+        if (layerWorkspace.trim().length() > 0) {
+          WorkspaceInfo workspace=catalog.getWorkspaceByName(layerWorkspace);
+          NamespaceInfo namespace=catalog.getNamespace(layerInfo.getResource().getNamespace().getId());
+          if (workspace != null && (!workspace.getName().equals(namespace.getPrefix()) || namespace == null)) {
+            namespace=catalog.getNamespaceByPrefix(workspace.getName());
+            if (namespace != null) {
+              layerInfo.getResource().setNamespace(namespace);
+            }
+          }
+        }
+        wmc.add(layerInfo);
+      }
+    }
+  }
+  return getWmc(xmppClient,wmc,type,pID,baseURL,metadata);
+}
