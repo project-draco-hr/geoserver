@@ -1,17 +1,18 @@
 {
   StringBuilder resultStr=new StringBuilder();
-  for (  char ch : input.toCharArray()) {
-    if (ch > 128 || ch < 0 || " %$&+,:;=?@<>#%".indexOf(ch) >= 0) {
-      try {
-        for (        byte enc : Character.toString(ch).getBytes("UTF-8")) {
-          resultStr.append(String.format("%%%02x",enc));
-        }
-      }
- catch (      UnsupportedEncodingException e) {
-      }
+  byte[] encArray;
+  try {
+    encArray=input.getBytes("UTF-8");
+  }
+ catch (  UnsupportedEncodingException e) {
+    throw new RuntimeException(e);
+  }
+  for (  byte enc : encArray) {
+    if (enc >= 'A' && enc <= 'Z' || enc >= 'a' && enc <= 'z' || enc >= '0' && enc <= '9' || enc == '-' || enc == '_' || enc == '.' || enc == '~' || enc == '/') {
+      resultStr.append((char)enc);
     }
  else {
-      resultStr.append(ch);
+      resultStr.append(String.format("%%%02x",enc));
     }
   }
   return resultStr.toString();
