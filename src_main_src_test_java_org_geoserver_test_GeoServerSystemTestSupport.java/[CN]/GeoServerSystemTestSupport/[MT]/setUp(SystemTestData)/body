@@ -18,14 +18,19 @@
   setUpTestData(testData);
   TestHttpClientProvider.startTest();
   if (testData.isTestDataAvailable()) {
-    MockServletContext servletContext=new MockServletContext();
-    servletContext.setInitParameter("GEOSERVER_DATA_DIR",testData.getDataDirectoryRoot().getPath());
-    servletContext.setInitParameter("serviceStrategy","PARTIAL-BUFFER2");
+    org.springframework.core.io.ResourceLoader rl;
     if (testData.getDataDirectoryRoot().canWrite()) {
       File webinf=new File(testData.getDataDirectoryRoot(),"WEB-INF");
       webinf.mkdir();
-      servletContext.setRealPath("WEB-INF",webinf.getAbsolutePath());
+      rl=new DirectoryResourceLoader(testData.getDataDirectoryRoot());
     }
+ else {
+      rl=new DefaultResourceLoader();
+    }
+    MockServletContext servletContext=new MockServletContext(rl);
+    servletContext.setMinorVersion(4);
+    servletContext.setInitParameter("GEOSERVER_DATA_DIR",testData.getDataDirectoryRoot().getPath());
+    servletContext.setInitParameter("serviceStrategy","PARTIAL-BUFFER2");
     List<String> contexts=new ArrayList();
     setUpSpring(contexts);
     applicationContext=new GeoServerTestApplicationContext(contexts.toArray(new String[contexts.size()]),servletContext);

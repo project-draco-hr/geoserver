@@ -43,8 +43,8 @@
   assertEquals(testUserName,((UserDetails)auth.getPrincipal()).getUsername());
   assertTrue(auth.getAuthorities().contains(new GeoServerRole(rootRole)));
   assertTrue(auth.getAuthorities().contains(new GeoServerRole(derivedRole)));
-  assertEquals(1,response.getCookies().size());
-  Cookie cookie=(Cookie)response.getCookies().get(0);
+  assertEquals(1,response.getCookies().length);
+  Cookie cookie=(Cookie)response.getCookies()[0];
   assertNotNull(cookie.getValue());
   GeoServerLogoutFilter logoutFilter=(GeoServerLogoutFilter)getSecurityManager().loadFilter(GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
   request=createRequest("/j_spring_security_logout_foo");
@@ -60,7 +60,7 @@
   assertNotNull(tmp);
   assertTrue(tmp.endsWith(GeoServerLogoutFilter.URL_AFTER_LOGOUT));
   assertNull(SecurityContextHolder.getContext().getAuthentication());
-  Cookie cancelCookie=(Cookie)response.getCookies().get(0);
+  Cookie cancelCookie=(Cookie)response.getCookies()[0];
   assertNull(cancelCookie.getValue());
   request=createRequest("/j_spring_security_check_foo");
   request.setupAddParameter("_spring_security_remember_me","yes");
@@ -78,7 +78,7 @@
   auth=ctx.getAuthentication();
   assertNotNull(auth);
   assertEquals(GeoServerUser.ROOT_USERNAME,auth.getPrincipal());
-  assertEquals(0,response.getCookies().size());
+  assertEquals(0,response.getCookies().length);
   updateUser("ug1",testUserName,false);
   request=createRequest("/foo/bar");
   request.addCookie(cookie);
@@ -89,8 +89,8 @@
   assertTrue(response.wasRedirectSent());
   tmp=response.getHeader("Location");
   assertTrue(tmp.endsWith(GeoServerUserNamePasswordAuthenticationFilter.URL_LOGIN_FORM));
-  assertEquals(1,response.getCookies().size());
-  cancelCookie=(Cookie)response.getCookies().get(0);
+  assertEquals(1,response.getCookies().length);
+  cancelCookie=(Cookie)response.getCookies()[0];
   assertNull(cancelCookie.getValue());
   updateUser("ug1",testUserName,true);
 }

@@ -1,6 +1,9 @@
 {
-  ((MockServletContext)applicationContext.getServletContext()).setRealPath("test.yaml",new File(getClass().getResource("/test.yaml").toURI()).getAbsolutePath());
-  JSON json=getAsJSON("/pdf/info.json?app=test");
+  GeoServerDataDirectory dd=getDataDirectory();
+  try (InputStream is=getClass().getResourceAsStream("/test.yaml")){
+    FileUtils.copyInputStreamToFile(is,new File(dd.root(),"test.yaml"));
+  }
+   JSON json=getAsJSON("/pdf/info.json?app=test");
   assertTrue(json instanceof JSONObject);
   JSONObject obj=(JSONObject)json;
   assertTrue(obj.containsKey("scales"));

@@ -17,14 +17,19 @@
   LoggingUtils.configureGeoServerLogging(loader,getClass().getResourceAsStream(getLogConfiguration()),false,true,null);
   GeoServerLoader.setLegacy(useLegacyDataDirectory());
   if (testData.isTestDataAvailable()) {
-    MockServletContext servletContext=new MockServletContext();
-    servletContext.setInitParameter("GEOSERVER_DATA_DIR",testData.getDataDirectoryRoot().getPath());
-    servletContext.setInitParameter("serviceStrategy","PARTIAL-BUFFER2");
+    org.springframework.core.io.ResourceLoader rl;
     if (testData.getDataDirectoryRoot().canWrite()) {
       File webinf=new File(testData.getDataDirectoryRoot(),"WEB-INF");
       webinf.mkdir();
-      servletContext.setRealPath("WEB-INF",webinf.getAbsolutePath());
+      rl=new DirectoryResourceLoader(testData.getDataDirectoryRoot());
     }
+ else {
+      rl=new DefaultResourceLoader();
+    }
+    MockServletContext servletContext=new MockServletContext(rl);
+    servletContext.setInitParameter("GEOSERVER_DATA_DIR",testData.getDataDirectoryRoot().getPath());
+    servletContext.setMinorVersion(4);
+    servletContext.setInitParameter("serviceStrategy","PARTIAL-BUFFER2");
     applicationContext=new GeoServerTestApplicationContext(getSpringContextLocations(),servletContext);
     applicationContext.setValidating(validating);
     applicationContext.setUseLegacyGeoServerLoader(useLegacyDataDirectory());
