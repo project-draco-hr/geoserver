@@ -10,8 +10,8 @@
     IOUtils.closeQuietly(is);
   }
   MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/gs/coveragestores/watertemp3/file.imagemosaic",bytes,"application/zip");
-  assertEquals(201,response.getStatusCode());
-  String content=response.getOutputStreamContent();
+  assertEquals(201,response.getStatus());
+  String content=response.getContentAsString();
   Document d=dom(new ByteArrayInputStream(content.getBytes()));
   XMLAssert.assertXpathEvaluatesTo("watertemp3","//coverageStore/name",d);
   XMLAssert.assertXpathEvaluatesTo("ImageMosaic","//coverageStore/type",d);
@@ -28,8 +28,8 @@
   MockHttpServletRequest request=createRequest("/rest/workspaces/gs/coveragestores/watertemp3/external.imagemosaic");
   request.setMethod("POST");
   request.setContentType("text/plain");
-  request.setBodyContent("file:///" + outputDirectory.dir().getAbsolutePath());
-  request.setHeader("Content-type","text/plain");
+  request.setContent(("file:///" + outputDirectory.dir().getAbsolutePath()).getBytes("UTF-8"));
+  request.addHeader("Content-type","text/plain");
   response=dispatch(request);
   GridCoverageReader reader=storeInfo.getGridCoverageReader(null,GeoTools.getDefaultHints());
   String[] metadataNames=reader.getMetadataNames();

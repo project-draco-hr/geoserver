@@ -18,7 +18,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   String authKey=null;
   for (  Entry<Object,Object> entry : mapper.authKeyProps.entrySet()) {
     if (testUserName.equals(entry.getValue())) {
@@ -30,10 +30,9 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   request.setQueryString(authKeyUrlParam + "=" + authKey);
-  request.setupAddParameter(authKeyUrlParam,authKey);
+  request.addParameter(authKeyUrlParam,authKey);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertFalse(response.wasRedirectSent());
+  assertFalse(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   SecurityContext ctx=(SecurityContext)request.getSession(false).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   Authentication auth=ctx.getAuthentication();
@@ -47,9 +46,9 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   request.setQueryString(authKeyUrlParam + "=abc");
-  request.setupAddParameter(authKeyUrlParam,"abc");
+  request.addParameter(authKeyUrlParam,"abc");
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   assertNull(SecurityContextHolder.getContext().getAuthentication());
   username=testUserName;
   password=username;
@@ -58,9 +57,9 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   request.setQueryString(authKeyUrlParam + "=" + authKey);
-  request.setupAddParameter(authKeyUrlParam,authKey);
+  request.addParameter(authKeyUrlParam,authKey);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   assertNull(SecurityContextHolder.getContext().getAuthentication());
   updateUser("ug1",username,true);
   insertAnonymousFilter();
@@ -68,6 +67,6 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   removeAnonymousFilter();
 }

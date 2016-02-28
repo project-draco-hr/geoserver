@@ -21,8 +21,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   loginUsingTicket(helper,request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertFalse(response.wasRedirectSent());
+  assertFalse(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   SecurityContext ctx=(SecurityContext)request.getSession(false).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   Authentication auth=ctx.getAuthentication();
@@ -37,8 +36,7 @@
   chain=new MockFilterChain();
   GeoServerLogoutFilter logoutFilter=(GeoServerLogoutFilter)getSecurityManager().loadFilter(GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
   logoutFilter.doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertTrue(response.wasRedirectSent());
+  assertTrue(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   String redirectUrl=response.getHeader("Location");
   assertNotNull(redirectUrl);
   assertTrue(redirectUrl.contains(GeoServerCasConstants.LOGOUT_URI));
@@ -49,8 +47,7 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   String ticket=loginUsingTicket(helper,request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertFalse(response.wasRedirectSent());
+  assertFalse(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   ctx=(SecurityContext)request.getSession(false).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   auth=ctx.getAuthentication();
@@ -65,11 +62,10 @@
   request.setSession(session);
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  request.setupAddParameter("logoutRequest",getBodyForLogoutRequest(ticket));
+  request.addParameter("logoutRequest",getBodyForLogoutRequest(ticket));
   GeoServerCasAuthenticationFilter casFilter=(GeoServerCasAuthenticationFilter)getSecurityManager().loadFilter(casFilterName);
   casFilter.doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertTrue(response.wasRedirectSent());
+  assertTrue(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   redirectUrl=response.getHeader("Location");
   assertNotNull(redirectUrl);
   assertFalse(redirectUrl.contains(GeoServerCasConstants.LOGOUT_URI));

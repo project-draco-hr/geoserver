@@ -11,7 +11,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   assertNull(SecurityContextHolder.getContext().getAuthentication());
   request=createRequest("/foo/bar");
   response=new MockHttpServletResponse();
@@ -22,10 +22,14 @@
     }
   }
 );
-  request.setUserInRole(derivedRole,true);
-  request.setUserInRole(rootRole,false);
+  if (true) {
+    request.addUserRole(derivedRole);
+  }
+  if (false) {
+    request.addUserRole(rootRole);
+  }
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   Authentication auth=getAuth(testFilterName3,testUserName,null,null);
   assertNotNull(auth);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -43,7 +47,7 @@
   }
 );
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   auth=getAuth(testFilterName3,GeoServerUser.ROOT_USERNAME,null,null);
   assertNull(auth);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -58,10 +62,14 @@
     }
   }
 );
-  request.setUserInRole(derivedRole,true);
-  request.setUserInRole(rootRole,false);
+  if (true) {
+    request.addUserRole(derivedRole);
+  }
+  if (false) {
+    request.addUserRole(rootRole);
+  }
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   auth=getAuth(testFilterName3,testUserName,null,null);
   assertNotNull(auth);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -74,6 +82,6 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   removeAnonymousFilter();
 }
