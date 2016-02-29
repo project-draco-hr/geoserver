@@ -1,0 +1,14 @@
+{
+  Request request=Dispatcher.REQUEST.get();
+  if (request == null || !"GetCapabilities".equalsIgnoreCase(request.getRequest())) {
+    return;
+  }
+  forwardOriginalUri(request,path);
+  Map requestRawKvp=request.getRawKvp();
+  if (request.getHttpRequest() instanceof RequestWrapper) {
+    RequestWrapper requestWrapper=(RequestWrapper)request.getHttpRequest();
+    Map parameters=requestWrapper.getOriginalParameters();
+    requestRawKvp=new KvpMap(KvpUtils.normalize(parameters));
+  }
+  forwardParameters(requestRawKvp,kvp);
+}

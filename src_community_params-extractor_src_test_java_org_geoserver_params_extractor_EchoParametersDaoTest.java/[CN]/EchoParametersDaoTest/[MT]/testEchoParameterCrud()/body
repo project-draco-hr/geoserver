@@ -1,0 +1,21 @@
+{
+  EchoParameter echoParameterA=new EchoParameterBuilder().withId("0").withActivated(true).withParameter("cql_filter").build();
+  EchoParameter echoParameterB=new EchoParameterBuilder().withId("1").withActivated(true).withParameter("bbox").build();
+  EchoParameter echoParameterC=new EchoParameterBuilder().withId("1").withActivated(false).withParameter("bbox").build();
+  List<EchoParameter> echoParameters=EchoParametersDao.getEchoParameters();
+  assertThat(echoParameters.size(),is(0));
+  EchoParametersDao.saveOrUpdateEchoParameter(echoParameterA);
+  EchoParametersDao.saveOrUpdateEchoParameter(echoParameterB);
+  echoParameters=EchoParametersDao.getEchoParameters();
+  assertThat(echoParameters.size(),is(2));
+  checkEchoParameter(echoParameterA,findEchoParameter("0",echoParameters));
+  checkEchoParameter(echoParameterB,findEchoParameter("1",echoParameters));
+  EchoParametersDao.saveOrUpdateEchoParameter(echoParameterC);
+  echoParameters=EchoParametersDao.getEchoParameters();
+  assertThat(echoParameters.size(),is(2));
+  checkEchoParameter(echoParameterA,findEchoParameter("0",echoParameters));
+  checkEchoParameter(echoParameterC,findEchoParameter("1",echoParameters));
+  EchoParametersDao.deleteEchoParameters("0");
+  echoParameters=EchoParametersDao.getEchoParameters();
+  assertThat(echoParameters.size(),is(1));
+}

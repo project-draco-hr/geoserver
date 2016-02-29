@@ -1,3 +1,11 @@
 {
-  RulesDao.saveOrUpdateRule(ruleModel.toRule());
+  if (!ruleModel.isEchoOnly()) {
+    RulesDao.saveOrUpdateRule(ruleModel.toRule());
+    if (!ruleModel.getEcho()) {
+      EchoParametersDao.deleteEchoParameters(ruleModel.getId());
+    }
+  }
+  if (ruleModel.getEcho() || ruleModel.isEchoOnly()) {
+    EchoParametersDao.saveOrUpdateEchoParameter(ruleModel.toEchoParameter());
+  }
 }
