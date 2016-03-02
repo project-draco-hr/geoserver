@@ -5,7 +5,7 @@
   SecurityManagerConfig config=securityManager.getSecurityConfig();
   GeoServerSecurityFilterChain filterChain=new GeoServerSecurityFilterChain(config.getFilterChain());
   filterChain.postConfigure(securityManager);
-  Map<RequestMatcher,List<Filter>> filterChainMap=new LinkedHashMap<RequestMatcher,List<Filter>>();
+  List<SecurityFilterChain> filterChains=new ArrayList<>();
   for (  RequestFilterChain chain : filterChain.getRequestChains()) {
     RequestMatcher matcher=matcherForChain(chain);
     List<Filter> filters=new ArrayList<Filter>();
@@ -21,18 +21,19 @@
         LOGGER.log(Level.SEVERE,"Error loading filter: " + filterName,ex);
       }
     }
-    filterChainMap.put(matcher,filters);
+    filterChains.add(new DefaultSecurityFilterChain(matcher,filters));
   }
 synchronized (this) {
     if (chainsInitialized) {
-      for (      SecurityFilterChain chain : getFilterChains()) {
+      for (      SecurityFilterChain chain : proxy.getFilterChains()) {
         for (        Filter filter : chain.getFilters()) {
           filter.destroy();
         }
       }
     }
     securityManager.getAuthenticationCache().removeAll();
-    setFilterChainMap(filterChainMap);
+    proxy=new FilterChainProxy(filterChains);
+    proxy.afterPropertiesSet();
     chainsInitialized=true;
   }
 }

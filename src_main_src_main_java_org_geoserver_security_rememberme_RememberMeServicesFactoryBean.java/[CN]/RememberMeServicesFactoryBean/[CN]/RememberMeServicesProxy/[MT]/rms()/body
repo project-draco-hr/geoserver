@@ -4,15 +4,11 @@
   }
   RememberMeServicesConfig rmsConfig=securityManager.getSecurityConfig().getRememberMeService();
   try {
-    rms=(RememberMeServices)Class.forName(rmsConfig.getClassName()).newInstance();
+    Class<RememberMeServices> rmsClass=(Class<RememberMeServices>)Class.forName(rmsConfig.getClassName());
+    rms=rmsClass.getConstructor(String.class,UserDetailsService.class).newInstance(rmsConfig.getKey(),new RememberMeUserDetailsService(securityManager));
   }
  catch (  Exception e) {
     throw new RuntimeException(e);
-  }
-  if (rms instanceof AbstractRememberMeServices) {
-    AbstractRememberMeServices arms=(AbstractRememberMeServices)rms;
-    arms.setUserDetailsService(new RememberMeUserDetailsService(securityManager));
-    arms.setKey(rmsConfig.getKey());
   }
   return rms;
 }
