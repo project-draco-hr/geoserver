@@ -3,8 +3,21 @@
   Object result=engine.eval("require('geoserver/catalog').namespaces");
   assertTrue(result instanceof NativeArray);
   NativeArray array=(NativeArray)result;
-  assertEquals("correct number of namespaces",5,array.getLength());
-  Scriptable obj=(Scriptable)array.get(0);
-  assertEquals("first namespace alias","cite",obj.get("alias",obj));
-  assertEquals("first namespace uri","http://www.opengis.net/cite",obj.get("uri",obj));
+  assertEquals("incorrect number of namespaces",5,array.getLength());
+  @SuppressWarnings("serial") Map<String,String> expectedNamespaces=new HashMap<String,String>(){
+{
+      put("cdf","http://www.opengis.net/cite/data");
+      put("cgf","http://www.opengis.net/cite/geometry");
+      put("cite","http://www.opengis.net/cite");
+      put("gs","http://geoserver.org");
+      put("sf","http://cite.opengeospatial.org/gmlsf");
+    }
+  }
+;
+  Map<String,String> actualNamespaces=new HashMap<String,String>();
+  for (  Object o : array) {
+    Scriptable s=(Scriptable)o;
+    actualNamespaces.put((String)s.get("alias",s),(String)s.get("uri",s));
+  }
+  assertEquals("unexpected namespaces",expectedNamespaces,actualNamespaces);
 }
