@@ -14,7 +14,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   SecurityContext ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -25,15 +25,19 @@
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
     if (rs == J2EERoleSource.Header) {
-      request.setHeader("roles",derivedRole + ";" + rootRole);
+      request.addHeader("roles",derivedRole + ";" + rootRole);
     }
     if (rs == J2EERoleSource.J2EE) {
-      request.setUserInRole(derivedRole,true);
-      request.setUserInRole(rootRole,false);
+      if (true) {
+        request.addUserRole(derivedRole);
+      }
+      if (false) {
+        request.addUserRole(rootRole);
+      }
     }
     setCertifacteForUser(testUserName,request);
     getProxy().doFilter(request,response,chain);
-    assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    assertEquals(HttpServletResponse.SC_OK,response.getStatus());
     ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
     assertNotNull(ctx);
     Authentication auth=ctx.getAuthentication();
@@ -52,12 +56,16 @@
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
     if (rs == J2EERoleSource.J2EE) {
-      request.setUserInRole(derivedRole,false);
-      request.setUserInRole(rootRole,false);
+      if (false) {
+        request.addUserRole(derivedRole);
+      }
+      if (false) {
+        request.addUserRole(rootRole);
+      }
     }
     setCertifacteForUser("unknown",request);
     getProxy().doFilter(request,response,chain);
-    assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    assertEquals(HttpServletResponse.SC_OK,response.getStatus());
     ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
     assertNotNull(ctx);
     Authentication auth=ctx.getAuthentication();
@@ -74,7 +82,7 @@
   chain=new MockFilterChain();
   setCertifacteForUser(testUserName,request);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -84,6 +92,6 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   removeAnonymousFilter();
 }

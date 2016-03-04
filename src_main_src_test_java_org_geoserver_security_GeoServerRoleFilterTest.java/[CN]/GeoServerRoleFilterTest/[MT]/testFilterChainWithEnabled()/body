@@ -8,8 +8,8 @@
   secMgr.saveFilter(config);
   MockHttpServletRequest request=createRequest("/foo");
   MockHttpServletResponse response=new MockHttpServletResponse();
-  MockFilterChain chain=new MockFilterChain();
-  chain.addFilter(getSecurityManager().loadFilter("roleConverter"));
+  Servlet servlet=EasyMock.createNiceMock(Servlet.class);
+  MockFilterChain chain=new MockFilterChain(servlet,getSecurityManager().loadFilter("roleConverter"));
   GeoServerSecurityFilterChainProxy filterChainProxy=GeoServerExtensions.bean(GeoServerSecurityFilterChainProxy.class);
   filterChainProxy.doFilter(request,response,chain);
   assertEquals(GeoServerRole.ANONYMOUS_ROLE.getAuthority(),response.getHeader("ROLES"));

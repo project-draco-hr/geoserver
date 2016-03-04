@@ -3,11 +3,11 @@
   assertXpathEvaluatesTo("0","count(/featureTypes/featureType)",getAsDOM("/rest/workspaces/gs/datastores/acme/featuretypes.xml"));
   byte[] dataToUpload=zippedPropertyFile("pds.properties");
   MockHttpServletResponse resp=putAsServletResponse("/rest/workspaces/gs/datastores/acme/file.properties",dataToUpload,"application/zip");
-  assertEquals("Upload into database datastore failed: " + resp.getOutputStreamContent(),201,resp.getStatusCode());
+  assertEquals("Upload into database datastore failed: " + resp.getContentAsString(),201,resp.getStatus());
   assertXpathEvaluatesTo("1","count(/featureTypes/featureType)",getAsDOM("/rest/workspaces/gs/datastores/acme/featuretypes.xml"));
   resp=putAsServletResponse("/rest/workspaces/gs/datastores/acme/featuretypes/pds.xml","<featureType><name>pds_alt</name></featureType>","application/xml");
-  assertEquals("Couldn't update featuretype settings: " + resp.getOutputStreamContent(),200,resp.getStatusCode());
+  assertEquals("Couldn't update featuretype settings: " + resp.getContentAsString(),200,resp.getStatus());
   resp=putAsServletResponse("/rest/workspaces/gs/datastores/acme/file.properties",dataToUpload,"application/zip");
-  assertEquals("Second upload to database datastore failed: " + resp.getOutputStreamContent(),201,resp.getStatusCode());
+  assertEquals("Second upload to database datastore failed: " + resp.getContentAsString(),201,resp.getStatus());
   assertXpathEvaluatesTo("1","count(/featureTypes/featureType)",getAsDOM("/rest/workspaces/gs/datastores/acme/featuretypes.xml"));
 }
