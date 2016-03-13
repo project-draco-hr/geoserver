@@ -2,10 +2,10 @@
   HttpServletRequest httpReq=(HttpServletRequest)req;
   HttpServletResponse httpRes=(HttpServletResponse)res;
   SingleSignOutHandler handler=getHandler();
-  if (handler.isLogoutRequest(httpReq)) {
+  if (isLogoutRequest(httpReq)) {
     if (singleSignOut) {
       LOGGER.info("Single Sign Out received from CAS server --> starting log out");
-      handler.destroySession(httpReq);
+      handler.process(httpReq,httpRes);
       LogoutFilterChain logOutChain=(LogoutFilterChain)getSecurityManager().getSecurityConfig().getFilterChain().getRequestChainByName("webLogout");
       logOutChain.doLogout(getSecurityManager(),httpReq,httpRes,getName());
     }
@@ -16,7 +16,7 @@
   if (SecurityContextHolder.getContext().getAuthentication() != null) {
     HttpSession session=httpReq.getSession(false);
     if (session != null && session.getAttribute(GeoServerCasConstants.CAS_ASSERTION_KEY) != null && singleSignOut) {
-      getHandler().recordSession(httpReq);
+      handler.process(httpReq,httpRes);
       if (LOGGER.isLoggable(Level.INFO))       LOGGER.info("Record HTTP Session " + session.getId() + " for CAS single sign out");
     }
   }

@@ -10,7 +10,9 @@
   ks.load(fis,password);
   KeyManagerFactory kmf=KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
   kmf.init(ks,password);
-  sslContext.init(kmf.getKeyManagers(),new TrustManager[]{trustManager},null);
+  TrustManagerFactory tmf=TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+  tmf.init(ks);
+  sslContext.init(kmf.getKeyManagers(),tmf.getTrustManagers(),null);
   httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext){
     public void configure(    HttpsParameters params){
       try {
