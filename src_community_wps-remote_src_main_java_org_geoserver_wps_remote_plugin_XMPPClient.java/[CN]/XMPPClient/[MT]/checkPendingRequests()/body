@@ -1,0 +1,29 @@
+{
+synchronized (pendingRequests) {
+    for (    RemoteRequestDescriptor request : pendingRequests) {
+      final String pid=request.getPid();
+      boolean isRequestValid=false;
+      for (      RemoteProcessClientListener process : getRemoteClientListeners()) {
+        if (process.getPID().equals(pid)) {
+          isRequestValid=true;
+          break;
+        }
+      }
+      if (!isRequestValid) {
+        pendingRequests.remove(request);
+        continue;
+      }
+      final Name serviceName=request.getServicename();
+      final String serviceJID=getFlattestMachine(serviceName);
+      if (serviceJID != null) {
+        final Object fixedInputs=getFixedInputs(request.getInput());
+        final String msg="topic=request&id=" + pid + "&baseURL="+ request.getBaseURL()+ "&message="+ byteArrayToURLString(pickle(fixedInputs));
+        request.getMetadata().put("serviceJID",serviceJID);
+        LOGGER.info("XMPPClient::execute - extracting the PID for the service JID [" + serviceJID + "] with inputs ["+ fixedInputs+ "]");
+        sendMessage(serviceJID,msg);
+        pendingRequests.remove(request);
+        continue;
+      }
+    }
+  }
+}
