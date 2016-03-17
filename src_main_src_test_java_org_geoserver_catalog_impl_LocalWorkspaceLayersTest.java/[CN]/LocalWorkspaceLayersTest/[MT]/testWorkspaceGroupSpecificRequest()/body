@@ -1,0 +1,36 @@
+{
+  CatalogFactory factory=catalog.getFactory();
+  WorkspaceInfo citeWs=catalog.getWorkspaceByName("cite");
+  LayerGroupInfo localGroup=factory.createLayerGroup();
+  localGroup.setName(LOCAL_GROUP);
+  localGroup.setWorkspace(citeWs);
+  localGroup.getLayers().add(getBuildingsLayer());
+  localGroup.getLayers().add(getBridgesLayer());
+  catalog.add(localGroup);
+  LayerGroupInfo globalGroup=factory.createLayerGroup();
+  globalGroup.setName(GLOBAL_GROUP);
+  globalGroup.getLayers().add(getAggregateGeoFeatureLayer());
+  catalog.add(globalGroup);
+  LocalWorkspace.set(citeWs);
+  LocalPublished.set(catalog.getLayerGroupByName(LOCAL_GROUP));
+  assertNull(catalog.getLayerByName(getLayerId(SystemTestData.BASIC_POLYGONS)));
+  assertNull(getAggregateGeoFeatureLayer());
+  assertNull(catalog.getLayerGroupByName(GLOBAL_GROUP));
+  assertNotNull(getBridgesLayer());
+  assertNotNull(getBuildingsLayer());
+  List<LayerInfo> layers=catalog.getLayers();
+  assertEquals(2,layers.size());
+  assertThat(layers,containsInAnyOrder(getBuildingsLayer(),getBridgesLayer()));
+  Request request=new Request();
+  request.setService("WMS");
+  request.setRequest("GetCapabilities");
+  Dispatcher.REQUEST.set(request);
+  assertNull(catalog.getLayerByName(getLayerId(SystemTestData.BASIC_POLYGONS)));
+  assertNull(getBridgesLayer());
+  assertNull(catalog.getLayerGroupByName(GLOBAL_GROUP));
+  assertNull(getBuildingsLayer());
+  assertNull(getAggregateGeoFeatureLayer());
+  assertEquals(0,catalog.getLayers().size());
+  LocalPublished.remove();
+  LocalWorkspace.remove();
+}

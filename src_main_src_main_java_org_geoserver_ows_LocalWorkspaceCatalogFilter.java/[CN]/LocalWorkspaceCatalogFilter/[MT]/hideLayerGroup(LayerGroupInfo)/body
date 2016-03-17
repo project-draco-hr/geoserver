@@ -1,4 +1,15 @@
 {
+  PublishedInfo local=LocalPublished.get();
+  if (local != null && local instanceof LayerGroupInfo) {
+    LayerGroupInfo lg=(LayerGroupInfo)local;
+    Request request=Dispatcher.REQUEST.get();
+    if (request != null && "WMS".equalsIgnoreCase(request.getService()) && "GetCapabilities".equals(request.getRequest()) && lg.getMode() == Mode.SINGLE) {
+      return !lg.equals(layerGroup);
+    }
+ else     if (!lg.equals(layerGroup) && !new LayerGroupHelper(lg).allGroups().contains(layerGroup)) {
+      return true;
+    }
+  }
   if (layerGroup.getWorkspace() == null) {
     if (LocalWorkspace.get() != null) {
       if (catalog.getLayerGroupByName(LocalWorkspace.get(),layerGroup.getName()) != null) {
