@@ -1,0 +1,28 @@
+{
+  RemoteMachineDescriptor candidateNode=null;
+  Double cpuLoadPercThreshold=DEFAULT_CPU_PERCENT_THRESHOLD;
+  Double vmemPercThreshold=DEFAULT_MEM_PERCENT_THRESHOLD;
+  if (getConfiguration().get("xmpp_cpu_perc_threshold") != null) {
+    cpuLoadPercThreshold=Double.valueOf(getConfiguration().get("xmpp_cpu_perc_threshold"));
+  }
+  if (getConfiguration().get("xmpp_mem_perc_threshold") != null) {
+    vmemPercThreshold=Double.valueOf(getConfiguration().get("xmpp_mem_perc_threshold"));
+  }
+synchronized (registeredProcessingMachines) {
+    LOGGER.info("XMPPClient::getFlattestMachine - scanning the connected remote services...");
+    for (    RemoteMachineDescriptor node : registeredProcessingMachines) {
+      if (node.getAvailable() && node.getServiceName().equals(serviceName)) {
+        if (node.getLoadAverage() >= cpuLoadPercThreshold || node.getMemPercUsed() >= vmemPercThreshold) {
+          continue;
+        }
+        if (candidateNode == null || (node.getLoadAverage() <= candidateNode.getLoadAverage() && (node.getLoadAverage() < candidateNode.getLoadAverage() || node.getMemPercUsed() < candidateNode.getMemPercUsed()))) {
+          candidateNode=node;
+        }
+      }
+    }
+  }
+  if (candidateNode != null) {
+    return candidateNode.getNodeJID();
+  }
+  return null;
+}

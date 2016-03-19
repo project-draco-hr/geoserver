@@ -1,26 +1,31 @@
 {
-  final String serviceJID=getFlattestMachine(name,(String)metadata.get("serviceJID"));
-  LOGGER.info("XMPPClient::execute - trying to send a request message to the service JID [" + serviceJID + "]");
-  if (metadata != null && serviceJID != null) {
-    metadata.put("serviceJID",serviceJID);
-    final Object fixedInputs=getFixedInputs(input);
-    LOGGER.info("XMPPClient::execute - extracting the PID for the service JID [" + serviceJID + "] with inputs ["+ fixedInputs+ "]");
-    final String pid=md5Java(serviceJID + System.nanoTime() + byteArrayToURLString(pickle(fixedInputs)));
-    Request request=Dispatcher.REQUEST.get();
-    metadata.put("request",request);
-    String baseURL=getGeoServer().getGlobal().getSettings().getProxyBaseUrl();
-    try {
-      if (baseURL == null) {
-        baseURL=RequestUtils.baseURL(request.getHttpRequest());
-      }
-      baseURL=ResponseUtils.buildURL(baseURL,"/",null,URLType.SERVICE);
-    }
- catch (    Exception e) {
-      LOGGER.warning("Could not acquire the GeoServer Base URL!");
-    }
-    String msg="topic=request&id=" + pid + "&baseURL="+ baseURL+ "&message="+ byteArrayToURLString(pickle(fixedInputs));
-    sendMessage(serviceJID,msg);
-    return pid;
+  LOGGER.info("XMPPClient::execute - searching available remote process machine for service [" + serviceName + "]");
+  if (metadata == null) {
+    throw new Exception("Could not send a Request Message to the Remote XMPP Client!");
   }
-  throw new Exception("Could not send a Request Message to the Remote XMPP Client!");
+  final Object fixedInputs=getFixedInputs(input);
+  final String pid=md5Java(serviceName.getNamespaceURI() + "." + serviceName.getLocalPart()+ System.nanoTime()+ byteArrayToURLString(pickle(fixedInputs)));
+  Request request=Dispatcher.REQUEST.get();
+  metadata.put("request",request);
+  String baseURL=getGeoServer().getGlobal().getSettings().getProxyBaseUrl();
+  try {
+    if (baseURL == null) {
+      baseURL=RequestUtils.baseURL(request.getHttpRequest());
+    }
+    baseURL=ResponseUtils.buildURL(baseURL,"/",null,URLType.SERVICE);
+  }
+ catch (  Exception e) {
+    LOGGER.warning("Could not acquire the GeoServer Base URL!");
+  }
+  final String msg="topic=request&id=" + pid + "&baseURL="+ baseURL+ "&message="+ byteArrayToURLString(pickle(fixedInputs));
+  final String serviceJID=getFlattestMachine(serviceName);
+  if (serviceJID != null) {
+    metadata.put("serviceJID",serviceJID);
+    LOGGER.info("XMPPClient::execute - extracting the PID for the service JID [" + serviceJID + "] with inputs ["+ fixedInputs+ "]");
+    sendMessage(serviceJID,msg);
+  }
+ else {
+    pendingRequests.add(new RemoteRequestDescriptor(serviceName,input,metadata,pid,baseURL));
+  }
+  return pid;
 }

@@ -1,0 +1,20 @@
+{
+synchronized (registeredProcessingMachines) {
+    List<String> nodeJIDs=new ArrayList<String>();
+    for (    RemoteMachineDescriptor node : registeredProcessingMachines) {
+      nodeJIDs.add(node.getNodeJID());
+      node.setAvailable(false);
+    }
+    for (    MultiUserChat mucServiceChannel : mucServiceChannels) {
+      for (      String occupant : mucServiceChannel.getOccupants()) {
+        if (!nodeJIDs.contains(occupant)) {
+          registeredProcessingMachines.add(new RemoteMachineDescriptor(occupant,extractServiceName(occupant),false,0.0,0.0));
+        }
+        String[] serviceJIDParts=occupant.split("/");
+        if (serviceJIDParts.length == 3 && (serviceJIDParts[2].startsWith("master") || serviceJIDParts[2].indexOf("@") < 0)) {
+          sendMessage(occupant,"topic=getloadavg");
+        }
+      }
+    }
+  }
+}

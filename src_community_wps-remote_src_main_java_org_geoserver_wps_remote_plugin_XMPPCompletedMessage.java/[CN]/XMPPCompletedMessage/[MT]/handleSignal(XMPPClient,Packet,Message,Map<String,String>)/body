@@ -4,15 +4,15 @@
   final String baseURL=signalArgs.get("baseURL");
   final XMPPOutputDefaultProducer outputProducer=new XMPPOutputDefaultProducer();
   if (msg != null && msg.equals("completed")) {
-    Map<String,Object> outputs=new HashMap<String,Object>();
+    final Map<String,Object> outputs=new HashMap<String,Object>();
     try {
       for (      Entry<String,String> result : signalArgs.entrySet()) {
         if (result.getKey().startsWith("result")) {
-          String serviceResultString=URLDecoder.decode(result.getValue(),"UTF-8");
-          JSONObject serviceResultJSON=(JSONObject)JSONSerializer.toJSON(serviceResultString);
-          Object output=xmppClient.unPickle(xmppClient.pickle(serviceResultJSON));
+          final String serviceResultString=URLDecoder.decode(result.getValue(),"UTF-8");
+          final JSONObject serviceResultJSON=(JSONObject)JSONSerializer.toJSON(serviceResultString);
+          final Object output=xmppClient.unPickle(xmppClient.pickle(serviceResultJSON));
           if (output instanceof Map) {
-            Map<String,Object> resultParams=(Map<String,Object>)output;
+            final Map<String,Object> resultParams=(Map<String,Object>)output;
             try {
               final Object value=(resultParams.get(result.getKey() + "_value") != null ? resultParams.get(result.getKey() + "_value") : null);
               final String type=(String)(resultParams.get(result.getKey() + "_type") != null ? resultParams.get(result.getKey() + "_type") : null);
@@ -28,7 +28,7 @@
  else                 if (resultParams.get(result.getKey() + "_pub") instanceof Boolean)                 publish=(Boolean)resultParams.get(result.getKey() + "_pub");
               }
               Object wpsOutputValue=outputProducer.produceOutput(value,type,pID,baseURL,xmppClient,publish,layerName,title,description,defaultStyle,targetWorkspace,metadata);
-              LOGGER.info(" - TEST - [XMPPCompletedMessage] wpsOutputValue:" + wpsOutputValue);
+              LOGGER.finest("[XMPPCompletedMessage] wpsOutputValue:" + wpsOutputValue);
               if (wpsOutputValue != null) {
                 outputs.put(result.getKey(),wpsOutputValue);
                 continue;

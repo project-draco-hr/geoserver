@@ -13,9 +13,9 @@
     pid=remoteClient.execute(name,input,metadata,monitor);
     LOGGER.info("Starting the execution of Remote Process with pId [" + pid + "]");
     running=pid != null;
-    if (running && (listener != null && !listener.isCanceled())) {
-      remoteClient.registerProcessClientListener(this);
-      doneSignal.await();
+    remoteClient.registerProcessClientListener(this);
+    while (running && (listener != null && !listener.isCanceled())) {
+      doneSignal.await(SIGNAL_TIMEOUT,TimeUnit.SECONDS);
     }
     LOGGER.info("Stopping the execution of Remote Process with pId [" + pid + "]");
   }
