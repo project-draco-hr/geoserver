@@ -1,5 +1,13 @@
 {
   persister.setCallback(new XStreamPersister.Callback(){
+    @Override protected CatalogInfo getCatalogObject(){
+      String workspace=getAttribute("workspace");
+      String coveragestore=getAttribute("coveragestore");
+      if (workspace == null || coveragestore == null) {
+        return null;
+      }
+      return catalog.getCoverageStoreByName(workspace,coveragestore);
+    }
     @Override protected void postEncodeCoverageStore(    CoverageStoreInfo cs,    HierarchicalStreamWriter writer,    MarshallingContext context){
       writer.startNode("coverages");
       encodeCollectionLink("coverages",writer,format);
