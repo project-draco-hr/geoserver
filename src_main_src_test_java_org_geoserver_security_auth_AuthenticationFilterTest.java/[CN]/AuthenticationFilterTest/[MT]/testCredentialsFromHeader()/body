@@ -14,7 +14,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   SecurityContext ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -23,7 +23,7 @@
   chain=new MockFilterChain();
   request.addHeader("X-Credentials","private-user=" + testUserName + "&private-pw="+ testPassword);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   Authentication auth=ctx.getAuthentication();
@@ -38,7 +38,7 @@
   chain=new MockFilterChain();
   request.addHeader("X-Credentials","private-user=" + testUserName + "&private-pw=wrongpass");
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -47,7 +47,7 @@
   chain=new MockFilterChain();
   request.addHeader("X-Credentials","private-user=wronguser&private-pw=" + testPassword);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -57,7 +57,7 @@
   String masterPassword=URLEncoder.encode(getMasterPassword(),"UTF-8");
   request.addHeader("X-Credentials","private-user=" + GeoServerUser.ROOT_USERNAME + "&private-pw="+ masterPassword);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   auth=ctx.getAuthentication();
   assertNotNull(auth);
@@ -70,7 +70,7 @@
   chain=new MockFilterChain();
   request.addHeader("X-Credentials","private-user=" + GeoServerUser.ROOT_USERNAME + "&private-pw=geoserver1");
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -81,7 +81,7 @@
   chain=new MockFilterChain();
   request.addHeader("X-Credentials","private-user=" + testUserName + "&private-pw="+ testPassword);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -91,6 +91,6 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   removeAnonymousFilter();
 }

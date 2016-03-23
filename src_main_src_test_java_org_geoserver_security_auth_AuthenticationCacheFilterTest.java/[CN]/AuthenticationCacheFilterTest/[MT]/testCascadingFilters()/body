@@ -10,7 +10,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getStatus());
   String tmp=response.getHeader("WWW-Authenticate");
   assertNotNull(tmp);
   assert(tmp.indexOf(GeoServerSecurityManager.REALM) != -1);
@@ -22,7 +22,7 @@
   String headerValue=clientDigestString(tmp,testUserName,testPassword,request.getMethod());
   request.addHeader("Authorization",headerValue);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   Authentication auth=getAuth(testFilterName2,testUserName,300,300);
   assertNotNull(auth);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -35,7 +35,7 @@
   chain=new MockFilterChain();
   request.addHeader("Authorization","Basic " + new String(Base64.encodeBytes((testUserName + ":" + testPassword).getBytes())));
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   auth=getAuth(testFilterName,testUserName,null,null);
   assertNotNull(auth);
   assertNull(SecurityContextHolder.getContext().getAuthentication());

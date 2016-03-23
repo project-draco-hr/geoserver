@@ -13,19 +13,19 @@
   MockHttpServletRequest request=createRequest("wms");
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
-  request.setupAddParameter("ticket","ST-blabla");
+  request.addParameter("ticket","ST-blabla");
   request.setQueryString("ticket=ST-blabla");
-  request.setHeader(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
+  request.addHeader(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getStatus());
   request=createRequest("wms");
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  request.setupAddParameter("ticket","ST-blabla");
-  request.setupAddParameter(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
+  request.addParameter("ticket","ST-blabla");
+  request.addParameter(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
   request.setQueryString("ticket=ST-blabla&" + GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT + "=false");
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getStatus());
   getCache().removeAll();
   String username="castest";
   CasFormAuthenticationHelper helper=new CasFormAuthenticationHelper(casServerURLPrefix,username,username);
@@ -38,17 +38,17 @@
     assertNotNull(proxyTicket);
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
-    request.setupAddParameter("ticket",proxyTicket);
+    request.addParameter("ticket",proxyTicket);
     if (i == 0) {
-      request.setupAddParameter(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
+      request.addParameter(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
       request.setQueryString(request.getQueryString() + "&ticket=" + proxyTicket+ "&"+ GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT+ "=false");
     }
  else {
-      request.setHeader(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
+      request.addHeader(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
       request.setQueryString(request.getQueryString() + "&ticket=" + proxyTicket);
     }
     getProxy().doFilter(request,response,chain);
-    assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    assertEquals(HttpServletResponse.SC_OK,response.getStatus());
     TestingAuthenticationCache cache=getCache();
     Authentication casAuth=cache.get(casProxyFilterName,username);
     assertNotNull(casAuth);
@@ -71,17 +71,17 @@
     assertNotNull(proxyTicket);
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
-    request.setupAddParameter("ticket",proxyTicket);
+    request.addParameter("ticket",proxyTicket);
     if (i == 0) {
-      request.setupAddParameter(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
+      request.addParameter(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
       request.setQueryString(request.getQueryString() + "&ticket=" + proxyTicket+ "&"+ GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT+ "=false");
     }
  else {
-      request.setHeader(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
+      request.addHeader(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
       request.setQueryString(request.getQueryString() + "&ticket=" + proxyTicket);
     }
     getProxy().doFilter(request,response,chain);
-    assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    assertEquals(HttpServletResponse.SC_OK,response.getStatus());
     TestingAuthenticationCache cache=getCache();
     Authentication casAuth=cache.get(casProxyFilterName,username);
     assertNotNull(casAuth);
@@ -102,11 +102,11 @@
   assertNotNull(proxyTicket);
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  request.setupAddParameter("ticket",proxyTicket);
-  request.setupAddParameter(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
+  request.addParameter("ticket",proxyTicket);
+  request.addParameter(GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT,"false");
   request.setQueryString("ticket=" + proxyTicket + "&"+ GeoServerCasAuthenticationEntryPoint.CAS_REDIRECT+ "=false");
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getStatus());
   TestingAuthenticationCache cache=getCache();
   Authentication casAuth=cache.get(casProxyFilterName,proxyTicket);
   assertNull(casAuth);
@@ -119,7 +119,7 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   removeAnonymousFilter();
   pconfig1.setProxyCallbackUrlPrefix(proxyCallbackUrlPrefix.toString());
   getSecurityManager().saveFilter(pconfig1);
@@ -132,9 +132,9 @@
   assertNotNull(proxyTicket);
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
-  request.setupAddParameter("ticket",proxyTicket);
+  request.addParameter("ticket",proxyTicket);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   cache=getCache();
   casAuth=cache.get(casProxyFilterName,username);
   assertNotNull(casAuth);

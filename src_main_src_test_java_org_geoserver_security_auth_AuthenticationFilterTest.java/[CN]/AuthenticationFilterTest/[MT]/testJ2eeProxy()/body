@@ -14,7 +14,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   SecurityContext ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -32,14 +32,18 @@
     }
 );
     if (rs == J2EERoleSource.Header) {
-      request.setHeader("roles",derivedRole + ";" + rootRole);
+      request.addHeader("roles",derivedRole + ";" + rootRole);
     }
     if (rs == J2EERoleSource.J2EE) {
-      request.setUserInRole(derivedRole,true);
-      request.setUserInRole(rootRole,false);
+      if (true) {
+        request.addUserRole(derivedRole);
+      }
+      if (false) {
+        request.addUserRole(rootRole);
+      }
     }
     getProxy().doFilter(request,response,chain);
-    assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    assertEquals(HttpServletResponse.SC_OK,response.getStatus());
     ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
     assertNotNull(ctx);
     auth=ctx.getAuthentication();
@@ -60,7 +64,7 @@
   }
 );
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   auth=ctx.getAuthentication();
@@ -80,10 +84,14 @@
     }
   }
 );
-  request.setUserInRole(derivedRole,true);
-  request.setUserInRole(rootRole,false);
+  if (true) {
+    request.addUserRole(derivedRole);
+  }
+  if (false) {
+    request.addUserRole(rootRole);
+  }
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   auth=ctx.getAuthentication();
@@ -98,6 +106,6 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   removeAnonymousFilter();
 }

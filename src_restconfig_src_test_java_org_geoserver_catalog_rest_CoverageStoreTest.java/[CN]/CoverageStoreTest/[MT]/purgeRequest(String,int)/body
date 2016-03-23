@@ -13,14 +13,14 @@
   FileInputStream fis=new FileInputStream(f);
   fis.read(zipData);
   MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/wcs/coveragestores/mosaicfordelete/file.imagemosaic",zipData,"application/zip");
-  assertEquals(201,response.getStatusCode());
+  assertEquals(201,response.getStatus());
   Document dom=getAsDOM("/rest/workspaces/wcs/coveragestores/mosaicfordelete.xml");
   assertXpathEvaluatesTo("true","/coverageStore/enabled",dom);
   GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
   final File storeDir=loader.url("data/wcs/mosaicfordelete");
   File[] content=storeDir.listFiles();
   assertEquals(11,content.length);
-  assertEquals(200,deleteAsServletResponse("/rest/workspaces/wcs/coveragestores/mosaicfordelete?recurse=true&purge=" + purge).getStatusCode());
+  assertEquals(200,deleteAsServletResponse("/rest/workspaces/wcs/coveragestores/mosaicfordelete?recurse=true&purge=" + purge).getStatus());
   content=storeDir.listFiles();
   assertEquals(expectedFiles,content.length);
   assertNull(catalog.getCoverageStoreByName("wcs","mosaicfordelete"));

@@ -10,12 +10,12 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain authchain=new MockFilterChain();
   getProxy().doFilter(request,response,authchain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   request=createRequest("/foo/bar?request=getCapabilities&a=b");
   response=new MockHttpServletResponse();
   authchain=new MockFilterChain();
   getProxy().doFilter(request,response,authchain);
-  assertTrue(response.wasRedirectSent());
+  assertTrue(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   String urlString=response.getHeader("Location");
   assertNotNull(urlString);
   assertTrue(urlString.startsWith("https"));

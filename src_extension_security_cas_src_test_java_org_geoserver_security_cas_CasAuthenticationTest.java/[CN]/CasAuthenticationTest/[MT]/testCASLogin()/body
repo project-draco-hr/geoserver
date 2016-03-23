@@ -15,8 +15,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertTrue(response.wasRedirectSent());
+  assertTrue(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   String redirectURL=response.getHeader("Location");
   assertTrue(redirectURL.contains(GeoServerCasConstants.LOGIN_URI));
   assertTrue(redirectURL.endsWith("bar"));
@@ -28,8 +27,7 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   String ticket=loginUsingTicket(helper,request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertFalse(response.wasRedirectSent());
+  assertFalse(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   SecurityContext ctx=(SecurityContext)request.getSession(false).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   Authentication auth=ctx.getAuthentication();
@@ -49,8 +47,7 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   ticket=loginUsingTicket(helper,request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertFalse(response.wasRedirectSent());
+  assertFalse(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   auth=ctx.getAuthentication();
@@ -72,8 +69,7 @@
   chain=new MockFilterChain();
   ticket=loginUsingTicket(helper,request,response,chain);
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertFalse(response.wasRedirectSent());
+  assertFalse(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   auth=ctx.getAuthentication();
   assertNotNull(auth);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -91,8 +87,7 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   ticket=loginUsingTicket(helper,request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertTrue(response.wasRedirectSent());
+  assertTrue(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   redirectURL=response.getHeader("Location");
   assertTrue(redirectURL.contains("login"));
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
@@ -106,7 +101,7 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   removeAnonymousFilter();
   username="castest";
   password=username;
@@ -117,11 +112,10 @@
   chain=new MockFilterChain();
   ticket=helper.getServiceTicket(new URL(request.getRequestURL().toString()));
   ticket+="ST-A";
-  request.setupAddParameter("ticket",ticket);
+  request.addParameter("ticket",ticket);
   request.setQueryString("ticket=" + ticket);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
-  assertTrue(response.wasRedirectSent());
+  assertTrue(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
   redirectURL=response.getHeader("Location");
   assertTrue(redirectURL.contains(GeoServerCasConstants.LOGIN_URI));
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
@@ -139,10 +133,10 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   ticket=helper.getServiceTicket(new URL(request.getRequestURL().toString()));
-  request.setupAddParameter("ticket",ticket);
+  request.addParameter("ticket",ticket);
   request.setQueryString("ticket=" + ticket);
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNotNull(ctx);
   PreAuthenticatedAuthenticationToken casAuth=(PreAuthenticatedAuthenticationToken)ctx.getAuthentication();

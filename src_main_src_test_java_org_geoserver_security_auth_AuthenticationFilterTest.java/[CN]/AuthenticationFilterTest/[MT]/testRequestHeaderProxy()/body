@@ -17,7 +17,7 @@
   MockHttpServletResponse response=new MockHttpServletResponse();
   MockFilterChain chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   SecurityContext ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -27,12 +27,12 @@
     request=createRequest("/foo/bar");
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
-    request.setHeader("principal",testUserName);
+    request.addHeader("principal",testUserName);
     if (rs.equals(PreAuthenticatedUserNameRoleSource.Header)) {
-      request.setHeader("roles",derivedRole + ";" + rootRole);
+      request.addHeader("roles",derivedRole + ";" + rootRole);
     }
     getProxy().doFilter(request,response,chain);
-    assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    assertEquals(HttpServletResponse.SC_OK,response.getStatus());
     ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
     assertNotNull(ctx);
     Authentication auth=ctx.getAuthentication();
@@ -50,9 +50,9 @@
     request=createRequest("/foo/bar");
     response=new MockHttpServletResponse();
     chain=new MockFilterChain();
-    request.setHeader("principal","unknwon");
+    request.addHeader("principal","unknwon");
     getProxy().doFilter(request,response,chain);
-    assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+    assertEquals(HttpServletResponse.SC_OK,response.getStatus());
     ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
     assertNotNull(ctx);
     Authentication auth=ctx.getAuthentication();
@@ -65,11 +65,11 @@
   config.setRoleSource(PreAuthenticatedUserNameRoleSource.UserGroupService);
   getSecurityManager().saveFilter(config);
   request=createRequest("/foo/bar");
-  request.setHeader("principal",testUserName);
+  request.addHeader("principal",testUserName);
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
   ctx=(SecurityContext)request.getSession(true).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
   assertNull(ctx);
   assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -79,6 +79,6 @@
   response=new MockHttpServletResponse();
   chain=new MockFilterChain();
   getProxy().doFilter(request,response,chain);
-  assertEquals(HttpServletResponse.SC_OK,response.getErrorCode());
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
   removeAnonymousFilter();
 }
