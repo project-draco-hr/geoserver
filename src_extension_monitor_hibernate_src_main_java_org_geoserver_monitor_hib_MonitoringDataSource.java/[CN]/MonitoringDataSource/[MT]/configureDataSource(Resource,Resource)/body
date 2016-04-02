@@ -2,10 +2,13 @@
   Properties db=new Properties();
   if (dbprops == null) {
     dbprops=monitoringDir.get("db.properties");
-    InputStream in=getClass().getResourceAsStream("db.properties");
-    IOUtils.copy(in,dbprops.out());
-    db.load(getClass().getResourceAsStream("db.properties"));
-  }
+    try (InputStream in=getClass().getResourceAsStream("db.properties");OutputStream out=dbprops.out()){
+      IOUtils.copy(in,out);
+    }
+     try (InputStream in=getClass().getResourceAsStream("db.properties")){
+      db.load(in);
+    }
+   }
  else {
     try (InputStream in=dbprops.in()){
       db.load(in);
