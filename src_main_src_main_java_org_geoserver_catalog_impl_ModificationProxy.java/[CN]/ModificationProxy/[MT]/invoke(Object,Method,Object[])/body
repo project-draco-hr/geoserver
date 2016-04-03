@@ -39,6 +39,11 @@
   }
   try {
     Object result=method.invoke(proxyObject,args);
+    if (result instanceof Proxy && Proxy.getInvocationHandler(result) instanceof ResolvingProxy) {
+      ResolvingProxy rp=ProxyUtils.handler(result,ResolvingProxy.class);
+      final Catalog catalog=(Catalog)GeoServerExtensions.bean("catalog");
+      result=rp.resolve(catalog,result);
+    }
     if (result != null && shouldProxyProperty(result.getClass())) {
       Object o=ModificationProxy.unwrap(result);
       if (o == result) {
