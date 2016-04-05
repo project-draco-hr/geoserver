@@ -1,0 +1,23 @@
+{
+  ModuleStatus status=createMock("testStatus",ModuleStatus.class);
+  expect(status.getName()).andReturn("test").atLeastOnce();
+  ModuleStatusImpl impl=new ModuleStatusImpl();
+  impl.setName("default");
+  ApplicationContext appContext=createMock(ApplicationContext.class);
+  expect(appContext.getBean("testStatus")).andStubReturn(status);
+  expect(appContext.getBean("defaultStatus")).andStubReturn(impl);
+  GeoServerExtensions gse=new GeoServerExtensions();
+  gse.setApplicationContext(appContext);
+  expect(appContext.getBeanNamesForType(ExtensionFilter.class)).andReturn(new String[0]);
+  expect(appContext.getBeanNamesForType(ModuleStatus.class)).andStubReturn(new String[]{"testStatus","defaultStatus"});
+  expect(appContext.isSingleton((String)anyObject())).andReturn(true).anyTimes();
+  expect(appContext.getBeanNamesForType(ExtensionProvider.class)).andReturn(new String[0]);
+  EasyMock.replay(status,appContext);
+  List<ModuleStatus> list=gse.extensions(ModuleStatus.class);
+  assertEquals("test interfact mock","test",status.getName());
+  assertEquals("found module status",2,list.size());
+  for (  ModuleStatus s : list) {
+    System.out.println(s.getName());
+  }
+  EasyMock.verify(status);
+}
