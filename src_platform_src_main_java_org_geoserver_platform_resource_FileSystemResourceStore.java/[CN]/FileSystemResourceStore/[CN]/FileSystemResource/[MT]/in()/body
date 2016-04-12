@@ -4,11 +4,34 @@
     throw new IllegalStateException("File not found " + actualFile);
   }
   final Lock lock=lock();
+  final Throwable tracer;
+  if (TRACE_ENABLED) {
+    tracer=new Exception();
+    tracer.fillInStackTrace();
+  }
+ else {
+    tracer=null;
+  }
   try {
     return new FileInputStream(file){
+      boolean closed=false;
       @Override public void close() throws IOException {
+        closed=true;
         super.close();
         lock.release();
+      }
+      @Override protected void finalize() throws IOException {
+        if (!closed) {
+          String warn="There is code leaving resource input streams open, locks around them might not be cleared! ";
+          if (!TRACE_ENABLED) {
+            warn+="Add -D" + TRACE_ENABLED + "=true to your JVM options to get a full stack trace of the code that acquired the input stream";
+          }
+          LOGGER.warning(warn);
+          if (TRACE_ENABLED) {
+            LOGGER.log(Level.WARNING,"The unclosed input stream originated on this stack trace",tracer);
+          }
+        }
+        super.finalize();
       }
     }
 ;
