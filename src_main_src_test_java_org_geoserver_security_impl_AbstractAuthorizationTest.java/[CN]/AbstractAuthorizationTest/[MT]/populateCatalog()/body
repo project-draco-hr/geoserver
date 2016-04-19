@@ -1,14 +1,24 @@
 {
-  layers=Arrays.asList(statesLayer,roadsLayer,landmarksLayer,basesLayer,arcGridLayer);
-  featureTypes=new ArrayList<FeatureTypeInfo>();
-  coverages=new ArrayList<CoverageInfo>();
+  layers=Arrays.asList(statesLayer,roadsLayer,landmarksLayer,basesLayer,arcGridLayer,cascadedLayer);
+  featureTypes=new ArrayList<>();
+  coverages=new ArrayList<>();
+  wmsLayers=new ArrayList<>();
   for (  LayerInfo layer : layers) {
-    if (layer.getResource() instanceof FeatureTypeInfo)     featureTypes.add((FeatureTypeInfo)layer.getResource());
- else     coverages.add((CoverageInfo)layer.getResource());
+    if (layer.getResource() instanceof FeatureTypeInfo) {
+      featureTypes.add((FeatureTypeInfo)layer.getResource());
+    }
+ else     if (layer.getResource() instanceof WMSLayerInfo) {
+      wmsLayers.add((WMSLayerInfo)layer.getResource());
+    }
+ else {
+      coverages.add((CoverageInfo)layer.getResource());
+    }
   }
   workspaces=Arrays.asList(toppWs,nurcWs);
   catalog=createNiceMock(Catalog.class);
   expect(catalog.getFeatureTypeByName("topp:states")).andReturn(states).anyTimes();
+  expect(catalog.getLayerByName("topp:cascaded")).andReturn(cascadedLayer).anyTimes();
+  expect(catalog.getResourceByName("topp:cascaded",WMSLayerInfo.class)).andReturn(cascaded).anyTimes();
   expect(catalog.getResourceByName("topp:states",FeatureTypeInfo.class)).andReturn(states).anyTimes();
   expect(catalog.getLayerByName("topp:states")).andReturn(statesLayer).anyTimes();
   expect(catalog.getCoverageByName("nurc:arcgrid")).andReturn(arcGrid).anyTimes();
