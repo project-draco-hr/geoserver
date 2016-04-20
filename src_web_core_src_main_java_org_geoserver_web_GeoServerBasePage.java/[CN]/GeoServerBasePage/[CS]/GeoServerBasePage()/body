@@ -20,7 +20,26 @@
   String faviconUrl=RequestCycle.get().urlFor(faviconReference,null).toString();
   add(new ExternalLink("faviconLink",faviconUrl,null));
   add(new Label("pageTitle",getPageTitle()));
-  WebMarkupContainer loginForm=new WebMarkupContainer("loginform");
+  WebMarkupContainer loginForm=new WebMarkupContainer("loginform"){
+    protected void onComponentTag(    org.apache.wicket.markup.ComponentTag tag){
+      String path=getRequest().getUrl().getPath();
+      StringBuilder loginPath=new StringBuilder();
+      if (path.isEmpty()) {
+        loginPath.append("../j_spring_security_check");
+      }
+ else {
+        String[] pathElements=path.split("/");
+        for (        String pathElement : pathElements) {
+          if (!pathElement.isEmpty()) {
+            loginPath.append("../");
+          }
+        }
+        loginPath.append("j_spring_security_check");
+      }
+      tag.put("action",loginPath);
+    }
+  }
+;
   add(loginForm);
   final Authentication user=GeoServerSession.get().getAuthentication();
   final boolean anonymous=user == null || user instanceof AnonymousAuthenticationToken;
