@@ -1,0 +1,17 @@
+{
+  GWCSettingsPage page=new GWCSettingsPage();
+  tester.startPage(page);
+  FormTester form=tester.newFormTester("form");
+  form.setValue("cachingOptionsPanel:container:configs:blobstores:innerCachingEnabled",true);
+  form.submit("submit");
+  tester.startPage(new GWCSettingsPage());
+  tester.assertComponent("form:cachingOptionsPanel:container:configs:blobstores:container:caches",DropDownChoice.class);
+  DropDownChoice<String> choice=(DropDownChoice<String>)tester.getComponentFromLastRenderedPage("form:cachingOptionsPanel:container:configs:blobstores:container:caches");
+  assertTrue(choice.getChoices().get(0).equalsIgnoreCase(GuavaCacheProvider.class.toString()));
+  DropDownChoice<String> evictionPoliciesDropDown=(DropDownChoice<String>)tester.getComponentFromLastRenderedPage("form:cachingOptionsPanel:container:configs:blobstores:container:cacheConfContainer:policy");
+  List evictionPolicies=evictionPoliciesDropDown.getChoices();
+  assertTrue(evictionPolicies.size() == 3);
+  assertTrue(evictionPolicies.contains(CacheConfiguration.EvictionPolicy.NULL));
+  assertTrue(evictionPolicies.contains(CacheConfiguration.EvictionPolicy.EXPIRE_AFTER_ACCESS));
+  assertTrue(evictionPolicies.contains(CacheConfiguration.EvictionPolicy.EXPIRE_AFTER_WRITE));
+}

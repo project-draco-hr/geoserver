@@ -11,28 +11,14 @@
   hardMemory.add(new MinimumLongValidator("BlobStorePanel.invalidHardMemory"));
   final TextField<Long> evictionTime=new TextField<Long>("evictionTime",evictionTimeValue);
   evictionTime.setType(Long.class).setOutputMarkupId(true).setEnabled(true);
-  final DropDownChoice<EvictionPolicy> policyDropDown=new DropDownChoice<EvictionPolicy>("policy",policy,Arrays.asList(EvictionPolicy.values()));
-  policyDropDown.setOutputMarkupId(true).setEnabled(true);
-  policyDropDown.add(new IValidator<EvictionPolicy>(){
-    @Override public void validate(    IValidatable<EvictionPolicy> validatable){
-      EvictionPolicy value=validatable.getValue();
-      if (value != EvictionPolicy.NULL) {
-        final ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
-        if (store != null) {
-          CacheProvider cache=store.getCacheProviders().get(key);
-          if (cache != null) {
-            List<EvictionPolicy> policies=cache.getSupportedPolicies();
-            if (policies != null && !policies.contains(value)) {
-              ValidationError error=new ValidationError();
-              error.setMessage(new ParamResourceModel("BlobStorePanel.invalidPolicy",null,"").getObject());
-              validatable.error(error);
-            }
-          }
-        }
-      }
-    }
+  List<EvictionPolicy> evictionPolicies=Arrays.asList(EvictionPolicy.values());
+  ConfigurableBlobStore store=GeoServerExtensions.bean(ConfigurableBlobStore.class);
+  if (store != null) {
+    CacheProvider cache=store.getCacheProviders().get(key);
+    evictionPolicies=cache.getSupportedPolicies();
   }
-);
+  final DropDownChoice<EvictionPolicy> policyDropDown=new DropDownChoice<EvictionPolicy>("policy",policy,evictionPolicies);
+  policyDropDown.setOutputMarkupId(true).setEnabled(true);
   final TextField<Integer> textConcurrency=new TextField<Integer>("concurrencyLevel",concurrencyLevel);
   textConcurrency.setType(Integer.class).setOutputMarkupId(true).setEnabled(true);
   textConcurrency.add(new MinimumConcurrencyValidator());
