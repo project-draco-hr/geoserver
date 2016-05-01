@@ -1,5 +1,6 @@
 {
   WorkspaceInfo ws=null;
+  LayerGroupInfo lg=null;
   if (request.context != null) {
     String first=request.context;
     String last=null;
@@ -9,6 +10,7 @@
       first=first.substring(0,slash);
     }
     ws=catalog.getWorkspaceByName(first);
+    lg=catalog.getLayerGroupByName(first);
     if (ws != null) {
       LocalWorkspace.set(ws);
       if (last != null) {
@@ -16,12 +18,21 @@
         if (ns != null) {
           LayerInfo l=catalog.getLayerByName(new NameImpl(ns.getURI(),last));
           if (l != null) {
-            LocalLayer.set(l);
+            LocalPublished.set(l);
           }
  else {
+            lg=catalog.getLayerGroupByName(ws,last);
+            if (lg != null) {
+              LocalPublished.set(lg);
+            }
+ else {
+            }
           }
         }
       }
+    }
+ else     if (lg != null && lg.getWorkspace() == null) {
+      LocalPublished.set(lg);
     }
  else {
       if (!gs.getGlobal().isGlobalServices()) {

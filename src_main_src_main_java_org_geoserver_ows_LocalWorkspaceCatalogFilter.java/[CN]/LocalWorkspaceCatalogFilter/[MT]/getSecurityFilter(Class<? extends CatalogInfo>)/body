@@ -1,12 +1,12 @@
 {
   WorkspaceInfo localWS=LocalWorkspace.get();
-  LayerInfo localLayer=LocalLayer.get();
-  if (localWS == null && localLayer == null) {
+  PublishedInfo localPublished=LocalPublished.get();
+  if (localWS == null && localPublished == null) {
     return Predicates.acceptAll();
   }
   if (ResourceInfo.class.isAssignableFrom(clazz)) {
     Filter localLayerFilter;
-    if (localLayer == null) {
+    if (localPublished == null) {
       localLayerFilter=Predicates.acceptAll();
     }
  else {
@@ -20,16 +20,27 @@
   }
  else   if (LayerGroupInfo.class.isAssignableFrom(clazz)) {
     Filter filter=standardFilter(clazz);
-    Function subLayersHidden=new InternalVolatileFunction(){
-      @Override public Boolean evaluate(      Object object){
-        return !subLayersHidden((LayerGroupInfo)object);
-      }
-    }
+    if (localPublished != null) {
+      if (localPublished instanceof LayerInfo) {
+        Function subLayersHidden=new InternalVolatileFunction(){
+          @Override public Boolean evaluate(          Object object){
+            return !subLayersHidden((LayerGroupInfo)object);
+          }
+        }
 ;
-    FilterFactory factory=Predicates.factory;
-    filter=Predicates.and(filter,factory.equals(factory.literal(Boolean.TRUE),subLayersHidden));
-    if (localLayer != null) {
-      filter=Predicates.and(filter,Predicates.equal("id",localLayer.getId()));
+        FilterFactory factory=Predicates.factory;
+        filter=Predicates.and(filter,factory.equals(factory.literal(Boolean.TRUE),subLayersHidden));
+        Predicates.and(filter,Predicates.equal("id",localPublished.getId()));
+      }
+ else       if (localPublished instanceof LayerGroupInfo) {
+        LayerGroupInfo lg=(LayerGroupInfo)localPublished;
+        List<LayerGroupInfo> groups=new LayerGroupHelper(lg).allGroups();
+        List<Filter> groupIdFilters=new ArrayList<>();
+        for (        LayerGroupInfo group : groups) {
+          groupIdFilters.add(Predicates.equal("id",group.getId()));
+        }
+        return Predicates.or(groupIdFilters);
+      }
     }
     return filter;
   }
@@ -37,11 +48,29 @@
     return standardFilter(clazz);
   }
  else   if (LayerInfo.class.isAssignableFrom(clazz)) {
-    if (localLayer == null) {
+    if (localPublished == null) {
       return Predicates.acceptAll();
     }
+ else     if (localPublished instanceof LayerInfo) {
+      return Predicates.equal("id",localPublished.getId());
+    }
+ else     if (localPublished instanceof LayerGroupInfo) {
+      LayerGroupInfo lg=(LayerGroupInfo)localPublished;
+      Request request=Dispatcher.REQUEST.get();
+      if (request != null && "WMS".equalsIgnoreCase(request.getService()) && "GetCapabilities".equals(request.getRequest()) && lg.getMode() == Mode.SINGLE) {
+        return Predicates.acceptNone();
+      }
  else {
-      return Predicates.equal("id",localLayer.getId());
+        List<LayerInfo> layers=new LayerGroupHelper(lg).allLayers();
+        List<Filter> layersIdFilters=new ArrayList<>();
+        for (        LayerInfo layer : layers) {
+          layersIdFilters.add(Predicates.equal("id",layer.getId()));
+        }
+        return Predicates.or(layersIdFilters);
+      }
+    }
+ else {
+      throw new RuntimeException("Unexpected local published reference of type " + localPublished.getClass());
     }
   }
  else   if (NamespaceInfo.class.isAssignableFrom(clazz)) {

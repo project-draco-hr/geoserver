@@ -1,3 +1,22 @@
 {
-  return LocalLayer.get() != null && !LocalLayer.get().equals(layer);
+  PublishedInfo local=LocalPublished.get();
+  if (local == null) {
+    return false;
+  }
+ else   if (local instanceof LayerInfo) {
+    return !local.equals(layer);
+  }
+ else   if (local instanceof LayerGroupInfo) {
+    LayerGroupInfo lg=(LayerGroupInfo)local;
+    Request request=Dispatcher.REQUEST.get();
+    if (request != null && "WMS".equalsIgnoreCase(request.getService()) && "GetCapabilities".equals(request.getRequest()) && lg.getMode() == Mode.SINGLE) {
+      return true;
+    }
+ else {
+      return !new LayerGroupHelper(lg).allLayers().contains(layer);
+    }
+  }
+ else {
+    throw new RuntimeException("Unknown PublishedInfo of type " + local.getClass());
+  }
 }

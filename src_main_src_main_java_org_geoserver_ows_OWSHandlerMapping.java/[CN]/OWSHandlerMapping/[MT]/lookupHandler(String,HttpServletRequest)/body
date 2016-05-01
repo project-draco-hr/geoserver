@@ -7,13 +7,21 @@
       String first=urlPath.substring(i,j);
       String last=urlPath.substring(j);
       if (catalog.getWorkspaceByName(first) != null) {
+        String wsName=first;
         j=last.indexOf("/",1);
         if (j != -1) {
           first=last.substring(1,j);
           if (catalog.getLayerByName(first) != null) {
             last=last.substring(j);
           }
+ else           if (catalog.getLayerGroupByName(wsName,first) != null) {
+            last=last.substring(j);
+          }
         }
+        h=super.lookupHandler(last,request);
+      }
+ else       if (catalog.getLayerGroupByName(first) != null) {
+        LayerGroupInfo lg=catalog.getLayerGroupByName(first);
         h=super.lookupHandler(last,request);
       }
     }
