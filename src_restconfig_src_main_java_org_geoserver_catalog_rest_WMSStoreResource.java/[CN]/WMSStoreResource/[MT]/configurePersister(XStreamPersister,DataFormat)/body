@@ -1,5 +1,13 @@
 {
   persister.setCallback(new XStreamPersister.Callback(){
+    @Override protected CatalogInfo getCatalogObject(){
+      String workspace=getAttribute("workspace");
+      String wmsstore=getAttribute("wmsstore");
+      if (workspace == null || wmsstore == null) {
+        return null;
+      }
+      return catalog.getStoreByName(workspace,wmsstore,WMSStoreInfo.class);
+    }
     @Override protected void postEncodeWMSStore(    WMSStoreInfo ds,    HierarchicalStreamWriter writer,    MarshallingContext context){
       writer.startNode("wmsLayers");
       encodeCollectionLink("wmslayers",writer);

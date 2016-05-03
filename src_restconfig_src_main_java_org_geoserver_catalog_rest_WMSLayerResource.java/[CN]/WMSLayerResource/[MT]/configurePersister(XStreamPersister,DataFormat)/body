@@ -1,6 +1,19 @@
 {
   persister.setHideFeatureTypeAttributes();
   persister.setCallback(new XStreamPersister.Callback(){
+    @Override protected CatalogInfo getCatalogObject(){
+      String workspace=getAttribute("workspace");
+      String wmsstore=getAttribute("wmsstore");
+      String wmslayer=getAttribute("wmslayer");
+      if (workspace == null || wmsstore == null || wmslayer == null) {
+        return null;
+      }
+      WMSStoreInfo wms=catalog.getStoreByName(workspace,wmsstore,WMSStoreInfo.class);
+      if (wms == null) {
+        return null;
+      }
+      return catalog.getResourceByStore(wms,wmslayer,WMSLayerInfo.class);
+    }
     @Override protected void postEncodeReference(    Object obj,    String ref,    String prefix,    HierarchicalStreamWriter writer,    MarshallingContext context){
       if (obj instanceof NamespaceInfo) {
         NamespaceInfo ns=(NamespaceInfo)obj;

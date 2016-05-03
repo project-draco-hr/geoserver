@@ -1,5 +1,13 @@
 {
   persister.setCallback(new XStreamPersister.Callback(){
+    @Override protected CatalogInfo getCatalogObject(){
+      String workspace=getAttribute("workspace");
+      String datastore=getAttribute("datastore");
+      if (workspace == null || datastore == null) {
+        return null;
+      }
+      return catalog.getDataStoreByName(workspace,datastore);
+    }
     @Override protected void postEncodeDataStore(    DataStoreInfo ds,    HierarchicalStreamWriter writer,    MarshallingContext context){
       writer.startNode("featureTypes");
       encodeCollectionLink("featuretypes",writer);

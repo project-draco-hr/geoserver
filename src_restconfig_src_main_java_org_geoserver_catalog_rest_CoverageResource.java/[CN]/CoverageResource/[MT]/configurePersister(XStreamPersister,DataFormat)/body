@@ -1,5 +1,18 @@
 {
   persister.setCallback(new XStreamPersister.Callback(){
+    @Override protected CatalogInfo getCatalogObject(){
+      String workspace=getAttribute("workspace");
+      String coveragestore=getAttribute("coveragestore");
+      String coverage=getAttribute("coverage");
+      if (workspace == null || coveragestore == null || coverage == null) {
+        return null;
+      }
+      CoverageStoreInfo cs=catalog.getCoverageStoreByName(workspace,coveragestore);
+      if (cs == null) {
+        return null;
+      }
+      return catalog.getCoverageByCoverageStore(cs,coverage);
+    }
     @Override protected void postEncodeReference(    Object obj,    String ref,    String prefix,    HierarchicalStreamWriter writer,    MarshallingContext context){
       if (obj instanceof NamespaceInfo) {
         NamespaceInfo ns=(NamespaceInfo)obj;

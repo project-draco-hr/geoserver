@@ -1,0 +1,19 @@
+{
+  WMSStoreInfo wsi=catalog.getStoreByName("sf","demo",WMSStoreInfo.class);
+  wsi.setEnabled(true);
+  catalog.save(wsi);
+  assertTrue(wsi.isEnabled());
+  int maxConnections=wsi.getMaxConnections();
+  int readTimeout=wsi.getReadTimeout();
+  int connectTimeout=wsi.getConnectTimeout();
+  boolean useConnectionPooling=wsi.isUseConnectionPooling();
+  String xml="<wmsStore>" + "<name>demo</name>" + "</wmsStore>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/sf/wmsstores/demo",xml,"text/xml");
+  assertEquals(200,response.getStatus());
+  wsi=catalog.getStoreByName("sf","demo",WMSStoreInfo.class);
+  assertTrue(wsi.isEnabled());
+  assertEquals(maxConnections,wsi.getMaxConnections());
+  assertEquals(readTimeout,wsi.getReadTimeout());
+  assertEquals(connectTimeout,wsi.getConnectTimeout());
+  assertEquals(useConnectionPooling,wsi.isUseConnectionPooling());
+}

@@ -1,0 +1,13 @@
+{
+  WMSLayerInfo wli=catalog.getResourceByName("sf","states",WMSLayerInfo.class);
+  wli.setEnabled(true);
+  catalog.save(wli);
+  assertTrue(wli.isEnabled());
+  boolean isAdvertised=wli.isAdvertised();
+  String xml="<wmsLayer>" + "<title>Lots of states here</title>" + "</wmsLayer>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/workspaces/sf/wmsstores/demo/wmslayers/states",xml,"text/xml");
+  assertEquals(200,response.getStatus());
+  wli=catalog.getResourceByName("sf","states",WMSLayerInfo.class);
+  assertTrue(wli.isEnabled());
+  assertEquals(isAdvertised,wli.isAdvertised());
+}
