@@ -12,4 +12,18 @@
   GeoServerSecurityManager securityManager=getBeanOfType(GeoServerSecurityManager.class);
   setRootRequestMapper(new DynamicCryptoMapper(getRootRequestMapper(),securityManager,this));
   getRequestCycleListeners().add(new CallbackRequestCycleListener(this));
+  WebUIMode webUIMode=getGeoServer().getGlobal().getWebUIMode();
+  if (webUIMode == null) {
+    webUIMode=WebUIMode.DEFAULT;
+  }
+switch (webUIMode) {
+case DO_NOT_REDIRECT:
+    getRequestCycleSettings().setRenderStrategy(RenderStrategy.ONE_PASS_RENDER);
+  break;
+case REDIRECT:
+getRequestCycleSettings().setRenderStrategy(RenderStrategy.REDIRECT_TO_BUFFER);
+break;
+case DEFAULT:
+getRequestCycleSettings().setRenderStrategy(defaultIsRedirect ? RenderStrategy.REDIRECT_TO_BUFFER : RenderStrategy.ONE_PASS_RENDER);
+}
 }
