@@ -1,5 +1,9 @@
 {
-  DirContextOperations roleObj=LDAPUtils.getLdapTemplateInContext(ctx,template).searchForSingleEntry(groupSearchBase,"cn={0}",new String[]{role.toString()});
+  String roleStr=role.toString();
+  if (roleStr.startsWith("ROLE_")) {
+    roleStr=roleStr.substring(5);
+  }
+  DirContextOperations roleObj=LDAPUtils.getLdapTemplateInContext(ctx,template).searchForSingleEntry(groupSearchBase,groupNameFilter,new String[]{roleStr});
   if (roleObj != null) {
     Object[] usernames=roleObj.getObjectAttributes(groupMembershipAttribute);
     if (usernames != null) {
@@ -9,10 +13,7 @@
         if (m.matches()) {
           user=m.group(1);
         }
-        if (lookupUserForDn) {
-          user=getUserNameFromMembership(user);
-        }
-        users.add(user);
+        users.add(getUserNameFromMembership(user));
       }
     }
   }

@@ -1,0 +1,17 @@
+{
+  final AtomicReference<GeoServerUserGroup> group=new AtomicReference<GeoServerUserGroup>();
+  authenticateIfNeeded(new AuthenticatedLdapEntryContextCallback(){
+    @Override public void executeWithContext(    DirContext ctx,    LdapEntryIdentification ldapEntryIdentification){
+      try {
+        DirContextOperations dco=LDAPUtils.getLdapTemplateInContext(ctx,template).searchForSingleEntry(groupSearchBase,groupNameFilter,new String[]{groupname});
+        if (dco != null) {
+          group.set(new GeoServerUserGroup(dco.getStringAttribute(groupNameAttribute)));
+        }
+      }
+ catch (      IncorrectResultSizeDataAccessException e) {
+      }
+    }
+  }
+);
+  return group.get();
+}

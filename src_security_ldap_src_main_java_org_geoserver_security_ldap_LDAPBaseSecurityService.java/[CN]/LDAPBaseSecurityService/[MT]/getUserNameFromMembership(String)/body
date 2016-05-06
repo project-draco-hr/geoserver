@@ -1,0 +1,18 @@
+{
+  final AtomicReference<String> userName=new AtomicReference<String>(user);
+  if (lookupUserForDn) {
+    authenticateIfNeeded(new AuthenticatedLdapEntryContextCallback(){
+      @Override public void executeWithContext(      DirContext ctx,      LdapEntryIdentification ldapEntryIdentification){
+        DirContextOperations obj=(DirContextOperations)LDAPUtils.getLdapTemplateInContext(ctx,template).lookup(user);
+        String name=obj.getObjectAttribute(userNameAttribute).toString();
+        Matcher m=userNamePattern.matcher(name);
+        if (m.matches()) {
+          name=m.group(1);
+        }
+        userName.set(name);
+      }
+    }
+);
+  }
+  return userName.get();
+}

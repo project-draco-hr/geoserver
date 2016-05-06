@@ -1,0 +1,13 @@
+{
+  final SortedSet<GeoServerUserGroup> groups=new TreeSet<GeoServerUserGroup>();
+  authenticateIfNeeded(new AuthenticatedLdapEntryContextCallback(){
+    @Override public void executeWithContext(    DirContext ctx,    LdapEntryIdentification ldapEntryIdentification){
+      Set<String> groupNames=LDAPUtils.getLdapTemplateInContext(ctx,template).searchForSingleAttributeValues(groupSearchBase,allGroupsSearchFilter,new String[]{},groupNameAttribute);
+      for (      String groupName : groupNames) {
+        groups.add(new GeoServerUserGroup(groupName));
+      }
+    }
+  }
+);
+  return Collections.unmodifiableSortedSet(groups);
+}
