@@ -1,0 +1,34 @@
+{
+  final UUID u1=UUID.fromString("12345678-1234-1234-1234-123456781234");
+  final Map<String,Object> tuple1=new HashMap<String,Object>(){
+{
+      put("a",1);
+      put("b",u1);
+      put("c","object1");
+    }
+  }
+;
+  final UUID u2=UUID.fromString("00000000-0000-0000-0000-000000000000");
+  final Map<String,Object> tuple2=new HashMap<String,Object>(){
+{
+      put("a",2);
+      put("b",u2);
+      put("c","object2");
+    }
+  }
+;
+  final List<Map<String,Object>> tupleList=Arrays.asList(tuple1,tuple2);
+  builder.writeList(tupleList);
+  final JSONArray root=JSONArray.fromObject(writer.toString());
+  assertEquals(2,root.size());
+  final JSONObject o1=root.getJSONObject(0);
+  assertEquals(3,o1.size());
+  assertEquals(1,o1.get("a"));
+  assertEquals(u1.toString(),o1.get("b"));
+  assertEquals("object1",o1.get("c"));
+  final JSONObject o2=root.getJSONObject(1);
+  assertEquals(3,o2.size());
+  assertEquals(2,o2.get("a"));
+  assertEquals(u2.toString(),o2.get("b"));
+  assertEquals("object2",o2.get("c"));
+}
