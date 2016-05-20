@@ -1,37 +1,40 @@
 {
   files=new ArrayList<FileData>();
-  LinkedList<Resource> q=new LinkedList<Resource>();
+  LinkedList<File> q=new LinkedList<File>();
   q.add(file);
   while (!q.isEmpty()) {
-    Resource dir=q.poll();
+    File dir=q.poll();
     if (m.isCanceled()) {
       return;
     }
-    m.setTask("Scanning " + dir.path());
-    List<Resource> fileList=Resources.list(dir,new Filter<Resource>(){
-      @Override public boolean accept(      Resource obj){
-        return obj.getType() != Type.DIRECTORY;
+    m.setTask("Scanning " + dir.getPath());
+    File[] fileList=dir.listFiles(new FilenameFilter(){
+      public boolean accept(      File dir,      String name){
+        return !new File(dir,name).isDirectory();
       }
     }
 );
-    Set<Resource> all=new LinkedHashSet<Resource>(fileList);
-    for (    Resource f : dir.list()) {
-      if (Resources.isHidden(f)) {
+    if (fileList == null) {
+      continue;
+    }
+    Set<File> all=new LinkedHashSet<File>(Arrays.asList(fileList));
+    for (    File f : dir.listFiles()) {
+      if (f.isHidden()) {
         all.remove(f);
         continue;
       }
-      if (f.getType() == Type.DIRECTORY) {
+      if (f.isDirectory()) {
         if (!recursive && !f.equals(file)) {
           continue;
         }
-        if (!"__MACOSX".equals(f.name())) {
+        if (!"__MACOSX".equals(f.getName())) {
           Directory d=new Directory(f);
           d.prepare(m);
           files.add(d);
         }
         continue;
       }
-      if ("aux".equalsIgnoreCase(FilenameUtils.getExtension(f.name()))) {
+      if ("aux".equalsIgnoreCase(FilenameUtils.getExtension(f.getName()))) {
         continue;
       }
       DataFormat format=DataFormat.lookup(f);
@@ -42,7 +45,7 @@
         all.removeAll(sf.allFiles());
       }
     }
-    for (    Resource f : all) {
+    for (    File f : all) {
       files.add(new ASpatialFile(f));
     }
   }
