@@ -1,0 +1,11 @@
+{
+  Document insertDom=postRequest("insertPolygon3d.xml");
+  String fid=assertSuccesfulInsert(insertDom);
+  Document featureDom=getFeature(fid);
+  assertEquals("New polygon",xpath.evaluate("//cite:full3d/gml:name",featureDom));
+  assertEquals("3",xpath.evaluate("//cite:full3d/cite:geom/gml:Polygon/@srsDimension",featureDom));
+  assertEquals("94000 471000 10 94001 471000 11 94001 471001 12 94000 471001 13 94000 471000 10",xpath.evaluate("//cite:full3d/cite:geom/gml:Polygon/gml:exterior/gml:LinearRing/gml:posList",featureDom));
+  SimpleFeature feature=getFeatureFromStore(fid);
+  Geometry g=(Geometry)feature.getDefaultGeometry();
+  assertEqualND(g,wkt.read("POLYGON((94000 471000 10, 94001 471000 11, 94001 471001 12, 94000 471001 13, 94000 471000 10))"));
+}

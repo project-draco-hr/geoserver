@@ -1,0 +1,13 @@
+{
+  Document insertDom=postRequest("insertPoint3d.xml");
+  print(insertDom);
+  String fid=assertSuccesfulInsert(insertDom);
+  Document featureDom=getFeature(fid);
+  print(featureDom);
+  assertEquals("New point",xpath.evaluate("//cite:full3d/gml:name",featureDom));
+  assertEquals("3",xpath.evaluate("//cite:full3d/cite:geom/gml:Point/@srsDimension",featureDom));
+  assertEquals("204330 491816 16",xpath.evaluate("//cite:full3d/cite:geom/gml:Point/gml:pos",featureDom));
+  SimpleFeature feature=getFeatureFromStore(fid);
+  Geometry g=(Geometry)feature.getDefaultGeometry();
+  assertEqualND(g,wkt.read("POINT(204330 491816 16)"));
+}

@@ -1,0 +1,11 @@
+{
+  Document insertDom=postRequest("insertLinestring3d.xml");
+  String fid=assertSuccesfulInsert(insertDom);
+  Document featureDom=getFeature(fid);
+  assertEquals("New line",xpath.evaluate("//cite:full3d/gml:name",featureDom));
+  assertEquals("3",xpath.evaluate("//cite:full3d/cite:geom/gml:LineString/@srsDimension",featureDom));
+  assertEquals("204330 491816 16 204319 491814 16",xpath.evaluate("//cite:full3d/cite:geom/gml:LineString/gml:posList",featureDom));
+  SimpleFeature feature=getFeatureFromStore(fid);
+  Geometry g=(Geometry)feature.getDefaultGeometry();
+  assertEqualND(g,wkt.read("LINESTRING(204330 491816 16, 204319 491814 16)"));
+}
