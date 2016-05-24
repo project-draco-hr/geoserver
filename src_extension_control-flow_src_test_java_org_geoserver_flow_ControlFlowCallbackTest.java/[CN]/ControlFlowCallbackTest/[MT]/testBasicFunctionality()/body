@@ -1,13 +1,17 @@
 {
-  ControlFlowCallback callback=new ControlFlowCallback();
+  final ControlFlowCallback callback=new ControlFlowCallback();
   TestingConfigurator tc=new TestingConfigurator();
-  CountingController controller=new CountingController(1,0);
+  final CountingController controller=new CountingController(1,0);
   tc.controllers.add(controller);
   callback.provider=new DefaultFlowControllerProvider(tc);
-  callback.operationDispatched(null,null);
-  assertEquals(1,controller.requestIncomingCalls);
-  assertEquals(0,controller.requestCompleteCalls);
-  callback.finished(null);
+  callback.doFilter(null,null,new FilterChain(){
+    @Override public void doFilter(    ServletRequest request,    ServletResponse response) throws IOException, ServletException {
+      callback.operationDispatched(null,null);
+      assertEquals(1,controller.requestIncomingCalls);
+      assertEquals(0,controller.requestCompleteCalls);
+    }
+  }
+);
   assertEquals(1,controller.requestIncomingCalls);
   assertEquals(1,controller.requestCompleteCalls);
 }

@@ -1,0 +1,30 @@
+{
+  final ControlFlowCallback callback=new ControlFlowCallback();
+  TestingConfigurator tc=new TestingConfigurator();
+  final BasicOWSController controller=new BasicOWSController("GWC",1);
+  tc.controllers.add(controller);
+  callback.provider=new DefaultFlowControllerProvider(tc);
+  final Request r1=new Request();
+  r1.setService("GWC");
+  MockHttpServletRequest httpRequest=new MockHttpServletRequest();
+  httpRequest.setMethod("GET");
+  MockHttpServletResponse httpResponse=new MockHttpServletResponse();
+  r1.setHttpRequest(httpRequest);
+  r1.setHttpResponse(httpResponse);
+  final AtomicBoolean servletCalled=new AtomicBoolean(false);
+  MockFilterChain filterChain=new MockFilterChain(new HttpServletBean(){
+    @Override protected void doGet(    HttpServletRequest req,    HttpServletResponse resp) throws ServletException, IOException {
+      servletCalled.set(true);
+      callback.operationDispatched(r1,null);
+      assertEquals(1,callback.getRunningRequests());
+      assertEquals(0,callback.getBlockedRequests());
+      assertEquals(1,controller.getRequestsInQueue());
+    }
+  }
+,callback);
+  filterChain.doFilter(httpRequest,httpResponse);
+  assertTrue(servletCalled.get());
+  assertEquals(0,callback.getRunningRequests());
+  assertEquals(0,callback.getBlockedRequests());
+  assertEquals(0,controller.getRequestsInQueue());
+}

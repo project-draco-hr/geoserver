@@ -1,21 +1,3 @@
 {
-  if (SENTINEL.isOutermostRequest() && REQUEST_CONTROLLERS.get() != null) {
-    runningRequests.decrementAndGet();
-    if (REQUEST_CONTROLLERS.get() != null) {
-      CallbackContext context=REQUEST_CONTROLLERS.get();
-      for (      FlowController flowController : context.controllers) {
-        try {
-          flowController.requestComplete(request);
-        }
- catch (        Exception e) {
-          LOGGER.log(Level.SEVERE,"Flow controller " + flowController + " failed to mark the request as complete",e);
-        }
-      }
-    }
-    REQUEST_CONTROLLERS.remove();
-    if (LOGGER.isLoggable(Level.INFO)) {
-      LOGGER.info("Running requests: " + getRunningRequests() + ", blocked requests: "+ getBlockedRequests());
-    }
-  }
-  SENTINEL.stop();
+  releaseControllers(false);
 }

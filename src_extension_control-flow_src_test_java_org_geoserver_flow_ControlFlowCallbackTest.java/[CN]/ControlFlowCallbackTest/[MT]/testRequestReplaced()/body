@@ -1,0 +1,25 @@
+{
+  ControlFlowCallback callback=new ControlFlowCallback();
+  TestingConfigurator tc=new TestingConfigurator();
+  BasicOWSController controller=new BasicOWSController("GWC",1);
+  tc.controllers.add(controller);
+  callback.provider=new DefaultFlowControllerProvider(tc);
+  Request r1=new Request();
+  r1.setService("GWC");
+  MockHttpServletResponse httpResponse=new MockHttpServletResponse();
+  r1.setHttpResponse(httpResponse);
+  callback.operationDispatched(r1,null);
+  assertEquals(1,callback.getRunningRequests());
+  assertEquals(0,callback.getBlockedRequests());
+  Request r2=new Request(r1);
+  r2.setService("WMS");
+  callback.operationDispatched(r2,null);
+  assertEquals(1,callback.getRunningRequests());
+  assertEquals(0,callback.getBlockedRequests());
+  callback.finished(r2);
+  assertEquals(1,callback.getRunningRequests());
+  assertEquals(0,callback.getBlockedRequests());
+  callback.finished(r2);
+  assertEquals(0,callback.getRunningRequests());
+  assertEquals(0,callback.getBlockedRequests());
+}

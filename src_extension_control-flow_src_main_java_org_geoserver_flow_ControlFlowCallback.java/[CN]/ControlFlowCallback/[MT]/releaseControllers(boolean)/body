@@ -1,0 +1,30 @@
+{
+  CallbackContext context=REQUEST_CONTROLLERS.get();
+  try {
+    if (context != null) {
+      context.nestingLevel--;
+      if (context.nestingLevel <= 0 || forceRelease) {
+        runningRequests.decrementAndGet();
+        LOGGER.info("releasing flow controllers for [" + context.request + "]");
+        final List<FlowController> controllers=context.controllers;
+        for (int i=controllers.size() - 1; i >= 0; i--) {
+          FlowController flowController=controllers.get(i);
+          try {
+            flowController.requestComplete(context.request);
+          }
+ catch (          Throwable t) {
+            LOGGER.log(Level.SEVERE,"Flow controller " + flowController + " failed to mark the request as complete",t);
+          }
+        }
+        if (LOGGER.isLoggable(Level.INFO)) {
+          LOGGER.info("Request completed, running requests: " + getRunningRequests() + ", blocked requests: "+ getBlockedRequests());
+        }
+      }
+    }
+  }
+  finally {
+    if (context != null && (context.nestingLevel <= 0 || forceRelease)) {
+      REQUEST_CONTROLLERS.remove();
+    }
+  }
+}
