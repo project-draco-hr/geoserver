@@ -1,0 +1,13 @@
+{
+  Document dom=getAsDOM("wms?request=getmap&service=wms&version=1.1.1" + "&format=" + KMLMapOutputFormat.MIME_TYPE + "&layers="+ getLayerId(BOULDER)+ "&styles="+ MockData.BASIC_POLYGONS.getLocalPart()+ ","+ "&height=1024&width=1024&bbox=-180,-90,180,90&srs=EPSG:4326&format_options=mode:refresh;kmscore:0;kmplacemark:true");
+  assertXpathEvaluatesTo("1","count(//kml:Folder[1]/kml:GroundOverlay)",dom);
+  assertXpathEvaluatesTo("1","count(//kml:Folder[1]/kml:Placemark)",dom);
+  Element pm=getFirstElementByTagName(dom,"Placemark");
+  assertNotNull(pm);
+  Element point=getFirstElementByTagName(pm,"Point");
+  assertNotNull(point);
+  String[] coords=getFirstElementByTagName(point,"coordinates").getFirstChild().getTextContent().split(",");
+  double[] p=new double[]{Double.parseDouble(coords[0]),Double.parseDouble(coords[1])};
+  assertEquals(-105.2,p[0],0.1);
+  assertEquals(40.0,p[1],0.1);
+}
