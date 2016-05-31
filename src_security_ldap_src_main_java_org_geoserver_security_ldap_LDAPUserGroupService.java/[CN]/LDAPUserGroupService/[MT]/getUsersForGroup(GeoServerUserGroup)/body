@@ -1,0 +1,27 @@
+{
+  final SortedSet<GeoServerUser> users=new TreeSet<GeoServerUser>();
+  authenticateIfNeeded(new AuthenticatedLdapEntryContextCallback(){
+    @Override public void executeWithContext(    DirContext ctx,    LdapEntryIdentification ldapEntryIdentification){
+      try {
+        DirContextOperations roleObj=LDAPUtils.getLdapTemplateInContext(ctx,template).searchForSingleEntry(groupSearchBase,groupNameFilter,new String[]{group.getGroupname()});
+        if (roleObj != null) {
+          Object[] usernames=roleObj.getObjectAttributes(groupMembershipAttribute);
+          if (usernames != null) {
+            for (            Object username : usernames) {
+              String user=username.toString();
+              Matcher m=userMembershipPattern.matcher(user);
+              if (m.matches()) {
+                user=m.group(1);
+              }
+              users.add(getUserByUsername(getUserNameFromMembership(user)));
+            }
+          }
+        }
+      }
+ catch (      IncorrectResultSizeDataAccessException e) {
+      }
+    }
+  }
+);
+  return Collections.unmodifiableSortedSet(users);
+}

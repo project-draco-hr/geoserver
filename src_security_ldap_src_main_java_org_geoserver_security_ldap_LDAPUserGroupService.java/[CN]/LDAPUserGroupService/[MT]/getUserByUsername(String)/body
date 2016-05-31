@@ -1,0 +1,17 @@
+{
+  final AtomicReference<GeoServerUser> user=new AtomicReference<GeoServerUser>();
+  authenticateIfNeeded(new AuthenticatedLdapEntryContextCallback(){
+    @Override public void executeWithContext(    DirContext ctx,    LdapEntryIdentification ldapEntryIdentification){
+      try {
+        DirContextOperations dco=LDAPUtils.getLdapTemplateInContext(ctx,template).searchForSingleEntry(userSearchBase,userNameFilter,new String[]{username});
+        if (dco != null) {
+          user.set(createUser(dco));
+        }
+      }
+ catch (      IncorrectResultSizeDataAccessException e) {
+      }
+    }
+  }
+);
+  return user.get();
+}

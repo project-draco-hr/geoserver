@@ -1,0 +1,79 @@
+{
+  super.initializeFromConfig(config);
+  LDAPBaseSecurityServiceConfig ldapConfig=(LDAPBaseSecurityServiceConfig)config;
+  ldapContext=LDAPUtils.createLdapContext(ldapConfig);
+  if (ldapConfig.isBindBeforeGroupSearch()) {
+    user=ldapConfig.getUser();
+    password=ldapConfig.getPassword();
+    template=new BindingLdapTemplate(ldapContext);
+  }
+ else {
+    template=new SpringSecurityLdapTemplate(ldapContext);
+  }
+  if (!isEmpty(ldapConfig.getGroupSearchBase())) {
+    groupSearchBase=ldapConfig.getGroupSearchBase();
+  }
+  if (!isEmpty(ldapConfig.getUserSearchBase())) {
+    userSearchBase=ldapConfig.getUserSearchBase();
+  }
+  if (!isEmpty(ldapConfig.getGroupSearchFilter())) {
+    groupMembershipFilter=ldapConfig.getGroupSearchFilter();
+    Matcher m=lookForMembershipAttribute.matcher(groupMembershipFilter);
+    if (m.matches()) {
+      if (isEmpty(ldapConfig.getGroupMembershipAttribute())) {
+        groupMembershipAttribute=m.group(1);
+      }
+      lookupUserForDn=m.group(3).equals("1");
+      userMembershipPattern=Pattern.compile("^" + Pattern.quote(m.group(2)) + "(.*)"+ Pattern.quote(m.group(4))+ "$");
+    }
+  }
+  if (!isEmpty(ldapConfig.getGroupMembershipAttribute())) {
+    groupMembershipAttribute=ldapConfig.getGroupMembershipAttribute();
+    if (isEmpty(ldapConfig.getGroupSearchFilter())) {
+      groupMembershipFilter=groupMembershipAttribute + "={0}";
+    }
+  }
+  if (!isEmpty(ldapConfig.getGroupFilter())) {
+    groupNameFilter=ldapConfig.getGroupFilter();
+    if (isEmpty(ldapConfig.getGroupNameAttribute())) {
+      Matcher m=lookForMembershipAttribute.matcher(groupNameFilter);
+      if (m.matches()) {
+        groupNameAttribute=m.group(1);
+      }
+    }
+  }
+  if (!isEmpty(ldapConfig.getGroupNameAttribute())) {
+    groupNameAttribute=ldapConfig.getGroupNameAttribute();
+    if (isEmpty(ldapConfig.getGroupFilter())) {
+      groupNameFilter=groupNameAttribute + "={0}";
+    }
+  }
+  if (!isEmpty(ldapConfig.getAllGroupsSearchFilter())) {
+    allGroupsSearchFilter=ldapConfig.getAllGroupsSearchFilter();
+  }
+ else {
+    allGroupsSearchFilter=groupNameAttribute + "=*";
+  }
+  if (!isEmpty(ldapConfig.getUserFilter())) {
+    this.userNameFilter=ldapConfig.getUserFilter();
+    Matcher m=lookForMembershipAttribute.matcher(userNameFilter);
+    if (m.matches()) {
+      if (isEmpty(ldapConfig.getUserNameAttribute())) {
+        userNameAttribute=m.group(1);
+      }
+      userNamePattern=Pattern.compile("^" + Pattern.quote(m.group(2)) + "(.*)"+ Pattern.quote(m.group(4))+ "$");
+    }
+  }
+  if (!isEmpty(ldapConfig.getUserNameAttribute())) {
+    userNameAttribute=ldapConfig.getUserNameAttribute();
+    if (isEmpty(ldapConfig.getUserFilter())) {
+      userNameFilter=userNameAttribute + "={0}";
+    }
+  }
+  if (!isEmpty(ldapConfig.getAllUsersSearchFilter())) {
+    allUsersSearchFilter=ldapConfig.getAllUsersSearchFilter();
+  }
+ else {
+    allUsersSearchFilter=userNameAttribute + "=*";
+  }
+}
