@@ -1,0 +1,23 @@
+{
+  StyledLayerDescriptorBuilder sldBuilder=new StyledLayerDescriptorBuilder();
+  final FeatureTypeStyleBuilder fts=sldBuilder.namedLayer().style().featureTypeStyle();
+  fts.rule().raster();
+  FunctionBuilder dcmFunction=new FunctionBuilder();
+  dcmFunction.name("ras:DynamicColorMap");
+  dcmFunction.function("parameter").literal("data").end();
+  dcmFunction.function("parameter").literal("opacity").function("env").literal(OPACITY).literal(1f).end().end();
+  FunctionBuilder paramFunction=dcmFunction.function("parameter");
+  FunctionBuilder cmFunction=paramFunction.literal("colorRamp").function("colormap");
+  cmFunction.literal(toColorExpressions(colorMap));
+  cmFunction.function("env").literal(RANGE_MIN).function("bandStats").literal(0).literal("minimum").end().end();
+  cmFunction.function("env").literal(RANGE_MAX).function("bandStats").literal(0).literal("maximum").end().end();
+  cmFunction.function("env").literal(COLOR_BEFORE).literal("rgba(0,0,0,0)").end();
+  cmFunction.function("env").literal(COLOR_AFTER).literal("rgba(0,0,0,0)").end();
+  cmFunction.function("env").literal(LOGSCALE).literal("false").end();
+  cmFunction.function("env").literal(NUMCOLORS).literal("254").end();
+  cmFunction.end();
+  paramFunction.end();
+  fts.transformation(dcmFunction.build());
+  StyledLayerDescriptor sld=sldBuilder.build();
+  return sld;
+}

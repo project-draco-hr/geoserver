@@ -1,0 +1,19 @@
+{
+  NamedLayer layer=(NamedLayer)sld.getStyledLayers()[0];
+  Style style=layer.getStyles()[0];
+  assertEquals(1,style.featureTypeStyles().size());
+  FeatureTypeStyle fts=style.featureTypeStyles().get(0);
+  Function dcm=(Function)fts.getTransformation();
+  assertNotNull(dcm);
+  assertEquals("ras:DynamicColorMap",dcm.getName());
+  assertEquals(3,dcm.getParameters().size());
+  assetIsParameterFunction(dcm.getParameters().get(0),"data");
+  Expression opacity=assetIsParameterFunction(dcm.getParameters().get(1),"opacity");
+  assertEquals(1f,opacity.evaluate(null,Float.class),0f);
+  EnvFunction.setLocalValue(PaletteParser.OPACITY,"0.5");
+  assertEquals(0.5f,opacity.evaluate(null,Float.class),0f);
+  Expression crValue=assetIsParameterFunction(dcm.getParameters().get(2),"colorRamp");
+  Function cm=(Function)crValue;
+  assertEquals("colormap",cm.getName());
+  return cm;
+}
