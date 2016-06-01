@@ -10,23 +10,18 @@
   nullValues.add(noData2);
   coverageDim.setNullValues(nullValues);
   GridSampleDimension sampleDim=new GridSampleDimension("original",new Category[]{new Category(Vocabulary.formatInternational(VocabularyKeys.NODATA),new Color(0,0,0,0),Double.NaN)},null);
-  GridSampleDimension wrappedDim=new WrappedSampleDimension(sampleDim,coverageDim);
-  double[] noData=wrappedDim.getNoDataValues();
-  assertEquals(2,noData.length);
-  assertEquals(noData1,noData[0],DELTA);
-  assertEquals(noData2,noData[1],DELTA);
-  List<Category> categories=wrappedDim.getCategories();
+  GridSampleDimension wrappedDim=WrappedSampleDimension.build(sampleDim,coverageDim);
+  GridSampleDimension copy=new GridSampleDimension(wrappedDim){
+  }
+;
+  List<Category> categories=copy.getCategories();
   Category category=categories.get(0);
   assertTrue(category.getName().equals(Category.NODATA.getName()));
   assertEquals(category.getRange().getMinimum(),Double.NaN,DELTA);
   assertEquals(category.getRange().getMaximum(),Double.NaN,DELTA);
   sampleDim=new GridSampleDimension("original",new Category[]{new Category(Vocabulary.formatInternational(VocabularyKeys.NODATA),new Color[]{new Color(0,0,0,0)},NumberRange.create(-9999,-9999))},null);
-  wrappedDim=new WrappedSampleDimension(sampleDim,coverageDim);
-  noData=wrappedDim.getNoDataValues();
-  assertEquals(2,noData.length);
-  assertEquals(noData1,noData[0],DELTA);
-  assertEquals(noData2,noData[1],DELTA);
-  categories=wrappedDim.getCategories();
+  copy=WrappedSampleDimension.build(sampleDim,coverageDim);
+  categories=copy.getCategories();
   category=categories.get(0);
   assertTrue(category.getName().equals(Category.NODATA.getName()));
   assertEquals(category.getRange().getMinimum(),noData1,DELTA);

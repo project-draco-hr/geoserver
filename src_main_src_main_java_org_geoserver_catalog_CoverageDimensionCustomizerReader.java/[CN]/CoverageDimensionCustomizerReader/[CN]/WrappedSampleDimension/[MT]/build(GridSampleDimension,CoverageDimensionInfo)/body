@@ -1,12 +1,9 @@
 {
-  super(sampleDim);
-  this.name=info.getName();
+  String name=info.getName();
   final InternationalString sampleDimDescription=sampleDim.getDescription();
-  this.configuredDescription=(sampleDimDescription == null || !sampleDimDescription.toString().equalsIgnoreCase(name)) ? new SimpleInternationalString(name) : sampleDimDescription;
-  this.sampleDim=sampleDim;
+  InternationalString configuredDescription=(sampleDimDescription == null || !sampleDimDescription.toString().equalsIgnoreCase(name)) ? new SimpleInternationalString(name) : sampleDimDescription;
   final List<Category> categories=sampleDim.getCategories();
-  this.configuredRange=info.getRange();
-  this.customCategories=categories;
+  NumberRange configuredRange=info.getRange();
   final String uom=info.getUnit();
   Unit defaultUnit=sampleDim.getUnits();
   Unit unit=defaultUnit;
@@ -20,8 +17,9 @@
       LOGGER.warning("Unable to parse the specified unit (" + uom + "). Using the previous one: "+ defaultUnit.toString());
     }
   }
-  this.configuredUnit=unit;
+  Unit configuredUnit=unit;
   final List<Double> nullValues=info.getNullValues();
+  double[] configuredNoDataValues;
   if (nullValues != null && nullValues.size() > 0) {
     final int size=nullValues.size();
     configuredNoDataValues=new double[size];
@@ -30,12 +28,12 @@
     }
   }
  else {
-    this.configuredNoDataValues=sampleDim.getNoDataValues();
+    configuredNoDataValues=sampleDim.getNoDataValues();
   }
   boolean nodataConfigured=configuredNoDataValues != null && configuredNoDataValues.length > 0;
   int numCategories=0;
+  List<Category> customCategories=new ArrayList<Category>(numCategories);
   if (categories != null && (numCategories=categories.size()) > 0) {
-    this.customCategories=new ArrayList<Category>(numCategories);
     Category wrapped=null;
     for (    Category category : categories) {
       wrapped=category;
@@ -54,4 +52,26 @@
       customCategories.add(wrapped);
     }
   }
+  if (configuredRange != null && !Double.isInfinite(configuredRange.getMinimum()) && !Double.isInfinite(configuredRange.getMaximum())) {
+    Class targetType=categories != null && !categories.isEmpty() ? categories.get(0).getRange().getElementClass() : Double.class;
+    final NumberRange<Double> dataRange=new NumberRange<>(targetType,configuredRange.getMinimum(),configuredRange.getMaximum());
+    List<NumberRange<?>> dataRanges=new ArrayList<>();
+    dataRanges.add(dataRange);
+    for (    Category category : customCategories) {
+      List<NumberRange<?>> newDataRanges=new ArrayList<>();
+      for (      NumberRange<?> dr : dataRanges) {
+        NumberRange<?>[] subtracted=dr.subtract(category.getRange());
+        for (        NumberRange<?> range : subtracted) {
+          if (!range.isEmpty()) {
+            newDataRanges.add(range);
+          }
+        }
+      }
+      dataRanges=newDataRanges;
+    }
+    for (int i=0; i < dataRanges.size(); i++) {
+      customCategories.add(new Category("data" + i,(Color)null,dataRanges.get(i)));
+    }
+  }
+  return new WrappedSampleDimension(name,configuredDescription,configuredRange,configuredUnit,configuredNoDataValues,(Category[])customCategories.toArray(new Category[customCategories.size()]),sampleDim);
 }
