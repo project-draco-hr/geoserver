@@ -1,0 +1,29 @@
+{
+  MbtilesConfiguration originalConfiguration=new MbtilesConfiguration();
+  originalConfiguration.setRootDirectory("/tmp/gwc");
+  String storeId=UUID.randomUUID().toString();
+  Field id=BlobStoreConfig.class.getDeclaredField("id");
+  id.setAccessible(true);
+  id.set(originalConfiguration,storeId);
+  GWC.get().addBlobStore(originalConfiguration);
+  TileLayer layer=GWC.get().getTileLayerByName("cite:Lakes");
+  layer.setBlobStoreId(storeId);
+  GWC.get().save(layer);
+  BlobStorePage page=new BlobStorePage(originalConfiguration);
+  tester.startPage(page);
+  tester.assertVisible("blobConfigContainer:blobStoreForm");
+  tester.assertComponent("blobConfigContainer:blobStoreForm:blobSpecificPanel",MbtilesBlobStorePanel.class);
+  assertThat(findStore(storeId),notNullValue());
+  FormTester formTester=tester.newFormTester("blobConfigContainer:blobStoreForm");
+  String updatedStoreId=UUID.randomUUID().toString();
+  formTester.setValue("id",updatedStoreId);
+  formTester.setValue("blobSpecificPanel:templatePath","{grid}/{layer}/{params}/{style}/tiles-{z}.sqlite");
+  tester.executeAjaxEvent("blobConfigContainer:blobStoreForm:save","click");
+  assertThat(findStore(storeId),nullValue());
+  MbtilesConfiguration configuration=findStore(updatedStoreId);
+  assertThat(configuration,notNullValue());
+  assertThat(configuration.getTemplatePath(),is("{grid}/{layer}/{params}/{style}/tiles-{z}.sqlite"));
+  layer=GWC.get().getTileLayerByName("cite:Lakes");
+  assertThat(layer.getBlobStoreId(),is(updatedStoreId));
+  GWC.get().removeBlobStores(Collections.singleton(updatedStoreId));
+}
