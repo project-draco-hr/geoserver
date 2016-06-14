@@ -1,0 +1,22 @@
+{
+  StyleInfo style=catalog.getStyleByName(ws,name);
+  if (style == null) {
+    style=catalog.getFactory().createStyle();
+    style.setName(name);
+    style.setWorkspace(ws);
+  }
+  GeoServerDataDirectory data=new GeoServerDataDirectory(this.data);
+  File styles=data.get(style,"").dir();
+  String target=new File(filename).getName();
+  catalog.getResourceLoader().copyFromClassPath(filename,new File(styles,target),scope);
+  style.setFilename(target);
+  style.setFormat(StyleProperty.FORMAT.get(properties,SLDHandler.FORMAT));
+  style.setFormatVersion(StyleProperty.FORMAT_VERSION.get(properties,SLDHandler.VERSION_10));
+  style.setLegend(StyleProperty.LEGEND_INFO.get(properties,null));
+  if (style.getId() == null) {
+    catalog.add(style);
+  }
+ else {
+    catalog.save(style);
+  }
+}
