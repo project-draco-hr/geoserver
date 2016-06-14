@@ -1,0 +1,47 @@
+{
+  Column[] legendMatrix=new Column[0];
+  if (maxHeight > 0) {
+    int cnLimit=maxColumns > 0 ? maxColumns : nodes.size();
+    legendMatrix=new Column[cnLimit];
+    legendMatrix[0]=new Column();
+    int cn=0;
+    int columnHeight=0;
+    for (int i=0; i < nodes.size(); i++) {
+      BufferedImage node=nodes.get(i);
+      if (columnHeight <= maxHeight) {
+        legendMatrix[cn].addNode(node);
+        columnHeight=columnHeight + node.getHeight();
+      }
+ else {
+        i--;
+        cn++;
+        if (cn == cnLimit) {
+          break;
+        }
+        columnHeight=0;
+        legendMatrix[cn]=new Column();
+      }
+    }
+  }
+ else {
+    int colNumber=maxColumns > 0 ? maxColumns : 1;
+    legendMatrix=new Column[colNumber];
+    legendMatrix[0]=new Column();
+    int rowNumber=(int)Math.ceil((float)nodes.size() / colNumber);
+    int cn=0;
+    int rc=0;
+    for (int i=0; i < nodes.size(); i++) {
+      if (rc < rowNumber) {
+        legendMatrix[cn].addNode(nodes.get(i));
+        rc++;
+      }
+ else {
+        i--;
+        cn++;
+        rc=0;
+        legendMatrix[cn]=new Column();
+      }
+    }
+  }
+  return legendMatrix;
+}

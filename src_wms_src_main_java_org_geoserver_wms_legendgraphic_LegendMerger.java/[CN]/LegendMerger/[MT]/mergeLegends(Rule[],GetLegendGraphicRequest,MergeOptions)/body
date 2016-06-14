@@ -1,0 +1,34 @@
+{
+  List<RenderedImage> imageStack=mergeOptions.getImageStack();
+  final int imgCount=imageStack.size();
+  List<BufferedImage> nodes=new ArrayList<BufferedImage>();
+  if (imgCount == 1 && (!mergeOptions.isForceLabelsOn() || rules == null)) {
+    return (BufferedImage)imageStack.get(0);
+  }
+ else {
+    for (int i=0; i < imgCount; i++) {
+      BufferedImage img=(BufferedImage)imageStack.get(i);
+      if (rules != null && rules[i] != null) {
+        BufferedImage label=renderLabel(img,rules[i],req,mergeOptions);
+        if (label != null) {
+          img=joinBufferedImageHorizzontally(img,label,mergeOptions.getLabelFont(),mergeOptions.isAntialias(),mergeOptions.isTransparent(),mergeOptions.getBackgroundColor());
+        }
+        nodes.add(img);
+      }
+ else {
+        nodes.add(img);
+      }
+    }
+  }
+  LegendLayout layout=mergeOptions.getLayout();
+  BufferedImage finalLegend=null;
+  if (layout == LegendLayout.HORIZONTAL) {
+    Row[] rows=createRows(nodes,mergeOptions.getRowWidth(),mergeOptions.getRows());
+    finalLegend=buildFinalHLegend(rows,mergeOptions);
+  }
+  if (layout == LegendLayout.VERTICAL) {
+    Column[] columns=createColumns(nodes,mergeOptions.getColumnHeight(),mergeOptions.getColumns());
+    finalLegend=buildFinalVLegend(columns,mergeOptions);
+  }
+  return finalLegend;
+}

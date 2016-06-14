@@ -1,0 +1,39 @@
+{
+  Style multipleRulesStyle=getCatalog().getStyleByName("rainfall_classes_nolabels").getStyle();
+  assertNotNull(multipleRulesStyle);
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  CoverageInfo cInfo=getCatalog().getCoverageByName("world");
+  assertNotNull(cInfo);
+  GridCoverage coverage=cInfo.getGridCoverage(null,null);
+  try {
+    SimpleFeatureCollection feature;
+    feature=FeatureUtilities.wrapGridCoverage((GridCoverage2D)coverage);
+    req.setLayer(feature.getSchema());
+    req.setStyle(multipleRulesStyle);
+    final int HEIGHT_HINT=30;
+    req.setHeight(HEIGHT_HINT);
+    HashMap legendOptions=new HashMap();
+    legendOptions.put("layout","horizontal");
+    legendOptions.put("rowwidth","100");
+    legendOptions.put("rows","2");
+    legendOptions.put("mx","0");
+    legendOptions.put("my","0");
+    legendOptions.put("dx","0");
+    legendOptions.put("dy","0");
+    legendOptions.put("forceRule","false");
+    req.setLegendOptions(legendOptions);
+    BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+    assertEquals(2 * HEIGHT_HINT,image.getHeight());
+    assertPixel(image,9,13,new Color(115,38,0));
+    assertPixel(image,110,43,new Color(38,115,0));
+  }
+  finally {
+    RenderedImage ri=coverage.getRenderedImage();
+    if (coverage instanceof GridCoverage2D) {
+      ((GridCoverage2D)coverage).dispose(true);
+    }
+    if (ri instanceof PlanarImage) {
+      ImageUtilities.disposePlanarImageChain((PlanarImage)ri);
+    }
+  }
+}

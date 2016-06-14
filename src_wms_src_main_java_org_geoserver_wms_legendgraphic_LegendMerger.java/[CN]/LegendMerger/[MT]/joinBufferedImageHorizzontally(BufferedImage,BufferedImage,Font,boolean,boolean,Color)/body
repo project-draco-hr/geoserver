@@ -1,0 +1,21 @@
+{
+  int offset=0;
+  int wid=img.getWidth() + label.getWidth() + offset;
+  int height=Math.max(img.getHeight(),label.getHeight()) + offset;
+  BufferedImage newImage=ImageUtils.createImage(wid,height,(IndexColorModel)null,transparent);
+  final Map<RenderingHints.Key,Object> hintsMap=new HashMap<RenderingHints.Key,Object>();
+  Graphics2D g2=ImageUtils.prepareTransparency(transparent,backgroundColor,newImage,hintsMap);
+  g2.setFont(labelFont);
+  if (useAA) {
+    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+  }
+ else {
+    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+  }
+  int imgOffset=(int)Math.round((height - img.getHeight()) / 2d);
+  int labelOffset=(int)Math.round((height - label.getHeight()) / 2d);
+  g2.drawImage(img,null,0,imgOffset);
+  g2.drawImage(label,null,img.getWidth() + offset,labelOffset);
+  g2.dispose();
+  return newImage;
+}

@@ -1,0 +1,40 @@
+{
+  int totalWidth=0;
+  int totalHeight=0;
+  for (  Column c : columns) {
+    if (c != null) {
+      if (totalWidth > 0) {
+        totalWidth=totalWidth + options.getDx();
+      }
+      totalWidth=totalWidth + c.getWidth();
+      int h=c.getHeight() + (c.nodes.size() - 1) * options.getDy();
+      totalHeight=Math.max(totalHeight,h);
+    }
+  }
+  totalWidth=totalWidth + options.getMargin() * 2;
+  totalHeight=totalHeight + options.getMargin() * 2;
+  totalWidth+=2;
+  final BufferedImage finalLegend=ImageUtils.createImage(totalWidth,totalHeight,(IndexColorModel)null,options.isTransparent());
+  final Map<RenderingHints.Key,Object> hintsMap=new HashMap<RenderingHints.Key,Object>();
+  Graphics2D finalGraphics=ImageUtils.prepareTransparency(options.isTransparent(),options.getBackgroundColor(),finalLegend,hintsMap);
+  if (options.isAntialias()) {
+    finalGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+  }
+ else {
+    finalGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+  }
+  int vOffset=options.getMargin();
+  int hOffset=options.getMargin();
+  for (  Column c : columns) {
+    if (c != null) {
+      for (      BufferedImage n : c.getNodes()) {
+        finalGraphics.drawImage(n,hOffset,vOffset,null);
+        vOffset=vOffset + n.getHeight() + options.getDy();
+      }
+      hOffset=hOffset + c.getWidth() + options.getDx();
+      vOffset=options.getMargin();
+    }
+  }
+  finalGraphics.dispose();
+  return finalLegend;
+}

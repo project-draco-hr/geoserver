@@ -1,0 +1,17 @@
+{
+  GetLegendGraphicRequest req=new GetLegendGraphicRequest();
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName(MockData.ROAD_SEGMENTS.getNamespaceURI(),MockData.ROAD_SEGMENTS.getLocalPart());
+  req.setLayer(ftInfo.getFeatureType());
+  req.setStyle(getCatalog().getStyleByName(MockData.ROAD_SEGMENTS.getLocalPart()).getStyle());
+  final int HEIGHT_HINT=20;
+  req.setHeight(HEIGHT_HINT);
+  HashMap legendOptions=new HashMap();
+  legendOptions.put("layout","horizontal");
+  legendOptions.put("forceLabels","off");
+  req.setLegendOptions(legendOptions);
+  this.legendProducer.buildLegendGraphic(req);
+  BufferedImage image=this.legendProducer.buildLegendGraphic(req);
+  assertEquals(HEIGHT_HINT,image.getHeight());
+  assertPixel(image,10,HEIGHT_HINT / 2,new Color(192,160,0));
+  assertPixel(image,50,HEIGHT_HINT / 2,new Color(224,64,0));
+}

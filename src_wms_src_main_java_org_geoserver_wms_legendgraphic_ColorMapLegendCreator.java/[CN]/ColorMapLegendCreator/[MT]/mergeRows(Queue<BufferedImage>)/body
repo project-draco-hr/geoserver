@@ -4,17 +4,32 @@
   finalDimension.setSize(Math.max(footerW,colorW + ruleW + labelW) + 2 * dx + 2 * margin,rowH * numRows + 2 * margin + (numRows - 1) * dy);
   final int totalWidth=(int)finalDimension.getWidth();
   final int totalHeight=(int)finalDimension.getHeight();
-  final BufferedImage finalLegend=ImageUtils.createImage(totalWidth,totalHeight,(IndexColorModel)null,transparent);
-  final Map<Key,Object> hintsMap=new HashMap<Key,Object>();
-  Graphics2D finalGraphics=ImageUtils.prepareTransparency(transparent,backgroundColor,finalLegend,hintsMap);
-  hintsMap.put(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-  finalGraphics.setRenderingHints(hintsMap);
-  int topOfRow=(int)(margin + 0.5);
-  for (int i=0; i < numRows; i++) {
-    final BufferedImage img=legendsQueue.remove();
-    finalGraphics.drawImage(img,(int)(margin + 0.5),topOfRow,null);
-    topOfRow+=img.getHeight() + dy;
+  BufferedImage finalLegend=ImageUtils.createImage(totalWidth,totalHeight,(IndexColorModel)null,transparent);
+  if (colorMapType == ColorMapType.RAMP) {
+    final Map<Key,Object> hintsMap=new HashMap<Key,Object>();
+    Graphics2D finalGraphics=ImageUtils.prepareTransparency(transparent,backgroundColor,finalLegend,hintsMap);
+    hintsMap.put(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+    finalGraphics.setRenderingHints(hintsMap);
+    int topOfRow=(int)(margin + 0.5);
+    for (int i=0; i < numRows; i++) {
+      final BufferedImage img=legendsQueue.remove();
+      finalGraphics.drawImage(img,(int)(margin + 0.5),topOfRow,null);
+      topOfRow+=img.getHeight() + dy;
+    }
+    if (this.layout == LegendLayout.HORIZONTAL) {
+      BufferedImage newImage=new BufferedImage(totalHeight,totalWidth,finalLegend.getType());
+      Graphics2D g2=newImage.createGraphics();
+      g2.rotate(-Math.PI / 2,0,0);
+      g2.drawImage(finalLegend,null,-totalWidth,0);
+      finalLegend=newImage;
+      g2.dispose();
+      finalGraphics.dispose();
+    }
   }
-  finalGraphics.dispose();
+ else {
+    List<RenderedImage> imgs=new ArrayList<RenderedImage>(legendsQueue);
+    LegendMerger.MergeOptions options=new LegendMerger.MergeOptions(imgs,(int)dx,(int)dy,(int)margin,backgroundColor,transparent,true,layout,rowWidth,rows,columnHeight,columns,null,false,false);
+    finalLegend=LegendMerger.mergeRasterLegends(options);
+  }
   return finalLegend;
 }
