@@ -4,12 +4,26 @@
   double max=getParameters().get(2).evaluate(feature,Double.class).doubleValue();
   String beforeColor=null;
   String afterColor=null;
+  boolean logarithmic=false;
   int expressionCount=getParameters().size();
+  int numColors=MAX_PALETTE_COLORS;
   if (expressionCount >= 4) {
     beforeColor=getParameters().get(3).evaluate(feature,String.class);
   }
   if (expressionCount >= 5) {
     afterColor=getParameters().get(4).evaluate(feature,String.class);
   }
-  return evaluate(colorMap,min,max,beforeColor,afterColor);
+  if (expressionCount >= 6) {
+    Boolean log=getParameters().get(5).evaluate(feature,Boolean.class);
+    if (log != null) {
+      logarithmic=log;
+    }
+  }
+  if (expressionCount >= 7) {
+    Integer nc=getParameters().get(6).evaluate(feature,Integer.class);
+    if (nc != null) {
+      numColors=nc;
+    }
+  }
+  return evaluate(colorMap,min,max,beforeColor,afterColor,logarithmic,numColors);
 }

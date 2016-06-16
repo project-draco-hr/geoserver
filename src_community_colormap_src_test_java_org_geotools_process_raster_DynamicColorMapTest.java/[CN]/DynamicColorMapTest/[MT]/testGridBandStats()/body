@@ -1,0 +1,18 @@
+{
+  Catalog catalog=getCatalog();
+  CoverageStoreInfo storeInfo=catalog.getCoverageStoreByName(COVERAGE_NAME);
+  assertNotNull(storeInfo);
+  CoverageInfo ci=catalog.getCoverageByName(COVERAGE_NAME);
+  assertNotNull(ci);
+  assertEquals(storeInfo,ci.getStore());
+  final FilterFactory ff=CommonFactoryFinder.getFilterFactory();
+  Function minStat=ff.function("bandStats",ff.literal(0),ff.literal("minimum"));
+  Function maxStat=ff.function("bandStats",ff.literal(0),ff.literal("maximum"));
+  GridCoverageReader reader=ci.getGridCoverageReader(null,null);
+  GridCoverage2D gridCoverage=(GridCoverage2D)reader.read(null);
+  double min=(Double)minStat.evaluate(gridCoverage);
+  double max=(Double)maxStat.evaluate(gridCoverage);
+  assertEquals(min,0,TOLERANCE);
+  assertEquals(max,0.5,TOLERANCE);
+  ImageIOUtilities.disposeImage(gridCoverage.getRenderedImage());
+}

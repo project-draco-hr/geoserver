@@ -1,0 +1,26 @@
+{
+  ColorMap cm;
+  LinearColorMap lcm=toLinearColorMap(sourceCM);
+  IndexColorModel icm=lcm.getColorModel();
+  cm=SF.createColorMap();
+  cm.addColorMapEntry(entryForValue(min - 1E-2,quantityMapper.apply(min - 1E-2),lcm,icm));
+  final boolean useIntervals=numColors < MAX_PALETTE_COLORS;
+  double step=(max - min) / (numColors);
+  for (int i=0; i < (numColors - 1); i++) {
+    double v=min + step * i;
+    double mapValue=v;
+    if (useIntervals) {
+      mapValue=v + step;
+    }
+    cm.addColorMapEntry(entryForValue(v,quantityMapper.apply(mapValue),lcm,icm));
+  }
+  cm.addColorMapEntry(entryForValue(max,quantityMapper.apply(max),lcm,icm));
+  if (useIntervals) {
+    cm.setType(ColorMap.TYPE_INTERVALS);
+    cm.addColorMapEntry(entryForValue(max + 1E-2,Double.POSITIVE_INFINITY,lcm,icm));
+  }
+ else {
+    cm.addColorMapEntry(entryForValue(max + 1E-2,quantityMapper.apply(max + 1E-2),lcm,icm));
+  }
+  return cm;
+}
