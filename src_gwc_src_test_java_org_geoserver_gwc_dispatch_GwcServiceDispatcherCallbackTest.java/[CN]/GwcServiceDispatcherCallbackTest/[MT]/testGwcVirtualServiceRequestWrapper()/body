@@ -1,0 +1,21 @@
+{
+  HttpServletRequest httpRequest=mock(HttpServletRequest.class);
+  when(httpRequest.getParameterMap()).thenReturn(new HashMap<>());
+  when(httpRequest.getContextPath()).thenReturn("geoserver");
+  Request request=new Request();
+  request.setKvp(Collections.singletonMap("LAYER","someLayer"));
+  request.setHttpRequest(httpRequest);
+  request.setContext("someWorkspace/gwc/service");
+  WorkspaceInfo workspace=mock(WorkspaceInfo.class);
+  when(workspace.getName()).thenReturn("someWorkspace");
+  GwcServiceDispatcherCallback callback=new GwcServiceDispatcherCallback(null);
+  LocalWorkspace.set(workspace);
+  Request wrappedRequest=callback.init(request);
+  assertThat(wrappedRequest,notNullValue());
+  assertThat(wrappedRequest.getHttpRequest(),notNullValue());
+  assertThat(wrappedRequest.getHttpRequest().getContextPath(),is("geoserver/someWorkspace"));
+  assertThat(wrappedRequest.getHttpRequest().getParameter("layer"),is("someWorkspace:someLayer"));
+  assertThat(wrappedRequest.getHttpRequest().getParameterMap(),notNullValue());
+  assertThat(wrappedRequest.getHttpRequest().getParameterMap().get("layer"),is(new String[]{"someWorkspace:someLayer"}));
+  assertThat(wrappedRequest.getHttpRequest().getParameterValues("layer"),is(new String[]{"someWorkspace:someLayer"}));
+}

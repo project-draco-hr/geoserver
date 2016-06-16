@@ -1,0 +1,23 @@
+{
+  HttpServletRequest httpRequest=mock(HttpServletRequest.class);
+  when(httpRequest.getParameterMap()).thenReturn(Collections.emptyMap());
+  Request request=mock(Request.class);
+  when(request.getHttpRequest()).thenReturn(httpRequest);
+  GwcServiceDispatcherCallback callback=new GwcServiceDispatcherCallback(null);
+  when(request.getContext()).thenReturn("wms/service");
+  assertThat(callback.init(request),nullValue());
+  when(request.getContext()).thenReturn("gwc/service");
+  assertThat(callback.init(request),notNullValue());
+  LocalWorkspace.set(mock(WorkspaceInfo.class));
+  when(request.getContext()).thenReturn("validWorkspace/gwc/service");
+  assertThat(callback.init(request),notNullValue());
+  LocalWorkspace.remove();
+  when(request.getContext()).thenReturn("invalidWorkspace/gwc/service");
+  try {
+    callback.init(request);
+    fail("The workspace is not valid, an exception should have been throw.");
+  }
+ catch (  ServiceException serviceException) {
+    assertThat(serviceException.getMessage(),is("No such workspace 'invalidWorkspace'"));
+  }
+}

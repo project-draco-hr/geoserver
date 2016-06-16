@@ -4,6 +4,21 @@
   lock.acquireReadLock();
   try {
     layer=layerCache.get(layerId);
+    WorkspaceInfo localWorkspace=LocalWorkspace.get();
+    if (localWorkspace != null) {
+      WorkspaceInfo layerWorkspace;
+      LayerInfo layerInfo=layer.getLayerInfo();
+      if (layerInfo != null) {
+        layerWorkspace=layer.getLayerInfo().getResource().getStore().getWorkspace();
+      }
+ else {
+        layerWorkspace=layer.getLayerGroupInfo().getWorkspace();
+      }
+      if (layerWorkspace == null) {
+        return null;
+      }
+      return localWorkspace.getName().equals(layerWorkspace.getName()) ? layer : null;
+    }
   }
  catch (  ExecutionException e) {
     throw propagate(e.getCause());
