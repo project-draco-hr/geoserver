@@ -4,29 +4,32 @@
     final Object[] params=operation.getParameters();
     if (params != null && params.length > 0 && params[0] instanceof GetLegendGraphicRequest) {
       final GetLegendGraphicRequest getLegendRequest=(GetLegendGraphicRequest)params[0];
-      final List<Style> styles=getLegendRequest.getStyles();
-      final String colorRamp=getColorRampDefinition(styles);
-      Map map=request.getRawKvp();
-      if (colorRamp != null && map.containsKey("LAYER")) {
-        Method method;
-        try {
-          Service service=new Service(operation.getService().getId(),dynamicColorMapBuilder,null,null);
-          method=DynamicColorMapBuilder.class.getMethod("execute",new Class[]{GetLegendGraphicRequest.class,Map.class,String.class});
-          Operation op=new Operation(id,service,method,new Object[]{getLegendRequest,map,colorRamp});
-          return op;
-        }
- catch (        SecurityException e) {
-          if (LOGGER.isLoggable(Level.SEVERE)) {
-            LOGGER.log(Level.SEVERE,"Unable to prepare an operation for Dynamic " + "GetLegendGraphic due to the reported error. Proceeding with default operation");
+      try {
+        for (        LegendRequest legend : getLegendRequest.getLegends()) {
+          ProcessFunction transformation=getDynamicColorMapTransformation(legend);
+          if (transformation != null) {
+            LayerInfo layer=legend.getLayerInfo();
+            if (layer != null && layer.getResource() instanceof CoverageInfo) {
+              CoverageInfo coverageInfo=(CoverageInfo)layer.getResource();
+              List<CoverageDimensionInfo> dimensions=coverageInfo.getDimensions();
+              String unit="";
+              if (dimensions != null && !dimensions.isEmpty()) {
+                CoverageDimensionInfo dimensionInfo=dimensions.get(0);
+                unit=dimensionInfo.getUnit();
+                if (unit == null) {
+                  unit="";
+                }
+              }
+              Style style=getDynamicStyle(coverageInfo,transformation);
+              if (style != null) {
+                legend.setStyle(style);
+              }
+            }
           }
-          return operation;
         }
-catch (        NoSuchMethodException e) {
-          if (LOGGER.isLoggable(Level.SEVERE)) {
-            LOGGER.log(Level.SEVERE,"Unable to prepare an operation for Dynamic " + "GetLegendGraphic due to the reported error. Proceeding with default operation");
-          }
-          return operation;
-        }
+      }
+ catch (      Exception e) {
+        throw new ServiceException("Failed to extract legend",e);
       }
     }
   }

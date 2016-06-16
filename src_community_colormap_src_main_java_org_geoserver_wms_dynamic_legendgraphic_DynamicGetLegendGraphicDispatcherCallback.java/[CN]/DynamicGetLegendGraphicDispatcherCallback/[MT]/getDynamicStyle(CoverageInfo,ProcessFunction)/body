@@ -1,0 +1,36 @@
+{
+  GridCoverage2D coverage=null;
+  try {
+    final CoverageStoreInfo storeInfo=coverageInfo.getStore();
+    final GridCoverage2DReader reader=(GridCoverage2DReader)catalog.getResourcePool().getGridCoverageReader(storeInfo,null);
+    GeneralParameterValue[] parameters=parseReadParameters(coverageInfo,reader);
+    coverage=(GridCoverage2D)reader.read(parameters);
+    ColorMap cm=null;
+    double opacity=1.0;
+    for (    Expression param : transformation.getParameters()) {
+      Map map=param.evaluate(coverage,Map.class);
+      Object paramValue=map.values().iterator().next();
+      Object key=map.keySet().iterator().next();
+      if (paramValue instanceof ColorMap) {
+        cm=(ColorMap)paramValue;
+      }
+ else {
+        if ("opacity".equals(key) && paramValue != null) {
+          opacity=((Number)paramValue).doubleValue();
+        }
+      }
+      ;
+    }
+    if (cm != null) {
+      StyleBuilder sb=new StyleBuilder();
+      RasterSymbolizer rs=sb.createRasterSymbolizer(cm,opacity);
+      return sb.createStyle(rs);
+    }
+  }
+  finally {
+    if (coverage != null) {
+      RasterCleaner.addCoverage(coverage);
+    }
+  }
+  return null;
+}
