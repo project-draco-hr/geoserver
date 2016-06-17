@@ -2,7 +2,14 @@
   final String methodName=invocation.getMethod().getName();
   if ("getConveyor".equals(methodName) || "handleRequest".equals(methodName)) {
     final org.geowebcache.service.Service service=(Service)invocation.getThis();
-    if (!gwcFacade.isServiceEnabled(service)) {
+    boolean serviceEnabled;
+    if (service.getPathName().equals("wmts")) {
+      serviceEnabled=geoServer.getService(WMTSInfo.class).isEnabled();
+    }
+ else {
+      serviceEnabled=gwcFacade.isServiceEnabled(service);
+    }
+    if (!serviceEnabled) {
       throw new org.geowebcache.service.HttpErrorCodeException(400,"Service is disabled");
     }
   }

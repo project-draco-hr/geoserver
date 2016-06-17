@@ -1,8 +1,14 @@
 {
   configPersister=mock(GWCConfigPersister.class);
-  when(configPersister.getConfig()).thenReturn(GWCConfig.getOldDefaults());
+  GWCConfig config=GWCConfig.getOldDefaults();
+  config.setWMTSEnabled(false);
+  when(configPersister.getConfig()).thenReturn(config);
   rawCatalog=mock(Catalog.class);
   tileLayerCatalog=mock(TileLayerCatalog.class);
   initializer=new GWCInitializer(configPersister,rawCatalog,tileLayerCatalog);
+  wmtsInfo.setEnabled(true);
+  geoServerFacade=mock(GeoServerFacade.class);
+  when(geoServerFacade.getService(WMTSInfo.class)).thenReturn(wmtsInfo);
   geoServer=mock(GeoServer.class);
+  when(geoServer.getFacade()).thenReturn(geoServerFacade);
 }
