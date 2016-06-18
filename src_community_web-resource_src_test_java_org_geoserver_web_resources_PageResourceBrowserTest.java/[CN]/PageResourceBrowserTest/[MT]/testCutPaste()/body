@@ -1,0 +1,26 @@
+{
+  assertFalse(tester.getComponentFromLastRenderedPage("cut").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("paste").isEnabled());
+  tester.assertComponent("treeview:rootView:/:children:temp:children:temp/dir",Component.class);
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:label:selectableLabel","click");
+  assertTrue(tester.getComponentFromLastRenderedPage("cut").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("paste").isEnabled());
+  tester.clickLink("cut");
+  assertEquals(PATH_DIR,resourceBrowser.clipBoard.getItems().iterator().next().getObject().path());
+  assertFalse(resourceBrowser.clipBoard.isCopy());
+  assertTrue(tester.getComponentFromLastRenderedPage("paste").isEnabled());
+  tester.clickLink("paste");
+  tester.assertComponent("dialog:dialog:content:form:userPanel",PanelPaste.class);
+  formTester=tester.newFormTester("dialog:dialog:content:form");
+  formTester.setValue("userPanel:directory","/temp/new_dir");
+  formTester.submit("submit");
+  assertNull(tester.getComponentFromLastRenderedPage("dialog:dialog:content:form:userPanel"));
+  assertFalse(Resources.exists(resourceBrowser.store().get(PATH_RES)));
+  assertTrue(Resources.exists(resourceBrowser.store().get("/temp/new_dir")));
+  assertTrue(Resources.exists(resourceBrowser.store().get("/temp/new_dir/dir/something")));
+  tester.assertContainsNot("treeview:rootView:/:children:temp:children:temp/dir");
+  tester.assertComponent("treeview:rootView:/:children:temp:children:temp/new_dir",Component.class);
+  assertEquals("temp/new_dir/dir",resourceBrowser.treeView().getSelectedNode().getObject().path());
+  assertTrue(resourceBrowser.clipBoard.getItems().isEmpty());
+  resourceBrowser.store().get("/temp/new_dir").delete();
+}

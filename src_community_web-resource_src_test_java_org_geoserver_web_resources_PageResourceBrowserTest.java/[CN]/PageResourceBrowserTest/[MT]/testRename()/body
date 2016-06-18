@@ -1,0 +1,21 @@
+{
+  assertFalse(tester.getComponentFromLastRenderedPage("rename").isEnabled());
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/something:selectableLabel","click");
+  assertTrue(tester.getComponentFromLastRenderedPage("rename").isEnabled());
+  tester.clickLink("rename");
+  tester.assertComponent("dialog:dialog:content:form:userPanel",PanelRename.class);
+  formTester=tester.newFormTester("dialog:dialog:content:form");
+  formTester.setValue("userPanel:name","anotherthing");
+  formTester.submit("submit");
+  assertNull(tester.getComponentFromLastRenderedPage("dialog:dialog:content:form:userPanel"));
+  assertFalse(Resources.exists(resourceBrowser.store().get(PATH_RES)));
+  tester.assertContainsNot("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/something");
+  tester.assertComponent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/anotherthing",Component.class);
+  Resource renamedResource=resourceBrowser.store().get("temp/dir/anotherthing");
+  assertTrue(Resources.exists(renamedResource));
+  try (InputStream is=renamedResource.in()){
+    assertEquals(DATA,IOUtils.toString(is));
+  }
+   assertEquals(renamedResource.path(),resourceBrowser.treeView().getSelectedNode().getObject().path());
+  renamedResource.delete();
+}

@@ -1,0 +1,15 @@
+{
+  assertFalse(tester.getComponentFromLastRenderedPage("edit").isEnabled());
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/something:selectableLabel","click");
+  assertTrue(tester.getComponentFromLastRenderedPage("edit").isEnabled());
+  tester.clickLink("edit");
+  tester.assertComponent("dialog:dialog:content:form:userPanel",PanelEdit.class);
+  formTester=tester.newFormTester("dialog:dialog:content:form");
+  assertEquals(DATA,formTester.getTextComponentValue("userPanel:contents"));
+  formTester.setValue("userPanel:contents",DATA2);
+  formTester.submit("submit");
+  assertNull(tester.getComponentFromLastRenderedPage("dialog:dialog:content:form:userPanel"));
+  try (InputStream is=resourceBrowser.store().get(PATH_RES).in()){
+    assertEquals(DATA2 + System.lineSeparator(),IOUtils.toString(is));
+  }
+ }

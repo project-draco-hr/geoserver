@@ -1,0 +1,32 @@
+{
+  super(id,nodeModel);
+  final AjaxCheckBox cbExpand=new AjaxCheckBox("cbExpand",nodeModel.getObject().getExpanded()){
+    private static final long serialVersionUID=7602857423814264211L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      if (!getModelObject() && !selectedNodeModel.getObject().isEmpty()) {
+        Set<TreeNode<T>> newSelectedNodes=new HashSet<TreeNode<T>>();
+        for (        TreeNode<T> selectedNode : selectedNodeModel.getObject()) {
+          TreeNode<T> node=selectedNode.getParent();
+          boolean selectionHidden=false;
+          while (!selectionHidden && node != null) {
+            if (node.isSameAs(nodeModel.getObject())) {
+              selectionHidden=true;
+            }
+            node=node.getParent();
+          }
+          if (!selectionHidden) {
+            newSelectedNodes.add(selectedNode);
+          }
+        }
+        if (newSelectedNodes.size() != selectedNodeModel.getObject().size()) {
+          setSelectedNodesInternal(newSelectedNodes,target);
+          target.add(TreeExpandableNodeView.this);
+        }
+      }
+    }
+  }
+;
+  add(cbExpand);
+  add(new FormComponentLabel("label",cbExpand).add(createSelectableLabel()));
+  add(new RepeatingView("children"));
+}

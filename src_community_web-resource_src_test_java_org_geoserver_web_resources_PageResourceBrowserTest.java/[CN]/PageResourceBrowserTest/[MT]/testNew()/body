@@ -1,0 +1,20 @@
+{
+  assertFalse(tester.getComponentFromLastRenderedPage("new").isEnabled());
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:label:selectableLabel","click");
+  assertTrue(tester.getComponentFromLastRenderedPage("new").isEnabled());
+  tester.clickLink("new");
+  tester.assertComponent("dialog:dialog:content:form:userPanel",PanelEdit.class);
+  formTester=tester.newFormTester("dialog:dialog:content:form");
+  formTester.setValue("userPanel:resource","/temp/dir/anewthing");
+  formTester.setValue("userPanel:contents",DATA2);
+  formTester.submit("submit");
+  assertNull(tester.getComponentFromLastRenderedPage("dialog:dialog:content:form:userPanel"));
+  tester.assertComponent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/anewthing",Component.class);
+  Resource newResource=resourceBrowser.store().get("temp/dir/anewthing");
+  assertTrue(Resources.exists(newResource));
+  try (InputStream is=newResource.in()){
+    assertEquals(DATA2 + System.lineSeparator(),IOUtils.toString(is));
+  }
+   assertEquals(newResource.path(),resourceBrowser.treeView().getSelectedNode().getObject().path());
+  newResource.delete();
+}

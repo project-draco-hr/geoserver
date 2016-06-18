@@ -1,0 +1,37 @@
+{
+  assertFalse(tester.getComponentFromLastRenderedPage("copy").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("paste").isEnabled());
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:label:selectableLabel","click");
+  assertFalse(tester.getComponentFromLastRenderedPage("copy").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("paste").isEnabled());
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/something:selectableLabel","click");
+  tester.getRequest().addParameter("ctrl","true");
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/somethingelse:selectableLabel","click");
+  assertTrue(tester.getComponentFromLastRenderedPage("copy").isEnabled());
+  assertFalse(tester.getComponentFromLastRenderedPage("paste").isEnabled());
+  tester.clickLink("copy");
+  assertContainsPaths(resourceBrowser.clipBoard.getItems(),PATH_RES,PATH_RES2);
+  assertTrue(resourceBrowser.clipBoard.isCopy());
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:label:selectableLabel","click");
+  assertTrue(tester.getComponentFromLastRenderedPage("paste").isEnabled());
+  tester.clickLink("paste");
+  tester.assertComponent("dialog:dialog:content:form:userPanel",PanelPaste.class);
+  formTester=tester.newFormTester("dialog:dialog:content:form");
+  formTester.submit("submit");
+  assertNull(tester.getComponentFromLastRenderedPage("dialog:dialog:content:form:userPanel"));
+  tester.assertComponent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/something.1",Component.class);
+  tester.assertComponent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/somethingelse.1",Component.class);
+  Resource copiedResource=resourceBrowser.store().get("temp/dir/something.1");
+  assertTrue(Resources.exists(copiedResource));
+  try (InputStream is=copiedResource.in()){
+    assertEquals(DATA,IOUtils.toString(is));
+  }
+   Resource copiedResource2=resourceBrowser.store().get("temp/dir/somethingelse.1");
+  assertTrue(Resources.exists(copiedResource2));
+  try (InputStream is=copiedResource.in()){
+    assertEquals(DATA,IOUtils.toString(is));
+  }
+   assertContainsPaths(resourceBrowser.treeView().getSelectedNodes(),copiedResource.path(),copiedResource2.path());
+  copiedResource.delete();
+  copiedResource2.delete();
+}

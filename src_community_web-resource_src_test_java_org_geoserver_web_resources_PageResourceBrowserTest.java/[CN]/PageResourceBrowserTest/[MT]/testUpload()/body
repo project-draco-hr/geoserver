@@ -1,0 +1,25 @@
+{
+  assertFalse(tester.getComponentFromLastRenderedPage("upload").isEnabled());
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:label:selectableLabel","click");
+  assertTrue(tester.getComponentFromLastRenderedPage("upload").isEnabled());
+  TemporaryFolder folder=new TemporaryFolder();
+  folder.create();
+  final File file=folder.newFile("anewthing");
+  try (OutputStream os=new FileOutputStream(file)){
+    os.write(DATA2.getBytes());
+  }
+   tester.clickLink("upload");
+  tester.assertComponent("dialog:dialog:content:form:userPanel",PanelUpload.class);
+  formTester=tester.newFormTester("dialog:dialog:content:form");
+  formTester.setFile("userPanel:file",new org.apache.wicket.util.file.File(file),"text/plain");
+  formTester.submit("submit");
+  assertNull(tester.getComponentFromLastRenderedPage("dialog:dialog:content:form:userPanel"));
+  tester.assertComponent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/anewthing",Component.class);
+  Resource uploadedResource=resourceBrowser.store().get("temp/dir/anewthing");
+  assertTrue(Resources.exists(uploadedResource));
+  try (InputStream is=uploadedResource.in()){
+    assertEquals(DATA2,IOUtils.toString(is));
+  }
+   assertEquals(uploadedResource.path(),resourceBrowser.treeView().getSelectedNode().getObject().path());
+  uploadedResource.delete();
+}

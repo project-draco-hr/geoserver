@@ -1,0 +1,58 @@
+{
+  return selectableLabel=new Label("selectableLabel",getNode().getLabel()).add(new AjaxEventBehavior("click"){
+    private static final long serialVersionUID=-3705747320247194977L;
+    @Override protected void updateAjaxAttributes(    AjaxRequestAttributes attributes){
+      super.updateAjaxAttributes(attributes);
+      attributes.getDynamicExtraParameters().add("return {'ctrl' : attrs.event.ctrlKey, 'shift' : attrs.event.shiftKey}");
+      attributes.setPreventDefault(true);
+    }
+    @Override public void onEvent(    AjaxRequestTarget target){
+      boolean shift=RequestCycle.get().getRequest().getRequestParameters().getParameterValue("shift").toBoolean();
+      boolean ctrl=RequestCycle.get().getRequest().getRequestParameters().getParameterValue("ctrl").toBoolean();
+      if (ctrl) {
+        Set<TreeNode<T>> newSelectedNodes=new HashSet<TreeNode<T>>();
+        if (isSelected(getNode())) {
+          for (          TreeNode<T> selectedNode : getSelectedNodes()) {
+            if (!selectedNode.isSameAs(getNode())) {
+              newSelectedNodes.add(selectedNode);
+            }
+          }
+        }
+ else {
+          newSelectedNodes.addAll(getSelectedNodes());
+          newSelectedNodes.add(getNode());
+        }
+        setSelectedNodesInternal(newSelectedNodes,target);
+      }
+ else       if (shift) {
+        boolean select=false;
+        boolean moveOn=false;
+        Set<TreeNode<T>> newSelectedNodes=new HashSet<TreeNode<T>>(getSelectedNodes());
+        for (        TreeNode<T> sibling : getNode().getParent().getChildren()) {
+          if (!select && (sibling.isSameAs(getNode()) || isSelected(sibling))) {
+            select=true;
+            moveOn=!sibling.isSameAs(getNode());
+          }
+ else           if (select && (sibling.isSameAs(getNode()) || (!moveOn && isSelected(sibling)))) {
+            select=false;
+            break;
+          }
+          if (select) {
+            newSelectedNodes.add(sibling);
+            target.add(getNearestViewInternal(sibling));
+          }
+        }
+        if (!select) {
+          newSelectedNodes.add(getNode());
+          setSelectedNodesInternal(newSelectedNodes,target);
+        }
+      }
+ else {
+        target.add(getSelectedViews());
+        setSelectedNodesInternal(Collections.singleton(getNode()),target);
+      }
+      target.add(TreeNodeView.this);
+    }
+  }
+).setOutputMarkupId(true);
+}

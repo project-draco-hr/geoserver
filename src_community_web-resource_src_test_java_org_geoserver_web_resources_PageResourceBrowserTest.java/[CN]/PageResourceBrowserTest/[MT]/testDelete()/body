@@ -1,0 +1,15 @@
+{
+  assertFalse(tester.getComponentFromLastRenderedPage("delete").isEnabled());
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/something:selectableLabel","click");
+  tester.getRequest().addParameter("ctrl","true");
+  tester.executeAjaxEvent("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/somethingelse:selectableLabel","click");
+  assertTrue(tester.getComponentFromLastRenderedPage("delete").isEnabled());
+  tester.clickLink("delete");
+  tester.assertComponent("dialog:dialog:content:form:userPanel",Label.class);
+  formTester=tester.newFormTester("dialog:dialog:content:form");
+  formTester.submit("submit");
+  assertNull(tester.getComponentFromLastRenderedPage("dialog:dialog:content:form:userPanel"));
+  assertFalse(Resources.exists(resourceBrowser.store().get(PATH_RES)));
+  assertFalse(Resources.exists(resourceBrowser.store().get(PATH_RES2)));
+  tester.assertContainsNot("treeview:rootView:/:children:temp:children:temp/dir:children:temp/dir/something");
+}

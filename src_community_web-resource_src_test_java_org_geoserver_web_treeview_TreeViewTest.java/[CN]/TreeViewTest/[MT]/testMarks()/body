@@ -1,0 +1,22 @@
+{
+  final String TESTMARK="testMark";
+  treeView.setSelectedNodes(Collections.emptySet());
+  treeView.registerMark("testMark");
+  assertNotNull(treeView.marks.get(TESTMARK));
+  treeView.addMarked("testMark",two);
+  treeView.addMarked("testMark",three);
+  assertFalse(treeView.hasMark(TESTMARK,one));
+  assertTrue(treeView.hasMark(TESTMARK,two));
+  assertTrue(treeView.hasMark(TESTMARK,three));
+  assertFalse(treeView.hasMark(TESTMARK,four));
+  final AttributeAppender app=treeView.marks.get(TESTMARK).getBehaviour();
+  tester.startComponentInPage(treeView);
+  assertTrue(tester.getComponentFromLastRenderedPage("treeView:rootView:1:children:2:label:selectableLabel").getBehaviors().contains(app));
+  assertTrue(tester.getComponentFromLastRenderedPage("treeView:rootView:1:children:3:selectableLabel").getBehaviors().contains(app));
+  treeView.clearMarked("testMark");
+  assertFalse(treeView.hasMark(TESTMARK,two));
+  assertFalse(treeView.hasMark(TESTMARK,three));
+  tester.startComponentInPage(treeView);
+  assertFalse(tester.getComponentFromLastRenderedPage("treeView:rootView:1:children:2:label:selectableLabel").getBehaviors().contains(app));
+  assertFalse(tester.getComponentFromLastRenderedPage("treeView:rootView:1:children:3:selectableLabel").getBehaviors().contains(app));
+}
