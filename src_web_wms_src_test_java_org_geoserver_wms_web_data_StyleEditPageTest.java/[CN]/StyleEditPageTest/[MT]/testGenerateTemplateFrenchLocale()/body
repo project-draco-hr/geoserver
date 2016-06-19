@@ -1,0 +1,18 @@
+{
+  final Session session=tester.getSession();
+  try {
+    session.clear();
+    session.setLocale(Locale.FRENCH);
+    StyleEditPage edit=new StyleEditPage(buildingsStyle);
+    tester.startPage(edit);
+    tester.newFormTester("form").select("templates",1);
+    tester.executeAjaxEvent("form:templates","onchange");
+    Component generateLink=tester.getComponentFromLastRenderedPage("form:generate");
+    tester.executeAjaxEvent(generateLink,"onClick");
+    assertTrue(tester.getLastResponseAsString().contains("l\\'??diteur"));
+  }
+  finally {
+    session.clear();
+    session.setLocale(Locale.getDefault());
+  }
+}
