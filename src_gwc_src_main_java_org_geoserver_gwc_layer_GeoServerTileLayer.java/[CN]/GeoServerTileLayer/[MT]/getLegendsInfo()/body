@@ -1,0 +1,50 @@
+{
+  LayerInfo layerInfo=getLayerInfo();
+  if (layerInfo == null) {
+    return null;
+  }
+  Map<String,LegendInfo> legends=new HashMap<>();
+  Set<StyleInfo> styles=new HashSet<>(layerInfo.getStyles());
+  styles.add(layerInfo.getDefaultStyle());
+  for (  StyleInfo styleInfo : styles) {
+    org.geoserver.catalog.LegendInfo legendInfo=styleInfo.getLegend();
+    LegendInfo gwcLegendInfo=new LegendInfo();
+    if (legendInfo != null) {
+      gwcLegendInfo.id=legendInfo.getId();
+      gwcLegendInfo.width=legendInfo.getWidth();
+      gwcLegendInfo.height=legendInfo.getHeight();
+      gwcLegendInfo.format=legendInfo.getFormat();
+      gwcLegendInfo.legendUrl=buildURL(RequestUtils.baseURL(Dispatcher.REQUEST.get().getHttpRequest()),legendInfo.getOnlineResource(),null,URLMangler.URLType.RESOURCE);
+      legends.put(styleInfo.prefixedName(),gwcLegendInfo);
+    }
+ else {
+      try {
+        gwcLegendInfo.width=GetLegendGraphicRequest.DEFAULT_WIDTH;
+        gwcLegendInfo.height=GetLegendGraphicRequest.DEFAULT_HEIGHT;
+        Dimension dimension=legendSample.getLegendURLSize(styleInfo);
+        if (dimension != null) {
+          gwcLegendInfo.width=(int)dimension.getWidth();
+          gwcLegendInfo.height=(int)dimension.getHeight();
+        }
+        gwcLegendInfo.format=GetLegendGraphicRequest.DEFAULT_FORMAT;
+        if (null == wms.getLegendGraphicOutputFormat(gwcLegendInfo.format)) {
+          if (LOGGER.isLoggable(Level.WARNING)) {
+            LOGGER.warning("Default legend format (" + gwcLegendInfo.format + ")is not supported (jai not available?), can't add LegendURL element");
+          }
+          continue;
+        }
+      }
+ catch (      Exception exception) {
+        LOGGER.log(Level.WARNING,"Error getting LegendURL dimensions from sample",exception);
+      }
+      String layerName=layerInfo.prefixedName();
+      Map<String,String> params=params("service","WMS","request","GetLegendGraphic","format",gwcLegendInfo.format,"width",String.valueOf(GetLegendGraphicRequest.DEFAULT_WIDTH),"height",String.valueOf(GetLegendGraphicRequest.DEFAULT_HEIGHT),"layer",layerName);
+      if (!styleInfo.getName().equals(layerInfo.getDefaultStyle().getName())) {
+        params.put("style",styleInfo.getName());
+      }
+      gwcLegendInfo.legendUrl=buildURL(RequestUtils.baseURL(Dispatcher.REQUEST.get().getHttpRequest()),"ows",params,URLMangler.URLType.SERVICE);
+      legends.put(styleInfo.prefixedName(),gwcLegendInfo);
+    }
+  }
+  return legends;
+}

@@ -1,3 +1,30 @@
 {
-  return null;
+  List<MetadataLinkInfo> gsMetadataLinks;
+  List<MetadataURL> gwcMetadataLinks=new ArrayList<>();
+  LayerInfo layerInfo=getLayerInfo();
+  if (layerInfo != null) {
+    gsMetadataLinks=layerInfo.getResource().getMetadataLinks();
+  }
+ else {
+    gsMetadataLinks=new ArrayList<>();
+    for (    LayerInfo layer : Iterables.filter(getLayerGroupInfo().getLayers(),LayerInfo.class)) {
+      List<MetadataLinkInfo> metadataLinksLayer=layer.getResource().getMetadataLinks();
+      if (metadataLinksLayer != null) {
+        gsMetadataLinks.addAll(metadataLinksLayer);
+      }
+    }
+  }
+  String baseUrl=RequestUtils.baseURL(Dispatcher.REQUEST.get().getHttpRequest());
+  for (  MetadataLinkInfo gsMetadata : gsMetadataLinks) {
+    String url=ResponseUtils.proxifyMetadataLink(gsMetadata,baseUrl);
+    try {
+      gwcMetadataLinks.add(new MetadataURL(gsMetadata.getMetadataType(),gsMetadata.getType(),new URL(url)));
+    }
+ catch (    MalformedURLException exception) {
+      if (LOGGER.isLoggable(Level.WARNING)) {
+        LOGGER.warning("Error adding layer metadata URL.");
+      }
+    }
+  }
+  return gwcMetadataLinks;
 }
