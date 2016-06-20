@@ -20,19 +20,35 @@
   String label=currentCME.getLabel();
   double quantity=LegendUtils.getQuantity(currentCME);
   String rule;
+  String lastRuleText;
   if (formatQuantity) {
     rule="";
+    lastRuleText="";
     if (opacity > 0) {
-      String symbol=leftEdge ? " > " : " = ";
-      String value=formatQuantity(quantity,digits,unit);
-      rule=leftEdge ? value + " " + symbol+ " x" : value + " ";
+      String formattedQuantity=formatQuantity(quantity,digits,unit);
+      if (leftEdge) {
+        rule=formattedQuantity + " >= x";
+        lastRuleText="";
+      }
+ else {
+        rule=formattedQuantity + " ";
+        lastRuleText=formattedQuantity + " <= x";
+      }
     }
   }
  else {
-    String symbol=leftEdge ? " > " : " = ";
-    rule=leftEdge ? Double.toString(quantity) + " " + symbol+ " x" : Double.toString(quantity) + " " + symbol+ " x";
+    final String formattedQuantity=Double.toString(quantity);
+    if (leftEdge) {
+      rule=formattedQuantity + " >= x";
+      lastRuleText="";
+    }
+ else {
+      rule=formattedQuantity + " = x";
+      lastRuleText=formattedQuantity + " <= x";
+    }
   }
   super.add(new TextManager(rule,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));
+  lastRuleManager=new TextManager(lastRuleText,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor);
   if (label != null) {
     hasLabel=true;
     super.add(new TextManager(label,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));

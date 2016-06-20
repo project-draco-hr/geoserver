@@ -11,30 +11,43 @@
   String label=currentCME.getLabel();
   double quantity1=leftEdge ? LegendUtils.getQuantity(currentCME) : LegendUtils.getQuantity(previousCME);
   double quantity2=LegendUtils.getQuantity(currentCME);
-  String rule;
+  String ruleText;
   String symbol1=null, symbol2=null;
-  if (formatQuantity) {
-    rule="";
-    if (opacity > 0) {
-      if (leftEdge)       symbol1=" < ";
+  if (leftEdge)   symbol1=" < ";
  else {
-        symbol1=" <= ";
-        symbol2=" < ";
-      }
+    symbol1=" <= ";
+    symbol2=" < ";
+  }
+  if (formatQuantity) {
+    ruleText="";
+    if (opacity > 0) {
       String value1=formatQuantity(quantity1,digits,unit);
       String value2=formatQuantity(quantity2,digits,unit);
-      rule=leftEdge ? value1 + " " + symbol1+ " x" : value1 + " " + symbol1+ " x "+ symbol2+ " "+ value2;
+      if (leftEdge) {
+        ruleText="x" + symbol1 + value1;
+      }
+ else       if (Double.isInfinite(quantity2)) {
+        ruleText=value1 + symbol1 + "x";
+      }
+ else {
+        ruleText=value1 + symbol1 + "x"+ symbol2+ value2;
+      }
     }
   }
  else {
-    if (leftEdge)     symbol1=" < ";
- else {
-      symbol1=" <= ";
-      symbol2=" < ";
+    final String value1=Double.toString(quantity1);
+    final String value2=Double.toString(quantity2);
+    if (leftEdge) {
+      ruleText="x" + symbol1 + value1;
     }
-    rule=leftEdge ? Double.toString(quantity1) + " " + symbol1+ " x" : Double.toString(quantity1) + " " + symbol1+ " x "+ symbol2+ " "+ Double.toString(quantity2);
+ else     if (Double.isInfinite(quantity2)) {
+      ruleText=value1 + symbol1 + "x";
+    }
+ else {
+      ruleText=value1 + symbol1 + "x"+ symbol2+ value2;
+    }
   }
-  super.add(new TextManager(rule,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));
+  super.add(new TextManager(ruleText,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));
   if (label != null) {
     hasLabel=true;
     super.add(new TextManager(label,vAling,hAlign,bkgColor,requestedDimension,labelFont,labelFontColor,leftEdge,borderColor));

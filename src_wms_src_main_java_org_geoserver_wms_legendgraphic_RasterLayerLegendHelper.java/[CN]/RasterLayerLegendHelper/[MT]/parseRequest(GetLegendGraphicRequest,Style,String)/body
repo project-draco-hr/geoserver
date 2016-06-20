@@ -43,7 +43,22 @@
       final ChannelSelection channelSelection=rasterSymbolizer.getChannelSelection();
       cmapLegendBuilder.setBand(channelSelection != null ? channelSelection.getGrayChannel() : null);
       final ColorMapEntry[] colorMapEntries=cmap.getColorMapEntries();
-      for (      ColorMapEntry ce : colorMapEntries)       if (ce != null)       cmapLegendBuilder.addColorMapEntry(ce);
+      ColorMapEntryLegendBuilder lastEntry=null;
+      boolean first=true;
+      for (      ColorMapEntry ce : colorMapEntries) {
+        if (ce == null) {
+          continue;
+        }
+        final Double qty=ce.getQuantity().evaluate(null,Double.class);
+        if (cmap.getType() == ColorMap.TYPE_INTERVALS && first && qty < 0 && Double.isInfinite(qty)) {
+          continue;
+        }
+        lastEntry=cmapLegendBuilder.addColorMapEntry(ce);
+        first=false;
+      }
+      if (lastEntry != null) {
+        lastEntry.setLastRow();
+      }
       cmapLegendBuilder.checkAdditionalOptions();
       cMapLegendCreator=cmapLegendBuilder.create();
     }
