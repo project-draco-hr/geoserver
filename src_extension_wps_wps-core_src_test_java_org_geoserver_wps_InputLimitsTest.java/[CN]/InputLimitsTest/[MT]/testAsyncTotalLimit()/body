@@ -1,0 +1,22 @@
+{
+  WPSInfo wps=getGeoServer().getService(WPSInfo.class);
+  wps.setMaxAsynchronousExecutionTime(2);
+  wps.setMaxAsynchronousTotalTime(3);
+  wps.setMaxAsynchronousProcesses(1);
+  getGeoServer().save(wps);
+  String statusLocationX1=submitAsynchronousRequest("wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&storeExecuteResponse=true&status=true&DataInputs=" + urlEncode("id=x1"));
+  MonkeyProcess.wait("x1",1100);
+  MonkeyProcess.exit("x1",null,false);
+  String statusLocationX2=submitAsynchronousRequest("wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&storeExecuteResponse=true&status=true&DataInputs=" + urlEncode("id=x2"));
+  MonkeyProcess.wait("x2",1100);
+  MonkeyProcess.exit("x2",null,false);
+  String statusLocationX3=submitAsynchronousRequest("wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&storeExecuteResponse=true&status=true&DataInputs=" + urlEncode("id=x3"));
+  MonkeyProcess.wait("x3",1100);
+  MonkeyProcess.progress("x3",54f,false);
+  Document response1=waitForProcessEnd(statusLocationX1,10);
+  assertXpathExists("//wps:ProcessSucceeded",response1);
+  Document response2=waitForProcessEnd(statusLocationX2,10);
+  assertXpathExists("//wps:ProcessSucceeded",response2);
+  Document response3=waitForProcessEnd(statusLocationX3,10);
+  assertXpathExists("//ows:ExceptionText[contains(., 'maxExecutionTime 2 seconds, maxTotalTime 3 seconds')]",response3);
+}
