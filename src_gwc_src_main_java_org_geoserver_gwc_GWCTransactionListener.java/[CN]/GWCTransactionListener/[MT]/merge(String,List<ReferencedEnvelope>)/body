@@ -2,9 +2,12 @@
   if (dirtyList.size() == 0) {
     return null;
   }
-  final CoordinateReferenceSystem declaredCrs=gwc.getDeclaredCrs(tileLayerName);
+  final CoordinateReferenceSystem declaredCrs=CRS.getHorizontalCRS(gwc.getDeclaredCrs(tileLayerName));
   ReferencedEnvelope merged=new ReferencedEnvelope(declaredCrs);
   for (  ReferencedEnvelope env : dirtyList) {
+    if (env instanceof ReferencedEnvelope3D) {
+      env=new ReferencedEnvelope(env,CRS.getHorizontalCRS(env.getCoordinateReferenceSystem()));
+    }
     ReferencedEnvelope transformedDirtyRegion=env.transform(declaredCrs,true,1000);
     merged.expandToInclude(transformedDirtyRegion);
   }
