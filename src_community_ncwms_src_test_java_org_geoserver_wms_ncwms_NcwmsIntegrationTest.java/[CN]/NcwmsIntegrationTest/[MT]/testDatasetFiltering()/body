@@ -1,0 +1,14 @@
+{
+  Document dom=getAsDOM("wms?service=WMS&version=1.3.0&request=GetCapabilities&dataset=cite");
+  for (  LayerInfo layer : getCatalog().getLayers()) {
+    if ("cite".equals(layer.getResource().getStore().getWorkspace().getName()) && !"Geometryless".equals(layer.getName())) {
+      assertEquals("Did not find " + layer.getName(),1,xpath.getMatchingNodes("//wms:Layer[wms:Name = '" + layer.getName() + "']",dom).getLength());
+    }
+ else {
+      assertEquals("Found unexpected " + layer.getName(),0,xpath.getMatchingNodes("//wms:Layer[wms:Name = '" + layer.getName() + "']",dom).getLength());
+    }
+  }
+  dom=getAsDOM("wms?service=WMS&version=1.3.0&request=GetCapabilities&dataset=cite:rain");
+  assertEquals(1,xpath.getMatchingNodes("//wms:Layer[wms:Name = 'rain']",dom).getLength());
+  assertEquals(2,xpath.getMatchingNodes("//wms:Layer",dom).getLength());
+}

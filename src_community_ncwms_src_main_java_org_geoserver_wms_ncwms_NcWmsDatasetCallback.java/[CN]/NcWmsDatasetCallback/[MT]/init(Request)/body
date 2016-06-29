@@ -1,0 +1,23 @@
+{
+  String dataset=Converters.convert(request.getRawKvp().get("DATASET"),String.class);
+  if (dataset != null) {
+    WorkspaceInfo ws=catalog.getWorkspaceByName(dataset);
+    if (ws != null) {
+      LocalWorkspace.set(ws);
+      return request;
+    }
+    LayerInfo layer=catalog.getLayerByName(dataset);
+    if (layer != null) {
+      LocalWorkspace.set(layer.getResource().getStore().getWorkspace());
+      LocalPublished.set(layer);
+      return request;
+    }
+    LayerGroupInfo group=catalog.getLayerGroupByName(dataset);
+    if (group != null) {
+      LocalWorkspace.set(group.getWorkspace());
+      LocalPublished.set(group);
+      return request;
+    }
+  }
+  return request;
+}
