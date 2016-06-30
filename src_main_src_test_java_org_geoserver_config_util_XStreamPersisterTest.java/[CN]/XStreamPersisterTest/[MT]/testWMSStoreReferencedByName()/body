@@ -1,0 +1,25 @@
+{
+  Catalog catalog=new CatalogImpl();
+  CatalogFactory cFactory=catalog.getFactory();
+  WorkspaceInfo ws=cFactory.createWorkspace();
+  ws.setName("foo");
+  WMSStoreInfo wms1=cFactory.createWebMapServer();
+  wms1.setName("bar");
+  wms1.setWorkspace(ws);
+  wms1.setCapabilitiesURL("http://fake.host/wms?request=GetCapabilities&service=wms");
+  catalog.detach(wms1);
+  ((WMSStoreInfoImpl)wms1).setId(null);
+  ByteArrayOutputStream out=out();
+  XStreamPersister persister=new XStreamPersisterFactory().createXMLPersister();
+  persister.setReferenceByName(true);
+  persister.save(wms1,out);
+  WMSStoreInfo wms2=persister.load(in(out),WMSStoreInfo.class);
+  assertEquals("bar",wms2.getName());
+  assertEquals(WMSStoreInfoImpl.DEFAULT_MAX_CONNECTIONS,wms2.getMaxConnections());
+  assertEquals(WMSStoreInfoImpl.DEFAULT_CONNECT_TIMEOUT,wms2.getConnectTimeout());
+  assertEquals(WMSStoreInfoImpl.DEFAULT_READ_TIMEOUT,wms2.getReadTimeout());
+  assertNotNull(wms2.getWorkspace());
+  assertEquals("foo",wms2.getWorkspace().getId());
+  Document dom=dom(in(out));
+  assertEquals("wmsStore",dom.getDocumentElement().getNodeName());
+}

@@ -1,0 +1,19 @@
+{
+  Catalog catalog=new CatalogImpl();
+  CatalogFactory cFactory=catalog.getFactory();
+  WorkspaceInfo ws=cFactory.createWorkspace();
+  ws.setName("foo");
+  DataStoreInfo ds1=cFactory.createDataStore();
+  ds1.setName("bar");
+  ds1.setWorkspace(ws);
+  catalog.detach(ds1);
+  ((DataStoreInfoImpl)ds1).setId(null);
+  ByteArrayOutputStream out=out();
+  XStreamPersister persister=new XStreamPersisterFactory().createXMLPersister();
+  persister.setReferenceByName(true);
+  persister.save(ds1,out);
+  DataStoreInfo ds2=persister.load(in(out),DataStoreInfo.class);
+  assertEquals("bar",ds2.getName());
+  Document dom=dom(in(out));
+  assertEquals("dataStore",dom.getDocumentElement().getNodeName());
+}
