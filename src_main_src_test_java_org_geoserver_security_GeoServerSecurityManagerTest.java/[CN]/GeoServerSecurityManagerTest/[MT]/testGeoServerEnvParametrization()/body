@@ -1,0 +1,19 @@
+{
+  GeoServerSecurityManager secMgr=getSecurityManager();
+  SecurityManagerConfig config=secMgr.loadSecurityConfig();
+  String oldRoleServiceName=config.getRoleServiceName();
+  try {
+    if (GeoServerEnvironment.ALLOW_ENV_PARAMETRIZATION) {
+      System.setProperty("TEST_SYS_PROPERTY",oldRoleServiceName);
+      config.setRoleServiceName("${TEST_SYS_PROPERTY}");
+      secMgr.saveSecurityConfig(config);
+      SecurityManagerConfig config1=secMgr.loadSecurityConfig();
+      assertEquals(config1.getRoleServiceName(),oldRoleServiceName);
+    }
+  }
+  finally {
+    config.setRoleServiceName(oldRoleServiceName);
+    secMgr.saveSecurityConfig(config);
+    System.setProperty("TEST_SYS_PROPERTY","");
+  }
+}
