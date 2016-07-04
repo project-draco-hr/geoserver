@@ -1,0 +1,50 @@
+{
+  NamespaceInfo nameSpaceA=new NamespaceInfoImpl();
+  nameSpaceA.setPrefix("workspace-a");
+  nameSpaceA.setURI("http://goserver.org/test");
+  WorkspaceInfo workspaceA=new WorkspaceInfoImpl();
+  workspaceA.setName("workspace-a");
+  when(catalog.getWorkspaceByName("workspace-a")).thenReturn(workspaceA);
+  FeatureTypeInfoImpl resourceA=new FeatureTypeInfoImpl(null);
+  resourceA.setNamespace(nameSpaceA);
+  LayerInfoImpl layerA=new LayerInfoImpl();
+  layerA.setResource(resourceA);
+  layerA.setName("layer-a");
+  layerA.setId("layer-a");
+  when(catalog.getLayer("layer-a")).thenReturn(layerA);
+  LayerGroupInfoImpl layerGroupA=new LayerGroupInfoImpl();
+  layerGroupA.setName("random-prefix:layer-group-a");
+  layerGroupA.setId("layer-group-a");
+  layerGroupA.setLayers(Collections.singletonList(layerA));
+  when(catalog.getLayerGroup("layer-group-a")).thenReturn(layerGroupA);
+  GeoServerTileLayer tileLayerA=new GeoServerTileLayer(layerA,defaults,gridSetBroker);
+  GeoServerTileLayer tileLayerB=new GeoServerTileLayer(layerGroupA,defaults,gridSetBroker);
+  Field catalogField=GeoServerTileLayer.class.getDeclaredField("catalog");
+  catalogField.setAccessible(true);
+  catalogField.set(tileLayerA,catalog);
+  catalogField.set(tileLayerB,catalog);
+  GwcServiceDispatcherCallback.GWC_OPERATION.remove();
+  assertThat(tileLayerA.getName(),is("workspace-a:layer-a"));
+  assertThat(tileLayerB.getName(),is("random-prefix:layer-group-a"));
+  GwcServiceDispatcherCallback.GWC_OPERATION.set("some-operation");
+  assertThat(tileLayerA.getName(),is("workspace-a:layer-a"));
+  assertThat(tileLayerB.getName(),is("random-prefix:layer-group-a"));
+  GwcServiceDispatcherCallback.GWC_OPERATION.set("GetCapabilities");
+  assertThat(tileLayerA.getName(),is("workspace-a:layer-a"));
+  assertThat(tileLayerB.getName(),is("random-prefix:layer-group-a"));
+  try {
+    LocalWorkspace.set(workspaceA);
+    GwcServiceDispatcherCallback.GWC_OPERATION.remove();
+    assertThat(tileLayerA.getName(),is("workspace-a:layer-a"));
+    assertThat(tileLayerB.getName(),is("random-prefix:layer-group-a"));
+    GwcServiceDispatcherCallback.GWC_OPERATION.set("some-operation");
+    assertThat(tileLayerA.getName(),is("workspace-a:layer-a"));
+    assertThat(tileLayerB.getName(),is("random-prefix:layer-group-a"));
+    GwcServiceDispatcherCallback.GWC_OPERATION.set("GetCapabilities");
+    assertThat(tileLayerA.getName(),is("layer-a"));
+    assertThat(tileLayerB.getName(),is("random-prefix:layer-group-a"));
+  }
+  finally {
+    LocalWorkspace.remove();
+  }
+}
