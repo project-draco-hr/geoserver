@@ -1,0 +1,21 @@
+{
+  final XStreamPersisterFactory xStreamPersisterFactory=new XStreamPersisterFactory();
+  CatalogBackupRestoreTasklet catalogTsklet=new CatalogBackupRestoreTasklet(backupFacade,xStreamPersisterFactory);
+  File tmpDd=File.createTempFile("template","tmp",new File("target"));
+  tmpDd.delete();
+  tmpDd.mkdir();
+  GeoServerDataDirectory dd=new GeoServerDataDirectory(tmpDd);
+  File tmpTd=File.createTempFile("template","tmp",new File("target"));
+  tmpTd.delete();
+  tmpTd.mkdir();
+  GeoServerDataDirectory td=new GeoServerDataDirectory(tmpTd);
+  BackupUtils.extractTo(file("data.zip"),dd.get(Paths.BASE));
+  catalogTsklet.backupRestoreAdditionalResources(dd.getResourceStore(),td.get(Paths.BASE));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"demo"))));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"images"))));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"logs"))));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"palettes"))));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"user_projections"))));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"validation"))));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"www"))));
+}

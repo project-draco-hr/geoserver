@@ -1,0 +1,54 @@
+{
+  for (  WorkspaceInfo ws : geoserver.getCatalog().getWorkspaces()) {
+    if (filteredWorkspace(ws)) {
+      Resource wsFolder=BackupUtils.dir(sourceWorkspacesFolder,ws.getName());
+      SettingsInfo wsSettings=null;
+      if (Resources.exists(wsFolder.get("settings.xml"))) {
+        wsSettings=(SettingsInfo)doRead(wsFolder,"settings.xml");
+      }
+      if (wsSettings != null) {
+        wsSettings.setWorkspace(ws);
+        if (!isDryRun()) {
+          geoserver.add(wsSettings);
+          doWrite(geoserver.getSettings(ws),dd.get(Paths.path("workspaces",ws.getName())),"settings.xml");
+        }
+ else {
+          doWrite(wsSettings,dd.get(Paths.path("workspaces",ws.getName())),"settings.xml");
+        }
+      }
+      List<Resource> serviceResources=Resources.list(wsFolder,new Filter<Resource>(){
+        @Override public boolean accept(        Resource res){
+          if (!"settings.xml".equals(res.name()) && res.name().endsWith(".xml")) {
+            return true;
+          }
+          return false;
+        }
+      }
+);
+      for (      Resource serviceResource : serviceResources) {
+        ServiceInfo localService=(ServiceInfo)doRead(wsFolder,serviceResource.name());
+        if (localService != null) {
+          localService.setWorkspace(ws);
+          if (!isDryRun()) {
+            geoserver.add(localService);
+          }
+          doWrite(localService,dd.get(Paths.path("workspaces",ws.getName())),"");
+        }
+      }
+      for (      StyleInfo sty : getCatalog().getStylesByWorkspace(ws.getName())) {
+        sty.setWorkspace(ws);
+        Resource wsLocalStyleFolder=BackupUtils.dir(dd.get(Paths.path("workspaces",ws.getName())),"styles");
+        doWrite(sty,wsLocalStyleFolder,sty.getName() + ".xml");
+        Resource styResource=sourceRestoreFolder.get(Paths.path("workspaces",ws.getName(),"styles",sty.getFilename()));
+        if (Resources.exists(styResource)) {
+          Resources.copy(styResource.file(),wsLocalStyleFolder);
+        }
+      }
+      for (      LayerGroupInfo lyg : getCatalog().getLayerGroupsByWorkspace(ws.getName())) {
+        lyg.setWorkspace(ws);
+        Resource wsLocalLayerGroupsFolder=BackupUtils.dir(dd.get(Paths.path("workspaces",ws.getName())),"layergroups");
+        doWrite(lyg,wsLocalLayerGroupsFolder,lyg.getName() + ".xml");
+      }
+    }
+  }
+}

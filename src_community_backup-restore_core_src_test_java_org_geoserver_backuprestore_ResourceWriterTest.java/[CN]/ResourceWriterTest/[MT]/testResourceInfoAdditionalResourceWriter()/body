@@ -1,0 +1,24 @@
+{
+  Catalog cat=getCatalog();
+  GeoServerDataDirectory dd=backupFacade.getGeoServerDataDirectory();
+  GeoServerDataDirectory td=new GeoServerDataDirectory(root);
+  Resource srcTemplatesDir=BackupUtils.dir(dd.get(Paths.BASE),"templates");
+  File srcTitleFtl=Resources.createNewFile(Files.asResource(new File(srcTemplatesDir.dir(),"title.ftl")));
+  File srcHeaderFtl=Resources.createNewFile(Files.asResource(new File(Paths.toFile(dd.get(Paths.BASE).dir(),Paths.path("workspaces","gs","foo","t1")),"header.ftl")));
+  File srcFakeFtl=Resources.createNewFile(Files.asResource(new File(Paths.toFile(dd.get(Paths.BASE).dir(),Paths.path("workspaces","gs","foo","t1")),"fake.ftl")));
+  assertTrue(Resources.exists(Files.asResource(srcTitleFtl)));
+  assertTrue(Resources.exists(Files.asResource(srcHeaderFtl)));
+  assertTrue(Resources.exists(Files.asResource(srcFakeFtl)));
+  FeatureTypeInfo ft=cat.getFeatureTypeByName("t1");
+  assertNotNull(ft);
+  ResourceInfoAdditionalResourceWriter riarw=new ResourceInfoAdditionalResourceWriter();
+  riarw.writeAdditionalResources(backupFacade,td.get(Paths.BASE),ft);
+  Resource trgTemplatesDir=BackupUtils.dir(td.get(Paths.BASE),"templates");
+  assertTrue(Resources.exists(trgTemplatesDir));
+  Resource trgTitleFtl=Files.asResource(new File(trgTemplatesDir.dir(),"title.ftl"));
+  Resource trgHeaderFtl=Files.asResource(new File(Paths.toFile(td.get(Paths.BASE).dir(),Paths.path("workspaces","gs","foo","t1")),"header.ftl"));
+  Resource trgFakeFtl=Files.asResource(new File(Paths.toFile(td.get(Paths.BASE).dir(),Paths.path("workspaces","gs","foo","t1")),"fake.ftl"));
+  assertTrue(Resources.exists(trgTitleFtl));
+  assertTrue(Resources.exists(trgHeaderFtl));
+  assertTrue(!Resources.exists(trgFakeFtl));
+}

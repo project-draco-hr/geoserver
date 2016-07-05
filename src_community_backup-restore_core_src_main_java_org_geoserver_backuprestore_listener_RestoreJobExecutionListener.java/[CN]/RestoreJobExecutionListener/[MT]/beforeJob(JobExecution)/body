@@ -1,0 +1,35 @@
+{
+  locker.lock(lockType);
+  if (backupFacade.getRestoreExecutions().get(jobExecution.getId()) != null) {
+    this.restoreExecution=backupFacade.getRestoreExecutions().get(jobExecution.getId());
+    this.restoreExecution.setRestoreCatalog(createRestoreCatalog());
+  }
+ else {
+    Long id=null;
+    RestoreExecutionAdapter rst=null;
+    for (    Entry<Long,RestoreExecutionAdapter> entry : backupFacade.getRestoreExecutions().entrySet()) {
+      id=entry.getKey();
+      rst=entry.getValue();
+      if (rst.getJobParameters().getLong(Backup.PARAM_TIME).equals(jobExecution.getJobParameters().getLong(Backup.PARAM_TIME))) {
+        break;
+      }
+ else {
+        id=null;
+        rst=null;
+      }
+    }
+    if (rst != null) {
+      Resource archiveFile=rst.getArchiveFile();
+      Catalog restoreCatalog=rst.getRestoreCatalog();
+      List<String> options=rst.getOptions();
+      Filter filter=rst.getFilter();
+      this.backupFacade.getRestoreExecutions().remove(id);
+      this.restoreExecution=new RestoreExecutionAdapter(jobExecution,backupFacade.getTotalNumberOfRestoreSteps());
+      this.restoreExecution.setArchiveFile(archiveFile);
+      this.restoreExecution.setRestoreCatalog(restoreCatalog);
+      this.restoreExecution.setFilter(filter);
+      this.restoreExecution.getOptions().addAll(options);
+      this.backupFacade.getRestoreExecutions().put(jobExecution.getId(),this.restoreExecution);
+    }
+  }
+}

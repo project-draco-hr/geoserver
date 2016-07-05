@@ -1,0 +1,49 @@
+{
+  final String inputFolderURL=jobExecution.getJobParameters().getString(Backup.PARAM_INPUT_FILE_PATH);
+  Resource sourceRestoreFolder=Resources.fromURL(inputFolderURL);
+  Resource sourceWorkspacesFolder=null;
+  GeoServerInfo newGeoServerInfo=null;
+  SettingsInfo newSettings=null;
+  LoggingInfo newLoggingInfo=null;
+  try {
+    newGeoServerInfo=(GeoServerInfo)doRead(sourceRestoreFolder,"global.xml");
+    newSettings=(SettingsInfo)doRead(sourceRestoreFolder,"settings.xml");
+    newLoggingInfo=(LoggingInfo)doRead(sourceRestoreFolder,"logging.xml");
+  }
+ catch (  Exception e) {
+    logValidationExceptions((ValidationResult)null,new UnexpectedJobExecutionException("Exception occurred while storing GeoServer globals and services settings!",e));
+  }
+  try {
+    sourceWorkspacesFolder=BackupUtils.dir(sourceRestoreFolder,"workspaces");
+    if (Resources.exists(sourceWorkspacesFolder.get("default.xml"))) {
+      NamespaceInfo newDefaultNamespace=(NamespaceInfo)doRead(sourceWorkspacesFolder,"defaultnamespace.xml");
+      WorkspaceInfo newDefaultWorkspace=(WorkspaceInfo)doRead(sourceWorkspacesFolder,"default.xml");
+      getCatalog().setDefaultNamespace(newDefaultNamespace);
+      getCatalog().setDefaultWorkspace(newDefaultWorkspace);
+    }
+  }
+ catch (  Exception e) {
+    logValidationExceptions((ValidationResult)null,new UnexpectedJobExecutionException("Exception occurred while storing GeoServer globals and services settings!",e));
+  }
+  if (!isDryRun()) {
+    try {
+      hardRestore(geoserver,dd,sourceRestoreFolder,sourceWorkspacesFolder,newGeoServerInfo,newLoggingInfo);
+    }
+ catch (    Exception e) {
+      logValidationExceptions((ValidationResult)null,new UnexpectedJobExecutionException("Exception occurred while storing GeoServer globals and services settings!",e));
+    }
+ finally {
+    }
+  }
+ else {
+    try {
+      GeoServerDataDirectory td=new GeoServerDataDirectory(BackupUtils.tmpDir().dir());
+      softRestore(geoserver,td,sourceRestoreFolder,sourceWorkspacesFolder,newGeoServerInfo,newLoggingInfo);
+    }
+ catch (    Exception e) {
+      logValidationExceptions((ValidationResult)null,new UnexpectedJobExecutionException("Exception occurred while storing GeoServer globals and services settings!",e));
+    }
+ finally {
+    }
+  }
+}

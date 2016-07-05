@@ -1,0 +1,29 @@
+{
+  Hints hints=new Hints(new HashMap(2));
+  hints.add(new Hints(new Hints.OptionKey(Backup.PARAM_BEST_EFFORT_MODE),Backup.PARAM_BEST_EFFORT_MODE));
+  Filter filter=ECQL.toFilter("name = 'topp'");
+  RestoreExecutionAdapter restoreExecution=backupFacade.runRestoreAsync(file("geoserver-full-backup.zip"),filter,hints);
+  Thread.sleep(100);
+  assertNotNull(backupFacade.getRestoreExecutions());
+  assertTrue(!backupFacade.getRestoreExecutions().isEmpty());
+  assertNotNull(restoreExecution);
+  Thread.sleep(100);
+  final Catalog restoreCatalog=restoreExecution.getRestoreCatalog();
+  assertNotNull(restoreCatalog);
+  while (restoreExecution.getStatus() != BatchStatus.COMPLETED) {
+    Thread.sleep(100);
+    if (restoreExecution.getStatus() == BatchStatus.ABANDONED || restoreExecution.getStatus() == BatchStatus.FAILED || restoreExecution.getStatus() == BatchStatus.UNKNOWN) {
+      for (      Throwable exception : restoreExecution.getAllFailureExceptions()) {
+        LOGGER.log(Level.INFO,"ERROR: " + exception.getLocalizedMessage(),exception);
+        exception.printStackTrace();
+      }
+      break;
+    }
+  }
+  assertTrue(restoreExecution.getStatus() == BatchStatus.COMPLETED);
+  if (restoreCatalog.getWorkspaces().size() > 0) {
+    assertTrue(restoreCatalog.getWorkspaces().size() == 2);
+    assertTrue(restoreCatalog.getDataStores().size() == 2);
+    assertTrue(restoreCatalog.getStyles().size() == 21);
+  }
+}
