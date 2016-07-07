@@ -1,0 +1,27 @@
+{
+  TreeSet<Double> result=new TreeSet<>();
+  try {
+    for (    MapLayerInfo l : request.getLayers()) {
+      ResourceInfo ri=l.getLayerInfo().getResource();
+      if (ri == null) {
+        continue;
+      }
+      DimensionInfo elevationInfo=ri.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
+      if (elevationInfo == null) {
+        continue;
+      }
+      if (l.getType() == MapLayerInfo.TYPE_VECTOR) {
+        TreeSet<Object> elevations=wms.queryFeatureTypeElevations(l.getFeature(),queryRange,maxAllowedFrames);
+        accumulateElevations(result,elevations,maxAllowedFrames);
+      }
+ else       if (l.getType() == MapLayerInfo.TYPE_RASTER) {
+        TreeSet<Object> elevations=wms.queryCoverageElevations(l.getCoverage(),queryRange,maxAllowedFrames);
+        accumulateElevations(result,elevations,maxAllowedFrames);
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new ServiceException("Failed to compute list of times in the range " + queryRange,e);
+  }
+  return new ArrayList<>(result);
+}

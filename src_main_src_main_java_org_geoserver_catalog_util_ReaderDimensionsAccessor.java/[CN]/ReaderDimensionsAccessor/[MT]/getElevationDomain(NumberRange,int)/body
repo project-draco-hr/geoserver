@@ -1,0 +1,27 @@
+{
+  if (!hasElevation()) {
+    Collections.emptySet();
+  }
+  TreeSet<Object> result=null;
+  if (reader instanceof StructuredGridCoverage2DReader) {
+    StructuredGridCoverage2DReader sr=(StructuredGridCoverage2DReader)reader;
+    result=getDimensionValuesInRange("elevation",range,maxEntries,sr);
+  }
+  if (result == null) {
+    result=new TreeSet<Object>();
+    TreeSet<Object> fullDomain=getElevationDomain();
+    for (    Object o : fullDomain) {
+      if (o instanceof Double) {
+        if (range.contains((Number)o)) {
+          result.add(o);
+        }
+      }
+ else       if (o instanceof NumberRange) {
+        if (range.intersects((NumberRange)o)) {
+          result.add(o);
+        }
+      }
+    }
+  }
+  return result;
+}

@@ -1,0 +1,18 @@
+{
+  DimensionInfo di=typeInfo.getMetadata().get(dimensionName,DimensionInfo.class);
+  if (di == null || !di.isEnabled()) {
+    throw new ServiceException("Layer " + typeInfo.prefixedName() + " does not have "+ dimensionName+ " support enabled");
+  }
+  FeatureSource fs=getFeatureSource(typeInfo);
+  final Query query=new Query(fs.getSchema().getName().getLocalPart());
+  query.setPropertyNames(Arrays.asList(di.getAttribute()));
+  final PropertyName attribute=ff.property(di.getAttribute());
+  final PropertyIsBetween rangeFilter=ff.between(attribute,ff.literal(range.getMinValue()),ff.literal(range.getMaxValue()));
+  query.setFilter(rangeFilter);
+  query.setMaxFeatures(maxItems);
+  FeatureCollection collection=fs.getFeatures(query);
+  UniqueVisitor visitor=new UniqueVisitor(attribute);
+  collection.accepts(visitor,null);
+  TreeSet<Object> result=new TreeSet<>(visitor.getUnique());
+  return result;
+}

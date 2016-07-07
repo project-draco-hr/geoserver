@@ -1,0 +1,20 @@
+{
+  final String name=sr.getGridCoverageNames()[0];
+  List<DimensionDescriptor> descriptors=sr.getDimensionDescriptors(name);
+  for (  DimensionDescriptor descriptor : descriptors) {
+    if (dimensionName.equalsIgnoreCase(descriptor.getName()) && descriptor.getEndAttribute() == null) {
+      GranuleSource gs=sr.getGranules(name,true);
+      final Query query=new Query(gs.getSchema().getName().getLocalPart());
+      final PropertyName attribute=FF.property(descriptor.getStartAttribute());
+      final PropertyIsBetween rangeFilter=FF.between(attribute,FF.literal(range.getMinValue()),FF.literal(range.getMaxValue()));
+      query.setFilter(rangeFilter);
+      query.setMaxFeatures(maxEntries);
+      FeatureCollection collection=gs.getGranules(query);
+      UniqueVisitor visitor=new UniqueVisitor(attribute);
+      collection.accepts(visitor,null);
+      TreeSet<Object> result=new TreeSet<>(visitor.getUnique());
+      return result;
+    }
+  }
+  return null;
+}

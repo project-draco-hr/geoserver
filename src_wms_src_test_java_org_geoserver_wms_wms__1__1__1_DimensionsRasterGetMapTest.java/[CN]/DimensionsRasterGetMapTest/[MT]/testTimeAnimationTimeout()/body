@@ -1,0 +1,32 @@
+{
+  setupRasterDimension(WATTEMP,ResourceInfo.ELEVATION,DimensionPresentation.LIST,null,UNITS,UNIT_SYMBOL);
+  setupRasterDimension(WATTEMP,ResourceInfo.TIME,DimensionPresentation.LIST,null,null,null);
+  final int TIMEOUT_MS=10;
+  final GeoServer gs=getGeoServer();
+  WMSInfo wms=gs.getService(WMSInfo.class);
+  wms.getMetadata().put(WMS.MAX_RENDERING_TIME,String.valueOf(TIMEOUT_MS));
+  gs.save(wms);
+  GetMap getMap=GeoServerExtensions.bean(GetMap.class);
+  List<GetMapCallback> originalCallbacks=GeoServerExtensions.extensions(GetMapCallback.class);
+  GetMapCallback timeoutCallback=new GetMapCallbackAdapter(){
+    @Override public WMSMapContent beforeRender(    WMSMapContent mapContent){
+      try {
+        Thread.sleep(TIMEOUT_MS * 2);
+      }
+ catch (      InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+      return super.beforeRender(mapContent);
+    }
+  }
+;
+  try {
+    getMap.setGetMapCallbacks(Arrays.asList(timeoutCallback));
+    MockHttpServletResponse resp=getAsServletResponse(BASE_URL + "&time=2008-10-01/2008-11-31&format=image/gif;subtype=animated");
+    assertEquals("application/vnd.ogc.se_xml",resp.getContentType());
+    assertTrue(resp.getContentAsString().contains("This animation request used more time"));
+  }
+  finally {
+    getMap.setGetMapCallbacks(originalCallbacks);
+  }
+}

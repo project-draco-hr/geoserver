@@ -1,0 +1,18 @@
+{
+  DimensionInfo elevation=coverage.getMetadata().get(ResourceInfo.ELEVATION,DimensionInfo.class);
+  if (elevation == null || !elevation.isEnabled()) {
+    throw new ServiceException("Layer " + coverage.prefixedName() + " does not have elevation support enabled");
+  }
+  GridCoverage2DReader reader=null;
+  try {
+    reader=(GridCoverage2DReader)coverage.getGridCoverageReader(null,null);
+  }
+ catch (  Throwable t) {
+    throw new ServiceException("Unable to acquire a reader for this coverage " + coverage.prefixedName(),t);
+  }
+  if (reader == null) {
+    throw new ServiceException("Unable to acquire a reader for this coverage " + coverage.prefixedName());
+  }
+  ReaderDimensionsAccessor dimensions=new ReaderDimensionsAccessor(reader);
+  return dimensions.getElevationDomain(queryRange,maxAnimationSteps);
+}
