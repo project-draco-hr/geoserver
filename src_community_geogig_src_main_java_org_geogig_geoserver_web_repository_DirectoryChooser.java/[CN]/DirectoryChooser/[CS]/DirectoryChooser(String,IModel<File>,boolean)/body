@@ -1,0 +1,93 @@
+{
+  super(contentId,initialDirectory);
+  getSession().bind();
+  this.makeRepositoriesSelectable=makeRepositoriesSelectable;
+  if (initialDirectory.getObject() == null) {
+    File lastUsed=getSession().getMetaData(LAST_VISITED_DIRECTORY);
+    initialDirectory.setObject(lastUsed);
+  }
+  ArrayList<File> roots=Lists.newArrayList(File.listRoots());
+  Collections.sort(roots);
+  GeoServerResourceLoader loader=GeoServerExtensions.bean(GeoServerResourceLoader.class);
+  File dataDirectory=loader.getBaseDirectory();
+  roots.add(0,dataDirectory);
+  if (USER_HOME != null) {
+    roots.add(1,USER_HOME);
+  }
+  File selection=initialDirectory.getObject();
+  if (selection != null) {
+    File relativeToDataDir=loader.url(selection.getPath());
+    if (relativeToDataDir != null) {
+      selection=relativeToDataDir;
+    }
+  }
+  File selectionRoot=null;
+  if (selection != null && selection.exists()) {
+    for (    File root : roots) {
+      if (isSubfile(root,selection.getAbsoluteFile())) {
+        selectionRoot=root;
+        break;
+      }
+    }
+    if (selectionRoot == null) {
+      selectionRoot=dataDirectory;
+      initialDirectory=new Model<>(selectionRoot);
+    }
+ else {
+      if (!selection.isDirectory()) {
+        initialDirectory=new Model<>(selection.getParentFile());
+      }
+ else {
+        initialDirectory=new Model<>(selection);
+      }
+    }
+  }
+ else {
+    selectionRoot=dataDirectory;
+    initialDirectory=new Model<>(selectionRoot);
+  }
+  this.directory=initialDirectory;
+  setDefaultModel(initialDirectory);
+  final DropDownChoice<File> choice=new DropDownChoice<>("roots",new Model<>(selectionRoot),new Model<ArrayList<File>>(roots),new FileRootsRenderer());
+  choice.add(new AjaxFormComponentUpdatingBehavior("change"){
+    private static final long serialVersionUID=-1113141016446727615L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      File selection=(File)choice.getModelObject();
+      breadcrumbs.setRootFile(selection);
+      updateFileBrowser(selection,target);
+    }
+  }
+);
+  choice.setOutputMarkupId(true);
+  add(choice);
+  breadcrumbs=new FileBreadcrumbs("breadcrumbs",new Model<>(selectionRoot),initialDirectory){
+    private static final long serialVersionUID=3637173832581301482L;
+    @Override protected void pathItemClicked(    File file,    AjaxRequestTarget target){
+      updateFileBrowser(file,target);
+    }
+  }
+;
+  breadcrumbs.setOutputMarkupId(true);
+  add(breadcrumbs);
+  directoryListingTable=new DirectoryDataView("fileTable",new FileProvider(initialDirectory),this.makeRepositoriesSelectable){
+    private static final long serialVersionUID=-1559299096797421815L;
+    @Override protected void linkNameClicked(    File file,    AjaxRequestTarget target){
+      updateFileBrowser(file,target);
+    }
+  }
+;
+  directoryListingTable.setOutputMarkupId(true);
+  directoryListingTable.setFileFilter(fileFilter);
+  add(directoryListingTable);
+  accepdDirectoryLink=new AjaxLink<File>("ok",this.directory){
+    private static final long serialVersionUID=1L;
+    @Override public void onClick(    AjaxRequestTarget target){
+      File dir=getModelObject();
+      getSession().setMetaData(LAST_VISITED_DIRECTORY,dir);
+      directorySelected(dir,target);
+    }
+  }
+;
+  add(accepdDirectoryLink);
+  accepdDirectoryLink.setVisible(!this.makeRepositoriesSelectable);
+}

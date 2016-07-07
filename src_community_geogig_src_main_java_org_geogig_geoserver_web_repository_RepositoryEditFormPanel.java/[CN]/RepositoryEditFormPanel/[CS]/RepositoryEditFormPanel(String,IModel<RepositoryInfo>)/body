@@ -1,0 +1,43 @@
+{
+  super(id);
+  final boolean isNew=repoInfo == null;
+  if (isNew) {
+    repoInfo=new Model<>(new RepositoryInfo());
+  }
+  setDefaultModel(repoInfo);
+  popupWindow=new ModalWindow("popupWindow");
+  add(popupWindow);
+  form=new Form<>("repoForm",repoInfo);
+  form.add(new RepositoryEditPanel("repo",repoInfo,isNew));
+  form.add(addRemoteLink());
+  List<RemoteInfo> remoteInfos=loadRemoteInfos(repoInfo.getObject());
+  form.add(remotes=new RemotesListPanel("remotes",remoteInfos));
+  add(form);
+  FeedbackPanel feedback=new FeedbackPanel("feedback");
+  form.add(feedback);
+  form.add(new AjaxLink<Void>("cancel"){
+    private static final long serialVersionUID=6220299771769708060L;
+    @Override public void onClick(    AjaxRequestTarget target){
+      cancelled(target);
+    }
+  }
+);
+  form.add(new AjaxSubmitLink("save",form){
+    private static final long serialVersionUID=1L;
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      super.onError(target,form);
+      target.add(form);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      try {
+        RepositoryInfo repoInfo=(RepositoryInfo)form.getModelObject();
+        onSave(repoInfo,target);
+      }
+ catch (      IllegalArgumentException e) {
+        form.error(e.getMessage());
+        target.add(form);
+      }
+    }
+  }
+);
+}

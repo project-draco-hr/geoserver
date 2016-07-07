@@ -1,0 +1,14 @@
+{
+  login();
+  super.setRequestAuth("admin","geoserver");
+  String remoteURL="http://example.com/geogig/upstream";
+  final String url=BASE_URL + "/remote?remoteName=upstream&remoteURL=" + remoteURL;
+  Document dom=getAsDOM(url);
+  print(dom);
+  assertXpathEvaluatesTo("true","/response/success",dom);
+  List<LogEvent> entries=new ArrayList<>(logStore.getLogEntries(0,10));
+  assertTrue(entries.size() > 0);
+  for (  LogEvent e : entries) {
+    assertEquals("admin",e.getUser());
+  }
+}

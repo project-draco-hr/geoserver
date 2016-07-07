@@ -1,0 +1,26 @@
+{
+  List<String> lines;
+  try {
+    OutputStream to=new ByteArrayOutputStream();
+    Resources.copy(script,to);
+    String scriptContents=to.toString();
+    lines=CharStreams.readLines(new StringReader(scriptContents));
+  }
+ catch (  IOException e) {
+    throw Throwables.propagate(e);
+  }
+  List<String> statements=new ArrayList<String>();
+  StringBuilder sb=new StringBuilder();
+  for (  String line : lines) {
+    line=line.trim();
+    if (line.startsWith("#") || line.startsWith("-") || line.isEmpty()) {
+      continue;
+    }
+    sb.append(line).append('\n');
+    if (line.endsWith(";")) {
+      statements.add(sb.toString());
+      sb.setLength(0);
+    }
+  }
+  return statements;
+}

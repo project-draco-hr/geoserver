@@ -1,0 +1,25 @@
+{
+  assertNotNull(layer);
+  final ResourceInfo resource=layer.getResource();
+  final DataStoreInfo store=(DataStoreInfo)resource.getStore();
+  final Map<String,Serializable> params=store.getConnectionParameters();
+  final String repoId=(String)params.get(REPOSITORY.key);
+  List<LayerIdentifierInfo> identifiers=layer.getIdentifiers();
+  LayerIdentifierInfo expected=null;
+  for (  LayerIdentifierInfo idinfo : identifiers) {
+    if (GeogigLayerIntegrationListener.AUTHORITY_URL_NAME.equals(idinfo.getAuthority())) {
+      expected=idinfo;
+    }
+  }
+  assertNotNull("No geogig identifier added for layer " + layer,expected);
+  String expectedId=repoId + ":" + resource.getNativeName();
+  if (params.containsKey(GeoGigDataStoreFactory.BRANCH.key)) {
+    String branch=(String)params.get(GeoGigDataStoreFactory.BRANCH.key);
+    expectedId+=":" + branch;
+  }
+ else   if (params.containsKey(GeoGigDataStoreFactory.HEAD.key)) {
+    String head=(String)params.get(GeoGigDataStoreFactory.HEAD.key);
+    expectedId+=":" + head;
+  }
+  assertEquals(expectedId,expected.getIdentifier());
+}

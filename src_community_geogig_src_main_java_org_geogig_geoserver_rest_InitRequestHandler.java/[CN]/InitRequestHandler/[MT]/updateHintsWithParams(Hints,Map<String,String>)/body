@@ -1,0 +1,38 @@
+{
+  final String parentDir=params.get(DIR_PARENT_DIR);
+  final String dbHost=params.get(DB_HOST);
+  final String dbPort=params.get(DB_PORT);
+  final String dbName=params.get(DB_NAME);
+  final String dbSchema=params.get(DB_SCHEMA);
+  final String dbUser=params.get(DB_USER);
+  final String dbPassword=params.get(DB_PASSWORD);
+  if (parentDir != null) {
+    final String leafDir=UUID.randomUUID().toString();
+    final String uri=new File(parentDir,leafDir).getAbsoluteFile().toURI().toString();
+    hints.set(Hints.REPOSITORY_URL,uri);
+  }
+ else   if (dbName != null && dbPassword != null) {
+    PostgresConfigBean bean=new PostgresConfigBean();
+    bean.setDatabase(dbName);
+    bean.setPassword(dbPassword);
+    if (null != dbSchema) {
+      bean.setSchema(dbSchema);
+    }
+    if (null != dbHost) {
+      bean.setHost(dbHost);
+    }
+    if (null != dbUser) {
+      bean.setUsername(dbUser);
+    }
+    if (null != dbPort) {
+      try {
+        Integer portInt=Integer.parseInt(dbPort);
+        bean.setPort(portInt);
+      }
+ catch (      Exception ex) {
+      }
+    }
+    final String uri=bean.buildUriForRepo(UUID.randomUUID().toString()).toString();
+    hints.set(Hints.REPOSITORY_URL,uri);
+  }
+}

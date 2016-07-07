@@ -1,0 +1,19 @@
+{
+  final File repo=geogigData.repoDirectory();
+  RepositoryInfo info=new RepositoryInfo();
+  info.setLocation(repo.toURI());
+  info=RepositoryManager.get().save(info);
+  final String repository=repo.getAbsolutePath();
+  String message="<dataStore>\n" + " <name>repo_old_config_existing_repo</name>\n" + " <type>GeoGIG</type>\n"+ " <connectionParameters>\n"+ "   <entry key=\"geogig_repository\">${repository}</entry>\n"+ " </connectionParameters>\n"+ "</dataStore>\n";
+  message=message.replace("${repository}",repository);
+  Catalog catalog=getCatalog();
+  final String uri="/rest/workspaces/gigws/datastores";
+  MockHttpServletResponse response=postAsServletResponse(uri,message,"text/xml");
+  assertEquals(201,response.getStatus());
+  DataStoreInfo newDataStore=catalog.getDataStoreByName("repo_old_config_existing_repo");
+  assertNotNull(newDataStore);
+  DataStore ds=(DataStore)newDataStore.getDataStore(null);
+  assertNotNull(ds);
+  checkNewConfig(newDataStore);
+  assertEquals(info.getId(),newDataStore.getConnectionParameters().get(REPOSITORY.key));
+}

@@ -1,0 +1,39 @@
+{
+  RepositoryManager manager=RepositoryManager.get();
+  GeoGIG geogig;
+  try {
+    repoInfo=manager.save(repoInfo);
+    geogig=manager.getRepository(repoInfo.getId());
+  }
+ catch (  Exception e) {
+    form.error("Unable to connect to repository " + repoInfo.getLocation() + "\n"+ e.getMessage());
+    target.add(form);
+    return;
+  }
+  Function<RemoteInfo,Integer> keyFunction=new Function<RemoteInfo,Integer>(){
+    @Override public Integer apply(    RemoteInfo r){
+      return r.getId();
+    }
+  }
+;
+  Map<Integer,RemoteInfo> currentRemotes=new HashMap<>(Maps.uniqueIndex(loadRemoteInfos(repoInfo),keyFunction));
+  Set<RemoteInfo> newRemotes=Sets.newHashSet(remotes.getRemotes());
+  if (!currentRemotes.isEmpty() || !newRemotes.isEmpty()) {
+    GeogigTransaction tx=geogig.command(TransactionBegin.class).call();
+    try {
+      updateRemotes(tx,currentRemotes,newRemotes);
+      tx.commit();
+    }
+ catch (    Exception e) {
+      try {
+        tx.abort();
+      }
+  finally {
+        form.error(e.getMessage());
+        target.add(form);
+      }
+      return;
+    }
+  }
+  saved(repoInfo,target);
+}

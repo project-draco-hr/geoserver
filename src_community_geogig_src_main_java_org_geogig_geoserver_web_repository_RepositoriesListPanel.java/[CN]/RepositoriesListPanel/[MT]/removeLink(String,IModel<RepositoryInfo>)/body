@@ -1,0 +1,27 @@
+{
+  return new ImageAjaxLink(id,REMOVE_ICON){
+    private static final long serialVersionUID=-3061812114487970427L;
+    private final IModel<RepositoryInfo> model=itemModel;
+    @Override public void onClick(    AjaxRequestTarget target){
+      GeoServerDialog dialog=RepositoriesListPanel.this.dialog;
+      dialog.setTitle(new ParamResourceModel("RepositoriesListPanel.confirmRemoval.title",this));
+      dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+        private static final long serialVersionUID=-450822090965263894L;
+        @Override protected Component getContents(        String id){
+          return new ConfirmRemovePanel(id,model);
+        }
+        @Override protected boolean onSubmit(        AjaxRequestTarget target,        Component contents){
+          boolean closeConfirmDialog=true;
+          final String repoId=model.getObject().getId();
+          RepositoryManager.get().delete(repoId);
+          return closeConfirmDialog;
+        }
+        @Override public void onClose(        AjaxRequestTarget target){
+          target.add(RepositoriesListPanel.this);
+        }
+      }
+);
+    }
+  }
+;
+}

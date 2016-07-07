@@ -1,0 +1,18 @@
+{
+  Optional<GeoGIG> geogig=getGeogig(request);
+  Preconditions.checkState(geogig.isPresent(),"No repository to delete.");
+  final String repositoryName=getStringAttribute(request,"repository");
+  final String repoId=getRepoIdForName(repositoryName);
+  GeoGIG ggig=geogig.get();
+  Optional<URI> repoUri=ggig.command(ResolveGeogigURI.class).call();
+  Preconditions.checkState(repoUri.isPresent(),"No repository to delete.");
+  ggig.close();
+  try {
+    GeoGIG.delete(repoUri.get());
+    RepositoryManager manager=RepositoryManager.get();
+    manager.delete(repoId);
+  }
+ catch (  Exception e) {
+    Throwables.propagate(e);
+  }
+}

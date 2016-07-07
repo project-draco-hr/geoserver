@@ -1,0 +1,31 @@
+{
+  String dataStoreHead;
+  Map<String,Serializable> storeParams=store.getConnectionParameters();
+  final String branch=(String)storeParams.get(GeoGigDataStoreFactory.BRANCH.key);
+  final String head=(String)storeParams.get(GeoGigDataStoreFactory.HEAD.key);
+  dataStoreHead=(head == null) ? branch : head;
+  if (dataStoreHead == null) {
+    Optional<Ref> currHead=context.command(RefParse.class).setName(Ref.HEAD).call();
+    if (!currHead.isPresent() || !(currHead.get() instanceof SymRef)) {
+      return null;
+    }
+    dataStoreHead=((SymRef)currHead.get()).getTarget();
+  }
+ else {
+    Optional<Ref> storeRef=context.command(RefParse.class).setName(dataStoreHead).call();
+    if (storeRef.isPresent()) {
+      Ref ref=storeRef.get();
+      if (ref instanceof SymRef) {
+        dataStoreHead=((SymRef)ref).getTarget();
+      }
+ else {
+        dataStoreHead=ref.getName();
+      }
+    }
+ else {
+      LOGGER.info("HEAD '{}' configured for store '{}' does not resolve to a ref",dataStoreHead,store.getName());
+      dataStoreHead=null;
+    }
+  }
+  return dataStoreHead;
+}

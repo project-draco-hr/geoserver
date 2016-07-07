@@ -1,0 +1,14 @@
+{
+  logStore.afterPropertiesSet();
+  Throwable ex=new RuntimeException("test exception");
+  ex.fillInStackTrace();
+  logStore.error(repoUrl,"error message 1",ex);
+  LogEvent event=logStore.getLogEntries(0,10).get(0);
+  assertEquals(Severity.ERROR,event.getSeverity());
+  long eventId=event.getEventId();
+  String stackTrace=logStore.getStackTrace(eventId);
+  assertNotNull(stackTrace);
+  assertTrue(stackTrace,stackTrace.contains("test exception"));
+  stackTrace=logStore.getStackTrace(eventId + 1);
+  assertNull(stackTrace);
+}

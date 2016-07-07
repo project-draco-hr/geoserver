@@ -1,0 +1,14 @@
+{
+  final String resource=BASE_URL + "/repo/exists?oid=";
+  GeoGIG geogig=geogigData.getGeogig();
+  Ref head=geogig.command(RefParse.class).setName(Ref.HEAD).call().get();
+  ObjectId commitId=head.getObjectId();
+  String url;
+  url=resource + commitId.toString();
+  assertResponse(url,"1");
+  ObjectId treeId=geogig.command(ResolveTreeish.class).setTreeish(commitId).call().get();
+  url=resource + treeId.toString();
+  assertResponse(url,"1");
+  url=resource + ObjectId.forString("fake");
+  assertResponse(url,"0");
+}

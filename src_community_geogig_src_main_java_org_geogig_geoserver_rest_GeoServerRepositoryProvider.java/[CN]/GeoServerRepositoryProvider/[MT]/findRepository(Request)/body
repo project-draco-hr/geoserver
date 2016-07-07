@@ -1,0 +1,22 @@
+{
+  Optional<String> repositoryName=getRepositoryName(request);
+  if (!repositoryName.isPresent()) {
+    return Optional.absent();
+  }
+  try {
+    String repoName=repositoryName.get();
+    String repoId=getRepoIdForName(repoName);
+    if (repoId != null) {
+      RepositoryManager repositoryManager=RepositoryManager.get();
+      RepositoryInfo repositoryInfo;
+      repositoryInfo=repositoryManager.get(repoId);
+      return Optional.of(repositoryInfo);
+    }
+ else {
+      return Optional.absent();
+    }
+  }
+ catch (  NoSuchElementException|IOException e) {
+    return Optional.absent();
+  }
+}

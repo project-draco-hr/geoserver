@@ -1,0 +1,17 @@
+{
+  String message=t.getLocalizedMessage();
+  boolean psqlCauseFound=false;
+  Throwable cause=t;
+  while (cause != null) {
+    Class clazz=cause.getClass();
+    if (UnknownHostException.class.isAssignableFrom(clazz)) {
+      return "UnknownHostException: " + cause.getLocalizedMessage();
+    }
+    if (!psqlCauseFound && PSQLException.class.isAssignableFrom(clazz)) {
+      psqlCauseFound=true;
+      message=cause.getLocalizedMessage();
+    }
+    cause=cause.getCause();
+  }
+  return message;
+}

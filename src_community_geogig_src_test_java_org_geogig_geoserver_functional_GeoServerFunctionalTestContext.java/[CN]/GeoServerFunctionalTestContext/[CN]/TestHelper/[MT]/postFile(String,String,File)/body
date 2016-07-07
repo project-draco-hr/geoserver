@@ -1,0 +1,13 @@
+{
+  Part[] parts=new Part[1];
+  parts[0]=new FilePart(formFieldName,file);
+  MultipartRequestEntity multipart=new MultipartRequestEntity(parts,new PostMethod().getParams());
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  multipart.writeRequest(bout);
+  MockHttpServletRequest req=createRequest(resourceUri);
+  req.setContentType(multipart.getContentType());
+  req.addHeader("Content-Type",multipart.getContentType());
+  req.setMethod("POST");
+  req.setContent(bout.toByteArray());
+  return dispatch(req);
+}

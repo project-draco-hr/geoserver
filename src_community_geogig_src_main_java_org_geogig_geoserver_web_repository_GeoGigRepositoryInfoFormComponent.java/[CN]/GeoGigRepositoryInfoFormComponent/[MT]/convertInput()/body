@@ -1,0 +1,27 @@
+{
+  RepositoryInfo modelObject=getModelObject();
+  URI location=modelObject.getLocation();
+  final String repoTypeChoice=location != null ? DropDownModel.getType(location) : dropdownPanel.getFormComponent().getConvertedInput().toString();
+  if (null != repoTypeChoice) {
+    String repoName=repoNamePanel.getFormComponent().getConvertedInput().toString().trim();
+    modelObject.setRepoName(repoName);
+switch (repoTypeChoice) {
+case DropDownModel.PG_CONFIG:
+      PostgresConfigBean bean=pgPanel.getConvertedInput();
+    String pgRepoId=modelObject.getLocation() != null ? PostgresConfigBean.parseRepoId(modelObject.getLocation()) : UUID.randomUUID().toString();
+  URI uri=bean.buildUriForRepo(pgRepoId);
+modelObject.setLocation(uri);
+break;
+case DropDownModel.DIRECTORY_CONFIG:
+if (modelObject.getLocation() == null) {
+String path=directoryComponent.getConvertedInput().trim();
+Path uriPath=Paths.get(path,UUID.randomUUID().toString());
+modelObject.setLocation(uriPath.toUri());
+}
+break;
+default :
+throw new IllegalStateException(String.format("Unknown repositry type '%s', expected one of %s, %s",repoTypeChoice,DropDownModel.PG_CONFIG,DropDownModel.DIRECTORY_CONFIG));
+}
+}
+setConvertedInput(modelObject);
+}

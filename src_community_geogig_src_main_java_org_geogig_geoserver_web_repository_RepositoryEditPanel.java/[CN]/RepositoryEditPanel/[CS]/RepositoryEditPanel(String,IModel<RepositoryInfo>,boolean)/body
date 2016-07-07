@@ -1,0 +1,69 @@
+{
+  super(wicketId,model);
+  config=new GeoGigRepositoryInfoFormComponent("repositoryConfig",model,isNew);
+  config.setVisible(true);
+  add(config);
+  add(new IValidator<RepositoryInfo>(){
+    private static final long serialVersionUID=224160688160723504L;
+    @Override public void validate(    IValidatable<RepositoryInfo> validatable){
+      if (isNew) {
+        config.processInput();
+      }
+      ValidationError error=new ValidationError();
+      RepositoryInfo repo=validatable.getValue();
+      final URI location=repo.getLocation();
+      final RepositoryResolver resolver=RepositoryResolver.lookup(location);
+      final String scheme=location.getScheme();
+      if (isNew && repoNameExists(repo.getRepoName())) {
+        error.addKey("errRepositoryNameExists");
+      }
+ else       if ("file".equals(scheme)) {
+        File repoDir=new File(location);
+        final File parent=repoDir.getParentFile();
+        if (!parent.exists() || !parent.isDirectory()) {
+          error.addKey("errParentDoesntExist");
+        }
+        if (!parent.canWrite()) {
+          error.addKey("errParentReadOnly");
+        }
+        if (isNew) {
+          if (repoDir.exists()) {
+            error.addKey("errDirectoryExists");
+          }
+        }
+ else         if (!isGeogigDirectory(repoDir)) {
+          error.addKey("notAGeogigRepository");
+        }
+      }
+ else       if ("postgresql".equals(scheme)) {
+        try {
+          if (isNew) {
+            if (resolver.repoExists(location)) {
+              error.addKey("errRepositoryExists");
+            }
+          }
+ else {
+            Repository repository=null;
+            try {
+              repository=resolver.open(location);
+            }
+  finally {
+              if (repository != null) {
+                repository.close();
+              }
+            }
+          }
+        }
+ catch (        Exception ex) {
+          LOGGER.error("Failed to connect to PostgreSQL database",ex);
+          error.addKey("errCannotConnectToDatabase");
+          error.setVariable("message",PostgresConnectionErrorHandler.getMessage(ex));
+        }
+      }
+      if (!error.getKeys().isEmpty()) {
+        validatable.error(error);
+      }
+    }
+  }
+);
+}

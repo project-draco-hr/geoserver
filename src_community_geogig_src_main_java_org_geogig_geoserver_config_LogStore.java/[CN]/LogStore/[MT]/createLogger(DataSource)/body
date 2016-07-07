@@ -1,0 +1,21 @@
+{
+  LoggerContext lc=new LoggerContext();
+  PatternLayoutEncoder ple=new PatternLayoutEncoder();
+  ple.setPattern("%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS\"},%level,%msg%n");
+  ple.setContext(lc);
+  ple.start();
+  DataSourceConnectionSource connectionSource=new DataSourceConnectionSource();
+  connectionSource.setContext(lc);
+  connectionSource.setDataSource(dataSource);
+  connectionSource.start();
+  DBAppender dbAppender=new DBAppender();
+  dbAppender.setContext(lc);
+  dbAppender.setConnectionSource(connectionSource);
+  dbAppender.start();
+  lc.start();
+  Logger logger=lc.getLogger(LogStore.class);
+  logger.addAppender(dbAppender);
+  logger.setLevel(Level.DEBUG);
+  StatusPrinter.print(lc);
+  return logger;
+}

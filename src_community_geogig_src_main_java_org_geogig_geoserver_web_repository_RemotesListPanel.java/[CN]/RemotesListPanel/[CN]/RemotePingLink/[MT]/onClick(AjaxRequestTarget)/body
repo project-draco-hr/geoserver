@@ -1,0 +1,21 @@
+{
+  RemoteInfo remoteInfo=getModelObject();
+  String location=remoteInfo.getURL();
+  String username=remoteInfo.getUserName();
+  String pwd=remoteInfo.getPassword();
+  try {
+    Ref head=RepositoryManager.pingRemote(location,username,pwd);
+    String headTarget;
+    if (head instanceof SymRef) {
+      headTarget=((SymRef)head).getTarget();
+    }
+ else {
+      headTarget=head.getObjectId().toString();
+    }
+    pingFeedbackPanel.info("Connection suceeded. HEAD is at " + headTarget);
+  }
+ catch (  Exception e) {
+    pingFeedbackPanel.error(e.getMessage());
+  }
+  target.add(pingFeedbackPanel);
+}

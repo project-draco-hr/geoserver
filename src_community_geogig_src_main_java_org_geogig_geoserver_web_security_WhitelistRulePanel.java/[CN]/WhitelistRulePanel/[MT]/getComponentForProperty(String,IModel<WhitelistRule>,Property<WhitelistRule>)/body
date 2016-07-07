@@ -1,0 +1,49 @@
+{
+  if (property == WhitelistRulesProvider.NAME) {
+    return new Label(id,property.getModel(model));
+  }
+ else   if (property == WhitelistRulesProvider.PATTERN) {
+    return new Label(id,property.getModel(model));
+  }
+ else   if (property == WhitelistRulesProvider.REQUIRE_SSL) {
+    final WhitelistRule rule=(WhitelistRule)model.getObject();
+    @SuppressWarnings("deprecation") Fragment fragment=new Fragment(id,"image.cell",this);
+    if (rule.isRequireSSL()) {
+      fragment.add(new Image("display",new PackageResourceReference(getClass(),"../lock.png")));
+    }
+ else {
+      fragment.add(new Image("display",new PackageResourceReference(getClass(),"../lock_open.png")));
+    }
+    return fragment;
+  }
+ else   if (property == WhitelistRulesProvider.EDIT) {
+    ImageAjaxLink link=new ImageAjaxLink(id,new PackageResourceReference(GeoServerApplication.class,"img/icons/silk/pencil.png")){
+      private static final long serialVersionUID=4467715973193154831L;
+      @Override public void onClick(      AjaxRequestTarget target){
+        window.setInitialHeight(360);
+        window.setInitialWidth(400);
+        window.setTitle(new Model<>("Edit whitelist rule"));
+        window.setContent(new WhitelistRuleEditor(window.getContentId(),model,window,WhitelistRulePanel.this,false));
+        window.show(target);
+      }
+    }
+;
+    return link;
+  }
+ else   if (property == WhitelistRulesProvider.REMOVE) {
+    final WhitelistRule rule=(WhitelistRule)model.getObject();
+    ImageAjaxLink link=new ImageAjaxLink(id,new PackageResourceReference(GeoServerApplication.class,"img/icons/silk/delete.png")){
+      private static final long serialVersionUID=9069782618988848563L;
+      @Override protected void onClick(      AjaxRequestTarget target){
+        provider.remove(rule);
+        provider.save();
+        target.add(WhitelistRulePanel.this);
+      }
+    }
+;
+    return link;
+  }
+ else {
+    throw new IllegalArgumentException("Property " + property + " is not associated with this component.");
+  }
+}

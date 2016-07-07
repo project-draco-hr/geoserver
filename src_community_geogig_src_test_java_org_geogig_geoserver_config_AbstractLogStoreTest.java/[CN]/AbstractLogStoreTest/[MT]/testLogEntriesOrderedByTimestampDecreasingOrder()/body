@@ -1,0 +1,14 @@
+{
+  logStore.afterPropertiesSet();
+  logStore.debug(repoUrl,"debug message");
+  Throwable ex=new RuntimeException("test exception");
+  ex.fillInStackTrace();
+  logStore.error(repoUrl,"error message",ex);
+  logStore.info(repoUrl,"info message");
+  List<LogEvent> entries=logStore.getLogEntries(0,10);
+  assertNotNull(entries);
+  assertEquals(3,entries.size());
+  assertEquals("info message",entries.get(0).getMessage());
+  assertEquals("error message",entries.get(1).getMessage());
+  assertEquals("debug message",entries.get(2).getMessage());
+}

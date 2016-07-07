@@ -1,0 +1,29 @@
+{
+  return new ImageAjaxLink(id,REMOVE_ICON){
+    private static final long serialVersionUID=-3061812114487970427L;
+    private final IModel<RemoteInfo> model=itemModel;
+    @Override public void onClick(    AjaxRequestTarget target){
+      GeoServerDialog dialog=RemotesListPanel.this.dialog;
+      dialog.setTitle(new ParamResourceModel("RemotesListPanel.confirmRemoval.title",this));
+      dialog.showOkCancel(target,new GeoServerDialog.DialogDelegate(){
+        private static final long serialVersionUID=-450822090965263894L;
+        @Override protected Component getContents(        String id){
+          return new ConfirmRemovePanel(id,model);
+        }
+        @Override protected boolean onSubmit(        AjaxRequestTarget target,        Component contents){
+          boolean closeConfirmDialog=true;
+          final RemoteInfo remote=model.getObject();
+          List<RemoteInfo> items=RemotesListPanel.this.provider.getItems();
+          items.remove(remote);
+          target.add(RemotesListPanel.this);
+          return closeConfirmDialog;
+        }
+        @Override public void onClose(        AjaxRequestTarget target){
+          target.add(RemotesListPanel.this);
+        }
+      }
+);
+    }
+  }
+;
+}

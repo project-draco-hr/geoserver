@@ -1,0 +1,23 @@
+{
+  GeoGigTestData testData=new GeoGigTestData();
+  testData.setUp(name);
+  testData.init();
+  GeoGIG geogig=testData.getGeogig();
+  Catalog catalog=helper.getCatalog();
+  CatalogBuilder catalogBuilder=testData.newCatalogBuilder(catalog);
+  int i=rnd.nextInt();
+  catalogBuilder.namespace("geogig.org/" + i).workspace("geogigws" + i).store("geogigstore" + i);
+  catalogBuilder.addAllRepoLayers().build();
+  String workspaceName=catalogBuilder.workspaceName();
+  String storeName=catalogBuilder.storeName();
+  DataStoreInfo dsInfo=catalog.getDataStoreByName(workspaceName,storeName);
+  assertNotNull(dsInfo);
+  assertEquals(GeoGigDataStoreFactory.DISPLAY_NAME,dsInfo.getType());
+  DataAccess<? extends FeatureType,? extends Feature> dataStore=dsInfo.getDataStore(null);
+  assertNotNull(dataStore);
+  assertTrue(dataStore instanceof GeoGigDataStore);
+  String repoId=(String)dsInfo.getConnectionParameters().get(GeoGigDataStoreFactory.REPOSITORY.key);
+  RepositoryInfo repositoryInfo=RepositoryManager.get().get(repoId);
+  assertNotNull(repositoryInfo);
+  return new TestData(geogig);
+}

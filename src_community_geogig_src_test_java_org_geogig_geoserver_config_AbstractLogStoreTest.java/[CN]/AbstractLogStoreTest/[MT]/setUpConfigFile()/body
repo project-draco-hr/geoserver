@@ -1,0 +1,20 @@
+{
+  Resource dirResource=resourceStore.get(LogStore.CONFIG_DIR_NAME);
+  File dir=dirResource.dir();
+  Properties properties=new Properties();
+  populateConfigProperties(properties,dir);
+  if (!properties.isEmpty()) {
+    File configFile=new File(dir,LogStore.CONFIG_FILE_NAME);
+    try {
+      if (!configFile.exists()) {
+        assertTrue(configFile.createNewFile());
+      }
+      try (Writer writer=new OutputStreamWriter(new FileOutputStream(configFile),Charsets.UTF_8)){
+        properties.store(writer,"");
+      }
+     }
+ catch (    Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+}

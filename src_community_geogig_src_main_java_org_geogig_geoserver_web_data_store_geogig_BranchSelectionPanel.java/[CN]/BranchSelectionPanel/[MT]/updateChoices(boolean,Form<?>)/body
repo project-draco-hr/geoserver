@@ -1,0 +1,33 @@
+{
+  final String repository=repositoryIdModel.getObject();
+  if (REPOSITORY.sample != null && REPOSITORY.sample.equals(repository)) {
+    return;
+  }
+  List<String> branchNames=new ArrayList<>();
+  if (repository != null) {
+    try {
+      RepositoryManager manager=this.manager.get();
+      List<Ref> branchRefs=manager.listBranches(repository);
+      for (      Ref branch : branchRefs) {
+        branchNames.add(branch.localName());
+      }
+    }
+ catch (    IOException e) {
+      if (reportError) {
+        form.error("Could not list branches: " + e.getMessage());
+      }
+      branchNames=new ArrayList<String>();
+    }
+catch (    RuntimeException e) {
+      if (reportError) {
+        form.error("Could not list branches: " + e.getMessage());
+      }
+      branchNames=new ArrayList<String>();
+    }
+    String current=(String)choice.getModelObject();
+    if (current != null && !branchNames.contains(current)) {
+      branchNames.add(0,current);
+    }
+  }
+  choice.setChoices(branchNames);
+}

@@ -1,0 +1,22 @@
+{
+  Optional<Variant> byExtension=Variants.getVariantByExtension(getRequest(),getVariants());
+  if (byExtension.isPresent()) {
+    return byExtension.get();
+  }
+  List<MediaType> acceptedMediaTypes=Lists.transform(getRequest().getClientInfo().getAcceptedMediaTypes(),new Function<Preference<MediaType>,MediaType>(){
+    @Override public MediaType apply(    Preference<MediaType> input){
+      return input.getMetadata();
+    }
+  }
+);
+  if (acceptedMediaTypes.contains(MediaType.TEXT_HTML)) {
+    return HTML;
+  }
+  if (acceptedMediaTypes.contains(MediaType.TEXT_XML)) {
+    return XML;
+  }
+  if (acceptedMediaTypes.contains(MediaType.APPLICATION_JSON)) {
+    return JSON;
+  }
+  return XML;
+}

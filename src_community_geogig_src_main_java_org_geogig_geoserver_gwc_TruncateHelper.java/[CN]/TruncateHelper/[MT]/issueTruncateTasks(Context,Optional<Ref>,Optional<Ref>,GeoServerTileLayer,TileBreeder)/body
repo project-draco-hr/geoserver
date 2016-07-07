@@ -1,0 +1,47 @@
+{
+  final ObjectId oldCommit=oldRef.isPresent() ? oldRef.get().getObjectId() : ObjectId.NULL;
+  final ObjectId newCommit=newRef.isPresent() ? newRef.get().getObjectId() : ObjectId.NULL;
+  final String tileLayerName=tileLayer.getName();
+  final String layerTreeName=tileLayer.getLayerInfo().getResource().getNativeName();
+  LOGGER.debug(String.format("Computing minimal bounds geometry on layer '%s' (tree '%s') for change %s...%s ",tileLayerName,layerTreeName,oldCommit,newCommit));
+  final Geometry minimalBounds;
+  Stopwatch sw=Stopwatch.createStarted();
+  try {
+    MinimalDiffBounds geomBuildCommand=context.command(MinimalDiffBounds.class).setOldVersion(oldCommit.toString()).setNewVersion(newCommit.toString());
+    geomBuildCommand.setTreeNameFilter(layerTreeName);
+    minimalBounds=geomBuildCommand.call();
+    sw.stop();
+    if (minimalBounds.isEmpty()) {
+      LOGGER.debug(String.format("Feature tree '%s' not affected by change %s...%s (took %s)",layerTreeName,oldCommit,newCommit,sw));
+      return;
+    }
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug(String.format("Minimal bounds on layer '%s' computed in %s: %s",tileLayerName,sw,formattedWKT(minimalBounds)));
+    }
+  }
+ catch (  Exception e) {
+    sw.stop();
+    LOGGER.error(String.format("Error computing minimal bounds for %s...%s on layer '%s' after %s",oldCommit,newCommit,tileLayerName,sw));
+    throw Throwables.propagate(e);
+  }
+  final Set<String> gridSubsets=tileLayer.getGridSubsets();
+  LayerInfo layerInfo=tileLayer.getLayerInfo();
+  ResourceInfo resource=layerInfo.getResource();
+  final CoordinateReferenceSystem nativeCrs=resource.getNativeCRS();
+  for (  String gridsetId : gridSubsets) {
+    GridSubset gridSubset=tileLayer.getGridSubset(gridsetId);
+    final CoordinateReferenceSystem gridSetCrs=getGridsetCrs(gridSubset);
+    LOGGER.debug("Reprojecting geometry mask to gridset {}",gridsetId);
+    Geometry geomInGridsetCrs=transformToGridsetCrs(minimalBounds,nativeCrs,gridSetCrs);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("geometry mask reprojected to gridset {}: {}",gridsetId,formattedWKT(geomInGridsetCrs));
+    }
+    geomInGridsetCrs=bufferAndSimplifyBySizeOfSmallerTile(geomInGridsetCrs,gridSetCrs,gridSubset);
+    try {
+      truncate(tileLayer,gridsetId,geomInGridsetCrs,breeder);
+    }
+ catch (    Exception e) {
+      e.printStackTrace();
+    }
+  }
+}

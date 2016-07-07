@@ -1,0 +1,27 @@
+{
+  HashMap<String,String> params=new HashMap<>(8);
+  if (request.isEntityAvailable()) {
+    Representation entity=request.getEntity();
+    final MediaType reqMediaType=entity.getMediaType();
+    if (MediaType.APPLICATION_WWW_FORM.equals(reqMediaType)) {
+      try {
+        Form form=request.getEntityAsForm();
+        addParameters(params,form);
+      }
+ catch (      Exception ex) {
+        throw new RestletException("Error parsing URL encoded form request",Status.CLIENT_ERROR_BAD_REQUEST,ex);
+      }
+    }
+ else     if (MediaType.APPLICATION_JSON.equals(reqMediaType)) {
+      try {
+        JsonRepresentation jsonRep=new JsonRepresentation(entity);
+        JSONObject jsonObj=jsonRep.toJsonObject();
+        addParameters(params,jsonObj);
+      }
+ catch (      IOException|JSONException ex) {
+        throw new RestletException("Error parsing JSON request",Status.CLIENT_ERROR_BAD_REQUEST,ex);
+      }
+    }
+  }
+  return params;
+}

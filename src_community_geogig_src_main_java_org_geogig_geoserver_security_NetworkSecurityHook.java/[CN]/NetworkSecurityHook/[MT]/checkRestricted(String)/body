@@ -1,0 +1,19 @@
+{
+  ConfigStore configStore=(ConfigStore)GeoServerExtensions.bean("geogigConfigStore");
+  List<WhitelistRule> rules;
+  try {
+    rules=configStore.getWhitelist();
+  }
+ catch (  IOException e) {
+    throw new CannotRunGeogigOperationException("Unable to obtain the remotes white list: " + e.getMessage(),e);
+  }
+  if (!rules.isEmpty()) {
+    for (    WhitelistRule rule : rules) {
+      if (!ruleBlocks(rule,remoteUrl)) {
+        return;
+      }
+    }
+    String msg=String.format("Remote %s does not pass any white list rule: %s",remoteUrl,new ArrayList<>(rules));
+    throw new CannotRunGeogigOperationException(msg);
+  }
+}

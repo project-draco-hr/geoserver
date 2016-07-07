@@ -1,0 +1,27 @@
+{
+  AjaxSubmitLink link=new AjaxSubmitLink("importExisting",storeEditForm){
+    private static final long serialVersionUID=1242472443848716943L;
+    @Override public boolean getDefaultFormProcessing(){
+      return false;
+    }
+    @Override public void onSubmit(    final AjaxRequestTarget target,    final Form<?> form){
+      final RepositoryImportFormPanel panel;
+      panel=new RepositoryImportFormPanel(modalWindow.getContentId()){
+        private static final long serialVersionUID=1L;
+        @SuppressWarnings("unchecked") @Override protected void saved(        final RepositoryInfo info,        final AjaxRequestTarget target){
+          modalWindow.close(target);
+          updateRepository((Form<DataStoreInfo>)form,target,info);
+        }
+        @Override protected void cancelled(        AjaxRequestTarget target){
+          modalWindow.close(target);
+        }
+      }
+;
+      modalWindow.setContent(panel);
+      modalWindow.setTitle(new ResourceModel("GeoGigDirectoryFormComponent.chooser.browseTitle"));
+      modalWindow.show(target);
+    }
+  }
+;
+  return link;
+}

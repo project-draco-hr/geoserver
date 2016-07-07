@@ -1,0 +1,19 @@
+{
+  String xml="<wfs:Transaction service=\"WFS\" version=\"1.1.0\"" + " xmlns:geogig=\"" + NAMESPACE + "\""+ " xmlns:ogc=\"http://www.opengis.net/ogc\""+ " xmlns:gml=\"http://www.opengis.net/gml\""+ " xmlns:wfs=\"http://www.opengis.net/wfs\">"+ " <wfs:Update typeName=\"geogig:Lines\">"+ "   <wfs:Property>"+ "     <wfs:Name>geogig:pp</wfs:Name>"+ "     <wfs:Value>"+ "        <gml:LineString srsDimension=\"2\" srsName=\"EPSG:4326\">"+ "            <gml:posList>3 4 5 6</gml:posList>"+ "        </gml:LineString>"+ "     </wfs:Value>"+ "   </wfs:Property>"+ "   <ogc:Filter>"+ "     <ogc:PropertyIsEqualTo>"+ "       <ogc:PropertyName>ip</ogc:PropertyName>"+ "       <ogc:Literal>1000</ogc:Literal>"+ "     </ogc:PropertyIsEqualTo>"+ "   </ogc:Filter>"+ " </wfs:Update>"+ "</wfs:Transaction>";
+  GeoGIG geogig=helper.getGeogig();
+  final NodeRef initialTypeTreeRef=geogig.command(FindTreeChild.class).setChildPath("Lines").call().get();
+  assertFalse(initialTypeTreeRef.getMetadataId().isNull());
+  Document dom=postAsDOM("wfs",xml);
+  assertEquals("wfs:TransactionResponse",dom.getDocumentElement().getNodeName());
+  assertEquals("1",getFirstElementByTagName(dom,"wfs:totalUpdated").getFirstChild().getNodeValue());
+  final NodeRef finalTypeTreeRef=geogig.command(FindTreeChild.class).setChildPath("Lines").call().get();
+  assertFalse(initialTypeTreeRef.equals(finalTypeTreeRef));
+  assertFalse(finalTypeTreeRef.getMetadataId().isNull());
+  assertEquals("Feature type tree metadataId shouuldn't change upon edits",initialTypeTreeRef.getMetadataId(),finalTypeTreeRef.getMetadataId());
+  Iterator<NodeRef> featureRefs=geogig.command(LsTreeOp.class).setReference("Lines").call();
+  while (featureRefs.hasNext()) {
+    NodeRef ref=featureRefs.next();
+    assertEquals(finalTypeTreeRef.getMetadataId(),ref.getMetadataId());
+    assertFalse(ref.toString(),ref.getNode().getMetadataId().isPresent());
+  }
+}

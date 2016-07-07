@@ -1,0 +1,30 @@
+{
+  if (node == null) {
+    return;
+  }
+  Envelope env=envBuff;
+  env.setToNull();
+  node.expand(env);
+  if (env.isNull()) {
+    return;
+  }
+  if (isPoint(env)) {
+    points.add(env.getMinX(),env.getMinY());
+  }
+ else   if (isOrthoLine(env)) {
+    double width=env.getWidth();
+    GrowableCoordinateSequence cs=new GrowableCoordinateSequence();
+    if (width == 0D) {
+      cs.add(env.getMinX(),env.getMinY());
+      cs.add(env.getMinX(),env.getMaxY());
+    }
+ else {
+      cs.add(env.getMinX(),env.getMinY());
+      cs.add(env.getMaxX(),env.getMinY());
+    }
+    nonPoints.add(GEOM_FACTORY.createLineString(cs));
+  }
+ else {
+    nonPoints.add(JTS.toGeometry(env,GEOM_FACTORY));
+  }
+}

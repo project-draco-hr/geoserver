@@ -1,0 +1,24 @@
+{
+  LOGGER.fine("Checking for root layer geogig auth URL");
+  WMSInfo serviceInfo=geoserver.getService(WMSInfo.class);
+  if (serviceInfo == null) {
+    LOGGER.info("No WMSInfo available in GeoServer. This is strange but can happen");
+    return false;
+  }
+  GeoServer geoserver=this.geoserver;
+  List<AuthorityURLInfo> authorityURLs=serviceInfo.getAuthorityURLs();
+  for (  AuthorityURLInfo urlInfo : authorityURLs) {
+    if (AUTHORITY_URL_NAME.equals(urlInfo.getName())) {
+      LOGGER.fine("geogig root layer auth URL already exists");
+      return true;
+    }
+  }
+  AuthorityURL geogigAuthURL=new AuthorityURL();
+  geogigAuthURL.setName(AUTHORITY_URL_NAME);
+  geogigAuthURL.setHref(AUTHORITY_URL);
+  serviceInfo.getAuthorityURLs().add(geogigAuthURL);
+  LOGGER.fine("Saving geogig root layer auth URL");
+  geoserver.save(serviceInfo);
+  LOGGER.info("geogig root layer auth URL saved");
+  return true;
+}

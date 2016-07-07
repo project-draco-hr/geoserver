@@ -1,0 +1,25 @@
+{
+  List<LayerIdentifierInfo> layerIdentifiers=geogigLayer.getIdentifiers();
+{
+    LayerIdentifierInfo id=null;
+    for (    LayerIdentifierInfo identifier : layerIdentifiers) {
+      if (AUTHORITY_URL_NAME.equals(identifier.getAuthority())) {
+        id=identifier;
+        break;
+      }
+    }
+    if (id != null) {
+      if (newIdentifier.equals(id.getIdentifier())) {
+        return;
+      }
+      layerIdentifiers.remove(id);
+    }
+  }
+  LayerIdentifier newId=new LayerIdentifier();
+  newId.setAuthority(AUTHORITY_URL_NAME);
+  newId.setIdentifier(newIdentifier);
+  layerIdentifiers.add(newId);
+  Catalog catalog=geoserver.getCatalog();
+  catalog.save(geogigLayer);
+  LOGGER.info("Updated geogig auth identifier for layer " + geogigLayer.prefixedName() + " as "+ newIdentifier);
+}

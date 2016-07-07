@@ -1,0 +1,40 @@
+{
+  super(id);
+  final String repoName=repo.getObject().getRepoName();
+  add(new Label("aboutRemoveMsg",new ParamResourceModel("RepositoriesListPanel$ConfirmRemovePanel.aboutRemove",this,repoName)));
+  final String repoId=repo.getObject().getId();
+  final List<? extends CatalogInfo> stores;
+  stores=RepositoryManager.get().findDataStores(repoId);
+  Catalog catalog=GeoServerApplication.get().getCatalog();
+  CascadeRemovalReporter visitor=new CascadeRemovalReporter(catalog);
+  for (  CatalogInfo info : stores) {
+    info.accept(visitor);
+  }
+  WebMarkupContainer removed=new WebMarkupContainer("removedObjects");
+  List<CatalogInfo> cascaded=visitor.getObjects(CatalogInfo.class,DELETE);
+  for (Iterator<CatalogInfo> it=cascaded.iterator(); it.hasNext(); ) {
+    CatalogInfo catalogInfo=it.next();
+    if (catalogInfo instanceof ResourceInfo) {
+      it.remove();
+    }
+  }
+  removed.setVisible(!cascaded.isEmpty());
+  add(removed);
+  WebMarkupContainer str=new WebMarkupContainer("storesRemoved");
+  removed.add(str);
+  str.setVisible(!stores.isEmpty());
+  str.add(new Label("stores",names(stores)));
+  WebMarkupContainer lar=new WebMarkupContainer("layersRemoved");
+  removed.add(lar);
+  List<LayerInfo> layers=visitor.getObjects(LayerInfo.class,DELETE);
+  if (layers.isEmpty())   lar.setVisible(false);
+  lar.add(new Label("layers",names(layers)));
+  WebMarkupContainer modified=new WebMarkupContainer("modifiedObjects");
+  modified.setVisible(visitor.getObjects(null,GROUP_CHANGED).size() > 0);
+  add(modified);
+  WebMarkupContainer grm=new WebMarkupContainer("groupsModified");
+  modified.add(grm);
+  List<LayerGroupInfo> groups=visitor.getObjects(LayerGroupInfo.class,GROUP_CHANGED);
+  grm.setVisible(!groups.isEmpty());
+  grm.add(new Label("groups",names(groups)));
+}

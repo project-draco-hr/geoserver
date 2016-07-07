@@ -1,0 +1,78 @@
+{
+  super(id,model);
+  setOutputMarkupId(true);
+  ImportRepositoryFormModel formModel=new ImportRepositoryFormModel(model);
+  dropdownPanel=new DropDownChoiceParamPanel("configChoicePanel",new DropDownModel(model),new ResourceModel("RepositoryImportPanel.repositoryType","Repository Type"),DropDownModel.CONFIG_LIST,true);
+  final DropDownChoice<Serializable> dropDownChoice=dropdownPanel.getFormComponent();
+  dropDownChoice.add(new AjaxFormComponentUpdatingBehavior("change"){
+    private static final long serialVersionUID=1L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      final String value=dropDownChoice.getModelObject().toString();
+      repoDirectoryComponent.setVisible(DropDownModel.DIRECTORY_CONFIG.equals(value));
+      pgPanel.setVisible(DropDownModel.PG_CONFIG.equals(value));
+      repoNamePanel.setVisible(DropDownModel.PG_CONFIG.equals(value));
+      target.add(settingsPanel);
+    }
+  }
+);
+  add(dropdownPanel);
+  settingsPanel=new WebMarkupContainer("settingsContainer");
+  settingsPanel.setOutputMarkupId(true);
+  add(settingsPanel);
+  repoNamePanel=new TextParamPanel("repositoryNamePanel",new PropertyModel(formModel,"repoName"),new ResourceModel("RepositoryImportPanel.repositoryName","Repository Name"),true);
+  repoNamePanel.setOutputMarkupId(true);
+  repoNamePanel.getFormComponent().setOutputMarkupId(true);
+  repoNamePanel.setVisible(DropDownModel.PG_CONFIG.equals(dropDownChoice.getModelObject().toString()));
+  settingsPanel.add(repoNamePanel);
+  pgPanel=new PostgresConfigFormPanel("pgPanel",new PropertyModel<>(formModel,"pgBean"));
+  pgPanel.setVisible(DropDownModel.PG_CONFIG.equals(dropDownChoice.getModelObject().toString()));
+  settingsPanel.add(pgPanel);
+  repoDirectoryComponent=new RepoDirectoryComponent("repoDirectoryPanel",formModel);
+  repoDirectoryComponent.setOutputMarkupId(true);
+  repoDirectoryComponent.setVisible(DropDownModel.DIRECTORY_CONFIG.equals(dropDownChoice.getModelObject().toString()));
+  settingsPanel.add(repoDirectoryComponent);
+  add(new IValidator<RepositoryInfo>(){
+    private static final long serialVersionUID=1L;
+    @Override public void validate(    IValidatable<RepositoryInfo> validatable){
+      ValidationError error=new ValidationError();
+      RepositoryInfo repo=validatable.getValue();
+      final URI location=repo.getLocation();
+      List<RepositoryInfo> existingRepos=RepositoryManager.get().getAll();
+      for (      RepositoryInfo configuredRepo : existingRepos) {
+        if (configuredRepo.getLocation().equals(location)) {
+          error.addKey("errRepositoryAlreadyConfigured");
+          break;
+        }
+      }
+      if (error.getKeys().isEmpty()) {
+        final RepositoryResolver resolver=RepositoryResolver.lookup(location);
+        final String scheme=location.getScheme();
+        if ("file".equals(scheme)) {
+          File repoDir=new File(location);
+          if (!repoDir.exists() || !repoDir.isDirectory()) {
+            error.addKey("errRepositoryDirectoryDoesntExist");
+          }
+          if (!isGeogigDirectory(repoDir)) {
+            error.addKey("notAGeogigRepository");
+          }
+        }
+ else         if ("postgresql".equals(scheme)) {
+          try {
+            if (!resolver.repoExists(location)) {
+              error.addKey("errRepositoryDoesntExist");
+            }
+          }
+ catch (          Exception ex) {
+            LOGGER.error("Failed to connect to PostgreSQL database",ex);
+            error.addKey("errCannotConnectToDatabase");
+            error.setVariable("message",PostgresConnectionErrorHandler.getMessage(ex));
+          }
+        }
+      }
+      if (!error.getKeys().isEmpty()) {
+        validatable.error(error);
+      }
+    }
+  }
+);
+}

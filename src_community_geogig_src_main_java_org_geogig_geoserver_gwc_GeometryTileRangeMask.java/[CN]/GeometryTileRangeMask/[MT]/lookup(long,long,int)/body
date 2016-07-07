@@ -1,0 +1,16 @@
+{
+  final long[] levelCoverage=getGridCoverages()[level];
+  final long minxTileX=levelCoverage[0];
+  final long maxTileX=levelCoverage[2];
+  final long minTileY=levelCoverage[1];
+  final long maxTileY=levelCoverage[3];
+  if (tileX < minxTileX || tileX > maxTileX || tileY < minTileY || tileY > maxTileY) {
+    return false;
+  }
+  long[] tileIndex=new long[]{tileX,tileY,level};
+  Envelope tileBounds=toEnvelope(gridSubset.boundsFromIndex(tileIndex));
+  tileBounds.expandBy(tileBounds.getWidth(),tileBounds.getHeight());
+  Geometry expandedTileBoundsGeom=geometryMask.getFactory().toGeometry(tileBounds);
+  boolean intersects=geometryMask.intersects(expandedTileBoundsGeom);
+  return intersects;
+}

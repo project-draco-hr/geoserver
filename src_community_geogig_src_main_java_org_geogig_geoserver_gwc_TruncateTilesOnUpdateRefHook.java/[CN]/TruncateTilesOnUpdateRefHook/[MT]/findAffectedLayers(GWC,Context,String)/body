@@ -1,0 +1,31 @@
+{
+  final Catalog catalog=mediator.getCatalog();
+  ListMultimap<StoreInfo,LayerInfo> affectedLayers=LinkedListMultimap.create();
+  CloseableIterator<LayerInfo> geogigLayers;
+  geogigLayers=catalog.list(LayerInfo.class,GEOGIG_LAYERINFO_FILTER);
+  try {
+    while (geogigLayers.hasNext()) {
+      LayerInfo layerInfo=geogigLayers.next();
+      if (!layerInfo.enabled()) {
+        continue;
+      }
+      if (!mediator.hasTileLayer(layerInfo)) {
+        continue;
+      }
+      final DataStoreInfo store=(DataStoreInfo)layerInfo.getResource().getStore();
+      if (affectedLayers.containsKey(store)) {
+        affectedLayers.put(store,layerInfo);
+      }
+ else {
+        @Nullable final String dataStoreHead=findDataStoreHeadRefName(store,context);
+        if (newRefName.equals(dataStoreHead)) {
+          affectedLayers.put(store,layerInfo);
+        }
+      }
+    }
+  }
+  finally {
+    geogigLayers.close();
+  }
+  return (List<LayerInfo>)affectedLayers.values();
+}

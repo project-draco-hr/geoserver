@@ -1,0 +1,34 @@
+{
+  Router router=new Router(){
+    @Override protected synchronized void init(    Request request,    Response response){
+      super.init(request,response);
+      if (!isStarted()) {
+        return;
+      }
+      request.getAttributes().put(RepositoryProvider.KEY,repositoryProvider);
+      String baseURL=request.getRootRef().getParentRef().toString();
+      String rootPath=request.getRootRef().toString().substring(baseURL.length());
+      String pagePath=request.getResourceRef().toString().substring(baseURL.length());
+      String basePath=null;
+      if (request.getResourceRef().getBaseRef() != null) {
+        basePath=request.getResourceRef().getBaseRef().toString().substring(baseURL.length());
+      }
+      String extension=ResponseUtils.getExtension(pagePath);
+      if (extension != null) {
+        pagePath=pagePath.substring(0,pagePath.length() - extension.length() - 1);
+      }
+      if (pagePath.endsWith("/")) {
+        pagePath=pagePath.substring(0,pagePath.length() - 1);
+      }
+      PageInfo pageInfo=new PageInfo();
+      pageInfo.setBaseURL(baseURL);
+      pageInfo.setRootPath(rootPath);
+      pageInfo.setBasePath(basePath);
+      pageInfo.setPagePath(pagePath);
+      pageInfo.setExtension(extension);
+      request.getAttributes().put(PageInfo.KEY,pageInfo);
+    }
+  }
+;
+  return router;
+}

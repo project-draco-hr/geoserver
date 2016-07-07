@@ -1,0 +1,27 @@
+{
+  JSONObject jsonObject=new JSONObject();
+  jsonObject.put(DB_NAME,"pgDatabaseName");
+  jsonObject.put(DB_PASSWORD,"fakePassword");
+  jsonObject.put(DB_SCHEMA,"fakeSchema");
+  jsonObject.put(DB_USER,"fakeUser");
+  jsonObject.put(DB_HOST,"fakeHost");
+  jsonObject.put(DB_PORT,"8899");
+  JsonRepresentation entity=new JsonRepresentation(jsonObject);
+  Assert.assertEquals("Bad MediaType",APPLICATION_JSON,entity.getMediaType());
+  Request request=buildRequest(entity);
+  Hints hints=initRequestHandler.createHintsFromRequest(request);
+  assertRepositoryName(hints);
+  Optional<Serializable> repoURL=hints.get(REPOSITORY_URL);
+  Assert.assertTrue("Expected REPOSIOTRY_URL to be PRESENT",repoURL.isPresent());
+  URI actual=URI.create(repoURL.get().toString());
+  Assert.assertEquals("Unexpected URI Scheme","postgresql",actual.getScheme());
+  final PostgresConfigBean expected=PostgresConfigBean.newInstance();
+  expected.setDatabase("pgDatabaseName");
+  expected.setPassword("fakePassword");
+  expected.setHost("fakeHost");
+  expected.setPort(Integer.valueOf("8899"));
+  expected.setSchema("fakeSchema");
+  expected.setUsername("fakeUser");
+  final PostgresConfigBean actualBean=PostgresConfigBean.from(actual);
+  Assert.assertEquals("Unexpected PG Configuration",expected,actualBean);
+}
