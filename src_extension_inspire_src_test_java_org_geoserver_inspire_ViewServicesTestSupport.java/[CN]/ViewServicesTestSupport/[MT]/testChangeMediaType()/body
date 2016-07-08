@@ -1,0 +1,22 @@
+{
+  final ServiceInfo serviceInfo=getServiceInfo();
+  final MetadataMap metadata=serviceInfo.getMetadata();
+  clearInspireMetadata(metadata);
+  metadata.put(CREATE_EXTENDED_CAPABILITIES.key,true);
+  metadata.put(SERVICE_METADATA_URL.key,getMetadataUrl());
+  metadata.put(SERVICE_METADATA_TYPE.key,getMetadataType());
+  metadata.put(LANGUAGE.key,getLanguage());
+  getGeoServer().save(serviceInfo);
+  Document dom=getAsDOM(getGetCapabilitiesRequestPath());
+  NodeList nodeList=dom.getElementsByTagNameNS(COMMON_NAMESPACE,"MetadataUrl");
+  assertEquals("Number of MediaType elements",1,nodeList.getLength());
+  Element mdUrl=(Element)nodeList.item(0);
+  assertInspireMetadataUrlResponse(mdUrl,getMetadataUrl(),getMetadataType());
+  serviceInfo.getMetadata().put(SERVICE_METADATA_TYPE.key,getAlternateMetadataType());
+  getGeoServer().save(serviceInfo);
+  dom=getAsDOM(getGetCapabilitiesRequestPath());
+  nodeList=dom.getElementsByTagNameNS(COMMON_NAMESPACE,"MetadataUrl");
+  assertEquals("Number of MediaType elements",1,nodeList.getLength());
+  mdUrl=(Element)nodeList.item(0);
+  assertInspireMetadataUrlResponse(mdUrl,getMetadataUrl(),getAlternateMetadataType());
+}
