@@ -1,0 +1,16 @@
+{
+  checkNotNull(info,"null RepositoryInfo");
+  ensureIdPresent(info);
+  checkNotNull(info.getLocation(),"null location URI: %s",info);
+  lock.writeLock().lock();
+  try (OutputStream out=resource(info.getId()).out()){
+    getConfigredXstream().toXML(info,new OutputStreamWriter(out,Charsets.UTF_8));
+  }
+ catch (  IOException e) {
+    throw Throwables.propagate(e);
+  }
+ finally {
+    lock.writeLock().unlock();
+  }
+  return info;
+}

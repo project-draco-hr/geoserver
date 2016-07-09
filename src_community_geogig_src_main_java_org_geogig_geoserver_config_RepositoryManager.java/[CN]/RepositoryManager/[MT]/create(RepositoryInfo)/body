@@ -1,0 +1,18 @@
+{
+  URI repoURI=repoInfo.getLocation();
+  RepositoryResolver resolver=RepositoryResolver.lookup(repoURI);
+  if (!resolver.repoExists(repoURI)) {
+    Hints hints=new Hints();
+    hints.set(Hints.REPOSITORY_URL,repoURI);
+    hints.set(Hints.REPOSITORY_NAME,repoInfo.getRepoName());
+    Context context=GlobalContextBuilder.builder().build(hints);
+    GeoGIG geogig=new GeoGIG(context);
+    try {
+      Repository repository=geogig.command(InitOp.class).call();
+      Preconditions.checkState(repository != null);
+    }
+  finally {
+      geogig.close();
+    }
+  }
+}

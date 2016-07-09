@@ -1,0 +1,20 @@
+{
+  final Catalog catalog=getCatalog();
+  storeInfo=catalog.getFactory().createDataStore();
+  storeInfo.setDescription("dummy geogig store");
+  storeInfo.setEnabled(true);
+  storeInfo.setName("dummy_geogig");
+  storeInfo.setType((new GeoGigDataStoreFactory()).getDisplayName());
+  storeInfo.setWorkspace(catalog.getDefaultWorkspace());
+  storeInfo.getConnectionParameters().put(GeoGigDataStoreFactory.RESOLVER_CLASS_NAME.key,GeoServerStoreRepositoryResolver.class.getName());
+  storeInfo.getConnectionParameters().put(GeoGigDataStoreFactory.BRANCH.key,"alpha");
+  storeInfo.getConnectionParameters().put(GeoGigDataStoreFactory.REPOSITORY.key,"94bcb762-9ee9-4b43-a912-063509966988");
+  catalog.save(storeInfo);
+  final String storeId=storeInfo.getId();
+  login();
+  page=new DataAccessEditPage(storeId);
+  tester.startPage(page);
+  editForm=(Form)tester.getComponentFromLastRenderedPage("dataStoreForm");
+  GeoGigDataStoreEditPanel panel=(GeoGigDataStoreEditPanel)tester.getComponentFromLastRenderedPage("dataStoreForm:parametersPanel");
+  return panel;
+}

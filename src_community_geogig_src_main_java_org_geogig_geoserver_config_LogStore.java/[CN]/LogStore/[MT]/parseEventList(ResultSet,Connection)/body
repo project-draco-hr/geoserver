@@ -1,0 +1,26 @@
+{
+  List<LogEvent> list=new LinkedList<LogEvent>();
+  long eventId;
+  long timestamp;
+  String levelString;
+  String formattedMessage;
+  List<String> msgParts;
+  String repoUrl;
+  String user;
+  String message;
+  while (rs.next()) {
+    eventId=rs.getLong(1);
+    timestamp=rs.getLong(2);
+    levelString=rs.getString(3);
+    formattedMessage=rs.getString(4);
+    msgParts=Splitter.on(MSG_FIELD_SEPARATOR).splitToList(formattedMessage);
+    Preconditions.checkState(msgParts.size() == 3,"Unknown message format: %s",formattedMessage);
+    repoUrl=msgParts.get(0);
+    user=msgParts.get(1);
+    message=msgParts.get(2);
+    Severity severity=LogEvent.Severity.valueOf(levelString);
+    LogEvent e=new LogEvent(eventId,timestamp,severity,repoUrl,user,message);
+    list.add(e);
+  }
+  return list;
+}

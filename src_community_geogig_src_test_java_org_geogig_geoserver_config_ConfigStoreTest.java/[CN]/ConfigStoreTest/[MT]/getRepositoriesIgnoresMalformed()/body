@@ -1,0 +1,17 @@
+{
+  store.save(dummy(1));
+  store.save(dummy(2));
+  store.save(dummy(3));
+  RepositoryInfo dummy=dummy(4);
+  store.save(dummy);
+  Resource breakIt=dataDir.get(ConfigStore.path(dummy.getId()));
+  byte[] bytes=Files.toByteArray(breakIt.file());
+  byte[] from=new byte[bytes.length - 5];
+  System.arraycopy(bytes,0,from,0,from.length);
+  Files.write(from,breakIt.file());
+  List<RepositoryInfo> all=store.getRepositories();
+  assertNotNull(all);
+  assertEquals(3,all.size());
+  Set<RepositoryInfo> expected=Sets.newHashSet(dummy(1),dummy(2),dummy(3));
+  assertEquals(expected,new HashSet<RepositoryInfo>(all));
+}

@@ -1,0 +1,27 @@
+{
+  double bufferRatio;
+  Integer zoomStop=gridSubset.getMaxCachedZoom();
+  if (zoomStop == null) {
+    zoomStop=gridSubset.getGridSet().getNumLevels() - 1;
+  }
+  zoomStop=Math.min(18,zoomStop);
+  Grid grid=gridSubset.getGridSet().getGrid(zoomStop);
+  double width=grid.getResolution() * gridSubset.getTileWidth();
+  double height=grid.getResolution() * gridSubset.getTileHeight();
+  bufferRatio=2 * Math.max(width,height);
+  BufferParameters bp=new BufferParameters();
+  bp.setEndCapStyle(BufferParameters.CAP_SQUARE);
+  bp.setJoinStyle(BufferParameters.JOIN_MITRE);
+  BufferOp bufferOp=new BufferOp(geomInGridsetCrs,bp);
+  Geometry geometry=bufferOp.getResultGeometry(bufferRatio);
+  if (LOGGER.isDebugEnabled()) {
+    LOGGER.debug(String.format("Geometry buffered by the size of a tile at zoom level %s (%s units): %s",zoomStop,bufferRatio,formattedWKT(geometry)));
+  }
+  TopologyPreservingSimplifier simplifier=new TopologyPreservingSimplifier(geometry);
+  simplifier.setDistanceTolerance(bufferRatio / 2);
+  geometry=simplifier.getResultGeometry();
+  if (LOGGER.isDebugEnabled()) {
+    LOGGER.debug("Simplified geometry: {}",formattedWKT(geometry));
+  }
+  return geometry;
+}

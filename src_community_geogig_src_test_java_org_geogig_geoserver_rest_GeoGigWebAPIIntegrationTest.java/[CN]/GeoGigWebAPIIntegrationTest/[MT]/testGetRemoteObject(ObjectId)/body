@@ -1,0 +1,16 @@
+{
+  GeoGIG geogig=geogigData.getGeogig();
+  final String resource=BASE_URL + "/repo/objects/";
+  final String url=resource + oid.toString();
+  MockHttpServletResponse servletResponse;
+  InputStream responseStream;
+  servletResponse=getAsServletResponse(url);
+  assertEquals(200,servletResponse.getStatus());
+  String contentType=MediaType.APPLICATION_OCTET_STREAM.toString();
+  assertEquals(contentType,servletResponse.getContentType());
+  responseStream=getBinaryInputStream(servletResponse);
+  ObjectSerializingFactory factory=DataStreamSerializationFactoryV1.INSTANCE;
+  RevObject actual=factory.read(oid,responseStream);
+  RevObject expected=geogig.command(RevObjectParse.class).setObjectId(oid).call().get();
+  assertEquals(expected,actual);
+}

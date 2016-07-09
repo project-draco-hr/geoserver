@@ -1,0 +1,32 @@
+{
+  if (command instanceof LsRemote) {
+    LsRemote lsRemote=(LsRemote)command;
+    Optional<Remote> remote=lsRemote.getRemote();
+    if (remote.isPresent()) {
+      String url=remote.get().getFetchURL();
+      checkRestricted(url);
+    }
+  }
+ else   if (command instanceof CloneOp) {
+    CloneOp cloneOp=(CloneOp)command;
+    Optional<String> url=cloneOp.getRepositoryURL();
+    if (url.isPresent()) {
+      checkRestricted(url.get());
+    }
+  }
+ else   if (command instanceof FetchOp) {
+    FetchOp fetchOp=(FetchOp)command;
+    for (    Remote r : fetchOp.getRemotes()) {
+      checkRestricted(r.getFetchURL());
+    }
+  }
+ else   if (command instanceof PushOp) {
+    PushOp pushOp=(PushOp)command;
+    Optional<Remote> remote=pushOp.getRemote();
+    if (remote.isPresent()) {
+      String url=remote.get().getPushURL();
+      checkRestricted(url);
+    }
+  }
+  return command;
+}

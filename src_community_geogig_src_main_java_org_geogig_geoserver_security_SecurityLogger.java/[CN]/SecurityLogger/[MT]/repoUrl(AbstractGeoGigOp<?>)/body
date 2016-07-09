@@ -1,0 +1,28 @@
+{
+  Context context=command.context();
+  if (context == null) {
+    return null;
+  }
+  Repository repository=context.repository();
+  if (repository == null) {
+    return null;
+  }
+  URI location=repository.getLocation();
+  if (location == null) {
+    return null;
+  }
+  String uri=location.toString();
+  if ("file".equals(location.getScheme())) {
+    try {
+      File f=new File(location);
+      if (f.getName().equals(".geogig")) {
+        f=f.getParentFile();
+        uri=f.toURI().toString();
+      }
+    }
+ catch (    Exception e) {
+      uri=location.toString();
+    }
+  }
+  return uri;
+}

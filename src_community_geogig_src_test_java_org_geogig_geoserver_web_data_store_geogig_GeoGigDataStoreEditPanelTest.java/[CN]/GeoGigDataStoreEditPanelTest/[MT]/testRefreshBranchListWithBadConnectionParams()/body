@@ -1,0 +1,17 @@
+{
+  startPanelForNewStore();
+  editForm.getModelObject().getConnectionParameters().put(GeoGigDataStoreFactory.REPOSITORY.key,UUID.randomUUID().toString());
+  final FormTester formTester=tester.newFormTester("dataStoreForm");
+  final String base="dataStoreForm:parametersPanel:";
+  BranchSelectionPanel branchPanel=(BranchSelectionPanel)tester.getComponentFromLastRenderedPage(base + "branch");
+  when(mockManager.listBranches(anyString())).thenThrow(new IOException("Could not connect"));
+  branchPanel.setRepositoryManager(Suppliers.ofInstance(mockManager));
+  String submitLink=base + "branch:refresh";
+  tester.executeAjaxEvent(submitLink,"click");
+  FeedbackMessage feedbackMessage=formTester.getForm().getFeedbackMessages().first();
+  assertNotNull(feedbackMessage);
+  Serializable message=feedbackMessage.getMessage();
+  assertNotNull(message);
+  String expectedMessage="Could not list branches: Could not connect";
+  assertEquals(expectedMessage,message.toString());
+}

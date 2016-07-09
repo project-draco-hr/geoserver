@@ -1,0 +1,39 @@
+{
+  Preconditions.checkNotNull(location,"Cannot parse NULL URI location");
+  Preconditions.checkNotNull(location.getScheme(),"Cannot parse NULL URI scheme");
+  if (!"postgresql".equals(location.getScheme())) {
+    return newInstance();
+  }
+  String host=location.getHost();
+  int port=location.getPort();
+  String uriPath=location.getPath();
+  int startIndex=uriPath.startsWith(SLASH) ? 1 : 0;
+  String[] paths=uriPath.substring(startIndex).split(SLASH);
+  String database=paths[0];
+  String schema=null;
+  if (paths.length > 2) {
+    schema=paths[1];
+  }
+  String query=location.getQuery();
+  String username=null;
+  String password=null;
+  for (  String queryParam : query.split(AMPERSAND)) {
+    int keyEnd=queryParam.indexOf("=");
+    String key=queryParam.substring(0,keyEnd);
+    String value=queryParam.substring(keyEnd + 1);
+    if (USER.equals(key)) {
+      username=value;
+    }
+ else     if (PASSWORD.equals(key)) {
+      password=value;
+    }
+  }
+  PostgresConfigBean bean=new PostgresConfigBean();
+  bean.setHost(host);
+  bean.setPort(port);
+  bean.setDatabase(database);
+  bean.setSchema(schema);
+  bean.setUsername(username);
+  bean.setPassword(password);
+  return bean;
+}

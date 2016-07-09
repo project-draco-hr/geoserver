@@ -1,0 +1,27 @@
+{
+  ConveyorTile tile=createTileProto(pointsLayer);
+  SimpleFeature feature=geogigData.getFeature("points/p2");
+  Envelope bounds=(Envelope)feature.getBounds();
+  org.geowebcache.grid.BoundingBox featureBounds=new org.geowebcache.grid.BoundingBox(bounds.getMinX(),bounds.getMinY(),bounds.getMaxX(),bounds.getMaxY());
+  GridSubset gridSubset=pointsLayer.getGridSubset(tile.getGridSetId());
+  long[][] featureCoverages=gridSubset.getCoverageIntersections(featureBounds);
+  int level=4;
+  long[] levelCoverageIntersection=featureCoverages[level];
+  final long tileX=levelCoverageIntersection[0];
+  final long tileY=levelCoverageIntersection[1];
+  long[] xyz=tile.getStorageObject().getXYZ();
+  xyz[0]=tileX;
+  xyz[1]=tileY;
+  xyz[2]=level;
+  ConveyorTile result=pointsLayer.getTile(tile);
+  CacheResult cacheResult=result.getCacheResult();
+  assertEquals(CacheResult.MISS,cacheResult);
+  result=pointsLayer.getTile(tile);
+  cacheResult=result.getCacheResult();
+  assertEquals(CacheResult.HIT,cacheResult);
+  geogigData.update("points/p1","geom","POINT(-1 -1)").add().commit("moved POINT(1 1) to POINT(-1 -1)").update("lines/l1","geom","LINESTRING(0 10, 0 -10)").add().commit("moved LINESTRING(-10 0, 10 0) to LINESTRING(0 10, 0 -10)");
+  Thread.sleep(100);
+  result=pointsLayer.getTile(tile);
+  cacheResult=result.getCacheResult();
+  assertEquals(CacheResult.MISS,cacheResult);
+}

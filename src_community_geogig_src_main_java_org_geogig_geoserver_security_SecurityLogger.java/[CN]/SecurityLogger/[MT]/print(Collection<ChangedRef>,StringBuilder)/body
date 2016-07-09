@@ -1,0 +1,26 @@
+{
+  for (Iterator<ChangedRef> it=changedRefs.iterator(); it.hasNext(); ) {
+    ChangedRef ref=it.next();
+    Ref oldRef=ref.getOldRef();
+    Ref newRef=ref.getNewRef();
+    if (ref.getType() == ChangeTypes.CHANGED_REF) {
+      sb.append(oldRef.getName()).append(" ");
+      sb.append(toString(oldRef.getObjectId()));
+      sb.append(" -> ");
+      sb.append(toString(newRef.getObjectId()));
+    }
+ else     if (ref.getType() == ChangeTypes.ADDED_REF) {
+      String reftype=(newRef.getName().startsWith(Ref.TAGS_PREFIX)) ? "tag" : "branch";
+      sb.append("* [new ").append(reftype).append("] ").append(newRef.getName()).append(" -> ").append(toString(newRef.getObjectId()));
+    }
+ else     if (ref.getType() == ChangeTypes.REMOVED_REF) {
+      sb.append("x [deleted] ").append(oldRef.getName());
+    }
+ else {
+      sb.append("[deepened]" + newRef.getName());
+    }
+    if (it.hasNext()) {
+      sb.append(", ");
+    }
+  }
+}

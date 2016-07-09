@@ -1,0 +1,36 @@
+{
+  DataStoreInfo ds=catalog.getFactory().createDataStore();
+  ds.setEnabled(true);
+  ds.setDescription("Test Geogig DataStore");
+  ds.setName(storeName);
+  ds.setType(GeoGigDataStoreFactory.DISPLAY_NAME);
+  ds.setWorkspace(ws);
+  Map<String,Serializable> connParams=ds.getConnectionParameters();
+  Optional<URL> GeogigDir=geogig.command(ResolveGeogigDir.class).call();
+  File repositoryUrl;
+  try {
+    repositoryUrl=new File(GeogigDir.get().toURI()).getParentFile();
+  }
+ catch (  URISyntaxException e) {
+    throw Throwables.propagate(e);
+  }
+  assertTrue(repositoryUrl.exists() && repositoryUrl.isDirectory());
+  connParams.put(GeoGigDataStoreFactory.REPOSITORY.key,repositoryUrl.getAbsolutePath());
+  connParams.put(GeoGigDataStoreFactory.DEFAULT_NAMESPACE.key,ns.getURI());
+  catalog.add(ds);
+  DataStoreInfo dsInfo=catalog.getDataStoreByName(ws.getName(),storeName);
+  assertNotNull(dsInfo);
+  assertEquals(GeoGigDataStoreFactory.DISPLAY_NAME,dsInfo.getType());
+  DataAccess<? extends FeatureType,? extends Feature> dataStore;
+  try {
+    dataStore=dsInfo.getDataStore(null);
+  }
+ catch (  IOException e) {
+    throw Throwables.propagate(e);
+  }
+  assertNotNull(dataStore);
+  assertTrue(dataStore instanceof GeoGigDataStore);
+  ds=catalog.getDataStoreByName(ds.getWorkspace(),ds.getName());
+  checkNotNull(ds);
+  return ds;
+}

@@ -1,0 +1,32 @@
+{
+  try {
+    this.configFile=findOrCreateConfigFile();
+  }
+ catch (  IOException e) {
+    throw Throwables.propagate(e);
+  }
+  Properties properties=new Properties();
+  try (InputStream in=new FileInputStream(configFile)){
+    properties.load(in);
+  }
+ catch (  FileNotFoundException e) {
+    throw new IllegalArgumentException("properties file does not exist: " + configFile);
+  }
+catch (  IOException e) {
+    throw new RuntimeException("Error loading properties file " + configFile,e);
+  }
+  boolean enabled=Boolean.valueOf(properties.getProperty(PROP_ENABLED));
+  if (enabled) {
+    dataSource=newDataSource(properties,configFile);
+    boolean runScript=Boolean.valueOf(properties.getProperty(PROP_RUN_SCRIPT));
+    if (runScript) {
+      String scriptProp=properties.getProperty(PROP_SCRIPT);
+      URL script=resolveScript(scriptProp,configFile);
+      runScript(dataSource,script);
+      properties.setProperty(PROP_RUN_SCRIPT,"false");
+      saveConfig(properties,configFile);
+    }
+    LOGBACKLOGGER=createLogger(dataSource);
+  }
+  this.enabled=enabled;
+}

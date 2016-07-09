@@ -1,0 +1,23 @@
+{
+  IModel<List<String>> choices=new RepositoryListDettachableModel();
+  RepoInfoChoiceRenderer choiceRenderer=new RepoInfoChoiceRenderer();
+  DropDownChoice<String> choice=new DropDownChoice<>("geogig_repository",repositoryIdModel,choices,choiceRenderer);
+  choice.setLabel(new ResourceModel("repository"));
+  choice.setNullValid(true);
+  choice.setRequired(true);
+  choice.setOutputMarkupId(true);
+  choice.add(new AjaxFormComponentUpdatingBehavior("change"){
+    private static final long serialVersionUID=6182000388125500580L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      String branchName=null;
+      if (Objects.equal(originalRepo,repositoryIdModel.getObject())) {
+        branchName=originalBranch;
+      }
+      branchNameModel.setObject(branchName);
+      branch.updateChoices(true,GeoGigDataStoreEditPanel.this.storeEditForm);
+      target.add(branch);
+    }
+  }
+);
+  return choice;
+}

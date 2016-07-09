@@ -1,0 +1,15 @@
+{
+  lock.writeLock().lock();
+  try {
+    Resource configRoot=getConfigRoot();
+    List<Resource> list=configRoot.list();
+    if (null == list) {
+      return newArrayList();
+    }
+    Iterator<Resource> xmlfiles=filter(list.iterator(),FILENAMEFILTER);
+    return newArrayList(filter(transform(xmlfiles,LOADER),notNull()));
+  }
+  finally {
+    lock.writeLock().unlock();
+  }
+}

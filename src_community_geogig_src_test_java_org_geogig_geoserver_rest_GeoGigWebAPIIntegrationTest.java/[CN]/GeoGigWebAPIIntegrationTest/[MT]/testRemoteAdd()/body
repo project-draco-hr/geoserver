@@ -1,0 +1,13 @@
+{
+  String remoteURL="http://example.com/geogig/upstream";
+  final String url=BASE_URL + "/remote?remoteName=upstream&remoteURL=" + remoteURL;
+  MockHttpServletResponse sr=getAsServletResponse(url);
+  assertEquals(200,sr.getStatus());
+  Document dom=super.dom(new ByteArrayInputStream(sr.getContentAsString().getBytes()),true);
+  assertXpathEvaluatesTo("true","/response/success",dom);
+  assertXpathEvaluatesTo("upstream","/response/name",dom);
+  dom=getAsDOM(url);
+  print(dom);
+  assertXpathEvaluatesTo("false","/response/success",dom);
+  assertXpathEvaluatesTo("REMOTE_ALREADY_EXISTS","/response/error",dom);
+}

@@ -1,0 +1,20 @@
+{
+  File parent=input.parent().dir();
+  File f=new File(parent,input.name());
+  if (!(parent.exists() && f.exists())) {
+    throw new FileNotFoundException("File not found: " + f.getAbsolutePath());
+  }
+  RepositoryInfo info;
+  try (Reader reader=new InputStreamReader(input.in(),Charsets.UTF_8)){
+    info=(RepositoryInfo)getConfigredXstream().fromXML(reader);
+  }
+ catch (  Exception e) {
+    String msg="Unable to load repo config " + input.name();
+    LOGGER.log(Level.WARNING,msg,e);
+    throw new IOException(msg,e);
+  }
+  if (info.getLocation() == null) {
+    throw new IOException("Repository info has incomplete information: " + info);
+  }
+  return info;
+}

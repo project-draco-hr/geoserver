@@ -1,0 +1,27 @@
+{
+  final String format="<id>=<attname>:<value>[;<attname>:<value>]+";
+  Map<String,Map<String,String>> specs=Maps.newHashMap();
+  for (  String spec : featureSpecs) {
+    String[] split=spec.split("=");
+    checkArgument(split.length == 2,"invalid feature spec. Expected '%s', got '%s'",format,spec);
+    String fid=split[0];
+    checkArgument(!isNullOrEmpty(fid),"invalid feature fid. Expected '%s', got '%s'",format,spec);
+    checkArgument(!specs.containsKey(fid),"Duplicate fid '%s' in feature spec '%s'",fid,Arrays.asList(featureSpecs));
+    String atts=split[1];
+    String[] attSpecs=atts.split(";");
+    Map<String,String> attributes=Maps.newHashMap();
+    for (    String attSpec : attSpecs) {
+      String[] attval=attSpec.split(":");
+      checkArgument(attval.length == 2,"invalid attribute spec '%s'. Expected '%s', got '%s'",attSpec,format,spec);
+      String attName=attval[0];
+      checkArgument(!isNullOrEmpty(attName),"empty attribute name in attribute spec '%s'. Expected '%s', got '%s'",attSpec,format,spec);
+      String attValue=attval[1];
+      if (isNullOrEmpty(attValue)) {
+        attValue=null;
+      }
+      attributes.put(attName,attValue);
+    }
+    specs.put(fid,attributes);
+  }
+  return specs;
+}

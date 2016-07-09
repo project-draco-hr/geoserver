@@ -1,0 +1,17 @@
+{
+  logStore.afterPropertiesSet();
+  logStore.debug(repoUrl,"debug message");
+  Throwable ex=new RuntimeException("test exception");
+  ex.fillInStackTrace();
+  logStore.error(repoUrl,"error message",ex);
+  logStore.info(repoUrl,"info message");
+  List<LogEvent> entries=logStore.getLogEntries(0,10);
+  assertNotNull(entries);
+  assertEquals(3,entries.size());
+  assertEquals(repoUrl,entries.get(0).getRepositoryURL());
+  assertEquals(repoUrl,entries.get(1).getRepositoryURL());
+  assertEquals(repoUrl,entries.get(2).getRepositoryURL());
+  assertEquals("anonymous",entries.get(0).getUser());
+  assertEquals("anonymous",entries.get(1).getUser());
+  assertEquals("anonymous",entries.get(2).getUser());
+}

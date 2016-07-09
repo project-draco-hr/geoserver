@@ -1,0 +1,13 @@
+{
+  Map<String,Object> params=Scripting.getParamMap(command);
+  String refName=(String)params.get("name");
+  command.getClientData().put("name",refName);
+  if (Ref.WORK_HEAD.equals(refName) || Ref.STAGE_HEAD.equals(refName)) {
+    command.getClientData().put("ignore",Boolean.TRUE);
+    return command;
+  }
+  Optional<Ref> currentValue=command.command(RefParse.class).setName(refName).call();
+  command.getClientData().put("oldValue",currentValue);
+  LOGGER.debug("GWC geogig truncate pre-hook engaged for ref '{}'",refName);
+  return command;
+}

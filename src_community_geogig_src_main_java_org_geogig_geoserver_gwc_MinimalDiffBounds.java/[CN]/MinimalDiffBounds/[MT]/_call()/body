@@ -1,0 +1,16 @@
+{
+  final String leftRefSpec=fromNullable(oldVersion).or(Ref.HEAD);
+  final String rightRefSpec=fromNullable(newVersion).or(Ref.WORK_HEAD);
+  RevTree left=resolveTree(leftRefSpec);
+  RevTree right=resolveTree(rightRefSpec);
+  ObjectDatabase leftSource=objectDatabase();
+  ObjectDatabase rightSource=objectDatabase();
+  PreOrderDiffWalk visitor=new PreOrderDiffWalk(left,right,leftSource,rightSource);
+  MinimalDiffBoundsConsumer consumer=new MinimalDiffBoundsConsumer();
+  if (treeName != null) {
+    consumer.setTreeNameFilter(treeName);
+  }
+  visitor.walk(consumer);
+  Geometry minimalBounds=consumer.buildGeometry();
+  return minimalBounds;
+}
