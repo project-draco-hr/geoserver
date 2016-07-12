@@ -1,0 +1,29 @@
+{
+  String remoteURL="http://example.com/geogig/upstream";
+  final String addUrl=BASE_URL + "/remote?remoteURL=" + remoteURL+ "&remoteName=";
+  final String removeUrl=BASE_URL + "/remote?remove=true&remoteName=";
+  final String listUrl=BASE_URL + "/remote?list=true";
+  MockHttpServletResponse sr;
+  Document dom;
+  dom=getAsDOM(addUrl + "upstream");
+  assertXpathEvaluatesTo("true","/response/success",dom);
+  assertXpathEvaluatesTo("upstream","/response/name",dom);
+  dom=getAsDOM(addUrl + "origin");
+  assertXpathEvaluatesTo("true","/response/success",dom);
+  assertXpathEvaluatesTo("origin","/response/name",dom);
+  dom=getAsDOM(listUrl);
+  assertXpathExists("/response/Remote/name[text() = 'upstream']",dom);
+  assertXpathExists("/response/Remote/name[text() = 'origin']",dom);
+  dom=getAsDOM(removeUrl + "upstream");
+  assertXpathEvaluatesTo("true","/response/success",dom);
+  assertXpathEvaluatesTo("upstream","/response/name",dom);
+  dom=getAsDOM(listUrl);
+  assertXpathNotExists("/response/Remote/name[text() = 'upstream']",dom);
+  assertXpathExists("/response/Remote/name[text() = 'origin']",dom);
+  dom=getAsDOM(removeUrl + "origin");
+  assertXpathEvaluatesTo("true","/response/success",dom);
+  assertXpathEvaluatesTo("origin","/response/name",dom);
+  dom=getAsDOM(listUrl);
+  assertXpathNotExists("/response/Remote/name[text() = 'upstream']",dom);
+  assertXpathNotExists("/response/Remote/name[text() = 'origin']",dom);
+}

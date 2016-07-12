@@ -1,0 +1,25 @@
+{
+  Optional<IRemoteRepo> remoteRepo;
+  try {
+    Hints hints=Hints.readOnly();
+    Repository localRepo=GlobalContextBuilder.builder().build(hints).repository();
+    remoteRepo=RemoteUtils.newRemote(localRepo,remote,null);
+    if (!remoteRepo.isPresent()) {
+      throw new IllegalArgumentException("Repository not found or not reachable");
+    }
+ else {
+      IRemoteRepo repo=remoteRepo.get();
+      try {
+        repo.open();
+        Ref head=repo.headRef();
+        return head;
+      }
+  finally {
+        repo.close();
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new IllegalArgumentException("Unable to connect: " + e.getMessage(),e);
+  }
+}

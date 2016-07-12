@@ -1,0 +1,88 @@
+{
+  super(id);
+  this.provider=fileProvider;
+  this.allowSelectingRepositories=allowSelectingRepositories;
+  final WebMarkupContainer table=new WebMarkupContainer("fileTable");
+  table.setOutputMarkupId(true);
+  add(table);
+  List<RepositoryInfo> all=RepositoryManager.get().getAll();
+  final Map<File,File> existingPaths=new HashMap<>();
+  for (  RepositoryInfo info : all) {
+    final URI uri=info.getLocation();
+    if ("file".equals(uri.getScheme())) {
+      File configured=new File(uri);
+      File canonical;
+      try {
+        canonical=configured.getCanonicalFile();
+      }
+ catch (      IOException e) {
+        canonical=configured;
+      }
+      existingPaths.put(canonical,configured);
+    }
+  }
+  DataView<File> fileTable=new DataView<File>("files",fileProvider){
+    private static final long serialVersionUID=1345694542339080271L;
+    @Override protected void populateItem(    final Item<File> item){
+      item.add(AttributeModifier.replace("class",item.getIndex() % 2 == 0 ? "even" : "odd"));
+      final File file=item.getModelObject();
+      final boolean isGeogigDirectory=RepositoryManager.isGeogigDirectory(file);
+      PackageResourceReference icon=isGeogigDirectory ? GEOGIG_FOLDER : FOLDER;
+      item.add(new Image("icon",icon));
+      AjaxFallbackLink<File> link=new AjaxFallbackLink<File>("nameLink"){
+        private static final long serialVersionUID=-644973941443812893L;
+        @Override public void onClick(        AjaxRequestTarget target){
+          linkNameClicked((File)item.getModelObject(),target);
+        }
+      }
+;
+      Label nameLabel=new Label("name",item.getModel()){
+        private static final long serialVersionUID=-4028081066393114129L;
+        @Override public IConverter getConverter(        Class type){
+          return FILE_NAME_CONVERTER;
+        }
+      }
+;
+      link.add(nameLabel);
+      final Map<File,File> existing=existingPaths;
+      File canonicalFile;
+      try {
+        canonicalFile=file.getCanonicalFile();
+      }
+ catch (      IOException e) {
+        canonicalFile=file;
+      }
+      final boolean alreadyImported=isGeogigDirectory && existing.containsKey(canonicalFile);
+      if (isGeogigDirectory) {
+        if (alreadyImported) {
+          link.setEnabled(false);
+          File dupicate=existing.get(canonicalFile);
+          nameLabel.add(AttributeModifier.replace("title",new ParamResourceModel("DirectoryChooser$DirectoryDataView.repoExists",DirectoryDataView.this,dupicate.getAbsolutePath()).getObject()));
+        }
+ else {
+          link.setEnabled(DirectoryDataView.this.allowSelectingRepositories);
+        }
+      }
+      item.add(link);
+      item.add(new Label("lastModified",item.getModel()){
+        private static final long serialVersionUID=-4706544449170830483L;
+        @Override public IConverter getConverter(        Class type){
+          return FILE_LASTMODIFIED_CONVERTER;
+        }
+      }
+);
+    }
+  }
+;
+  fileContent=new WebMarkupContainer("fileContent"){
+    private static final long serialVersionUID=-4197754944388542068L;
+    @Override protected void onComponentTag(    ComponentTag tag){
+      if (tableHeight != null) {
+        tag.getAttributes().put("style","overflow:auto; height:" + tableHeight);
+      }
+    }
+  }
+;
+  fileContent.add(fileTable);
+  table.add(fileContent);
+}

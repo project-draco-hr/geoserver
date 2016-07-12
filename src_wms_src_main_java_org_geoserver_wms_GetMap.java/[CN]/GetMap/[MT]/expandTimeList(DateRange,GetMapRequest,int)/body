@@ -1,0 +1,27 @@
+{
+  TreeSet<Date> result=new TreeSet<>();
+  try {
+    for (    MapLayerInfo l : request.getLayers()) {
+      ResourceInfo ri=l.getLayerInfo().getResource();
+      if (ri == null) {
+        continue;
+      }
+      DimensionInfo timeInfo=ri.getMetadata().get(ResourceInfo.TIME,DimensionInfo.class);
+      if (timeInfo == null) {
+        continue;
+      }
+      if (l.getType() == MapLayerInfo.TYPE_VECTOR) {
+        TreeSet<Object> times=wms.queryFeatureTypeTimes(l.getFeature(),queryRange,maxAllowedFrames);
+        accumulateTimes(result,times,maxAllowedFrames);
+      }
+ else       if (l.getType() == MapLayerInfo.TYPE_RASTER) {
+        TreeSet<Object> times=wms.queryCoverageTimes(l.getCoverage(),queryRange,maxAllowedFrames);
+        accumulateTimes(result,times,maxAllowedFrames);
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new ServiceException("Failed to compute list of times in the range " + queryRange,e);
+  }
+  return new ArrayList<>(result);
+}

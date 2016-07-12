@@ -1,0 +1,15 @@
+{
+  File repoDir=repoFolder.getRoot().getAbsoluteFile();
+  JSONObject jsonObject=new JSONObject();
+  jsonObject.put(DIR_PARENT_DIR,repoDir.getAbsolutePath());
+  JsonRepresentation entity=new JsonRepresentation(jsonObject);
+  Assert.assertEquals("Bad MediaType",APPLICATION_JSON,entity.getMediaType());
+  Request request=buildRequest(entity);
+  Hints hints=initRequestHandler.createHintsFromRequest(request);
+  assertRepositoryName(hints);
+  Optional<Serializable> repoURL=hints.get(REPOSITORY_URL);
+  Assert.assertTrue("Expected REPOSIOTRY_URL to be PRESENT",repoURL.isPresent());
+  URI actual=URI.create(repoURL.get().toString());
+  File actualParent=new File(actual).getParentFile();
+  Assert.assertEquals("Repository Parent Directory does not match",repoDir,actualParent);
+}

@@ -1,0 +1,14 @@
+{
+  Optional<String> repositoryName=getRepositoryName(request);
+  if (!repositoryName.isPresent()) {
+    return Optional.absent();
+  }
+  Optional<GeoGIG> geogig=getGeogig(repositoryName.get());
+  if (!geogig.isPresent() && isInitRequest(request)) {
+    geogig=InitRequestHandler.createGeoGIG(request);
+  }
+  if (!geogig.isPresent()) {
+    geogig=Optional.fromNullable(RepositoryManager.get().createRepo(new Hints()));
+  }
+  return geogig;
+}

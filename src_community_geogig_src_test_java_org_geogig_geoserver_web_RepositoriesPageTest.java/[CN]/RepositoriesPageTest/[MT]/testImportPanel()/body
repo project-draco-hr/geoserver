@@ -1,0 +1,18 @@
+{
+  navigateToRepositoriesPage();
+  tester.clickLink("headerPanel:importExisting");
+  tester.assertRenderedPage(RepositoryImportPage.class);
+  DropDownChoiceParamPanel panel=(DropDownChoiceParamPanel)tester.getComponentFromLastRenderedPage("panel:repoForm:repo:configChoicePanel");
+  DropDownChoice<Serializable> choice=panel.getFormComponent();
+  assertEquals("Expected DropDwon to be set to " + DropDownModel.DIRECTORY_CONFIG,DropDownModel.DIRECTORY_CONFIG,choice.getModelObject());
+  final String settings="panel:repoForm:repo:settingsContainer:";
+  tester.assertVisible(settings + "repoDirectoryPanel");
+  tester.assertInvisible(settings + "repositoryNamePanel");
+  tester.assertInvisible(settings + "pgPanel");
+  FormTester formTester=tester.newFormTester("panel:repoForm");
+  formTester.select("repo:configChoicePanel:border:border_body:paramValue",choice.getChoices().indexOf(DropDownModel.PG_CONFIG));
+  tester.executeAjaxEvent(choice,"change");
+  tester.assertInvisible(settings + "repoDirectoryPanel");
+  tester.assertVisible(settings + "repositoryNamePanel");
+  tester.assertVisible(settings + "pgPanel");
+}

@@ -1,0 +1,20 @@
+{
+  Representation representation;
+  if (HTML.equals(variant)) {
+    String templateName="RepositoryResource.ftl";
+    FreemarkerFormat format=new FreemarkerFormat(templateName,getClass(),MediaType.TEXT_HTML);
+    representation=format.toRepresentation(getMap());
+  }
+ else {
+    Request request=getRequest();
+    GeoServerRepositoryProvider repoFinder=(GeoServerRepositoryProvider)repositoryProvider(request);
+    Optional<RepositoryInfo> repository=repoFinder.findRepository(request);
+    if (!repository.isPresent()) {
+      throw new RestletException("not found",Status.CLIENT_ERROR_NOT_FOUND);
+    }
+    final String baseURL=getRequest().getRootRef().toString();
+    RepositoryInfo repoInfo=repository.get();
+    representation=new RepositorytRepresentation(variant.getMediaType(),baseURL,repoInfo);
+  }
+  return representation;
+}

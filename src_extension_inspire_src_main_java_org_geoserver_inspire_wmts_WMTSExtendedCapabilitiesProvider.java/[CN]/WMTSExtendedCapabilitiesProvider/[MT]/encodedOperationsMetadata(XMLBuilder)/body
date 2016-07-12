@@ -1,0 +1,49 @@
+{
+  ExtendedCapabilitiesProvider.Translator translator=new org.geoserver.ExtendedCapabilitiesProvider.Translator(){
+    @Override public void start(    String element){
+      try {
+        xml.indentElement(element);
+      }
+ catch (      IOException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+    @Override public void start(    String element,    Attributes attributes){
+      try {
+        xml.indentElement(element);
+        for (int i=0; i < attributes.getLength(); i++) {
+          xml.attribute(attributes.getQName(i),attributes.getValue(i));
+        }
+      }
+ catch (      IOException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+    @Override public void chars(    String text){
+      try {
+        xml.text(text);
+      }
+ catch (      IOException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+    @Override public void end(    String element){
+      try {
+        xml.endElement(element);
+      }
+ catch (      IOException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+  }
+;
+  MetadataMap serviceMetadata=geoserver.getService(WMTSInfo.class).getMetadata();
+  Boolean createExtendedCapabilities=serviceMetadata.get(CREATE_EXTENDED_CAPABILITIES.key,Boolean.class);
+  String metadataURL=(String)serviceMetadata.get(SERVICE_METADATA_URL.key);
+  if (metadataURL == null || createExtendedCapabilities != null && !createExtendedCapabilities) {
+    return;
+  }
+  String mediaType=(String)serviceMetadata.get(SERVICE_METADATA_TYPE.key);
+  String language=(String)serviceMetadata.get(LANGUAGE.key);
+  ViewServicesUtils.addScenario1Elements(translator,metadataURL,mediaType,language);
+}

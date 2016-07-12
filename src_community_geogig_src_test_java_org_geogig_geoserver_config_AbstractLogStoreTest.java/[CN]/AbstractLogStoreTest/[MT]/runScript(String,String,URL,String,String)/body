@@ -1,0 +1,20 @@
+{
+  List<String> statements=parseStatements(script);
+  Connection connection;
+  try {
+    Driver d=(Driver)Class.forName(driverClassName).newInstance();
+    connection=DriverManager.getConnection(jdbcUrl,user,password);
+  }
+ catch (  InstantiationException|IllegalAccessException|ClassNotFoundException|SQLException e) {
+    throw Throwables.propagate(e);
+  }
+  System.err.println("Running script " + script.getFile() + " on db "+ jdbcUrl);
+  for (  String sql : statements) {
+    try (Statement st=connection.createStatement()){
+      st.execute(sql);
+    }
+ catch (    SQLException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+}

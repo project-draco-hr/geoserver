@@ -1,0 +1,20 @@
+{
+  GeoGIG geogig=helper.getGeogig();
+  insert();
+  update();
+  List<RevCommit> expected=ImmutableList.copyOf(geogig.command(LogOp.class).call());
+  File repoDir=helper.getRepositoryDirectory();
+  assertTrue(repoDir.exists() && repoDir.isDirectory());
+  destroyGeoServer();
+  TestPlatform testPlatform=new TestPlatform(repoDir);
+  Context context=new CLITestContextBuilder(testPlatform).build();
+  geogig=new GeoGIG(context);
+  try {
+    assertNotNull(geogig.getRepository());
+    List<RevCommit> actual=ImmutableList.copyOf(geogig.command(LogOp.class).call());
+    assertEquals(expected,actual);
+  }
+  finally {
+    geogig.close();
+  }
+}

@@ -1,0 +1,23 @@
+{
+  SimpleFeatureType type=getType(parentTreePath);
+  SimpleFeatureBuilder fb=new SimpleFeatureBuilder(type);
+  Map<String,Map<String,String>> specs=parseFeatureSpecs(featureSpecs);
+  List<Feature> features=Lists.newArrayList();
+  for (  Map.Entry<String,Map<String,String>> spec : specs.entrySet()) {
+    String fid=spec.getKey();
+    Map<String,String> attributes=spec.getValue();
+    fb.reset();
+    for (    Map.Entry<String,String> e : attributes.entrySet()) {
+      String att=e.getKey();
+      String sval=e.getValue();
+      AttributeDescriptor descriptor=type.getDescriptor(att);
+      Class<?> binding=descriptor.getType().getBinding();
+      Object value=Converters.convert(sval,binding);
+      checkArgument(sval == null || value != null,"Unable to convert value '%s' to %s",sval,binding.getName());
+      fb.set(att,value);
+    }
+    SimpleFeature feature=fb.buildFeature(fid);
+    features.add(feature);
+  }
+  return insert(parentTreePath,features.toArray(new Feature[features.size()]));
+}

@@ -1,0 +1,17 @@
+{
+  String remoteURL="http://example.com/geogig/upstream";
+  final String url=BASE_URL + "/remote?remoteName=upstream&remoteURL=" + remoteURL;
+  Document dom=getAsDOM(url);
+  assertXpathEvaluatesTo("true","/response/success",dom);
+  dom=getAsDOM(url);
+  assertXpathEvaluatesTo("false","/response/success",dom);
+  List<LogEvent> entries=new ArrayList<>(logStore.getLogEntries(0,10));
+  assertTrue(entries.toString(),entries.size() > 0);
+  LogEvent last=entries.get(0);
+  assertEquals(Severity.ERROR,last.getSeverity());
+  assertEquals("anonymous",last.getUser());
+  assertEquals(repoURL.toString(),last.getRepositoryURL());
+  assertTrue(last.getMessage(),last.getMessage().contains("Remote add failed"));
+  assertTrue(last.getMessage(),last.getMessage().contains("name='upstream'"));
+  assertTrue(last.getMessage(),last.getMessage().contains("REMOTE_ALREADY_EXISTS"));
+}

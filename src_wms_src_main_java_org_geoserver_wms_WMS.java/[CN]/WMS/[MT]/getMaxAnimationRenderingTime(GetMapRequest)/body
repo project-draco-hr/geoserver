@@ -1,0 +1,22 @@
+{
+  int localMaxRenderingTime=0;
+  Object timeoutOption=request.getFormatOptions().get("timeout");
+  if (timeoutOption != null) {
+    try {
+      localMaxRenderingTime=Integer.parseInt(timeoutOption.toString());
+    }
+ catch (    NumberFormatException e) {
+      RenderedImageMapOutputFormat.LOGGER.log(Level.WARNING,"Could not parse format_option \"timeout\": " + timeoutOption,e);
+    }
+  }
+  Long maxRenderingTime=getMaxAnimatorRenderingTime();
+  if (maxRenderingTime == null) {
+    return localMaxRenderingTime;
+  }
+ else   if (localMaxRenderingTime == 0) {
+    return maxRenderingTime.intValue();
+  }
+ else {
+    return Math.min(maxRenderingTime.intValue(),localMaxRenderingTime);
+  }
+}

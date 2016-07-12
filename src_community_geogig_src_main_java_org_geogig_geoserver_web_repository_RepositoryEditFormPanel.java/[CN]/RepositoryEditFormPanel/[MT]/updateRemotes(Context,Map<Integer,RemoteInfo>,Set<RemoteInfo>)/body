@@ -1,0 +1,52 @@
+{
+{
+    Map<Integer,RemoteInfo> remaining=new HashMap<>();
+    for (    RemoteInfo ri : newRemotes) {
+      if (ri.getId() != null) {
+        remaining.put(ri.getId(),ri);
+      }
+    }
+    for (    RemoteInfo deleted : currentRemotes.values()) {
+      if (!remaining.containsKey(deleted.getId())) {
+        String name=deleted.getName();
+        try {
+          geogig.command(RemoteRemoveOp.class).setName(name).call();
+        }
+ catch (        RuntimeException e) {
+          throw new RuntimeException("Error deleting remote " + name,e);
+        }
+      }
+    }
+  }
+  for (  RemoteInfo ri : newRemotes) {
+    if (ri.getId() == null) {
+      RemoteAddOp cmd=geogig.command(RemoteAddOp.class);
+      cmd.setName(ri.getName());
+      cmd.setURL(ri.getURL());
+      cmd.setUserName(ri.getUserName());
+      cmd.setPassword(ri.getPassword());
+      try {
+        cmd.call();
+      }
+ catch (      RuntimeException e) {
+        throw new RuntimeException("Error adding remote " + ri.getName() + ": "+ e.getMessage(),e);
+      }
+    }
+ else {
+      RemoteInfo old=currentRemotes.remove(ri.getId());
+      Preconditions.checkNotNull(old);
+      if (old.equals(ri)) {
+        continue;
+      }
+      try {
+        geogig.command(RemoteRemoveOp.class).setName(old.getName()).call();
+        RemoteAddOp addop=geogig.command(RemoteAddOp.class);
+        addop.setName(ri.getName()).setURL(ri.getURL()).setUserName(ri.getUserName()).setPassword(ri.getPassword());
+        addop.call();
+      }
+ catch (      RuntimeException e) {
+        throw new RuntimeException("Error updating remote " + ri.getName() + ": "+ e.getMessage(),e);
+      }
+    }
+  }
+}

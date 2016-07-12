@@ -1,0 +1,12 @@
+{
+  final ServiceInfo serviceInfo=getServiceInfo();
+  final MetadataMap metadata=serviceInfo.getMetadata();
+  clearInspireMetadata(metadata);
+  metadata.put(CREATE_EXTENDED_CAPABILITIES.key,true);
+  metadata.put(SERVICE_METADATA_TYPE.key,getMetadataType());
+  metadata.put(LANGUAGE.key,getLanguage());
+  getGeoServer().save(serviceInfo);
+  final Document dom=getAsDOM(getGetCapabilitiesRequestPath());
+  final NodeList nodeList=dom.getElementsByTagNameNS(getInspireNameSpace(),"ExtendedCapabilities");
+  assertEquals("Number of INSPIRE ExtendedCapabilities elements",0,nodeList.getLength());
+}

@@ -1,0 +1,16 @@
+{
+  int numBands=renderedImage.getSampleModel().getNumBands();
+  if (numBands == 4 || numBands == 2) {
+    RenderingHints renderingHints=ImageUtilities.getRenderingHints(renderedImage);
+    RenderedOp extremaOp=ExtremaDescriptor.create(renderedImage,null,1,1,false,1,renderingHints);
+    double[][] extrema=(double[][])extremaOp.getProperty("Extrema");
+    double[] mins=extrema[0];
+    return mins[mins.length - 1] == 255;
+  }
+ else   if (renderedImage.getColorModel() instanceof IndexColorModel) {
+    return false;
+  }
+ else {
+    return (numBands == 3) || (numBands == 1);
+  }
+}

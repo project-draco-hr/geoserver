@@ -1,0 +1,18 @@
+{
+  final CatalogInfo preModifySource=PRE_MOFIFY_EVENT.get();
+  if (preModifySource == null) {
+    return;
+  }
+  if (!event.getSource().getId().equals(preModifySource.getId())) {
+    return;
+  }
+  PRE_MOFIFY_EVENT.remove();
+  LOGGER.fine("handing post-modify event for " + preModifySource);
+  CatalogInfo source=event.getSource();
+  if (source instanceof WorkspaceInfo) {
+    handlePostWorkspaceChange((WorkspaceInfo)source);
+  }
+ else   if (source instanceof DataStoreInfo) {
+    handlePostGeogigStoreChange((DataStoreInfo)source);
+  }
+}

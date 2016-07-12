@@ -1,0 +1,37 @@
+{
+  return new AjaxSubmitLink("chooser"){
+    private static final long serialVersionUID=1L;
+    @Override public boolean getDefaultFormProcessing(){
+      return false;
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form form){
+      File repoDirFile=null;
+      repoDirectoryField.processInput();
+      String repoDir=repoDirectoryField.getConvertedInput();
+      if (repoDir != null && !repoDir.trim().isEmpty()) {
+        repoDirFile=new File(repoDir);
+      }
+      DirectoryChooser chooser=new DirectoryChooser(dialog.getContentId(),new Model<>(repoDirFile),true){
+        private static final long serialVersionUID=1L;
+        @Override protected void geogigDirectoryClicked(        File file,        AjaxRequestTarget target){
+          repoDirectoryField.clearInput();
+          repoDirectoryField.setModelObject(file.getAbsolutePath());
+          target.add(repoDirectoryField);
+          dialog.close(target);
+        }
+        @Override protected void directorySelected(        File file,        AjaxRequestTarget target){
+          repoDirectoryField.clearInput();
+          repoDirectoryField.setModelObject(file.getAbsolutePath());
+          target.add(repoDirectoryField);
+          dialog.close(target);
+        }
+      }
+;
+      chooser.setFileTableHeight(null);
+      dialog.setContent(chooser);
+      dialog.setTitle(new ResourceModel("GeoGigDirectoryFormComponent.chooser.chooseParentTile"));
+      dialog.show(target);
+    }
+  }
+;
+}

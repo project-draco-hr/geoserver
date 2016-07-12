@@ -1,0 +1,28 @@
+{
+  geogigData.init().config("user.name","gabriel").config("user.email","gabriel@test.com").createTypeTree("lines","geom:LineString:srid=4326").createTypeTree("points","geom:Point:srid=4326").add().commit("created type trees").get();
+  geogigData.insert("points","p1=geom:POINT(0 0)","p2=geom:POINT(1 1)","p3=geom:POINT(2 2)");
+  geogigData.insert("lines","l1=geom:LINESTRING(-10 0, 10 0)","l2=geom:LINESTRING(0 0, 180 0)");
+  geogigData.add().commit("Added test features");
+  mediator=GWC.get();
+  assertNotNull(mediator);
+  storageBroker=GeoWebCacheExtensions.bean(StorageBroker.class);
+  assertNotNull(storageBroker);
+  GWCConfig config=mediator.getConfig();
+  config.setCacheLayersByDefault(true);
+  mediator.saveConfig(config);
+  Catalog catalog=getCatalog();
+  CatalogBuilder catalogBuilder=geogigData.newCatalogBuilder(catalog);
+  catalogBuilder.addAllRepoLayers().build();
+  String layerName=catalogBuilder.workspaceName() + ":points";
+  LayerInfo pointLayerInfo=catalog.getLayerByName(layerName);
+  assertNotNull(pointLayerInfo);
+  pointsLayer=mediator.getTileLayer(pointLayerInfo);
+  assertNotNull(pointsLayer);
+  pointsLayer.getInfo().setExpireCache(10 * 1000);
+  mediator.save(pointsLayer);
+  layerName=catalogBuilder.workspaceName() + ":lines";
+  LayerInfo lineLayerInfo=catalog.getLayerByName(layerName);
+  assertNotNull(lineLayerInfo);
+  linesLayer=mediator.getTileLayer(lineLayerInfo);
+  assertNotNull(lineLayerInfo);
+}

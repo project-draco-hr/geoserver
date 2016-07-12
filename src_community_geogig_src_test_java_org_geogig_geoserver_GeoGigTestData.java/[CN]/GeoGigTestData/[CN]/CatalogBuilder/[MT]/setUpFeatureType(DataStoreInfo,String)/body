@@ -1,0 +1,39 @@
+{
+  FeatureTypeInfo ft=catalog.getFactory().createFeatureType();
+  ft.setStore(ds);
+  ft.setAdvertised(true);
+  ft.setEnabled(true);
+  ft.setName(layerName);
+  ft.setNativeName(layerName);
+  NamespaceInfo namespaceInfo=catalog.getNamespaceByPrefix(ds.getWorkspace().getName());
+  ft.setNamespace(namespaceInfo);
+  ft.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+  WorkingTree workingTree=geogig.getRepository().workingTree();
+  Map<String,NodeRef> trees=Maps.uniqueIndex(workingTree.getFeatureTypeTrees(),new Function<NodeRef,String>(){
+    @Override public String apply(    NodeRef treeRef){
+      return treeRef.name();
+    }
+  }
+);
+  NodeRef treeRef=trees.get(layerName);
+  FeatureType featureType=getType(treeRef.path());
+  CoordinateReferenceSystem nativeCRS=featureType.getCoordinateReferenceSystem();
+  ft.setNativeCRS(nativeCRS);
+  String srs=CRS.toSRS(nativeCRS);
+  ft.setSRS(srs);
+  ReferencedEnvelope box=new ReferencedEnvelope(nativeCRS);
+  treeRef.expand(box);
+  ft.setNativeBoundingBox(box);
+  ReferencedEnvelope latLonBounds;
+  try {
+    latLonBounds=box.transform(DefaultGeographicCRS.WGS84,true);
+  }
+ catch (  Exception e) {
+    throw Throwables.propagate(e);
+  }
+  ft.setLatLonBoundingBox(latLonBounds);
+  catalog.add(ft);
+  ft=catalog.getFeatureTypeByName(ft.prefixedName());
+  checkNotNull(ft);
+  return ft;
+}

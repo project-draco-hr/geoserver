@@ -1,0 +1,42 @@
+{
+  RemovalListener<String,GeoGIG> listener=new RemovalListener<String,GeoGIG>(){
+    @Override public void onRemoval(    RemovalNotification<String,GeoGIG> notification){
+      String repoId=notification.getKey();
+      GeoGIG geogig=notification.getValue();
+      if (geogig != null) {
+        URI location=null;
+        try {
+          if (geogig.getContext() != null) {
+            location=geogig.getRepository().getLocation();
+          }
+          LOGGER.fine(format("Closing cached GeoGig repository instance %s",location != null ? location : repoId));
+          geogig.close();
+          LOGGER.finer(format("Closed cached GeoGig repository instance %s",location != null ? location : repoId));
+        }
+ catch (        RuntimeException e) {
+          LOGGER.log(Level.WARNING,format("Error disposing GeoGig repository instance for id %s",repoId),e);
+        }
+      }
+    }
+  }
+;
+  final CacheLoader<String,GeoGIG> loader=new CacheLoader<String,GeoGIG>(){
+    private final RepositoryManager manager=repoManager;
+    @Override public GeoGIG load(    final String repoId) throws Exception {
+      try {
+        RepositoryInfo repoInfo=manager.get(repoId);
+        URI repoLocation=repoInfo.getLocation();
+        Repository repo=RepositoryResolver.load(repoLocation);
+        GeoGIG geogig=new GeoGIG(repo);
+        geogig.getRepository();
+        return geogig;
+      }
+ catch (      Exception e) {
+        LOGGER.log(Level.WARNING,format("Error loading GeoGig repository instance for id %s",repoId),e);
+        throw e;
+      }
+    }
+  }
+;
+  repoCache=CacheBuilder.newBuilder().softValues().expireAfterAccess(5,TimeUnit.MINUTES).removalListener(listener).build(loader);
+}

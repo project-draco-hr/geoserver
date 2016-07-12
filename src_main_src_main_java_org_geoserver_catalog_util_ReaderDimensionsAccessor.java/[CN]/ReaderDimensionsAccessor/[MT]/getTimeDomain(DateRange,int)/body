@@ -1,0 +1,27 @@
+{
+  if (!hasTime()) {
+    Collections.emptySet();
+  }
+  TreeSet<Object> result=null;
+  if (reader instanceof StructuredGridCoverage2DReader) {
+    StructuredGridCoverage2DReader sr=(StructuredGridCoverage2DReader)reader;
+    result=getDimensionValuesInRange("time",range,maxEntries,sr);
+  }
+  if (result == null) {
+    result=new TreeSet<Object>();
+    TreeSet<Object> fullDomain=getElevationDomain();
+    for (    Object o : fullDomain) {
+      if (o instanceof Date) {
+        if (range.contains((Date)o)) {
+          result.add(o);
+        }
+      }
+ else       if (o instanceof DateRange) {
+        if (range.intersects((DateRange)o)) {
+          result.add(o);
+        }
+      }
+    }
+  }
+  return result;
+}

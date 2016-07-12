@@ -1,0 +1,21 @@
+{
+  GeoGIG geogig=geogigData.getGeogig();
+  final String resource=BASE_URL + "/repo/batchobjects";
+  final String url=resource;
+  RevObject expected=geogig.command(RevObjectParse.class).setObjectId(oid).call().get();
+  JsonObject requestBody=new JsonObject();
+  JsonArray wantList=new JsonArray();
+  wantList.add(new JsonPrimitive(oid.toString()));
+  requestBody.add("want",wantList);
+  MockHttpServletResponse servletResponse;
+  InputStream responseStream;
+  servletResponse=postAsServletResponse(url,requestBody.toString(),"application/json");
+  assertEquals(200,servletResponse.getStatus());
+  String contentType=MediaType.APPLICATION_OCTET_STREAM.toString();
+  assertEquals(contentType,servletResponse.getContentType());
+  responseStream=getBinaryInputStream(servletResponse);
+  ObjectSerializingFactory factory=DataStreamSerializationFactoryV1.INSTANCE;
+  Iterator<RevObject> objects=new ObjectStreamIterator(responseStream,factory);
+  RevObject actual=Iterators.getLast(objects);
+  assertEquals(expected,actual);
+}

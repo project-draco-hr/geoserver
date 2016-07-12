@@ -1,0 +1,31 @@
+{
+  BlobStorePage page=new BlobStorePage();
+  tester.startPage(page);
+  executeAjaxEventBehavior("selector:typeOfBlobStore","change","1");
+  FormTester formTester=tester.newFormTester("blobConfigContainer:blobStoreForm");
+  String storeId=UUID.randomUUID().toString();
+  formTester.setValue("id",storeId);
+  formTester.setValue("enabled",false);
+  formTester.setValue("blobSpecificPanel:rootDirectory:border:border_body:paramValue","/tmp/gwc");
+  formTester.setValue("blobSpecificPanel:templatePath","{grid}/{layer}/{params}/tiles-{z}.sqlite");
+  formTester.setValue("blobSpecificPanel:rowRangeCount","1500");
+  formTester.setValue("blobSpecificPanel:columnRangeCount","500");
+  formTester.setValue("blobSpecificPanel:poolSize","2000");
+  formTester.setValue("blobSpecificPanel:poolReaperIntervalMs","1000");
+  formTester.setValue("blobSpecificPanel:eagerDelete","true");
+  formTester.setValue("blobSpecificPanel:useCreateTime","true");
+  formTester.setValue("blobSpecificPanel:mbtilesMetadataDirectory:border:border_body:paramValue","/tmp/gwc/mbtilesMetadata");
+  tester.executeAjaxEvent("blobConfigContainer:blobStoreForm:save","click");
+  MbtilesConfiguration configuration=findStore(storeId);
+  assertThat(configuration,notNullValue());
+  assertThat(configuration.getRootDirectory(),is("/tmp/gwc"));
+  assertThat(configuration.getTemplatePath(),is("{grid}/{layer}/{params}/tiles-{z}.sqlite"));
+  assertThat(configuration.getRowRangeCount(),is(1500L));
+  assertThat(configuration.getColumnRangeCount(),is(500L));
+  assertThat(configuration.getPoolSize(),is(2000L));
+  assertThat(configuration.getPoolReaperIntervalMs(),is(1000L));
+  assertThat(configuration.eagerDelete(),is(true));
+  assertThat(configuration.useCreateTime(),is(true));
+  assertThat(configuration.getMbtilesMetadataDirectory(),is("/tmp/gwc/mbtilesMetadata"));
+  GWC.get().removeBlobStores(Collections.singleton(storeId));
+}

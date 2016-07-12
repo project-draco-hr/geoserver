@@ -1,0 +1,14 @@
+{
+  SimpleFeature feature=getFeature(featurePath);
+  SimpleFeatureType featureType=feature.getFeatureType();
+  AttributeDescriptor descriptor=featureType.getDescriptor(attributeName);
+  Class<?> binding=descriptor.getType().getBinding();
+  Object actualValue=Converters.convert(value,binding);
+  checkArgument(value == null || actualValue != null,"Unable to convert value '%s' to %s",value,binding.getName());
+  feature.setAttribute(attributeName,actualValue);
+  String parentPath=NodeRef.parentPath(featurePath);
+  Context context=geogig.getContext();
+  WorkingTree workingTree=context.workingTree();
+  workingTree.insert(parentPath,feature);
+  return this;
+}

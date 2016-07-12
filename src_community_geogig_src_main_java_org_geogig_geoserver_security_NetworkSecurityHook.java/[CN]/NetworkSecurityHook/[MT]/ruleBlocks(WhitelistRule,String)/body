@@ -1,0 +1,43 @@
+{
+  URL parsed;
+  try {
+    parsed=new URL(url);
+  }
+ catch (  MalformedURLException e) {
+    return false;
+  }
+  final String host=parsed.getHost();
+  if (host == null || parsed.getProtocol() == null || parsed.getProtocol().equals("file")) {
+    return false;
+  }
+  if (rule.isRequireSSL() && !parsed.getProtocol().equals("https")) {
+    return true;
+  }
+  String pattern=rule.getPattern();
+  if (pattern.startsWith("[.*]")) {
+    final String effectivePattern=rule.getPattern().substring("[.*]".length());
+    return !host.endsWith(effectivePattern);
+  }
+ else {
+    Matcher matcher=IP_ADDRESS_OR_CIDR_RANGE.matcher(pattern);
+    String effectiveHost;
+    if (host.startsWith("[") && host.endsWith("]")) {
+      effectiveHost=host.substring(1,host.length() - 1);
+    }
+ else {
+      effectiveHost=host;
+    }
+    if (matcher.matches()) {
+      try {
+        IpAddressMatcher ipMatcher=new IpAddressMatcher(matcher.group());
+        return !ipMatcher.matches(effectiveHost);
+      }
+ catch (      IllegalArgumentException e) {
+        return false;
+      }
+    }
+ else {
+      return !host.equalsIgnoreCase(pattern);
+    }
+  }
+}

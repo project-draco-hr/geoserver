@@ -1,0 +1,16 @@
+{
+  MockDimensionReader reader=new MockDimensionReader();
+  reader.metadata.put(GridCoverage2DReader.HAS_TIME_DOMAIN,"true");
+  reader.metadata.put(GridCoverage2DReader.TIME_DOMAIN,"2016-02-23T03:00:00.000Z/2016-02-23T03:00:00.000Z/PT1S,2016-02-23T06:00:00.000Z,2016-02-23T09:00:00.000Z/2016-02-23T12:00:00.000Z/PT1S");
+  ReaderDimensionsAccessor accessor=new ReaderDimensionsAccessor(reader);
+  TreeSet<Object> domain=accessor.getTimeDomain();
+  assertEquals(3,domain.size());
+  Iterator<Object> it=domain.iterator();
+  Date firstEntry=(Date)it.next();
+  assertEquals(accessor.getTimeFormat().parse("2016-02-23T03:00:00.000Z"),firstEntry);
+  Date secondEntry=(Date)it.next();
+  assertEquals(accessor.getTimeFormat().parse("2016-02-23T06:00:00.000Z"),secondEntry);
+  DateRange thirdEntry=(DateRange)it.next();
+  assertEquals(accessor.getTimeFormat().parse("2016-02-23T09:00:00.000Z"),thirdEntry.getMinValue());
+  assertEquals(accessor.getTimeFormat().parse("2016-02-23T12:00:00.000Z"),thirdEntry.getMaxValue());
+}

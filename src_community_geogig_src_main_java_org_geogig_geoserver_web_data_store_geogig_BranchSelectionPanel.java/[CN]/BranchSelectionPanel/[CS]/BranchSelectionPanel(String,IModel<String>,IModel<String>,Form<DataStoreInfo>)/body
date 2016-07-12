@@ -1,0 +1,23 @@
+{
+  super(id,branchNameModel);
+  this.repositoryIdModel=repositoryIdModel;
+  final List<String> choices=new ArrayList<String>();
+  choice=new DropDownChoice<String>("branchDropDown",branchNameModel,choices);
+  choice.setOutputMarkupId(true);
+  choice.setNullValid(true);
+  choice.setRequired(false);
+  add(choice);
+  updateChoices(false,null);
+  final AjaxSubmitLink refreshLink=new AjaxSubmitLink("refresh",storeEditForm){
+    private static final long serialVersionUID=1L;
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      onSubmit(target,form);
+    }
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      updateChoices(true,form);
+      target.add(BranchSelectionPanel.this.choice);
+    }
+  }
+;
+  add(refreshLink);
+}

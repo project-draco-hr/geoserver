@@ -1,0 +1,16 @@
+{
+  super(componentId,storeEditForm);
+  final IModel<DataStoreInfo> model=storeEditForm.getModel();
+  setDefaultModel(model);
+  final IModel<Map<String,Serializable>> paramsModel=new PropertyModel<>(model,"connectionParameters");
+  paramsModel.getObject().put(RESOLVER_CLASS_NAME.key,GeoServerStoreRepositoryResolver.class.getName());
+  this.repositoryIdModel=new MapModel(paramsModel,REPOSITORY.key);
+  this.branchNameModel=new MapModel(paramsModel,BRANCH.key);
+  this.originalRepo=repositoryIdModel.getObject();
+  this.originalBranch=branchNameModel.getObject();
+  add(repository=createRepositoryPanel());
+  add(importExistingLink(storeEditForm));
+  add(addNewLink(storeEditForm));
+  add(branch=createBranchNameComponent(storeEditForm));
+  add(modalWindow=new ModalWindow("modalWindow"));
+}

@@ -1,0 +1,15 @@
+{
+  if (PRE_MOFIFY_EVENT.get() != null) {
+    LOGGER.fine("pre-modify event exists, ignoring handleModifyEvent (" + PRE_MOFIFY_EVENT.get() + ")");
+    return;
+  }
+  final CatalogInfo source=event.getSource();
+  final boolean isGeogigStore=isGeogigStore(source);
+  boolean tryPostUpdate=(source instanceof WorkspaceInfo) || isGeogigStore;
+  final List<String> propertyNames=event.getPropertyNames();
+  tryPostUpdate&=propertyNames.contains("name") || propertyNames.contains("connectionParameters");
+  if (tryPostUpdate) {
+    LOGGER.fine("Storing event for post-handling on " + source);
+    PRE_MOFIFY_EVENT.set(source);
+  }
+}

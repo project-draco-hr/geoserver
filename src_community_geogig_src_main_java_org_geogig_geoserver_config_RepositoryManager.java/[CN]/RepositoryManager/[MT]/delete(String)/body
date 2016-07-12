@@ -1,0 +1,13 @@
+{
+  List<DataStoreInfo> repoStores=findDataStores(repoId);
+  CascadeDeleteVisitor deleteVisitor=new CascadeDeleteVisitor(this.catalog);
+  for (  DataStoreInfo storeInfo : repoStores) {
+    storeInfo.accept(deleteVisitor);
+  }
+  try {
+    this.store.delete(repoId);
+  }
+  finally {
+    this.repoCache.invalidate(repoId);
+  }
+}

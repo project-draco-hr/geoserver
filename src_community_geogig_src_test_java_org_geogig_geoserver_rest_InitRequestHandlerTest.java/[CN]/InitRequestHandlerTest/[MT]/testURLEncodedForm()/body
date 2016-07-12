@@ -1,0 +1,26 @@
+{
+  Request request=buildRequest(null);
+  StringBuilder data=new StringBuilder(128);
+  data.append(DB_NAME).append("=").append("pgDatabaseName").append("&");
+  data.append(DB_PASSWORD).append("=").append("fakePassword").append("&");
+  data.append(DB_SCHEMA).append("=").append("fakeSchema").append("&");
+  data.append(DB_USER).append("=").append("fakeUser").append("&");
+  data.append(DB_HOST).append("=").append("fakeHost").append("&");
+  data.append(DB_PORT).append("=").append("8899");
+  request.setEntity(data.toString(),APPLICATION_WWW_FORM);
+  Hints hints=initRequestHandler.createHintsFromRequest(request);
+  assertRepositoryName(hints);
+  Optional<Serializable> repoURL=hints.get(REPOSITORY_URL);
+  Assert.assertTrue("Expected REPOSIOTRY_URL to be PRESENT",repoURL.isPresent());
+  URI actual=URI.create(repoURL.get().toString());
+  Assert.assertEquals("Unexpected URI Scheme","postgresql",actual.getScheme());
+  final PostgresConfigBean expected=PostgresConfigBean.newInstance();
+  expected.setDatabase("pgDatabaseName");
+  expected.setPassword("fakePassword");
+  expected.setHost("fakeHost");
+  expected.setPort(Integer.valueOf("8899"));
+  expected.setSchema("fakeSchema");
+  expected.setUsername("fakeUser");
+  final PostgresConfigBean actualBean=PostgresConfigBean.from(actual);
+  Assert.assertEquals("Unexpected PG Configuration",expected,actualBean);
+}

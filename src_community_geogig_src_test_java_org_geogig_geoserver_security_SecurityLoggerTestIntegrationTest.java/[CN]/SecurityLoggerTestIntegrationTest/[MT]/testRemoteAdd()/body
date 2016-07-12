@@ -1,0 +1,20 @@
+{
+  String remoteURL="http://example.com/geogig/upstream";
+  final String url=BASE_URL + "/remote?remoteName=upstream&remoteURL=" + remoteURL;
+  Document dom=getAsDOM(url);
+  assertXpathEvaluatesTo("true","/response/success",dom);
+  List<LogEvent> entries=new ArrayList<>(logStore.getLogEntries(0,10));
+  assertEquals(entries.toString(),2,entries.size());
+  LogEvent first=entries.get(1);
+  assertEquals(Severity.DEBUG,first.getSeverity());
+  assertEquals("anonymous",first.getUser());
+  assertEquals(repoURL.toString(),first.getRepositoryURL());
+  assertTrue(first.getMessage(),first.getMessage().contains("Remote add:"));
+  assertTrue(first.getMessage(),first.getMessage().contains("name='upstream'"));
+  LogEvent second=entries.get(0);
+  assertEquals(Severity.INFO,second.getSeverity());
+  assertEquals("anonymous",second.getUser());
+  assertEquals(repoURL.toString(),second.getRepositoryURL());
+  assertTrue(first.getMessage(),second.getMessage().contains("Remote add success"));
+  assertTrue(first.getMessage(),second.getMessage().contains("name='upstream'"));
+}
