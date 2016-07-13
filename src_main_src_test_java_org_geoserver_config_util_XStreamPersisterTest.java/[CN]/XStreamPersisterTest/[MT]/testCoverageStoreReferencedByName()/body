@@ -6,7 +6,11 @@
   CoverageStoreInfo cs1=cFactory.createCoverageStore();
   cs1.setName("bar");
   cs1.setWorkspace(ws);
+  catalog.detach(cs1);
+  ((CoverageStoreInfoImpl)cs1).setId(null);
   ByteArrayOutputStream out=out();
+  XStreamPersister persister=new XStreamPersisterFactory().createXMLPersister();
+  persister.setReferenceByName(true);
   persister.save(cs1,out);
   CoverageStoreInfo ds2=persister.load(in(out),CoverageStoreInfo.class);
   assertEquals("bar",ds2.getName());
