@@ -1,0 +1,11 @@
+{
+  ServletContext context=EasyMock.createMock(ServletContext.class);
+  EasyMock.expect(context.getInitParameter("GEOSERVER_REQUIRE_FILE")).andReturn("does-not-exist");
+  EasyMock.expect(context.getInitParameter("GEOSERVER_DATA_DIR")).andReturn(null);
+  EasyMock.expect(context.getInitParameter("GEOSERVER_DATA_ROOT")).andReturn(null);
+  EasyMock.expect(context.getRealPath("/data")).andReturn("data");
+  EasyMock.replay(context);
+  expected.expect(IllegalArgumentException.class);
+  expected.expectMessage("Missing required file: does-not-exist " + "From: Servlet context parameter GEOSERVER_REQUIRE_FILE: does-not-exist");
+  GeoServerResourceLoader.lookupGeoServerDataDirectory(context);
+}
