@@ -1,0 +1,12 @@
+{
+  GeoGIG geogig=context.getRepo(repo);
+  final Optional<URI> repoLocation=geogig.command(ResolveGeogigURI.class).call();
+  assertTrue("Expected Repository location to be present",repoLocation.isPresent());
+  Optional<Map<String,String>> optConfig=geogig.command(ConfigOp.class).setAction(CONFIG_LIST).setScope(LOCAL).call();
+  assertTrue("GeoGig repo config missing",optConfig.isPresent());
+  Map<String,String> config=optConfig.get();
+  assertTrue("\"user.name\" missing in repository config",config.containsKey("user.name"));
+  assertEquals("GeoGig User",config.get("user.name"));
+  assertTrue("\"user.email\" missing in repository config",config.containsKey("user.email"));
+  assertEquals("geogig@geogig.org",config.get("user.email"));
+}
