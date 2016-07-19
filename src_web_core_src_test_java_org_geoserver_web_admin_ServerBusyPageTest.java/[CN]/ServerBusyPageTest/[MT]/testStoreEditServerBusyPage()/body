@@ -1,0 +1,44 @@
+{
+  System.setProperty("CONFIGURATION_TRYLOCK_TIMEOUT","0");
+  login();
+  List<GrantedAuthority> l=new ArrayList<GrantedAuthority>();
+  l.add(new SimpleGrantedAuthority("ROLE_ANONYMOUS"));
+  final LockType type=LockType.WRITE;
+  final GeoServerConfigurationLock locker=(GeoServerConfigurationLock)GeoServerExtensions.bean("configurationLock");
+  if (locker != null) {
+    Thread configWriter=new Thread(){
+      public void run(){
+        locker.setEnabled(true);
+        locker.lock(type);
+        try {
+          Thread.sleep(5000);
+        }
+ catch (        InterruptedException e) {
+        }
+ finally {
+          try {
+            locker.unlock(type);
+          }
+ catch (          Exception e) {
+          }
+        }
+      }
+    }
+;
+    configWriter.start();
+    Thread.sleep(300);
+    tester.startPage(DataAccessEditPage.class,new PageParameters().add("wsName","cite").add("storeName","cite"));
+    if (!locker.tryLock(type)) {
+      tester.assertRenderedPage(ServerBusyPage.class);
+    }
+ else {
+      tester.assertRenderedPage(DataAccessEditPage.class);
+    }
+    tester.assertNoErrorMessage();
+    try {
+      locker.unlock(type);
+    }
+ catch (    Exception e) {
+    }
+  }
+}

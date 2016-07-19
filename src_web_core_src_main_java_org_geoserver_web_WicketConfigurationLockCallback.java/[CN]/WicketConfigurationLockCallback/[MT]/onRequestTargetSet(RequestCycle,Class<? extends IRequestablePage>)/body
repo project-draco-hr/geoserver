@@ -1,0 +1,19 @@
+{
+  if (!GeoServerUnlockablePage.class.isAssignableFrom(requestTarget)) {
+    LockType type=THREAD_LOCK.get();
+    if (type != null || requestTarget == null) {
+      return;
+    }
+    boolean lockTaken=false;
+    if (type == null) {
+      type=getLockType(requestTarget);
+      lockTaken=locker.tryLock(type);
+      if (lockTaken) {
+        THREAD_LOCK.set(type);
+      }
+    }
+    if (cycle != null && !lockTaken) {
+      cycle.setResponsePage(ServerBusyPage.class);
+    }
+  }
+}
