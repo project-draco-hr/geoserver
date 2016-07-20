@@ -1,3 +1,15 @@
 {
-  return DISPOSITION_ATTACH;
+  GetFeatureRequest request=GetFeatureRequest.adapt(operation.getParameters()[0]);
+  String outputFormat=request.getOutputFormat();
+  Format format=formats.get(outputFormat);
+  List<Query> queries=request.getQueries();
+  if (format == null) {
+    throw new WFSException("Unknown output format " + outputFormat);
+  }
+ else   if (format.getType() == OutputType.BINARY || queries.size() > 1) {
+    return DISPOSITION_ATTACH;
+  }
+ else {
+    return DISPOSITION_INLINE;
+  }
 }
