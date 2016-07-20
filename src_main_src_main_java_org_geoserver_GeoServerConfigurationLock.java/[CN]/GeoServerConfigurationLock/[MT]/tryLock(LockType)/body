@@ -1,0 +1,23 @@
+{
+  if (!enabled) {
+    return true;
+  }
+  Lock lock=getLock(type);
+  boolean res=false;
+  try {
+    res=lock.tryLock(DEFAULT_TRY_LOCK_TIMEOUT_MS,TimeUnit.MILLISECONDS);
+  }
+ catch (  InterruptedException e) {
+    LOGGER.log(Level.WARNING,"Thread " + Thread.currentThread().getId() + " thrown an InterruptedException on GeoServerConfigurationLock TryLock.",e);
+    res=false;
+  }
+  if (LOGGER.isLoggable(LEVEL)) {
+    if (res) {
+      LOGGER.log(LEVEL,"Thread " + Thread.currentThread().getId() + " got the lock in mode "+ type);
+    }
+ else {
+      LOGGER.log(LEVEL,"Thread " + Thread.currentThread().getId() + " could not get the lock in mode "+ type);
+    }
+  }
+  return res;
+}
