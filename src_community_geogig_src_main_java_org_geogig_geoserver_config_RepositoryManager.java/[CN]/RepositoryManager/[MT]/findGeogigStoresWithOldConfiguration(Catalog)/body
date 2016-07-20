@@ -1,4 +1,11 @@
 {
-  org.opengis.filter.Filter filter=and(equal("type",GeoGigDataStoreFactory.DISPLAY_NAME),isNull("connectionParameters." + GeoGigDataStoreFactory.RESOLVER_CLASS_NAME.key));
-  return findGeoGigStores(catalog,filter);
+  org.opengis.filter.Filter preFilter=equal("type",GeoGigDataStoreFactory.DISPLAY_NAME);
+  List<DataStoreInfo> stores=findGeoGigStores(catalog,preFilter);
+  Predicate<DataStoreInfo> postFilter=new Predicate<DataStoreInfo>(){
+    @Override public boolean apply(    DataStoreInfo st){
+      return !st.getConnectionParameters().containsKey(GeoGigDataStoreFactory.RESOLVER_CLASS_NAME.key);
+    }
+  }
+;
+  return Lists.newArrayList(Iterables.filter(stores,postFilter));
 }
