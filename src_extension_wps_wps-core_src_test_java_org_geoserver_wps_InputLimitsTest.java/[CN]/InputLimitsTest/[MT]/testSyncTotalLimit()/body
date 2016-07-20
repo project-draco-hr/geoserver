@@ -1,10 +1,9 @@
 {
   WPSInfo wps=getGeoServer().getService(WPSInfo.class);
-  wps.setMaxSynchronousExecutionTime(1);
-  wps.setMaxSynchronousTotalTime(2);
+  wps.setMaxSynchronousTotalTime(1);
   getGeoServer().save(wps);
   MonkeyProcess.wait("x1",1100);
   MonkeyProcess.progress("x1",54f,false);
   Document result=getAsDOM("wps?service=WPS&version=1.0.0&request=Execute&Identifier=gs:Monkey&DataInputs=" + urlEncode("id=x1"));
-  assertXpathExists("//ows:ExceptionText[contains(., 'maxExecutionTime 1 seconds, maxTotalTime 2 seconds')]",result);
+  assertXpathExists("//ows:ExceptionText[contains(., 'maxTotalTime 1 seconds')]",result);
 }
