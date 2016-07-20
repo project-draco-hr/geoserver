@@ -1,0 +1,40 @@
+{
+  onlineResource.processInput();
+  if (onlineResource.getModelObject() != null) {
+    URL url=null;
+    try {
+      String baseUrl=baseURL(form);
+      String external=onlineResource.getModelObject().toString();
+      URI uri=new URI(external);
+      if (uri.isAbsolute()) {
+        url=uri.toURL();
+        if (!external.startsWith(baseUrl)) {
+          form.warn("Recommend use of styles directory at " + baseUrl);
+        }
+      }
+ else {
+        WorkspaceInfo wsInfo=((StyleInfo)getDefaultModelObject()).getWorkspace();
+        if (wsInfo != null) {
+          url=new URL(baseUrl + "styles/" + wsInfo.getName()+ "/"+ external);
+        }
+ else {
+          url=new URL(baseUrl + "styles/" + external);
+        }
+      }
+      URLConnection conn=url.openConnection();
+      if ("text/html".equals(conn.getContentType())) {
+        form.error("Unable to access url");
+        return null;
+      }
+      return conn;
+    }
+ catch (    FileNotFoundException notFound) {
+      form.error("Unable to access " + url);
+    }
+catch (    Exception e) {
+      e.printStackTrace();
+      form.error("Recommend use of styles directory at " + e);
+    }
+  }
+  return null;
+}

@@ -1,0 +1,39 @@
+{
+  super(id,new Model<FeatureTypeInfo>(ft));
+  this.featureTypeId=ft.getId();
+  Feature sample=getSampleFeature(ft);
+  DataAttributesProvider summaries=new DataAttributesProvider(sample);
+  add(new Label("summary-message","For reference, here is a listing of the attributes in this data set."));
+  final WebMarkupContainer attsContainer=new WebMarkupContainer("attributes-container");
+  attsContainer.setOutputMarkupId(true);
+  add(attsContainer);
+  final GeoServerTablePanel<DataAttribute> attributes=new GeoServerTablePanel<DataAttribute>("attributes",summaries){
+    private static final long serialVersionUID=7753093373969576568L;
+    @Override protected Component getComponentForProperty(    String id,    final IModel<DataAttribute> itemModel,    Property<DataAttribute> property){
+      if (DataAttributesProvider.COMPUTE_STATS.equals(property.getName())) {
+        Fragment f=new Fragment(id,"computeStatsFragment",DataPanel.this);
+        f.add(new AjaxLink<Void>("computeStats"){
+          private static final long serialVersionUID=1L;
+          @Override public void onClick(          AjaxRequestTarget target){
+            DataAttribute attribute=(DataAttribute)itemModel.getObject();
+            try {
+              updateAttributeStats(attribute);
+            }
+ catch (            IOException e) {
+              error("Failed to compute stats for the attribute: " + e.getMessage());
+            }
+            target.add(attsContainer);
+          }
+        }
+);
+        return f;
+      }
+      return null;
+    }
+  }
+;
+  attributes.setPageable(false);
+  attributes.setFilterable(false);
+  attributes.setSortable(false);
+  attsContainer.add(attributes);
+}

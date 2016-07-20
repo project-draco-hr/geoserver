@@ -1,7 +1,9 @@
 {
   Catalog catalog=getCatalog();
-  StyleInfo s=(StyleInfo)styleForm.getModelObject();
-  s.setFormat(format);
+  StyleInfo model=styleForm.getModelObject();
+  StyleInfo s=catalog.getFactory().createStyle();
+  CatalogBuilder builder=new CatalogBuilder(catalog);
+  builder.updateStyle(s,model);
   StyleHandler styleHandler=styleHandler();
   if (null == s.getLegend() || null == s.getLegend().getOnlineResource() || s.getLegend().getOnlineResource().isEmpty()) {
     s.setLegend(null);
@@ -17,8 +19,8 @@
   }
   try {
     Version version=styleHandler.version(rawStyle);
-    s.setSLDVersion(version);
-    getCatalog().add(s);
+    s.setFormatVersion(version);
+    catalog.add(s);
   }
  catch (  Exception e) {
     LOGGER.log(Level.SEVERE,"Error occurred saving the style",e);

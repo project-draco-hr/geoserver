@@ -1,0 +1,29 @@
+{
+  return new ConfirmOverwriteSubmitLink("generate"){
+    private static final long serialVersionUID=55921414750155395L;
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      templates.processInput();
+      nameTextField.processInput();
+      wsChoice.processInput();
+      StyleType template=(StyleType)templates.getConvertedInput();
+      StyleGenerator styleGen=new StyleGenerator(stylePage.getCatalog());
+      styleGen.setWorkspace(getStylePage().getStyleInfo().getWorkspace());
+      if (template != null) {
+        try {
+          stylePage.editor.reset();
+          stylePage.setRawStyle(new StringReader(styleGen.generateStyle(stylePage.styleHandler(),template,getStylePage().getStyleInfo().getName())));
+          target.appendJavaScript(String.format("if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }",stylePage.styleHandler().getCodeMirrorEditMode()));
+          clearFeedbackMessages();
+        }
+ catch (        Exception e) {
+          clearFeedbackMessages();
+          stylePage.editor.getFeedbackMessages().clear();
+          stylePage.error("Errors occurred generating the style");
+          LOGGER.log(Level.WARNING,"Errors occured generating the style",e);
+        }
+        target.add(stylePage);
+      }
+    }
+  }
+;
+}

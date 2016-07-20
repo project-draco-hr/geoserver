@@ -1,0 +1,24 @@
+{
+  return new ConfirmOverwriteSubmitLink("copy"){
+    private static final long serialVersionUID=-6388040033082157163L;
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      styles.processInput();
+      StyleInfo style=(StyleInfo)styles.getConvertedInput();
+      if (style != null) {
+        try {
+          stylePage.editor.reset();
+          stylePage.setRawStyle(stylePage.readFile(style));
+          target.appendJavaScript(String.format("if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }",stylePage.styleHandler().getCodeMirrorEditMode()));
+          clearFeedbackMessages();
+        }
+ catch (        Exception e) {
+          clearFeedbackMessages();
+          stylePage.error("Errors occurred loading the '" + style.getName() + "' style");
+          LOGGER.log(Level.WARNING,"Errors occurred loading the '" + style.getName() + "' style",e);
+        }
+        target.add(stylePage);
+      }
+    }
+  }
+;
+}

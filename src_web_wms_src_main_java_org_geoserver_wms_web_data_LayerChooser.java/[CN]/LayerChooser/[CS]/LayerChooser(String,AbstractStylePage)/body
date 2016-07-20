@@ -1,0 +1,40 @@
+{
+  super(id);
+  LayerProvider provider=new LayerProvider(parent);
+  GeoServerTablePanel<LayerInfo> table=new GeoServerTablePanel<LayerInfo>("layer.table",provider){
+    private static final long serialVersionUID=1196129584558094662L;
+    @Override public Component getComponentForProperty(    String id,    IModel<LayerInfo> value,    Property<LayerInfo> property){
+      final LayerInfo layer=(LayerInfo)value.getObject();
+      final String text=property.getPropertyValue(layer).toString();
+      if (property == LayerProvider.name) {
+        return new Fragment(id,"layer.link",LayerChooser.this){
+          private static final long serialVersionUID=-7619814477490657757L;
+{
+            add(new GeoServerAjaxFormLink("link",parent.styleForm){
+{
+                add(new Label("layer.name",new Model<String>(text)));
+              }
+              private static final long serialVersionUID=8020574396677784792L;
+              @Override protected void onClick(              AjaxRequestTarget target,              Form<?> form){
+                parent.getLayerModel().setObject(layer);
+                parent.getPopup().close(target);
+                parent.configurationChanged();
+                target.add(parent.styleForm);
+              }
+              @Override public boolean getDefaultFormProcessing(){
+                return false;
+              }
+            }
+);
+          }
+        }
+;
+      }
+ else {
+        return new Label(id,text);
+      }
+    }
+  }
+;
+  add(table);
+}

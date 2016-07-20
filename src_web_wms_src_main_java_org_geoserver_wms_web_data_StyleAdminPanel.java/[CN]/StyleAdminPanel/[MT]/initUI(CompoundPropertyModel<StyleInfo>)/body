@@ -1,0 +1,107 @@
+{
+  StyleInfo style=getStylePage().getStyleInfo();
+  IModel<String> nameBinding=styleModel.bind("name");
+  add(nameTextField=new TextField<String>("name",nameBinding));
+  nameTextField.setRequired(true);
+  IModel<WorkspaceInfo> wsBinding=styleModel.bind("workspace");
+  wsChoice=new DropDownChoice<WorkspaceInfo>("workspace",wsBinding,new WorkspacesModel(),new WorkspaceChoiceRenderer());
+  wsChoice.setNullValid(true);
+  if (!stylePage.isAuthenticatedAsAdmin()) {
+    wsChoice.setNullValid(false);
+    wsChoice.setRequired(true);
+  }
+  add(wsChoice);
+  if (!stylePage.isAuthenticatedAsAdmin()) {
+    wsChoice.setEnabled(false);
+  }
+  IModel<String> formatBinding=styleModel.bind("format");
+  formatChoice=new DropDownChoice<String>("format",formatBinding,new StyleFormatsModel(),new ChoiceRenderer<String>(){
+    private static final long serialVersionUID=2064887235303504013L;
+    @Override public String getIdValue(    String object,    int index){
+      return object;
+    }
+    @Override public Object getDisplayValue(    String object){
+      return Styles.handler(object).getName();
+    }
+  }
+);
+  formatChoice.add(new AjaxFormComponentUpdatingBehavior("change"){
+    private static final long serialVersionUID=-8372146231225388561L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      target.appendJavaScript(String.format("if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }",stylePage.styleHandler().getCodeMirrorEditMode()));
+    }
+  }
+);
+  add(formatChoice);
+  formatReadOnlyMessage=new WebMarkupContainer("formatReadOnly",new Model<String>());
+  formatReadOnlyMessage.setVisible(false);
+  add(formatReadOnlyMessage);
+  legendPanel=new ExternalGraphicPanel("legendPanel",styleModel,stylePage.styleForm);
+  legendPanel.setOutputMarkupId(true);
+  add(legendPanel);
+  if (style.getId() != null) {
+    try {
+      stylePage.setRawStyle(stylePage.readFile(style));
+    }
+ catch (    IOException e) {
+      Session.get().error(new ParamResourceModel("styleNotFound",this,style.getFilename()).getString());
+    }
+  }
+  templates=new DropDownChoice<StyleType>("templates",new Model<StyleType>(),new StyleTypeModel(),new StyleTypeChoiceRenderer());
+  templates.setOutputMarkupId(true);
+  templates.add(new AjaxFormComponentUpdatingBehavior("change"){
+    private static final long serialVersionUID=-6649152103570059645L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      templates.validate();
+      generateLink.setEnabled(templates.getConvertedInput() != null);
+      target.add(generateLink);
+    }
+  }
+);
+  add(templates);
+  generateLink=generateLink();
+  generateLink.setEnabled(false);
+  add(generateLink);
+  styles=new DropDownChoice<StyleInfo>("existingStyles",new Model<StyleInfo>(),new StylesModel(),new StyleChoiceRenderer());
+  styles.setOutputMarkupId(true);
+  styles.add(new AjaxFormComponentUpdatingBehavior("change"){
+    private static final long serialVersionUID=8098121930876372129L;
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      styles.validate();
+      copyLink.setEnabled(styles.getConvertedInput() != null);
+      target.add(copyLink);
+    }
+  }
+);
+  add(styles);
+  copyLink=copyLink();
+  copyLink.setEnabled(false);
+  add(copyLink);
+  uploadLink=uploadLink();
+  add(uploadLink);
+  fileUploadField=new FileUploadField("filename");
+  fileUploadField.setDefaultModel(new Model<String>(""));
+  add(fileUploadField);
+  add(previewLink());
+  legendContainer=new WebMarkupContainer("legendContainer");
+  legendContainer.setOutputMarkupId(true);
+  add(legendContainer);
+  this.legendImg=new Image("legendImg",new AbstractResource(){
+    private static final long serialVersionUID=-6932528694575832606L;
+    @Override protected ResourceResponse newResourceResponse(    Attributes attributes){
+      ResourceResponse rr=new ResourceResponse();
+      rr.setContentType("image/png");
+      rr.setWriteCallback(new WriteCallback(){
+        @Override public void writeData(        Attributes attributes) throws IOException {
+          ImageIO.write(legendImage,"PNG",attributes.getResponse().getOutputStream());
+        }
+      }
+);
+      return rr;
+    }
+  }
+);
+  legendContainer.add(this.legendImg);
+  this.legendImg.setVisible(false);
+  this.legendImg.setOutputMarkupId(true);
+}

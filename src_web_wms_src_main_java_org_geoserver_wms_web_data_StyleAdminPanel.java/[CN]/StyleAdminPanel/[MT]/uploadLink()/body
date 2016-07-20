@@ -1,0 +1,35 @@
+{
+  return new ConfirmOverwriteSubmitLink("upload",stylePage.styleForm){
+    private static final long serialVersionUID=658341311654601761L;
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      FileUpload upload=fileUploadField.getFileUpload();
+      if (upload == null) {
+        warn("No file selected.");
+        return;
+      }
+      ByteArrayOutputStream bout=new ByteArrayOutputStream();
+      try {
+        IOUtils.copy(upload.getInputStream(),bout);
+        stylePage.editor.reset();
+        stylePage.setRawStyle(new InputStreamReader(new ByteArrayInputStream(bout.toByteArray()),"UTF-8"));
+        target.appendJavaScript(String.format("if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }",stylePage.styleHandler().getCodeMirrorEditMode()));
+        clearFeedbackMessages();
+      }
+ catch (      IOException e) {
+        throw new WicketRuntimeException(e);
+      }
+catch (      Exception e) {
+        clearFeedbackMessages();
+        stylePage.error("Errors occurred uploading the '" + upload.getClientFileName() + "' style");
+        LOGGER.log(Level.WARNING,"Errors occurred uploading the '" + upload.getClientFileName() + "' style",e);
+      }
+      StyleInfo s=getStylePage().getStyleInfo();
+      if (s.getName() == null || "".equals(s.getName().trim())) {
+        nameTextField.setModelValue(new String[]{ResponseUtils.stripExtension(upload.getClientFileName())});
+        nameTextField.modelChanged();
+      }
+      target.add(stylePage);
+    }
+  }
+;
+}

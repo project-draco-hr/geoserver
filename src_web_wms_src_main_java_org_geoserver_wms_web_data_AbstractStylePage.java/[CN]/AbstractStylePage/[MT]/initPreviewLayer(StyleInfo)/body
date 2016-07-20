@@ -1,0 +1,27 @@
+{
+  Catalog catalog=getCatalog();
+  List<LayerInfo> layers;
+  if (style != null) {
+    layers=catalog.getLayers(style);
+    if (layers.size() > 0) {
+      layerModel=new Model<LayerInfo>(layers.get(0));
+      return;
+    }
+  }
+  DataStoreInfo defaultStore=catalog.getDefaultDataStore(catalog.getDefaultWorkspace());
+  if (defaultStore != null) {
+    List<ResourceInfo> resources=catalog.getResourcesByStore(defaultStore,ResourceInfo.class);
+    for (    ResourceInfo resource : resources) {
+      layers=catalog.getLayers(resource);
+      if (layers.size() > 0) {
+        layerModel=new Model<LayerInfo>(layers.get(0));
+        return;
+      }
+    }
+  }
+  layers=catalog.getLayers();
+  if (layers.size() > 0) {
+    layerModel=new Model<LayerInfo>(layers.get(0));
+    return;
+  }
+}

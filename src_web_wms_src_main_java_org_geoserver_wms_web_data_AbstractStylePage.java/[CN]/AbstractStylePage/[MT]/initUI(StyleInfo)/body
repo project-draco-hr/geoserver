@@ -1,160 +1,104 @@
 {
-  CompoundPropertyModel<StyleInfo> styleModel=new CompoundPropertyModel(style != null ? new StyleDetachableModel(style) : getCatalog().getFactory().createStyle());
-  format=style != null ? style.getFormat() : getCatalog().getFactory().createStyle().getFormat();
-  if (null == styleModel.getObject().getLegend()) {
+  if (style == null) {
+    styleModel=new CompoundPropertyModel<StyleInfo>(getCatalog().getFactory().createStyle());
+    styleModel.getObject().setName("");
     styleModel.getObject().setLegend(getCatalog().getFactory().createLegend());
+    add(new Label("stylename",""));
   }
-  styleForm=new Form("form",styleModel){
+ else {
+    add(new Label("stylename",(style.getWorkspace() == null ? "" : style.getWorkspace().getName() + ":") + style.getName()));
+    styleModel=new CompoundPropertyModel<StyleInfo>(new StyleDetachableModel(style));
+  }
+  styleForm=new Form<StyleInfo>("styleForm",styleModel){
     @Override protected void onSubmit(){
-      super.onSubmit();
       onStyleFormSubmit();
+      super.onSubmit();
     }
   }
 ;
-  styleForm.setMarkupId("mainForm");
   add(styleForm);
-  styleForm.add(nameTextField=new TextField("name"));
-  nameTextField.setRequired(true);
-  wsChoice=new DropDownChoice<WorkspaceInfo>("workspace",new WorkspacesModel(),new WorkspaceChoiceRenderer());
-  wsChoice.setNullValid(true);
-  if (!isAuthenticatedAsAdmin()) {
-    wsChoice.setNullValid(false);
-    wsChoice.setRequired(true);
-  }
-  styleForm.add(wsChoice);
-  formatChoice=new DropDownChoice<String>("format",new PropertyModel(this,"format"),new StyleFormatsModel(),new ChoiceRenderer<String>(){
-    @Override public String getIdValue(    String object,    int index){
-      return object;
+  styleForm.setMultiPart(true);
+  popup=new ModalWindow("popup");
+  styleForm.add(popup);
+  List<ITab> tabs=new ArrayList<ITab>();
+  tabs.add(new PanelCachingTab(new AbstractTab(new Model<String>("Data")){
+    public Panel getPanel(    String id){
+      return new StyleAdminPanel(id,AbstractStylePage.this);
     }
-    @Override public Object getDisplayValue(    String object){
-      return Styles.handler(object).getName();
+  }
+));
+  tabs.add(new PanelCachingTab(new AbstractTab(new Model<String>("Publishing")){
+    private static final long serialVersionUID=4184410057835108176L;
+    public Panel getPanel(    String id){
+      return new LayerAssociationPanel(id,AbstractStylePage.this);
+    }
+  }
+));
+  tabs.add(new PanelCachingTab(new AbstractTab(new Model<String>("Layer Preview")){
+    public Panel getPanel(    String id){
+      return new OpenLayersPreviewPanel(id,AbstractStylePage.this);
+    }
+  }
+));
+  tabs.add(new PanelCachingTab(new AbstractTab(new Model<String>("Layer Attributes")){
+    private static final long serialVersionUID=4184410057835108176L;
+    public Panel getPanel(    String id){
+      try {
+        return new LayerAttributePanel(id,AbstractStylePage.this);
+      }
+ catch (      IOException e) {
+        throw new WicketRuntimeException(e);
+      }
+    }
+  }
+));
+  List<StyleEditTabPanelInfo> tabPanels=getGeoServerApplication().getBeansOfType(StyleEditTabPanelInfo.class);
+  Collections.sort(tabPanels,new Comparator<StyleEditTabPanelInfo>(){
+    public int compare(    StyleEditTabPanelInfo o1,    StyleEditTabPanelInfo o2){
+      Integer order1=o1.getOrder() >= 0 ? o1.getOrder() : Integer.MAX_VALUE;
+      Integer order2=o2.getOrder() >= 0 ? o2.getOrder() : Integer.MAX_VALUE;
+      return order1.compareTo(order2);
     }
   }
 );
-  formatChoice.add(new AjaxFormComponentUpdatingBehavior("change"){
-    @Override protected void onUpdate(    AjaxRequestTarget target){
-      target.appendJavaScript(String.format("if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }",styleHandler().getCodeMirrorEditMode()));
+  for (  StyleEditTabPanelInfo tabPanelInfo : tabPanels) {
+    String titleKey=tabPanelInfo.getTitleKey();
+    IModel<String> titleModel=null;
+    if (titleKey != null) {
+      titleModel=new org.apache.wicket.model.ResourceModel(titleKey);
     }
-  }
+ else {
+      titleModel=new Model<String>(tabPanelInfo.getComponentClass().getSimpleName());
+    }
+    final Class<StyleEditTabPanel> panelClass=tabPanelInfo.getComponentClass();
+    tabs.add(new AbstractTab(titleModel){
+      private static final long serialVersionUID=-6637277497986497791L;
+      @Override public Panel getPanel(      String panelId){
+        StyleEditTabPanel tabPanel;
+        try {
+          tabPanel=panelClass.getConstructor(String.class,IModel.class).newInstance(panelId,styleModel);
+        }
+ catch (        Exception e) {
+          throw new WicketRuntimeException(e);
+        }
+        return tabPanel;
+      }
+    }
 );
-  styleForm.add(formatChoice);
-  formatReadOnlyMessage=new WebMarkupContainer("formatReadOnly",new Model());
-  formatReadOnlyMessage.setVisible(false);
-  styleForm.add(formatReadOnlyMessage);
-  styleForm.add(editor=new CodeMirrorEditor("styleEditor",styleHandler().getCodeMirrorEditMode(),new PropertyModel(this,"rawStyle")));
+  }
+  tabbedPanel=new AjaxTabbedPanel<ITab>("context",tabs);
+  styleForm.add(tabbedPanel);
+  styleForm.add(editor=new CodeMirrorEditor("styleEditor",styleHandler().getCodeMirrorEditMode(),new PropertyModel<String>(this,"rawStyle")));
   editor.setTextAreaMarkupId("editor");
   editor.setOutputMarkupId(true);
   editor.setRequired(true);
   styleForm.add(editor);
-  ExternalGraphicPanel legendPanel=new ExternalGraphicPanel("legendPanel",styleModel,styleForm);
-  legendPanel.setOutputMarkupId(true);
-  styleForm.add(legendPanel);
-  if (style != null) {
-    try {
-      setRawStyle(readFile(style));
-    }
- catch (    IOException e) {
-      Session.get().error(new ParamResourceModel("styleNotFound",this,style.getFilename()).getString());
-    }
-  }
-  templates=new DropDownChoice("templates",new Model(),new StyleTypeModel(),new StyleTypeChoiceRenderer());
-  templates.setOutputMarkupId(true);
-  templates.add(new AjaxFormComponentUpdatingBehavior("change"){
-    @Override protected void onUpdate(    AjaxRequestTarget target){
-      templates.validate();
-      generateLink.setEnabled(templates.getConvertedInput() != null);
-      target.add(generateLink);
-    }
-  }
-);
-  styleForm.add(templates);
-  generateLink=generateLink();
-  generateLink.setEnabled(false);
-  styleForm.add(generateLink);
-  styles=new DropDownChoice("existingStyles",new Model(),new StylesModel(),new StyleChoiceRenderer());
-  styles.setOutputMarkupId(true);
-  styles.add(new AjaxFormComponentUpdatingBehavior("change"){
-    @Override protected void onUpdate(    AjaxRequestTarget target){
-      styles.validate();
-      copyLink.setEnabled(styles.getConvertedInput() != null);
-      target.add(copyLink);
-    }
-  }
-);
-  styleForm.add(styles);
-  copyLink=copyLink();
-  copyLink.setEnabled(false);
-  styleForm.add(copyLink);
-  uploadForm=uploadForm(styleForm);
-  uploadForm.setMultiPart(true);
-  uploadForm.setMaxSize(Bytes.megabytes(1));
-  uploadForm.setMarkupId("uploadForm");
-  add(uploadForm);
-  uploadForm.add(fileUploadField=new FileUploadField("filename"));
   add(validateLink());
-  add(previewLink());
-  Link cancelLink=new Link("cancel"){
+  Link<StylePage> cancelLink=new Link<StylePage>("cancel"){
     @Override public void onClick(){
       doReturn(StylePage.class);
     }
   }
 ;
   add(cancelLink);
-  legendContainer=new WebMarkupContainer("legendContainer");
-  legendContainer.setOutputMarkupId(true);
-  add(legendContainer);
-  this.legendImg=new Image("legendImg",new AbstractResource(){
-    @Override protected ResourceResponse newResourceResponse(    Attributes attributes){
-      ResourceResponse rr=new ResourceResponse();
-      rr.setContentType("image/png");
-      rr.setWriteCallback(new WriteCallback(){
-        @Override public void writeData(        Attributes attributes) throws IOException {
-          GeoServerDataDirectory dd=GeoServerExtensions.bean(GeoServerDataDirectory.class,getGeoServerApplication().getApplicationContext());
-          StyleInfo si=new StyleInfoImpl(getCatalog());
-          String styleName="tmp" + UUID.randomUUID().toString();
-          String styleFileName=styleName + ".sld";
-          si.setFilename(styleFileName);
-          si.setName(styleName);
-          si.setWorkspace(wsChoice.getModel().getObject());
-          Resource styleResource=null;
-          try {
-            styleResource=dd.style(si);
-            try (OutputStream os=styleResource.out()){
-              IOUtils.write(lastStyle,os);
-            }
-             Style style=dd.parsedStyle(si);
-            if (style != null) {
-              GetLegendGraphicRequest request=new GetLegendGraphicRequest();
-              request.setLayer(null);
-              request.setStyle(style);
-              request.setStrict(false);
-              Map<String,String> legendOptions=new HashMap<String,String>();
-              legendOptions.put("forceLabels","on");
-              legendOptions.put("fontAntiAliasing","true");
-              request.setLegendOptions(legendOptions);
-              BufferedImageLegendGraphicBuilder builder=new BufferedImageLegendGraphicBuilder();
-              BufferedImage image=builder.buildLegendGraphic(request);
-              ByteArrayOutputStream bos=new ByteArrayOutputStream();
-              ImageIO.write(image,"PNG",attributes.getResponse().getOutputStream());
-            }
-            error("Failed to build legend preview");
-          }
- catch (          IOException e) {
-            throw new RuntimeException(e);
-          }
- finally {
-            if (styleResource != null) {
-              styleResource.delete();
-            }
-          }
-        }
-      }
-);
-      return rr;
-    }
-  }
-);
-  legendContainer.add(this.legendImg);
-  this.legendImg.setVisible(false);
-  this.legendImg.setOutputMarkupId(true);
 }
