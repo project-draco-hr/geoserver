@@ -1,0 +1,65 @@
+{
+  MultiPolygon rasterFilter=null;
+  if (policy.getLimits() instanceof CoverageAccessLimits) {
+    CoverageAccessLimits limits=(CoverageAccessLimits)policy.getLimits();
+    rasterFilter=limits.getRasterFilter();
+    Filter readFilter=limits.getReadFilter();
+    final GeneralParameterValue[] limitParams=limits.getParams();
+    if (parameters == null) {
+      parameters=limitParams;
+    }
+ else     if (limitParams != null) {
+      List<GeneralParameterValue> params=new ArrayList<GeneralParameterValue>(Arrays.asList(parameters));
+      for (      GeneralParameterValue lparam : limitParams) {
+        final GeneralParameterDescriptor ldescriptor=lparam.getDescriptor();
+        for (Iterator it=params.iterator(); it.hasNext(); ) {
+          GeneralParameterValue param=(GeneralParameterValue)it.next();
+          if (param.getDescriptor().equals(lparam.getDescriptor())) {
+            it.remove();
+            break;
+          }
+        }
+        params.add(lparam);
+      }
+      parameters=params.toArray(new GeneralParameterValue[params.size()]);
+    }
+    if (readFilter != null && !Filter.INCLUDE.equals(readFilter)) {
+      Format format=delegate.getFormat();
+      ParameterValueGroup readParameters=format.getReadParameters();
+      List<GeneralParameterDescriptor> descriptors=readParameters.getDescriptor().descriptors();
+      boolean replacedOriginalFilter=false;
+      for (      GeneralParameterValue pv : parameters) {
+        String pdCode=pv.getDescriptor().getName().getCode();
+        if ("FILTER".equals(pdCode) || "Filter".equals(pdCode)) {
+          replacedOriginalFilter=true;
+          ParameterValue pvalue=(ParameterValue)pv;
+          Filter originalFilter=(Filter)pvalue.getValue();
+          if (originalFilter == null || Filter.INCLUDE.equals(originalFilter)) {
+            pvalue.setValue(readFilter);
+          }
+ else {
+            Filter combined=Predicates.and(originalFilter,readFilter);
+            pvalue.setValue(combined);
+          }
+        }
+      }
+      if (!replacedOriginalFilter) {
+        parameters=CoverageUtils.mergeParameter(descriptors,parameters,readFilter,"FILTER","Filter");
+      }
+    }
+  }
+  GridCoverage2D grid=delegate.read(parameters);
+  if (rasterFilter != null) {
+    Geometry coverageBounds=JTS.toGeometry((Envelope)new ReferencedEnvelope(grid.getEnvelope2D()));
+    if (coverageBounds.intersects(rasterFilter)) {
+      final ParameterValueGroup param=cropParams.clone();
+      param.parameter("source").setValue(grid);
+      param.parameter("ROI").setValue(rasterFilter);
+      grid=(GridCoverage2D)coverageCropFactory.doOperation(param,null);
+    }
+ else {
+      return null;
+    }
+  }
+  return grid;
+}
