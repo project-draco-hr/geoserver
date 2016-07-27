@@ -5,9 +5,10 @@
     Map<String,Resource> resources=new HashMap<String,Resource>();
     if (store instanceof DataStoreInfo) {
       DataStoreInfo dstore=(DataStoreInfo)store;
-      List<Name> names=dstore.getDataStore(null).getNames();
+      DataStoreInfo expandedStore=getCatalog().getResourcePool().clone(dstore,true);
+      List<Name> names=expandedStore.getDataStore(null).getNames();
       for (      Name name : names) {
-        FeatureTypeInfo fti=getCatalog().getFeatureTypeByDataStore(dstore,name.getLocalPart());
+        FeatureTypeInfo fti=getCatalog().getFeatureTypeByDataStore(expandedStore,name.getLocalPart());
         if (fti == null || fti.getMetadata().get(FeatureTypeInfo.JDBC_VIRTUAL_TABLE) == null) {
           resources.put(name.getLocalPart(),new Resource(name));
         }
@@ -15,8 +16,9 @@
     }
  else     if (store instanceof CoverageStoreInfo) {
       CoverageStoreInfo cstore=(CoverageStoreInfo)store;
-      NamespaceInfo ns=getCatalog().getNamespaceByPrefix(cstore.getWorkspace().getName());
-      GridCoverageReader reader=cstore.getGridCoverageReader(null,null);
+      CoverageStoreInfo expandedStore=getCatalog().getResourcePool().clone(cstore,true);
+      NamespaceInfo ns=getCatalog().getNamespaceByPrefix(expandedStore.getWorkspace().getName());
+      GridCoverageReader reader=expandedStore.getGridCoverageReader(null,null);
       try {
         String[] names=reader.getGridCoverageNames();
         for (        String name : names) {
@@ -36,9 +38,10 @@
     }
  else     if (store instanceof WMSStoreInfo) {
       WMSStoreInfo wmsInfo=(WMSStoreInfo)store;
+      WMSStoreInfo expandedStore=getCatalog().getResourcePool().clone(wmsInfo,true);
       CatalogBuilder builder=new CatalogBuilder(getCatalog());
       builder.setStore(store);
-      List<Layer> layers=wmsInfo.getWebMapServer(null).getCapabilities().getLayerList();
+      List<Layer> layers=expandedStore.getWebMapServer(null).getCapabilities().getLayerList();
       for (      Layer l : layers) {
         if (l.getName() == null) {
           continue;
