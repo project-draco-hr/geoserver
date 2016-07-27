@@ -3,7 +3,14 @@
   List<DataStoreInfo> stores=findGeoGigStores(catalog,preFilter);
   Predicate<DataStoreInfo> postFilter=new Predicate<DataStoreInfo>(){
     @Override public boolean apply(    DataStoreInfo st){
-      return !st.getConnectionParameters().containsKey(GeoGigDataStoreFactory.RESOLVER_CLASS_NAME.key);
+      final Map<String,Serializable> conParams=st.getConnectionParameters();
+      if (conParams.containsKey(REPOSITORY.key)) {
+        final File repoConfigFile=new File(conParams.get(REPOSITORY.key).toString());
+        if (repoConfigFile.isDirectory()) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 ;

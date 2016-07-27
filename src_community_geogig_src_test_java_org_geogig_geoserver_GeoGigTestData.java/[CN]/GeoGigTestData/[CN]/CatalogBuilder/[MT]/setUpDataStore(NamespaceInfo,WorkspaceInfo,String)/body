@@ -15,7 +15,10 @@
     throw Throwables.propagate(e);
   }
   assertTrue(repositoryUrl.exists() && repositoryUrl.isDirectory());
-  connParams.put(GeoGigDataStoreFactory.REPOSITORY.key,repositoryUrl.getAbsolutePath());
+  RepositoryInfo info=new RepositoryInfo();
+  info.setLocation(geogig.getRepository().getLocation());
+  RepositoryManager.get().save(info);
+  connParams.put(GeoGigDataStoreFactory.REPOSITORY.key,GeoServerGeoGigRepositoryResolver.getURI(info.getRepoName()));
   connParams.put(GeoGigDataStoreFactory.DEFAULT_NAMESPACE.key,ns.getURI());
   catalog.add(ds);
   DataStoreInfo dsInfo=catalog.getDataStoreByName(ws.getName(),storeName);

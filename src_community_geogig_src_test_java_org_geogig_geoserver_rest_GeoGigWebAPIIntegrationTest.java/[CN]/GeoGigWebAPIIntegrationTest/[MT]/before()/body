@@ -23,8 +23,11 @@
   DataAccess<? extends FeatureType,? extends Feature> dataStore=dsInfo.getDataStore(null);
   assertNotNull(dataStore);
   assertTrue(dataStore instanceof GeoGigDataStore);
-  String repoId=(String)dsInfo.getConnectionParameters().get(GeoGigDataStoreFactory.REPOSITORY.key);
-  RepositoryInfo repositoryInfo=RepositoryManager.get().get(repoId);
+  String repoStr=(String)dsInfo.getConnectionParameters().get(GeoGigDataStoreFactory.REPOSITORY.key);
+  URI repoURI=new URI(repoStr);
+  RepositoryResolver resolver=RepositoryResolver.lookup(repoURI);
+  String repoName=resolver.getName(repoURI);
+  RepositoryInfo repositoryInfo=RepositoryManager.get().getByRepoName(repoName);
   assertNotNull(repositoryInfo);
   BASE_URL="/geogig/repos/testrepo";
 }

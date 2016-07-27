@@ -1,0 +1,19 @@
+{
+  String name=getName(repositoryLocation);
+  RepositoryManager repoMgr=RepositoryManager.get();
+  try {
+    RepositoryInfo info=repoMgr.getByRepoName(name);
+    String repositoryId=info.getId();
+    GeoGIG gig=repoMgr.getRepository(repositoryId);
+    Repository repo=gig.getRepository();
+    if (!repo.isOpen()) {
+      repo.open();
+    }
+    return repo;
+  }
+ catch (  IOException ioe) {
+    RepositoryConnectionException rce=new RepositoryConnectionException("No GeoGig repository found with NAME or ID: " + name);
+    rce.initCause(ioe);
+    throw rce;
+  }
+}

@@ -1,13 +1,16 @@
 {
   startPanelForNewStore();
-  editForm.getModelObject().getConnectionParameters().put(GeoGigDataStoreFactory.REPOSITORY.key,UUID.randomUUID().toString());
+  editForm.getModelObject().getConnectionParameters().put(GeoGigDataStoreFactory.REPOSITORY.key,getURI("dummy_repo_3"));
   final FormTester formTester=tester.newFormTester("dataStoreForm");
   final String base="dataStoreForm:parametersPanel:";
   BranchSelectionPanel branchPanel=(BranchSelectionPanel)tester.getComponentFromLastRenderedPage(base + "branch");
   assertNotNull(branchPanel);
   ObjectId dummyId=ObjectId.forString("dummy");
   final List<Ref> branches=Arrays.asList(new Ref("master",dummyId),new Ref("alpha",dummyId),new Ref("sandbox",dummyId));
+  RepositoryInfo repoInfo=mock(RepositoryInfo.class);
+  when(repoInfo.getId()).thenReturn(UUID.randomUUID().toString());
   branchPanel.setRepositoryManager(Suppliers.ofInstance(mockManager));
+  when(mockManager.getByRepoName("dummy_repo_3")).thenReturn(repoInfo);
   when(mockManager.listBranches(anyString())).thenReturn(branches);
   String dropDownPath=base + "branch:branchDropDown";
   final DropDownChoice choice=(DropDownChoice)tester.getComponentFromLastRenderedPage(dropDownPath);

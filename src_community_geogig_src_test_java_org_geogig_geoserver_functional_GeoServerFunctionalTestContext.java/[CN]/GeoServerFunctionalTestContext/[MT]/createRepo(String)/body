@@ -1,7 +1,7 @@
 {
   GeoGigTestData testData=new GeoGigTestData();
   testData.setUp(name);
-  testData.init();
+  testData.init().config("user.name","John").config("user.email","John.Doe@example.com");
   GeoGIG geogig=testData.getGeogig();
   Catalog catalog=helper.getCatalog();
   CatalogBuilder catalogBuilder=testData.newCatalogBuilder(catalog);
@@ -16,8 +16,11 @@
   DataAccess<? extends FeatureType,? extends Feature> dataStore=dsInfo.getDataStore(null);
   assertNotNull(dataStore);
   assertTrue(dataStore instanceof GeoGigDataStore);
-  String repoId=(String)dsInfo.getConnectionParameters().get(GeoGigDataStoreFactory.REPOSITORY.key);
-  RepositoryInfo repositoryInfo=RepositoryManager.get().get(repoId);
+  String repoStr=(String)dsInfo.getConnectionParameters().get(GeoGigDataStoreFactory.REPOSITORY.key);
+  URI repoURI=new URI(repoStr);
+  RepositoryResolver resolver=RepositoryResolver.lookup(repoURI);
+  String repoName=resolver.getName(repoURI);
+  RepositoryInfo repositoryInfo=RepositoryManager.get().getByRepoName(repoName);
   assertNotNull(repositoryInfo);
   return new TestData(geogig);
 }

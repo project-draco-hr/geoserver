@@ -1,9 +1,12 @@
 {
   startPanelForNewStore();
-  editForm.getModelObject().getConnectionParameters().put(GeoGigDataStoreFactory.REPOSITORY.key,UUID.randomUUID().toString());
+  editForm.getModelObject().getConnectionParameters().put(GeoGigDataStoreFactory.REPOSITORY.key,getURI("dummy_repo_2"));
   final FormTester formTester=tester.newFormTester("dataStoreForm");
   final String base="dataStoreForm:parametersPanel:";
   BranchSelectionPanel branchPanel=(BranchSelectionPanel)tester.getComponentFromLastRenderedPage(base + "branch");
+  RepositoryInfo repoInfo=mock(RepositoryInfo.class);
+  when(repoInfo.getId()).thenReturn(UUID.randomUUID().toString());
+  when(mockManager.getByRepoName("dummy_repo_2")).thenReturn(repoInfo);
   when(mockManager.listBranches(anyString())).thenThrow(new IOException("Could not connect"));
   branchPanel.setRepositoryManager(Suppliers.ofInstance(mockManager));
   String submitLink=base + "branch:refresh";
