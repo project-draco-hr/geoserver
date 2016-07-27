@@ -1,0 +1,15 @@
+{
+  Object lookupContext=lookupContext(false,true);
+  if (lookupContext == null || !(lookupContext instanceof BackupExecutionAdapter)) {
+    getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+  }
+ else {
+    BackupExecutionAdapter execution=(BackupExecutionAdapter)lookupContext;
+    if (execution.getStatus() == BatchStatus.COMPLETED) {
+      getResponse().setEntity(new FileRepresentation(execution.getArchiveFile().file(),MediaType.APPLICATION_ZIP,0));
+    }
+ else {
+      throw new RestletException("Backup execution status not ready yet!",Status.CLIENT_ERROR_NOT_FOUND);
+    }
+  }
+}

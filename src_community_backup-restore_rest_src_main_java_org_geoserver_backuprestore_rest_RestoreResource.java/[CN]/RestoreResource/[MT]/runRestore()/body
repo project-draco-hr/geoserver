@@ -1,0 +1,24 @@
+{
+  RestoreExecutionAdapter execution=null;
+  try {
+    Form query=getRequest().getResourceRef().getQueryAsForm();
+    if (MediaType.APPLICATION_JSON.equals(getRequest().getEntity().getMediaType()) || MediaType.APPLICATION_XML.equals(getRequest().getEntity().getMediaType())) {
+      RestoreExecutionAdapter newExecution=(RestoreExecutionAdapter)getFormatPostOrPut().toObject(getRequest().getEntity());
+      execution=getBackupFacade().runRestoreAsync(newExecution.getArchiveFile(),newExecution.getFilter(),asParams(newExecution.getOptions()));
+      LOGGER.log(Level.INFO,"Restore file started: " + newExecution.getArchiveFile());
+      getResponse().redirectSeeOther(getPageInfo().rootURI("/br/restore/" + execution.getId()));
+      getResponse().setEntity(getFormatGet().toRepresentation(execution));
+      getResponse().setStatus(Status.SUCCESS_CREATED);
+    }
+ else {
+      throw new IllegalArgumentException("Unknown Content-Type: " + getRequest().getEntity().getMediaType());
+    }
+  }
+ catch (  IllegalArgumentException iae) {
+    throw new RestletException("Unable to perform restore: ",Status.CLIENT_ERROR_BAD_REQUEST,iae);
+  }
+catch (  Exception e) {
+    throw new RestletException("Unable to perform restore: ",Status.SERVER_ERROR_INTERNAL,e);
+  }
+  return execution;
+}

@@ -1,0 +1,184 @@
+{
+  add(new Label("id",new PropertyModel(model,"id")));
+  add(new Label("clazz",new Model(this.clazz.getSimpleName().substring(0,this.clazz.getSimpleName().indexOf("Execution")))));
+  BackupRestoreExecutionsProvider provider=new BackupRestoreExecutionsProvider(getType()){
+    @Override protected List<Property<AbstractExecutionAdapter>> getProperties(){
+      return Arrays.asList(ID,STATE,STARTED,PROGRESS,ARCHIVEFILE,OPTIONS);
+    }
+    @Override protected List<T> getItems(){
+      return Collections.singletonList(model.getObject());
+    }
+  }
+;
+  final BackupRestoreExecutionsTable headerTable=new BackupRestoreExecutionsTable("header",provider,getType());
+  headerTable.setOutputMarkupId(true);
+  headerTable.setFilterable(false);
+  headerTable.setPageable(false);
+  add(headerTable);
+  final T bkp=model.getObject();
+  boolean selectable=bkp.getStatus() != BatchStatus.COMPLETED;
+  add(new Icon("icon",COMPRESS_ICON));
+  add(new Label("title",new DataTitleModel(bkp)).add(new AttributeModifier("title",new DataTitleModel(bkp,false))));
+  @SuppressWarnings("rawtypes") Form<?> form=new Form("form");
+  add(form);
+  try {
+    if (params != null && params.getNamedKeys().contains(DETAILS_LEVEL)) {
+      if (params.get(DETAILS_LEVEL).toInt() > 0) {
+        expand=params.get(DETAILS_LEVEL).toInt();
+      }
+    }
+  }
+ catch (  Exception e) {
+    LOGGER.log(Level.WARNING,"Error parsing the 'details level' parameter: ",params.get(DETAILS_LEVEL).toString());
+  }
+  form.add(new SubmitLink("refresh"){
+    @Override public void onSubmit(){
+      setResponsePage(BackupRestorePage.class,new PageParameters().add("id",params.get("id").toLong()).add("clazz",getType().getSimpleName()).add(DETAILS_LEVEL,expand));
+    }
+  }
+);
+  NumberTextField<Integer> expand=new NumberTextField<Integer>("expand",new PropertyModel<Integer>(this,"expand"));
+  expand.add(RangeValidator.minimum(0));
+  form.add(expand);
+  TextArea<String> details=new TextArea<String>("details",new BKErrorDetailsModel(bkp));
+  details.setOutputMarkupId(true);
+  details.setMarkupId("details");
+  add(details);
+  String location=bkp.getArchiveFile().path();
+  if (location == null) {
+    location=getGeoServerApplication().getGeoServer().getLogging().getLocation();
+  }
+  backupFile=new File(location);
+  if (!backupFile.isAbsolute()) {
+    GeoServerDataDirectory dd=getGeoServerApplication().getBeanOfType(GeoServerDataDirectory.class);
+    backupFile=dd.get(Paths.convert(backupFile.getPath())).file();
+  }
+  if (!backupFile.exists()) {
+    error("Could not find the Backup Archive file: " + backupFile.getAbsolutePath());
+  }
+  final Link<Object> downLoadLink=new Link<Object>("download"){
+    @Override public void onClick(){
+      IResourceStream stream=new FileResourceStream(backupFile){
+        public String getContentType(){
+          return "application/zip";
+        }
+      }
+;
+      ResourceStreamRequestHandler handler=new ResourceStreamRequestHandler(stream,backupFile.getName());
+      handler.setContentDisposition(ContentDisposition.ATTACHMENT);
+      RequestCycle.get().scheduleRequestHandlerAfterCurrent(handler);
+    }
+  }
+;
+  add(downLoadLink);
+  final AjaxLink pauseLink=new AjaxLink("pause"){
+    @Override protected void disableLink(    ComponentTag tag){
+      super.disableLink(tag);
+      tag.setName("a");
+      tag.addBehavior(AttributeModifier.replace("class","disabled"));
+    }
+    @Override public void onClick(    AjaxRequestTarget target){
+      AbstractExecutionAdapter bkp=model.getObject();
+      if (bkp.getStatus() == BatchStatus.STOPPED) {
+        setLinkEnabled((AjaxLink)downLoadLink.getParent().get("pause"),false,target);
+      }
+ else {
+        try {
+          backupFacade().stopExecution(bkp.getId());
+          setResponsePage(BackupRestoreDataPage.class);
+        }
+ catch (        NoSuchJobExecutionException|JobExecutionNotRunningException e) {
+          LOGGER.log(Level.WARNING,"",e);
+          getSession().error(e);
+          setResponsePage(BackupRestoreDataPage.class);
+        }
+      }
+    }
+  }
+;
+  pauseLink.setEnabled(doSelectReady(bkp) && bkp.getStatus() != BatchStatus.STOPPED);
+  add(pauseLink);
+  final AjaxLink resumeLink=new AjaxLink("resume"){
+    @Override protected void disableLink(    ComponentTag tag){
+      super.disableLink(tag);
+      tag.setName("a");
+      tag.addBehavior(AttributeModifier.replace("class","disabled"));
+    }
+    @Override public void onClick(    AjaxRequestTarget target){
+      AbstractExecutionAdapter bkp=model.getObject();
+      if (bkp.getStatus() != BatchStatus.STOPPED) {
+        setLinkEnabled((AjaxLink)downLoadLink.getParent().get("pause"),false,target);
+      }
+ else {
+        try {
+          Long id=backupFacade().restartExecution(bkp.getId());
+          PageParameters pp=new PageParameters();
+          pp.add("id",id);
+          if (bkp instanceof BackupExecutionAdapter) {
+            pp.add("clazz",BackupExecutionAdapter.class.getSimpleName());
+          }
+ else           if (bkp instanceof RestoreExecutionAdapter) {
+            pp.add("clazz",RestoreExecutionAdapter.class.getSimpleName());
+          }
+          setResponsePage(BackupRestorePage.class,pp);
+        }
+ catch (        NoSuchJobExecutionException|JobInstanceAlreadyCompleteException|NoSuchJobException|JobRestartException|JobParametersInvalidException e) {
+          LOGGER.log(Level.WARNING,"",e);
+          getSession().error(e);
+          setResponsePage(BackupRestoreDataPage.class);
+        }
+      }
+    }
+  }
+;
+  resumeLink.setEnabled(bkp.getStatus() == BatchStatus.STOPPED);
+  add(resumeLink);
+  final AjaxLink cancelLink=new AjaxLink("cancel"){
+    @Override protected void disableLink(    ComponentTag tag){
+      super.disableLink(tag);
+      tag.setName("a");
+      tag.addBehavior(AttributeModifier.replace("class","disabled"));
+    }
+    @Override public void onClick(    AjaxRequestTarget target){
+      AbstractExecutionAdapter bkp=model.getObject();
+      if (!doSelectReady(bkp)) {
+        setLinkEnabled((AjaxLink)downLoadLink.getParent().get("cancel"),false,target);
+      }
+ else {
+        try {
+          backupFacade().abandonExecution(bkp.getId());
+          PageParameters pp=new PageParameters();
+          pp.add("id",bkp.getId());
+          if (bkp instanceof BackupExecutionAdapter) {
+            pp.add("clazz",BackupExecutionAdapter.class.getSimpleName());
+          }
+ else           if (bkp instanceof RestoreExecutionAdapter) {
+            pp.add("clazz",RestoreExecutionAdapter.class.getSimpleName());
+          }
+          setResponsePage(BackupRestorePage.class,pp);
+        }
+ catch (        NoSuchJobExecutionException|JobExecutionAlreadyRunningException e) {
+          error(e);
+          LOGGER.log(Level.WARNING,"",e);
+        }
+      }
+    }
+  }
+;
+  cancelLink.setEnabled(doSelectReady(bkp));
+  add(cancelLink);
+  final AjaxLink doneLink=new AjaxLink("done"){
+    @Override protected void disableLink(    ComponentTag tag){
+      super.disableLink(tag);
+      tag.setName("a");
+      tag.addBehavior(AttributeModifier.replace("class","disabled"));
+    }
+    @Override public void onClick(    AjaxRequestTarget target){
+      setResponsePage(BackupRestoreDataPage.class);
+      return;
+    }
+  }
+;
+  add(doneLink);
+  add(dialog=new GeoServerDialog("dialog"));
+}

@@ -1,0 +1,44 @@
+{
+  Object item=null;
+  try {
+    InputStream in=Resources.fromPath(fileName,directory).in();
+    final List<XStreamServiceLoader> loaders=GeoServerExtensions.extensions(XStreamServiceLoader.class);
+    for (    XStreamServiceLoader<ServiceInfo> l : loaders) {
+      try {
+        if (l.getFilename().equals(fileName)) {
+          item=l.load(backupFacade.getGeoServer(),Resources.fromPath(fileName,directory));
+          if (item != null && item instanceof ServiceInfo) {
+            return item;
+          }
+        }
+      }
+ catch (      Exception e) {
+        item=null;
+      }
+    }
+    try {
+      if (item == null) {
+        try {
+          if (getXp() == null) {
+            xstream=getxStreamPersisterFactory().createXMLPersister();
+            setXp(xstream.getXStream());
+          }
+          item=getXp().fromXML(in);
+        }
+  finally {
+          in.close();
+        }
+      }
+    }
+ catch (    Exception e) {
+      item=null;
+      if (getCurrentJobExecution() != null) {
+        getCurrentJobExecution().addWarningExceptions(Arrays.asList(e));
+      }
+    }
+  }
+ catch (  Exception e) {
+    logValidationExceptions((T)null,e);
+  }
+  return item;
+}

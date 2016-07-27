@@ -1,0 +1,34 @@
+{
+  if (!getOutputState().isInitialized()) {
+    throw new WriterNotOpenException("Writer must be open before it can be written to");
+  }
+  if (logger.isDebugEnabled()) {
+    logger.debug("Writing to flat file with " + items.size() + " items.");
+  }
+  OutputState state=getOutputState();
+  StringBuilder lines=new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n");
+  int lineCount=0;
+  if (items.size() > 0) {
+    lines.append("<items>\n");
+  }
+  for (  T item : items) {
+    lines.append(doWrite(item));
+    lineCount++;
+    try {
+      firePostWrite(item);
+    }
+ catch (    IOException e) {
+      logValidationExceptions((ValidationResult)null,new WriteFailedException("Could not write data.  The file may be corrupt.",e));
+    }
+  }
+  if (items.size() > 0) {
+    lines.append("</items>\n");
+  }
+  try {
+    state.write(lines.toString());
+  }
+ catch (  IOException e) {
+    logValidationExceptions((ValidationResult)null,new WriteFailedException("Could not write data.  The file may be corrupt.",e));
+  }
+  state.linesWritten+=lineCount;
+}

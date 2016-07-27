@@ -1,0 +1,37 @@
+{
+  Resource tmpDir=BackupUtils.tmpDir();
+  BackupUtils.extractTo(archiveFile,tmpDir);
+  JobParametersBuilder paramsBuilder=new JobParametersBuilder();
+  if (filter != null) {
+    paramsBuilder.addString("filter",ECQL.toCQL(filter));
+  }
+  paramsBuilder.addString(PARAM_INPUT_FILE_PATH,BackupUtils.getArchiveURLProtocol(tmpDir) + tmpDir.path()).addLong(PARAM_TIME,System.currentTimeMillis());
+  parseParams(params,paramsBuilder);
+  JobParameters jobParameters=paramsBuilder.toJobParameters();
+  RestoreExecutionAdapter restoreExecution;
+  try {
+    if (getRestoreRunningExecutions().isEmpty() && getBackupRunningExecutions().isEmpty()) {
+synchronized (jobOperator) {
+        JobExecution jobExecution=jobLauncher.run(restoreJob,jobParameters);
+        restoreExecution=new RestoreExecutionAdapter(jobExecution,totalNumberOfRestoreSteps);
+        restoreExecutions.put(restoreExecution.getId(),restoreExecution);
+        restoreExecution.setArchiveFile(archiveFile);
+        restoreExecution.setFilter(filter);
+        for (        Entry jobParam : jobParameters.toProperties().entrySet()) {
+          if (!PARAM_OUTPUT_FILE_PATH.equals(jobParam.getKey()) && !PARAM_INPUT_FILE_PATH.equals(jobParam.getKey()) && !PARAM_TIME.equals(jobParam.getKey())) {
+            restoreExecution.getOptions().add(jobParam.getKey() + "=" + jobParam.getValue());
+          }
+        }
+        return restoreExecution;
+      }
+    }
+ else {
+      throw new IOException("Could not start a new Restore Job Execution since there are currently Running jobs.");
+    }
+  }
+ catch (  JobExecutionAlreadyRunningException|JobRestartException|JobInstanceAlreadyCompleteException|JobParametersInvalidException e) {
+    throw new IOException("Could not start a new Restore Job Execution: ",e);
+  }
+ finally {
+  }
+}
