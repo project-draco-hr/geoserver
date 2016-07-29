@@ -1,0 +1,37 @@
+{
+  newBackupRestorePanel=new WebMarkupContainer("newBackupRestorePanel");
+  newBackupRestorePanel.setOutputMarkupId(true);
+  resetResourcePanel();
+  add(newBackupRestorePanel);
+  Catalog catalog=GeoServerApplication.get().getCatalog();
+  workspace=new WorkspaceDetachableModel(null);
+  workspaceChoice=new DropDownChoice("workspace",workspace,new WorkspacesModel(),new WorkspaceChoiceRenderer());
+  workspaceChoice.setOutputMarkupId(true);
+  workspaceChoice.add(new AjaxFormComponentUpdatingBehavior("change"){
+    @Override protected void onUpdate(    AjaxRequestTarget target){
+      updateTargetWorkspace(target);
+    }
+  }
+);
+  workspaceChoice.setNullValid(true);
+  add(workspaceChoice);
+  WebMarkupContainer workspaceNameContainer=new WebMarkupContainer("workspaceNameContainer");
+  workspaceNameContainer.setOutputMarkupId(true);
+  add(workspaceNameContainer);
+  workspaceNameTextField=new TextField("workspaceName",new Model());
+  workspaceNameTextField.setOutputMarkupId(true);
+  boolean defaultWorkspace=catalog.getDefaultWorkspace() != null;
+  workspaceNameTextField.setVisible(!defaultWorkspace);
+  workspaceNameTextField.setRequired(!defaultWorkspace);
+  workspaceNameContainer.add(workspaceNameTextField);
+  Form backupForm=new Form("backupForm");
+  add(backupForm);
+  populateBackupForm(backupForm);
+  Form restoreForm=new Form("restoreForm");
+  add(restoreForm);
+  populateRestoreForm(restoreForm);
+  add(dialog=new GeoServerDialog("dialog"));
+  dialog.setInitialWidth(600);
+  dialog.setInitialHeight(400);
+  dialog.setMinimalHeight(150);
+}

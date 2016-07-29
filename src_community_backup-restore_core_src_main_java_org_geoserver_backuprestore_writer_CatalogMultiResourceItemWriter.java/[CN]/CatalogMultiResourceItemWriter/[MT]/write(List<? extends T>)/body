@@ -1,0 +1,23 @@
+{
+  try {
+    if (!opened) {
+      File file=setResourceToDelegate();
+      file.createNewFile();
+      Assert.state(file.canWrite(),"Output resource " + file.getAbsolutePath() + " must be writable");
+      delegate.open(new ExecutionContext());
+      opened=true;
+    }
+    delegate.write(items);
+    currentResourceItemCount+=items.size();
+    if (currentResourceItemCount >= itemCountLimitPerResource) {
+      delegate.close();
+      resourceIndex++;
+      currentResourceItemCount=0;
+      setResourceToDelegate();
+      opened=false;
+    }
+  }
+ catch (  Exception e) {
+    logValidationExceptions((T)null,e);
+  }
+}

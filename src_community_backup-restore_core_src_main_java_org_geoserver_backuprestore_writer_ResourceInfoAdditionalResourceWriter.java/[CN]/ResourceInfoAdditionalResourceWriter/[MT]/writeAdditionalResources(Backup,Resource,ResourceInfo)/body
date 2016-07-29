@@ -1,0 +1,21 @@
+{
+  final Resource rootDataDir=backupFacade.getGeoServerDataDirectory().getRoot(Paths.BASE);
+  GeoServerTemplateLoader templateLoader=new GeoServerTemplateLoader(item.getClass(),backupFacade.getResourceLoader());
+  templateLoader.setResource(item);
+  if (templateLoader != null) {
+    for (    String template : templates) {
+      final Object ftl=templateLoader.findTemplateSource(template);
+      if (ftl != null && ftl instanceof File) {
+        Resource templateResource=Files.asResource((File)ftl);
+        if (Resources.exists(templateResource)) {
+          final String relative=rootDataDir.dir().toURI().relativize(templateResource.file().toURI()).getPath();
+          Resource targetFtl=Resources.fromPath(relative,base.parent());
+          if (!targetFtl.parent().dir().exists()) {
+            targetFtl.parent().dir().mkdirs();
+          }
+          Resources.copy(templateResource.file(),targetFtl.parent());
+        }
+      }
+    }
+  }
+}

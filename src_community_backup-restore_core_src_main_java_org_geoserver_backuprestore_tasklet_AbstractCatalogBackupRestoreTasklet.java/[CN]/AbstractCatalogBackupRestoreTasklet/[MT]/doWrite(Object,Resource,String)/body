@@ -1,0 +1,31 @@
+{
+  try {
+    if (item instanceof ServiceInfo) {
+      ServiceInfo service=(ServiceInfo)item;
+      XStreamServiceLoader loader=findServiceLoader(service);
+      try {
+        loader.save(service,backupFacade.getGeoServer(),BackupUtils.dir(directory,fileName));
+      }
+ catch (      Throwable t) {
+        throw new RuntimeException(t);
+      }
+    }
+ else {
+      OutputStream out=Resources.fromPath(fileName,directory).out();
+      try {
+        if (getXp() == null) {
+          xstream=getxStreamPersisterFactory().createXMLPersister();
+          setXp(xstream.getXStream());
+        }
+        item=xstream.unwrapProxies(item);
+        getXp().toXML(item,out);
+      }
+  finally {
+        out.close();
+      }
+    }
+  }
+ catch (  Exception e) {
+    logValidationExceptions((T)null,e);
+  }
+}

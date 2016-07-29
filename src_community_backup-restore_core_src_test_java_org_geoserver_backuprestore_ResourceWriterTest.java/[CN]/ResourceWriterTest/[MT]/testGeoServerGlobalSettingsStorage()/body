@@ -1,0 +1,31 @@
+{
+  Catalog cat=getCatalog();
+  GeoServer geoserver=getGeoServer();
+  final XStreamPersisterFactory xStreamPersisterFactory=new XStreamPersisterFactory();
+  CatalogBackupRestoreTasklet catalogTsklet=new CatalogBackupRestoreTasklet(backupFacade,xStreamPersisterFactory);
+  GeoServerDataDirectory td=new GeoServerDataDirectory(root);
+  catalogTsklet.doWrite(geoserver.getGlobal(),td.get(Paths.BASE),"global.xml");
+  catalogTsklet.doWrite(geoserver.getSettings(),td.get(Paths.BASE),"settings.xml");
+  catalogTsklet.doWrite(geoserver.getLogging(),td.get(Paths.BASE),"logging.xml");
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"global.xml"))));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"settings.xml"))));
+  assertTrue(Resources.exists(Files.asResource(new File(td.get(Paths.BASE).dir(),"logging.xml"))));
+  XStreamPersister xstream=xStreamPersisterFactory.createXMLPersister();
+  xstream.setCatalog(cat);
+  xstream.setReferenceByName(true);
+  xstream.setExcludeIds();
+  XStream xp=xstream.getXStream();
+  GeoServerInfo gsGlobal=(GeoServerInfo)xp.fromXML(new File(td.get(Paths.BASE).dir(),"global.xml"));
+  assertNotNull(gsGlobal);
+  SettingsInfo gsSettins=(SettingsInfo)xp.fromXML(new File(td.get(Paths.BASE).dir(),"settings.xml"));
+  assertNotNull(gsSettins);
+  LoggingInfo gsLogging=(LoggingInfo)xp.fromXML(new File(td.get(Paths.BASE).dir(),"logging.xml"));
+  assertNotNull(gsLogging);
+  assertEquals(geoserver.getGlobal(),gsGlobal);
+  assertEquals(geoserver.getSettings(),gsSettins);
+  assertEquals(geoserver.getLogging(),gsLogging);
+  catalogTsklet.doWrite(cat.getDefaultWorkspace(),BackupUtils.dir(td.get(Paths.BASE),"workspaces"),"default.xml");
+  assertTrue(Resources.exists(Files.asResource(new File(BackupUtils.dir(td.get(Paths.BASE),"workspaces").dir(),"default.xml"))));
+  WorkspaceInfo defaultWorkspace=(WorkspaceInfo)xp.fromXML(new File(BackupUtils.dir(td.get(Paths.BASE),"workspaces").dir(),"default.xml"));
+  assertEquals(cat.getDefaultWorkspace().getName(),defaultWorkspace.getName());
+}

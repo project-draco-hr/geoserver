@@ -1,8 +1,10 @@
 {
+  WMSStoreInfo expandedStore=getCatalog().getFactory().createWebMapServer();
   WMSStoreInfo savedStore=getCatalog().getFactory().createWebMapServer();
-  clone(info,savedStore);
   try {
-    getCatalog().validate(savedStore,false).throwIfInvalid();
+    clone(info,expandedStore);
+    getCatalog().validate(expandedStore,false).throwIfInvalid();
+    clone(info,savedStore,false);
     getCatalog().save(savedStore);
   }
  catch (  RuntimeException e) {
@@ -11,11 +13,12 @@
   }
   NewLayerPage layerChooserPage;
   try {
-    layerChooserPage=new NewLayerPage(savedStore.getId());
+    layerChooserPage=new NewLayerPage(expandedStore.getId());
   }
  catch (  RuntimeException e) {
     LOGGER.log(Level.INFO,"Getting list of layers for the WMS store " + info.getCapabilitiesURL(),e);
     try {
+      getCatalog().remove(expandedStore);
       getCatalog().remove(savedStore);
     }
  catch (    RuntimeErrorException shouldNotHappen) {
