@@ -1,0 +1,21 @@
+{
+  doWrite(newGeoServerInfo,td.get(Paths.BASE),"global.xml");
+  doWrite(newLoggingInfo,td.get(Paths.BASE),"logging.xml");
+  restoreGlobalServices(sourceRestoreFolder,td);
+  BackupUtils.dir(td.get(Paths.BASE),"workspaces");
+  Resource workspaces=td.get("workspaces");
+  restoreWorkSpacesAndLayers(workspaces);
+  BackupUtils.dir(td.get(Paths.BASE),"styles");
+  Resource styles=td.get("styles");
+  restoreGlobalStyles(sourceRestoreFolder,styles);
+  BackupUtils.dir(td.get(Paths.BASE),"layergroups");
+  Resource layerGroups=td.get("layergroups");
+  restoreGlobalLayerGroups(layerGroups);
+  restoreLocalWorkspaceSettingsAndServices(geoserver,sourceRestoreFolder,sourceWorkspacesFolder,td);
+  final GeoServerResourceLoader sourceGeoServerResourceLoader=new GeoServerResourceLoader(sourceRestoreFolder.dir());
+  backupRestoreAdditionalResources(sourceGeoServerResourceLoader,td.get(Paths.BASE));
+  if (GeoServerExtensions.bean("gwcGeoServervConfigPersister") != null) {
+    restoreGWCSettings(sourceRestoreFolder,td.get(Paths.BASE));
+  }
+  Files.delete(td.get(Paths.BASE).dir());
+}

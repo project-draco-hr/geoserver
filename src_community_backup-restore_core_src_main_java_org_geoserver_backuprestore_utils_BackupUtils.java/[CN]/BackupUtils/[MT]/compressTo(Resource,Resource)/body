@@ -1,0 +1,31 @@
+{
+  FileSystemManager manager=VFS.getManager();
+  FileObject sourceDir=manager.createVirtualFileSystem(manager.resolveFile(sourceFolder.dir().getAbsolutePath()));
+  try {
+    if ("zip".equalsIgnoreCase(FileUtils.getExtension(archiveFile.path()))) {
+      OutputStream fos=archiveFile.out();
+      ZipOutputStream zos=new ZipOutputStream(fos);
+      for (      FileObject sourceFile : sourceDir.getChildren()) {
+        writeEntry(zos,sourceFile,null);
+      }
+      zos.flush();
+      zos.close();
+      fos.close();
+    }
+ else {
+      FileObject zipFile=manager.resolveFile(resolveArchiveURI(archiveFile));
+      zipFile.createFile();
+      ZipOutputStream zos=new ZipOutputStream(zipFile.getContent().getOutputStream());
+      for (      FileObject sourceFile : sourceDir.getChildren()) {
+        writeEntry(zos,sourceFile,null);
+      }
+      zos.flush();
+      zos.close();
+      zipFile.close();
+      manager.closeFileSystem(zipFile.getFileSystem());
+    }
+  }
+  finally {
+    manager.closeFileSystem(sourceDir.getFileSystem());
+  }
+}

@@ -1,0 +1,73 @@
+{
+  final GeoServerDataDirectory dd=backupFacade.getGeoServerDataDirectory();
+  final Resource security=dd.getSecurity(Paths.BASE);
+  if (!isNew()) {
+    final String outputFolderURL=jobExecution.getJobParameters().getString(Backup.PARAM_OUTPUT_FILE_PATH);
+    final Resource targetBackupFolder=Resources.fromURL(outputFolderURL);
+    final Resource securityTargetResource=BackupUtils.dir(targetBackupFolder,SECURITY_RESOURCE_NAME);
+    try {
+      Resources.copy(security,securityTargetResource);
+    }
+ catch (    IOException e) {
+      logValidationExceptions((ValidationResult)null,new UnexpectedJobExecutionException("Exception occurred while storing GeoServer security and services settings!",e));
+    }
+    GeoServerSecurityManager testGssm=null;
+    try {
+      testGssm=new GeoServerSecurityManager(new GeoServerDataDirectory(targetBackupFolder.dir()));
+      testGssm.setApplicationContext(Backup.getContext());
+      testGssm.reload();
+    }
+ catch (    Exception e) {
+      logValidationExceptions((ValidationResult)null,new UnexpectedJobExecutionException("Exception occurred while storing GeoServer security and services settings!",e));
+    }
+ finally {
+      if (testGssm != null) {
+        try {
+          testGssm.destroy();
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.WARNING,"Test GeoServerSecurityManager Destry Error!",e);
+        }
+      }
+    }
+  }
+ else {
+    final String inputFolderURL=jobExecution.getJobParameters().getString(Backup.PARAM_INPUT_FILE_PATH);
+    final Resource sourceRestoreFolder=Resources.fromURL(inputFolderURL);
+    final Resource sourceSecurityResource=BackupUtils.dir(sourceRestoreFolder,SECURITY_RESOURCE_NAME);
+    GeoServerSecurityManager testGssm=null;
+    try {
+      testGssm=new GeoServerSecurityManager(new GeoServerDataDirectory(new GeoServerResourceLoader(sourceRestoreFolder.dir())));
+      testGssm.setApplicationContext(Backup.getContext());
+      testGssm.reload();
+    }
+ catch (    Exception e) {
+      logValidationExceptions((ValidationResult)null,new UnexpectedJobExecutionException("Exception occurred while storing GeoServer security and services settings!",e));
+    }
+ finally {
+      if (testGssm != null) {
+        try {
+          testGssm.destroy();
+        }
+ catch (        Exception e) {
+          LOGGER.log(Level.WARNING,"Test GeoServerSecurityManager Destry Error!",e);
+        }
+      }
+    }
+    if (!isDryRun()) {
+      security.delete();
+      try {
+        Resources.copy(sourceSecurityResource,security);
+      }
+ catch (      IOException e) {
+        logValidationExceptions((ValidationResult)null,new UnexpectedJobExecutionException("Exception occurred while storing GeoServer security and services settings!",e));
+      }
+      GeoServerSecurityManager securityContext=GeoServerExtensions.bean(GeoServerSecurityManager.class);
+      securityContext.reload();
+      for (      SecurityManagerListener listener : GeoServerExtensions.extensions(SecurityManagerListener.class)) {
+        listener.handlePostChanged(securityContext);
+      }
+    }
+  }
+  return RepeatStatus.FINISHED;
+}

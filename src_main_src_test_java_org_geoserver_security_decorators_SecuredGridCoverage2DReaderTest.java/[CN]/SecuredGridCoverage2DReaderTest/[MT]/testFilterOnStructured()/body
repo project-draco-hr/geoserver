@@ -1,0 +1,16 @@
+{
+  final Filter securityFilter=ECQL.toFilter("A > 10");
+  final Filter requestFilter=ECQL.toFilter("B < 10");
+  DefaultSecureDataFactory factory=new DefaultSecureDataFactory();
+  Format format=setupFormat();
+  StructuredGridCoverage2DReader reader=createNiceMock(StructuredGridCoverage2DReader.class);
+  expect(reader.getFormat()).andReturn(format).anyTimes();
+  setupReadAssertion(reader,requestFilter,securityFilter);
+  CoverageAccessLimits accessLimits=new CoverageAccessLimits(CatalogMode.HIDE,securityFilter,null,null);
+  Object securedObject=factory.secure(reader,WrapperPolicy.readOnlyHide(accessLimits));
+  assertTrue(securedObject instanceof SecuredStructuredGridCoverage2DReader);
+  SecuredStructuredGridCoverage2DReader secured=(SecuredStructuredGridCoverage2DReader)securedObject;
+  final ParameterValue pv=ImageMosaicFormat.FILTER.createValue();
+  pv.setValue(requestFilter);
+  secured.read(new GeneralParameterValue[]{pv});
+}

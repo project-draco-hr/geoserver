@@ -1,0 +1,33 @@
+{
+  Hints hints=new Hints(new HashMap(2));
+  hints.add(new Hints(new Hints.OptionKey(Backup.PARAM_BEST_EFFORT_MODE),Backup.PARAM_BEST_EFFORT_MODE));
+  backupFacade.runBackupAsync(Files.asResource(File.createTempFile("testRunSpringBatchBackupJob",".zip")),true,null,hints);
+  try {
+    backupFacade.runBackupAsync(Files.asResource(File.createTempFile("testRunSpringBatchBackupJob",".zip")),true,null,hints);
+  }
+ catch (  IOException e) {
+    assertEquals(e.getMessage(),"Could not start a new Backup Job Execution since there are currently Running jobs.");
+  }
+  Thread.sleep(100);
+  assertNotNull(backupFacade.getBackupExecutions());
+  assertTrue(!backupFacade.getBackupExecutions().isEmpty());
+  assertTrue(backupFacade.getBackupRunningExecutions().size() == 1);
+  BackupExecutionAdapter backupExecution=null;
+  final Iterator<BackupExecutionAdapter> iterator=backupFacade.getBackupExecutions().values().iterator();
+  while (iterator.hasNext()) {
+    backupExecution=iterator.next();
+  }
+  assertNotNull(backupExecution);
+  while (backupExecution.getStatus() != BatchStatus.COMPLETED) {
+    Thread.sleep(100);
+    if (backupExecution.getStatus() == BatchStatus.ABANDONED || backupExecution.getStatus() == BatchStatus.FAILED || backupExecution.getStatus() == BatchStatus.UNKNOWN) {
+      LOGGER.severe("backupExecution.getStatus() == " + (backupExecution.getStatus()));
+      for (      Throwable exception : backupExecution.getAllFailureExceptions()) {
+        LOGGER.log(Level.INFO,"ERROR: " + exception.getLocalizedMessage(),exception);
+        exception.printStackTrace();
+      }
+      break;
+    }
+  }
+  assertTrue(backupExecution.getStatus() == BatchStatus.COMPLETED);
+}

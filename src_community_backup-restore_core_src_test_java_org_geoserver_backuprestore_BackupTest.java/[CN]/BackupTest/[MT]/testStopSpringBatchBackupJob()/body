@@ -1,0 +1,31 @@
+{
+  Hints hints=new Hints(new HashMap(2));
+  hints.add(new Hints(new Hints.OptionKey(Backup.PARAM_BEST_EFFORT_MODE),Backup.PARAM_BEST_EFFORT_MODE));
+  BackupExecutionAdapter backupExecution=backupFacade.runBackupAsync(Files.asResource(File.createTempFile("testRunSpringBatchBackupJob",".zip")),true,null,hints);
+  while (backupExecution.getStatus() != BatchStatus.STARTED) {
+    Thread.sleep(10);
+    if (backupExecution.getStatus() == BatchStatus.ABANDONED || backupExecution.getStatus() == BatchStatus.FAILED || backupExecution.getStatus() == BatchStatus.UNKNOWN) {
+      for (      Throwable exception : backupExecution.getAllFailureExceptions()) {
+        LOGGER.log(Level.INFO,"ERROR: " + exception.getLocalizedMessage(),exception);
+        exception.printStackTrace();
+      }
+      break;
+    }
+  }
+  if (backupExecution.getStatus() != BatchStatus.COMPLETED) {
+    backupFacade.stopExecution(backupExecution.getId());
+    Thread.sleep(100);
+    assertNotNull(backupExecution);
+    while (backupExecution.getStatus() != BatchStatus.STOPPED) {
+      Thread.sleep(100);
+      if (backupExecution.getStatus() == BatchStatus.ABANDONED || backupExecution.getStatus() == BatchStatus.FAILED || backupExecution.getStatus() == BatchStatus.UNKNOWN) {
+        for (        Throwable exception : backupExecution.getAllFailureExceptions()) {
+          LOGGER.log(Level.INFO,"ERROR: " + exception.getLocalizedMessage(),exception);
+          exception.printStackTrace();
+        }
+        break;
+      }
+    }
+    assertTrue(backupExecution.getStatus() == BatchStatus.STOPPED);
+  }
+}
