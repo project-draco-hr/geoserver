@@ -1,5 +1,5 @@
 {
-  String message="<dataStore>\n" + " <name>repo_new_config</name>\n" + " <type>GeoGIG</type>\n"+ " <connectionParameters>\n"+ "   <entry key=\"geogig_repository\">${repository}</entry>\n"+ "   <entry key=\"resolver\">${resolver}</entry>\n"+ " </connectionParameters>\n"+ "</dataStore>\n";
+  String message="<dataStore>\n" + " <name>repo_new_config</name>\n" + " <type>GeoGIG</type>\n"+ " <connectionParameters>\n"+ "   <entry key=\"geogig_repository\">${repository}</entry>\n"+ " </connectionParameters>\n"+ "</dataStore>\n";
   GeoGIG geogig=geogigData.createRepository("new_repo");
   try {
     geogig.command(InitOp.class).call();
@@ -9,9 +9,8 @@
     RepositoryInfo info=new RepositoryInfo();
     info.setLocation(location);
     info=manager.save(info);
-    final String repoId=info.getId();
-    message=message.replace("${repository}",repoId);
-    message=message.replace("${resolver}",GeoGigInitializer.REPO_RESOLVER_CLASSNAME);
+    final String repoName=info.getRepoName();
+    message=message.replace("${repository}",GeoServerGeoGigRepositoryResolver.getURI(repoName));
     Catalog catalog=getCatalog();
     CatalogBuilder catalogBuilder=geogigData.newCatalogBuilder(catalog);
     catalogBuilder.setUpWorkspace("new_ws");

@@ -1,9 +1,8 @@
 {
   Map<String,Serializable> params=ds.getConnectionParameters();
   String repository=(String)params.get(REPOSITORY.key);
-  String resolverClassName=(String)params.get(RESOLVER_CLASS_NAME.key);
   assertNotNull(repository);
-  assertEquals(GeoGigInitializer.REPO_RESOLVER_CLASSNAME,resolverClassName);
-  RepositoryInfo info=RepositoryManager.get().get(repository);
-  assertNotNull(info);
+  URI repoURI=new URI(repository);
+  RepositoryResolver resolver=RepositoryResolver.lookup(repoURI);
+  assertTrue(String.format("Expected GeoGig DataStoreInfo to containg a '%s' URI value with scheme '%s'",REPOSITORY.key,GeoServerGeoGigRepositoryResolver.GEOSERVER_URI_SCHEME),resolver.canHandle(repoURI));
 }

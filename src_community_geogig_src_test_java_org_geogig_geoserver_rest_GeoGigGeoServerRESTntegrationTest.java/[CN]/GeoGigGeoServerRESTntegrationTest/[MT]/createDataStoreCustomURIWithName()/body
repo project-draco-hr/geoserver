@@ -1,0 +1,29 @@
+{
+  String message="<dataStore>\n" + " <name>repo_new_config2</name>\n" + " <type>GeoGIG</type>\n"+ " <connectionParameters>\n"+ "   <entry key=\"geogig_repository\">${repository}</entry>\n"+ " </connectionParameters>\n"+ "</dataStore>\n";
+  GeoGIG geogig=geogigData.createRepository("new_repo1");
+  try {
+    geogig.command(InitOp.class).call();
+    File repo=geogig.command(ResolveGeogigDir.class).getFile().get();
+    final URI location=repo.getParentFile().getAbsoluteFile().toURI();
+    RepositoryManager manager=RepositoryManager.get();
+    RepositoryInfo info=new RepositoryInfo();
+    info.setLocation(location);
+    info=manager.save(info);
+    final String customURI=GeoServerGeoGigRepositoryResolver.getURI("new_repo1");
+    message=message.replace("${repository}",customURI);
+    final String uri="/rest/workspaces/gigws/datastores";
+    MockHttpServletResponse response=postAsServletResponse(uri,message,"text/xml");
+    assertEquals(201,response.getStatus());
+    String locationHeader=response.getHeader("Location");
+    assertNotNull(locationHeader);
+    assertTrue(locationHeader.endsWith("/workspaces/gigws/datastores/repo_new_config2"));
+    DataStoreInfo newDataStore=catalog.getDataStoreByName("repo_new_config2");
+    assertNotNull(newDataStore);
+    DataStore ds=(DataStore)newDataStore.getDataStore(null);
+    assertNotNull(ds);
+    checkNewConfig(newDataStore);
+  }
+  finally {
+    geogig.close();
+  }
+}

@@ -1,24 +1,23 @@
 {
-  final String repository=repositoryIdModel.getObject();
-  if (REPOSITORY.sample != null && REPOSITORY.sample.equals(repository)) {
+  final String repoUriStr=repositoryUriModel.getObject();
+  if (REPOSITORY.sample != null && REPOSITORY.sample.equals(repoUriStr)) {
     return;
   }
   List<String> branchNames=new ArrayList<>();
-  if (repository != null) {
+  if (repoUriStr != null) {
     try {
       RepositoryManager manager=this.manager.get();
-      List<Ref> branchRefs=manager.listBranches(repository);
+      URI repoURI=new URI(repoUriStr);
+      RepositoryResolver resolver=RepositoryResolver.lookup(repoURI);
+      String repoName=resolver.getName(repoURI);
+      RepositoryInfo repoInfo=manager.getByRepoName(repoName);
+      String repoId=repoInfo.getId();
+      List<Ref> branchRefs=manager.listBranches(repoId);
       for (      Ref branch : branchRefs) {
         branchNames.add(branch.localName());
       }
     }
- catch (    IOException e) {
-      if (reportError) {
-        form.error("Could not list branches: " + e.getMessage());
-      }
-      branchNames=new ArrayList<String>();
-    }
-catch (    RuntimeException e) {
+ catch (    IOException|URISyntaxException e) {
       if (reportError) {
         form.error("Could not list branches: " + e.getMessage());
       }
