@@ -1,0 +1,18 @@
+{
+  Assume.assumeTrue(isOnline());
+  XStreamPersister xp=new XStreamPersisterFactory().createXMLPersister();
+  DataStoreInfo storeInfo=xp.load(getClass().getResourceAsStream("datastore.xml"),DataStoreInfoImpl.class);
+  storeInfo.setWorkspace(getCatalog().getDefaultWorkspace());
+  getCatalog().add(storeInfo);
+  FeatureTypeInfo ftInfo=xp.load(getClass().getResourceAsStream("featuretype.xml"),FeatureTypeInfoImpl.class);
+  ((FeatureTypeInfoImpl)ftInfo).setStore(storeInfo);
+  getCatalog().add(ftInfo);
+  DataAccess<? extends FeatureType,? extends Feature> store=storeInfo.getDataStore(null);
+  if (store instanceof RetypingDataStore) {
+    store=((RetypingDataStore)store).getWrapped();
+  }
+  assertTrue(store instanceof WFSDataStore);
+  FeatureType type=ftInfo.getFeatureType();
+  assertEquals("sf_archsites",type.getName().getLocalPart());
+  assertEquals("sf_archsites",ftInfo.getFeatureSource(null,null).getName().getLocalPart());
+}
