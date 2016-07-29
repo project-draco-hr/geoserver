@@ -3,11 +3,9 @@
     return;
   }
   final Catalog catalog=getCatalog();
-  DataStoreInfo expandedStore=catalog.getFactory().createDataStore();
-  clone(info,expandedStore);
   DataAccess<? extends FeatureType,? extends Feature> dataStore;
   try {
-    dataStore=expandedStore.getDataStore(new NullProgressListener());
+    dataStore=info.getDataStore(new NullProgressListener());
     dataStore.dispose();
   }
  catch (  IOException e) {
@@ -19,10 +17,9 @@
     throw new IllegalArgumentException("Error creating data store, check the parameters. Error message: " + message);
   }
   DataStoreInfo savedStore=catalog.getFactory().createDataStore();
+  clone(info,savedStore);
   try {
-    clone(info,savedStore);
     catalog.validate(savedStore,true).throwIfInvalid();
-    clone(info,savedStore,false);
     catalog.add(savedStore);
   }
  catch (  Exception e) {
@@ -35,11 +32,10 @@
   }
   final NewLayerPage newLayerPage;
   try {
-    newLayerPage=new NewLayerPage(expandedStore.getId());
+    newLayerPage=new NewLayerPage(savedStore.getId());
   }
  catch (  RuntimeException e) {
     try {
-      catalog.remove(expandedStore);
       catalog.remove(savedStore);
     }
  catch (    Exception removeEx) {
