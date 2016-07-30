@@ -1,0 +1,22 @@
+{
+  String path="wms?service=WMS&request=GetMap&version=1.1.1&format=image/png" + "&layers=" + getLayerId(MockData.LAKES) + "&srs=EPSG:4326"+ "&width=256&height=256&styles=&bbox=-180.0,-90.0,0.0,90.0&tiled=true";
+  MockHttpServletResponse response;
+  setRequestAuth(null,null);
+  response=getAsServletResponse(path);
+  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getStatus());
+  setRequestAuth("cite","cite");
+  response=getAsServletResponse(path);
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
+  assertEquals("image/png",response.getContentType());
+  assertThat(response.getHeader("geowebcache-cache-result"),equalToIgnoringCase("MISS"));
+  response=getAsServletResponse(path);
+  assertEquals(HttpServletResponse.SC_OK,response.getStatus());
+  assertEquals("image/png",response.getContentType());
+  assertThat(response.getHeader("geowebcache-cache-result"),equalToIgnoringCase("HIT"));
+  setRequestAuth("other","other");
+  response=getAsServletResponse(path);
+  assertEquals(HttpServletResponse.SC_FORBIDDEN,response.getStatus());
+  setRequestAuth(null,null);
+  response=getAsServletResponse(path);
+  assertEquals(HttpServletResponse.SC_UNAUTHORIZED,response.getStatus());
+}

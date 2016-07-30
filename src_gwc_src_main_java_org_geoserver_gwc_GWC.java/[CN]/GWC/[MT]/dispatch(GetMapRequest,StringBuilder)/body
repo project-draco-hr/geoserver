@@ -19,6 +19,31 @@
     requestMistmatchTarget.append("tile layer disabled");
     return null;
   }
+  if (getConfig().isSecurityEnabled()) {
+    String bboxstr=request.getRawKvp().get("BBOX");
+    String srs=request.getRawKvp().get("SRS");
+    ReferencedEnvelope bbox=null;
+    try {
+      bbox=(ReferencedEnvelope)new BBoxKvpParser().parse(bboxstr);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException("Invalid bbox for layer '" + layerName + "': "+ bboxstr);
+    }
+    if (srs != null) {
+      try {
+        bbox=new ReferencedEnvelope(bbox,CRS.decode(srs));
+      }
+ catch (      Exception e) {
+        throw new RuntimeException("Can't decode SRS for layer '" + layerName + "': "+ srs);
+      }
+    }
+    try {
+      verifyAccessLayer(layerName,bbox);
+    }
+ catch (    ServiceException e) {
+      return null;
+    }
+  }
   ConveyorTile tileReq=prepareRequest(tileLayer,request,requestMistmatchTarget);
   if (null == tileReq) {
     return null;
