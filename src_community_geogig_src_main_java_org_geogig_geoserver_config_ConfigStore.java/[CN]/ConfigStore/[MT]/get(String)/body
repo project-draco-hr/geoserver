@@ -1,0 +1,22 @@
+{
+  checkNotNull(id,"provided a null id");
+  checkIdFormat(id);
+  lock.readLock().lock();
+  try {
+    CachedInfo cached=cache.get(id);
+    Resource resource=resource(id);
+    final long lastmodified=resource.lastmodified();
+    RepositoryInfo info;
+    if (cached == null || cached.lastModified < lastmodified) {
+      info=load(resource);
+      cache.put(id,new CachedInfo(info,lastmodified));
+    }
+ else {
+      info=cached.info;
+    }
+    return info;
+  }
+  finally {
+    lock.readLock().unlock();
+  }
+}

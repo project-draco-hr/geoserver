@@ -1,16 +1,13 @@
 {
-  RemovalListener<String,GeoGIG> listener=new RemovalListener<String,GeoGIG>(){
-    @Override public void onRemoval(    RemovalNotification<String,GeoGIG> notification){
+  RemovalListener<String,Repository> disposingListener=new RemovalListener<String,Repository>(){
+    @Override public void onRemoval(    RemovalNotification<String,Repository> notification){
       String repoId=notification.getKey();
-      GeoGIG geogig=notification.getValue();
-      if (geogig != null) {
-        URI location=null;
+      Repository repository=notification.getValue();
+      if (repository != null) {
         try {
-          if (geogig.getContext() != null) {
-            location=geogig.getRepository().getLocation();
-          }
+          URI location=repository.getLocation();
           LOGGER.fine(format("Closing cached GeoGig repository instance %s",location != null ? location : repoId));
-          geogig.close();
+          repository.close();
           LOGGER.finer(format("Closed cached GeoGig repository instance %s",location != null ? location : repoId));
         }
  catch (        RuntimeException e) {
@@ -20,16 +17,15 @@
     }
   }
 ;
-  final CacheLoader<String,GeoGIG> loader=new CacheLoader<String,GeoGIG>(){
+  final CacheLoader<String,Repository> loader=new CacheLoader<String,Repository>(){
     private final RepositoryManager manager=repoManager;
-    @Override public GeoGIG load(    final String repoId) throws Exception {
+    @Override public Repository load(    final String repoId) throws Exception {
       try {
         RepositoryInfo repoInfo=manager.get(repoId);
         URI repoLocation=repoInfo.getLocation();
         Repository repo=RepositoryResolver.load(repoLocation);
-        GeoGIG geogig=new GeoGIG(repo);
-        geogig.getRepository();
-        return geogig;
+        checkState(repo.isOpen());
+        return repo;
       }
  catch (      Exception e) {
         LOGGER.log(Level.WARNING,format("Error loading GeoGig repository instance for id %s",repoId),e);
@@ -38,5 +34,5 @@
     }
   }
 ;
-  repoCache=CacheBuilder.newBuilder().softValues().expireAfterAccess(5,TimeUnit.MINUTES).removalListener(listener).build(loader);
+  repoCache=CacheBuilder.newBuilder().softValues().expireAfterAccess(5,TimeUnit.MINUTES).removalListener(disposingListener).build(loader);
 }
