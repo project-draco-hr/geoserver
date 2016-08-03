@@ -1,7 +1,14 @@
 {
   try {
     if (catalogIterator.hasNext()) {
-      return (T)catalogIterator.next();
+      T item=(T)catalogIterator.next();
+      try {
+        firePreRead(item);
+      }
+ catch (      IOException e) {
+        logValidationExceptions((ValidationResult)null,new UnexpectedInputException("Could not write data.  The file may be corrupt.",e));
+      }
+      return item;
     }
   }
  catch (  Exception e) {

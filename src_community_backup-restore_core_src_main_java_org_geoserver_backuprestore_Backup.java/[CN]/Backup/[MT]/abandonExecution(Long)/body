@@ -1,11 +1,20 @@
 {
-  JobExecution jobExecution=jobOperator.abandon(executionId);
-  jobExecution.setStatus(BatchStatus.ABANDONED);
-  jobRepository.update(jobExecution);
-  if (this.backupExecutions.get(executionId) != null) {
-    this.backupExecutions.get(executionId).setDelegate(jobExecution);
+  LOGGER.info("Aborting execution id [" + executionId + "]");
+  JobExecution jobExecution=null;
+  try {
+    if (this.backupExecutions.get(executionId) != null) {
+      jobExecution=this.backupExecutions.get(executionId).getDelegate();
+    }
+ else     if (this.restoreExecutions.get(executionId) != null) {
+      jobExecution=this.restoreExecutions.get(executionId).getDelegate();
+    }
+    jobOperator.abandon(executionId);
   }
- else   if (this.restoreExecutions.get(executionId) != null) {
-    this.restoreExecutions.get(executionId).setDelegate(jobExecution);
+  finally {
+    if (jobExecution != null) {
+      jobExecution.setStatus(BatchStatus.ABANDONED);
+      jobExecution.setEndTime(new Date());
+      jobRepository.update(jobExecution);
+    }
   }
 }

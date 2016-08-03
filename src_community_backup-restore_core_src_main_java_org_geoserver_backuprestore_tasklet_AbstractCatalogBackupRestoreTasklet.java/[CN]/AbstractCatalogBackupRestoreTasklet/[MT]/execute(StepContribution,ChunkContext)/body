@@ -1,5 +1,35 @@
 {
   super.retrieveInterstepData(chunkContext.getStepContext().getStepExecution());
   JobExecution jobExecution=chunkContext.getStepContext().getStepExecution().getJobExecution();
-  return doExecute(contribution,chunkContext,jobExecution);
+  FutureTask<RepeatStatus> theTask=new FutureTask<RepeatStatus>(new Callable<RepeatStatus>(){
+    @Override public RepeatStatus call() throws Exception {
+      return doExecute(contribution,chunkContext,jobExecution);
+    }
+  }
+);
+  long t0=System.currentTimeMillis();
+  taskExecutor.execute(theTask);
+  while (true) {
+    Thread.sleep(checkInterval);
+    JobExecution currentExecution=chunkContext.getStepContext().getStepExecution().getJobExecution();
+    if (currentExecution.isStopping()) {
+      stopped=true;
+    }
+    if (theTask.isDone()) {
+      return theTask.get();
+    }
+ else     if (System.currentTimeMillis() - t0 > timeout) {
+      theTask.cancel(interruptOnCancel);
+      throw new SystemCommandException("Execution of system command did not finish within the timeout");
+    }
+ else     if (execution.isTerminateOnly()) {
+      theTask.cancel(interruptOnCancel);
+      throw new JobInterruptedException("Job interrupted while executing.");
+    }
+ else     if (stopped) {
+      theTask.cancel(interruptOnCancel);
+      contribution.setExitStatus(ExitStatus.STOPPED);
+      return RepeatStatus.FINISHED;
+    }
+  }
 }

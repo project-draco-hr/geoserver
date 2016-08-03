@@ -1,4 +1,23 @@
 {
   LOGGER.info("Stopping execution id [" + executionId + "]");
-  return jobOperator.stop(executionId);
+  JobExecution jobExecution=null;
+  try {
+    if (this.backupExecutions.get(executionId) != null) {
+      jobExecution=this.backupExecutions.get(executionId).getDelegate();
+    }
+ else     if (this.restoreExecutions.get(executionId) != null) {
+      jobExecution=this.restoreExecutions.get(executionId).getDelegate();
+    }
+    jobOperator.stop(executionId);
+  }
+  finally {
+    if (jobExecution != null) {
+      final BatchStatus status=jobExecution.getStatus();
+      if (!status.isGreaterThan(BatchStatus.STARTED)) {
+        jobExecution.setStatus(BatchStatus.STOPPING);
+        jobExecution.setEndTime(new Date());
+        jobRepository.update(jobExecution);
+      }
+    }
+  }
 }

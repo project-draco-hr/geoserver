@@ -25,6 +25,14 @@
     }
   }
  finally {
-    locker.unlock(lockType);
+    try {
+      List<BackupRestoreCallback> callbacks=GeoServerExtensions.extensions(BackupRestoreCallback.class);
+      for (      BackupRestoreCallback callback : callbacks) {
+        callback.onEndRequest();
+      }
+    }
+ catch (    Exception e) {
+      LOGGER.log(Level.SEVERE,"Could not unlock GeoServer Catalog Configuration!",e);
+    }
   }
 }
