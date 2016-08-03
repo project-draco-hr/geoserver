@@ -1,25 +1,9 @@
 {
-  if (this.repoName != null) {
-    return repoName;
-  }
   if (this.location != null) {
-    Repository repo=null;
-    try {
+    if (this.repoName == null) {
       RepositoryResolver resolver=RepositoryResolver.lookup(this.location);
-      if (resolver.repoExists(this.location)) {
-        repo=RepositoryResolver.load(this.location);
-        return repo.command(ResolveRepositoryName.class).call();
-      }
-      return resolver.getName(this.location);
-    }
- catch (    RepositoryConnectionException e) {
-      Throwables.propagate(e);
-    }
- finally {
-      if (repo != null) {
-        repo.close();
-      }
+      this.repoName=resolver.getName(this.location);
     }
   }
-  return null;
+  return this.repoName;
 }

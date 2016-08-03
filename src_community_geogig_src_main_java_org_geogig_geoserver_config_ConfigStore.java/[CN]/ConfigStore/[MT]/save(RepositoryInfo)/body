@@ -3,8 +3,11 @@
   ensureIdPresent(info);
   checkNotNull(info.getLocation(),"null location URI: %s",info);
   lock.writeLock().lock();
-  try (OutputStream out=resource(info.getId()).out()){
+  Resource resource=resource(info.getId());
+  try (OutputStream out=resource.out()){
     getConfigredXstream().toXML(info,new OutputStreamWriter(out,Charsets.UTF_8));
+    long lastmodified=resource.lastmodified();
+    cache.put(info.getId(),new CachedInfo(info,lastmodified));
   }
  catch (  IOException e) {
     throw Throwables.propagate(e);
