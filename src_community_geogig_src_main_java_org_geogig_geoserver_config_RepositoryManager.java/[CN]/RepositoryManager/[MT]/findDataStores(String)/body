@@ -1,7 +1,14 @@
 {
+  String repoName=null;
+  try {
+    repoName=this.get(repoId).getRepoName();
+  }
+ catch (  IOException ioe) {
+    Throwables.propagate(ioe);
+  }
   Filter filter=equal("type",GeoGigDataStoreFactory.DISPLAY_NAME);
   String locationKey="connectionParameters." + GeoGigDataStoreFactory.REPOSITORY.key;
-  filter=and(filter,equal(locationKey,repoId));
+  filter=and(filter,equal(locationKey,GeoServerGeoGigRepositoryResolver.getURI(repoName)));
   List<DataStoreInfo> dependent;
   try (CloseableIterator<DataStoreInfo> stores=this.catalog.list(DataStoreInfo.class,filter)){
     dependent=Lists.newArrayList(stores);
