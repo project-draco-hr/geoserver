@@ -1,5 +1,5 @@
 {
-  GridCoverage2D scaledGridCoverage=null, clippedGridCoverage=null, reprojectedGridCoverage=null, originalGridCoverage=null;
+  GridCoverage2D scaledGridCoverage=null, clippedGridCoverage=null, reprojectedGridCoverage=null, bandFilteredCoverage=null, originalGridCoverage=null;
   try {
     CoordinateReferenceSystem nativeCRS=DownloadUtilities.getNativeCRS(coverageInfo);
     if (LOGGER.isLoggable(Level.FINE)) {
@@ -69,14 +69,27 @@
     if (originalGridCoverage == null) {
       throw new WPSException("The reader did not return any data for current input " + "parameters. It normally means there is nothing there, or the data got filtered out by the ROI or filter");
     }
+    if (bandIndices != null && bandIndices.length > 0) {
+      int sampleDimensionsNumber=originalGridCoverage.getNumSampleDimensions();
+      for (      int i : bandIndices) {
+        if (i < 0 || i >= sampleDimensionsNumber) {
+          throw new WPSException("Band index " + i + " is invalid for the current input raster. "+ "This raster contains "+ sampleDimensionsNumber+ " band"+ (sampleDimensionsNumber > 1 ? "s" : ""));
+        }
+      }
+      BandSelectProcess bandSelectProcess=new BandSelectProcess();
+      bandFilteredCoverage=bandSelectProcess.execute(originalGridCoverage,bandIndices,null);
+    }
+ else {
+      bandFilteredCoverage=originalGridCoverage;
+    }
     if (reproject) {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.log(Level.FINE,"Reprojecting the layer");
       }
-      reprojectedGridCoverage=(GridCoverage2D)Operations.DEFAULT.resample(originalGridCoverage,targetCRS,null,interpolation);
+      reprojectedGridCoverage=(GridCoverage2D)Operations.DEFAULT.resample(bandFilteredCoverage,targetCRS,null,interpolation);
     }
  else {
-      reprojectedGridCoverage=originalGridCoverage;
+      reprojectedGridCoverage=bandFilteredCoverage;
     }
     if (roi != null) {
       if (LOGGER.isLoggable(Level.FINE)) {

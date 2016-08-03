@@ -1,0 +1,29 @@
+{
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(),getGeoServer());
+  final WPSResourceManager resourceManager=getResourceManager();
+  DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  File rasterZip=downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),null,false,null,null,null,new int[]{0,2},new NullProgressListener());
+  Assert.assertNotNull(rasterZip);
+  GeoTiffReader reader=null;
+  GridCoverage2D gc=null;
+  try {
+    final File[] tiffFiles=extractTIFFFile(rasterZip);
+    Assert.assertNotNull(tiffFiles);
+    Assert.assertTrue(tiffFiles.length > 0);
+    reader=new GeoTiffReader(tiffFiles[0]);
+    gc=reader.read(null);
+    Assert.assertNotNull(gc);
+    Assert.assertEquals(2,gc.getNumSampleDimensions());
+    Assert.assertEquals(0,CoverageUtilities.getVisibleBand(gc));
+    Assert.assertNotEquals(3,gc.getNumSampleDimensions());
+  }
+  finally {
+    if (gc != null) {
+      CoverageCleanerCallback.disposeCoverage(gc);
+    }
+    if (reader != null) {
+      reader.dispose();
+    }
+    resourceManager.finished(resourceManager.getExecutionId(true));
+  }
+}
