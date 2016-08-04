@@ -17,6 +17,12 @@
       try {
         @SuppressWarnings("unchecked") T mappedFragment=(T)unmarshal(StaxUtils.getSource(fragmentReader));
         item=mappedFragment;
+        try {
+          firePostRead(item,resource);
+        }
+ catch (        IOException e) {
+          logValidationExceptions((ValidationResult)null,new UnexpectedInputException("Could not write data.  The file may be corrupt.",e));
+        }
       }
   finally {
         fragmentReader.markFragmentProcessed();

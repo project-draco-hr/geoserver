@@ -1,0 +1,21 @@
+{
+  String i=getAttribute("restoreId");
+  if (i != null) {
+    RestoreExecutionAdapter restoreExecution=null;
+    try {
+      restoreExecution=getBackupFacade().getRestoreExecutions().get(Long.parseLong(i));
+    }
+ catch (    NumberFormatException e) {
+    }
+    if (restoreExecution == null && mustExist) {
+      throw new RestletException("No such restore execution: " + i,Status.CLIENT_ERROR_NOT_FOUND);
+    }
+    return restoreExecution;
+  }
+ else {
+    if (allowAll) {
+      return getBackupFacade().getRestoreExecutions().entrySet().iterator();
+    }
+    throw new RestletException("No restore execution specified",Status.CLIENT_ERROR_BAD_REQUEST);
+  }
+}

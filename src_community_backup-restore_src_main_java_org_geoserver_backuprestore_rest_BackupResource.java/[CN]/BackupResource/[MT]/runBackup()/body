@@ -1,0 +1,24 @@
+{
+  BackupExecutionAdapter execution=null;
+  try {
+    Form query=getRequest().getResourceRef().getQueryAsForm();
+    if (MediaType.APPLICATION_JSON.equals(getRequest().getEntity().getMediaType()) || MediaType.APPLICATION_XML.equals(getRequest().getEntity().getMediaType())) {
+      BackupExecutionAdapter newExecution=(BackupExecutionAdapter)getFormatPostOrPut().toObject(getRequest().getEntity());
+      execution=getBackupFacade().runBackupAsync(newExecution.getArchiveFile(),newExecution.isOverwrite(),newExecution.getFilter(),asParams(newExecution.getOptions()));
+      LOGGER.log(Level.INFO,"Backup file generated: " + newExecution.getArchiveFile());
+      getResponse().redirectSeeOther(getPageInfo().rootURI("/br/backup/" + execution.getId()));
+      getResponse().setEntity(getFormatGet().toRepresentation(execution));
+      getResponse().setStatus(Status.SUCCESS_CREATED);
+    }
+ else {
+      throw new IllegalArgumentException("Unknown Content-Type: " + getRequest().getEntity().getMediaType());
+    }
+  }
+ catch (  IllegalArgumentException iae) {
+    throw new RestletException("Unable to perform backup: ",Status.CLIENT_ERROR_BAD_REQUEST,iae);
+  }
+catch (  Exception e) {
+    throw new RestletException("Unable to perform backup: ",Status.SERVER_ERROR_INTERNAL,e);
+  }
+  return execution;
+}

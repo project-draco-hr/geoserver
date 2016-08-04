@@ -1,0 +1,15 @@
+{
+  Resource tmpDir=BackupUtils.tmpDir();
+  String archiveFilePath=Paths.path(tmpDir.path(),"geoserver-backup.zip");
+  String json="{\"backup\": {" + "   \"archiveFile\": \"" + archiveFilePath + "\", "+ "   \"overwrite\": true,"+ "   \"options\": { \"option\": [\"BK_BEST_EFFORT=false\"] },"+ "   \"filter\": \"name IN ('topp','geosolutions-it')\""+ "  }"+ "}";
+  JSONObject backup=postNewBackup(json);
+  Assert.notNull(backup);
+  JSONObject execution=readExecutionStatus(backup.getJSONObject("execution").getLong("id"));
+  assertTrue(execution.getJSONObject("stepExecutions").getJSONArray("step").getJSONObject(0).getJSONObject("parameters").get("filter").equals("name IN ('topp','geosolutions-it')"));
+  assertTrue("STARTED".equals(execution.getString("status")) || "STARTING".equals(execution.getString("status")));
+  while ("STARTED".equals(execution.getString("status")) || "STARTING".equals(execution.getString("status"))) {
+    execution=readExecutionStatus(execution.getLong("id"));
+    Thread.sleep(100);
+  }
+  assertTrue("COMPLETED".equals(execution.getString("status")));
+}

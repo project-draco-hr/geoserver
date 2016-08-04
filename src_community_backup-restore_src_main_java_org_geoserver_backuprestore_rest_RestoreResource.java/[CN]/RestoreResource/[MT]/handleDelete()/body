@@ -1,0 +1,24 @@
+{
+  DataFormat formatGet=getFormatGet(false);
+  Object lookupContext=lookupContext(true,false);
+  if (lookupContext == null) {
+    getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+  }
+ else   if (lookupContext instanceof RestoreExecutionAdapter) {
+    Long executionId=((RestoreExecutionAdapter)lookupContext).getId();
+    try {
+      getBackupFacade().abandonExecution(executionId);
+    }
+ catch (    NoSuchJobExecutionException|JobExecutionAlreadyRunningException e) {
+      if (e instanceof NoSuchJobExecutionException) {
+        throw new RestletException(e.getMessage(),Status.CLIENT_ERROR_BAD_REQUEST,e);
+      }
+ else {
+        throw new RestletException("Error occurred canceling backup: ",Status.SERVER_ERROR_INTERNAL,e);
+      }
+    }
+    getResponse().redirectSeeOther(getPageInfo().rootURI("/br/restore/" + executionId));
+    getResponse().setEntity(formatGet.toRepresentation(lookupContext));
+    getResponse().setStatus(Status.SUCCESS_ACCEPTED);
+  }
+}

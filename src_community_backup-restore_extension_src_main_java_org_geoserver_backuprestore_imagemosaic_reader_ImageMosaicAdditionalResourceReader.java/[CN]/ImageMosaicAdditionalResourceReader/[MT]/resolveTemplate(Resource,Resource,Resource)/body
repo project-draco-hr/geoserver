@@ -1,0 +1,16 @@
+{
+  Properties templateProperties=new Properties();
+  templateProperties.load(res.in());
+  Properties resolvedProperties=new Properties();
+  for (  Entry<Object,Object> propEntry : templateProperties.entrySet()) {
+    String value=(String)propEntry.getValue();
+    if (GeoServerEnvironment.ALLOW_ENV_PARAMETRIZATION) {
+      value=(String)gsEnvironment.resolveValue(value);
+    }
+    resolvedProperties.setProperty((String)propEntry.getKey(),value);
+  }
+  final String relative=sourceBackupFolder.dir().toURI().relativize(res.file().toURI()).getPath();
+  final String targetPropertyFileName=relative.substring(0,relative.length() - ".template".length());
+  final File targetFile=new File(mosaicIndexBase.parent().dir(),targetPropertyFileName);
+  resolvedProperties.store(new FileOutputStream(targetFile),null);
+}
