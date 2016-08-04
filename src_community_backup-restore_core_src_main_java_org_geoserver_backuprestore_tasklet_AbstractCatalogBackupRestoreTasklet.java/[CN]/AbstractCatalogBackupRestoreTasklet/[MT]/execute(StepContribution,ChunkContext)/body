@@ -20,11 +20,15 @@
     }
  else     if (System.currentTimeMillis() - t0 > timeout) {
       theTask.cancel(interruptOnCancel);
-      throw new SystemCommandException("Execution of system command did not finish within the timeout");
+      JobInterruptedException exception=new JobInterruptedException("Job " + currentExecution + " did not finish within the timeout.");
+      logValidationExceptions((T)null,exception);
+      return RepeatStatus.FINISHED;
     }
- else     if (execution.isTerminateOnly()) {
+ else     if (execution != null && execution.isTerminateOnly()) {
       theTask.cancel(interruptOnCancel);
-      throw new JobInterruptedException("Job interrupted while executing.");
+      JobInterruptedException exception=new JobInterruptedException("Job " + currentExecution + " interrupted while executing.");
+      logValidationExceptions((T)null,exception);
+      return RepeatStatus.FINISHED;
     }
  else     if (stopped) {
       theTask.cancel(interruptOnCancel);
