@@ -1,0 +1,45 @@
+{
+  String ctxPath=request.getContextPath();
+  String reqPath=request.getRequestURI();
+  reqPath=URLDecoder.decode(reqPath,"UTF-8");
+  reqPath=reqPath.substring(ctxPath.length());
+  if ((reqPath.length() > 1) && reqPath.startsWith("/")) {
+    reqPath=reqPath.substring(1);
+  }
+  Resource resource;
+  if (reqPath.startsWith("styles/")) {
+    String[] tokens=reqPath.split("/");
+    int count=tokens.length;
+    GeoServerResourceLoader resources=catalog.getResourceLoader();
+    GeoServerDataDirectory data=new GeoServerDataDirectory(resources);
+    if (count == 2) {
+      String stylePath=tokens[1];
+      resource=data.getStyles(stylePath);
+    }
+ else     if (count == 3) {
+      String temp="workspaces/" + tokens[1] + "/styles/"+ tokens[2];
+      String wsName=tokens[1];
+      String stylePath=tokens[2];
+      WorkspaceInfo workspace=catalog.getWorkspaceByName(wsName);
+      if (workspace == null) {
+        throw new IllegalArgumentException("Workspace not found");
+      }
+      resource=data.getStyles(workspace,stylePath);
+      if (resource.getType() == Type.UNDEFINED) {
+        resource=data.getStyles(stylePath);
+      }
+    }
+ else {
+      throw new IllegalStateException("Unexpected number of tokens in reqest path.");
+    }
+switch (resource.getType()) {
+case RESOURCE:
+      return DataUtilities.fileToURL(resource.file());
+case DIRECTORY:
+case UNDEFINED:
+default :
+    return null;
+}
+}
+return null;
+}

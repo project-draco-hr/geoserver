@@ -60,7 +60,18 @@ catch (        IOException e) {
         try {
           File styles=resources.find("styles");
           String[] path=value.split(Pattern.quote(File.separator));
-          File test=resources.find(styles,path);
+          WorkspaceInfo wsInfo=styleModel.getObject().getWorkspace();
+          File test=null;
+          if (wsInfo != null) {
+            String wsName=wsInfo.getName();
+            List<String> list=new ArrayList();
+            list.addAll(Arrays.asList("workspaces",wsName,"styles"));
+            list.addAll(Arrays.asList(path));
+            test=resources.find(list.toArray(new String[list.size()]));
+          }
+          if (test == null) {
+            test=resources.find(styles,path);
+          }
           if (test == null) {
             ValidationError error=new ValidationError();
             error.setMessage("File not found in styles directory");
