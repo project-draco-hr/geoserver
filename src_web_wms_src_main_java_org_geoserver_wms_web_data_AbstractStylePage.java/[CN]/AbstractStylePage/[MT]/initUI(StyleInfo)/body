@@ -21,26 +21,26 @@
   popup=new ModalWindow("popup");
   styleForm.add(popup);
   List<ITab> tabs=new ArrayList<ITab>();
-  tabs.add(new PanelCachingTab(new AbstractTab(new Model<String>("Data")){
+  PanelCachingTab dataTab=new PanelCachingTab(new AbstractTab(new Model<String>("Data")){
     public Panel getPanel(    String id){
       return new StyleAdminPanel(id,AbstractStylePage.this);
     }
   }
-));
-  tabs.add(new PanelCachingTab(new AbstractTab(new Model<String>("Publishing")){
+);
+  PanelCachingTab publishingTab=new PanelCachingTab(new AbstractTab(new Model<String>("Publishing")){
     private static final long serialVersionUID=4184410057835108176L;
     public Panel getPanel(    String id){
       return new LayerAssociationPanel(id,AbstractStylePage.this);
     }
   }
-));
-  tabs.add(new PanelCachingTab(new AbstractTab(new Model<String>("Layer Preview")){
+);
+  PanelCachingTab previewTab=new PanelCachingTab(new AbstractTab(new Model<String>("Layer Preview")){
     public Panel getPanel(    String id){
       return new OpenLayersPreviewPanel(id,AbstractStylePage.this);
     }
   }
-));
-  tabs.add(new PanelCachingTab(new AbstractTab(new Model<String>("Layer Attributes")){
+);
+  PanelCachingTab attributeTab=new PanelCachingTab(new AbstractTab(new Model<String>("Layer Attributes")){
     private static final long serialVersionUID=4184410057835108176L;
     public Panel getPanel(    String id){
       try {
@@ -51,7 +51,13 @@
       }
     }
   }
-));
+);
+  tabs.add(dataTab);
+  if (style != null) {
+    tabs.add(publishingTab);
+    tabs.add(previewTab);
+    tabs.add(attributeTab);
+  }
   List<StyleEditTabPanelInfo> tabPanels=getGeoServerApplication().getBeansOfType(StyleEditTabPanelInfo.class);
   Collections.sort(tabPanels,new Comparator<StyleEditTabPanelInfo>(){
     public int compare(    StyleEditTabPanelInfo o1,    StyleEditTabPanelInfo o2){
@@ -64,27 +70,29 @@
   for (  StyleEditTabPanelInfo tabPanelInfo : tabPanels) {
     String titleKey=tabPanelInfo.getTitleKey();
     IModel<String> titleModel=null;
-    if (titleKey != null) {
-      titleModel=new org.apache.wicket.model.ResourceModel(titleKey);
-    }
- else {
-      titleModel=new Model<String>(tabPanelInfo.getComponentClass().getSimpleName());
-    }
-    final Class<StyleEditTabPanel> panelClass=tabPanelInfo.getComponentClass();
-    tabs.add(new AbstractTab(titleModel){
-      private static final long serialVersionUID=-6637277497986497791L;
-      @Override public Panel getPanel(      String panelId){
-        StyleEditTabPanel tabPanel;
-        try {
-          tabPanel=panelClass.getConstructor(String.class,IModel.class).newInstance(panelId,styleModel);
-        }
- catch (        Exception e) {
-          throw new WicketRuntimeException(e);
-        }
-        return tabPanel;
+    if (tabPanelInfo.isEnabledOnNew() || style != null) {
+      if (titleKey != null) {
+        titleModel=new org.apache.wicket.model.ResourceModel(titleKey);
       }
-    }
+ else {
+        titleModel=new Model<String>(tabPanelInfo.getComponentClass().getSimpleName());
+      }
+      final Class<StyleEditTabPanel> panelClass=tabPanelInfo.getComponentClass();
+      tabs.add(new AbstractTab(titleModel){
+        private static final long serialVersionUID=-6637277497986497791L;
+        @Override public Panel getPanel(        String panelId){
+          StyleEditTabPanel tabPanel;
+          try {
+            tabPanel=panelClass.getConstructor(String.class,IModel.class).newInstance(panelId,styleModel);
+          }
+ catch (          Exception e) {
+            throw new WicketRuntimeException(e);
+          }
+          return tabPanel;
+        }
+      }
 );
+    }
   }
   tabbedPanel=new AjaxTabbedPanel<ITab>("context",tabs);
   styleForm.add(tabbedPanel);
@@ -94,6 +102,27 @@
   editor.setRequired(true);
   styleForm.add(editor);
   add(validateLink());
+  add(new AjaxSubmitLink("apply",styleForm){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      if (style == null) {
+        StyleInfo s=getStyleInfo();
+        PageParameters parameters=new PageParameters();
+        parameters.add(StyleEditPage.NAME,s.getName());
+        if (s.getWorkspace() != null) {
+          parameters.add(StyleEditPage.WORKSPACE,s.getWorkspace().getName());
+        }
+        getRequestCycle().setResponsePage(StyleEditPage.class,parameters);
+      }
+      target.add(AbstractStylePage.this);
+    }
+  }
+);
+  add(new AjaxSubmitLink("submit",styleForm){
+    @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
+      doReturn(StylePage.class);
+    }
+  }
+);
   Link<StylePage> cancelLink=new Link<StylePage>("cancel"){
     @Override public void onClick(){
       doReturn(StylePage.class);
