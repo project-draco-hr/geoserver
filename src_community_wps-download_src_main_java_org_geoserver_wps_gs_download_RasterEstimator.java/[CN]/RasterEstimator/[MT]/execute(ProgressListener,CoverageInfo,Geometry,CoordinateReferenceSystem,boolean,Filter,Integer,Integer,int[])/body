@@ -1,11 +1,5 @@
 {
   final long rasterSizeLimits=downloadServiceConfiguration.getRasterSizeLimits();
-  if (rasterSizeLimits <= 0) {
-    if (LOGGER.isLoggable(Level.FINE)) {
-      LOGGER.fine("No raster size limits, moving on....");
-    }
-    return true;
-  }
   if (LOGGER.isLoggable(Level.FINE)) {
     LOGGER.fine("Raster size limits: " + rasterSizeLimits);
   }
@@ -59,18 +53,42 @@
   }
   if (areaRead >= Integer.MAX_VALUE || targetArea >= Integer.MAX_VALUE) {
     if (LOGGER.isLoggable(Level.FINE)) {
-      LOGGER.log(Level.FINE,"Area to read or target image size exceed maximum integer value: " + Integer.MAX_VALUE);
+      LOGGER.log(Level.FINE,"Area to read or target image size exceeds maximum integer value: " + Integer.MAX_VALUE);
     }
     return false;
   }
-  if (areaRead > rasterSizeLimits) {
+  if (rasterSizeLimits > DownloadServiceConfiguration.NO_LIMIT && (areaRead > rasterSizeLimits || targetArea > rasterSizeLimits)) {
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.log(Level.FINE,"Area exceeds the limits");
     }
     return false;
   }
   if (LOGGER.isLoggable(Level.FINE)) {
-    LOGGER.log(Level.FINE,"Area does not exceeds the limits");
+    LOGGER.log(Level.FINE,"Area does not exceed the limits");
+  }
+  int bandsCount=coverageInfo.getDimensions().size();
+  List<CoverageDimensionInfo> coverageDimensionInfoList=coverageInfo.getDimensions();
+  int accumulatedPixelSizeInBits=0;
+  if (bandIndices != null && bandIndices.length > 0) {
+    for (int i=0; i < bandIndices.length; i++) {
+      if (bandIndices[i] >= 0 && bandIndices[i] < bandsCount)       accumulatedPixelSizeInBits+=TypeMap.getSize(coverageDimensionInfoList.get(bandIndices[i]).getDimensionType());
+    }
+  }
+ else {
+    for (int i=0; i < bandsCount; i++) {
+      accumulatedPixelSizeInBits+=TypeMap.getSize(coverageDimensionInfoList.get(i).getDimensionType());
+    }
+  }
+  long rasterSizeInBytes=(long)targetArea * accumulatedPixelSizeInBits / 8;
+  final long writeLimits=downloadServiceConfiguration.getWriteLimits();
+  if (writeLimits > DownloadServiceConfiguration.NO_LIMIT && rasterSizeInBytes > writeLimits) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.log(Level.FINE,"Output raw raster size (" + rasterSizeInBytes + ") exceeds"+ " the specified write limits ("+ writeLimits+ ")");
+    }
+    return false;
+  }
+  if (LOGGER.isLoggable(Level.FINE)) {
+    LOGGER.log(Level.FINE,"Output raw raster size (" + rasterSizeInBytes + ") does not exceed"+ " the specified write limits ("+ writeLimits+ ")");
   }
   return true;
 }
