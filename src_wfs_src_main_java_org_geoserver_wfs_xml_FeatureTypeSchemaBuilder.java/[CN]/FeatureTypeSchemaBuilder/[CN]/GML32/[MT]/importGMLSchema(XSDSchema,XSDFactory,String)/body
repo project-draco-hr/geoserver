@@ -1,15 +1,17 @@
 {
-  XSDImport imprt;
-  try {
-    imprt=factory.createXSDImport();
-    imprt.setNamespace(gmlNamespace);
-    imprt.setSchemaLocation(ResponseUtils.buildSchemaURL(baseUrl,gmlSchemaLocation));
-    imprt.setResolvedSchema(GML.getInstance().getSchema());
-    schema.getContents().add(imprt);
-    schema.getQNamePrefixToNamespaceMap().put("wfs",WFS.NAMESPACE);
-    ((XSDSchemaImpl)WFS.getInstance().getSchema()).imported(imprt);
-  }
- catch (  IOException e) {
-    throw new RuntimeException(e);
+synchronized (Schemas.class) {
+    XSDImport imprt;
+    try {
+      imprt=factory.createXSDImport();
+      imprt.setNamespace(gmlNamespace);
+      imprt.setSchemaLocation(ResponseUtils.buildSchemaURL(baseUrl,gmlSchemaLocation));
+      imprt.setResolvedSchema(GML.getInstance().getSchema());
+      schema.getContents().add(imprt);
+      schema.getQNamePrefixToNamespaceMap().put("wfs",WFS.NAMESPACE);
+      ((XSDSchemaImpl)WFS.getInstance().getSchema()).imported(imprt);
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

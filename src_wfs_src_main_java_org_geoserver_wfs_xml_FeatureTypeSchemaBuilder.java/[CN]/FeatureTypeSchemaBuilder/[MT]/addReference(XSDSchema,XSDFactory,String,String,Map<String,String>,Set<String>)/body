@@ -1,13 +1,15 @@
 {
   if (getWfsSchema() != null && imports.get(getWfsSchema().getTargetNamespace()) == null) {
-    schema.getQNamePrefixToNamespaceMap().put("wfs",getWfsSchema().getTargetNamespace());
-    XSDImport wfsImport=factory.createXSDImport();
-    wfsImport.setNamespace(getWfsSchema().getTargetNamespace());
-    wfsImport.setSchemaLocation(getWfsSchema().getSchemaLocation());
-    wfsImport.setResolvedSchema(getWfsSchema());
-    schema.getContents().add(wfsImport);
-    ((XSDSchemaImpl)getWfsSchema()).imported(wfsImport);
-    imports.put(getWfsSchema().getTargetNamespace(),getWfsSchema().getSchemaLocation());
+synchronized (Schemas.class) {
+      schema.getQNamePrefixToNamespaceMap().put("wfs",getWfsSchema().getTargetNamespace());
+      XSDImport wfsImport=factory.createXSDImport();
+      wfsImport.setNamespace(getWfsSchema().getTargetNamespace());
+      wfsImport.setSchemaLocation(getWfsSchema().getSchemaLocation());
+      wfsImport.setResolvedSchema(getWfsSchema());
+      schema.getContents().add(wfsImport);
+      ((XSDSchemaImpl)getWfsSchema()).imported(wfsImport);
+      imports.put(getWfsSchema().getTargetNamespace(),getWfsSchema().getSchemaLocation());
+    }
   }
   if (namespace.equals(schema.getTargetNamespace())) {
     if (includes.contains(schemaLocation)) {
