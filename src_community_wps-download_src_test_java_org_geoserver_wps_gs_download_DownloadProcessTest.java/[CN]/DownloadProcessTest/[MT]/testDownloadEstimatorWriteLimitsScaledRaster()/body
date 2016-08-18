@@ -1,5 +1,5 @@
 {
-  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(new DownloadServiceConfiguration(DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.NO_LIMIT,921600,921600,DownloadServiceConfiguration.DEFAULT_COMPRESSION_LEVEL)),getGeoServer());
+  DownloadEstimatorProcess limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(new DownloadServiceConfiguration(DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.NO_LIMIT,921600,DownloadServiceConfiguration.DEFAULT_COMPRESSION_LEVEL)),getGeoServer());
   final WPSResourceManager resourceManager=getResourceManager();
   DownloadProcess downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
   File nonScaled=downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),null,false,null,null,null,null,new NullProgressListener());
@@ -29,5 +29,17 @@
       reader.dispose();
     }
     resourceManager.finished(resourceManager.getExecutionId(true));
+  }
+  limits=new DownloadEstimatorProcess(new StaticDownloadServiceConfiguration(new DownloadServiceConfiguration(DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.NO_LIMIT,30000,DownloadServiceConfiguration.NO_LIMIT,DownloadServiceConfiguration.DEFAULT_COMPRESSION_LEVEL)),getGeoServer());
+  downloadProcess=new DownloadProcess(getGeoServer(),limits,resourceManager);
+  try {
+    int targetSizeX=100;
+    int targetSizeY=100;
+    int[] bandIndices=new int[]{0,2,2,2};
+    File scaled=downloadProcess.execute(getLayerId(MockData.USA_WORLDIMG),null,"image/tiff",null,CRS.decode("EPSG:4326",true),null,false,null,targetSizeX,targetSizeY,bandIndices,new NullProgressListener());
+    Assert.assertFalse(true);
+  }
+ catch (  ProcessException e) {
+    Assert.assertEquals("java.lang.IllegalArgumentException: Download Limits Exceeded. " + "Unable to proceed!: Download Limits Exceeded. Unable to proceed!",e.getMessage() + (e.getCause() != null ? ": " + e.getCause().getMessage() : ""));
   }
 }
