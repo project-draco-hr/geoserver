@@ -1,14 +1,17 @@
 {
   final Resource targetBackupFolder=BackupUtils.dir(base.parent(),IMAGEMOSAIC_INDEXES_FOLDER);
+  Resources.directory(targetBackupFolder,!Resources.exists(targetBackupFolder));
   final CoverageStoreInfo mosaicCoverageStore=backupFacade.getCatalog().getResourcePool().clone((CoverageStoreInfo)item,true);
   final String mosaicName=mosaicCoverageStore.getName();
   final String mosaicUrlBase=mosaicCoverageStore.getURL();
   final Resource mosaicIndexBase=Resources.fromURL(mosaicUrlBase);
+  final Resource mosaicBaseFolder=Files.asResource((Resources.directory(mosaicIndexBase) != null ? Resources.directory(mosaicIndexBase) : Resources.directory(mosaicIndexBase.parent())));
+  Resource targetMosaicBaseFolder=BackupUtils.dir(targetBackupFolder,mosaicBaseFolder.name());
   if (Resources.exists(mosaicIndexBase)) {
     for (    Entry<String,Filter<Resource>> entry : resources.entrySet()) {
       List<Resource> mosaicIndexerResources=Resources.list(mosaicIndexBase,entry.getValue(),true);
       for (      Resource res : mosaicIndexerResources) {
-        if (!FilenameUtils.getBaseName(res.name()).equals(mosaicName) && Resources.exists(res) && Resources.canRead(res)) {
+        if (!FilenameUtils.getBaseName(res.name()).equals(mosaicName) && !FilenameUtils.getBaseName(res.name()).equals(mosaicBaseFolder.name()) && Resources.exists(res)&& Resources.canRead(res)) {
           final String relative=mosaicIndexBase.parent().dir().toURI().relativize(res.file().toURI()).getPath();
           Resource targetFtl=Resources.fromPath(relative,targetBackupFolder);
           if (!targetFtl.parent().dir().exists()) {
@@ -19,4 +22,11 @@
       }
     }
   }
+  final File indexerFile=new File(targetMosaicBaseFolder.dir(),"indexer.properties");
+  Properties indexerProperties=new Properties();
+  if (indexerFile.exists() && indexerFile.canRead()) {
+    indexerProperties.load(new FileInputStream(indexerFile));
+  }
+  indexerProperties.setProperty("Name",mosaicName);
+  indexerProperties.store(new FileOutputStream(indexerFile),null);
 }

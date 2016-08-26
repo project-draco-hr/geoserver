@@ -5,12 +5,13 @@
   final String mosaicUrlBase=mosaicCoverageStore.getURL();
   final Resource mosaicIndexBase=Resources.fromURL(mosaicUrlBase);
   List<Resource> mosaicIndexerResources=Resources.list(sourceBackupFolder,resources.get("properties"),true);
-  boolean datastorePresent=true;
+  mosaicIndexerResources.addAll(Resources.list(sourceBackupFolder,resources.get("info"),true));
+  boolean datastoreAlreadyPresent=true;
   for (  Resource res : mosaicIndexerResources) {
     if (!FilenameUtils.getBaseName(res.name()).equals(mosaicName) && Resources.exists(res) && Resources.canRead(res)) {
       boolean result=copyFile(sourceBackupFolder,mosaicIndexBase,res,false);
       if (result && FilenameUtils.getBaseName(res.name()).equals("datastore")) {
-        datastorePresent=false;
+        datastoreAlreadyPresent=false;
       }
     }
   }
@@ -23,7 +24,7 @@
       }
     }
   }
-  if (!datastorePresent) {
+  if (!datastoreAlreadyPresent) {
     final File indexerFile=new File(mosaicIndexBase.dir(),"indexer.properties");
     Properties indexerProperties=new Properties();
     if (indexerFile.exists() && indexerFile.canRead()) {
