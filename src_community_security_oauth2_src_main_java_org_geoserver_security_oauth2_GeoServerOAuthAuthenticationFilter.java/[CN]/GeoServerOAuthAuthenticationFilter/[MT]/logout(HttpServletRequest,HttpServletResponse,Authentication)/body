@@ -1,0 +1,25 @@
+{
+  request.setAttribute(GeoServerLogoutFilter.LOGOUT_REDIRECT_ATTR,filterConfig.getLogoutUri());
+  OAuth2AccessToken token=restTemplate.getOAuth2ClientContext().getAccessToken();
+  if (token != null && token.getTokenType().equals(OAuth2AccessToken.BEARER_TYPE)) {
+    restTemplate.getOAuth2ClientContext().setAccessToken(null);
+    final AccessTokenRequest accessTokenRequest=restTemplate.getOAuth2ClientContext().getAccessTokenRequest();
+    if (accessTokenRequest != null && accessTokenRequest.getStateKey() != null) {
+      restTemplate.getOAuth2ClientContext().removePreservedState(accessTokenRequest.getStateKey());
+    }
+  }
+  request.getSession().invalidate();
+  response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+  Cookie[] allCookies=request.getCookies();
+  for (int i=0; i < allCookies.length; i++) {
+    String name=allCookies[i].getName();
+    if (name.equalsIgnoreCase("JSESSIONID")) {
+      Cookie cookieToDelete=allCookies[i];
+      cookieToDelete.setMaxAge(-1);
+      cookieToDelete.setPath("/");
+      cookieToDelete.setComment("EXPIRING COOKIE at " + System.currentTimeMillis());
+      response.addCookie(cookieToDelete);
+    }
+  }
+  SecurityContextHolder.getContext().setAuthentication(null);
+}
