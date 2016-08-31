@@ -1,0 +1,15 @@
+{
+  String layerName=(String)conveyor.getParameter("layer",true);
+  TileLayer tileLayer=tileLayerDispatcher.getTileLayer(layerName);
+  LayerInfo layerInfo=getLayerInfo(tileLayer,layerName);
+  List<Dimension> dimensions=DimensionsUtils.extractDimensions(wms,layerInfo);
+  ReferencedEnvelope boundingBox=(ReferencedEnvelope)conveyor.getParameter("bbox",false);
+  Filter filter=Filter.INCLUDE;
+  for (  Dimension dimension : dimensions) {
+    Object restriction=conveyor.getParameter(dimension.getDimensionName(),false);
+    dimension.setBoundingBox(boundingBox);
+    dimension.addDomainRestriction(restriction);
+    filter=filterFactory.and(filter,dimension.getFilter());
+  }
+  return new Domains(dimensions,layerInfo,boundingBox,SimplifyingFilterVisitor.simplify(filter));
+}

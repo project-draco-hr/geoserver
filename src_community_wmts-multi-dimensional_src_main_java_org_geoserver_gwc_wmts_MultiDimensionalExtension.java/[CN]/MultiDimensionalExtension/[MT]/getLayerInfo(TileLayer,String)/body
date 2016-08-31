@@ -1,0 +1,19 @@
+{
+  if (tileLayer != null && tileLayer instanceof GeoServerTileLayer) {
+    PublishedInfo publishedInfo=((GeoServerTileLayer)tileLayer).getPublishedInfo();
+    if (!(publishedInfo instanceof LayerInfo)) {
+      return null;
+    }
+    return (LayerInfo)publishedInfo;
+  }
+  WorkspaceInfo localWorkspace=LocalWorkspace.get();
+  if (localWorkspace != null) {
+    layerName=CatalogConfiguration.removeWorkspacePrefix(layerName,catalog);
+    layerName=localWorkspace.getName() + ":" + layerName;
+  }
+  LayerInfo layerInfo=catalog.getLayerByName(layerName);
+  if (layerInfo == null) {
+    throw new ServiceException(String.format("Unknown layer '%s'.",layerName));
+  }
+  return layerInfo;
+}

@@ -1,0 +1,13 @@
+{
+  FeatureSource featureSource=super.getFeatureSource(listener,hints);
+  if (!(featureSource instanceof SimpleFeatureSource)) {
+    throw new IllegalStateException("Cannot apply dynamic dimension restrictions to complex features.");
+  }
+  SimpleFeatureSource simpleSource=(SimpleFeatureSource)featureSource;
+  try {
+    return new DefaultView(simpleSource,new Query(simpleSource.getSchema().getTypeName(),filter));
+  }
+ catch (  SchemaException exception) {
+    throw new IOException("Failed to restrict the domain.",exception);
+  }
+}
