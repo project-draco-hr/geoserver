@@ -1,11 +1,21 @@
 {
+  RequestAttributes parentRequestAttributes=RequestContextHolder.getRequestAttributes();
+  Thread parentThread=Thread.currentThread();
   return jobs.submit(new Job<ImportContext>(){
     @Override protected ImportContext call(    ProgressMonitor monitor) throws Exception {
-      if (init) {
-        init(context,true);
+      try {
+        RequestContextHolder.setRequestAttributes(parentRequestAttributes);
+        if (init) {
+          init(context,true);
+        }
+        run(context,filter,monitor);
+        return context;
       }
-      run(context,filter,monitor);
-      return context;
+  finally {
+        if (Thread.currentThread() != parentThread) {
+          RequestContextHolder.resetRequestAttributes();
+        }
+      }
     }
     @Override public String toString(){
       return "Processing import " + context.getId();
