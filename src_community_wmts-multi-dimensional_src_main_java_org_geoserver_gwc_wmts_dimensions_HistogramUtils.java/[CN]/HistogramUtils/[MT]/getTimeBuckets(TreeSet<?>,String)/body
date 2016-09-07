@@ -1,0 +1,21 @@
+{
+  Tuple<Date,Date> minMax=DimensionsUtils.getMinMax(domainValues,Date.class);
+  resolution=resolution != null ? resolution : TIME_DEFAULT_RESOLUTION;
+  Tuple<String,List<Date>> intervals=getDateIntervals(minMax,resolution);
+  int i=0;
+  while (intervals.second.size() >= HISTOGRAM_MAX_THRESHOLD && i < MAX_ITERATIONS) {
+    i++;
+    resolution="PT" + i + "M";
+    intervals=getDateIntervals(minMax,resolution);
+  }
+  if (intervals.second.size() == 1) {
+    return Tuple.tuple(intervals.first,Collections.singletonList(new DateRange(minMax.first,minMax.second)));
+  }
+  List<Range> buckets=new ArrayList<>();
+  Date previous=intervals.second.get(0);
+  for (int step=1; step < intervals.second.size(); step++) {
+    buckets.add(new DateRange(previous,intervals.second.get(step)));
+    previous=intervals.second.get(step);
+  }
+  return Tuple.tuple(intervals.first,buckets);
+}

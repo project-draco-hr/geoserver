@@ -1,0 +1,18 @@
+{
+  FeatureTypeInfo typeInfo=(FeatureTypeInfo)getResourceInfo();
+  Filter filter=Filter.INCLUDE;
+  if (getBoundingBox() != null) {
+    String geometryAttributeName;
+    try {
+      geometryAttributeName=typeInfo.getFeatureSource(null,null).getSchema().getGeometryDescriptor().getLocalName();
+    }
+ catch (    IOException exception) {
+      throw new RuntimeException(String.format("Exception accessing feature source of vector type '%s'.",typeInfo.getName()),exception);
+    }
+    filter=appendBoundingBoxFilter(filter,geometryAttributeName);
+  }
+  if (getDomainRestrictions() != null) {
+    filter=appendDomainRestrictionsFilter(filter,dimensionInfo.getAttribute(),dimensionInfo.getEndAttribute());
+  }
+  return filter;
+}

@@ -1,0 +1,19 @@
+{
+  if (!(object instanceof Domains)) {
+    throw new IllegalArgumentException("Expected domains info but instead got: " + object.getClass().getCanonicalName());
+  }
+  Domains domains=(Domains)object;
+  Attributes nameSpaces=createAttributes(new String[]{"xmlns:xs","http://www.w3.org/2001/XMLSchema","xmlns:gml","http://www.opengis.net/gml","xmlns:wmts","http://www.opengis.net/wmts/1.0"});
+  start("wmts:FeatureCollection",nameSpaces);
+  FeatureIterator iterator=domains.getFeatureCollection().features();
+  try {
+    while (iterator.hasNext()) {
+      SimpleFeature simpleFeature=(SimpleFeature)iterator.next();
+      handleFeature(simpleFeature,domains.getDimensions());
+    }
+  }
+  finally {
+    iterator.close();
+  }
+  end("wmts:FeatureCollection");
+}

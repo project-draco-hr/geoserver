@@ -1,0 +1,20 @@
+{
+  CoverageInfo typeInfo=(CoverageInfo)getResourceInfo();
+  Filter filter=Filter.INCLUDE;
+  if (getBoundingBox() != null) {
+    try {
+      filter=appendBoundingBoxFilter(filter,typeInfo);
+    }
+ catch (    IOException exception) {
+      throw new RuntimeException(String.format("Exception accessing feature source of raster type '%s'.",typeInfo.getName()),exception);
+    }
+  }
+  if (getDomainRestrictions() != null) {
+    Tuple<String,String> attributes=getAttributes();
+    if (attributes.first == null) {
+      throw new RuntimeException(String.format("Could not found start attribute name for dimension '%s' in raster '%s'.",getDimensionName(),typeInfo.getName()));
+    }
+    filter=appendDomainRestrictionsFilter(filter,attributes.first,attributes.second);
+  }
+  return filter;
+}

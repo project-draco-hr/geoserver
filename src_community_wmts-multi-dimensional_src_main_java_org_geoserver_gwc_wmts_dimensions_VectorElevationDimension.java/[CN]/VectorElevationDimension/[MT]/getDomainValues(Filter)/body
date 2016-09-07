@@ -1,0 +1,18 @@
+{
+  try {
+    FeatureTypeInfo typeInfo=(FeatureTypeInfo)getResourceInfo();
+    TreeSet<?> fullDomainValues=getWms().getFeatureTypeElevations(typeInfo);
+    fullDomainValues=fullDomainValues == null ? new TreeSet<>() : fullDomainValues;
+    if (filter == null || filter.equals(Filter.INCLUDE)) {
+      return fullDomainValues;
+    }
+    TreeSet<?> restrictedValues=getWms().getFeatureTypeElevations(new FilteredFeatureType(typeInfo,filter));
+    if (restrictedValues == null) {
+      restrictedValues=new TreeSet<>();
+    }
+    return restrictedValues;
+  }
+ catch (  Exception exception) {
+    throw new RuntimeException(String.format("Error getting domain values for dimension '%s' of vector '%s'.",getDimensionName(),getResourceInfo().getName()),exception);
+  }
+}

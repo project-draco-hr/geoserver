@@ -1,0 +1,21 @@
+{
+  List<Dimension> dimensions=new ArrayList<>();
+  for (  Map.Entry<String,Serializable> entry : typeInfo.getMetadata().entrySet()) {
+    String key=entry.getKey();
+    Serializable value=entry.getValue();
+    if (key.equals(ResourceInfo.TIME)) {
+      DimensionInfo dimensionInfo=Converters.convert(value,DimensionInfo.class);
+      checkAndAddDimension(dimensions,new RasterTimeDimension(wms,layerInfo,dimensionInfo));
+    }
+ else     if (key.equals(ResourceInfo.ELEVATION)) {
+      DimensionInfo dimensionInfo=Converters.convert(value,DimensionInfo.class);
+      checkAndAddDimension(dimensions,new RasterElevationDimension(wms,layerInfo,dimensionInfo));
+    }
+ else     if (key.startsWith(ResourceInfo.CUSTOM_DIMENSION_PREFIX)) {
+      DimensionInfo dimensionInfo=Converters.convert(value,DimensionInfo.class);
+      String dimensionName=key.substring(ResourceInfo.CUSTOM_DIMENSION_PREFIX.length());
+      checkAndAddDimension(dimensions,new RasterCustomDimension(wms,layerInfo,dimensionName,dimensionInfo));
+    }
+  }
+  return dimensions;
+}
