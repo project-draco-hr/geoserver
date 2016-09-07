@@ -5,7 +5,7 @@
     styleModel.getObject().setLegend(getCatalog().getFactory().createLegend());
   }
  else {
-    styleModel=new CompoundPropertyModel<StyleInfo>(new StyleDetachableModel(style));
+    styleModel=new CompoundPropertyModel<StyleInfo>(style);
   }
   styleForm=new Form<StyleInfo>("styleForm",styleModel){
     @Override protected void onSubmit(){
@@ -95,6 +95,18 @@
   tabbedPanel=new AjaxTabbedPanel<ITab>("context",tabs){
     protected String getTabContainerCssClass(){
       return "tab-row tab-row-compact";
+    }
+    @Override protected WebMarkupContainer newLink(    String linkId,    final int index){
+      AjaxSubmitLink link=new AjaxSubmitLink(linkId){
+        private static final long serialVersionUID=1L;
+        @Override public void onSubmit(        AjaxRequestTarget target,        Form<?> form){
+          setSelectedTab(index);
+          target.add(AbstractStylePage.this);
+        }
+      }
+;
+      link.setDefaultFormProcessing(false);
+      return link;
     }
   }
 ;
