@@ -60,6 +60,7 @@
     tileSizeX=mapContent.getMapWidth();
     tileSizeY=mapContent.getMapHeight();
   }
+  final int[] bandIndices=ChannelSelectionUpdateStyleVisitor.getBandIndicesFromSelectionChannels(symbolizer);
   RenderedImage image=null;
   GridCoverage2D coverage=null;
   RenderingHints interpolationHints=new RenderingHints(JAI.KEY_INTERPOLATION,interpolation);
@@ -69,7 +70,7 @@
       final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
       final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
       final Object params=feature.getProperty("params").getValue();
-      GeneralParameterValue[] readParameters=getReadParameters(params,null,null,interpolation,readerBgColor);
+      GeneralParameterValue[] readParameters=getReadParameters(params,null,null,interpolation,readerBgColor,bandIndices);
       final GridCoverageRenderer gcr=new GridCoverageRenderer(mapEnvelope.getCoordinateReferenceSystem(),mapEnvelope,mapRasterArea,worldToScreen,interpolationHints);
       gcr.setAdvancedProjectionHandlingEnabled(true);
       gcr.setWrapEnabled(wms.isContinuousMapWrappingEnabled());
@@ -109,7 +110,7 @@
       if (transformation != null) {
         RenderingTransformationHelper helper=new RenderingTransformationHelper(){
           protected GridCoverage2D readCoverage(          GridCoverage2DReader reader,          Object params,          GridGeometry2D readGG) throws IOException {
-            return readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
+            return readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor,bandIndices);
           }
         }
 ;
@@ -128,7 +129,12 @@
         final Feature feature=mapContent.layers().get(0).getFeatureSource().getFeatures().features().next();
         final GridCoverage2DReader reader=(GridCoverage2DReader)feature.getProperty("grid").getValue();
         final Object params=feature.getProperty("params").getValue();
-        coverage=readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor);
+        coverage=readBestCoverage(reader,params,ReferencedEnvelope.reference(readGG.getEnvelope()),readGG.getGridRange2D(),interpolation,readerBgColor,bandIndices);
+        if (reader.getFormat().getReadParameters().getDescriptor().descriptors().contains(AbstractGridFormat.BANDS) && params != null) {
+          if (bandIndices != null) {
+            symbolizer=GridCoverageRenderer.setupSymbolizerForBandsSelection(symbolizer);
+          }
+        }
       }
       if (coverage == null) {
         image=createBkgImage(mapWidth,mapHeight,bgColor,null);

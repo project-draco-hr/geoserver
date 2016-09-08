@@ -1,0 +1,55 @@
+{
+  createMultiBandCoverageView();
+  addMultiBandViewToCatalog();
+  final Catalog cat=getCatalog();
+  final CoverageInfo coverageInfo=cat.getCoverageByName("multiband_select");
+  final MetadataMap metadata=coverageInfo.getMetadata();
+  final ResourcePool resPool=cat.getResourcePool();
+  final ReferencedEnvelope bbox=coverageInfo.getLatLonBoundingBox();
+  final GridCoverage coverage=resPool.getGridCoverage(coverageInfo,"multiband_select",bbox,null);
+  RenderedImage srcImage=coverage.getRenderedImage();
+  assertEquals(coverage.getNumSampleDimensions(),5);
+  ((GridCoverage2D)coverage).dispose(true);
+  final GridCoverageReader reader=resPool.getGridCoverageReader(coverageInfo,"multiband_select",null);
+  int[] bandIndices=new int[]{2,0,1,0,2,2,2,3};
+  Parameter<int[]> bandIndicesParam=null;
+  if (bandIndices != null) {
+    bandIndicesParam=(Parameter<int[]>)AbstractGridFormat.BANDS.createValue();
+    bandIndicesParam.setValue(bandIndices);
+  }
+  GridCoverage2DReader myReader=(GridCoverage2DReader)reader;
+  ImageLayout layout=myReader.getImageLayout();
+  SampleModel sampleModel=layout.getSampleModel(null);
+  assertEquals(5,sampleModel.getNumBands());
+  reader.dispose();
+  List<GeneralParameterValue> paramList=new ArrayList<GeneralParameterValue>();
+  paramList.addAll(Arrays.asList(bandIndicesParam));
+  GeneralParameterValue[] readParams=paramList.toArray(new GeneralParameterValue[paramList.size()]);
+  GridCoverage result=reader.read(readParams);
+  assertEquals(8,result.getNumSampleDimensions());
+  RenderedImage destImage=result.getRenderedImage();
+  int dWidth=destImage.getWidth();
+  int dHeight=destImage.getHeight();
+  int[] destImageRowBand0=new int[dWidth * dHeight];
+  int[] destImageRowBand1=new int[destImageRowBand0.length];
+  int[] destImageRowBand2=new int[destImageRowBand0.length];
+  int[] destImageRowBand3=new int[destImageRowBand0.length];
+  destImage.getData().getSamples(0,0,dWidth,dHeight,0,destImageRowBand0);
+  destImage.getData().getSamples(0,0,dWidth,dHeight,1,destImageRowBand1);
+  destImage.getData().getSamples(0,0,dWidth,dHeight,2,destImageRowBand2);
+  destImage.getData().getSamples(0,0,dWidth,dHeight,3,destImageRowBand3);
+  int sWidth=srcImage.getWidth();
+  int sHeight=srcImage.getHeight();
+  int[] srcImageRowBand0=new int[sWidth * sHeight];
+  int[] srcImageRowBand1=new int[srcImageRowBand0.length];
+  int[] srcImageRowBand2=new int[srcImageRowBand0.length];
+  int[] srcImageRowBand3=new int[srcImageRowBand0.length];
+  srcImage.getData().getSamples(0,0,sWidth,sHeight,0,srcImageRowBand0);
+  srcImage.getData().getSamples(0,0,sWidth,sHeight,1,srcImageRowBand1);
+  srcImage.getData().getSamples(0,0,sWidth,sHeight,2,srcImageRowBand2);
+  Assert.assertTrue(Arrays.equals(destImageRowBand0,srcImageRowBand2));
+  Assert.assertTrue(Arrays.equals(destImageRowBand1,srcImageRowBand0));
+  Assert.assertTrue(Arrays.equals(destImageRowBand2,srcImageRowBand1));
+  Assert.assertTrue(Arrays.equals(destImageRowBand3,srcImageRowBand0));
+  Assert.assertFalse(Arrays.equals(destImageRowBand0,srcImageRowBand0));
+}
