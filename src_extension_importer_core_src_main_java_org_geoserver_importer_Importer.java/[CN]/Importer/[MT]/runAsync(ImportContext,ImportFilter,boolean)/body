@@ -1,10 +1,13 @@
 {
-  RequestAttributes parentRequestAttributes=RequestContextHolder.getRequestAttributes();
+  final RequestAttributes parentRequestAttributes=RequestContextHolder.getRequestAttributes();
+  final Authentication auth=SecurityContextHolder.getContext().getAuthentication();
   Thread parentThread=Thread.currentThread();
   return jobs.submit(new Job<ImportContext>(){
     @Override protected ImportContext call(    ProgressMonitor monitor) throws Exception {
+      final Authentication oldAuth=SecurityContextHolder.getContext().getAuthentication();
       try {
         RequestContextHolder.setRequestAttributes(parentRequestAttributes);
+        SecurityContextHolder.getContext().setAuthentication(auth);
         if (init) {
           init(context,true);
         }
@@ -14,6 +17,7 @@
   finally {
         if (Thread.currentThread() != parentThread) {
           RequestContextHolder.resetRequestAttributes();
+          SecurityContextHolder.getContext().setAuthentication(oldAuth);
         }
       }
     }
