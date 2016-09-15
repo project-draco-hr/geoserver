@@ -4,16 +4,34 @@
   final CoverageInfo cinfo=layer.getCoverage();
   final GridCoverage2DReader reader=(GridCoverage2DReader)cinfo.getGridCoverageReader(new NullProgressListener(),GeoTools.getDefaultHints());
   final Coordinate middle=WMS.pixelToWorld(params.getX(),params.getY(),params.getRequestedBounds(),params.getWidth(),params.getHeight());
+  double x=middle.x;
+  double y=middle.y;
   CoordinateReferenceSystem requestedCRS=params.getRequestedCRS();
-  DirectPosition position=new DirectPosition2D(requestedCRS,middle.x,middle.y);
-  if (requestedCRS != null) {
-    final CoordinateReferenceSystem targetCRS;
-    if (cinfo.getProjectionPolicy() == ProjectionPolicy.NONE) {
-      targetCRS=cinfo.getNativeCRS();
+  CoordinateReferenceSystem targetCRS;
+  if (cinfo.getProjectionPolicy() == ProjectionPolicy.NONE) {
+    targetCRS=cinfo.getNativeCRS();
+  }
+ else {
+    targetCRS=cinfo.getCRS();
+  }
+  DirectPosition targetCoverageMedianPosition=reader.getOriginalEnvelope().getMedian();
+  if (requestedCRS != null && requestedCRS instanceof GeographicCRS) {
+    TransformedDirectPosition coverageMedianPosition=new TransformedDirectPosition(targetCRS,requestedCRS,new Hints(Hints.LENIENT_DATUM_SHIFT,Boolean.TRUE));
+    try {
+      coverageMedianPosition.transform(targetCoverageMedianPosition);
+    }
+ catch (    TransformException exception) {
+      throw new CannotEvaluateException("Cannot find coverage median position in requested CRS",exception);
+    }
+    if (CRS.getAxisOrder(requestedCRS) == CRS.AxisOrder.NORTH_EAST) {
+      y+=360 * Math.round((coverageMedianPosition.getOrdinate(1) - y) / 360);
     }
  else {
-      targetCRS=cinfo.getCRS();
+      x+=360 * Math.round((coverageMedianPosition.getOrdinate(0) - x) / 360);
     }
+  }
+  DirectPosition position=new DirectPosition2D(requestedCRS,x,y);
+  if (requestedCRS != null) {
     final TransformedDirectPosition arbitraryToInternal=new TransformedDirectPosition(requestedCRS,targetCRS,new Hints(Hints.LENIENT_DATUM_SHIFT,Boolean.TRUE));
     try {
       arbitraryToInternal.transform(position);
@@ -22,6 +40,17 @@
       throw new CannotEvaluateException("Unable to answer the geatfeatureinfo",exception);
     }
     position=arbitraryToInternal;
+  }
+  if (targetCRS != null && targetCRS instanceof GeographicCRS) {
+    x=position.getOrdinate(0);
+    y=position.getOrdinate(1);
+    if (CRS.getAxisOrder(targetCRS) == CRS.AxisOrder.NORTH_EAST) {
+      y+=360 * Math.round((targetCoverageMedianPosition.getOrdinate(1) - y) / 360);
+    }
+ else {
+      x+=360 * Math.round((targetCoverageMedianPosition.getOrdinate(0) - x) / 360);
+    }
+    position=new DirectPosition2D(targetCRS,x,y);
   }
   if (!reader.getOriginalEnvelope().contains(position)) {
     return null;
