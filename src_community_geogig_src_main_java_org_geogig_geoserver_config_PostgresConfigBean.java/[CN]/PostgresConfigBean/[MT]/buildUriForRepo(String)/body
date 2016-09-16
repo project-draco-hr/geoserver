@@ -1,15 +1,32 @@
 {
-  StringBuilder sb=new StringBuilder(128);
-  sb.append(SCHEME).append(this.host);
+  UriComponentsBuilder builder=UriComponentsBuilder.newInstance();
+  builder.scheme(SCHEME);
+  builder.host(host);
   if (port > 0) {
-    sb.append(":").append(port);
+    builder.port(port);
   }
+  StringBuilder sb=new StringBuilder(128);
   sb.append(SLASH).append(database);
   if (null != schema) {
     sb.append(SLASH).append(schema);
   }
   sb.append(SLASH).append(repoId);
-  sb.append(QUESTION_MARK).append(USER).append("=").append(username);
-  sb.append(AMPERSAND).append(PASSWORD).append("=").append(password);
-  return URI.create(sb.toString());
+  builder.path(sb.toString());
+  String encodedUsername=username;
+  String encodedPassword=password;
+  try {
+    encodedUsername=URLEncoder.encode(username,UTF8);
+  }
+ catch (  UnsupportedEncodingException uee) {
+    LOGGER.warn(String.format("Error encoding PostgreSQL username in UTF-8, attempting to use unencoded value: %s",username),uee);
+  }
+  try {
+    encodedPassword=URLEncoder.encode(password,UTF8);
+  }
+ catch (  UnsupportedEncodingException uee) {
+    LOGGER.warn("Error encoding PostgreSQL password value, attempting to use unencoded value",uee);
+  }
+  builder.queryParam(USER,encodedUsername);
+  builder.queryParam(PASSWORD,encodedPassword);
+  return builder.build(true).toUri();
 }
