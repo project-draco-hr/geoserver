@@ -17,6 +17,17 @@
     map.put("request",request);
     map.put("yx",String.valueOf(isWms13FlippedCRS(request.getCrs())));
     map.put("maxResolution",new Double(getMaxResolution(mapContent.getRenderingArea())));
+    ProjectionHandler handler=null;
+    try {
+      handler=ProjectionHandlerFinder.getHandler(new ReferencedEnvelope(request.getCrs()),request.getCrs(),wms.isContinuousMapWrappingEnabled());
+    }
+ catch (    MismatchedDimensionException e) {
+      LOGGER.log(Level.FINER,e.getMessage(),e);
+    }
+catch (    FactoryException e) {
+      LOGGER.log(Level.FINER,e.getMessage(),e);
+    }
+    map.put("global",String.valueOf(handler != null && handler instanceof WrappingProjectionHandler));
     String baseUrl=ResponseUtils.buildURL(request.getBaseUrl(),"/",null,URLType.RESOURCE);
     String queryString=null;
     if (baseUrl.indexOf("?") > 0) {
