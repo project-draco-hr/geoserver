@@ -1,0 +1,10 @@
+{
+  authenticate("cite","cite");
+  String request="csw?service=CSW&version=2.0.2&request=GetRecords&typeNames=csw:Record&resultType=results&maxRecords=100";
+  Document d=getAsDOM(request);
+  List<ResourceInfo> citeResources=getCatalog().getResourcesByNamespace(MockData.CITE_URI,ResourceInfo.class);
+  assertEquals(citeResources.size(),xpath.getMatchingNodes("//csw:SummaryRecord",d).getLength());
+  for (  ResourceInfo ri : citeResources) {
+    assertEquals(1,xpath.getMatchingNodes(String.format("//csw:SummaryRecord[dc:identifier='%s']",ri.prefixedName()),d).getLength());
+  }
+}
