@@ -1,0 +1,26 @@
+{
+  Tuple<Double,Double> minMax=DimensionsUtils.getMinMax(domainValues,Double.class);
+  resolution=resolution != null ? resolution : NUMERICAL_DEFAULT_RESOLUTION;
+  double finalResolution=Double.parseDouble(resolution);
+  double min=minMax.first;
+  double max=Math.max(minMax.second,finalResolution);
+  int i=0;
+  while ((max - min) / finalResolution >= HISTOGRAM_MAX_THRESHOLD && i < MAX_ITERATIONS) {
+    finalResolution+=10;
+    i++;
+  }
+  String domainString=min + "/" + max+ "/"+ finalResolution;
+  if ((max - min) / finalResolution == 1) {
+    return Tuple.tuple(domainString,Collections.singletonList(NumberRange.create(min,max)));
+  }
+  List<Range> buckets=new ArrayList<>();
+  for (double step=min; step < max; step+=finalResolution) {
+    double limit=step + finalResolution;
+    if (limit > max) {
+      buckets.add(NumberRange.create(step,max));
+      break;
+    }
+    buckets.add(NumberRange.create(step,limit));
+  }
+  return Tuple.tuple(domainString,buckets);
+}

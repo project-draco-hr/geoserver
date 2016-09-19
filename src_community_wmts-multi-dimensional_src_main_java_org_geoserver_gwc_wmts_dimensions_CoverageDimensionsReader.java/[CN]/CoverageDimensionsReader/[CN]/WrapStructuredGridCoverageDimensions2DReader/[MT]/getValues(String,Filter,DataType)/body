@@ -1,0 +1,21 @@
+{
+  try {
+    GranuleSource source=reader.getGranules(reader.getGridCoverageNames()[0],true);
+    List<DimensionDescriptor> descriptors=reader.getDimensionDescriptors(reader.getGridCoverageNames()[0]);
+    for (    DimensionDescriptor descriptor : descriptors) {
+      if (dimensionName.equalsIgnoreCase(descriptor.getName())) {
+        Query query=new Query(source.getSchema().getName().getLocalPart());
+        if (filter != null) {
+          query.setFilter(filter);
+        }
+        FeatureCollection featureCollection=source.getGranules(query);
+        String attributeName=descriptor.getStartAttribute();
+        return Tuple.tuple(attributeName,featureCollection);
+      }
+    }
+    return null;
+  }
+ catch (  Exception exception) {
+    throw new RuntimeException("Error reading domain values.",exception);
+  }
+}
