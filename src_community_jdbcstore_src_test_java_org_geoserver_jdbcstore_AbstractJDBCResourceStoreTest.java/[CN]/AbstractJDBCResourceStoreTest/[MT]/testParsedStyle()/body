@@ -1,0 +1,35 @@
+{
+  ClassPathXmlApplicationContext ctx=new ClassPathXmlApplicationContext("GeoServerDataDirectoryTest-applicationContext.xml",GeoServerDataDirectoryTest.class);
+  ctx.refresh();
+  support.initialize();
+  cache.create();
+  JDBCResourceStore store=new JDBCResourceStore(support.getDataSource(),getConfig(false,false));
+  store.setCache(new SimpleResourceCache(cache.getRoot()));
+  GeoServerResourceLoader loader=new GeoServerResourceLoader(store);
+  GeoServerDataDirectory dataDir=new GeoServerDataDirectory(loader);
+  Resource styleDir=store.get("styles");
+  Resource styleResource=styleDir.get("external.sld");
+  IOUtils.copy(getClass().getResourceAsStream("external.sld"),styleResource.out());
+  Resource noIconResource=styleDir.get("noicon.png");
+  assertFalse(Resources.exists(noIconResource));
+  Resource iconResource=styleDir.get("icon.png");
+  IOUtils.copy(getClass().getResourceAsStream("icon.png"),iconResource.out());
+  assertTrue(Resources.exists(iconResource));
+  StyleInfoImpl si=new StyleInfoImpl(null);
+  si.setName("");
+  si.setId("");
+  si.setFormat("sld");
+  si.setFormatVersion(new Version("1.0.0"));
+  si.setFilename(styleResource.name());
+  Style s=dataDir.parsedStyle(si);
+  Symbolizer symbolizer=s.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0);
+  assertTrue(symbolizer instanceof PointSymbolizer);
+  GraphicalSymbol graphic=((PointSymbolizer)symbolizer).getGraphic().graphicalSymbols().get(0);
+  assertTrue(graphic instanceof ExternalGraphic);
+  File iconFile=new File(cache.getRoot(),"styles/icon.png");
+  File noiconFile=new File(cache.getRoot(),"styles/noicon.png");
+  assertFalse(noiconFile.exists());
+  assertTrue(iconFile.exists());
+  ctx.destroy();
+  ctx.close();
+}
