@@ -3,11 +3,9 @@
     styleModel=new CompoundPropertyModel<StyleInfo>(getCatalog().getFactory().createStyle());
     styleModel.getObject().setName("");
     styleModel.getObject().setLegend(getCatalog().getFactory().createLegend());
-    add(new Label("stylename",""));
   }
  else {
-    add(new Label("stylename",(style.getWorkspace() == null ? "" : style.getWorkspace().getName() + ":") + style.getName()));
-    styleModel=new CompoundPropertyModel<StyleInfo>(new StyleDetachableModel(style));
+    styleModel=new CompoundPropertyModel<StyleInfo>(style);
   }
   styleForm=new Form<StyleInfo>("styleForm",styleModel){
     @Override protected void onSubmit(){
@@ -94,7 +92,24 @@
 );
     }
   }
-  tabbedPanel=new AjaxTabbedPanel<ITab>("context",tabs);
+  tabbedPanel=new AjaxTabbedPanel<ITab>("context",tabs){
+    protected String getTabContainerCssClass(){
+      return "tab-row tab-row-compact";
+    }
+    @Override protected WebMarkupContainer newLink(    String linkId,    final int index){
+      AjaxSubmitLink link=new AjaxSubmitLink(linkId){
+        private static final long serialVersionUID=1L;
+        @Override public void onSubmit(        AjaxRequestTarget target,        Form<?> form){
+          setSelectedTab(index);
+          target.add(AbstractStylePage.this);
+        }
+      }
+;
+      link.setDefaultFormProcessing(false);
+      return link;
+    }
+  }
+;
   styleForm.add(tabbedPanel);
   styleForm.add(editor=new CodeMirrorEditor("styleEditor",styleHandler().getCodeMirrorEditMode(),new PropertyModel<String>(this,"rawStyle")));
   editor.setTextAreaMarkupId("editor");
@@ -115,11 +130,17 @@
       }
       target.add(AbstractStylePage.this);
     }
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      target.add(AbstractStylePage.this);
+    }
   }
 );
   add(new AjaxSubmitLink("submit",styleForm){
     @Override protected void onSubmit(    AjaxRequestTarget target,    Form<?> form){
       doReturn(StylePage.class);
+    }
+    @Override protected void onError(    AjaxRequestTarget target,    Form<?> form){
+      target.add(AbstractStylePage.this);
     }
   }
 );

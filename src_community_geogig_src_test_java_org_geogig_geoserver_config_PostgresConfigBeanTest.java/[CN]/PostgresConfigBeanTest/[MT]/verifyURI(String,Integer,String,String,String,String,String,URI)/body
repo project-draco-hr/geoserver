@@ -1,0 +1,46 @@
+{
+  assertEquals("Unexpected HOST value",expectedHost,uri.getHost());
+  if (expectedPort != null) {
+    assertEquals("Unexpected PORT value",expectedPort.intValue(),uri.getPort());
+  }
+ else {
+    assertEquals("Unexpected PORT value",5432,uri.getPort());
+  }
+  String path=uri.getPath();
+  assertNotNull("PATH value from URI should not be bull",path);
+  String[] paths=path.split("/");
+  assertEquals("Unexpected number of path elements",4,paths.length);
+  assertTrue("Unexpected leading URI Path element",paths[0].isEmpty());
+  assertEquals("Unexpected DATABASE value",expectedDb,paths[1]);
+  if (expectedSchema != null) {
+    assertEquals("Unexpected SCHEMA value",expectedSchema,paths[2]);
+  }
+ else {
+    assertEquals("Unexpected SCHEMA value","public",paths[2]);
+  }
+  assertEquals("Unexpected REPOSITORY ID value",expectedRepoId,paths[3]);
+  String rawQuery=uri.getRawQuery();
+  assertTrue("URI missing USER query parameter",rawQuery.contains("user="));
+  assertTrue("URI missing PASSWORD queyr parameter",rawQuery.contains("&password="));
+  String[] queryParams=rawQuery.split("&");
+  assertEquals("Unexpected number of query parameters",2,queryParams.length);
+  String userPair, passwordPair;
+  if (queryParams[0].startsWith("user=")) {
+    userPair=queryParams[0];
+    passwordPair=queryParams[1];
+  }
+ else {
+    passwordPair=queryParams[0];
+    userPair=queryParams[0];
+  }
+  assertTrue("No parsable USER query parameter found",userPair.startsWith("user="));
+  assertTrue("No parsable PASSWORD query parameter found",passwordPair.startsWith("password="));
+  String[] userParts=userPair.split("=");
+  assertEquals("Malformed USER query parameter",2,userParts.length);
+  String[] passwordParts=passwordPair.split("=");
+  assertEquals("Malformed PASSWORD query parameter",2,passwordParts.length);
+  String decodedUser=URLDecoder.decode(userParts[1],UTF8);
+  assertEquals("Unexpected URL decoded value for USER query parameter",expectedUser,decodedUser);
+  String decodedPassword=URLDecoder.decode(passwordParts[1],UTF8);
+  assertEquals("Unexpected URL decoded value for PASSWORD query parameter",expectedPassword,decodedPassword);
+}

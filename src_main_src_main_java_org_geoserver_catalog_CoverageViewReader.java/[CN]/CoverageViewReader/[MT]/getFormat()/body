@@ -1,3 +1,36 @@
 {
-  return delegate.getFormat();
+  return new Format(){
+    private final Format delegateFormat=delegate.getFormat();
+    @Override public ParameterValueGroup getWriteParameters(){
+      return delegateFormat.getWriteParameters();
+    }
+    @Override public String getVersion(){
+      return delegateFormat.getVersion();
+    }
+    @Override public String getVendor(){
+      return delegateFormat.getVendor();
+    }
+    @Override public ParameterValueGroup getReadParameters(){
+      HashMap<String,String> info=new HashMap<String,String>();
+      info.put("name",getName());
+      info.put("description",getDescription());
+      info.put("vendor",getVendor());
+      info.put("docURL",getDocURL());
+      info.put("version",getVersion());
+      List<GeneralParameterDescriptor> delegateFormatParams=new ArrayList<GeneralParameterDescriptor>();
+      delegateFormatParams.addAll(delegateFormat.getReadParameters().getDescriptor().descriptors());
+      delegateFormatParams.add(AbstractGridFormat.BANDS);
+      return new ParameterGroup(new DefaultParameterDescriptorGroup(info,delegateFormatParams.toArray(new GeneralParameterDescriptor[delegateFormatParams.size()])));
+    }
+    @Override public String getName(){
+      return delegateFormat.getName();
+    }
+    @Override public String getDocURL(){
+      return delegateFormat.getDocURL();
+    }
+    @Override public String getDescription(){
+      return delegateFormat.getDescription();
+    }
+  }
+;
 }
