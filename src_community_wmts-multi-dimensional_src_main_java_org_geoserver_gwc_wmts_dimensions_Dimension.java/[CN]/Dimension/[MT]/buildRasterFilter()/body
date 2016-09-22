@@ -1,7 +1,7 @@
 {
   CoverageInfo typeInfo=(CoverageInfo)getResourceInfo();
   Filter filter=Filter.INCLUDE;
-  if (getBoundingBox() != null) {
+  if (boundingBox != null) {
     try {
       filter=appendBoundingBoxFilter(filter,typeInfo);
     }
@@ -9,8 +9,9 @@
       throw new RuntimeException(String.format("Exception accessing feature source of raster type '%s'.",typeInfo.getName()),exception);
     }
   }
-  if (getDomainRestrictions() != null) {
-    Tuple<String,String> attributes=getAttributes();
+  if (domainRestrictions != null) {
+    CoverageDimensionsReader reader=CoverageDimensionsReader.instantiateFrom(typeInfo);
+    Tuple<String,String> attributes=reader.getDimensionAttributesNames(getDimensionName());
     if (attributes.first == null) {
       throw new RuntimeException(String.format("Could not found start attribute name for dimension '%s' in raster '%s'.",getDimensionName(),typeInfo.getName()));
     }

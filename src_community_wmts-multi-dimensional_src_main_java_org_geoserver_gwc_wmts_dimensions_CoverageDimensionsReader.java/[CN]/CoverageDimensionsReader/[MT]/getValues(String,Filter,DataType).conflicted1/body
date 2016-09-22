@@ -1,0 +1,25 @@
+{
+  String metaDataValue;
+  try {
+    metaDataValue=reader.getMetadataValue(dimensionName.toUpperCase() + "_DOMAIN");
+  }
+ catch (  Exception exception) {
+    throw new RuntimeException(String.format("Error extract dimension '%s' values from raster '%s'.",dimensionName,typeInfo.getName()),exception);
+  }
+  if (metaDataValue == null || metaDataValue.isEmpty()) {
+    return Tuple.tuple(getDimensionAttributesNames(dimensionName).first,null);
+  }
+  String[] rawValues=metaDataValue.split(",");
+  dataType=normalizeDataType(rawValues[0],dataType);
+  Tuple<SimpleFeatureType,Function<String,Object>> featureTypeAndConverter=getFeatureTypeAndConverter(dimensionName,rawValues[0],dataType);
+  MemoryFeatureCollection featureCollection=new MemoryFeatureCollection(featureTypeAndConverter.first);
+  for (int i=0; i < rawValues.length; i++) {
+    SimpleFeatureBuilder featureBuilder=new SimpleFeatureBuilder(featureTypeAndConverter.first);
+    featureBuilder.add(featureTypeAndConverter.second.apply(rawValues[i]));
+    SimpleFeature feature=featureBuilder.buildFeature(String.valueOf(i));
+    if (filter == null || filter.evaluate(feature)) {
+      featureCollection.add(feature);
+    }
+  }
+  return Tuple.tuple(getDimensionAttributesNames(dimensionName).first,featureCollection);
+}

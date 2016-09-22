@@ -1,11 +1,8 @@
 {
-  GridCoverage2DReader reader=(GridCoverage2DReader)typeInfo.getGridCoverageReader(null,null);
-  if (!(reader instanceof StructuredGridCoverage2DReader)) {
+  CoverageDimensionsReader reader=CoverageDimensionsReader.instantiateFrom(typeInfo);
+  String geometryAttributeName=reader.getGeometryAttributeName();
+  if (geometryAttributeName == null) {
     return filter;
   }
-  StructuredGridCoverage2DReader structuredReader=(StructuredGridCoverage2DReader)reader;
-  String coverageName=structuredReader.getGridCoverageNames()[0];
-  GranuleSource source=structuredReader.getGranules(coverageName,true);
-  String geometryAttributeName=source.getSchema().getGeometryDescriptor().getLocalName();
   return appendBoundingBoxFilter(filter,geometryAttributeName);
 }

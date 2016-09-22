@@ -4,29 +4,7 @@
     return Tuple.tuple(dimensionInfo.getAttribute(),dimensionInfo.getEndAttribute());
   }
   if (resourceInfo instanceof CoverageInfo) {
-    Tuple<String,StructuredGridCoverage2DReader> rasterReader;
-    try {
-      rasterReader=getRasterReader();
-    }
- catch (    IOException exception) {
-      throw new RuntimeException(String.format("Error opening structured reader for raster '%s'.",layerInfo.getName(),exception));
-    }
-    List<DimensionDescriptor> descriptors;
-    try {
-      descriptors=rasterReader.second.getDimensionDescriptors(rasterReader.first);
-    }
- catch (    IOException exception) {
-      throw new RuntimeException(String.format("Error extracting dimensions descriptors from raster '%s'.",layerInfo.getName(),exception));
-    }
-    String startAttributeName=null;
-    String endAttributeName=null;
-    for (    DimensionDescriptor descriptor : descriptors) {
-      if (getDimensionName().equalsIgnoreCase(descriptor.getName())) {
-        startAttributeName=descriptor.getStartAttribute();
-        endAttributeName=descriptor.getEndAttribute();
-      }
-    }
-    return Tuple.tuple(startAttributeName,endAttributeName);
+    return CoverageDimensionsReader.instantiateFrom((CoverageInfo)resourceInfo).getDimensionAttributesNames(getDimensionName());
   }
   return Tuple.tuple(null,null);
 }
