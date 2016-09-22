@@ -12,9 +12,10 @@
     tester.clickLink("rasterStoreForm:save");
     tester.assertNoErrorMessage();
     assertNotNull(store.getId());
-    assertEquals("foo",store.getName());
-    assertNotNull(catalog.getStoreByName(coverageStore.getName(),CoverageStoreInfo.class));
-    assertNotNull(catalog.getStoreByName("foo",CoverageStoreInfo.class));
+    CoverageStoreInfo expandedStore=catalog.getResourcePool().clone(store,true);
+    assertNotNull(expandedStore.getId());
+    assertNotNull(expandedStore.getCatalog());
+    catalog.validate(expandedStore,false).throwIfInvalid();
   }
   finally {
     catalog.remove(store);

@@ -3,8 +3,7 @@
     return;
   }
   final Catalog catalog=getCatalog();
-  DataStoreInfo expandedStore=catalog.getFactory().createDataStore();
-  clone(info,expandedStore);
+  DataStoreInfo expandedStore=catalog.getResourcePool().clone(info,true);
   DataAccess<? extends FeatureType,? extends Feature> dataStore;
   try {
     dataStore=expandedStore.getDataStore(new NullProgressListener());
@@ -18,11 +17,10 @@
     }
     throw new IllegalArgumentException("Error creating data store, check the parameters. Error message: " + message);
   }
-  DataStoreInfo savedStore=catalog.getFactory().createDataStore();
+  DataStoreInfo savedStore=catalog.getResourcePool().clone(info,true);
   try {
-    clone(info,savedStore);
     catalog.validate(savedStore,true).throwIfInvalid();
-    clone(info,savedStore,false);
+    savedStore=catalog.getResourcePool().clone(info,false);
     catalog.add(savedStore);
   }
  catch (  Exception e) {
