@@ -1,0 +1,30 @@
+{
+  standardData();
+  cache.create();
+  JDBCResourceStoreProperties config=getConfig(true,false);
+  ResourceStore fileStore=new FileSystemResourceStore(cache.getRoot());
+  ResourceStore jdbcStore=new JDBCResourceStore(support.getDataSource(),config,fileStore);
+  ((JDBCResourceStore)jdbcStore).setCache(new SimpleResourceCache(cache.getRoot()));
+  Resource jdbcResource=jdbcStore.get("FileA");
+  jdbcResource.file();
+  Thread.sleep(2);
+  byte[] expected="FileA Updated Contents".getBytes();
+  OutputStream out=jdbcResource.out();
+  try {
+    out.write(expected);
+  }
+  finally {
+    out.close();
+  }
+  jdbcResource.file();
+  Resource fileResource=fileStore.get("FileA");
+  InputStream in=fileResource.in();
+  try {
+    byte[] result=new byte[expected.length];
+    in.read(result);
+    assertThat(result,equalTo(expected));
+  }
+  finally {
+    in.close();
+  }
+}
