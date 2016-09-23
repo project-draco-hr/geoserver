@@ -10,6 +10,16 @@
       client.setUser(user);
       client.setPassword(pwd);
     }
+    Map<String,Object> hints=new HashMap<>();
+    hints.put(DocumentHandler.DEFAULT_NAMESPACE_HINT_KEY,WMSSchema.getInstance());
+    hints.put(DocumentFactory.VALIDATION_HINT,Boolean.FALSE);
+    EntityResolverProvider provider=getCatalog().getResourcePool().getEntityResolverProvider();
+    if (provider != null) {
+      EntityResolver entityResolver=provider.getEntityResolver();
+      if (entityResolver != null) {
+        hints.put(XMLHandlerHints.ENTITY_RESOLVER,entityResolver);
+      }
+    }
     WebMapServer server=new WebMapServer(new URL(url),client);
     server.getCapabilities();
   }

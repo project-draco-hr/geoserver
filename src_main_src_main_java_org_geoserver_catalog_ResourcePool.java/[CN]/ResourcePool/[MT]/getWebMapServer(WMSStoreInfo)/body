@@ -1,8 +1,16 @@
 {
   WMSStoreInfo expandedStore=clone(info,true);
   try {
+    EntityResolver entityResolver=null;
+    if (entityResolverProvider != null) {
+      entityResolver=entityResolverProvider.getEntityResolver();
+    }
     String id=info.getId();
     WebMapServer wms=wmsCache.get(id);
+    if (wms != null && wms.getHints() != null && !Objects.equals(wms.getHints().get(XMLHandlerHints.ENTITY_RESOLVER),entityResolver)) {
+      wmsCache.remove(id);
+      wms=null;
+    }
     if (wms == null) {
 synchronized (wmsCache) {
         wms=wmsCache.get(id);
@@ -10,7 +18,13 @@ synchronized (wmsCache) {
           HTTPClient client=getHTTPClient(expandedStore);
           String capabilitiesURL=expandedStore.getCapabilitiesURL();
           URL serverURL=new URL(capabilitiesURL);
-          wms=new WebMapServer(serverURL,client);
+          Map<String,Object> hints=new HashMap<>();
+          hints.put(DocumentHandler.DEFAULT_NAMESPACE_HINT_KEY,WMSSchema.getInstance());
+          hints.put(DocumentFactory.VALIDATION_HINT,Boolean.FALSE);
+          if (entityResolver != null) {
+            hints.put(XMLHandlerHints.ENTITY_RESOLVER,entityResolver);
+          }
+          wms=new WebMapServer(serverURL,client,hints);
           wmsCache.put(id,wms);
         }
       }
