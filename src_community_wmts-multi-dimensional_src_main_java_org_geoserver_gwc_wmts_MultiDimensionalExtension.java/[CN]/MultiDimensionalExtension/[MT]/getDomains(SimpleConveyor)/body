@@ -4,6 +4,14 @@
   LayerInfo layerInfo=getLayerInfo(tileLayer,layerName);
   List<Dimension> dimensions=DimensionsUtils.extractDimensions(wms,layerInfo);
   ReferencedEnvelope boundingBox=(ReferencedEnvelope)conveyor.getParameter("bbox",false);
+  if (boundingBox != null) {
+    String providedTileMatrixSet=(String)conveyor.getParameter("tileMatrixSet",true);
+    GridSubset gridSubset=tileLayer.getGridSubset(providedTileMatrixSet);
+    if (gridSubset == null) {
+      throw new RuntimeException(String.format("Unknown grid set '%s'.",providedTileMatrixSet));
+    }
+    boundingBox=new ReferencedEnvelope(boundingBox,CRS.decode(gridSubset.getSRS().toString()));
+  }
   Filter filter=Filter.INCLUDE;
   for (  Dimension dimension : dimensions) {
     Object restriction=conveyor.getParameter(dimension.getDimensionName(),false);
