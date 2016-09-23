@@ -7,7 +7,7 @@
       throw createFilterException(OAuth2FilterConfigException.OAUTH2_URL_IN_LOGOUT_URI_MALFORMED);
     }
   }
-  super.validateFilterConfig((PreAuthenticatedUserNameFilterConfig)filterConfig);
+  super.validateFilterConfig((SecurityNamedServiceConfig)filterConfig);
   if (StringUtils.hasLength(filterConfig.getCheckTokenEndpointUrl()) == false)   throw createFilterException(OAuth2FilterConfigException.OAUTH2_CHECKTOKENENDPOINT_URL_REQUIRED);
   try {
     new URL(filterConfig.getCheckTokenEndpointUrl());
@@ -23,7 +23,7 @@
  catch (    MalformedURLException ex) {
       throw createFilterException(OAuth2FilterConfigException.OAUTH2_ACCESSTOKENURI_MALFORMED);
     }
-    if ("https".equalsIgnoreCase(accessTokenUri.getProtocol()) == false)     throw createFilterException(OAuth2FilterConfigException.OAUTH2_ACCESSTOKENURI_NOT_HTTPS);
+    if (filterConfig.getForceAccessTokenUriHttps() && "https".equalsIgnoreCase(accessTokenUri.getProtocol()) == false)     throw createFilterException(OAuth2FilterConfigException.OAUTH2_ACCESSTOKENURI_NOT_HTTPS);
   }
   if (StringUtils.hasLength(filterConfig.getUserAuthorizationUri())) {
     URL userAuthorizationUri=null;
@@ -33,7 +33,7 @@
  catch (    MalformedURLException ex) {
       throw createFilterException(OAuth2FilterConfigException.OAUTH2_USERAUTHURI_MALFORMED);
     }
-    if ("https".equalsIgnoreCase(userAuthorizationUri.getProtocol()) == false)     throw createFilterException(OAuth2FilterConfigException.OAUTH2_USERAUTHURI_NOT_HTTPS);
+    if (filterConfig.getForceUserAuthorizationUriHttps() && "https".equalsIgnoreCase(userAuthorizationUri.getProtocol()) == false)     throw createFilterException(OAuth2FilterConfigException.OAUTH2_USERAUTHURI_NOT_HTTPS);
   }
   if (StringUtils.hasLength(filterConfig.getRedirectUri())) {
     try {
