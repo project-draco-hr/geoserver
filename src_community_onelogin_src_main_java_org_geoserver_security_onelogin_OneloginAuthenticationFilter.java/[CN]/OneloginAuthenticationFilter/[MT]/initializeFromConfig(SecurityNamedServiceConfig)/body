@@ -1,0 +1,44 @@
+{
+  super.initializeFromConfig(config);
+  OneloginAuthenticationFilterConfig authConfig=(OneloginAuthenticationFilterConfig)config;
+  try {
+    if (getNestedFilters().isEmpty()) {
+      MetadataGenerator generator=new MetadataGenerator();
+      generator.setEntityId(authConfig.getEntityId());
+      generator.setIncludeDiscoveryExtension(false);
+      generator.setKeyManager(new EmptyKeyManager());
+      generator.setRequestSigned(false);
+      generator.setWantAssertionSigned(authConfig.getWantAssertionSigned());
+      ExtendedMetadata em=new ExtendedMetadata();
+      em.setRequireLogoutRequestSigned(false);
+      generator.setExtendedMetadata(em);
+      MetadataGeneratorFilter metadataGeneratorFilter=new MetadataGeneratorFilter(generator);
+      ParserPool parserPool=context.getBean(ParserPool.class);
+      HttpClientParams clientParams=new HttpClientParams();
+      clientParams.setSoTimeout(5000);
+      HttpClient httpClient=new HttpClient(clientParams);
+      httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(5000);
+      HTTPMetadataProvider pro=new HTTPMetadataProvider(new Timer(true),httpClient,authConfig.getMetadataURL());
+      pro.setParserPool(parserPool);
+      ExtendedMetadataDelegate emd=new ExtendedMetadataDelegate(pro,em);
+      MetadataManager metadata=context.getBean(MetadataManager.class);
+      metadata.addMetadataProvider(emd);
+      metadata.refreshMetadata();
+      metadataGeneratorFilter.setManager(metadata);
+      getNestedFilters().add(metadataGeneratorFilter);
+    }
+ else {
+      LOGGER.log(Level.FINE,"Metadata filter already added");
+    }
+    SAMLUserDetailsServiceImpl usd=context.getBean(SAMLUserDetailsServiceImpl.class);
+    usd.setConverter(this.getConverter());
+    usd.setRoleServiceName(this.getRoleServiceName());
+    usd.setRolesHeaderAttribute(this.getRolesHeaderAttribute());
+    usd.setRoleSource(this.getRoleSource());
+    usd.setSecurityManager(this.securityManager);
+    usd.setUserGroupServiceName(this.getUserGroupServiceName());
+  }
+ catch (  Exception ex) {
+    throw new RuntimeException(ex);
+  }
+}

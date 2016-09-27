@@ -1,0 +1,28 @@
+{
+  LogoutFilterChain logoutchain=(LogoutFilterChain)getSecurityManager().getSecurityConfig().getFilterChain().getRequestChainByName("webLogout");
+  confgiureFilter(PreAuthenticatedUserNameRoleSource.RoleService);
+  MockHttpServletRequest request=createRequest("/foo/bar");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain();
+  getProxy().doFilter(request,response,chain);
+  String encodedResponseMessage=buildSAMLRespons(testUserName);
+  request=createRequest(SAMLProcessingFilter.FILTER_URL);
+  request.setMethod("POST");
+  request.addParameter("SAMLResponse",encodedResponseMessage);
+  chain=new MockFilterChain();
+  response=new MockHttpServletResponse();
+  getProxy().doFilter(request,response,chain);
+  SecurityContext ctx=(SecurityContext)request.getSession(false).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+  assertNotNull(ctx);
+  Authentication auth=ctx.getAuthentication();
+  assertEquals(testUserName,auth.getPrincipal());
+  SecurityContextHolder.setContext(ctx);
+  request=createRequest(logoutchain.getPatterns().get(0));
+  response=new MockHttpServletResponse();
+  chain=new MockFilterChain();
+  GeoServerLogoutFilter logoutFilter=(GeoServerLogoutFilter)getSecurityManager().loadFilter(GeoServerSecurityFilterChain.FORM_LOGOUT_FILTER);
+  logoutFilter.doFilter(request,response,chain);
+  assertTrue(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
+  String redirectURL=response.getHeader("Location");
+  assertThat(redirectURL,CoreMatchers.containsString(SAMLLogoutFilter.FILTER_URL));
+}

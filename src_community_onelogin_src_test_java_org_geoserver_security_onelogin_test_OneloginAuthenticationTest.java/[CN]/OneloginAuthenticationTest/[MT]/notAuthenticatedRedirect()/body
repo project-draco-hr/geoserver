@@ -1,0 +1,23 @@
+{
+  confgiureFilter(PreAuthenticatedUserNameRoleSource.UserGroupService);
+  MockHttpServletRequest request=createRequest("/foo/bar");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain();
+  getProxy().doFilter(request,response,chain);
+  assertTrue(response.getStatus() == MockHttpServletResponse.SC_MOVED_TEMPORARILY);
+  String redirectURL=response.getHeader("Location");
+  assertThat(redirectURL,CoreMatchers.containsString(REDIRECT_URL));
+  URIBuilder uriBuilder=new URIBuilder(redirectURL);
+  List<NameValuePair> urlParameters=uriBuilder.getQueryParams();
+  String samlRequest=null;
+  for (  NameValuePair par : urlParameters) {
+    if (par.getName().equals("SAMLRequest")) {
+      samlRequest=par.getValue();
+      break;
+    }
+  }
+  assertNotNull(samlRequest);
+  StringSamlDecoder decoder=new StringSamlDecoder();
+  SAMLObject samlRequestObject=decoder.decode(samlRequest);
+  assertNotNull(samlRequestObject);
+}

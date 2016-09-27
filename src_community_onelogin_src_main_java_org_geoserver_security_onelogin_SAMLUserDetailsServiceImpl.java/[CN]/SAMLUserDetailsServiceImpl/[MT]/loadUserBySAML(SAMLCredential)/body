@@ -1,0 +1,17 @@
+{
+  String principal=credential.getNameID().getValue();
+  Collection<GeoServerRole> roles=null;
+  if (GeoServerUser.ROOT_USERNAME.equals(principal)) {
+    roles=Collections.singleton(GeoServerRole.ADMIN_ROLE);
+  }
+ else {
+    try {
+      roles=getRoles(principal);
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+    if (roles.contains(GeoServerRole.AUTHENTICATED_ROLE) == false)     roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+  }
+  return new User(principal,"",true,true,true,true,roles);
+}

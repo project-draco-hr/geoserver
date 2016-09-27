@@ -1,0 +1,20 @@
+{
+  try {
+    ClassLoader classLoader=SSLUtilities.class.getClassLoader();
+    InputStream keyStoreInputStream=classLoader.getResourceAsStream(keyStoreName);
+    if (keyStoreInputStream == null) {
+      throw new FileNotFoundException("Could not find file named '" + keyStoreName + "' in the CLASSPATH");
+    }
+    KeyStore keystore=KeyStore.getInstance(KeyStore.getDefaultType());
+    keystore.load(keyStoreInputStream,null);
+    TrustManagerFactory trustManagerFactory=TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    trustManagerFactory.init(keystore);
+    TrustManager[] trustManagers=trustManagerFactory.getTrustManagers();
+    SSLContext sc=SSLContext.getInstance("SSL");
+    sc.init(null,trustManagers,null);
+    SSLContext.setDefault(sc);
+  }
+ catch (  IOException|GeneralSecurityException e) {
+    throw new RuntimeException(e);
+  }
+}
