@@ -5,7 +5,12 @@
   }
   final Map<String,Object> properties=coverage.getProperties();
   final SampleDimension[] dims=coverage.getSampleDimensions();
-  GridSampleDimension[] wrappedDims=wrapDimensions(dims);
+  GridSampleDimension[] wrappedDims=null;
+  if (info != null) {
+    List<CoverageDimensionInfo> storedDimensions=info.getDimensions();
+    int[] selectedBandIndexes=getSelectedBandIndexes(parameters);
+    wrappedDims=wrapDimensions(dims,storedDimensions,selectedBandIndexes);
+  }
   NoDataContainer noDataProperty=CoverageUtilities.getNoDataProperty(coverage);
   if (wrappedDims == null) {
     wrappedDims=(GridSampleDimension[])dims;
