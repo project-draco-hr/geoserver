@@ -6,9 +6,10 @@
   Object actualValue=Converters.convert(value,binding);
   checkArgument(value == null || actualValue != null,"Unable to convert value '%s' to %s",value,binding.getName());
   feature.setAttribute(attributeName,actualValue);
-  String parentPath=NodeRef.parentPath(featurePath);
   Context context=geogig.getContext();
   WorkingTree workingTree=context.workingTree();
-  workingTree.insert(parentPath,feature);
+  RevFeatureType type=RevFeatureTypeBuilder.build(featureType);
+  FeatureInfo info=FeatureInfo.insert(RevFeatureBuilder.build(feature),type.getId(),featurePath);
+  workingTree.insert(info);
   return this;
 }

@@ -1,7 +1,11 @@
 {
   WorkingTree workingTree=geogig.getContext().workingTree();
   for (  Feature feature : features) {
-    workingTree.insert(parentTreePath,feature);
+    RevFeatureType type=RevFeatureTypeBuilder.build(feature.getType());
+    geogig.getRepository().objectDatabase().put(type);
+    String path=NodeRef.appendChild(parentTreePath,feature.getIdentifier().getID());
+    FeatureInfo info=FeatureInfo.insert(RevFeatureBuilder.build(feature),type.getId(),path);
+    workingTree.insert(info);
   }
   return this;
 }
