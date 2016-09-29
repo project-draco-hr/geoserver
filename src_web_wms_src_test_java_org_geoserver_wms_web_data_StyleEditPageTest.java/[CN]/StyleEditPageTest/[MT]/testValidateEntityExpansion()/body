@@ -1,0 +1,10 @@
+{
+  String xml=IOUtils.toString(TestData.class.getResource("externalEntities.sld"),"UTF-8");
+  tester.newFormTester("styleForm").setValue("styleEditor:editorContainer:editorParent:editor",xml);
+  tester.executeAjaxEvent("validate","click");
+  List<Serializable> messages=tester.getMessages(FeedbackMessage.ERROR);
+  assertEquals(1,messages.size());
+  String message=messages.get(0).toString();
+  assertThat(message,containsString("Entity resolution disallowed"));
+  assertThat(message,containsString("/this/file/does/not/exist"));
+}
