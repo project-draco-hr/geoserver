@@ -32,9 +32,18 @@
   data.setHttpReferer(getHttpReferer(req));
   if (SecurityContextHolder.getContext() != null && SecurityContextHolder.getContext().getAuthentication() != null) {
     Authentication auth=SecurityContextHolder.getContext().getAuthentication();
-    if (auth.getPrincipal() != null && auth.getPrincipal() instanceof UserDetails) {
-      data.setRemoteUser(((UserDetails)auth.getPrincipal()).getUsername());
+    Object principal=auth.getPrincipal();
+    if (principal != null) {
+      if (principal instanceof UserDetails) {
+        data.setRemoteUser(((UserDetails)principal).getUsername());
+      }
+ else       if (principal instanceof String) {
+        data.setRemoteUser((String)principal);
+      }
     }
+  }
+  if (data.getRemoteUser() == null || data.getRemoteUser().isEmpty()) {
+    data.setRemoteUser(req.getRemoteUser());
   }
   data.setRemoteUserAgent(req.getHeader("user-agent"));
   request=new MonitorServletRequest(req,monitor.getConfig().getMaxBodySize());
