@@ -3,14 +3,13 @@
   RepositoryManager repoMgr=RepositoryManager.get();
   try {
     RepositoryInfo info=repoMgr.getByRepoName(name);
-    String repositoryId=info.getId();
-    Repository repo=repoMgr.getRepository(repositoryId);
+    Repository repo=RepositoryResolver.load(info.getLocation());
     checkState(repo.isOpen(),"RepositoryManager returned a closed repository for %s",name);
     return repo;
   }
- catch (  IOException ioe) {
+ catch (  Exception ex) {
     RepositoryConnectionException rce=new RepositoryConnectionException("No GeoGig repository found with NAME or ID: " + name);
-    rce.initCause(ioe);
+    rce.initCause(ex);
     throw rce;
   }
 }
