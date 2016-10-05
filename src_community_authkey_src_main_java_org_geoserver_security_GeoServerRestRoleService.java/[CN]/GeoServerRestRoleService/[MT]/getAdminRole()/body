@@ -1,0 +1,31 @@
+{
+  if (adminGroup == null) {
+    try {
+      return (GeoServerRole)connectToRESTEndpoint(restRoleServiceConfig.getBaseUrl(),restRoleServiceConfig.getAdminRoleRESTEndpoint(),restRoleServiceConfig.getAdminRoleJSONPath(),new RestEndpointConnectionCallback(){
+        @Override public Object executeWithContext(        String json) throws Exception {
+          try {
+            String targetRole=JsonPath.read(json,restRoleServiceConfig.getAdminRoleJSONPath());
+            if (targetRole.startsWith(rolePrefix)) {
+              targetRole=targetRole.substring(rolePrefix.length());
+            }
+            return createRoleObject(targetRole);
+          }
+ catch (          PathNotFoundException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+          }
+          return null;
+        }
+      }
+);
+    }
+ catch (    Exception ex) {
+      Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+    }
+  }
+  try {
+    return getRoleByName(adminGroup);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+}
