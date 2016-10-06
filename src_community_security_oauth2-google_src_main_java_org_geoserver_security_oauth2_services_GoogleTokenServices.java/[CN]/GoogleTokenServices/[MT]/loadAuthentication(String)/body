@@ -1,0 +1,10 @@
+{
+  Map<String,Object> checkTokenResponse=checkToken(accessToken);
+  if (checkTokenResponse.containsKey("error")) {
+    logger.debug("check_token returned error: " + checkTokenResponse.get("error"));
+    throw new InvalidTokenException(accessToken);
+  }
+  transformNonStandardValuesToStandardValues(checkTokenResponse);
+  Assert.state(checkTokenResponse.containsKey("client_id"),"Client id must be present in response from auth server");
+  return tokenConverter.extractAuthentication(checkTokenResponse);
+}

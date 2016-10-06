@@ -1,0 +1,13 @@
+{
+  String cacheKey=authenticateFromCache(this,(HttpServletRequest)request,(HttpServletResponse)response);
+  if (SecurityContextHolder.getContext().getAuthentication() == null) {
+    doAuthenticate((HttpServletRequest)request,(HttpServletResponse)response);
+    Authentication postAuthentication=SecurityContextHolder.getContext().getAuthentication();
+    if (postAuthentication != null && cacheKey != null) {
+      if (cacheAuthentication(postAuthentication,(HttpServletRequest)request)) {
+        getSecurityManager().getAuthenticationCache().put(getName(),cacheKey,postAuthentication);
+      }
+    }
+  }
+  chain.doFilter(request,response);
+}
