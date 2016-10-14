@@ -1,0 +1,31 @@
+{
+  Charset charSet=wms.getCharSet();
+  OutputStreamWriter osw=new OutputStreamWriter(output,charSet);
+  PrintWriter writer=new PrintWriter(osw);
+  CoordinateReferenceSystem crs=request.getGetMapRequest().getCrs();
+  final Coordinate middle=WMS.pixelToWorld(request.getXPixel(),request.getYPixel(),new ReferencedEnvelope(request.getGetMapRequest().getBbox(),crs),request.getGetMapRequest().getWidth(),request.getGetMapRequest().getHeight());
+  if (crs instanceof ProjectedCRS) {
+    writer.println("# X: " + middle.y);
+    writer.println("# Y: " + middle.x);
+  }
+ else {
+    writer.println("# Latitude: " + middle.y);
+    writer.println("# Longitude: " + middle.x);
+  }
+  final List collections=results.getFeature();
+  if (collections.size() > 0) {
+    SimpleFeatureCollection fc=(SimpleFeatureCollection)collections.get(0);
+    writer.println("Time (UTC)," + fc.getSchema().getDescription().toString());
+    DateFormat isoFormatter=new SimpleDateFormat(ISO8601_2000_UTC_PATTERN);
+    isoFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+    try (SimpleFeatureIterator fi=fc.features()){
+      while (fi.hasNext()) {
+        SimpleFeature f=fi.next();
+        Date date=(Date)f.getAttribute("date");
+        Double value=(Double)f.getAttribute("value");
+        writer.println(isoFormatter.format(date) + "," + value);
+      }
+    }
+   }
+  writer.flush();
+}

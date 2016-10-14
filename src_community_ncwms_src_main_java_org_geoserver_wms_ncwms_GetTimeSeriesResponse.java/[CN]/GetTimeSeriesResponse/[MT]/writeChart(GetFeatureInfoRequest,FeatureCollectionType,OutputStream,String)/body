@@ -1,0 +1,30 @@
+{
+  final TimeSeries series=new TimeSeries("time",Millisecond.class);
+  String valueAxisLabel="Value";
+  String title="Time series";
+  final String timeaxisLabel="Date / time";
+  final List collections=results.getFeature();
+  if (collections.size() > 0) {
+    SimpleFeatureCollection fc=(SimpleFeatureCollection)collections.get(0);
+    title+=" of " + fc.getSchema().getName().getLocalPart();
+    valueAxisLabel=fc.getSchema().getDescription().toString();
+    try (SimpleFeatureIterator fi=fc.features()){
+      while (fi.hasNext()) {
+        SimpleFeature f=fi.next();
+        Date date=(Date)f.getAttribute("date");
+        Double value=(Double)f.getAttribute("value");
+        series.add(new Millisecond(date),value);
+      }
+    }
+   }
+  XYDataset dataset=new TimeSeriesCollection(series);
+  JFreeChart chart=ChartFactory.createTimeSeriesChart(title,timeaxisLabel,valueAxisLabel,dataset,false,false,false);
+  XYPlot plot=(XYPlot)chart.getPlot();
+  plot.setRenderer(new XYLineAndShapeRenderer());
+  if (mimeType.startsWith("image/png")) {
+    ChartUtilities.writeChartAsPNG(output,chart,IMAGE_WIDTH,IMAGE_HEIGHT);
+  }
+ else   if (mimeType.equals("image/jpg") || mimeType.equals("image/jpeg")) {
+    ChartUtilities.writeChartAsJPEG(output,chart,IMAGE_WIDTH,IMAGE_HEIGHT);
+  }
+}

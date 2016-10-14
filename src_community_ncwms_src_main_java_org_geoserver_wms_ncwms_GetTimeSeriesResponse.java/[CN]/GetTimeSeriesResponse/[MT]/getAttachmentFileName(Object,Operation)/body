@@ -1,0 +1,17 @@
+{
+  Request request=Dispatcher.REQUEST.get();
+  if (request != null && request.getRawKvp() != null && request.getRawKvp().get("QUERY_LAYERS") != null && request.getRawKvp().get("INFO_FORMAT") != null) {
+    String filename=null;
+    String layers=((String)request.getRawKvp().get("QUERY_LAYERS")).trim();
+    if (layers.length() > 0) {
+      filename=layers.replace(",","_").replace(":","-");
+      String format=(String)request.getRawKvp().get("INFO_FORMAT");
+      String[] splitted=format.split("/");
+      if (splitted.length > 0) {
+        filename=filename+="." + splitted[1];
+      }
+      return filename;
+    }
+  }
+  return super.getAttachmentFileName(value,operation);
+}

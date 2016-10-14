@@ -1,0 +1,68 @@
+{
+  FeatureCollectionType result=WfsFactory.eINSTANCE.createFeatureCollectionType();
+  WfsFactory.eINSTANCE.createFeatureCollectionType();
+  result.setTimeStamp(Calendar.getInstance());
+  if (request.getGetMapRequest().getTime() == null || request.getGetMapRequest().getTime().size() != 1) {
+    throw new ServiceException("The TIME parameter was not a valid WMS time range or was missing");
+  }
+  Object queryRangePlain=(DateRange)request.getGetMapRequest().getTime().get(0);
+  if (queryRangePlain == null || !(queryRangePlain instanceof DateRange)) {
+    throw new ServiceException("The TIME parameter was not a valid WMS time range");
+  }
+  DateRange queryRange=(DateRange)queryRangePlain;
+  final List<MapLayerInfo> requestedLayers=request.getQueryLayers();
+  if (requestedLayers.size() != 1) {
+    throw new ServiceException("The QUERY_LAYERS parameter must specify a single coverage layer for the GetTimeSeries operation");
+  }
+  final MapLayerInfo layer=requestedLayers.get(0);
+  CoverageInfo coverage;
+  try {
+    coverage=layer.getCoverage();
+  }
+ catch (  Exception cex) {
+    throw new ServiceException("The GetTimeSeries operation is only defined for coverage layers");
+  }
+  int maxRenderingTime=wms.getMaxRenderingTime(request.getGetMapRequest());
+  CountdownClock countdownClock=new CountdownClock(maxRenderingTime);
+  LayerIdentifier identifier=getLayerIdentifier(layer);
+  SimpleFeatureBuilder featureBuilder=getResultFeatureBuilder(layer.getName(),buildTypeDescription(layer));
+  try {
+    TreeSet availableDates=wms.queryCoverageTimes(coverage,queryRange,Query.DEFAULT_MAX);
+    ListFeatureCollection features=new ListFeatureCollection(featureBuilder.getFeatureType());
+    for (    Object d : availableDates) {
+      countdownClock.checkTimeout();
+      Date date=(Date)d;
+      DateRange currentDate=new DateRange(date,date);
+      request.getGetMapRequest().getTime().remove(0);
+      request.getGetMapRequest().getTime().add(currentDate);
+      FeatureInfoRequestParameters requestParams=new FeatureInfoRequestParameters(request);
+      List<FeatureCollection> identifiedCollections=identifier.identify(requestParams,1);
+      if (identifiedCollections != null) {
+        for (        FeatureCollection c : identifiedCollections) {
+          try (FeatureIterator featIter=c.features()){
+            if (featIter.hasNext()) {
+              Feature inFeat=featIter.next();
+              Iterator<Property> propIter=inFeat.getProperties().iterator();
+              if (propIter.hasNext()) {
+                Property prop=propIter.next();
+                featureBuilder.add(date);
+                featureBuilder.add(prop.getValue());
+                SimpleFeature newFeat=featureBuilder.buildFeature(null);
+                features.add(newFeat);
+              }
+            }
+          }
+         }
+      }
+    }
+    result.getFeature().add(features);
+  }
+ catch (  Exception e) {
+    throw new ServiceException("Error processing the operation",e);
+  }
+ finally {
+    request.getGetMapRequest().getTime().remove(0);
+    request.getGetMapRequest().getTime().add(queryRange);
+  }
+  return result;
+}
