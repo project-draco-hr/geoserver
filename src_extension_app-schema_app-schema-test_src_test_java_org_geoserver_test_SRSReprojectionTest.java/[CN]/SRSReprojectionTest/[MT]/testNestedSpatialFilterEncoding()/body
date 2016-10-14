@@ -1,0 +1,22 @@
+{
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName("ex","geomContainer");
+  FeatureSource fs=ftInfo.getFeatureSource(new NullProgressListener(),null);
+  AppSchemaDataAccess da=(AppSchemaDataAccess)fs.getDataStore();
+  FeatureTypeMapping rootMapping=da.getMappingByNameOrElement(ftInfo.getQualifiedName());
+  assumeTrue(shouldTestNestedFiltersEncoding(rootMapping));
+  JDBCDataStore store=(JDBCDataStore)rootMapping.getSource().getDataStore();
+  FilterFactoryImplNamespaceAware ff=new FilterFactoryImplNamespaceAware();
+  ff.setNamepaceContext(rootMapping.getNamespaces());
+  GeometryFactory factory=new GeometryFactory();
+  Polygon srcPolygon=factory.createPolygon(factory.createLinearRing(factory.getCoordinateSequenceFactory().create(new Coordinate[]{new Coordinate(-1.2,52.5),new Coordinate(-1.2,52.6),new Coordinate(-1.1,52.6),new Coordinate(-1.1,52.5),new Coordinate(-1.2,52.5)})),null);
+  Envelope bounds=srcPolygon.getEnvelopeInternal();
+  BBOX intersects=ff.bbox("ex:nestedFeature[2]/ex:nestedGeom/ex:nestedFeature/ex:nestedGeom/ex:geom",bounds.getMinX(),bounds.getMinY(),bounds.getMaxX(),bounds.getMaxY(),"EPSG:4283");
+  ComplexFilterSplitter splitter=new ComplexFilterSplitter(store.getFilterCapabilities(),rootMapping);
+  splitter.visit(intersects,null);
+  Filter preFilter=splitter.getFilterPre();
+  Filter postFilter=splitter.getFilterPost();
+  assertEquals(Filter.INCLUDE,preFilter);
+  assertEquals(intersects,postFilter);
+  Filter unrolled=AppSchemaDataAccess.unrollFilter(intersects,rootMapping);
+  assertTrue(NestedFilterToSQL.isNestedFilter(unrolled));
+}
