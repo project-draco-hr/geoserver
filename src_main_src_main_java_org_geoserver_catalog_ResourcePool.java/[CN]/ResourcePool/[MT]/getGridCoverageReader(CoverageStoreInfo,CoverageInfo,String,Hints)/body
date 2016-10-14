@@ -58,6 +58,9 @@ synchronized (hints != null ? hintCoverageReaderCache : coverageReaderCache) {
       }
     }
   }
+  if (coverageInfo == null && coverageName != null) {
+    coverageInfo=getCoverageInfo(coverageName,info);
+  }
   if (coverageInfo != null) {
     MetadataMap metadata=coverageInfo.getMetadata();
     if (metadata != null && metadata.containsKey(CoverageView.COVERAGE_VIEW)) {
@@ -66,12 +69,12 @@ synchronized (hints != null ? hintCoverageReaderCache : coverageReaderCache) {
     }
   }
   if (coverageName != null) {
-    return CoverageDimensionCustomizerReader.wrap((GridCoverage2DReader)reader,coverageName,info);
+    return CoverageDimensionCustomizerReader.wrap((GridCoverage2DReader)reader,coverageName,coverageInfo);
   }
  else {
     final int numCoverages=((GridCoverage2DReader)reader).getGridCoverageCount();
     if (numCoverages == 1) {
-      return CoverageDimensionCustomizerReader.wrap((GridCoverage2DReader)reader,null,info);
+      return CoverageDimensionCustomizerReader.wrap((GridCoverage2DReader)reader,null,coverageInfo);
     }
     return reader;
   }
