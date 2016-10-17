@@ -1,0 +1,22 @@
+{
+  if ((geom == null) || (geom.isEmpty())) {
+    return null;
+  }
+  if (geom.getGeometryType() == "GeometryCollection") {
+    return collectionClip((GeometryCollection)geom);
+  }
+  Geometry result=super._run(geom);
+  if ((result == null) || (result.isEmpty())) {
+    return null;
+  }
+  if ((geom instanceof Point) || (geom instanceof MultiPoint)) {
+    return onlyPoints(result);
+  }
+ else   if ((geom instanceof LineString) || (geom instanceof MultiLineString)) {
+    return onlyLines(result);
+  }
+ else   if ((geom instanceof Polygon) || (geom instanceof MultiPolygon)) {
+    return onlyPolygon(result);
+  }
+  return result;
+}
