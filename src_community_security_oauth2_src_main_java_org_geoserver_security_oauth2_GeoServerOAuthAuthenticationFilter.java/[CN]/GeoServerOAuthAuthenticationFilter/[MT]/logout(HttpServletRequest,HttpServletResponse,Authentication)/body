@@ -6,6 +6,12 @@
     if (accessTokenRequest != null && accessTokenRequest.getStateKey() != null) {
       restTemplate.getOAuth2ClientContext().removePreservedState(accessTokenRequest.getStateKey());
     }
+    try {
+      accessTokenRequest.remove("access_token");
+    }
+  finally {
+      LOGGER.fine("Cleaned out Session Access Token Request!");
+    }
     request.getSession().invalidate();
     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
     Cookie[] allCookies=request.getCookies();

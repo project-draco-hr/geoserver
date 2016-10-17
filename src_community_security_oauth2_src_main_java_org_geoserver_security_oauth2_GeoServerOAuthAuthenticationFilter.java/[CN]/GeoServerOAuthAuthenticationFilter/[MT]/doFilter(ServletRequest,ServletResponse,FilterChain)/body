@@ -1,8 +1,15 @@
 {
   String cacheKey=authenticateFromCache(this,(HttpServletRequest)request,(HttpServletResponse)response);
-  if (SecurityContextHolder.getContext().getAuthentication() == null) {
+  String accessToken=request.getParameter("access_token");
+  OAuth2AccessToken token=restTemplate.getOAuth2ClientContext().getAccessToken();
+  if (accessToken != null && token != null && !token.getValue().equals(accessToken)) {
+    restTemplate.getOAuth2ClientContext().setAccessToken(null);
+  }
+  final Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
+  final Collection<? extends GrantedAuthority> authorities=(authentication != null ? authentication.getAuthorities() : null);
+  if (accessToken != null || authentication == null || (authentication != null && authorities.size() == 1 && authorities.contains(GeoServerRole.ANONYMOUS_ROLE))) {
     doAuthenticate((HttpServletRequest)request,(HttpServletResponse)response);
-    Authentication postAuthentication=SecurityContextHolder.getContext().getAuthentication();
+    Authentication postAuthentication=authentication;
     if (postAuthentication != null && cacheKey != null) {
       if (cacheAuthentication(postAuthentication,(HttpServletRequest)request)) {
         getSecurityManager().getAuthenticationCache().put(getName(),cacheKey,postAuthentication);
