@@ -1,0 +1,12 @@
+{
+  LayerInfo l=getCatalog().getLayers().get(0);
+  assertFalse(l.getDefaultStyle() == buildingsStyle);
+  tester.executeAjaxEvent("styleForm:context:tabs-container:tabs:1:link","click");
+  tester.assertComponent("styleForm:context:panel:layer.table",GeoServerTablePanel.class);
+  FormTester form=tester.newFormTester("styleForm");
+  form.setValue("context:panel:layer.table:listContainer:items:1:itemProperties:2:component:default.selected",true);
+  AbstractAjaxBehavior behavior=(AbstractAjaxBehavior)WicketTesterHelper.findBehavior(tester.getComponentFromLastRenderedPage("styleForm:context:panel:layer.table:listContainer:items:1:itemProperties:2:component:default.selected"),AjaxFormComponentUpdatingBehavior.class);
+  tester.executeBehavior(behavior);
+  l=getCatalog().getLayers().get(0);
+  assertEquals(buildingsStyle,l.getDefaultStyle());
+}
