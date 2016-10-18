@@ -13,6 +13,30 @@
   StyleInfo defaultStyle=getCatalog().getStyleByName("Default");
   layer0.setDefaultStyle(defaultStyle);
   getCatalog().save(layer0);
+  Catalog catalog=getCatalog();
+  DataStoreInfo ds=catalog.getStoreByName("sf","unstore",DataStoreInfo.class);
+  if (ds == null) {
+    CatalogBuilder cb=new CatalogBuilder(catalog);
+    cb.setWorkspace(catalog.getWorkspaceByName("sf"));
+    ds=cb.buildDataStore("unstore");
+    catalog.add(ds);
+    FeatureTypeInfo ft=catalog.getFactory().createFeatureType();
+    ft.setName("unres");
+    ft.setStore(catalog.getStoreByName("unstore",DataStoreInfo.class));
+    ft.setCatalog(catalog);
+    ft.setNamespace(catalog.getNamespaceByPrefix("sf"));
+    ft.setSRS("EPSG:4326");
+    CoordinateReferenceSystem wgs84=CRS.decode("EPSG:4326");
+    ft.setNativeCRS(wgs84);
+    ft.setLatLonBoundingBox(new ReferencedEnvelope(-110,0,-60,50,wgs84));
+    ft.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+    catalog.add(ft);
+    LayerInfo ftl=catalog.getFactory().createLayer();
+    ftl.setResource(ft);
+    ftl.setName("unlayer");
+    ftl.setDefaultStyle(getCatalog().getStyleByName("Default"));
+    catalog.add(ftl);
+  }
   edit=new StyleEditPage(buildingsStyle);
   tester.startPage(edit);
 }

@@ -1,12 +1,20 @@
 {
   super(id,new Model<FeatureTypeInfo>(ft));
   this.featureTypeId=ft.getId();
-  Feature sample=getSampleFeature(ft);
-  DataAttributesProvider summaries=new DataAttributesProvider(sample);
   add(new Label("summary-message","For reference, here is a listing of the attributes in this data set."));
   final WebMarkupContainer attsContainer=new WebMarkupContainer("attributes-container");
   attsContainer.setOutputMarkupId(true);
   add(attsContainer);
+  Feature sample;
+  try {
+    sample=getSampleFeature(ft);
+  }
+ catch (  Exception e) {
+    attsContainer.error("Failed to load attribute list, internal error is: " + e.getMessage());
+    attsContainer.add(new EmptyPanel("attributes"));
+    return;
+  }
+  DataAttributesProvider summaries=new DataAttributesProvider(sample);
   final GeoServerTablePanel<DataAttribute> attributes=new GeoServerTablePanel<DataAttribute>("attributes",summaries){
     private static final long serialVersionUID=7753093373969576568L;
     @Override protected Component getComponentForProperty(    String id,    final IModel<DataAttribute> itemModel,    Property<DataAttribute> property){
