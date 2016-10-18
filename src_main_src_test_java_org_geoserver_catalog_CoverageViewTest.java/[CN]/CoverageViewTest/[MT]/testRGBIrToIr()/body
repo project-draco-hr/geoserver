@@ -1,0 +1,22 @@
+{
+  Catalog cat=getCatalog();
+  CoverageInfo coverageInfo=cat.getCoverageByName(RGB_IR_VIEW);
+  final ResourcePool rp=cat.getResourcePool();
+  GridCoverageReader reader=rp.getGridCoverageReader(coverageInfo,RGB_IR_VIEW,null);
+  GeneralParameterValue[] params=buildFootprintBandParams(FootprintBehavior.None,new int[]{3});
+  GridCoverage solidCoverage=reader.read(RGB_IR_VIEW,params);
+  try {
+    assertBandNames(solidCoverage,"Infrared");
+  }
+  finally {
+    ((GridCoverage2D)solidCoverage).dispose(true);
+  }
+  params=buildFootprintBandParams(FootprintBehavior.Transparent,new int[]{3});
+  GridCoverage txCoverage=reader.read(RGB_IR_VIEW,params);
+  try {
+    assertBandNames(txCoverage,"Infrared","ALPHA_BAND");
+  }
+  finally {
+    ((GridCoverage2D)solidCoverage).dispose(true);
+  }
+}

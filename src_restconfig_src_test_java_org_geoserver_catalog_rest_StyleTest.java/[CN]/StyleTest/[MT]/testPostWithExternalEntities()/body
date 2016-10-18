@@ -1,0 +1,9 @@
+{
+  URL zip=getClass().getResource("test-data/externalEntities.zip");
+  byte[] bytes=FileUtils.readFileToByteArray(DataUtilities.urlToFile(zip));
+  MockHttpServletResponse response=postAsServletResponse("/rest/workspaces/gs/styles",bytes,"application/zip");
+  assertEquals(400,response.getStatus());
+  final String content=response.getContentAsString();
+  assertThat(content,containsString("Entity resolution disallowed"));
+  assertThat(content,containsString("/this/file/does/not/exist"));
+}

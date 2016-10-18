@@ -1,0 +1,18 @@
+{
+  final Catalog catalog=getCatalog();
+  final CatalogBuilder cb=new CatalogBuilder(catalog);
+  cb.setStore(catalog.getStoreByName(MockData.POLYGONS.getPrefix(),DataStoreInfo.class));
+  FeatureTypeInfo ft=cb.buildFeatureType(new NameImpl(MockData.POLYGONS));
+  LayerInfo layer=cb.buildLayer(ft);
+  login();
+  ResourceConfigurationPage page=new ResourceConfigurationPage(layer,true);
+  tester.startPage(page);
+  tester.executeAjaxEvent("publishedinfo:tabs:panel:theList:0:content:referencingForm:computeLatLon","onclick");
+  tester.assertNoErrorMessage();
+  Component llbox=tester.getComponentFromLastRenderedPage("publishedinfo:tabs:panel:theList:0:content:referencingForm:latLonBoundingBox");
+  ReferencedEnvelope re=(ReferencedEnvelope)llbox.getDefaultModelObject();
+  assertEquals(-93,re.getMinX(),0.1);
+  assertEquals(4.5,re.getMinY(),0.1);
+  assertEquals(-93,re.getMaxX(),0.1);
+  assertEquals(4.5,re.getMaxY(),0.1);
+}

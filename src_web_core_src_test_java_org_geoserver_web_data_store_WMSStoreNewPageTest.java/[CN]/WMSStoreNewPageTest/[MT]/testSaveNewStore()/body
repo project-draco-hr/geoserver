@@ -1,0 +1,22 @@
+{
+  WMSStoreNewPage page=startPage();
+  assertNull(page.getDefaultModelObject());
+  final Catalog catalog=getCatalog();
+  WMSStoreInfo info=catalog.getFactory().createWebMapServer();
+  info.setName("foo");
+  tester.assertNoErrorMessage();
+  FormTester form=tester.newFormTester("form");
+  form.select("workspacePanel:border:border_body:paramValue",4);
+  Component wsDropDown=tester.getComponentFromLastRenderedPage("form:workspacePanel:border:border_body:paramValue");
+  tester.executeAjaxEvent(wsDropDown,"change");
+  form.setValue("namePanel:border:border_body:paramValue","foo");
+  form.setValue("capabilitiesURL:border:border_body:paramValue","http://foo");
+  tester.clickLink("form:save",true);
+  tester.assertErrorMessages("Connection test failed: foo");
+  catalog.save(info);
+  assertNotNull(info.getId());
+  WMSStoreInfo expandedStore=catalog.getResourcePool().clone(info,true);
+  assertNotNull(expandedStore.getId());
+  assertNotNull(expandedStore.getCatalog());
+  catalog.validate(expandedStore,false).throwIfInvalid();
+}

@@ -1,0 +1,23 @@
+{
+  FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName("gsml","MappedFeature");
+  FeatureSource fs=ftInfo.getFeatureSource(new NullProgressListener(),null);
+  AppSchemaDataAccess da=(AppSchemaDataAccess)fs.getDataStore();
+  FeatureTypeMapping rootMapping=da.getMappingByNameOrElement(ftInfo.getQualifiedName());
+  assumeTrue(shouldTestNestedFiltersEncoding(rootMapping));
+  JDBCDataStore store=(JDBCDataStore)rootMapping.getSource().getDataStore();
+  NestedFilterToSQL nestedFilterToSQL=createNestedFilterEncoder(rootMapping);
+  FilterFactoryImplNamespaceAware ff=new FilterFactoryImplNamespaceAware();
+  ff.setNamepaceContext(rootMapping.getNamespaces());
+  PropertyIsEqualTo nestedIdFilter=ff.equals(ff.property("gsml:specification/gsml:GeologicUnit/gsml:composition/gsml:CompositionPart/gsml:lithology/gsml:ControlledConcept/@gml:id"),ff.literal("cc.1"));
+  ComplexFilterSplitter splitter=new ComplexFilterSplitter(store.getFilterCapabilities(),rootMapping);
+  splitter.visit(nestedIdFilter,null);
+  Filter preFilter=splitter.getFilterPre();
+  Filter postFilter=splitter.getFilterPost();
+  assertEquals(nestedIdFilter,preFilter);
+  assertEquals(Filter.INCLUDE,postFilter);
+  Filter unrolled=AppSchemaDataAccess.unrollFilter(nestedIdFilter,rootMapping);
+  assertTrue(NestedFilterToSQL.isNestedFilter(unrolled));
+  String encodedFilter=nestedFilterToSQL.encodeToString(unrolled);
+  assertTrue(encodedFilter.matches("^EXISTS.*SELECT.*FROM.*INNER JOIN.*INNER JOIN.*WHERE.*$"));
+  assertContainsFeatures(fs.getFeatures(nestedIdFilter),"mf4");
+}

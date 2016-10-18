@@ -1,0 +1,19 @@
+{
+  super.onSetUp(testData);
+  final Catalog cat=getCatalog();
+  final CoverageStoreInfo storeInfo=cat.getCoverageStoreByName("ir-rgb");
+  final CoverageBand rBand=new CoverageBand(Arrays.asList(new InputCoverageBand("rgb","0")),"rband",0,CompositionType.BAND_SELECT);
+  final CoverageBand gBand=new CoverageBand(Arrays.asList(new InputCoverageBand("rgb","1")),"gband",1,CompositionType.BAND_SELECT);
+  final CoverageBand bBand=new CoverageBand(Arrays.asList(new InputCoverageBand("rgb","2")),"bband",2,CompositionType.BAND_SELECT);
+  final CoverageBand irBand=new CoverageBand(Collections.singletonList(new InputCoverageBand("ir","0")),"irband",3,CompositionType.BAND_SELECT);
+  final CoverageView coverageView=new CoverageView(RGB_IR_VIEW,Arrays.asList(rBand,gBand,bBand,irBand));
+  final CatalogBuilder builder=new CatalogBuilder(cat);
+  builder.setStore(storeInfo);
+  final CoverageInfo coverageInfo=coverageView.createCoverageInfo(RGB_IR_VIEW,storeInfo,builder);
+  coverageInfo.getParameters().put("USE_JAI_IMAGEREAD","false");
+  coverageInfo.getDimensions().get(0).setName("Red");
+  coverageInfo.getDimensions().get(1).setName("Green");
+  coverageInfo.getDimensions().get(2).setName("Blue");
+  coverageInfo.getDimensions().get(3).setName("Infrared");
+  cat.add(coverageInfo);
+}

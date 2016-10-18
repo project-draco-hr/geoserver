@@ -4,6 +4,10 @@
   try {
     is=new FileInputStream(sldFile);
     SLDParser parser=new SLDParser(CommonFactoryFinder.getStyleFactory(null),is);
+    EntityResolver resolver=catalog.getResourcePool().getEntityResolver();
+    if (resolver != null) {
+      parser.setEntityResolver(resolver);
+    }
     Style[] styles=parser.readXML();
     if (styles.length > 0) {
       style=styles[0];
@@ -15,7 +19,7 @@
   }
  catch (  Exception ex) {
     LOGGER.severe(ex.getMessage());
-    throw new RestletException("Style error.",Status.CLIENT_ERROR_BAD_REQUEST);
+    throw new RestletException("Style error. " + ex.getMessage(),Status.CLIENT_ERROR_BAD_REQUEST);
   }
  finally {
     IOUtils.closeQuietly(is);

@@ -1,0 +1,20 @@
+{
+  DataAccess<?,?> source=mapping.getSource().getDataStore();
+  if (!(source instanceof JDBCDataStore)) {
+    throw new IllegalArgumentException("nested filters encoding requires the source datastore be a JDBCDataStore");
+  }
+  JDBCDataStore store=(JDBCDataStore)source;
+  SQLDialect dialect=store.getSQLDialect();
+  FilterToSQL original=null;
+  if (dialect instanceof BasicSQLDialect) {
+    original=((BasicSQLDialect)dialect).createFilterToSQL();
+  }
+ else   if (dialect instanceof PreparedStatementSQLDialect) {
+    original=((PreparedStatementSQLDialect)dialect).createPreparedFilterToSQL();
+    ((PreparedFilterToSQL)original).setPrepareEnabled(false);
+  }
+  original.setFeatureType((SimpleFeatureType)mapping.getSource().getSchema());
+  NestedFilterToSQL nestedFilterToSQL=new NestedFilterToSQL(mapping,original);
+  nestedFilterToSQL.setInline(true);
+  return nestedFilterToSQL;
+}

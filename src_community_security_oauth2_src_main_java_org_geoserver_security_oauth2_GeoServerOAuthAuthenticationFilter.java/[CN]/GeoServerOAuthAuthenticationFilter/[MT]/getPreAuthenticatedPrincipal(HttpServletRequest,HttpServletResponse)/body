@@ -1,0 +1,37 @@
+{
+  configureRestTemplate();
+  if (req.getAttribute(UserNameAlreadyRetrieved) != null)   return (String)req.getAttribute(UserName);
+  String accessToken=req.getParameter("access_token");
+  if (accessToken != null) {
+    restTemplate.getOAuth2ClientContext().setAccessToken(new DefaultOAuth2AccessToken(accessToken));
+  }
+  filter.setRestTemplate(restTemplate);
+  filter.setTokenServices(tokenServices);
+  Authentication authentication=null;
+  try {
+    authentication=filter.attemptAuthentication(req,null);
+  }
+ catch (  Exception e) {
+    if (e instanceof UserRedirectRequiredException) {
+      this.aep.commence(req,resp,null);
+    }
+  }
+  String principal=(authentication != null ? (String)authentication.getPrincipal() : null);
+  if (principal != null && principal.trim().length() == 0)   principal=null;
+  try {
+    if (principal != null && PreAuthenticatedUserNameRoleSource.UserGroupService.equals(getRoleSource())) {
+      GeoServerUserGroupService service=getSecurityManager().loadUserGroupService(getUserGroupServiceName());
+      GeoServerUser u=service.getUserByUsername(principal);
+      if (u != null && u.isEnabled() == false) {
+        principal=null;
+        handleDisabledUser(u,req);
+      }
+    }
+  }
+ catch (  IOException ex) {
+    throw new RuntimeException(ex);
+  }
+  req.setAttribute(UserNameAlreadyRetrieved,Boolean.TRUE);
+  if (principal != null)   req.setAttribute(UserName,principal);
+  return principal;
+}

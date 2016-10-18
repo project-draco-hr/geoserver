@@ -48,6 +48,17 @@ synchronized (dataStoreCache) {
               }
             }
           }
+          EntityResolver resolver=getEntityResolver();
+          if (resolver != null && params != null) {
+            for (            Param p : params) {
+              if (EntityResolver.class.equals(p.getType())) {
+                if (!(resolver instanceof Serializable)) {
+                  resolver=new SerializableEntityResolver(resolver);
+                }
+                connectionParameters.put(p.getName(),(Serializable)resolver);
+              }
+            }
+          }
           dataStore=DataStoreUtils.getDataAccess(connectionParameters);
           if (dataStore == null) {
             dataStore=DataAccessFinder.getDataStore(connectionParameters);

@@ -1,0 +1,12 @@
+{
+  return new AuthenticationEntryPoint(){
+    @Override public void commence(    HttpServletRequest request,    HttpServletResponse response,    AuthenticationException authException) throws IOException, ServletException {
+      final StringBuilder loginUri=new StringBuilder(getUserAuthorizationUri());
+      loginUri.append("?").append("response_type=code").append("&").append("client_id=").append(getCliendId()).append("&").append("scope=").append(getScopes().replace(",","%20")).append("&").append("redirect_uri=").append(getRedirectUri());
+      if (getEnableRedirectAuthenticationEntryPoint() || request.getRequestURI().endsWith(getLoginEndpoint())) {
+        response.sendRedirect(loginUri.toString());
+      }
+    }
+  }
+;
+}

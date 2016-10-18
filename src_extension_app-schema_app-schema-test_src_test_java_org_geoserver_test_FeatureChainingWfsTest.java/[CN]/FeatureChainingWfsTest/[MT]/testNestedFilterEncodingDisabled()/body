@@ -1,0 +1,28 @@
+{
+  AppSchemaDataAccessRegistry.getAppSchemaProperties().setProperty(AppSchemaDataAccessConfigurator.PROPERTY_ENCODE_NESTED_FILTERS,"false");
+  try {
+    assertFalse(AppSchemaDataAccessConfigurator.shouldEncodeNestedFilters());
+    FeatureTypeInfo ftInfo=getCatalog().getFeatureTypeByName("gsml","MappedFeature");
+    FeatureSource fs=ftInfo.getFeatureSource(new NullProgressListener(),null);
+    AppSchemaDataAccess da=(AppSchemaDataAccess)fs.getDataStore();
+    FeatureTypeMapping rootMapping=da.getMappingByNameOrElement(ftInfo.getQualifiedName());
+    assumeTrue(rootMapping.getSource().getDataStore() instanceof JDBCDataStore);
+    JDBCDataStore store=(JDBCDataStore)rootMapping.getSource().getDataStore();
+    NestedFilterToSQL nestedFilterToSQL=createNestedFilterEncoder(rootMapping);
+    FilterFactoryImplNamespaceAware ff=new FilterFactoryImplNamespaceAware();
+    ff.setNamepaceContext(rootMapping.getNamespaces());
+    PropertyIsLike like=ff.like(ff.property("gsml:specification/gsml:GeologicUnit/gml:description"),"*sedimentary*");
+    ComplexFilterSplitter splitterLike=new ComplexFilterSplitter(store.getFilterCapabilities(),rootMapping);
+    splitterLike.visit(like,null);
+    Filter preFilter=splitterLike.getFilterPre();
+    Filter postFilter=splitterLike.getFilterPost();
+    assertEquals(Filter.INCLUDE,preFilter);
+    assertEquals(like,postFilter);
+    Filter unrolled=AppSchemaDataAccess.unrollFilter(like,rootMapping);
+    assertTrue(NestedFilterToSQL.isNestedFilter(unrolled));
+    assertContainsFeatures(fs.getFeatures(like),"mf1","mf2","mf3");
+  }
+  finally {
+    AppSchemaDataAccessRegistry.getAppSchemaProperties().setProperty(AppSchemaDataAccessConfigurator.PROPERTY_ENCODE_NESTED_FILTERS,"true");
+  }
+}
