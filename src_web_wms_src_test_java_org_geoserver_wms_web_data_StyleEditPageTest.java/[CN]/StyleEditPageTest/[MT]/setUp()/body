@@ -1,19 +1,19 @@
 {
+  Catalog catalog=getCatalog();
   login();
-  buildingsStyle=getCatalog().getStyleByName(MockData.BUILDINGS.getLocalPart());
+  buildingsStyle=catalog.getStyleByName(MockData.BUILDINGS.getLocalPart());
   if (buildingsStyle == null) {
-    StyleInfo si=getCatalog().getStyleByName("BuildingsNew");
+    StyleInfo si=catalog.getStyleByName("BuildingsNew");
     if (si != null) {
       si.setName(MockData.BUILDINGS.getLocalPart());
-      getCatalog().save(si);
+      catalog.save(si);
     }
-    buildingsStyle=getCatalog().getStyleByName(MockData.BUILDINGS.getLocalPart());
+    buildingsStyle=catalog.getStyleByName(MockData.BUILDINGS.getLocalPart());
   }
-  LayerInfo layer0=getCatalog().getLayers().get(0);
-  StyleInfo defaultStyle=getCatalog().getStyleByName("Default");
+  LayerInfo layer0=catalog.getLayers().get(0);
+  StyleInfo defaultStyle=catalog.getStyleByName("Default");
   layer0.setDefaultStyle(defaultStyle);
-  getCatalog().save(layer0);
-  Catalog catalog=getCatalog();
+  catalog.save(layer0);
   DataStoreInfo ds=catalog.getStoreByName("sf","unstore",DataStoreInfo.class);
   if (ds == null) {
     CatalogBuilder cb=new CatalogBuilder(catalog);
@@ -36,6 +36,31 @@
     ftl.setName("unlayer");
     ftl.setDefaultStyle(getCatalog().getStyleByName("Default"));
     catalog.add(ftl);
+  }
+  WMSStoreInfo wms=catalog.getStoreByName("sf","wmsstore",WMSStoreInfo.class);
+  if (wms == null) {
+    CatalogBuilder cb=new CatalogBuilder(catalog);
+    cb.setWorkspace(catalog.getWorkspaceByName("sf"));
+    wms=cb.buildWMSStore("wmsstore");
+    wms.setCapabilitiesURL("http://demo.opengeo.org/geoserver/wms?");
+    catalog.add(wms);
+    WMSLayerInfo wmr=catalog.getFactory().createWMSLayer();
+    wmr.setName("states");
+    wmr.setNativeName("topp:states");
+    wmr.setStore(catalog.getStoreByName("wmsstore",WMSStoreInfo.class));
+    wmr.setCatalog(catalog);
+    wmr.setNamespace(catalog.getNamespaceByPrefix("sf"));
+    wmr.setSRS("EPSG:4326");
+    CoordinateReferenceSystem wgs84=CRS.decode("EPSG:4326");
+    wmr.setNativeCRS(wgs84);
+    wmr.setLatLonBoundingBox(new ReferencedEnvelope(-110,0,-60,50,wgs84));
+    wmr.setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
+    catalog.add(wmr);
+    LayerInfo wml=catalog.getFactory().createLayer();
+    wml.setResource(wmr);
+    wml.setName("states");
+    wml.setDefaultStyle(getCatalog().getStyleByName("Default"));
+    catalog.add(wml);
   }
   edit=new StyleEditPage(buildingsStyle);
   tester.startPage(edit);
