@@ -1,0 +1,16 @@
+{
+  Catalog catalog=getCatalog();
+  StoreInfo store=catalog.getStoreByName("cdf",DataStoreInfo.class);
+  try {
+    store.setEnabled(false);
+    catalog.save(store);
+    Document doc=getAsDOM("wfs?service=WFS&version=1.0.0&request=GetFeature&typename=cdf:Fifteen");
+    XMLAssert.assertXpathEvaluatesTo("1","count(//ogc:ServiceException)",doc);
+    XMLAssert.assertXpathEvaluatesTo("InvalidParameterValue","//ogc:ServiceException/@code",doc);
+    XMLAssert.assertXpathEvaluatesTo("typeName","//ogc:ServiceException/@locator",doc);
+  }
+  finally {
+    store.setEnabled(true);
+    catalog.save(store);
+  }
+}
