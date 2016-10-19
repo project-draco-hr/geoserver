@@ -1,0 +1,21 @@
+{
+  confgiureFilter(PreAuthenticatedUserNameRoleSource.UserGroupService);
+  MockHttpServletRequest request=createRequest("/foo/bar");
+  MockHttpServletResponse response=new MockHttpServletResponse();
+  MockFilterChain chain=new MockFilterChain();
+  getProxy().doFilter(request,response,chain);
+  String encodedResponseMessage=buildSAMLRespons("abc@xyz.com");
+  request=createRequest(SAMLProcessingFilter.FILTER_URL);
+  request.setMethod("POST");
+  request.addParameter("SAMLResponse",encodedResponseMessage);
+  chain=new MockFilterChain();
+  response=new MockHttpServletResponse();
+  getProxy().doFilter(request,response,chain);
+  SecurityContext ctx=(SecurityContext)request.getSession(false).getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+  assertNotNull(ctx);
+  Authentication auth=ctx.getAuthentication();
+  assertNotNull(auth);
+  assertNull(SecurityContextHolder.getContext().getAuthentication());
+  checkForAuthenticatedRole(auth);
+  assertEquals("abc@xyz.com",auth.getPrincipal());
+}

@@ -1,0 +1,20 @@
+{
+  try {
+    String oneloginFilterName="testOneloginFilter";
+    if (config == null) {
+      config=new OneloginAuthenticationFilterConfig();
+      config.setWantAssertionSigned(false);
+      config.setClassName(OneloginAuthenticationFilter.class.getName());
+      config.setName(oneloginFilterName);
+      config.setEntityId("geoserver");
+      config.setMetadataURL("https://localhost:" + idpSamlService.httpsPort() + METADATA_URL);
+    }
+    config.setUserGroupServiceName(serviceType == PreAuthenticatedUserNameRoleSource.RoleService ? "rs1" : "ug1");
+    config.setRoleSource(serviceType);
+    getSecurityManager().saveFilter(config);
+    prepareFilterChain(pattern,oneloginFilterName);
+    modifyChain(pattern,false,true,null);
+  }
+ catch (  Exception e) {
+  }
+}

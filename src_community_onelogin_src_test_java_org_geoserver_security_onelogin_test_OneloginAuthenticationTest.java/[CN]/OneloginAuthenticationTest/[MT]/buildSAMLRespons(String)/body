@@ -1,0 +1,40 @@
+{
+  DateTime now=new DateTime();
+  String xml=IOUtils.toString(this.getClass().getResourceAsStream("/__files/response.xml"),"UTF-8");
+  DocumentBuilderFactory domFactory=DocumentBuilderFactory.newInstance();
+  Document doc=domFactory.newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream(xml.getBytes("utf-8"))));
+  XPath xpath=XPathFactory.newInstance().newXPath();
+  NodeList nodes=(NodeList)xpath.evaluate("//@IssueInstant",doc,XPathConstants.NODESET);
+  for (int idx=0; idx < nodes.getLength(); idx++) {
+    Node value=nodes.item(idx);
+    value.setNodeValue(now.toString("yyyy-MM-dd'T'HH:mm:ssZ"));
+  }
+  nodes=(NodeList)xpath.evaluate("//@NotOnOrAfter",doc,XPathConstants.NODESET);
+  for (int idx=0; idx < nodes.getLength(); idx++) {
+    Node value=nodes.item(idx);
+    value.setNodeValue(now.toString("yyyy-MM-dd'T'HH:mm:ssZ"));
+  }
+  nodes=(NodeList)xpath.evaluate("//@NotBefore",doc,XPathConstants.NODESET);
+  for (int idx=0; idx < nodes.getLength(); idx++) {
+    Node value=nodes.item(idx);
+    value.setNodeValue(now.toString("yyyy-MM-dd'T'HH:mm:ssZ"));
+  }
+  nodes=(NodeList)xpath.evaluate("//@AuthnInstant",doc,XPathConstants.NODESET);
+  for (int idx=0; idx < nodes.getLength(); idx++) {
+    Node value=nodes.item(idx);
+    value.setNodeValue(now.toString("yyyy-MM-dd'T'HH:mm:ssZ"));
+  }
+  nodes=(NodeList)xpath.evaluate("//@SessionNotOnOrAfter",doc,XPathConstants.NODESET);
+  for (int idx=0; idx < nodes.getLength(); idx++) {
+    Node value=nodes.item(idx);
+    value.setNodeValue(now.plusDays(1).toString("yyyy-MM-dd'T'HH:mm:ssZ"));
+  }
+  Node node=(Node)xpath.evaluate("//*[local-name() = 'NameID']/text()",doc,XPathConstants.NODE);
+  node.setNodeValue(username);
+  Transformer xformer=TransformerFactory.newInstance().newTransformer();
+  StringWriter writer=new StringWriter();
+  xformer.transform(new DOMSource(doc),new StreamResult(writer));
+  String output=writer.getBuffer().toString();
+  String encodedResponseMessage=Base64.encodeBytes(output.getBytes("UTF-8"),Base64.DONT_BREAK_LINES).trim();
+  return encodedResponseMessage;
+}
