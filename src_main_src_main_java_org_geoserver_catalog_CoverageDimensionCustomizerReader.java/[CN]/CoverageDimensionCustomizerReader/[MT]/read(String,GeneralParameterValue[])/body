@@ -7,9 +7,22 @@
   final SampleDimension[] dims=coverage.getSampleDimensions();
   GridSampleDimension[] wrappedDims=null;
   if (info != null) {
-    List<CoverageDimensionInfo> storedDimensions=info.getDimensions();
+    List<CoverageDimensionInfo> dimensions=info.getDimensions();
+    if (dimensions == null || dimensions.isEmpty()) {
+      MetadataMap map=info.getMetadata();
+      if (map.containsKey(CoverageView.COVERAGE_VIEW)) {
+        CoverageView coverageView=(CoverageView)map.get(CoverageView.COVERAGE_VIEW);
+        dimensions=new ArrayList<>();
+        List<CoverageBand> coverageBands=coverageView.getCoverageBands();
+        for (        CoverageBand band : coverageBands) {
+          CoverageDimensionInfo dimensionInfo=new CoverageDimensionImpl();
+          dimensionInfo.setName(band.getDefinition());
+          dimensions.add(dimensionInfo);
+        }
+      }
+    }
     int[] selectedBandIndexes=getSelectedBandIndexes(parameters);
-    wrappedDims=wrapDimensions(dims,storedDimensions,selectedBandIndexes);
+    wrappedDims=wrapDimensions(dims,dimensions,selectedBandIndexes);
   }
   NoDataContainer noDataProperty=CoverageUtilities.getNoDataProperty(coverage);
   if (wrappedDims == null) {
