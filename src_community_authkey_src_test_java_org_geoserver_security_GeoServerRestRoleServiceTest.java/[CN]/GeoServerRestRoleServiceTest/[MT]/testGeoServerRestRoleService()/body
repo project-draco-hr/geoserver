@@ -1,0 +1,22 @@
+{
+  GeoServerRestRoleServiceConfig roleServiceconfig=new GeoServerRestRoleServiceConfig();
+  roleServiceconfig.setBaseUrl(uri);
+  GeoServerRestRoleService roleService=new GeoServerRestRoleService(roleServiceconfig);
+  roleService.setRestTemplate(template);
+  final SortedSet<GeoServerRole> roles=roleService.getRoles();
+  final GeoServerRole adminRole=roleService.getAdminRole();
+  final SortedSet<GeoServerRole> testUserRoles=roleService.getRolesForUser("test");
+  final SortedSet<GeoServerRole> testUserEmailRoles=roleService.getRolesForUser("test@geoserver.org");
+  final SortedSet<GeoServerRole> adminUserRoles=roleService.getRolesForUser("admin");
+  assertNotNull(roles);
+  assertNotNull(adminRole);
+  assertNotNull(testUserRoles);
+  assertNotNull(testUserEmailRoles);
+  assertNotNull(adminUserRoles);
+  assertEquals(3,roles.size());
+  assertEquals("ROLE_ADMIN",adminRole.getAuthority());
+  assertEquals(testUserEmailRoles.size(),testUserRoles.size());
+  assertTrue(!testUserRoles.contains(GeoServerRole.ADMIN_ROLE));
+  assertTrue(!testUserRoles.contains(adminRole));
+  assertTrue(adminUserRoles.contains(GeoServerRole.ADMIN_ROLE));
+}

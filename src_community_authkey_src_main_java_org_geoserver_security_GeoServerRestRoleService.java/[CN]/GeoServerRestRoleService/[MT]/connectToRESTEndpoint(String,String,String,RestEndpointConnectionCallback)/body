@@ -1,0 +1,44 @@
+{
+  ClientHttpRequest clientRequest=null;
+  ClientHttpResponse clientResponse=null;
+  try {
+    final URI baseURI=new URI(roleRESTBaseURL);
+    URL url=baseURI.resolve(roleRESTEndpoint).toURL();
+    clientRequest=getRestTemplate().getRequestFactory().createRequest(url.toURI(),HttpMethod.GET);
+    clientResponse=clientRequest.execute();
+    int status=clientResponse.getRawStatusCode();
+switch (status) {
+case 200:
+case 201:
+      BufferedReader br=new BufferedReader(new InputStreamReader(clientResponse.getBody()));
+    StringBuilder sb=new StringBuilder();
+  String line;
+while ((line=br.readLine()) != null) {
+  sb.append(line + "\n");
+}
+br.close();
+String json=sb.toString();
+return callback.executeWithContext(json);
+}
+}
+ catch (MalformedURLException ex) {
+Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+}
+catch (IOException ex) {
+Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+}
+catch (URISyntaxException ex) {
+Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+}
+ finally {
+if (clientResponse != null) {
+try {
+clientResponse.close();
+}
+ catch (Exception ex) {
+Logger.getLogger(getClass().getName()).log(Level.SEVERE,null,ex);
+}
+}
+}
+return null;
+}

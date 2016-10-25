@@ -1,0 +1,32 @@
+{
+  if (role.startsWith(rolePrefix)) {
+    role=role.substring(rolePrefix.length());
+  }
+  final String roleName=role;
+  try {
+    return (GeoServerRole)connectToRESTEndpoint(restRoleServiceConfig.getBaseUrl(),restRoleServiceConfig.getRolesRESTEndpoint(),restRoleServiceConfig.getRolesJSONPath(),new RestEndpointConnectionCallback(){
+      @Override public Object executeWithContext(      String json) throws Exception {
+        try {
+          List<String> rolesString=JsonPath.read(json,restRoleServiceConfig.getRolesJSONPath());
+          for (          String targetRole : rolesString) {
+            if (targetRole.startsWith(rolePrefix)) {
+              targetRole=targetRole.substring(rolePrefix.length());
+            }
+            if (roleName.equalsIgnoreCase(targetRole)) {
+              return createRoleObject(roleName);
+            }
+          }
+        }
+ catch (        PathNotFoundException ex) {
+          Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+        }
+        return null;
+      }
+    }
+);
+  }
+ catch (  Exception ex) {
+    Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+  }
+  return null;
+}

@@ -1,0 +1,33 @@
+{
+  final SortedSet<GeoServerRole> roles=new TreeSet<GeoServerRole>();
+  try {
+    return (SortedSet<GeoServerRole>)connectToRESTEndpoint(restRoleServiceConfig.getBaseUrl(),restRoleServiceConfig.getUsersRESTEndpoint() + "/" + username,restRoleServiceConfig.getUsersJSONPath(),new RestEndpointConnectionCallback(){
+      @Override public Object executeWithContext(      String json) throws Exception {
+        try {
+          List<String> rolesString=JsonPath.read(json,restRoleServiceConfig.getUsersJSONPath());
+          for (          String role : rolesString) {
+            if (role.startsWith(rolePrefix)) {
+              role=role.substring(rolePrefix.length());
+            }
+            roles.add(createRoleObject(role));
+          }
+        }
+ catch (        PathNotFoundException ex) {
+          Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+          roles.clear();
+          roles.add(GeoServerRole.AUTHENTICATED_ROLE);
+        }
+        SortedSet<GeoServerRole> finalRoles=Collections.unmodifiableSortedSet(fixGeoServerRoles(roles));
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Setting ROLES for User [" + username + "] to "+ finalRoles);
+        }
+        return finalRoles;
+      }
+    }
+);
+  }
+ catch (  Exception ex) {
+    Logger.getLogger(getClass().getName()).log(Level.WARNING,null,ex);
+  }
+  return Collections.unmodifiableSortedSet(roles);
+}
