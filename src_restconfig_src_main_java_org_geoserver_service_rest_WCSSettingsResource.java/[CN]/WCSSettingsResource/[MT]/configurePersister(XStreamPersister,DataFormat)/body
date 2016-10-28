@@ -1,4 +1,22 @@
 {
   persister.setHideFeatureTypeAttributes();
+  persister.setCallback(new XStreamPersister.Callback(){
+    @Override protected ServiceInfo getServiceObject(){
+      String workspace=getAttribute("workspace");
+      ServiceInfo service;
+      if (workspace != null) {
+        WorkspaceInfo ws=geoServer.getCatalog().getWorkspaceByName(workspace);
+        service=geoServer.getService(ws,WCSInfo.class);
+      }
+ else {
+        service=geoServer.getService(WCSInfo.class);
+      }
+      return service;
+    }
+    @Override protected Class<WCSInfo> getObjectClass(){
+      return WCSInfo.class;
+    }
+  }
+);
   WCSXStreamLoader.initXStreamPersister(persister);
 }

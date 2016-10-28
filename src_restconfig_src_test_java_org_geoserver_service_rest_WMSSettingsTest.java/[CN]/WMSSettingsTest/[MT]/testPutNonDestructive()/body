@@ -1,0 +1,14 @@
+{
+  GeoServer geoServer=getGeoServer();
+  WMSInfo i=geoServer.getService(WMSInfo.class);
+  i.setEnabled(true);
+  geoServer.save(i);
+  String xml="<wms>" + "<id>wms</id>" + "<name>WMS</name><title>GeoServer Web Map Service</title>"+ "<maintainer>http://geoserver.org/comm</maintainer>"+ "</wms>";
+  MockHttpServletResponse response=putAsServletResponse("/rest/services/wms/settings",xml,"text/xml");
+  assertEquals(200,response.getStatus());
+  Document dom=getAsDOM("/rest/services/wms/settings.xml");
+  assertXpathEvaluatesTo("true","/wms/enabled",dom);
+  assertXpathEvaluatesTo("WMS","/wms/name",dom);
+  i=geoServer.getService(WMSInfo.class);
+  assertTrue(i.isEnabled());
+}
