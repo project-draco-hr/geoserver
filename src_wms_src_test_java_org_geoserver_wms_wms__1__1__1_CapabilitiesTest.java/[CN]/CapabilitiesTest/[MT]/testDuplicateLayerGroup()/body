@@ -1,0 +1,15 @@
+{
+  Catalog catalog=getCatalog();
+  LayerInfo lakes=catalog.getLayerByName(getLayerId(MockData.LAKES));
+  lakes.setAdvertised(false);
+  catalog.save(lakes);
+  try {
+    Document doc=getAsDOM("wms?service=WMS&request=getCapabilities&version=1.1.1",true);
+    assertXpathEvaluatesTo("1","count(//Layer[Title='containerGroup']/Layer[Name='nature'])",doc);
+    assertXpathEvaluatesTo("1","count(//Layer[Name='nature'])",doc);
+  }
+  finally {
+    lakes.setAdvertised(true);
+    catalog.save(lakes);
+  }
+}
