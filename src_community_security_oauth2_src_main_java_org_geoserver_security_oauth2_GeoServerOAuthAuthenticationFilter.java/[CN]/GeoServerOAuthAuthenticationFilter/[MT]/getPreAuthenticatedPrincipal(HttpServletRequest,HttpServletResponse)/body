@@ -1,6 +1,5 @@
 {
   configureRestTemplate();
-  if (req.getAttribute(UserNameAlreadyRetrieved) != null)   return (String)req.getAttribute(UserName);
   String accessToken=req.getParameter("access_token");
   if (accessToken != null) {
     restTemplate.getOAuth2ClientContext().setAccessToken(new DefaultOAuth2AccessToken(accessToken));
@@ -13,7 +12,31 @@
   }
  catch (  Exception e) {
     if (e instanceof UserRedirectRequiredException) {
-      this.aep.commence(req,resp,null);
+      if (filterConfig.getEnableRedirectAuthenticationEntryPoint() || req.getRequestURI().endsWith(filterConfig.getLoginEndpoint())) {
+        this.aep.commence(req,resp,null);
+      }
+ else {
+        if (resp.getStatus() != 302) {
+          final AccessTokenRequest accessTokenRequest=restTemplate.getOAuth2ClientContext().getAccessTokenRequest();
+          if (accessTokenRequest.getPreservedState() != null && accessTokenRequest.getStateKey() != null) {
+            accessTokenRequest.remove("state");
+            accessTokenRequest.remove(accessTokenRequest.getStateKey());
+            accessTokenRequest.setPreservedState(null);
+          }
+        }
+      }
+    }
+ else     if (e instanceof BadCredentialsException || e instanceof ResourceAccessException) {
+      if (e.getCause() instanceof OAuth2AccessDeniedException) {
+        LOGGER.log(Level.WARNING,"Error while trying to authenticate to OAuth2 Provider with the following Exception cause:",e.getCause());
+      }
+      if (e instanceof ResourceAccessException) {
+        LOGGER.log(Level.SEVERE,"Could not Authorize OAuth2 Resource due to the following exception:",e);
+      }
+      if (e instanceof ResourceAccessException || e.getCause() instanceof OAuth2AccessDeniedException) {
+        LOGGER.log(Level.WARNING,"It is worth notice that if you try to validate credentials against an SSH protected Endpoint, you need either your server exposed on a secure SSL channel or OAuth2 Provider Certificate to be trusted on your JVM!");
+        LOGGER.info("Please refer to the GeoServer OAuth2 Plugin Documentation in order to find the steps for importing the SSH certificates.");
+      }
     }
   }
   String principal=(authentication != null ? (String)authentication.getPrincipal() : null);
